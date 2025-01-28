@@ -1,0 +1,307 @@
+from django.shortcuts import render
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.response import Response
+from django.http import JsonResponse
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from django.utils.translation import gettext_lazy as _
+from .models import CustomUser
+from .serializers import *
+import random
+import string
+from django.core.mail import send_mail
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
+from django.contrib.auth.decorators import login_required
+from .utils import send_email_with_secret_code
+from django.template.loader import render_to_string
+from rest_framework import status
+from django.contrib.auth import logout
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
+from django.urls import reverse
+from django.contrib.auth import login
+from rest_framework.viewsets import ModelViewSet
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+
+# Create your views here.
+
+
+# === Vues Pages Statiques === #
+
+def index(request):
+    return render(request, 'main/index.html')
+
+
+def check_auth(request):
+    return render(request, 'main/check_auth.html')
+
+
+def forgot_auth(request):
+    return render(request, 'main/forgot_auth.html')
+
+
+def reset_auth(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/reset_auth.html', {'error': _('Token manquant.')})
+    return render(request, 'main/reset_auth.html', {'token': token})
+
+
+
+# === VIEWS Dashboards === #
+
+
+########################################################################################################################
+#                                                                                                                      #
+#  VIEWS START FOR ROOT                                                                                                #
+#                                                                                                                      #
+########################################################################################################################
+
+@login_required
+def dash_root(request):
+    token = request.GET.get('token')
+    if not token:
+      return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    context = {
+        'dash_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+    return render(request, 'main/root/dash_root.html', context)
+
+@login_required
+def dash_root_pays(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        'locations_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+    return render(request, 'main/root/pays/dash_root_pays.html', context)
+
+
+@login_required
+def dash_root_province(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+
+    context = {
+        'locations_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'pays_list': pays_list,  # Ajouter la liste des pays au contexte
+    }
+    return render(request, 'main/root/province/dash_root_province.html', context)
+
+
+@login_required
+def dash_root_ville(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    # Récupérer tous les pays
+    province_list = Province.objects.all()
+
+    context = {
+        'locations_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'pays_list': pays_list,  # Ajouter la liste des pays au contexte
+        'province_list': province_list,  # Ajouter la liste des pays au contexte
+    }
+    return render(request, 'main/root/ville/dash_root_ville.html', context)
+
+
+@login_required
+def dash_root_devise(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    # Récupérer tous les pays
+    province_list = Province.objects.all()
+
+    context = {
+        'codification_active': 'active',
+        'devise_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'pays_list': pays_list,  # Ajouter la liste des pays au contexte
+        'province_list': province_list,  # Ajouter la liste des pays au contexte
+    }
+    return render(request, 'main/root/devise/dash_root_devise.html', context)
+
+
+@login_required
+def dash_root_annee(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    # Récupérer tous les pays
+    province_list = Province.objects.all()
+
+    context = {
+        'codification_active': 'active',
+        'annee_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/annee/dash_root_annee.html', context)
+
+
+@login_required
+def dash_root_coloration(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'codification_active': 'active',
+        'coloration_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/coloration/dash_root_coloration.html', context)
+
+
+@login_required
+def dash_root_category_nace(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'codification_active': 'active',
+        'nace_cat_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/nace/dash_root_category_nace.html', context)
+
+########################################################################################################################
+#                                                                                                                      #
+#  VIEWS END FOR ROOT                                                                                                  #
+#                                                                                                                      #
+########################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@login_required
+def dash_validateur(request):
+    return render(request, 'main/validateur/dash_validateur.html')
+
+
+@login_required
+def dash_analyste(request):
+    return render(request, 'main/analyste/dash_analyste.html')
+
+
+@login_required
+def dash_client(request):
+    return render(request, 'main/client/dash_client.html')
+
+
+

@@ -1,0 +1,397 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-calendar-check fa-fw me-1"></i> Années</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAnnee">Module de Gestion des Années</h4>
+                    <span>Dans ce module, vous pouvez gérer les années, telles que l'ajout, la modification, la suppression et la consultation des années actives.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- ANNEE START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Années civiles</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-3">
+                        <!-- Add year button -->
+                        <div>
+                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addAnneeModal">
+                                Ajouter une Année
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Année list START -->
+                <div class="table-responsive border-0" id="anneeList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">Année</th>
+                                <th scope="col" class="border-0">Status</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="anneeTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Année list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- ANNEE END -->
+
+<!-- Add Annee Modal START -->
+<div class="modal fade" id="addAnneeModal" tabindex="-1" aria-labelledby="addAnneeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAnneeModalLabel">Ajouter une Année</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAnneeForm">
+                    <div class="mb-3">
+                        <label for="annee" class="form-label">Année</label>
+                        <input type="number" class="form-control" id="annee" name="annee" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="is_active" class="form-label">Actif</label>
+                        <select class="form-select" id="is_active" name="is_active" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Annee Modal END -->
+
+<!-- Edit Annee Modal START -->
+<div class="modal fade" id="editAnneeModal" tabindex="-1" aria-labelledby="editAnneeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAnneeModalLabel">Modifier une Année</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAnneeForm">
+                    <input type="hidden" id="editAnneeId" name="id">
+                    <div class="mb-3">
+                        <label for="editAnnee" class="form-label">Année</label>
+                        <input type="number" class="form-control" id="editAnnee" name="annee" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editIsActive" class="form-label">Actif</label>
+                        <select class="form-select" id="editIsActive" name="is_active" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Annee Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    $(document).ready(function() {
+        // Function to load annees data
+        function loadAnnees(page = 1, search = '') {
+            $.ajax({
+                url: '/api/liste-des-annees-civiles/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' + (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update annees table body
+                    $('#anneeTableBody').html('');
+                    response.results.forEach(function(annee, index) {
+                        $('#anneeTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + annee.annee + '</td>' +
+                            '<td>' + (annee.is_active ? 'Actif' : 'Inactif') + '</td>' +
+                            '<td><button class="btn btn-light btn-round mb-0 edit-btn" data-id="' + annee.id + '"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + annee.id + '"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+                }
+            });
+        }
+
+        // Load data on page load
+        loadAnnees();
+
+        // Handle page change
+        $(document).on('click', '.pagination .page-link', function(e) {
+            e.preventDefault();
+            var page = $(this).data('page');
+            loadAnnees(page);
+        });
+
+        // Handle search
+        $('#searchForm').submit(function(e) {
+            e.preventDefault();
+            var search = $('#searchInput').val();
+            loadAnnees(1, search);
+        });
+
+        // Handle Add Annee Form
+        $('#addAnneeForm').submit(function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var formData = form.serialize();
+            $.ajax({
+                url: '/api/ajouter-une-annee/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'L\'année ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addAnneeModal').modal('hide');
+                        window.location.reload(true);
+                        loadDevises();
+                    });
+                },
+                error: function() {
+                    // SweetAlert error notification
+                    Swal.fire({
+                        title: 'Erreur!',
+                        text: 'Une erreur s\'est produite lors de l\'ajout de l\'année.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+
+        // Edit Annee button click
+        $(document).on('click', '.edit-btn', function() {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/api/editer-une-annee/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editAnneeId').val(response.id);
+                    $('#editAnnee').val(response.annee);
+                    $('#editIsActive').val(response.is_active ? 'true' : 'false');
+                    $('#editAnneeModal').modal('show');
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de la devise.',
+                    });
+                }
+            });
+        });
+
+        // Handle Edit Annee Form
+        $('#editAnneeForm').submit(function(e) {
+            e.preventDefault();
+            var form = $(this);
+            var formData = form.serialize();
+            $.ajax({
+                url: '/api/editer-une-annee/' + $('#editAnneeId').val() + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editAnneeModal').modal('hide');
+                    loadAnnees();
+                    // SweetAlert success notification
+                    Swal.fire({
+                        title: 'Succès!',
+                        text: 'L\'année a été modifiée avec succès.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                },
+                error: function() {
+                    // SweetAlert error notification
+                    Swal.fire({
+                        title: 'Erreur!',
+                        text: 'Une erreur s\'est produite lors de la modification de l\'année.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+
+        // Handle Delete Annee
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            // SweetAlert confirmation dialog
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: "Cette année sera définitivement supprimée!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Supprimer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supprimer-des-annees/',  // L'URL de l'API
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),  // Envoie des IDs dans le corps de la requête
+                        contentType: 'application/json',  // Assurez-vous d'envoyer les données en JSON
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function(response) {
+                            loadAnnees();  // Recharger la liste des années après suppression
+                            // SweetAlert success notification
+                            Swal.fire({
+                                title: 'Supprimé!',
+                                text: 'L\'année a été supprimée.',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                        },
+                        error: function() {
+                            // SweetAlert error notification
+                            Swal.fire({
+                                title: 'Erreur!',
+                                text: 'Une erreur s\'est produite lors de la suppression de l\'année.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+
+        // Fill Edit Modal with selected Annee data
+        $(document).on('click', '.btn-info', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/annee/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editAnneeId').val(response.id);
+                    $('#editAnnee').val(response.annee);
+                    $('#editIsActive').val(response.is_active ? 'true' : 'false');
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}
