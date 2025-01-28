@@ -376,7 +376,7 @@ class CategoryNaceCode(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.libelle else _("Catégorie Code NACE sans libellé")
+        return f"{self.code} - {self.libelle}"
 
     class Meta:
         verbose_name = _("Catégorie Code NACE")

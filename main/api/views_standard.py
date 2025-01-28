@@ -345,7 +345,7 @@ class ListCategoryNaceView(APIView):
         search_query = request.query_params.get('search', '')
         page_number = request.query_params.get('page', 1)
 
-        category_list = CategoryNafCode.objects.filter(
+        category_list = CategoryNaceCode.objects.filter(
             Q(code__icontains=search_query) | Q(libelle__icontains=search_query)
         ).order_by('code')
 
@@ -370,7 +370,7 @@ class SearchCategoryNaceView(APIView):
         if not search_term:
             return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        category_list = CategoryNafCode.objects.filter(
+        category_list = CategoryNaceCode.objects.filter(
             Q(code__icontains=search_term) | Q(libelle__icontains=search_term)
         ).order_by('code')
 
@@ -404,8 +404,8 @@ class EditCategoryNaceView(APIView):
 
     def get(self, request, id, *args, **kwargs):
         try:
-            category = CategoryNafCode.objects.get(id=id)
-        except CategoryNafCode.DoesNotExist:
+            category = CategoryNaceCode.objects.get(id=id)
+        except CategoryNaceCode.DoesNotExist:
             return Response({'detail': 'Catégorie non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = AddCategoryNaceCodeSerializer(category)
@@ -413,8 +413,8 @@ class EditCategoryNaceView(APIView):
 
     def put(self, request, id, *args, **kwargs):
         try:
-            category = CategoryNafCode.objects.get(id=id)
-        except CategoryNafCode.DoesNotExist:
+            category = CategoryNaceCode.objects.get(id=id)
+        except CategoryNaceCode.DoesNotExist:
             return Response({'detail': 'Catégorie non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = AddCategoryNaceCodeSerializer(category, data=request.data)
@@ -432,7 +432,7 @@ class DeleteCategoryNaceView(APIView):
         if not ids or not isinstance(ids, list):
             return Response({'detail': 'Liste des IDs manquante ou invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        categories = CategoryNafCode.objects.filter(id__in=ids)
+        categories = CategoryNaceCode.objects.filter(id__in=ids)
         deleted_count = categories.count()
         categories.delete()
 

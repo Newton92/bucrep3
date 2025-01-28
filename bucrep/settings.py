@@ -265,9 +265,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # from main.models import CustomUser
 # from rest_framework.authtoken.models import Token
 
-# user = CustomUser.objects.get(username='admin')  # Remplacez 'admin' par le nom d'utilisateur de votre superutilisateur
-# token, created = Token.objects.get_or_create(user=user)
-# print(token.key) = 438d8d3a0ad4f508b4420ce9a3cd2416cb70b51c
+
 
 CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
 
