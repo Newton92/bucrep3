@@ -80,6 +80,8 @@ class CouleurCommentaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = CouleurCommentaire
         fields = ['id', 'couleur', 'code']
+        
+        
 
 
 class AddCategoryNaceCodeSerializer(serializers.ModelSerializer):
@@ -90,11 +92,34 @@ class AddCategoryNaceCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
         
         
-class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
+class AddSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCategoryNaceCode
         fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
+        
+        
+class CategoryNaceCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNaceCode
+        fields = ['id', 'code', 'libelle']
+        
+        
+class EditSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNaceCodeSerializer()
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNaceCodeSerializer()
+
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = ['id', 'category', 'code', 'libelle', 'active', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class CategoryNaceCodeSerializer(serializers.ModelSerializer):
@@ -106,10 +131,39 @@ class CategoryNaceCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
         
         
-class SubCategoryNafCodeSerializer(serializers.ModelSerializer):
+        
+        
+class AddSubCategoryNafCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCategoryNafCode
         fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"] 
+             
+
+
+
+
+
+class CategoryNafCodeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CategoryNafCode
+        fields = ["id", "code", "libelle", "active", "created_at", "updated_at", "subcategories"]
+        read_only_fields = ["created_at", "updated_at"]        
+        
+class SubCategoryNafCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNafCodeSerializer()
+    class Meta:
+        model = SubCategoryNafCode
+        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]     
+
+
+class AddCategoryNafCodeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CategoryNafCode
+        fields = ["id", "code", "libelle", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
 
 
@@ -119,6 +173,14 @@ class CategoryNafCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryNafCode
         fields = ["id", "code", "libelle", "active", "created_at", "updated_at", "subcategories"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class EditSubCategoryNafCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNafCodeSerializer()
+    class Meta:
+        model = SubCategoryNafCode
+        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
         
         

@@ -270,6 +270,89 @@ def dash_root_category_nace(request):
     }
     return render(request, 'main/root/nace/dash_root_category_nace.html', context)
 
+
+@login_required
+def dash_root_category_naf(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'codification_active': 'active',
+        'naf_cat_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/naf/dash_root_category_naf.html', context)
+
+
+@login_required
+def dash_root_code_nace(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les categories nace
+    categorie_list = CategoryNaceCode.objects.all()
+    
+
+    context = {
+        'codification_active': 'active',
+        'nace_code_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'categorie_list': categorie_list
+        
+    }
+    return render(request, 'main/root/nace/dash_root_code_nace.html', context)
+
+
+@login_required
+def dash_root_code_naf(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les categories nace
+    categorie_list = CategoryNafCode.objects.all()
+    
+
+    context = {
+        'codification_active': 'active',
+        'naf_code_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'categorie_list': categorie_list
+        
+    }
+    return render(request, 'main/root/naf/dash_root_code_naf.html', context)
+
+
 ########################################################################################################################
 #                                                                                                                      #
 #  VIEWS END FOR ROOT                                                                                                  #

@@ -437,3 +437,316 @@ class DeleteCategoryNaceView(APIView):
         categories.delete()
 
         return Response({'detail': f'{deleted_count} catégorie(s) supprimée(s).'}, status=status.HTTP_200_OK)
+    
+    
+class ListCategoryNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        category_list = CategoryNafCode.objects.filter(
+            Q(code__icontains=search_query) | Q(libelle__icontains=search_query)
+        ).order_by('code')
+
+        paginator = Paginator(category_list, 10)  # 10 éléments par page
+        category_page = paginator.get_page(page_number)
+        serializer = AddCategoryNafCodeSerializer(category_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': category_page.has_next(),
+            'previous': category_page.has_previous()
+        })
+        
+        
+class SearchCategoryNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        category_list = CategoryNafCode.objects.filter(
+            Q(code__icontains=search_term) | Q(libelle__icontains=search_term)
+        ).order_by('code')
+
+        paginator = Paginator(category_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        category_page = paginator.get_page(page_number)
+        serializer = AddCategoryNafCodeSerializer(category_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': category_page.has_next(),
+            'previous': category_page.has_previous()
+        })
+        
+        
+class AddCategoryNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddCategoryNafCodeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class EditCategoryNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        category = CategoryNafCode.objects.filter(id=id).first()
+        if not category:
+            return Response({'detail': 'Catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AddCategoryNafCodeSerializer(category)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        category = CategoryNafCode.objects.filter(id=id).first()
+        if not category:
+            return Response({'detail': 'Catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AddCategoryNafCodeSerializer(category, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class DeleteCategoryNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        categories = CategoryNafCode.objects.filter(id__in=ids)
+        if not categories.exists():
+            return Response({'error': 'Aucune catégorie trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = categories.delete()
+        return Response({'message': f'{count} catégories supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+class ListCodeNaceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+        
+        subcategory_list = SubCategoryNaceCode.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(category__code__icontains=search_query) |
+            Q(category__libelle__icontains=search_query)
+        ).order_by('code')
+        
+        paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
+        subcategory_page = paginator.get_page(page_number)
+        serializer = SubCategoryNaceCodeSerializer(subcategory_page, many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': subcategory_page.has_next(),
+            'previous': subcategory_page.has_previous()
+        })
+
+
+class SearchCodeNaceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        subcategory_list = SubCategoryNaceCode.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(category__code__icontains=search_term) |
+            Q(category__libelle__icontains=search_term)
+        ).order_by('code')
+
+        paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        subcategory_page = paginator.get_page(page_number)
+        serializer = SubCategoryNaceCodeSerializer(subcategory_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': subcategory_page.has_next(),
+            'previous': subcategory_page.has_previous()
+        })
+
+
+class AddCodeNaceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddSubCategoryNaceCodeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditCodeNaceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        subcategory = SubCategoryNaceCode.objects.filter(id=id).first()
+        if not subcategory:
+            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditSubCategoryNaceCodeSerializer(subcategory)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        subcategory = SubCategoryNaceCode.objects.filter(id=id).first()
+        if not subcategory:
+            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditSubCategoryNaceCodeSerializer(subcategory, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteCodeNaceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        subcategories = SubCategoryNaceCode.objects.filter(id__in=ids)
+        if not subcategories.exists():
+            return Response({'error': 'Aucune sous-catégorie trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = subcategories.delete()
+        return Response({'message': f'{count} sous-catégories supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+class ListCodeNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+        
+        subcategory_list = SubCategoryNafCode.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(category__code__icontains=search_query) |
+            Q(category__libelle__icontains=search_query)
+        ).order_by('code')
+        
+        paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
+        subcategory_page = paginator.get_page(page_number)
+        serializer = SubCategoryNafCodeSerializer(subcategory_page, many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': subcategory_page.has_next(),
+            'previous': subcategory_page.has_previous()
+        })
+
+
+class SearchCodeNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        subcategory_list = SubCategoryNafCode.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(category__code__icontains=search_term) |
+            Q(category__libelle__icontains=search_term)
+        ).order_by('code')
+
+        paginator = Paginator(subcategory_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        subcategory_page = paginator.get_page(page_number)
+        serializer = SubCategoryNafCodeSerializer(subcategory_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': subcategory_page.has_next(),
+            'previous': subcategory_page.has_previous()
+        })
+
+
+class AddCodeNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddSubCategoryNafCodeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditCodeNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        subcategory = SubCategoryNafCode.objects.filter(id=id).first()
+        if not subcategory:
+            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditSubCategoryNafCodeSerializer(subcategory)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        subcategory = SubCategoryNafCode.objects.filter(id=id).first()
+        if not subcategory:
+            return Response({'detail': 'Sous-catégorie NAF non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditSubCategoryNafCodeSerializer(subcategory, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteCodeNafView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        subcategories = SubCategoryNafCode.objects.filter(id__in=ids)
+        if not subcategories.exists():
+            return Response({'error': 'Aucune sous-catégorie trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = subcategories.delete()
+        return Response({'message': f'{count} sous-catégories supprimées avec succès.'}, status=status.HTTP_200_OK)

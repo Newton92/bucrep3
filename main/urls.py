@@ -44,6 +44,9 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-annees-civiles', dash_root_annee, name='dash_root_annee'),
     path('root-dashboard/standard/liste-des-colorations', dash_root_coloration, name='dash_root_coloration'),
     path('root-dashboard/standard/liste-des-categories-nace', dash_root_category_nace, name='dash_root_category_nace'),
+    path('root-dashboard/standard/liste-des-categories-naf', dash_root_category_naf, name='dash_root_category_naf'),
+    path('root-dashboard/standard/liste-des-codes-nace', dash_root_code_nace, name='dash_root_code_nace'),
+    path('root-dashboard/standard/liste-des-codes-naf', dash_root_code_naf, name='dash_root_code_naf'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -140,6 +143,24 @@ urlpatterns = [
     path('api/ajouter-une-categorie-nace/', AddCategoryNaceView.as_view(), name='add-categorie-nace'),
     path('api/editer-une-categorie-nace/<int:id>/', EditCategoryNaceView.as_view(), name='edit-categorie-nace'),
     path('api/supprimer-des-categories-nace/', DeleteCategoryNaceView.as_view(), name='delete-categorie-nace'),
+    
+    path('api/liste-des-categories-naf/', ListCategoryNafView.as_view(), name='list-categorie-naf'),
+    path('api/recherche-categorie-naf/', SearchCategoryNafView.as_view(), name='search-categorie-naf'),
+    path('api/ajouter-une-categorie-naf/', AddCategoryNafView.as_view(), name='add-categorie-naf'),
+    path('api/editer-une-categorie-naf/<int:id>/', EditCategoryNafView.as_view(), name='edit-categorie-naf'),
+    path('api/supprimer-des-categories-naf/', DeleteCategoryNafView.as_view(), name='delete-categorie-naf'),
+    
+    path('api/liste-des-codes-nace/', ListCodeNaceView.as_view(), name='list-code-nace'),
+    path('api/recherche-codes-nace/', SearchCodeNaceView.as_view(), name='search-code-nace'),
+    path('api/ajouter-un-code-nace/', AddCodeNaceView.as_view(), name='add-code-nace'),
+    path('api/editer-un-code-nace/<int:id>/', EditCodeNaceView.as_view(), name='edit-code-nace'),
+    path('api/supprimer-des-codes-nace/', DeleteCodeNaceView.as_view(), name='delete-code-nace'),
+    
+    path('api/liste-des-codes-naf/', ListCodeNafView.as_view(), name='list-code-naf'),
+    path('api/recherche-codes-naf/', SearchCodeNafView.as_view(), name='search-code-naf'),
+    path('api/ajouter-un-code-naf/', AddCodeNafView.as_view(), name='add-code-naf'),
+    path('api/editer-un-code-naf/<int:id>/', EditCodeNafView.as_view(), name='edit-code-naf'),
+    path('api/supprimer-des-codes-naf/', DeleteCodeNafView.as_view(), name='delete-code-naf'),
     
     ########################################################################################################################
     #                                                                                                                      #
