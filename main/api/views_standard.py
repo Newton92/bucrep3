@@ -750,3 +750,311 @@ class DeleteCodeNafView(APIView):
 
         count, _ = subcategories.delete()
         return Response({'message': f'{count} sous-catégories supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+class ListFormeJuridiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        forme_juridique_list = FormeJuridique.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(description__icontains=search_query)
+        ).order_by('code')
+
+        paginator = Paginator(forme_juridique_list, 10)  # 10 éléments par page
+        forme_juridique_page = paginator.get_page(page_number)
+        serializer = FormeJuridiqueSerializer(forme_juridique_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': forme_juridique_page.has_next(),
+            'previous': forme_juridique_page.has_previous()
+        })
+        
+        
+class SearchFormeJuridiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        forme_juridique_list = FormeJuridique.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(description__icontains=search_term)
+        ).order_by('code')
+
+        paginator = Paginator(forme_juridique_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        forme_juridique_page = paginator.get_page(page_number)
+        serializer = FormeJuridiqueSerializer(forme_juridique_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': forme_juridique_page.has_next(),
+            'previous': forme_juridique_page.has_previous()
+        })
+
+
+class AddFormeJuridiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = FormeJuridiqueSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditFormeJuridiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        forme_juridique = FormeJuridique.objects.filter(id=id).first()
+        if not forme_juridique:
+            return Response({'detail': 'Forme juridique non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = FormeJuridiqueSerializer(forme_juridique)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        forme_juridique = FormeJuridique.objects.filter(id=id).first()
+        if not forme_juridique:
+            return Response({'detail': 'Forme juridique non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = FormeJuridiqueSerializer(forme_juridique, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteFormeJuridiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        formes_juridiques = FormeJuridique.objects.filter(id__in=ids)
+        if not formes_juridiques.exists():
+            return Response({'error': 'Aucune forme juridique trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = formes_juridiques.delete()
+        return Response({'message': f'{count} formes juridiques supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+class ListDomaineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        domaine_list = DomaineEntreprise.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(description__icontains=search_query)
+        ).order_by('libelle')
+
+        paginator = Paginator(domaine_list, 10)  # 10 éléments par page
+        domaine_page = paginator.get_page(page_number)
+        serializer = DomaineEntrepriseSerializer(domaine_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': domaine_page.has_next(),
+            'previous': domaine_page.has_previous()
+        })
+
+class SearchDomaineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        domaine_list = DomaineEntreprise.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(description__icontains=search_term)
+        ).order_by('libelle')
+
+        paginator = Paginator(domaine_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        domaine_page = paginator.get_page(page_number)
+        serializer = DomaineEntrepriseSerializer(domaine_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': domaine_page.has_next(),
+            'previous': domaine_page.has_previous()
+        })
+
+class AddDomaineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = DomaineEntrepriseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditDomaineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        domaine = DomaineEntreprise.objects.filter(id=id).first()
+        if not domaine:
+            return Response({'detail': 'Domaine entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DomaineEntrepriseSerializer(domaine)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        domaine = DomaineEntreprise.objects.filter(id=id).first()
+        if not domaine:
+            return Response({'detail': 'Domaine entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DomaineEntrepriseSerializer(domaine, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteDomaineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        domaines = DomaineEntreprise.objects.filter(id__in=ids)
+        if not domaines.exists():
+            return Response({'error': 'Aucun domaine entreprise trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = domaines.delete()
+        return Response({'message': f'{count} domaines entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+class ListPosteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        poste_list = PosteEntreprise.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(domaine__code__icontains=search_query) |
+            Q(domaine__libelle__icontains=search_query)
+        ).order_by('libelle')
+
+        paginator = Paginator(poste_list, 10)  # 10 éléments par page
+        poste_page = paginator.get_page(page_number)
+        serializer = PosteEntrepriseSerializer(poste_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': poste_page.has_next(),
+            'previous': poste_page.has_previous()
+        })
+
+class SearchPosteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        poste_list = PosteEntreprise.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(description__icontains=search_term) |
+            Q(domaine__code__icontains=search_term) |
+            Q(domaine__libelle__icontains=search_term)
+        ).order_by('libelle')
+
+        paginator = Paginator(poste_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        poste_page = paginator.get_page(page_number)
+        serializer = PosteEntrepriseSerializer(poste_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': poste_page.has_next(),
+            'previous': poste_page.has_previous()
+        })
+
+class AddPosteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddPosteEntrepriseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditPosteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        poste = PosteEntreprise.objects.filter(id=id).first()
+        if not poste:
+            return Response({'detail': 'Poste entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditPosteEntrepriseSerializer(poste)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        poste = PosteEntreprise.objects.filter(id=id).first()
+        if not poste:
+            return Response({'detail': 'Poste entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditPosteEntrepriseSerializer(poste, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeletePosteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        postes = PosteEntreprise.objects.filter(id__in=ids)
+        if not postes.exists():
+            return Response({'error': 'Aucun poste entreprise trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = postes.delete()
+        return Response({'message': f'{count} postes entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)

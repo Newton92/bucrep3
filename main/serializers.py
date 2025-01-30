@@ -141,9 +141,6 @@ class AddSubCategoryNafCodeSerializer(serializers.ModelSerializer):
              
 
 
-
-
-
 class CategoryNafCodeSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -184,25 +181,38 @@ class EditSubCategoryNafCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
         
         
+        
+        
 class FormeJuridiqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormeJuridique
         fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
-        
-class PosteEntrepriseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PosteEntreprise
-        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
 
 
 class DomaineEntrepriseSerializer(serializers.ModelSerializer):
-    postes = PosteEntrepriseSerializer(many=True, read_only=True)
 
     class Meta:
         model = DomaineEntreprise
-        fields = ["id", "code", "libelle", "description", "active", "postes", "created_at", "updated_at"]
+        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
+        
+class AddPosteEntrepriseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PosteEntreprise
+        fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
+        
+class EditPosteEntrepriseSerializer(serializers.ModelSerializer):
+    domaine = DomaineEntrepriseSerializer()
+    class Meta:
+        model = PosteEntreprise
+        fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
+        
+class PosteEntrepriseSerializer(serializers.ModelSerializer):
+    domaine = DomaineEntrepriseSerializer()
+    class Meta:
+        model = PosteEntreprise
+        fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
         
         
 class BaseModeleSerializer(serializers.ModelSerializer):

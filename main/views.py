@@ -353,6 +353,79 @@ def dash_root_code_naf(request):
     return render(request, 'main/root/naf/dash_root_code_naf.html', context)
 
 
+@login_required
+def dash_root_forme_juridique(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'codification_active': 'active',
+        'juridique_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/juridique/dash_root_forme_juridique.html', context)
+
+
+@login_required
+def dash_root_domaine(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'codification_active': 'active',
+        'domaine_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/domaine/dash_root_domaine.html', context)
+
+@login_required
+def dash_root_poste(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Récupération des domaines
+    domaines = DomaineEntreprise.objects.all()
+
+    context = {
+        'codification_active': 'active',
+        'poste_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'domaines': domaines,  # Ajouter les domaines au contexte
+    }
+    return render(request, 'main/root/poste/dash_root_poste.html', context)
+
 ########################################################################################################################
 #                                                                                                                      #
 #  VIEWS END FOR ROOT                                                                                                  #

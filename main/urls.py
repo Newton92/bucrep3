@@ -47,6 +47,9 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-categories-naf', dash_root_category_naf, name='dash_root_category_naf'),
     path('root-dashboard/standard/liste-des-codes-nace', dash_root_code_nace, name='dash_root_code_nace'),
     path('root-dashboard/standard/liste-des-codes-naf', dash_root_code_naf, name='dash_root_code_naf'),
+    path('root-dashboard/standard/liste-des-formes-juridiques', dash_root_forme_juridique, name='dash_root_forme_juridique'),
+    path('root-dashboard/standard/liste-des-domaines', dash_root_domaine, name='dash_root_domaine'),
+    path('root-dashboard/standard/liste-des-postes', dash_root_poste, name='dash_root_poste'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -161,6 +164,24 @@ urlpatterns = [
     path('api/ajouter-un-code-naf/', AddCodeNafView.as_view(), name='add-code-naf'),
     path('api/editer-un-code-naf/<int:id>/', EditCodeNafView.as_view(), name='edit-code-naf'),
     path('api/supprimer-des-codes-naf/', DeleteCodeNafView.as_view(), name='delete-code-naf'),
+    
+    path('api/liste-des-formes-juridiques/', ListFormeJuridiqueView.as_view(), name='list-forme-juridique'),
+    path('api/recherche-forme-juridique/', SearchFormeJuridiqueView.as_view(), name='search-forme-juridique'),
+    path('api/ajouter-une-forme-juridique/', AddFormeJuridiqueView.as_view(), name='add-forme-juridique'),
+    path('api/editer-une-forme-juridique/<int:id>/', EditFormeJuridiqueView.as_view(), name='edit-forme-juridique'),
+    path('api/supprimer-des-formes-juridiques/', DeleteFormeJuridiqueView.as_view(), name='delete-forme-juridique'),
+    
+    path('api/liste-des-domaines/', ListDomaineView.as_view(), name='list-domaine'),
+    path('api/recherche-domaine/', SearchDomaineView.as_view(), name='search-domaine'),
+    path('api/ajouter-une-domaine/', AddDomaineView.as_view(), name='add-domaine'),
+    path('api/editer-une-domaine/<int:id>/', EditDomaineView.as_view(), name='edit-domaine'),
+    path('api/supprimer-des-domaine/', DeleteDomaineView.as_view(), name='delete-domaine'),
+    
+    path('api/liste-des-postes/', ListPosteView.as_view(), name='list-poste'),
+    path('api/recherche-poste/', SearchPosteView.as_view(), name='search-poste'),
+    path('api/ajouter-une-poste/', AddPosteView.as_view(), name='add-poste'),
+    path('api/editer-une-poste/<int:id>/', EditPosteView.as_view(), name='edit-poste'),
+    path('api/supprimer-des-postes/', DeletePosteView.as_view(), name='delete-poste'),
     
     ########################################################################################################################
     #                                                                                                                      #
