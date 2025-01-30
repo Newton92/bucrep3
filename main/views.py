@@ -426,6 +426,30 @@ def dash_root_poste(request):
     }
     return render(request, 'main/root/poste/dash_root_poste.html', context)
 
+
+@login_required
+def dash_root_category_entreprise(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        'codification_active': 'active',
+        'entreprise_cat_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/entreprise/dash_root_category_entreprise.html', context)
+
+
 ########################################################################################################################
 #                                                                                                                      #
 #  VIEWS END FOR ROOT                                                                                                  #

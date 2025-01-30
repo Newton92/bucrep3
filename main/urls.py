@@ -50,6 +50,7 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-formes-juridiques', dash_root_forme_juridique, name='dash_root_forme_juridique'),
     path('root-dashboard/standard/liste-des-domaines', dash_root_domaine, name='dash_root_domaine'),
     path('root-dashboard/standard/liste-des-postes', dash_root_poste, name='dash_root_poste'),
+    path('root-dashboard/standard/liste-des-categories-entreprise', dash_root_category_entreprise, name='dash_root_category_entreprise'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -176,6 +177,12 @@ urlpatterns = [
     path('api/ajouter-une-domaine/', AddDomaineView.as_view(), name='add-domaine'),
     path('api/editer-une-domaine/<int:id>/', EditDomaineView.as_view(), name='edit-domaine'),
     path('api/supprimer-des-domaine/', DeleteDomaineView.as_view(), name='delete-domaine'),
+    
+    path('api/liste-des-categories-entreprise/', ListCategorieEntrepriseView.as_view(), name='list-categorie-entreprise'),
+    path('api/recherche-categorie-entreprise/', SearchCategorieEntrepriseView.as_view(), name='search-categorie-entreprise'),
+    path('api/ajouter-une-categorie-entreprise/', AddCategorieEntrepriseView.as_view(), name='add-categorie-entreprise'),
+    path('api/editer-une-categorie-entreprise/<int:id>/', EditCategorieEntrepriseView.as_view(), name='edit-categorie-entreprise'),
+    path('api/supprimer-des-categories-entreprise/', DeleteCategorieEntrepriseView.as_view(), name='delete-categorie-entreprise'),
     
     path('api/liste-des-postes/', ListPosteView.as_view(), name='list-poste'),
     path('api/recherche-poste/', SearchPosteView.as_view(), name='search-poste'),

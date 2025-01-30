@@ -256,3 +256,8 @@ class ModeleComportementJugementSerializer(BaseModeleSerializer):
         model = ModeleComportementJugement
         
         
+class CategorieEntrepriseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategorieEntreprise
+        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]

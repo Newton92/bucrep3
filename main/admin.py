@@ -172,6 +172,11 @@ class DomaineEntrepriseAdmin(admin.ModelAdmin):
     list_filter = ["active"]
     ordering = ["libelle"]
 
+@admin.register(CategorieEntreprise)
+class CategorieEntrepriseAdmin(admin.ModelAdmin):
+    list_display = ('code', 'libelle', 'description', 'active', 'created_at', 'updated_at')
+    search_fields = ('code', 'libelle', 'description')
+    list_filter = ('active',)
 
 @admin.register(PosteEntreprise)
 class PosteEntrepriseAdmin(admin.ModelAdmin):

@@ -1058,3 +1058,103 @@ class DeletePosteView(APIView):
 
         count, _ = postes.delete()
         return Response({'message': f'{count} postes entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+class ListCategorieEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        categorie_list = CategorieEntreprise.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(description__icontains=search_query)
+        ).order_by('libelle')
+
+        paginator = Paginator(categorie_list, 10)  # 10 éléments par page
+        categorie_page = paginator.get_page(page_number)
+        serializer = CategorieEntrepriseSerializer(categorie_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': categorie_page.has_next(),
+            'previous': categorie_page.has_previous()
+        })
+
+class SearchCategorieEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        categorie_list = CategorieEntreprise.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(description__icontains=search_term)
+        ).order_by('libelle')
+
+        paginator = Paginator(categorie_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        categorie_page = paginator.get_page(page_number)
+        serializer = CategorieEntrepriseSerializer(categorie_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': categorie_page.has_next(),
+            'previous': categorie_page.has_previous()
+        })
+
+class AddCategorieEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = CategorieEntrepriseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditCategorieEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        categorie = CategorieEntreprise.objects.filter(id=id).first()
+        if not categorie:
+            return Response({'detail': 'Catégorie entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CategorieEntrepriseSerializer(categorie)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        categorie = CategorieEntreprise.objects.filter(id=id).first()
+        if not categorie:
+            return Response({'detail': 'Catégorie entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CategorieEntrepriseSerializer(categorie, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteCategorieEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        categories = CategorieEntreprise.objects.filter(id__in=ids)
+        if not categories.exists():
+            return Response({'error': 'Aucune catégorie entreprise trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = categories.delete()
+        return Response({'message': f'{count} catégories entreprise supprimées avec succès.'}, status=status.HTTP_200_OK)

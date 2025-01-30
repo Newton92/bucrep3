@@ -3,10 +3,32 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+import datetime
+import time
 
 # Create your models here.
 
 couleur_validator = RegexValidator(r'^#([0-9A-Fa-f]{3}){1,2}$', 'La couleur doit être au format hexadécimal (#RRGGBB ou #RGB).')
+
+
+
+def generate_unique_code():
+    # Obtenir l'année en cours
+    current_year = datetime.datetime.now().year
+
+    # Obtenir le timestamp actuel
+    timestamp = int(time.time())
+
+    # Formater le code unique
+    unique_code = f"{current_year}-{timestamp}"
+
+    return unique_code
+
+# Exemple d'utilisation
+unique_code = generate_unique_code()
+print(unique_code)
+
 
 
 
@@ -506,6 +528,22 @@ class PosteEntreprise(models.Model):
         verbose_name_plural = _("Postes entreprise")
         ordering = ["libelle"]
         
+
+class CategorieEntreprise(models.Model):
+    code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    description = models.TextField(_("Description"), null=True, blank=True)
+    active = models.BooleanField(_("Actif"), default=True)
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return self.libelle or _("Catégorie sans libellé")
+
+    class Meta:
+        verbose_name = _("Catégorie d'Entreprise")
+        verbose_name_plural = _("Catégories d'Entreprises")
+        
         
 class BaseModele(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
@@ -566,3 +604,223 @@ class ModeleComportementJugement(BaseModele):
     class Meta:
         verbose_name = _("Modèle de comportement de jugement")
         verbose_name_plural = _("Modèles de comportement de jugement")
+        
+
+class Acheteur(models.Model):
+    code = models.CharField(
+        _("Code"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Code unique de l'acheteur")
+    )
+
+    categorie_entreprise = models.ForeignKey(
+        'CategorieEntreprise',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Catégorie d'Entreprise"),
+        help_text=_("Catégorie à laquelle appartient l'entreprise")
+    )
+
+    forme_juridique = models.ForeignKey(
+        'FormeJuridique',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Forme Juridique"),
+        help_text=_("Forme juridique de l'entreprise")
+    )
+    
+    activite_principale = models.CharField(
+        _("Activité Principale"),
+        max_length=255,
+        blank=True,
+        help_text=_("Activité principale de l'entreprise")
+    )
+
+    nom = models.CharField(
+        _("Raison sociale"),
+        max_length=1000,
+        blank=False,
+        unique=True,
+        help_text=_("Nom officiel de l'entreprise")
+    )
+
+    sigle = models.CharField(
+        _("Sigle"),
+        max_length=255,
+        blank=True,
+        help_text=_("Sigle de l'entreprise")
+    )
+
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description de l'entreprise")
+    )
+
+    capital_social = models.DecimalField(
+        _("Capital Social"),
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Capital social de l'entreprise")
+    )
+
+    date_creation = models.DateField(
+        _("Date de Création"),
+        null=True,
+        blank=True,
+        help_text=_("Date de création de l'entreprise")
+    )
+
+    statut = models.CharField(
+        _("Statut actuel de l'entreprise"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Statut actuel de l'entreprise")
+    )
+
+    code_postal = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=_("Code postal de l'entreprise")
+    )
+
+    fax = models.CharField(
+        max_length=300,
+        blank=True,
+        help_text=_("Numéro de fax de l'entreprise")
+    )
+
+    boite_postale = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=_("Boîte postale de l'entreprise")
+    )
+
+    email = models.EmailField(
+        blank=True,
+        help_text=_("Adresse email de l'entreprise")
+    )
+
+    site_internet = models.URLField(
+        max_length=300,
+        blank=True,
+        help_text=_("Site internet de l'entreprise")
+    )
+
+    numero_adresse = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=_("Numéro de l'adresse de l'entreprise")
+    )
+
+    rue_adresse = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text=_("Rue de l'adresse de l'entreprise")
+    )
+
+    pays = models.ManyToManyField(
+        'Pays',
+        blank=True,
+        verbose_name=_("Pays"),
+        help_text=_("Pays où l'entreprise est située")
+    )
+
+    province = models.ManyToManyField(
+        'Province',
+        blank=True,
+        verbose_name=_("Province"),
+        help_text=_("Province où l'entreprise est située")
+    )
+
+    ville = models.ManyToManyField(
+        'Ville',
+        blank=True,
+        verbose_name=_("Ville"),
+        help_text=_("Ville où l'entreprise est située")
+    )
+
+    latitude = models.DecimalField(
+        _("Latitude"),
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text=_("Latitude de l'entreprise")
+    )
+
+    longitude = models.DecimalField(
+        _("Longitude"),
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True,
+        help_text=_("Longitude de l'entreprise")
+    )
+
+    couleur_commentaire = models.ForeignKey(
+        'CouleurCommentaire',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        help_text=_("Couleur du commentaire")
+    )
+
+    commentaire = models.TextField(
+        blank=True,
+        help_text=_("Commentaire sur l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        blank=True,
+        null=True,
+        help_text=_("Date de création de l'enregistrement")
+    )
+
+    updated_at = models.DateTimeField(
+        _("Date de Mise à Jour"),
+        auto_now=True,
+        help_text=_("Date de la dernière mise à jour de l'enregistrement")
+    )
+
+    class Meta:
+        verbose_name = _("Acheteur")
+        verbose_name_plural = _("Acheteurs")
+        ordering = ['nom']
+        unique_together = ('nom', 'email')
+
+    def __str__(self):
+        return self.nom
+
+    def clean(self):
+        # Ajouter des validateurs pour éviter les doublons
+        if Acheteur.objects.filter(nom=self.nom).exclude(pk=self.pk).exists():
+            raise ValidationError(_("Un acheteur avec ce nom existe déjà."))
+        if Acheteur.objects.filter(email=self.email).exclude(pk=self.pk).exists():
+            raise ValidationError(_("Un acheteur avec cet email existe déjà."))
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = self.generate_unique_code()
+        super(Acheteur, self).save(*args, **kwargs)
+
+    def generate_unique_code(self):
+        # Obtenir l'année en cours
+        current_year = datetime.datetime.now().year
+
+        # Obtenir le timestamp actuel
+        timestamp = int(time.time())
+
+        # Formater le code unique
+        unique_code = f"{current_year}-{timestamp}"
+
+        return unique_code
