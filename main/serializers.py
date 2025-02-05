@@ -40,25 +40,32 @@ class UpdateProvinceSerializer(serializers.ModelSerializer):
     
     
 class VilleSerializer(serializers.ModelSerializer):
-    pays = PaysSerializer()  # Utilisez le sérialiseur pour inclure les détails du pays
     province = ProvinceSerializer()  # Utilisez le sérialiseur pour inclure les détails du pays
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'pays', 'province', 'date_creation', 'date_modification', 'is_active']
+        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
+        read_only_fields = ['id', 'date_creation', 'date_modification']
+    
+    
+class VilleProvinceSerializer(serializers.ModelSerializer):
+    province = ProvinceSerializer()  # Utilisez le sérialiseur pour inclure les détails du pays
+    class Meta:
+        model = Ville
+        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
         read_only_fields = ['id', 'date_creation', 'date_modification']
     
     
 class AddVilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'pays', 'province', 'date_creation', 'date_modification', 'is_active']
+        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
         read_only_fields = ['id', 'date_creation', 'date_modification']
     
     
 class UpdateVilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'pays', 'province', 'date_creation', 'date_modification', 'is_active']
+        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
         read_only_fields = ['id', 'date_creation', 'date_modification']
         
         
@@ -260,4 +267,59 @@ class CategorieEntrepriseSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategorieEntreprise
         fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class StructureEntrepriseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StructureEntreprise
+        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class StatutEntrepriseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatutEntreprise
+        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class AcheteurSerializer(serializers.ModelSerializer):
+    categorie_entreprise = CategorieEntrepriseSerializer()
+    forme_juridique = FormeJuridiqueSerializer()
+    statut_entreprise = StatutEntrepriseSerializer()
+    
+    pays = PaysSerializer()
+    province = ProvinceSerializer()
+    ville = VilleSerializer()
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "code", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", 
+            "description", "date_creation", "statut_entreprise", 
+            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
+            "ville", "province", "pays", "couleur_commentaire", "commentaire", 
+            "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class AddAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description",  
+            "date_creation", "statut_entreprise",
+            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
+            "ville", "province", "pays", "couleur_commentaire", "commentaire"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+class EditAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description", 
+            "date_creation", "statut_entreprise",
+            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
+            "ville", "province", "pays", "couleur_commentaire", "commentaire"]
         read_only_fields = ["created_at", "updated_at"]

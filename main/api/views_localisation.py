@@ -165,10 +165,10 @@ class ListProvincesByCountryView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        country_id = kwargs.get('country_id')
-        provinces = Province.objects.filter(pays_id=country_id, is_active=True).order_by('nom')
+        country_id = self.kwargs.get('country_id')
+        provinces = Province.objects.filter(pays_id=country_id).order_by('nom')
         serializer = ProvinceSerializer(provinces, many=True)
-        return Response(serializer.data)
+        return Response({"results": serializer.data})
 
 
 class AddProvinceView(APIView):
@@ -244,6 +244,17 @@ class ListVillesView(APIView):
             'next': villes_page.has_next(),
             'previous': villes_page.has_previous()
         })
+        
+        
+class ListVillesByProvinceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        province_id = self.kwargs.get('province_id')
+        villes = Ville.objects.filter(province_id=province_id).order_by('nom')
+        serializer = VilleProvinceSerializer(villes, many=True)
+        return Response({"results": serializer.data})
+
 
 class AddVilleView(APIView):
     permission_classes = [IsAuthenticated]

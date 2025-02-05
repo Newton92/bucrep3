@@ -66,14 +66,14 @@ class ProvinceAdmin(admin.ModelAdmin):
     
 @admin.register(Ville)
 class VilleAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'code', 'pays', 'province', 'is_active', 'date_creation', 'date_modification')
-    list_filter = ('is_active', 'pays', 'province')
+    list_display = ('nom', 'code', 'province', 'is_active', 'date_creation', 'date_modification')
+    list_filter = ('is_active', 'province')
     search_fields = ('nom', 'code')
     ordering = ('nom',)
     readonly_fields = ('date_creation', 'date_modification')
     fieldsets = (
         (None, {
-            'fields': ('nom', 'code', 'pays', 'province', 'is_active')
+            'fields': ('nom', 'code', 'province', 'is_active')
         }),
         ('Dates importantes', {
             'fields': ('date_creation', 'date_modification'),
@@ -177,6 +177,22 @@ class CategorieEntrepriseAdmin(admin.ModelAdmin):
     list_display = ('code', 'libelle', 'description', 'active', 'created_at', 'updated_at')
     search_fields = ('code', 'libelle', 'description')
     list_filter = ('active',)
+    
+    
+@admin.register(StructureEntreprise)
+class StructureEntrepriseAdmin(admin.ModelAdmin):
+    list_display = ('code', 'libelle', 'description', 'active', 'created_at', 'updated_at')
+    search_fields = ('code', 'libelle', 'description')
+    list_filter = ('active',)
+    
+    
+@admin.register(StatutEntreprise)
+class StatutEntrepriseAdmin(admin.ModelAdmin):
+    list_display = ('code', 'libelle', 'description', 'active', 'created_at', 'updated_at')
+    search_fields = ('code', 'libelle', 'description')
+    list_filter = ('active',)
+    
+    
 
 @admin.register(PosteEntreprise)
 class PosteEntrepriseAdmin(admin.ModelAdmin):
@@ -201,6 +217,57 @@ admin.site.register(ModeleRelationEntreprise, BaseModeleAdmin)
 admin.site.register(ModeleInformationNotationEntreprise, BaseModeleAdmin)
 admin.site.register(ModeleComportementPaiement, BaseModeleAdmin)
 admin.site.register(ModeleComportementJugement, BaseModeleAdmin)
+
+
+class AcheteurAdmin(admin.ModelAdmin):
+    # Affichage des champs dans la liste d'administration
+    list_display = ('nom', 'categorie_entreprise', 'forme_juridique', 'activite_principale', 'email', 'date_creation', 'statut_entreprise')
+    
+    # Champs qui peuvent être filtrés
+    list_filter = ('categorie_entreprise', 'forme_juridique', 'statut_entreprise', 'pays', 'province', 'ville')
+    
+    # Champs qui peuvent être recherchés
+    search_fields = ('nom', 'email', 'activite_principale', 'description')
+    
+    # Champs éditables directement dans la liste (si applicable)
+    list_editable = ('email',)
+    
+    # Ajout de filtres de recherche supplémentaires pour des relations de clé étrangère
+    autocomplete_fields = ['categorie_entreprise', 'forme_juridique', 'statut_entreprise', 'pays', 'province', 'ville']
+
+    # Configuration des champs affichés lors de l'ajout d'un nouvel objet
+    fieldsets = (
+        (None, {
+            'fields': ('nom', 'sigle', 'description', 'activite_principale', 'date_creation', 'statut_entreprise')
+        }),
+        ('Contact', {
+            'fields': ('email', 'site_internet', 'numero_adresse', 'rue_adresse', 'code_postal', 'fax', 'boite_postale')
+        }),
+        ('Adresse', {
+            'fields': ('pays', 'province', 'ville')
+        }),
+        ('Commentaires', {
+            'fields': ('commentaire', 'couleur_commentaire')
+        }),
+    )
+    
+    # Ajout d'une option pour formater les dates dans l'interface
+    date_hierarchy = 'date_creation'
+    
+    # Permet de lier les champs de recherche et d'ajout
+    ordering = ['nom']
+    
+    # Exclure des champs inutiles dans la liste d'édition ou d'ajout (par exemple)
+    exclude = ('code',)
+
+    # Validation avant la sauvegarde
+    def save_model(self, request, obj, form, change):
+        # Vous pouvez ajouter une logique personnalisée avant la sauvegarde
+        super().save_model(request, obj, form, change)
+
+# Enregistrer le modèle avec l'administration Django
+admin.site.register(Acheteur, AcheteurAdmin)
+
     
     
 

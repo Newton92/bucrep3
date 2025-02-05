@@ -145,7 +145,7 @@ def dash_root_ville(request):
     refresh = RefreshToken.for_user(user)
     
     # Récupérer tous les pays
-    pays_list = Pays.objects.all()
+    # pays_list = Pays.objects.all()
     
     # Récupérer tous les pays
     province_list = Province.objects.all()
@@ -157,7 +157,7 @@ def dash_root_ville(request):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
         
-        'pays_list': pays_list,  # Ajouter la liste des pays au contexte
+        # 'pays_list': pays_list,  # Ajouter la liste des pays au contexte
         'province_list': province_list,  # Ajouter la liste des pays au contexte
     }
     return render(request, 'main/root/ville/dash_root_ville.html', context)
@@ -449,6 +449,127 @@ def dash_root_category_entreprise(request):
     }
     return render(request, 'main/root/entreprise/dash_root_category_entreprise.html', context)
 
+
+
+@login_required
+def dash_root_structure_entreprise(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        'codification_active': 'active',
+        'entreprise_structure_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/structure/dash_root_structure_entreprise.html', context)
+
+
+
+@login_required
+def dash_root_statut_entreprise(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        'codification_active': 'active',
+        'entreprise_statut_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/statut/dash_root_statut_entreprise.html', context)
+
+
+
+@login_required
+def dash_root_acheteur(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/acheteur/dash_root_acheteur.html', context)
+
+
+@login_required
+def dash_root_add_acheteur(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les categories d'entreprise
+    categorie_list = CategorieEntreprise.objects.all()
+    
+    # Récupérer tous les formes juridiques
+    juridique_list = FormeJuridique.objects.all()
+    
+    # Récupérer tous les statuts entreprise
+    statut_list = StatutEntreprise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    # Récupérer tous les provinces
+    province_list = Province.objects.all()
+    
+    # Récupérer tous les villes
+    ville_list = Ville.objects.all()
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'categorie_list': categorie_list,
+        'juridique_list': juridique_list,
+        'statut_list': statut_list,
+        'coloration_list': coloration_list,
+        'pays_list': pays_list,
+        'province_list': province_list,
+        'ville_list': ville_list,
+        
+    }
+    return render(request, 'main/root/acheteur/dash_root_add_acheteur.html', context)
 
 ########################################################################################################################
 #                                                                                                                      #

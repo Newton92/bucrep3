@@ -1158,3 +1158,205 @@ class DeleteCategorieEntrepriseView(APIView):
 
         count, _ = categories.delete()
         return Response({'message': f'{count} catégories entreprise supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+class ListStructureEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        structure_list = StructureEntreprise.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(description__icontains=search_query)
+        ).order_by('libelle')
+
+        paginator = Paginator(structure_list, 10)  # 10 éléments par page
+        structure_page = paginator.get_page(page_number)
+        serializer = StructureEntrepriseSerializer(structure_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': structure_page.has_next(),
+            'previous': structure_page.has_previous()
+        })
+
+class SearchStructureEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        structure_list = StructureEntreprise.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(description__icontains=search_term)
+        ).order_by('libelle')
+
+        paginator = Paginator(structure_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        structure_page = paginator.get_page(page_number)
+        serializer = StructureEntrepriseSerializer(structure_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': structure_page.has_next(),
+            'previous': structure_page.has_previous()
+        })
+
+class AddStructureEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = StructureEntrepriseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditStructureEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        structure = StructureEntreprise.objects.filter(id=id).first()
+        if not structure:
+            return Response({'detail': 'Structure entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StructureEntrepriseSerializer(structure)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        structure = StructureEntreprise.objects.filter(id=id).first()
+        if not structure:
+            return Response({'detail': 'Structure entreprise non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StructureEntrepriseSerializer(structure, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteStructureEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        structures = StructureEntreprise.objects.filter(id__in=ids)
+        if not structures.exists():
+            return Response({'error': 'Aucune structure entreprise trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = structures.delete()
+        return Response({'message': f'{count} structures entreprise supprimées avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+class ListStatutEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get('search', '')
+        page_number = request.query_params.get('page', 1)
+
+        statut_list = StatutEntreprise.objects.filter(
+            Q(code__icontains=search_query) |
+            Q(libelle__icontains=search_query) |
+            Q(description__icontains=search_query)
+        ).order_by('libelle')
+
+        paginator = Paginator(statut_list, 10)  # 10 éléments par page
+        statut_page = paginator.get_page(page_number)
+        serializer = StatutEntrepriseSerializer(statut_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': statut_page.has_next(),
+            'previous': statut_page.has_previous()
+        })
+
+class SearchStatutEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        statut_list = StatutEntreprise.objects.filter(
+            Q(code__icontains=search_term) |
+            Q(libelle__icontains=search_term) |
+            Q(description__icontains=search_term)
+        ).order_by('libelle')
+
+        paginator = Paginator(statut_list, 10)  # 10 éléments par page
+        page_number = request.query_params.get('page', 1)
+        statut_page = paginator.get_page(page_number)
+        serializer = StatutEntrepriseSerializer(statut_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': statut_page.has_next(),
+            'previous': statut_page.has_previous()
+        })
+
+class AddStatutEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = StatutEntrepriseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditStatutEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        statut = StatutEntreprise.objects.filter(id=id).first()
+        if not statut:
+            return Response({'detail': 'Statut entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StatutEntrepriseSerializer(statut)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        statut = StatutEntreprise.objects.filter(id=id).first()
+        if not statut:
+            return Response({'detail': 'Statut entreprise non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = StatutEntrepriseSerializer(statut, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteStatutEntrepriseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        statuts = StatutEntreprise.objects.filter(id__in=ids)
+        if not statuts.exists():
+            return Response({'error': 'Aucun statut entreprise trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = statuts.delete()
+        return Response({'message': f'{count} statuts entreprise supprimés avec succès.'}, status=status.HTTP_200_OK)

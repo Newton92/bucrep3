@@ -252,13 +252,6 @@ class Ville(models.Model):
         verbose_name=_("Code de la ville"),
         help_text=_("Code unique de la ville, par exemple 'PAR' pour Paris ou 'DOU' pour Douala.")
     )
-    pays = models.ForeignKey(
-        'Pays',
-        null=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Pays"),
-        help_text=_("Pays auquel appartient la ville.")
-    )
     province = models.ForeignKey(
         'Province',
         null=True,
@@ -545,6 +538,38 @@ class CategorieEntreprise(models.Model):
         verbose_name_plural = _("Catégories d'Entreprises")
         
         
+class StructureEntreprise(models.Model):
+    code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    description = models.TextField(_("Description"), null=True, blank=True)
+    active = models.BooleanField(_("Actif"), default=True)
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return self.libelle or _("Structure sans libellé")
+
+    class Meta:
+        verbose_name = _("Structure d'Entreprise")
+        verbose_name_plural = _("Structures d'Entreprises")
+        
+        
+class StatutEntreprise(models.Model):
+    code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    description = models.TextField(_("Description"), null=True, blank=True)
+    active = models.BooleanField(_("Actif"), default=True)
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return self.libelle or _("Statut sans libellé")
+
+    class Meta:
+        verbose_name = _("Statut d'Entreprise")
+        verbose_name_plural = _("Statuts d'Entreprises")
+        
+        
 class BaseModele(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
@@ -662,15 +687,6 @@ class Acheteur(models.Model):
         help_text=_("Description de l'entreprise")
     )
 
-    capital_social = models.DecimalField(
-        _("Capital Social"),
-        max_digits=15,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("Capital social de l'entreprise")
-    )
-
     date_creation = models.DateField(
         _("Date de Création"),
         null=True,
@@ -678,11 +694,12 @@ class Acheteur(models.Model):
         help_text=_("Date de création de l'entreprise")
     )
 
-    statut = models.CharField(
-        _("Statut actuel de l'entreprise"),
-        max_length=255,
+    statut_entreprise = models.ForeignKey(
+        'StatutEntreprise',
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        verbose_name=_("Statut actuel de l'entreprise"),
         help_text=_("Statut actuel de l'entreprise")
     )
 
@@ -746,24 +763,6 @@ class Acheteur(models.Model):
         blank=True,
         verbose_name=_("Ville"),
         help_text=_("Ville où l'entreprise est située")
-    )
-
-    latitude = models.DecimalField(
-        _("Latitude"),
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True,
-        help_text=_("Latitude de l'entreprise")
-    )
-
-    longitude = models.DecimalField(
-        _("Longitude"),
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True,
-        help_text=_("Longitude de l'entreprise")
     )
 
     couleur_commentaire = models.ForeignKey(

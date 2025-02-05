@@ -10,6 +10,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from main.api.views_localisation import *
 from main.api.views_standard import *
 from main.api.views_authentication import *
+from main.api.views_acheteur import *
 
 # router = DefaultRouter()
 # router.register(r'pays', PaysViewSet, basename='pays')
@@ -51,6 +52,10 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-domaines', dash_root_domaine, name='dash_root_domaine'),
     path('root-dashboard/standard/liste-des-postes', dash_root_poste, name='dash_root_poste'),
     path('root-dashboard/standard/liste-des-categories-entreprise', dash_root_category_entreprise, name='dash_root_category_entreprise'),
+    path('root-dashboard/standard/liste-des-structures-entreprise', dash_root_structure_entreprise, name='dash_root_structure_entreprise'),
+    path('root-dashboard/standard/liste-des-status-entreprise', dash_root_statut_entreprise, name='dash_root_statut_entreprise'),
+    path('root-dashboard/acheteurs/liste-des-acheteurs', dash_root_acheteur, name='dash_root_acheteur'),
+    path('root-dashboard/acheteurs/ajouter-un-acheteur', dash_root_add_acheteur, name='dash_root_add_acheteur'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -114,12 +119,13 @@ urlpatterns = [
     path('api/supprimer-des-pays/', DeletePaysView.as_view(), name='delete-pays'),
     
     path('api/liste-des-provinces/', ListProvincesView.as_view(), name='list_provinces'),
-    path('api/provinces/<int:country_id>/', ListProvincesByCountryView.as_view(), name='list-provinces'),
+    path('api/provinces/<int:country_id>/', ListProvincesByCountryView.as_view(), name='list-provinces-pays'),
     path('api/ajouter-une-province/', AddProvinceView.as_view(), name='add_province'),
     path('api/editer-une-province/<int:id>/', EditProvinceView.as_view(), name='edit_province'),
     path('api/supprimer-des-provinces/', DeleteProvincesView.as_view(), name='delete_provinces'),
     
     path('api/liste-des-villes/', ListVillesView.as_view(), name='list_villes'),
+    path('api/villes/<int:province_id>/', ListVillesByProvinceView.as_view(), name='list-villes-provinces'),
     path('api/ajouter-une-ville/', AddVilleView.as_view(), name='add_ville'),
     path('api/editer-une-ville/<int:id>/', EditVilleView.as_view(), name='edit_ville'),
     path('api/supprimer-des-villes/', DeleteVillesView.as_view(), name='delete_villes'),
@@ -184,11 +190,29 @@ urlpatterns = [
     path('api/editer-une-categorie-entreprise/<int:id>/', EditCategorieEntrepriseView.as_view(), name='edit-categorie-entreprise'),
     path('api/supprimer-des-categories-entreprise/', DeleteCategorieEntrepriseView.as_view(), name='delete-categorie-entreprise'),
     
+    path('api/liste-des-structures-entreprise/', ListStructureEntrepriseView.as_view(), name='list-structure-entreprise'),
+    path('api/recherche-structure-entreprise/', SearchStructureEntrepriseView.as_view(), name='search-structure-entreprise'),
+    path('api/ajouter-une-structure-entreprise/', AddStructureEntrepriseView.as_view(), name='add-structure-entreprise'),
+    path('api/editer-une-structure-entreprise/<int:id>/', EditStructureEntrepriseView.as_view(), name='edit-structure-entreprise'),
+    path('api/supprimer-des-structures-entreprise/', DeleteStructureEntrepriseView.as_view(), name='delete-structure-entreprise'),
+    
+    path('api/liste-des-statuts-entreprise/', ListStatutEntrepriseView.as_view(), name='list-statut-entreprise'),
+    path('api/recherche-statut-entreprise/', SearchStatutEntrepriseView.as_view(), name='search-statut-entreprise'),
+    path('api/ajouter-une-statut-entreprise/', AddStatutEntrepriseView.as_view(), name='add-statut'),
+    path('api/editer-une-statut-entreprise/<int:id>/', EditStatutEntrepriseView.as_view(), name='edit-statut-entreprise'),
+    path('api/supprimer-des-statuts-entreprise/', DeleteStatutEntrepriseView.as_view(), name='delete-statut-entreprise'),
+    
     path('api/liste-des-postes/', ListPosteView.as_view(), name='list-poste'),
     path('api/recherche-poste/', SearchPosteView.as_view(), name='search-poste'),
     path('api/ajouter-une-poste/', AddPosteView.as_view(), name='add-poste'),
     path('api/editer-une-poste/<int:id>/', EditPosteView.as_view(), name='edit-poste'),
     path('api/supprimer-des-postes/', DeletePosteView.as_view(), name='delete-poste'),
+    
+    path('api/liste-des-acheteurs/', ListAcheteurView.as_view(), name='list-acheteur'),
+    path('api/recherche-acheteur/', SearchAcheteurView.as_view(), name='search-acheteur'),
+    path('api/ajouter-un-acheteur/', AddAcheteurView.as_view(), name='add-acheteur'),
+    path('api/editer-un-acheteur/<int:id>/', EditAcheteurView.as_view(), name='edit-acheteur'),
+    path('api/supprimer-des-acheteurs/', DeleteAcheteurView.as_view(), name='delete-acheteur'),
     
     ########################################################################################################################
     #                                                                                                                      #
