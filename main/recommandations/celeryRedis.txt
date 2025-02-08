@@ -1,0 +1,138 @@
+Allons-y, je t'explique tout ça ! Celery, c'est super pour gérer des tâches en arrière-plan dans Django, comme l'envoi d'emails, les notifications, ou, dans ton cas, la récupération périodique d'emails !  
+
+**Voici les étapes pour intégrer Celery dans ton projet Django :**  
+
+---
+
+**1. Installer Celery et un broker (RabbitMQ ou Redis)**  
+
+Celery a besoin d'un *broker* pour gérer les files d'attente des tâches. Redis est souvent le choix le plus simple :  
+
+```bash
+pip install celery redis
+```
+
+**2. Configurer Redis (ou ton broker préféré)**  
+
+Assure-toi que Redis est installé et en cours d'exécution. Sur Ubuntu, tu peux l'installer avec :  
+
+```bash
+sudo apt-get install redis-server
+```
+
+Et le démarrer :  
+
+```bash
+sudo systemctl start redis
+```
+
+---
+
+**3. Configurer Celery dans Django**  
+
+Dans le dossier de ton projet Django (là où il y a `settings.py`), crée un fichier `celery.py` :  
+
+```python
+from __future__ import absolute_import, unicode_literals
+import os
+from celery import Celery
+
+# Définit le module de configuration de Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'monprojet.settings')
+
+# Crée une instance de Celery
+app = Celery('monprojet')
+
+# Charge les paramètres de configuration à partir du fichier settings.py
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Auto-découverte des tâches définies dans l'app Django
+app.autodiscover_tasks()
+
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request!r}')
+```
+
+---
+
+**4. Mettre à jour `settings.py` pour Celery**  
+
+Ajoute la configuration de Celery :  
+
+```python
+# settings.py
+
+# Configuration de Redis en tant que broker
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+
+# Pour détecter automatiquement les tâches dans tes apps
+CELERY_IMPORTS = ('monapp.tasks',)  # Mets le nom de ton app Django
+```
+
+Et mets à jour `__init__.py` dans le dossier de ton projet (là où `settings.py` est) pour charger Celery au démarrage :  
+
+```python
+from __future__ import absolute_import, unicode_literals
+from .celery import app as celery_app
+
+__all__ = ('celery_app',)
+```
+
+---
+
+**5. Créer une tâche Celery dans une app Django**  
+
+Par exemple, dans `monapp/tasks.py` :
+
+```python
+from celery import shared_task
+from .fetch_emails import fetch_new_emails  # Importe ta fonction de récupération d'emails
+
+@shared_task
+def check_new_emails():
+    fetch_new_emails()
+```
+
+---
+
+**6. Lancer Celery et l'instance Django**  
+
+Dans deux terminaux différents :  
+
+**Lancer Celery** :  
+
+```bash
+celery -A monprojet worker -l info
+```
+
+**Lancer le Beat Scheduler (pour les tâches périodiques)** :  
+
+```bash
+celery -A monprojet beat -l info
+```
+
+---
+
+**7. (Facultatif) Planifier des tâches avec Celery Beat**  
+
+Si tu veux que ta tâche s'exécute automatiquement toutes les 10 minutes, par exemple, ajoute un fichier `celery.py` ou `tasks.py` :
+
+```python
+from celery import Celery
+from celery.schedules import crontab
+
+app = Celery('monprojet')
+
+app.conf.beat_schedule = {
+    'check-emails-every-10-minutes': {
+        'task': 'monapp.tasks.check_new_emails',
+        'schedule': crontab(minute='*/10'),  # Toutes les 10 minutes
+    },
+}
+```
+
+---
+
+Voilà ! Tu es prêt à automatiser tout ça ! Qu'est-ce que tu en dis ? On peaufine quelque chose ensemble ? 😊

@@ -20,17 +20,6 @@
     border-radius: 15px; /* Bordures arrondies pour la carte aussi */
 }
 
-.color-circle {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: black;
-    margin-left: 5px;
-}
-
-
-
 </style>
 
 {% endblock %}
@@ -69,13 +58,15 @@
         <div class="card border">
             <!-- Card header -->
             <div class="card-header border-bottom">
-                <h4 class="card-header-title">Ajout d'un Acheteur</h4>
+                <h4 class="card-header-title">Editer un Acheteur</h4>
             </div>
 
             <!-- Card body START -->
             <div class="card-body vstack gap-4">
 
-                <form id="addAcheteurForm">
+                <form id="editAcheteurForm">
+
+                    <input type="hidden" name="id" id="editAcheteurId" />
 
                     <!-- Généralités item START -->
                     <div class="card">
@@ -92,10 +83,10 @@
 
                         <!-- card body -->
                         <div class="card-body p-0 pt-3">
-                            <!-- Name  -->
+                            <!-- Name -->
                             <div class="mb-3">
                                 <label class="form-label">Nom de l'acheteur</label>
-                                <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex. BATI PLUS" required>
+                                <input type="text" class="form-control" id="editNom" name="nom" placeholder="Ex. BATI PLUS" required>
                             </div>
 
                             <br>
@@ -103,7 +94,7 @@
                             <!-- Sigle -->
                             <div class="mb-3">
                                 <label class="form-label">Sigle</label>
-                                <input type="text" class="form-control" id="sigle" name="sigle" placeholder="Ex. BATI+">
+                                <input type="text" class="form-control" id="editSigle" name="sigle" placeholder="Ex. BATI+">
                             </div>
 
                             <br>
@@ -111,7 +102,7 @@
                             <!-- Date de Création -->
                             <div>
                                 <label class="form-label">Date de Création</label>
-                                <input type="date" class="form-control flatpickr" id="date_creation" name="date_creation" placeholder="Date de Création" data-date-format="d M Y" required>
+                                <input type="date" class="form-control flatpickr" id="editDateCreation" name="date_creation" placeholder="Date de Création" data-date-format="d M Y" required>
                             </div>
 
                             <br>
@@ -119,7 +110,7 @@
                             <!-- Activité principale -->
                             <div>
                                 <label class="form-label">Activité principale</label>
-                                <input type="text" class="form-control" id="activite_principale" name="activite_principale" placeholder="Ex. Vente de produits de construction" required>
+                                <input type="text" class="form-control" id="editActivitePrincipale" name="activite_principale" placeholder="Ex. Vente de produits de construction" required>
                             </div>
 
                             <br>
@@ -127,8 +118,7 @@
                             <!-- Statut -->
                             <div class="mb-3">
                                 <label for="statut_entreprise" class="form-label">Statut actuel de l'acheteur</label>
-                                <select class="form-select" id="statut_entreprise" name="statut_entreprise" required>
-                                    <option value="">Sélectionnez un statut</option>
+                                <select class="form-select" id="editStatutEntreprise" name="statut_entreprise" required>
                                     {% for statut in statut_list %}
                                         <option value="{{ statut.id }}">{{ statut.libelle }}</option>
                                     {% endfor %}
@@ -140,8 +130,7 @@
                             <!-- Catégorie -->
                             <div class="mb-3">
                                 <label for="categorie_entreprise" class="form-label">Catégorie de l'acheteur</label>
-                                <select class="form-select" id="categorie_entreprise" name="categorie_entreprise">
-                                    <option value="">Sélectionnez une catégorie</option>
+                                <select class="form-select" id="editCategorieEntreprise" name="categorie_entreprise">
                                     {% for categorie in categorie_list %}
                                         <option value="{{ categorie.id }}">{{ categorie.libelle }}</option>
                                     {% endfor %}
@@ -153,8 +142,7 @@
                             <!-- Forme juridique -->
                             <div class="mb-3">
                                 <label for="forme_juridique" class="form-label">Forme juridique de l'acheteur</label>
-                                <select class="form-select" id="forme_juridique" name="forme_juridique" required>
-                                    <option value="">Sélectionnez une forme juridique</option>
+                                <select class="form-select" id="editFormeJuridique" name="forme_juridique" required>
                                     {% for juridique in juridique_list %}
                                         <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
                                     {% endfor %}
@@ -166,7 +154,7 @@
                             <!-- Description -->
                             <div class="mb-3">
                                 <label for="description" class="form-label">Description</label>
-                                <textarea class="form-control" id="description" name="description"></textarea>
+                                <textarea class="form-control" id="editDescription" name="description"></textarea>
                             </div>
                         </div>
                     </div>
@@ -193,8 +181,8 @@
                             <div class="mb-3">
                                 <label class="form-label">Email principal & Fax</label>
                                 <div class="input-group">
-                                    <input type="email" class="form-control" id="email" name="email" placeholder="Ex. contact@batiplus.ga">
-                                    <input type="text" class="form-control" id="fax" name="fax" placeholder="Ex. (+241) 22 22 22 22">
+                                    <input type="email" class="form-control" id="editEmail" name="email" placeholder="Ex. contact@batiplus.ga">
+                                    <input type="text" class="form-control" id="editFax" name="fax" placeholder="Ex. (+241) 22 22 22 22">
                                 </div>
                             </div>
 
@@ -204,8 +192,8 @@
                             <div class="mb-3">
                                 <label class="form-label">Boite postale & Code postal</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="boite_postale" name="boite_postale" placeholder="Ex. BP 2022 Libreville, Gabon">
-                                    <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="Ex. 241">
+                                    <input type="text" class="form-control" id="editBoitePostale" name="boite_postale" placeholder="Ex. BP 2022 Libreville, Gabon">
+                                    <input type="text" class="form-control" id="editCodePostal" name="code_postal" placeholder="Ex. 241">
                                 </div>
                             </div>
 
@@ -214,7 +202,7 @@
                             <!-- Site internet -->
                             <div class="mb-3">
                                 <label class="form-label">Site internet</label>
-                                <input type="text" class="form-control" id="site_internet" name="site_internet" placeholder="Ex. https://www.bati-plus.ga">
+                                <input type="text" class="form-control" id="editSiteInternet" name="site_internet" placeholder="Ex. https://www.bati-plus.ga">
                                 <small><strong>Note : </strong>Ne pas oublier de mentionner le prefixe suivant pour tout lien : https://</small>
                             </div>
                         </div>
@@ -242,8 +230,8 @@
                             <div class="mb-3">
                                 <label class="form-label">Numero & Rue (adresse)</label>
                                 <div class="input-group">
-                                    <input type="text" class="form-control" id="numero_adresse" name="numero_adresse" placeholder="Ex. 17345">
-                                    <input type="text" class="form-control" id="rue_adresse" name="rue_adresse" placeholder="Ex. Rue Camp de Gaulle">
+                                    <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse" placeholder="Ex. 17345">
+                                    <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse" placeholder="Ex. Rue Camp de Gaulle">
                                 </div>
                             </div>
 
@@ -252,7 +240,7 @@
                             <!-- Pays -->
                             <div class="mb-3">
                                 <label for="pays" class="form-label">Pays</label>
-                                <select class="form-select" id="pays" name="pays" required>
+                                <select class="form-select" id="editPays" name="pays" required>
                                     <option value="">Sélectionnez un pays</option>
                                     {% for pays in pays_list %}
                                         <option value="{{ pays.id }}">{{ pays.nom }}</option>
@@ -265,8 +253,11 @@
                             <!-- Province -->
                             <div class="mb-3">
                                 <label for="province" class="form-label">Province</label>
-                                <select class="form-select" id="province" name="province" disabled required>
+                                <select class="form-select" id="editProvince" name="province" required>
                                     <option value="">Sélectionnez une province</option>
+                                    {% for province in province_list %}
+                                        <option value="{{ province.id }}">{{ province.nom }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
 
@@ -275,8 +266,11 @@
                             <!-- Ville -->
                             <div class="mb-3">
                                 <label for="ville" class="form-label">Ville</label>
-                                <select class="form-select" id="ville" name="ville" disabled required>
+                                <select class="form-select" id="editVille" name="ville" required>
                                     <option value="">Sélectionnez une ville</option>
+                                    {% for ville in ville_list %}
+                                        <option value="{{ ville.id }}">{{ ville.nom }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             
@@ -305,15 +299,12 @@
                             <!-- Coloration -->
                             <div class="mb-3">
                                 <label for="couleur_commentaire" class="form-label">Quelle coloration voulez-vous pour votre commentaire ?</label>
-                                <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
+                                <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
                                     <option value="">Sélectionnez une couleur</option>
                                     {% for coloration in coloration_list %}
-                                        <option value="{{ coloration.id }}">
-                                            {{ coloration.couleur }} - [{{ coloration.code }}]
-                                        </option>
+                                        <option value="{{ coloration.id }}">{{ coloration.couleur }} - [{{ coloration.code }}]</option>
                                     {% endfor %}
                                 </select>
-                                
                             </div>
 
                             <br>
@@ -321,7 +312,7 @@
                             <!-- Commentaire -->
                             <div class="mb-3">
                                 <label for="commentaire" class="form-label">Votre Commentaire</label>
-                                <textarea class="form-control" id="commentaire" name="commentaire"></textarea>
+                                <textarea class="form-control" id="editCommentaire" name="commentaire"></textarea>
                             </div>
                         </div>
                     </div>
@@ -357,7 +348,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         tinymce.init({
-            selector: '#description, #editDescription, #commentaire',
+            selector: '#description, #editDescription, #commentaire, #editCommentaire',
             setup: function (editor) {
                 editor.on('init', function () {
                     editor.getContainer().querySelector('iframe').setAttribute('title', 'Éditeur de texte');
@@ -376,18 +367,18 @@
 $(document).ready(function() {
 
     // Charger les provinces en fonction du pays sélectionné
-    $('#pays').on('change', function() {
+    $('#editPays').on('change', function() {
         const paysId = $(this).val();
-        const provinceSelect = $('#province');
+        const provinceSelect = $('#editProvince');
 
         if (paysId) {
             provinceSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
 
             $.ajax({
-                url: `/api/provinces/${paysId}/`, 
+                url: `/api/provinces/${paysId}/`,
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}' // Utiliser le token stocké
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     provinceSelect.prop('disabled', false).html('<option value="">Sélectionnez une province</option>');
@@ -396,6 +387,12 @@ $(document).ready(function() {
                         response.results.forEach(function(province) {
                             provinceSelect.append(new Option(province.nom, province.id));
                         });
+
+                        // Sélectionner automatiquement la province de l'acheteur si disponible
+                        const selectedProvince = '{{ acheteur.province }}'; 
+                        if (selectedProvince) {
+                            provinceSelect.val(selectedProvince).trigger('change');
+                        }
                     } else {
                         provinceSelect.html('<option value="">Aucune province disponible</option>');
                     }
@@ -410,9 +407,9 @@ $(document).ready(function() {
     });
 
     // Charger les villes en fonction de la province sélectionnée
-    $('#province').on('change', function() {
-        var provinceId = $(this).val();
-        var villeSelect = $('#ville');
+    $('#editProvince').on('change', function() {
+        const provinceId = $(this).val();
+        const villeSelect = $('#editVille');
 
         if (provinceId) {
             villeSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
@@ -421,7 +418,7 @@ $(document).ready(function() {
                 url: `/api/villes/${provinceId}/`,
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' +  '{{ access }}' // Utiliser le token stocké
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     villeSelect.prop('disabled', false).html('<option value="">Sélectionnez une ville</option>');
@@ -430,6 +427,12 @@ $(document).ready(function() {
                         response.results.forEach(function(ville) {
                             villeSelect.append(new Option(ville.nom, ville.id));
                         });
+
+                        // Sélectionner automatiquement la ville de l'acheteur si disponible
+                        const selectedVille = '{{ acheteur.ville }}'; 
+                        if (selectedVille) {
+                            villeSelect.val(selectedVille);
+                        }
                     } else {
                         villeSelect.html('<option value="">Aucune ville disponible</option>');
                     }
@@ -444,45 +447,92 @@ $(document).ready(function() {
     });
 
 
-    // Ajouter un acheteur
-    $('#addAcheteurForm').on('submit', function(event) {
-        event.preventDefault();
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
 
-        // Activer les champs désactivés pour qu'ils soient envoyés avec le formulaire
-        $('#province, #ville').prop('disabled', false);
-
-        var formData = $(this).serialize();
-        console.log("Données du formulaire :", formData);
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
 
         $.ajax({
-            url: '/api/ajouter-un-acheteur/',
-            type: 'POST',
-            data: formData,
+            url: `/api/editer-un-acheteur/${id}/`,
+            type: 'GET',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}' // Stocke le token dans localStorage
+                'Authorization': 'Bearer ' + '{{ access }}'
             },
             success: function(response) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Succès!',
-                    text: 'L’acheteur a été ajouté avec succès.',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    location.reload(); // Rafraîchir la page après validation
-                });
+                $('#editAcheteurId').val(response.id);
+                $('#editNom').val(response.nom);
+                $('#editSigle').val(response.sigle);
+                $('#editDateCreation').val(response.date_creation);
+                $('#editActivitePrincipale').val(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise);
+                $('#editFormeJuridique').val(response.forme_juridique);
+                $('#editDescription').val(response.description);
+                $('#editEmail').val(response.email);
+                $('#editFax').val(response.fax);
+                $('#editBoitePostale').val(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse);
+                $('#editPays').val(response.pays);
+                $('#editProvince').val(response.province);
+                $('#editVille').val(response.ville);
+                $('#editCouleurCommentaire').val(response.couleur_commentaire);
+                $('#editCommentaire').val(response.commentaire);
+                    
+                // Re-initialize TinyMCE for the editDescription textarea
+                tinymce.get('editDescription').setContent(response.description);
+                tinymce.get('editCommentaire').setContent(response.commentaire);
             },
             error: function(xhr) {
-                console.error(xhr.responseText);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Erreur!',
-                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
-                    confirmButtonText: 'Réessayer'
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
                 });
+                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
     });
 
+
+    // Edit Acheteur form submission
+    $('#editAcheteurForm').on('submit', function(event) {
+        event.preventDefault();
+        const id = $('#editAcheteurId').val();
+        const formData = $(this).serialize();
+        $.ajax({
+            url: '/api/editer-un-acheteur/' + id + '/',
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Acheteur mis à jour avec succès.',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    location.reload(); // Rafraîchir la page après validation
+                });
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la mise à jour de l\'acheteur.',
+                });
+            }
+        });
+    });
 
     // Gestion de l'expiration du token
     $.ajaxSetup({

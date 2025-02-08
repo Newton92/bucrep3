@@ -51,19 +51,15 @@ class ListAcheteurView(APIView):
             Q(site_internet__icontains=search_query) |
             Q(rue_adresse__icontains=search_query) |
             Q(activite_principale__icontains=search_query) |
-            Q(categorie_entreprise__code__icontains=search_query) |
             Q(categorie_entreprise__libelle__icontains=search_query) |
-            Q(forme_juridique__code__icontains=search_query) |
             Q(forme_juridique__libelle__icontains=search_query) |
-            Q(statut_entreprise__code__icontains=search_query) |
             Q(statut_entreprise__libelle__icontains=search_query) |
-            Q(pays__code__icontains=search_query) |
             Q(pays__nom__icontains=search_query) |
-            Q(province__code__icontains=search_query) |
             Q(province__nom__icontains=search_query) |
-            Q(ville__code__icontains=search_query) |
             Q(ville__nom__icontains=search_query)
         ).order_by('nom')
+        
+        print(str(acheteur_list.query))  # Affiche la requête SQL exécutée
 
         paginator = Paginator(acheteur_list, 10)  # 10 éléments par page
         acheteur_page = paginator.get_page(page_number)
@@ -174,3 +170,15 @@ class DeleteAcheteurView(APIView):
 
         count, _ = acheteurs.delete()
         return Response({'message': f'{count} acheteurs supprimés avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+class GetAcheteurView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        acheteur = Acheteur.objects.filter(id=id).first()
+        if not acheteur:
+            return Response({'detail': 'Acheteur non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetAcheteurSerializer(acheteur)
+        return Response(serializer.data)

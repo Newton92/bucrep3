@@ -1,0 +1,361 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Acheteurs</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAcheteurs">Module de Gestion des Acheteurs</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un acheteur d'entreprise notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                        <!-- Title -->
+                    <div class="ms-2">
+                        <h6 class="card-title mb-0" id="editNom"></h6>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Description</h6>
+                        <span id="editDescription"></span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Activité principale</h6>
+                        <span id="editActivitePrincipale"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Date création</h6>
+                        <span id="editDateCreation"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Contats & Adresse</h6>
+                        <strong>Fax : </strong><span id="editFax"></span><br>
+                        <strong>Email : </strong><span id="editEmail"></span><br>
+                        <strong>Site web : </strong><span id="editSiteInternet"></span><br>
+                        <strong>Boite postale : </strong><span id="editBoitePostale"></span><br>
+                        <strong>Rue adresse : </strong><span id="editRueAdresse"></span><br>
+                        <strong>Numéro adresse : </strong><span id="editNumeroAdresse"></span><br>
+                        <strong>Pays : </strong><span id="editPays"></span><br>
+                        <strong>Province : </strong><span id="editProvince"></span><br>
+                        <strong>Ville : </strong><span id="editVille"></span><br>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Forme juridique</h6>
+                        <span id="editFormeJuridique"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Taille</h6>
+                        <span id="editCategorieEntreprise"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Statut actuel</h6>
+                        <span class="text-success" id="editStatutEntreprise"></span>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </div>
+        <!-- Card item END -->
+
+        
+
+
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6>Modules</h6>
+                <br>
+                <a href="{% url 'dash_root_manage_acheteur_resume' id_acheteur %}?token={{ user.reset_token }}" target="_blank" class="btn btn-success btn-sm mb-0">Résumé &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Evaluation du Risque &nbsp;</a>
+                <a href="#" class="btn btn-warning btn-sm mb-2 mb-sm-0">Opinion Crédit ACREMAC &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-0">Données enregistrées &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Tendance &nbsp;</a>
+
+                <br><br>
+
+                <a href="#" class="btn btn-warning btn-sm mb-0">Logos &nbsp;</a>
+                <a href="#" class="btn btn-warning btn-sm mb-0">Téléphones &nbsp;</a>
+                <a href="#" class="btn btn-warning btn-sm mb-2 mb-sm-0">Emails &nbsp;</a>
+                <a href="#" class="btn btn-warning btn-sm mb-0">Codes NACE &nbsp;</a>
+                <a href="#" class="btn btn-warning btn-sm mb-2 mb-sm-0">Codes NAF &nbsp;</a>
+
+                <br><br>
+
+                <a href="#" class="btn btn-info btn-sm mb-0">Documents &nbsp;</a>
+                <a href="#" class="btn btn-info btn-sm mb-0">Procédures collectives &nbsp;</a>
+                <a href="#" class="btn btn-info btn-sm mb-2 mb-sm-0">Registres de Commerce &nbsp;</a>
+                <a href="#" class="btn btn-info btn-sm mb-0">NIF - NIU &nbsp;</a>
+                <a href="#" class="btn btn-info btn-sm mb-2 mb-sm-0">CNSS &nbsp;</a>
+                
+                <br><br>
+
+                <a href="#" class="btn btn-success btn-sm mb-0">Responsables &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Antécédents Juridiques &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-0">Management du Risque &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Conseil d'administration &nbsp;</a>
+                
+                <br><br>
+
+                <a href="#" class="btn btn-success btn-sm mb-0">Composition Capital Social &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Composition Actions &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-0">Filiales ou Branches &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Analyse Sectorielle &nbsp;</a>
+                
+                <br><br>
+
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Opérations et Historique &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-0">Propriétés et Actifs &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Conditions d'achat &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-0">Conditions de vente &nbsp;</a>
+                
+                <br><br>
+
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Sommaire et Avis &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-0">Conseils &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Géopolitiques &nbsp;</a>
+                <a href="#" class="btn btn-info btn-sm mb-0">SWOT &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">Données Bancaires &nbsp;</a>
+                <a href="#" class="btn btn-danger btn-sm mb-0">Bilan Classique</a>
+                
+                <br><br>
+
+                <a href="#" class="btn btn-danger btn-sm mb-2 mb-sm-0">Bilan Anglais &nbsp;</a>
+                <a href="#" class="btn btn-danger btn-sm mb-0">Bilan Bancaire &nbsp;</a>
+                <a href="#" class="btn btn-danger btn-sm mb-2 mb-sm-0">Bilan SYSOHADA &nbsp;</a>
+                <a href="#" class="btn btn-info btn-sm mb-0">Comptes Financiers &nbsp;</a>
+
+                <br><br>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6>Rapports (consultation)</h6>
+                <span>A partir de ces boutons d'action, vous avez la possibilité de prévisualiser le rapport d'un acheteur sous divers formats !</span>
+                <br><br>
+
+                <a href="#" class="btn btn-info btn-sm mb-0">WEB &nbsp;</a>
+                <a href="#" class="btn btn-success btn-sm mb-2 mb-sm-0">XML &nbsp;</a>
+                <a href="#" class="btn btn-warning btn-sm mb-2 mb-sm-0">PDF &nbsp;</a>
+                <a href="#" class="btn btn-primary btn-sm mb-0">JSON &nbsp;</a>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+
+<script>
+$(document).ready(function() {
+
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log(response);
+                $('#editAcheteurId').val(response.id);
+                $('#editCode').val(response.code).text(response.code);
+                $('#editNom').val(response.nom).text(response.nom);
+                $('#editSigle').val(response.sigle).text(response.sigle);
+                if (response.date_creation) {
+                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                }
+                
+                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+                $('#editDescription').html(response.description);
+                $('#editEmail').val(response.email).text(response.email);
+                $('#editFax').val(response.fax).text(response.fax);
+                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editPays').val(response.pays.nom).text(response.pays.nom);
+                $('#editProvince').val(response.province.nom).text(response.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+                    
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+});
+
+</script>
+
+{% endblock %}

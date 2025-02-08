@@ -11,6 +11,7 @@ from main.api.views_localisation import *
 from main.api.views_standard import *
 from main.api.views_authentication import *
 from main.api.views_acheteur import *
+from main.api.views_modules_acheteur import *
 
 # router = DefaultRouter()
 # router.register(r'pays', PaysViewSet, basename='pays')
@@ -56,6 +57,9 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-status-entreprise', dash_root_statut_entreprise, name='dash_root_statut_entreprise'),
     path('root-dashboard/acheteurs/liste-des-acheteurs', dash_root_acheteur, name='dash_root_acheteur'),
     path('root-dashboard/acheteurs/ajouter-un-acheteur', dash_root_add_acheteur, name='dash_root_add_acheteur'),
+    path('root-dashboard/acheteurs/editer-un-acheteur/<int:acheteur_id>/', dash_root_edit_acheteur, name='dash_root_edit_acheteur'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/', dash_root_manage_acheteur, name='dash_root_manage_acheteur'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/resumes/', dash_root_manage_acheteur_resume, name='dash_root_manage_acheteur_resume'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -212,7 +216,14 @@ urlpatterns = [
     path('api/recherche-acheteur/', SearchAcheteurView.as_view(), name='search-acheteur'),
     path('api/ajouter-un-acheteur/', AddAcheteurView.as_view(), name='add-acheteur'),
     path('api/editer-un-acheteur/<int:id>/', EditAcheteurView.as_view(), name='edit-acheteur'),
+    path('api/consulter-un-acheteur/<int:id>/', GetAcheteurView.as_view(), name='get-acheteur'),
     path('api/supprimer-des-acheteurs/', DeleteAcheteurView.as_view(), name='delete-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-resumes/', ListAcheteurResumeView.as_view(), name='list-resume-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-resume/', SearchAcheteurResumeView.as_view(), name='search-resume-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-resume/', AddAcheteurResumeView.as_view(), name='add-resume-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-resume/<int:resume_id>/', EditAcheteurResumeView.as_view(), name='edit-resume-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-resumes/', DeleteAcheteurResumeView.as_view(), name='delete-resume-acheteur'),
     
     ########################################################################################################################
     #                                                                                                                      #

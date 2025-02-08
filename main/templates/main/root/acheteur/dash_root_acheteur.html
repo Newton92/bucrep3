@@ -116,6 +116,8 @@
 
 {% block scripts %}
 
+
+
 <script>
     $(document).ready(function() {
 
@@ -128,6 +130,14 @@
                     'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
                 },
                 success: function(response) {
+
+                    console.log(response); // Vérifiez ce que l'API renvoie
+
+                    if (!response.results || response.results.length === 0) {
+                        console.warn("Aucun acheteur trouvé.");
+                        return;
+                    }
+
                     // Update pagination info
                     $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
 
@@ -153,13 +163,18 @@
                         $('#acheteursTableBody').append('<tr>' +
                             '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
                             '<td>' + acheteur.code + '</td>' +
-                            '<td>' + acheteur.nom + '</td>' +
+                            '<td title="' + acheteur.nom + '">' + (acheteur.nom.length > 20 ? acheteur.nom.substring(0, 20) + '...' : acheteur.nom) + '</td>' +
                             '<td>' + acheteur.sigle + '</td>' +
                             '<td>' + acheteur.pays.nom + '</td>' +
                             '<td>' + acheteur.ville.nom + '</td>' +
-                            '<td><button class="btn btn-light btn-round mb-0 edit-btn" data-id="' + acheteur.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Éditer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + acheteur.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
+                            '<td>' +
+                                '<button class="btn btn-warning btn-round mb-0 edit-btn" data-id="' + acheteur.id + '" data-nom="' + acheteur.nom + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Éditer"><i class="bi bi-pencil"></i></button>' +
+                                '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + acheteur.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
+                                '&nbsp; <button class="btn btn-info btn-round mb-0 manage-btn" data-id="' + acheteur.id + '" data-nom="' + acheteur.nom + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Manager"><i class="bi bi-eye"></i></button>' +
+                            '</td>' +
+                        '</tr>');
+
+
                     });
                 },
                 error: function(response) {
@@ -190,7 +205,48 @@
             loadAcheteurs(page, search);
         });
 
-        
+        // Edit Acheteur button click (avec SweetAlert)
+        $(document).on('click', '.edit-btn', function() {
+            var acheteurId = $(this).data('id');
+            var acheteurNom = $(this).data('nom');
+            
+            Swal.fire({
+                title: 'Modifier Acheteur',
+                html: 'Voulez-vous modifier l\'acheteur <b>"' + acheteurNom + '"</b> ?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, modifier',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/root-dashboard/acheteurs/editer-un-acheteur/' + acheteurId + '/?token=' + '{{ user.reset_token }}';
+                }
+            });
+        });
+
+        // Manage Acheteur button click (avec SweetAlert)
+        $(document).on('click', '.manage-btn', function() {
+            var acheteurId = $(this).data('id');
+            var acheteurNom = $(this).data('nom');
+            
+            Swal.fire({
+                title: 'Manager Acheteur',
+                html: 'Voulez-vous manager l\'acheteur <b>"' + acheteurNom + '"</b> ?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, manager',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/root-dashboard/acheteurs/manager-un-acheteur/' + acheteurId + '/?token=' + '{{ user.reset_token }}';
+                }
+            });
+        });
+
         // Delete Acheteur button click
         $(document).on('click', '.delete-btn', function() {
             var id = $(this).data('id');
@@ -210,28 +266,29 @@
                         data: JSON.stringify({ ids: [id] }),
                         contentType: 'application/json',
                         headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                            'Authorization': 'Bearer ' + '{{ access }}'
                         },
                         success: function(response) {
                             Swal.fire(
                                 'Supprimé!',
                                 'L\'acheteur a été supprimé.',
                                 'success'
-                            ).then(() => {
-                                loadAcheteurs();
-                            });
+                            );
+                            loadAcheteurs();
                         },
                         error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de l\'acheteur.',
-                            });
+                            Swal.fire(
+                                'Erreur!',
+                                'Une erreur est survenue lors de la suppression.',
+                                'error'
+                            );
                         }
                     });
                 }
             });
         });
+
+        
 
         // Intercept AJAX responses to check for token expiration
         $.ajaxSetup({
@@ -274,8 +331,10 @@
                 }
             });
         }
+
     });
 </script>
+
 
 
 {% endblock %}

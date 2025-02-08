@@ -221,10 +221,10 @@ admin.site.register(ModeleComportementJugement, BaseModeleAdmin)
 
 class AcheteurAdmin(admin.ModelAdmin):
     # Affichage des champs dans la liste d'administration
-    list_display = ('nom', 'categorie_entreprise', 'forme_juridique', 'activite_principale', 'email', 'date_creation', 'statut_entreprise')
+    list_display = ('code', 'nom', 'categorie_entreprise', 'forme_juridique', 'activite_principale', 'email', 'date_creation', 'statut_entreprise')
     
     # Champs qui peuvent être filtrés
-    list_filter = ('categorie_entreprise', 'forme_juridique', 'statut_entreprise', 'pays', 'province', 'ville')
+    list_filter = ('code', 'categorie_entreprise', 'forme_juridique', 'statut_entreprise', 'pays', 'province', 'ville')
     
     # Champs qui peuvent être recherchés
     search_fields = ('nom', 'email', 'activite_principale', 'description')

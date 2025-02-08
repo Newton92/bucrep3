@@ -222,45 +222,72 @@ class PosteEntrepriseSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
         
         
+
+
+
+
 class BaseModeleSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%d/%m/%Y")
+    updated_at = serializers.DateTimeField(format="%d/%m/%Y")
+
     class Meta:
-        fields = ['id', 'code', 'libelle', 'created_at', 'updated_at']
+        fields = ["id", "code", "libelle", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
 
 class ModeleRapportSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleRapport
 
+
 class ModeleAvisCommercialSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleAvisCommercial
+
 
 class ModeleAlarmeSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleAlarme
 
+
 class ModeleBilanSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleBilan
+
 
 class ModeleBailSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleBail
 
+
+class ModeleNotationSerializer(BaseModeleSerializer):
+    class Meta(BaseModeleSerializer.Meta):
+        model = ModeleNotation
+
+
 class ModeleRelationEntrepriseSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleRelationEntreprise
+
 
 class ModeleInformationNotationEntrepriseSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleInformationNotationEntreprise
 
+
 class ModeleComportementPaiementSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleComportementPaiement
 
+
 class ModeleComportementJugementSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleComportementJugement
+
+
+
+
+
         
         
 class CategorieEntrepriseSerializer(serializers.ModelSerializer):
@@ -295,7 +322,9 @@ class AcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", 
+            "id", "code", 
+            "categorie_entreprise", "forme_juridique", "activite_principale", 
+            "nom", "sigle", 
             "description", "date_creation", "statut_entreprise", 
             "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
             "ville", "province", "pays", "couleur_commentaire", "commentaire", 
@@ -318,8 +347,110 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description", 
+            "id", "code", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description", 
             "date_creation", "statut_entreprise",
             "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
             "ville", "province", "pays", "couleur_commentaire", "commentaire"]
         read_only_fields = ["created_at", "updated_at"]
+        
+        
+class GetAcheteurSerializer(serializers.ModelSerializer):
+    categorie_entreprise = CategorieEntrepriseSerializer()
+    forme_juridique = FormeJuridiqueSerializer()
+    statut_entreprise = StatutEntrepriseSerializer()
+    
+    pays = PaysSerializer()
+    province = ProvinceSerializer()
+    ville = VilleSerializer()
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "code", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description", 
+            "date_creation", "statut_entreprise",
+            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
+            "ville", "province", "pays", "couleur_commentaire", "commentaire"]
+        read_only_fields = ["created_at", "updated_at"]
+        
+        
+        
+
+class RiskRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskRating
+        fields = '__all__'
+
+class ResumeSerializer(serializers.ModelSerializer):
+    
+    acheteur = AcheteurSerializer()
+    devise = DeviseSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
+    
+    class Meta:
+        model = Resume
+        fields = '__all__'
+        
+        
+class AddResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resume
+        fields = [
+            "id", "acheteur", "devise", "capital_social", "chiffre_affaire", "resultat_net", "capitaux_propre", "nombre_employe", 
+            "date_creation", "couleur_commentaire", "commentaire"]
+        
+class GetResumeSerializer(serializers.ModelSerializer):
+    
+    acheteur = AcheteurSerializer()
+    devise = DeviseSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
+    
+    class Meta:
+        model = Resume
+        fields = '__all__'
+        
+class EditResumeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Resume
+        fields = [
+            "id", "acheteur", "devise", "capital_social", "chiffre_affaire", "resultat_net", "capitaux_propre", "nombre_employe", 
+            "date_creation", "couleur_commentaire", "commentaire"]
+
+class DonneesEnregistrementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonneesEnregistrement
+        fields = '__all__'
+
+class TendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tendance
+        fields = '__all__'
+
+class ResponsableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsableAcheteur
+        fields = '__all__'
+
+class AntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntecedantsJuridique
+        fields = '__all__'
+
+class RiskManagmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskManagment
+        fields = '__all__'
+
+class ConseilAdministrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConseilAdministration
+        fields = '__all__'
+
+class CompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionCapitalSocial
+        fields = '__all__'
+
+class CompositionActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionAction
+        fields = '__all__'
