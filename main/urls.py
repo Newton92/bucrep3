@@ -42,6 +42,8 @@ urlpatterns = [
     path('root-dashboard/localisation/liste-des-pays', dash_root_pays, name='dash_root_pays'),
     path('root-dashboard/localisation/liste-des-provinces', dash_root_province, name='dash_root_province'),
     path('root-dashboard/localisation/liste-des-villes', dash_root_ville, name='dash_root_ville'),
+    
+    
     path('root-dashboard/standard/liste-des-devises', dash_root_devise, name='dash_root_devise'),
     path('root-dashboard/standard/liste-des-annees-civiles', dash_root_annee, name='dash_root_annee'),
     path('root-dashboard/standard/liste-des-colorations', dash_root_coloration, name='dash_root_coloration'),
@@ -55,11 +57,16 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-categories-entreprise', dash_root_category_entreprise, name='dash_root_category_entreprise'),
     path('root-dashboard/standard/liste-des-structures-entreprise', dash_root_structure_entreprise, name='dash_root_structure_entreprise'),
     path('root-dashboard/standard/liste-des-status-entreprise', dash_root_statut_entreprise, name='dash_root_statut_entreprise'),
+    
+    
     path('root-dashboard/acheteurs/liste-des-acheteurs', dash_root_acheteur, name='dash_root_acheteur'),
     path('root-dashboard/acheteurs/ajouter-un-acheteur', dash_root_add_acheteur, name='dash_root_add_acheteur'),
     path('root-dashboard/acheteurs/editer-un-acheteur/<int:acheteur_id>/', dash_root_edit_acheteur, name='dash_root_edit_acheteur'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/', dash_root_manage_acheteur, name='dash_root_manage_acheteur'),
+    
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/resumes/', dash_root_manage_acheteur_resume, name='dash_root_manage_acheteur_resume'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/evaluation-risques/', dash_root_manage_acheteur_risk_rating, name='dash_root_manage_acheteur_risk_rating'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/donnees-enregistrees/', dash_root_manage_acheteur_data_save, name='dash_root_manage_acheteur_data_save'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -224,6 +231,18 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/ajouter-un-resume/', AddAcheteurResumeView.as_view(), name='add-resume-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-un-resume/<int:resume_id>/', EditAcheteurResumeView.as_view(), name='edit-resume-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-resumes/', DeleteAcheteurResumeView.as_view(), name='delete-resume-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-evaluations-de-risque/', ListAcheteurRiskRatingView.as_view(), name='list-risk-rating-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-evaluation-risque/', SearchAcheteurRiskRatingView.as_view(), name='search-risk-rating-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-evaluation-risque/', AddAcheteurRiskRatingView.as_view(), name='add-risk-rating-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-evaluation-risque/<int:risk_rating_id>/', EditAcheteurRiskRatingView.as_view(), name='edit-risk-rating-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-evaluation-risque/', DeleteAcheteurRiskRatingView.as_view(), name='delete-risk-rating-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-donnees-enregistrees/', ListAcheteurDataSaveRatingView.as_view(), name='list-donnee-enregistree-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-donnee-enregistree/', SearchAcheteurDataSaveView.as_view(), name='search-donnee-enregistree-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-donnee-enregistree/', AddAcheteurDataSaveView.as_view(), name='add-donnee-enregistree-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-donnee-enregistree/<int:donnee_enregistrement_id>/', EditAcheteurDataSaveView.as_view(), name='edit-donnee-enregistree-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-donnees-enregistrees/', DeleteAcheteurDataSaveView.as_view(), name='delete-donnee-enregistree-acheteur'),
     
     ########################################################################################################################
     #                                                                                                                      #

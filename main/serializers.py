@@ -376,9 +376,40 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
         
 
 class RiskRatingSerializer(serializers.ModelSerializer):
+    
+    acheteur = AcheteurSerializer()
     class Meta:
         model = RiskRating
         fields = '__all__'
+        
+        
+class GetRiskRatingSerializer(serializers.ModelSerializer):
+    
+    acheteur = AcheteurSerializer()
+    class Meta:
+        model = RiskRating
+        fields = '__all__'
+        
+        
+class AddRiskRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskRating
+        fields = [
+            "id", "acheteur", "remboursabilite", "situation_liquidite", "performance_rentabilite", "perspective_secteur", 
+            "qualite_information_analyse", "existence_garantie", 
+            "terme_financier_duree_pret", "mesure_propre_soutenir_credit", "interpretation", "analyse"]
+        
+        
+class EditRiskRatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskRating
+        fields = [
+            "id", "acheteur", "remboursabilite", "situation_liquidite", "performance_rentabilite", "perspective_secteur", 
+            "qualite_information_analyse", "existence_garantie", 
+            "terme_financier_duree_pret", "mesure_propre_soutenir_credit", "interpretation", "analyse"]
+        
+        
+
 
 class ResumeSerializer(serializers.ModelSerializer):
     
@@ -397,6 +428,7 @@ class AddResumeSerializer(serializers.ModelSerializer):
         fields = [
             "id", "acheteur", "devise", "capital_social", "chiffre_affaire", "resultat_net", "capitaux_propre", "nombre_employe", 
             "date_creation", "couleur_commentaire", "commentaire"]
+   
         
 class GetResumeSerializer(serializers.ModelSerializer):
     
@@ -407,6 +439,7 @@ class GetResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = '__all__'
+    
         
 class EditResumeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -415,10 +448,49 @@ class EditResumeSerializer(serializers.ModelSerializer):
             "id", "acheteur", "devise", "capital_social", "chiffre_affaire", "resultat_net", "capitaux_propre", "nombre_employe", 
             "date_creation", "couleur_commentaire", "commentaire"]
 
+
+
+
 class DonneesEnregistrementSerializer(serializers.ModelSerializer):
+    forme_juridique_ref = FormeJuridiqueSerializer()
+    statut_registre_ref = StatutEntrepriseSerializer()
     class Meta:
         model = DonneesEnregistrement
         fields = '__all__'
+        
+        
+class GetDonneesEnregistrementSerializer(serializers.ModelSerializer):
+    forme_juridique_ref = FormeJuridiqueSerializer()
+    statut_registre_ref = StatutEntrepriseSerializer()
+    class Meta:
+        model = DonneesEnregistrement
+        fields = '__all__'  
+        
+        
+class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonneesEnregistrement   
+        fields = [
+            "id", "acheteur", "date_creation", "date_registre", "forme_juridique", "forme_juridique_ref", "numero_registre_commerce", "numero_fiscale", 
+            "statut_registre", "statut_registre_ref", "commentaire"]
+        
+        
+class EditDonneesEnregistrementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DonneesEnregistrement   
+        fields = [
+            "id", "acheteur", "date_creation", "date_registre", "forme_juridique", "forme_juridique_ref", "numero_registre_commerce", "numero_fiscale", 
+            "statut_registre", "statut_registre_ref", "commentaire"]     
+
+
+
+
+
+
+
+
+
+
 
 class TendanceSerializer(serializers.ModelSerializer):
     class Meta:
