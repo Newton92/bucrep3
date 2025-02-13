@@ -296,8 +296,8 @@
                         <input type="date" class="form-control" id="editDateRegistre" name="date_registre" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editFormeJuridique" class="form-label">Forme Juridique</label>
-                        <select class="form-select" id="editFormeJuridique" name="forme_juridique" required>
+                        <label for="editFormeJuridique2" class="form-label">Forme Juridique</label>
+                        <select class="form-select" id="editFormeJuridique2" name="forme_juridique" required>
                             <option value="">Sélectionnez une forme juridique</option>
                             <option value="Entreprise Individuelle (EI)">Entreprise Individuelle (EI)</option>
                             <option value="Société à Responsabilité Limitée (SARL)">Société à Responsabilité Limitée (SARL)</option>
@@ -319,6 +319,7 @@
                     <div class="mb-3">
                         <label for="editRefFormeJuridique" class="form-label">Référence Forme Juridique</label>
                         <select class="form-select" id="editRefFormeJuridique" name="forme_juridique_ref">
+                            <option value="">Sélectionnez une référence</option>
                             {% for forme in juridique_list %}
                                 <option value="{{ forme.id }}">{{ forme.libelle }}</option>
                             {% endfor %}
@@ -363,6 +364,7 @@
                     <div class="mb-3">
                         <label for="editRefStatutRegistre" class="form-label">Référence Statut au Registre</label>
                         <select class="form-select" id="editRefStatutRegistre" name="statut_registre_ref">
+                            <option value="">Sélectionnez une référence</option>
                             {% for statut in statut_list %}
                                 <option value="{{ statut.id }}">{{ statut.libelle }}</option>
                             {% endfor %}
@@ -417,7 +419,6 @@
                 'Authorization': 'Bearer ' + '{{ access }}'
             },
             success: function(response) {
-                console.log(response);
                 $('#editAcheteurId').val(response.id);
                 $('#editCode').val(response.code).text(response.code);
                 $('#editNom').val(response.nom).text(response.nom);
@@ -496,13 +497,12 @@
                             '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
                             '<td>' + dataSave.date_creation + '</td>' +
                             '<td>' + dataSave.date_registre + '</td>' +
-                            '<td>' + dataSave.forme_juridique_ref.nom + '</td>' +
+                            '<td>' + dataSave.forme_juridique + '</td>' +
                             '<td>' + dataSave.numero_registre_commerce + '</td>' +
                             '<td>' + dataSave.numero_fiscale + '</td>' +
-                            '<td>' + dataSave.statut_registre_ref.nom + '</td>' +
-                            '<td>' + dataSave.commentaire + '</td>' +
-                            '<td><button class="btn btn-light btn-round mb-0 edit-btn" data-id="' + dataSave.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + dataSave.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '<td>' + dataSave.statut_registre + '</td>' +
+                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + dataSave.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + dataSave.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
                             '</tr>');
                     });
                 },
@@ -577,17 +577,23 @@
                     'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
                 },
                 success: function(response) {
+                    console.log(response.forme_juridique);
                     $('#editDataSaveId').val(response.id);
                     $('#editDateCreation').val(response.date_creation);
                     $('#editDateRegistre').val(response.date_registre);
-                    $('#editFormeJuridique').val(response.forme_juridique_ref.id);
+                    $('#editFormeJuridique2').val(response.forme_juridique);
+                    $('#editRefFormeJuridique').val(response.forme_juridique_ref);
                     $('#editNumeroRegistreCommerce').val(response.numero_registre_commerce);
                     $('#editNumeroFiscal').val(response.numero_fiscale);
-                    $('#editStatutRegistre').val(response.statut_registre_ref.id);
+                    $('#editStatutRegistre').val(response.statut_registre);
+                    $('#editRefStatutRegistre').val(response.statut_registre_ref);
                     $('#editCommentaire').val(response.commentaire);
                     $('#editDataSaveModal').modal('show');
+
+                    tinymce.get('editCommentaire').setContent(response.commentaire);
                 },
                 error: function(response) {
+                    console.error("Erreur lors de la récupération des données de la donnée d'enregistrement :", response);
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
@@ -596,6 +602,7 @@
                 }
             });
         });
+
 
         // Edit Data Save form submission
         $('#editDataSaveForm').on('submit', function(event) {

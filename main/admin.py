@@ -268,6 +268,125 @@ class AcheteurAdmin(admin.ModelAdmin):
 # Enregistrer le modèle avec l'administration Django
 admin.site.register(Acheteur, AcheteurAdmin)
 
+
+
+@admin.register(Resume)
+class ResumeAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'capital_social', 'chiffre_affaire', 'resultat_net', 'capitaux_propre', 'nombre_employe', 'date_creation', 'couleur_commentaire', 'created_at', 'updated_at')
+    search_fields = ('acheteur__name', 'commentaire')
+    list_filter = ('couleur_commentaire', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(RiskRating)
+class RiskRatingAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'remboursabilite', 'situation_liquidite', 'performance_rentabilite', 'perspective_secteur', 'qualite_information_analyse', 'existence_garantie', 'terme_financier_duree_pret', 'mesure_propre_soutenir_credit', 'created_at', 'updated_at')
+    search_fields = ('acheteur__name', 'interpretation', 'analyse')
+    list_filter = ('remboursabilite', 'situation_liquidite', 'performance_rentabilite', 'perspective_secteur', 'qualite_information_analyse', 'existence_garantie', 'terme_financier_duree_pret', 'mesure_propre_soutenir_credit', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(DonneesEnregistrement)
+class DonneesEnregistrementAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'date_creation', 'date_registre', 'forme_juridique', 'forme_juridique_ref', 'numero_registre_commerce', 'numero_fiscale', 'statut_registre', 'statut_registre_ref', 'created_at', 'updated_at')
+    search_fields = ('acheteur__name', 'numero_registre_commerce', 'numero_fiscale', 'commentaire')
+    list_filter = ('forme_juridique', 'forme_juridique_ref', 'statut_registre', 'statut_registre_ref', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+    
+
+
+@admin.register(Tendance)
+class TendanceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'acheteur', 'avis_commercial', 'avis_commercial_ref', 'created_at', 'updated_at')
+    list_filter = ('avis_commercial', 'avis_commercial_ref', 'created_at')
+    search_fields = ('acheteur__nom', 'presse_media', 'principaux_concurrent', 'commentaire')
+    autocomplete_fields = ('acheteur', 'avis_commercial_ref')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('acheteur', 'avis_commercial', 'avis_commercial_ref')
+        }),
+        ('Détails', {
+            'fields': ('presse_media', 'principaux_concurrent', 'commentaire')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+
     
     
 
+
+class ResponsableAcheteurAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'prenom', 'sexe', 'poste', 'acheteur', 'created_at', 'updated_at')
+    search_fields = ('nom', 'prenom', 'acheteur__nom')
+    list_filter = ('sexe', 'poste', 'created_at', 'updated_at')
+
+class AntecedantsJuridiqueAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'autre', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'dossier_faillite', 'jugement_cour')
+    list_filter = ('created_at', 'updated_at')
+
+class RiskManagmentAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'professionalisme', 'organisation', 'turn_over', 'greve', 'degradation_qualite', 'non_respect_condition', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom',)
+    list_filter = ('professionalisme', 'organisation', 'turn_over', 'greve', 'degradation_qualite', 'non_respect_condition', 'created_at', 'updated_at')
+
+class ConseilAdministrationAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'fonction_dans_le_conseil', 'acheteur', 'created_at', 'updated_at')
+    search_fields = ('nom', 'acheteur__nom')
+    list_filter = ('fonction_dans_le_conseil', 'created_at', 'updated_at')
+
+class CompositionCapitalSocialAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'devise', 'emis', 'publie', 'libere', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom',)
+    list_filter = ('devise', 'created_at', 'updated_at')
+
+class CompositionActionAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'prenom', 'pourcentage', 'acheteur', 'created_at', 'updated_at')
+    search_fields = ('nom', 'prenom', 'acheteur__nom')
+    list_filter = ('created_at', 'updated_at')
+
+class OpinionCreditAcremacAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation', 'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve', 'risque_moyen', 'risque_faible', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom',)
+    list_filter = ('created_at', 'updated_at')
+
+class StructureAdmin(admin.ModelAdmin):
+    list_display = ('nom', 'type_affiliation', 'acheteur', 'created_at', 'updated_at')
+    search_fields = ('nom', 'acheteur__nom')
+    list_filter = ('type_affiliation', 'created_at', 'updated_at')
+
+admin.site.register(ResponsableAcheteur, ResponsableAcheteurAdmin)
+admin.site.register(AntecedantsJuridique, AntecedantsJuridiqueAdmin)
+admin.site.register(RiskManagment, RiskManagmentAdmin)
+admin.site.register(ConseilAdministration, ConseilAdministrationAdmin)
+admin.site.register(CompositionCapitalSocial, CompositionCapitalSocialAdmin)
+admin.site.register(CompositionAction, CompositionActionAdmin)
+admin.site.register(OpinionCreditAcremac, OpinionCreditAcremacAdmin)
+admin.site.register(Structure, StructureAdmin)
+
+
+
+
+class AnalyseSectorielleAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'couleur_commentaire', 'commentaire', 'impact_covid_19', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'commentaire', 'impact_covid_19')
+    list_filter = ('created_at', 'updated_at', 'couleur_commentaire')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'couleur_commentaire')
+        }),
+        ('Contenu', {
+            'fields': ('commentaire', 'impact_covid_19')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(AnalyseSectorielle, AnalyseSectorielleAdmin)

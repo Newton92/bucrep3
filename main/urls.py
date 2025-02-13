@@ -67,6 +67,15 @@ urlpatterns = [
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/resumes/', dash_root_manage_acheteur_resume, name='dash_root_manage_acheteur_resume'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/evaluation-risques/', dash_root_manage_acheteur_risk_rating, name='dash_root_manage_acheteur_risk_rating'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/donnees-enregistrees/', dash_root_manage_acheteur_data_save, name='dash_root_manage_acheteur_data_save'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/tendances/', dash_root_manage_acheteur_tendance, name='dash_root_manage_acheteur_tendance'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/responsables/', dash_root_manage_acheteur_responsable, name='dash_root_manage_acheteur_responsable'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/antecedents-juridiques/', dash_root_manage_acheteur_antecedent, name='dash_root_manage_acheteur_antecedent'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/gestion-des-risques/', dash_root_manage_acheteur_gestion_risque, name='dash_root_manage_acheteur_gestion_risque'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/membres-du-conseil/', dash_root_manage_acheteur_membre_conseil, name='dash_root_manage_acheteur_membre_conseil'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/compositions-du-capital-social/', dash_root_manage_acheteur_composition_capital, name='dash_root_manage_acheteur_composition_capital'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/actionnaires/', dash_root_manage_acheteur_actionnaire, name='dash_root_manage_acheteur_actionnaire'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/opinions-acremac/', dash_root_manage_acheteur_opinion_acremac, name='dash_root_manage_acheteur_opinion_acremac'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/filiales/', dash_root_manage_acheteur_filiale, name='dash_root_manage_acheteur_filiale'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -238,11 +247,67 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/editer-une-evaluation-risque/<int:risk_rating_id>/', EditAcheteurRiskRatingView.as_view(), name='edit-risk-rating-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-evaluation-risque/', DeleteAcheteurRiskRatingView.as_view(), name='delete-risk-rating-acheteur'),
     
-    path('api/acheteur/<int:acheteur_id>/liste-des-donnees-enregistrees/', ListAcheteurDataSaveRatingView.as_view(), name='list-donnee-enregistree-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/liste-des-donnees-enregistrees/', ListAcheteurDataSaveView.as_view(), name='list-donnee-enregistree-acheteur'),
     path('api/acheteur/<int:acheteur_id>/recherche-donnee-enregistree/', SearchAcheteurDataSaveView.as_view(), name='search-donnee-enregistree-acheteur'),
     path('api/acheteur/<int:acheteur_id>/ajouter-une-donnee-enregistree/', AddAcheteurDataSaveView.as_view(), name='add-donnee-enregistree-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-une-donnee-enregistree/<int:donnee_enregistrement_id>/', EditAcheteurDataSaveView.as_view(), name='edit-donnee-enregistree-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-donnees-enregistrees/', DeleteAcheteurDataSaveView.as_view(), name='delete-donnee-enregistree-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-tendances/', ListAcheteurTendanceView.as_view(), name='list-tendance-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-tendance/', SearchAcheteurTendanceView.as_view(), name='search-tendance-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-tendance/', AddAcheteurTendanceView.as_view(), name='add-tendance-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-tendance/<int:tendance_id>/', EditAcheteurTendanceView.as_view(), name='edit-tendance-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-tendances/', DeleteAcheteurTendanceView.as_view(), name='delete-tendance-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-responsables/', ListAcheteurResponsableView.as_view(), name='list-responsable-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-responsable/', SearchAcheteurResponsableView.as_view(), name='search-responsable-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-responsable/', AddAcheteurResponsableView.as_view(), name='add-responsable-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-responsable/<int:responsable_id>/', EditAcheteurResponsableView.as_view(), name='edit-responsable-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-responsables/', DeleteAcheteurResponsableView.as_view(), name='delete-responsable-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-antecdents-juridiques/', ListAcheteurAntecedentView.as_view(), name='list-antecedent-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-antecedent/', SearchAcheteurAntecedentView.as_view(), name='search-antecedent-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-antecedent/', AddAcheteurAntecedentView.as_view(), name='add-antecedent-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-antecedent/<int:antecedent_id>/', EditAcheteurAntecedentView.as_view(), name='edit-antecedent-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-antecedents/', DeleteAcheteurAntecedentView.as_view(), name='delete-antecedent-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-gestions-de-risque/', ListAcheteurGestionRisqueView.as_view(), name='list-gestion-de-risque-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-gestion-de-risque/', SearchAcheteurGestionRisqueView.as_view(), name='search-gestion-de-risque-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-gestion-de-risque/', AddAcheteurGestionRisqueView.as_view(), name='add-gestion-de-risque-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-gestion-de-risque/<int:gestion_risque_id>/', EditAcheteurGestionRisqueView.as_view(), name='edit-gestion-de-risque-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-gestions-de-risque/', DeleteAcheteurGestionRisqueView.as_view(), name='delete-gestion-de-risque-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-membres-du-conseil/', ListAcheteurMembreConseilView.as_view(), name='list-membre-du-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-membre-du-conseil/', SearchAcheteurMembreConseilView.as_view(), name='search-membre-du-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-membre-du-conseil/', AddAcheteurMembreConseilView.as_view(), name='add-membre-du-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-membre-du-conseil/<int:membre_conseil_id>/', EditAcheteurMembreConseilView.as_view(), name='edit-membre-du-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-membres-du-conseil/', DeleteAcheteurMembreConseilView.as_view(), name='delete-membre-du-conseil-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-compositions-du-capital/', ListAcheteurCompositionCapitalView.as_view(), name='list-composition-du-capital-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-composition-du-capital/', SearchAcheteurCompositionCapitalView.as_view(), name='search-composition-du-capital-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-composition-du-capital/', AddAcheteurCompositionCapitalView.as_view(), name='add-composition-du-capital-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-composition-du-capital/<int:composition_capital_id>/', EditAcheteurCompositionCapitalView.as_view(), name='edit-composition-du-capital-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-composition-du-capital/', DeleteAcheteurCompositionCapitalView.as_view(), name='delete-composition-du-capital-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-actionnaires/', ListAcheteurActionnaireView.as_view(), name='list-actionnaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-actionnaire/', SearchAcheteurActionnaireView.as_view(), name='search-actionnaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-actionnaire/', AddAcheteurActionnaireView.as_view(), name='add-actionnaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-actionnaire/<int:actionnaire_id>/', EditAcheteurActionnaireView.as_view(), name='edit-actionnaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-actionnaires/', DeleteAcheteurActionnaireView.as_view(), name='delete-actionnaire-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-opinions-acremac/', ListAcheteurOpinionAcremacView.as_view(), name='list-opinion-acremac-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-opinion-acremac/', SearchAcheteurOpinionAcremacView.as_view(), name='search-opinion-acremac-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-opinion-acremac/', AddAcheteurOpinionAcremacView.as_view(), name='add-opinion-acremac-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-opinion-acremac/<int:opinion_id>/', EditAcheteurOpinionAcremacView.as_view(), name='edit-opinion-acremac-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-opinion-acremac/', DeleteAcheteurOpinionAcremacView.as_view(), name='delete-opinion-acremac-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-filiales/', ListAcheteurFilialeView.as_view(), name='list-filiale-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-filiale/', SearchAcheteurFilialeView.as_view(), name='search-filiale-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-filiale/', AddAcheteurFilialeView.as_view(), name='add-filiale-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-filiale/<int:filiale_id>/', EditAcheteurFilialeView.as_view(), name='edit-filiale-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-filiales/', DeleteAcheteurFilialeView.as_view(), name='delete-filiale-acheteur'),
     
     ########################################################################################################################
     #                                                                                                                      #

@@ -1380,6 +1380,65 @@ class CompositionAction(models.Model):
     class Meta:
         verbose_name = _("Composition de l'Actionnariat")
         verbose_name_plural = _("Compositions de l'Actionnariat")
+        
+        
+        
+class OpinionCreditAcremac(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur', 
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur")
+    )
+    risque_de_defaut = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque de défaut")
+    )
+    risque_de_concentration_credit = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque de concentration de crédit")
+    )
+    risque_de_reputation = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque de réputation")
+    )
+    risque_pays = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque pays")
+    )
+    risque_de_taux_dinteret = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque de taux d'intérêt")
+    )
+    risque_de_liquidite = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque de liquidité")
+    )
+    risque_eleve = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque élevé")
+    )
+    risque_moyen = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque moyen")
+    )
+    risque_faible = models.IntegerField(
+        default=0, 
+        verbose_name=_("Risque faible")
+    )
+    couleur_commentaire = models.ForeignKey(
+        'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+
+    def __str__(self):
+        return f"Opinion Credit Acremac for {self.acheteur}"
+
+    class Meta:
+        verbose_name = _("Opinion Credit Acremac")
+        verbose_name_plural = _("Opinions Credit Acremac")
 
 
 
@@ -1417,11 +1476,11 @@ class Structure(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return self.nom or _("Structure sans nom")
+        return self.nom or _("Filiale sans nom")
 
     class Meta:
-        verbose_name = _("Structure")
-        verbose_name_plural = _("Structures")
+        verbose_name = _("Filiale ou Branche")
+        verbose_name_plural = _("Filiales ou Branches")
 
 
 class AnalyseSectorielle(models.Model):
@@ -1677,58 +1736,6 @@ class Geopolitics(models.Model):
         verbose_name = _("Geopolitique")
         verbose_name_plural = _("Géopolitiques")
 
-
-class OpinionCreditAcremac(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur', 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
-    )
-    risque_de_defaut = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque de défaut")
-    )
-    risque_de_concentration_credit = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque de concentration de crédit")
-    )
-    risque_de_reputation = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque de réputation")
-    )
-    risque_pays = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque pays")
-    )
-    risque_de_taux_dinteret = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque de taux d'intérêt")
-    )
-    risque_de_liquidite = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque de liquidité")
-    )
-    risque_eleve = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque élevé")
-    )
-    risque_moyen = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque moyen")
-    )
-    risque_faible = models.BooleanField(
-        default=False, 
-        verbose_name=_("Risque faible")
-    )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
-
-    def __str__(self):
-        return f"Opinion Credit Acremac for {self.acheteur}"
-
-    class Meta:
-        verbose_name = _("Opinion Credit Acremac")
-        verbose_name_plural = _("Opinions Credit Acremac")
 
 
 class Banquier(models.Model):

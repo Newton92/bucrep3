@@ -30,6 +30,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from main.utilitaires import constantes
 
 
 # Create your views here.
@@ -706,6 +707,9 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
     
+    # Passer les postes du fichier constantes.py ici 
+    bons_postes_list = BON_POST_CHOICES_CHOICES
+    
 
     context = {
         'acheteur_active': 'active',
@@ -718,6 +722,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
         
         'devise_list': devise_list,
         'coloration_list': coloration_list,
+        'bons_postes_list': bons_postes_list,
         
     }
     return render(request, 'main/root/acheteur/resume/dash_root_manage_acheteur_resume.html', context)
@@ -786,6 +791,335 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
         
     }
     return render(request, 'main/root/acheteur/data/dash_root_manage_acheteur_data_save.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_tendance(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les avis commerciaux
+    commercial_list = ModeleAvisCommercial.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'commercial_list': commercial_list,
+        
+    }
+    return render(request, 'main/root/acheteur/tendance/dash_root_manage_acheteur_tendance.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_responsable(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les avis commerciaux
+    poste_list = PosteEntreprise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'poste_list': poste_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/responsable/dash_root_manage_acheteur_responsable.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_antecedent(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/antecedent/dash_root_manage_acheteur_antecedent.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/gestion/dash_root_manage_acheteur_gestion_risque.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les avis commerciaux
+    poste_list = PosteEntreprise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'poste_list': poste_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/conseil/dash_root_manage_acheteur_membre_conseil.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les devises
+    devise_list = Devise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'devise_list': devise_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/composition/dash_root_manage_acheteur_composition_capital.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/actionnaire/dash_root_manage_acheteur_actionnaire.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/opinion/dash_root_manage_acheteur_opinion_acremac.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_filiale(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les structures d'entreprise
+    structure_list = StructureEntreprise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'structure_list': structure_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/filiale/dash_root_manage_acheteur_filiale.html', context)
 
 ########################################################################################################################
 #                                                                                                                      #

@@ -1,5 +1,8 @@
 # main/serializers.py
 from rest_framework import serializers
+from django.core.exceptions import ValidationError
+import decimal
+from django.utils import timezone
 from .models import *
 
 # Vos serializers ici !
@@ -311,6 +314,14 @@ class StatutEntrepriseSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
         
         
+        
+        
+        
+        
+        
+        
+        
+        
 class AcheteurSerializer(serializers.ModelSerializer):
     categorie_entreprise = CategorieEntrepriseSerializer()
     forme_juridique = FormeJuridiqueSerializer()
@@ -375,12 +386,54 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
         
         
 
+
 class RiskRatingSerializer(serializers.ModelSerializer):
-    
     acheteur = AcheteurSerializer()
+
     class Meta:
         model = RiskRating
         fields = '__all__'
+
+    def validate_remboursabilite(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_situation_liquidite(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_performance_rentabilite(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_perspective_secteur(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_qualite_information_analyse(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_existence_garantie(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_terme_financier_duree_pret(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
+    def validate_mesure_propre_soutenir_credit(self, value):
+        if value not in [True, False]:
+            raise ValidationError("La valeur doit être True ou False.")
+        return value
+
         
         
 class GetRiskRatingSerializer(serializers.ModelSerializer):
@@ -411,15 +464,42 @@ class EditRiskRatingSerializer(serializers.ModelSerializer):
         
 
 
+
+
 class ResumeSerializer(serializers.ModelSerializer):
-    
     acheteur = AcheteurSerializer()
     devise = DeviseSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
-    
+
     class Meta:
         model = Resume
         fields = '__all__'
+
+    def validate_capital_social(self, value):
+        if not isinstance(value, (int, float, decimal.Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_chiffre_affaire(self, value):
+        if not isinstance(value, (int, float, decimal.Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_resultat_net(self, value):
+        if not isinstance(value, (int, float, decimal.Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_capitaux_propres(self, value):
+        if not isinstance(value, (int, float, decimal.Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_nombre_employe(self, value):
+        if not isinstance(value, (int, float, decimal.Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
         
         
 class AddResumeSerializer(serializers.ModelSerializer):
@@ -451,17 +531,21 @@ class EditResumeSerializer(serializers.ModelSerializer):
 
 
 
+
+
 class DonneesEnregistrementSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
     forme_juridique_ref = FormeJuridiqueSerializer()
     statut_registre_ref = StatutEntrepriseSerializer()
+
     class Meta:
         model = DonneesEnregistrement
         fields = '__all__'
+
         
         
 class GetDonneesEnregistrementSerializer(serializers.ModelSerializer):
-    forme_juridique_ref = FormeJuridiqueSerializer()
-    statut_registre_ref = StatutEntrepriseSerializer()
+    acheteur = AcheteurSerializer()
     class Meta:
         model = DonneesEnregistrement
         fields = '__all__'  
@@ -476,6 +560,7 @@ class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
         
         
 class EditDonneesEnregistrementSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = DonneesEnregistrement   
         fields = [
@@ -488,41 +573,361 @@ class EditDonneesEnregistrementSerializer(serializers.ModelSerializer):
 
 
 
-
-
-
-
 class TendanceSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    avis_commercial_ref = ModeleAvisCommercialSerializer()
     class Meta:
         model = Tendance
         fields = '__all__'
+        
+        
+class GetTendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tendance
+        fields = '__all__'
+        
+        
+class AddTendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tendance
+        fields = [
+            "id", "acheteur", "avis_commercial", "avis_commercial_ref", "presse_media", "principaux_concurrent", "commentaire"]  
+        
+        
+class EditTendanceSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    avis_commercial_ref = ModeleAvisCommercialSerializer()
+    class Meta:
+        model = Tendance
+        fields = [
+            "id", "acheteur", "avis_commercial", "avis_commercial_ref", "presse_media", "principaux_concurrent", "commentaire"]  
+        
+        
+        
+
+
+
 
 class ResponsableAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    poste_ref = PosteEntrepriseSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
     class Meta:
         model = ResponsableAcheteur
         fields = '__all__'
+        
+        
+class GetResponsableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsableAcheteur
+        fields = '__all__'
+        
+        
+class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsableAcheteur
+        fields = [
+            "id", "acheteur", "nom", "prenom", "sexe", "poste", "poste_ref", "nationalite", "couleur_commentaire", "commentaire"] 
+        
+        
+class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResponsableAcheteur
+        fields = [
+            "id", "acheteur", "nom", "prenom", "sexe", "poste", "poste_ref", "nationalite", "couleur_commentaire", "commentaire"] 
+        
+        
+        
+
+
+
+        
 
 class AntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
     class Meta:
         model = AntecedantsJuridique
         fields = '__all__'
+        
+        
+class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntecedantsJuridique
+        fields = '__all__'
+        
+        
+class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntecedantsJuridique
+        fields = [
+            "id", "acheteur", "dossier_faillite", "jugement_cour", "antecedant_redressement", "autre", "couleur_commentaire", "commentaire"] 
+        
+        
+class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AntecedantsJuridique
+        fields = [
+            "id", "acheteur", "dossier_faillite", "jugement_cour", "antecedant_redressement", "autre", "couleur_commentaire", "commentaire"] 
+        
+        
+        
+        
+        
+        
 
 class RiskManagmentSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
     class Meta:
         model = RiskManagment
         fields = '__all__'
+        
+        
+class GetRiskManagmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskManagment
+        fields = '__all__'
+        
+        
+class AddRiskManagmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskManagment
+        fields = [
+            "id", "acheteur", "professionalisme", "organisation", "turn_over", "greve", 
+            "degradation_qualite", "non_respect_condition", "couleur_commentaire", "commentaire"] 
+        
+        
+class EditRiskManagmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RiskManagment
+        fields = [
+            "id", "acheteur", "professionalisme", "organisation", "turn_over", "greve", 
+            "degradation_qualite", "non_respect_condition", "couleur_commentaire", "commentaire"]          
+        
+        
+   
+   
+   
+   
+
+   
+        
+        
 
 class ConseilAdministrationSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    fonction_dans_le_conseil_ref = PosteEntrepriseSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
     class Meta:
         model = ConseilAdministration
         fields = '__all__'
+        
+        
+class GetConseilAdministrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConseilAdministration
+        fields = '__all__'
+        
+        
+class AddConseilAdministrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConseilAdministration
+        fields = [
+            "id", "acheteur", "nom", "fonction_dans_le_conseil", "fonction_dans_le_conseil_ref", "numero_adresse", "rue_adresse", 
+            "code_postale_adresse", "couleur_commentaire", "commentaire"] 
+        
+        
+class EditConseilAdministrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConseilAdministration
+        fields = [
+            "id", "acheteur", "nom", "fonction_dans_le_conseil", "fonction_dans_le_conseil_ref", "numero_adresse", "rue_adresse", 
+            "code_postale_adresse", "couleur_commentaire", "commentaire"] 
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
 class CompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    devise = DeviseSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
     class Meta:
         model = CompositionCapitalSocial
         fields = '__all__'
+        
+        
+class GetCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionCapitalSocial
+        fields = '__all__'
+        
+        
+class AddCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionCapitalSocial
+        fields = [
+            "id", "acheteur", "devise", "emis", "publie", "libere", "couleur_commentaire", "commentaire"] 
+        
+        
+class EditCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionCapitalSocial
+        fields = [
+            "id", "acheteur", "devise", "emis", "publie", "libere", "couleur_commentaire", "commentaire"] 
+        
+        
+        
+        
+        
+        
+        
+       
 
 class CompositionActionSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
     class Meta:
         model = CompositionAction
         fields = '__all__'
+        
+        
+class GetCompositionActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionAction
+        fields = '__all__'
+        
+        
+class AddCompositionActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionAction
+        fields = [
+            "id", "acheteur", "nom", "prenom", "pourcentage", "couleur_commentaire", "commentaire"] 
+        
+        
+class EditCompositionActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompositionAction
+        fields = [
+            "id", "acheteur", "nom", "prenom", "pourcentage", "couleur_commentaire", "commentaire"] 
+
+
+
+
+
+
+
+class OpinionCreditAcremacSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    couleur_commentaire = CouleurCommentaireSerializer()
+
+    class Meta:
+        model = OpinionCreditAcremac
+        fields = '__all__'
+        
+        
+class GetOpinionCreditAcremacSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OpinionCreditAcremac
+        fields = '__all__'
+        
+        
+
+class AddOpinionCreditAcremacSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OpinionCreditAcremac
+        fields = [
+            'acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation',
+            'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve',
+            'risque_moyen', 'risque_faible', "couleur_commentaire", "commentaire"
+        ]
+
+class EditOpinionCreditAcremacSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OpinionCreditAcremac
+        fields = [
+            'acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation',
+            'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve',
+            'risque_moyen', 'risque_faible', "couleur_commentaire", "commentaire"
+        ]
+
+
+
+
+
+
+
+
+
+
+class StructureSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    couleur_commentaire = CouleurCommentaireSerializer()
+    type_affiliation_ref = StructureEntrepriseSerializer()
+
+    class Meta:
+        model = Structure
+        fields = '__all__'
+
+class GetStructureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Structure
+        fields = '__all__'
+
+class AddStructureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Structure
+        fields = [
+            'acheteur', 'nom', 'type_affiliation', 'type_affiliation_ref',
+            'numero_adresse', 'rue_adresse', 'code_postale_adresse',
+            'couleur_commentaire', 'commentaire'
+        ]
+
+class EditStructureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Structure
+        fields = [
+            'acheteur', 'nom', 'type_affiliation', 'type_affiliation_ref',
+            'numero_adresse', 'rue_adresse', 'code_postale_adresse',
+            'couleur_commentaire', 'commentaire'
+        ]
+
+
+
+
+
+
+
+class AnalyseSectorielleSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    couleur_commentaire = CouleurCommentaireSerializer()
+
+    class Meta:
+        model = AnalyseSectorielle
+        fields = '__all__'
+
+class GetAnalyseSectorielleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalyseSectorielle
+        fields = '__all__'
+
+class AddAnalyseSectorielleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalyseSectorielle
+        fields = [
+            'acheteur', 'couleur_commentaire', 'commentaire', 'impact_covid_19'
+        ]
+
+class EditAnalyseSectorielleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AnalyseSectorielle
+        fields = [
+            'acheteur', 'couleur_commentaire', 'commentaire', 'impact_covid_19'
+        ]
