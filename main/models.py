@@ -1538,6 +1538,9 @@ class CompteFinancier(models.Model):
     type_compte = models.CharField(max_length=200, null=True, blank=True, verbose_name=_("Type de compte"))
     devise = models.CharField(max_length=20, default=XAF, choices=STATUS_CHANGE, blank=True, verbose_name=_("Devise"))
     type_bilan = models.CharField(max_length=255, choices=LIEN_TYPE_BILAN_CHOICE, default="--------", verbose_name=_("Type de bilan"))
+    type_bilan_ref = models.ForeignKey(
+        'ModeleBilan', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence Type de bilan")
+    )
     
     couleur_commentaire = models.ForeignKey('CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire"))
     commentaire = models.TextField(blank=True, max_length=10000000, verbose_name=_("Commentaire"))
@@ -1574,6 +1577,10 @@ class OperationEtHistorique(models.Model):
 class ProprieteEtActif(models.Model):
     acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur"))
     locaux = models.CharField(max_length=255, choices=LIEN_COMPORTEMENT_PREMISES_CHOICE, blank=True, verbose_name=_("Locaux"))
+    locaux_ref = models.ForeignKey(
+        'ModeleBail', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence sur les locaux")
+    )
+    
     branche = models.CharField(max_length=255, blank=True, verbose_name=_("Branche"))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
@@ -1585,6 +1592,7 @@ class ProprieteEtActif(models.Model):
     class Meta:
         verbose_name = _("Propriété et Actif")
         verbose_name_plural = _("Propriétés et Actifs")
+
 
 
 class ConditionAchat(models.Model):

@@ -76,6 +76,10 @@ urlpatterns = [
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/actionnaires/', dash_root_manage_acheteur_actionnaire, name='dash_root_manage_acheteur_actionnaire'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/opinions-acremac/', dash_root_manage_acheteur_opinion_acremac, name='dash_root_manage_acheteur_opinion_acremac'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/filiales/', dash_root_manage_acheteur_filiale, name='dash_root_manage_acheteur_filiale'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/analyses-sectorielles/', dash_root_manage_acheteur_analyse_sectorielle, name='dash_root_manage_acheteur_analyse_sectorielle'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/comptes-financiers/', dash_root_manage_acheteur_compte_financier, name='dash_root_manage_acheteur_compte_financier'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/operations-et-historiques/', dash_root_manage_acheteur_operation_historique, name='dash_root_manage_acheteur_operation_historique'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/proprietes-et-actifs/', dash_root_manage_acheteur_propriete_actif, name='dash_root_manage_acheteur_propriete_actif'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -114,7 +118,7 @@ urlpatterns = [
     path('client-dashboard/', dash_client, name='dash_client'),
     ########################################################################################################################
     #                                                                                                                      #
-    #  API ROUTES END FOR CLIENT                                                                                                    #
+    #  API ROUTES END FOR CLIENT                                                                                           #
     #                                                                                                                      #
     ########################################################################################################################
     
@@ -287,12 +291,12 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/recherche-composition-du-capital/', SearchAcheteurCompositionCapitalView.as_view(), name='search-composition-du-capital-acheteur'),
     path('api/acheteur/<int:acheteur_id>/ajouter-une-composition-du-capital/', AddAcheteurCompositionCapitalView.as_view(), name='add-composition-du-capital-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-une-composition-du-capital/<int:composition_capital_id>/', EditAcheteurCompositionCapitalView.as_view(), name='edit-composition-du-capital-acheteur'),
-    path('api/acheteur/<int:acheteur_id>/supprimer-des-composition-du-capital/', DeleteAcheteurCompositionCapitalView.as_view(), name='delete-composition-du-capital-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-compositions-du-capital/', DeleteAcheteurCompositionCapitalView.as_view(), name='delete-composition-du-capital-acheteur'),
     
     path('api/acheteur/<int:acheteur_id>/liste-des-actionnaires/', ListAcheteurActionnaireView.as_view(), name='list-actionnaire-acheteur'),
     path('api/acheteur/<int:acheteur_id>/recherche-actionnaire/', SearchAcheteurActionnaireView.as_view(), name='search-actionnaire-acheteur'),
     path('api/acheteur/<int:acheteur_id>/ajouter-un-actionnaire/', AddAcheteurActionnaireView.as_view(), name='add-actionnaire-acheteur'),
-    path('api/acheteur/<int:acheteur_id>/editer-une-actionnaire/<int:actionnaire_id>/', EditAcheteurActionnaireView.as_view(), name='edit-actionnaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-actionnaire/<int:actionnaire_id>/', EditAcheteurActionnaireView.as_view(), name='edit-actionnaire-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-actionnaires/', DeleteAcheteurActionnaireView.as_view(), name='delete-actionnaire-acheteur'),
     
     
@@ -300,7 +304,7 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/recherche-opinion-acremac/', SearchAcheteurOpinionAcremacView.as_view(), name='search-opinion-acremac-acheteur'),
     path('api/acheteur/<int:acheteur_id>/ajouter-une-opinion-acremac/', AddAcheteurOpinionAcremacView.as_view(), name='add-opinion-acremac-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-une-opinion-acremac/<int:opinion_id>/', EditAcheteurOpinionAcremacView.as_view(), name='edit-opinion-acremac-acheteur'),
-    path('api/acheteur/<int:acheteur_id>/supprimer-des-opinion-acremac/', DeleteAcheteurOpinionAcremacView.as_view(), name='delete-opinion-acremac-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-opinions-acremac/', DeleteAcheteurOpinionAcremacView.as_view(), name='delete-opinion-acremac-acheteur'),
     
     
     path('api/acheteur/<int:acheteur_id>/liste-des-filiales/', ListAcheteurFilialeView.as_view(), name='list-filiale-acheteur'),
@@ -308,6 +312,39 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/ajouter-une-filiale/', AddAcheteurFilialeView.as_view(), name='add-filiale-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-une-filiale/<int:filiale_id>/', EditAcheteurFilialeView.as_view(), name='edit-filiale-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-filiales/', DeleteAcheteurFilialeView.as_view(), name='delete-filiale-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-analyses-sectorielles/', ListAcheteurAnalyseSectorielleView.as_view(), name='list-analyse-sectorielle-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-analyse-sectorielle/', SearchAcheteurAnalyseSectorielleView.as_view(), name='search-analyse-sectorielle-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-analyse-sectorielle/', AddAcheteurAnalyseSectorielleView.as_view(), name='add-analyse-sectorielle-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-analyse-sectorielle/<int:analyse_id>/', EditAcheteurAnalyseSectorielleView.as_view(), name='edit-analyse-sectorielle-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-analyses-sectorielles/', DeleteAcheteurAnalyseSectorielleView.as_view(), name='delete-analyse-sectorielle-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-comptes-financiers/', ListAcheteurCompteFinancierView.as_view(), name='list-compte-financier-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-compte-financier/', SearchAcheteurCompteFinancierView.as_view(), name='search-compte-financier-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-compte-financier/', AddAcheteurCompteFinancierView.as_view(), name='add-compte-financier-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-compte-financier/<int:compte_financier_id>/', EditAcheteurCompteFinancierView.as_view(), name='edit-compte-financier-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-comptes-financiers/', DeleteAcheteurCompteFinancierView.as_view(), name='delete-compte-financier-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-operations-et-historiques/', ListAcheteurOperationHistoriqueView.as_view(), name='list-operation-et-historique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-operation-et-historique/', SearchAcheteurOperationHistoriqueView.as_view(), name='search-operation-et-historique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-operation-et-historique/', AddAcheteurOperationHistoriqueView.as_view(), name='add-operation-et-historique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-operation-et-historique/<int:operation_historique_id>/', EditAcheteurOperationHistoriqueView.as_view(), name='edit-operation-et-historique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-operations-et-historiques/', DeleteAcheteurOperationHistoriqueView.as_view(), name='delete-operation-et-historique-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-proprietes-et-actifs/', ListAcheteurProprieteActifView.as_view(), name='list-propriete-et-actif-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-propriete-et-actif/', SearchAcheteurProprieteActifView.as_view(), name='search-propriete-et-actif-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-propriete-et-actif/', AddAcheteurProprieteActifView.as_view(), name='add-propriete-et-actif-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-propriete-et-actif/<int:propriete_actif_id>/', EditAcheteurProprieteActifView.as_view(), name='edit-propriete-et-actif-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-proprietes-et-actifs/', DeleteAcheteurProprieteActifView.as_view(), name='delete-propriete-et-actif-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-conditions-achat/', ListAcheteurConditionAchatView.as_view(), name='list-condition-achat-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-condition-achat/', SearchAcheteurConditionAchatView.as_view(), name='search-condition-achat-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-condition-achat/', AddAcheteurConditionAchatView.as_view(), name='add-condition-achat-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-condition-achat/<int:condition_achat_id>/', EditAcheteurConditionAchatView.as_view(), name='edit-condition-achat-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-conditions-achat/', DeleteAcheteurConditionAchatView.as_view(), name='delete-condition-achat-acheteur'),
     
     ########################################################################################################################
     #                                                                                                                      #

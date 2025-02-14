@@ -390,3 +390,196 @@ class AnalyseSectorielleAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 admin.site.register(AnalyseSectorielle, AnalyseSectorielleAdmin)
+
+
+
+
+class CompteFinancierAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'cabinet', 'requis_pour_deposer', 'credibilite_cabinet', 'source', 'presentation',
+                     'date_compte', 'date_fin', 'date_compte_n_moins_un', 'date_fin_n_moins_un',
+                     'date_compte_n_moins_deux', 'date_fin_n_moins_deux', 'type_compte', 'devise', 'type_bilan',
+                     'couleur_commentaire', 'commentaire', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'cabinet', 'commentaire')
+    list_filter = ('credibilite_cabinet', 'devise', 'type_bilan', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'cabinet', 'requis_pour_deposer', 'credibilite_cabinet', 'source', 'presentation')
+        }),
+        ('Dates', {
+            'fields': ('date_compte', 'date_fin', 'date_compte_n_moins_un', 'date_fin_n_moins_un',
+                       'date_compte_n_moins_deux', 'date_fin_n_moins_deux')
+        }),
+        ('Compte', {
+            'fields': ('type_compte', 'devise', 'type_bilan')
+        }),
+        ('Commentaire', {
+            'fields': ('couleur_commentaire', 'commentaire')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(CompteFinancier, CompteFinancierAdmin)
+
+class OperationEtHistoriqueAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'commentaire_ratios', 'description_complete_activite', 'importation', 'historique',
+                     'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'commentaire_ratios', 'description_complete_activite')
+    list_filter = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'commentaire_ratios', 'description_complete_activite', 'importation', 'historique')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(OperationEtHistorique, OperationEtHistoriqueAdmin)
+
+class ProprieteEtActifAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'locaux', 'branche', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'locaux', 'branche')
+    list_filter = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'locaux', 'branche')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(ProprieteEtActif, ProprieteEtActifAdmin)
+
+class ConditionAchatAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'local', 'importation', 'les_clients', 'fournisseur', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'local', 'importation', 'les_clients', 'fournisseur')
+    list_filter = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'local', 'importation', 'les_clients', 'fournisseur')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(ConditionAchat, ConditionAchatAdmin)
+
+class ConditionDeVenteAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'local', 'recouvrement_de_dette_jugement', 'comportement_de_paiement',
+                     'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'local', 'recouvrement_de_dette_jugement', 'comportement_de_paiement')
+    list_filter = ('recouvrement_de_dette_jugement', 'comportement_de_paiement', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'local', 'recouvrement_de_dette_jugement', 'comportement_de_paiement')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(ConditionDeVente, ConditionDeVenteAdmin)
+
+class SommaireEtAvisAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'couleur_commentaire', 'commentaire', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'commentaire')
+    list_filter = ('couleur_commentaire', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'couleur_commentaire', 'commentaire')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(SommaireEtAvis, SommaireEtAvisAdmin)
+
+class AdviceAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'points_forts', 'points_faibles', 'dynamisme_court_terme', 'dynamisme_long_terme',
+                     'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'points_forts', 'points_faibles')
+    list_filter = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'points_forts', 'points_faibles', 'dynamisme_court_terme', 'dynamisme_long_terme')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(Advice, AdviceAdmin)
+
+class GeopoliticsAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'donnees_politiques', 'donnees_economiques', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'donnees_politiques', 'donnees_economiques')
+    list_filter = ('created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'donnees_politiques', 'donnees_economiques')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(Geopolitics, GeopoliticsAdmin)
+
+class BanquierAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville',
+                     'code_postal', 'couleur_commentaire', 'commentaire', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'nom_banque', 'numero_compte', 'commentaire')
+    list_filter = ('ville', 'couleur_commentaire', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        (None, {
+            'fields': ('acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville',
+                       'code_postal', 'couleur_commentaire', 'commentaire')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    readonly_fields = ('created_at', 'updated_at')
+
+admin.site.register(Banquier, BanquierAdmin)
+

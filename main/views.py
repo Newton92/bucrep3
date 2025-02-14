@@ -1084,7 +1084,6 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
 
 
 
-
 @login_required
 def dash_root_manage_acheteur_filiale(request, acheteur_id):
     token = request.GET.get('token')
@@ -1121,6 +1120,157 @@ def dash_root_manage_acheteur_filiale(request, acheteur_id):
     }
     return render(request, 'main/root/acheteur/filiale/dash_root_manage_acheteur_filiale.html', context)
 
+
+
+
+@login_required
+def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les structures d'entreprise
+    structure_list = StructureEntreprise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'structure_list': structure_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/analyse/dash_root_manage_acheteur_analyse_sectorielle.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les modeles de bilan
+    bilan_list = ModeleBilan.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'bilan_list': bilan_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/finance/dash_root_manage_acheteur_compte_financier.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/operation/dash_root_manage_acheteur_operation_historique.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    
+    # Récupérer tous les reference des locaux
+    locaux_list = ModeleBail.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'locaux_list': locaux_list,
+        
+    }
+    return render(request, 'main/root/acheteur/propriete/dash_root_manage_acheteur_propriete_actif.html', context)
 ########################################################################################################################
 #                                                                                                                      #
 #  VIEWS END FOR ROOT                                                                                                  #

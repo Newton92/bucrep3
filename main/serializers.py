@@ -931,3 +931,126 @@ class EditAnalyseSectorielleSerializer(serializers.ModelSerializer):
         fields = [
             'acheteur', 'couleur_commentaire', 'commentaire', 'impact_covid_19'
         ]
+
+
+
+
+
+
+
+
+
+
+
+class CompteFinancierSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    type_bilan_ref = ModeleBilanSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
+
+    class Meta:
+        model = CompteFinancier
+        fields = '__all__'
+        
+        
+class GetCompteFinancierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancier
+        fields = '__all__'
+
+
+
+class AddCompteFinancierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancier
+        fields = [
+            'acheteur', 'cabinet', 'requis_pour_deposer', 'credibilite_cabinet',
+            'source', 'presentation', 'date_compte', 'date_fin',
+            'date_compte_n_moins_un', 'date_fin_n_moins_un',
+            'date_compte_n_moins_deux', 'date_fin_n_moins_deux',
+            'type_compte', 'devise', 'type_bilan', 'type_bilan_ref', 'couleur_commentaire', 'commentaire'
+        ]
+
+
+
+class EditCompteFinancierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancier
+        fields = [
+            'acheteur', 'cabinet', 'requis_pour_deposer', 'credibilite_cabinet',
+            'source', 'presentation', 'date_compte', 'date_fin',
+            'date_compte_n_moins_un', 'date_fin_n_moins_un',
+            'date_compte_n_moins_deux', 'date_fin_n_moins_deux',
+            'type_compte', 'devise', 'type_bilan', 'type_bilan_ref', 'couleur_commentaire', 'commentaire'
+        ]
+
+
+
+
+
+
+
+
+
+class OperationEtHistoriqueSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+
+    class Meta:
+        model = OperationEtHistorique
+        fields = '__all__'
+
+class GetOperationEtHistoriqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OperationEtHistorique
+        fields = '__all__'
+
+class AddOperationEtHistoriqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OperationEtHistorique
+        fields = [
+            'acheteur', 'commentaire_ratios', 'description_complete_activite',
+            'importation', 'historique'
+        ]
+
+class EditOperationEtHistoriqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OperationEtHistorique
+        fields = [
+            'acheteur', 'commentaire_ratios', 'description_complete_activite',
+            'importation', 'historique'
+        ]
+
+
+
+
+
+
+
+
+
+
+class ProprieteEtActifSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    locaux_ref = ModeleBailSerializer()  # Utilisez un sérialiseur imbriqué pour la référence sur les locaux
+
+    class Meta:
+        model = ProprieteEtActif
+        fields = '__all__'
+
+class GetProprieteEtActifSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProprieteEtActif
+        fields = '__all__'
+
+class AddProprieteEtActifSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProprieteEtActif
+        fields = [
+            'acheteur', 'locaux', 'locaux_ref', 'branche'
+        ]
+
+class EditProprieteEtActifSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProprieteEtActif
+        fields = [
+            'acheteur', 'locaux', 'locaux_ref', 'branche'
+        ]

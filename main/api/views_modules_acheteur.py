@@ -1529,3 +1529,477 @@ class DeleteAcheteurFilialeView(APIView):
         count, _ = filiales.delete()
         return Response({'message': f'{count} filiales supprimées avec succès.'}, status=status.HTTP_200_OK)
 
+
+
+
+
+
+
+class ListAcheteurAnalyseSectorielleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+
+        analyse_list = AnalyseSectorielle.objects.filter(
+            acheteur_id=acheteur_id,
+        ).order_by('-created_at')
+
+        if search_term:
+            analyse_list = analyse_list.filter(
+                Q(commentaire__icontains=search_term) |
+                Q(impact_covid_19__icontains=search_term)
+            )
+
+        paginator = Paginator(analyse_list, 10)  # 10 enregistrements par page
+        analyse_page = paginator.get_page(page_number)
+        serializer = AnalyseSectorielleSerializer(analyse_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': analyse_page.has_next(),
+            'previous': analyse_page.has_previous()
+        })
+
+class SearchAcheteurAnalyseSectorielleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        analyse_list = AnalyseSectorielle.objects.filter(
+            Q(acheteur_id=acheteur_id) & (
+                Q(commentaire__icontains=search_term) |
+                Q(impact_covid_19__icontains=search_term)
+            )
+        ).order_by('-created_at')
+
+        paginator = Paginator(analyse_list, 10)  # 10 enregistrements par page
+        page_number = request.query_params.get('page', 1)
+        analyse_page = paginator.get_page(page_number)
+        serializer = AnalyseSectorielleSerializer(analyse_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': analyse_page.has_next(),
+            'previous': analyse_page.has_previous()
+        })
+
+class AddAcheteurAnalyseSectorielleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+
+        serializer = AddAnalyseSectorielleSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurAnalyseSectorielleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, analyse_id, *args, **kwargs):
+        analyse = AnalyseSectorielle.objects.filter(id=analyse_id, acheteur_id=acheteur_id).first()
+        if not analyse:
+            return Response({'detail': 'Analyse sectorielle non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetAnalyseSectorielleSerializer(analyse)
+        return Response(serializer.data)
+
+    def put(self, request, acheteur_id, analyse_id, *args, **kwargs):
+        analyse = AnalyseSectorielle.objects.filter(id=analyse_id, acheteur_id=acheteur_id).first()
+        if not analyse:
+            return Response({'detail': 'Analyse sectorielle non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditAnalyseSectorielleSerializer(analyse, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurAnalyseSectorielleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        analyses = AnalyseSectorielle.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not analyses.exists():
+            return Response({'error': 'Aucune analyse sectorielle trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = analyses.delete()
+        return Response({'message': f'{count} analyses sectorielles supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+class ListAcheteurCompteFinancierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+
+        compte_list = CompteFinancier.objects.filter(
+            acheteur_id=acheteur_id,
+        ).order_by('-created_at')
+
+        if search_term:
+            compte_list = compte_list.filter(
+                Q(commentaire__icontains=search_term) |
+                Q(cabinet__icontains=search_term)
+            )
+
+        paginator = Paginator(compte_list, 10)  # 10 enregistrements par page
+        compte_page = paginator.get_page(page_number)
+        serializer = CompteFinancierSerializer(compte_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': compte_page.has_next(),
+            'previous': compte_page.has_previous()
+        })
+
+
+
+class SearchAcheteurCompteFinancierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        compte_list = CompteFinancier.objects.filter(
+            Q(acheteur_id=acheteur_id) & (
+                Q(commentaire__icontains=search_term) |
+                Q(cabinet__icontains=search_term)
+            )
+        ).order_by('-created_at')
+
+        paginator = Paginator(compte_list, 10)  # 10 enregistrements par page
+        page_number = request.query_params.get('page', 1)
+        compte_page = paginator.get_page(page_number)
+        serializer = CompteFinancierSerializer(compte_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': compte_page.has_next(),
+            'previous': compte_page.has_previous()
+        })
+
+
+
+class AddAcheteurCompteFinancierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+
+        serializer = AddCompteFinancierSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class EditAcheteurCompteFinancierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, compte_financier_id, *args, **kwargs):
+        compte = CompteFinancier.objects.filter(id=compte_financier_id, acheteur_id=acheteur_id).first()
+        if not compte:
+            return Response({'detail': 'Compte financier non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetCompteFinancierSerializer(compte)
+        return Response(serializer.data)
+
+    def put(self, request, acheteur_id, compte_financier_id, *args, **kwargs):
+        compte = CompteFinancier.objects.filter(id=compte_financier_id, acheteur_id=acheteur_id).first()
+        if not compte:
+            return Response({'detail': 'Compte financier non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditCompteFinancierSerializer(compte, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class DeleteAcheteurCompteFinancierView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comptes = CompteFinancier.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not comptes.exists():
+            return Response({'error': 'Aucun compte financier trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = comptes.delete()
+        return Response({'message': f'{count} comptes financiers supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurOperationHistoriqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+
+        operation_list = OperationEtHistorique.objects.filter(
+            acheteur_id=acheteur_id,
+        ).order_by('-created_at')
+
+        if search_term:
+            operation_list = operation_list.filter(
+                Q(commentaire_ratios__icontains=search_term) |
+                Q(description_complete_activite__icontains=search_term) |
+                Q(importation__icontains=search_term) |
+                Q(historique__icontains=search_term)
+            )
+
+        paginator = Paginator(operation_list, 10)  # 10 enregistrements par page
+        operation_page = paginator.get_page(page_number)
+        serializer = OperationEtHistoriqueSerializer(operation_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': operation_page.has_next(),
+            'previous': operation_page.has_previous()
+        })
+
+class SearchAcheteurOperationHistoriqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        operation_list = OperationEtHistorique.objects.filter(
+            Q(acheteur_id=acheteur_id) & (
+                Q(commentaire_ratios__icontains=search_term) |
+                Q(description_complete_activite__icontains=search_term) |
+                Q(importation__icontains=search_term) |
+                Q(historique__icontains=search_term)
+            )
+        ).order_by('-created_at')
+
+        paginator = Paginator(operation_list, 10)  # 10 enregistrements par page
+        page_number = request.query_params.get('page', 1)
+        operation_page = paginator.get_page(page_number)
+        serializer = OperationEtHistoriqueSerializer(operation_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': operation_page.has_next(),
+            'previous': operation_page.has_previous()
+        })
+
+class AddAcheteurOperationHistoriqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+
+        serializer = AddOperationEtHistoriqueSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurOperationHistoriqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, operation_historique_id, *args, **kwargs):
+        operation = OperationEtHistorique.objects.filter(id=operation_historique_id, acheteur_id=acheteur_id).first()
+        if not operation:
+            return Response({'detail': 'Opération et historique non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetOperationEtHistoriqueSerializer(operation)
+        return Response(serializer.data)
+
+    def put(self, request, acheteur_id, operation_historique_id, *args, **kwargs):
+        operation = OperationEtHistorique.objects.filter(id=operation_historique_id, acheteur_id=acheteur_id).first()
+        if not operation:
+            return Response({'detail': 'Opération et historique non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditOperationEtHistoriqueSerializer(operation, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurOperationHistoriqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        operations = OperationEtHistorique.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not operations.exists():
+            return Response({'error': 'Aucune opération et historique trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = operations.delete()
+        return Response({'message': f'{count} opérations et historiques supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurProprieteActifView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+
+        propriete_list = ProprieteEtActif.objects.filter(
+            acheteur_id=acheteur_id,
+        ).order_by('-created_at')
+
+        if search_term:
+            propriete_list = propriete_list.filter(
+                Q(locaux__icontains=search_term) |
+                Q(locaux_ref__libelle__icontains=search_term) |
+                Q(branche__icontains=search_term)
+            )
+
+        paginator = Paginator(propriete_list, 10)  # 10 enregistrements par page
+        propriete_page = paginator.get_page(page_number)
+        serializer = ProprieteEtActifSerializer(propriete_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': propriete_page.has_next(),
+            'previous': propriete_page.has_previous()
+        })
+
+class SearchAcheteurProprieteActifView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        propriete_list = ProprieteEtActif.objects.filter(
+            Q(acheteur_id=acheteur_id) & (
+                Q(locaux__icontains=search_term) |
+                Q(locaux_ref__libelle__icontains=search_term) |
+                Q(branche__icontains=search_term)
+            )
+        ).order_by('-created_at')
+
+        paginator = Paginator(propriete_list, 10)  # 10 enregistrements par page
+        page_number = request.query_params.get('page', 1)
+        propriete_page = paginator.get_page(page_number)
+        serializer = ProprieteEtActifSerializer(propriete_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': propriete_page.has_next(),
+            'previous': propriete_page.has_previous()
+        })
+
+class AddAcheteurProprieteActifView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+
+        serializer = AddProprieteEtActifSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurProprieteActifView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, propriete_actif_id, *args, **kwargs):
+        propriete = ProprieteEtActif.objects.filter(id=propriete_actif_id, acheteur_id=acheteur_id).first()
+        if not propriete:
+            return Response({'detail': 'Propriété et actif non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetProprieteEtActifSerializer(propriete)
+        return Response(serializer.data)
+
+    def put(self, request, acheteur_id, propriete_actif_id, *args, **kwargs):
+        propriete = ProprieteEtActif.objects.filter(id=propriete_actif_id, acheteur_id=acheteur_id).first()
+        if not propriete:
+            return Response({'detail': 'Propriété et actif non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditProprieteEtActifSerializer(propriete, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurProprieteActifView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        proprietes = ProprieteEtActif.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not proprietes.exists():
+            return Response({'error': 'Aucune propriété et actif trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = proprietes.delete()
+        return Response({'message': f'{count} propriétés et actifs supprimés avec succès.'}, status=status.HTTP_200_OK)
