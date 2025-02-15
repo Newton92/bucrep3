@@ -1271,6 +1271,210 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
         
     }
     return render(request, 'main/root/acheteur/propriete/dash_root_manage_acheteur_propriete_actif.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/achat/dash_root_manage_acheteur_condition_achat.html', context)
+
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    
+    # Récupérer tous les modeles de comportement de paiement
+    paiement_list = ModeleComportementPaiement.objects.all()
+    
+    
+    # Récupérer tous les reference de comportement de jugement
+    jugement_list = ModeleComportementJugement.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'paiement_list': paiement_list,
+        'jugement_list': jugement_list,
+        
+    }
+    return render(request, 'main/root/acheteur/vente/dash_root_manage_acheteur_condition_vente.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/sommaire/dash_root_manage_acheteur_sommaire_avis.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_advice(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/advice/dash_root_manage_acheteur_advice.html', context)
+
+
+@login_required
+def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/geopolitique/dash_root_manage_acheteur_geopolitic.html', context)
+
+
+@login_required
+def dash_root_manage_acheteur_banking(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les villes
+    ville_list = Ville.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'ville_list': ville_list,
+        'coloration_list': coloration_list,
+        
+    }
+    return render(request, 'main/root/acheteur/banque/dash_root_manage_acheteur_banking.html', context)
 ########################################################################################################################
 #                                                                                                                      #
 #  VIEWS END FOR ROOT                                                                                                  #

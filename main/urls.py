@@ -80,6 +80,12 @@ urlpatterns = [
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/comptes-financiers/', dash_root_manage_acheteur_compte_financier, name='dash_root_manage_acheteur_compte_financier'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/operations-et-historiques/', dash_root_manage_acheteur_operation_historique, name='dash_root_manage_acheteur_operation_historique'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/proprietes-et-actifs/', dash_root_manage_acheteur_propriete_actif, name='dash_root_manage_acheteur_propriete_actif'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/conditions-achat/', dash_root_manage_acheteur_condition_achat, name='dash_root_manage_acheteur_condition_achat'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/conditions-vente/', dash_root_manage_acheteur_condition_vente, name='dash_root_manage_acheteur_condition_vente'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/sommaires-et-avis/', dash_root_manage_acheteur_sommaire_avis, name='dash_root_manage_acheteur_sommaire_avis'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/conseils/', dash_root_manage_acheteur_advice, name='dash_root_manage_acheteur_advice'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/geopolitiques/', dash_root_manage_acheteur_geopolitic, name='dash_root_manage_acheteur_geopolitic'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/donnees-bancaires/', dash_root_manage_acheteur_banking, name='dash_root_manage_acheteur_banking'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -345,6 +351,42 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/ajouter-une-condition-achat/', AddAcheteurConditionAchatView.as_view(), name='add-condition-achat-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-une-condition-achat/<int:condition_achat_id>/', EditAcheteurConditionAchatView.as_view(), name='edit-condition-achat-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-conditions-achat/', DeleteAcheteurConditionAchatView.as_view(), name='delete-condition-achat-acheteur'),
+    
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-conditions-vente/', ListAcheteurConditionVenteView.as_view(), name='list-condition-vente-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-condition-vente/', SearchAcheteurConditionVenteView.as_view(), name='search-condition-vente-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-une-condition-vente/', AddAcheteurConditionVenteView.as_view(), name='add-condition-vente-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-une-condition-vente/<int:condition_vente_id>/', EditAcheteurConditionVenteView.as_view(), name='edit-condition-vente-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-conditions-vente/', DeleteAcheteurConditionVenteView.as_view(), name='delete-condition-vente-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-sommaires-et-avis/', ListAcheteurSommaireAvisView.as_view(), name='list-sommaire-et-avis-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-sommaire-et-avis/', SearchAcheteurSommaireAvisView.as_view(), name='search-sommaire-et-avis-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-sommaire-et-avis/', AddAcheteurSommaireAvisView.as_view(), name='add-sommaire-et-avis-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-sommaire-et-avis/<int:sommaire_avis_id>/', EditAcheteurSommaireAvisView.as_view(), name='edit-sommaire-et-avis-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-sommaires-et-avis/', DeleteAcheteurSommaireAvisView.as_view(), name='delete-sommaire-et-avis-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-conseils/', ListAcheteurConseilView.as_view(), name='list-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-conseil/', SearchAcheteurConseilView.as_view(), name='search-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-conseil/', AddAcheteurConseilView.as_view(), name='add-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-conseil/<int:advice_id>/', EditAcheteurConseilView.as_view(), name='edit-conseil-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-conseils/', DeleteAcheteurConseilView.as_view(), name='delete-conseil-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-donnees-geopolitiques/', ListAcheteurGeopoliticView.as_view(), name='list-donnee-geopolitique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-donnee-geopolitique/', SearchAcheteurGeopoliticView.as_view(), name='search-donnee-geopolitique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-donnee-geopolitique/', AddAcheteurGeopoliticView.as_view(), name='add-donnee-geopolitique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-donnee-geopolitique/<int:geopolitic_id>/', EditAcheteurGeopoliticView.as_view(), name='edit-donnee-geopolitique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-donnees-geopolitiques/', DeleteAcheteurGeopoliticView.as_view(), name='delete-donnee-geopolitique-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/liste-des-donnees-bancaires/', ListAcheteurBankingView.as_view(), name='list-donnee-bancaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/recherche-donnee-bancaire/', SearchAcheteurBankingView.as_view(), name='search-donnee-bancaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/ajouter-un-donnee-bancaire/', AddAcheteurBankingView.as_view(), name='add-donnee-bancaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/editer-un-donnee-bancaire/<int:banking_id>/', EditAcheteurBankingView.as_view(), name='edit-donnee-bancaire-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/supprimer-des-donnees-bancaires/', DeleteAcheteurBankingView.as_view(), name='delete-donnee-bancaire-acheteur'),
     
     ########################################################################################################################
     #                                                                                                                      #

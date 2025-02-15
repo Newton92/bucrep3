@@ -1054,3 +1054,180 @@ class EditProprieteEtActifSerializer(serializers.ModelSerializer):
         fields = [
             'acheteur', 'locaux', 'locaux_ref', 'branche'
         ]
+
+
+
+
+class ConditionAchatSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+
+    class Meta:
+        model = ConditionAchat
+        fields = '__all__'
+
+class GetConditionAchatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionAchat
+        fields = '__all__'
+
+class AddConditionAchatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionAchat
+        fields = ['acheteur', 'local', 'importation', 'les_clients', 'fournisseur']
+
+class EditConditionAchatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionAchat
+        fields = ['acheteur', 'local', 'importation', 'les_clients', 'fournisseur']
+        
+        
+        
+
+
+
+
+
+
+class ConditionDeVenteSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    recouvrement_de_dette_jugement_ref = ModeleComportementJugementSerializer()
+    comportement_de_paiement_ref = ModeleComportementPaiementSerializer()
+
+    class Meta:
+        model = ConditionDeVente
+        fields = '__all__'
+
+class GetConditionDeVenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionDeVente
+        fields = '__all__'
+
+class AddConditionDeVenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionDeVente
+        fields = [
+            'acheteur', 'local', 'recouvrement_de_dette_jugement',
+            'recouvrement_de_dette_jugement_ref', 'comportement_de_paiement',
+            'comportement_de_paiement_ref'
+        ]
+
+class EditConditionDeVenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConditionDeVente
+        fields = [
+            'acheteur', 'local', 'recouvrement_de_dette_jugement',
+            'recouvrement_de_dette_jugement_ref', 'comportement_de_paiement',
+            'comportement_de_paiement_ref'
+        ]
+
+
+
+
+
+
+
+class SommaireEtAvisSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    couleur_commentaire = CouleurCommentaireSerializer()
+
+    class Meta:
+        model = SommaireEtAvis
+        fields = '__all__'
+
+class GetSommaireEtAvisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SommaireEtAvis
+        fields = '__all__'
+
+class AddSommaireEtAvisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SommaireEtAvis
+        fields = ['acheteur', 'couleur_commentaire', 'commentaire']
+
+class EditSommaireEtAvisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SommaireEtAvis
+        fields = ['acheteur', 'couleur_commentaire', 'commentaire']
+        
+        
+        
+
+
+
+
+
+class AdviceSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+
+    class Meta:
+        model = Advice
+        fields = '__all__'
+
+class GetAdviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Advice
+        fields = '__all__'
+
+class AddAdviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Advice
+        fields = ['acheteur', 'points_forts', 'points_faibles', 'dynamisme_court_terme', 'dynamisme_long_terme']
+
+class EditAdviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Advice
+        fields = ['acheteur', 'points_forts', 'points_faibles', 'dynamisme_court_terme', 'dynamisme_long_terme']
+
+
+
+
+class GeopoliticsSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+
+    class Meta:
+        model = Geopolitics
+        fields = '__all__'
+
+class GetGeopoliticsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Geopolitics
+        fields = '__all__'
+
+class AddGeopoliticsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Geopolitics
+        fields = ['acheteur', 'donnees_politiques', 'donnees_economiques']
+
+class EditGeopoliticsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Geopolitics
+        fields = ['acheteur', 'donnees_politiques', 'donnees_economiques']
+        
+        
+        
+
+
+
+class BanquierSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    ville = VilleSerializer()
+    couleur_commentaire = CouleurCommentaireSerializer()
+
+    class Meta:
+        model = Banquier
+        fields = '__all__'
+
+class GetBanquierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banquier
+        fields = '__all__'
+
+class AddBanquierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banquier
+        fields = ['acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville', 'code_postal', 'couleur_commentaire', 'commentaire']
+
+class EditBanquierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banquier
+        fields = ['acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville', 'code_postal', 'couleur_commentaire', 'commentaire']

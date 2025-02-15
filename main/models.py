@@ -1627,18 +1627,27 @@ class ConditionDeVente(models.Model):
         blank=True, 
         verbose_name=_("Local")
     )
+    
     recouvrement_de_dette_jugement = models.CharField(
         max_length=255, 
         choices=LIEN_COMPORTEMENT_JUGEMENT_CHOICE, 
         default="--------",
         verbose_name=_("Recouvrement de dette jugement")
     )
+    recouvrement_de_dette_jugement_ref = models.ForeignKey(
+        'ModeleComportementJugement', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence sur les locaux")
+    )
+    
     comportement_de_paiement = models.CharField(
         max_length=255, 
         choices=LIEN_COMPORTEMENT_PAIEMENT_CHOICE, 
         default="--------",
         verbose_name=_("Comportement de paiement")
     )
+    comportement_de_paiement_ref = models.ForeignKey(
+        'ModeleComportementPaiement', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence sur les locaux")
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
 
@@ -1711,11 +1720,11 @@ class Advice(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
 
     def __str__(self):
-        return f"Advice for {self.acheteur}"
+        return f"Conseils pour {self.acheteur}"
 
     class Meta:
-        verbose_name = _("Advice")
-        verbose_name_plural = _("Advices")
+        verbose_name = _("Conseil")
+        verbose_name_plural = _("Conseils")
 
 
 class Geopolitics(models.Model):
