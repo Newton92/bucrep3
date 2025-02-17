@@ -1855,26 +1855,6 @@ class Banquier(models.Model):
 
 
 
-##########################################################
-##########################################################
-# Debut Modules Additifs
-##########################################################
-##########################################################
-
-
-
-
-
-##########################################################
-##########################################################
-# Fin Modules Additifs
-##########################################################
-##########################################################
-
-
-
-
-
 
 
 
@@ -1914,8 +1894,8 @@ class ActifA(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='actifa_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='actifa_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Actif bilan anglais : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -1969,8 +1949,8 @@ class PassifA(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='passifa_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='passifa_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Passif bilan anglais : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2025,8 +2005,8 @@ class ResultatA(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='resultata_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='resultata_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Résultat bilan anglais : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2163,8 +2143,8 @@ class ActifC(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='actif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='actif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Actif bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2240,8 +2220,8 @@ class PassifC(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='passif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='passif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Passif bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2337,8 +2317,8 @@ class ResultatC(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='resultat_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='resultat_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Résultat bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2468,8 +2448,8 @@ class Assets(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='assets_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='assets_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Actif bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2542,8 +2522,8 @@ class Liabilities(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='liabilities_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='liabilities_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Passif bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2599,8 +2579,8 @@ class OffBalanceSheet(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='offbalance_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='offbalance_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Hors bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2673,8 +2653,8 @@ class Expenses(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='expenses_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='expenses_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Dépense bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2748,8 +2728,8 @@ class Products(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='product_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='product_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Produit bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2850,8 +2830,8 @@ class ActifS(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='actifs_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='actifs_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Actif bilan SYSCOHADA : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2933,8 +2913,8 @@ class PassifS(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='passifs_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='passifs_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Passif bilan SYSCOHADA : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -3033,8 +3013,8 @@ class ResultatS(models.Model):
         verbose_name=_("Date de mise à jour")
     )
     
-    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('User', related_name='resultats_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('CustomUser', related_name='resultats_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return "Résultat bilan SYSCOHADA : " + self.id + ". " +  self.acheteur + " (" + self.annee + ")"
@@ -3104,6 +3084,524 @@ class ResultatS(models.Model):
 ##########################################################
 ##########################################################
 # Fin Modules Bilan SysCohada
+##########################################################
+##########################################################
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut Modules Additifs
+##########################################################
+##########################################################
+class Logo(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='logo',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au logo")
+    )
+    image = models.ImageField(
+        _("Image"),
+        upload_to='logos/',
+        null=True,
+        blank=True,
+        help_text=_("Image du logo de l'entreprise")
+    )
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description du logo")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Logo")
+        verbose_name_plural = _("Logos")
+
+    def __str__(self):
+        return f"Logo de {self.acheteur.nom}"
+
+
+
+class Telephone(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='telephones',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au numéro de téléphone")
+    )
+    numero = models.CharField(
+        _("Numéro de téléphone"),
+        max_length=20,
+        help_text=_("Numéro de téléphone de l'entreprise")
+    )
+    type = models.CharField(
+        _("Type"),
+        max_length=50,
+        choices=[
+            ('fixe', _("Fixe")),
+            ('mobile', _("Mobile")),
+            ('fax', _("Fax")),
+        ],
+        help_text=_("Type de numéro de téléphone")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Téléphone")
+        verbose_name_plural = _("Téléphones")
+
+    def __str__(self):
+        return f"{self.numero} ({self.type}) - {self.acheteur.nom}"
+
+
+
+
+class Email(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='emails',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à l'adresse email")
+    )
+    adresse = models.EmailField(
+        _("Adresse email"),
+        help_text=_("Adresse email de l'entreprise")
+    )
+    type = models.CharField(
+        _("Type"),
+        max_length=50,
+        choices=[
+            ('professionnel', _("Professionnel")),
+            ('personnel', _("Personnel")),
+        ],
+        help_text=_("Type d'adresse email")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Email")
+        verbose_name_plural = _("Emails")
+
+    def __str__(self):
+        return f"{self.adresse} ({self.type}) - {self.acheteur.nom}"
+
+
+
+
+class Document(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='documents',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au document")
+    )
+    titre = models.CharField(
+        _("Titre"),
+        max_length=255,
+        help_text=_("Titre du document")
+    )
+    fichier = models.FileField(
+        _("Fichier"),
+        upload_to='documents/',
+        help_text=_("Fichier du document")
+    )
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description du document")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Document")
+        verbose_name_plural = _("Documents")
+
+    def __str__(self):
+        return f"{self.titre} - {self.acheteur.nom}"
+
+
+
+
+class Swot(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='swot',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à l'analyse SWOT")
+    )
+    forces = models.TextField(
+        _("Forces"),
+        null=True,
+        blank=True,
+        help_text=_("Forces de l'entreprise")
+    )
+    faiblesses = models.TextField(
+        _("Faiblesses"),
+        null=True,
+        blank=True,
+        help_text=_("Faiblesses de l'entreprise")
+    )
+    opportunites = models.TextField(
+        _("Opportunités"),
+        null=True,
+        blank=True,
+        help_text=_("Opportunités de l'entreprise")
+    )
+    menaces = models.TextField(
+        _("Menaces"),
+        null=True,
+        blank=True,
+        help_text=_("Menaces de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("SWOT")
+        verbose_name_plural = _("SWOT")
+
+    def __str__(self):
+        return f"SWOT de {self.acheteur.nom}"
+
+
+
+
+class ProcedureCollective(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='procedures_collectives',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à la procédure collective")
+    )
+    type_procedure = models.CharField(
+        _("Type de procédure"),
+        max_length=255,
+        help_text=_("Type de procédure collective")
+    )
+    date_ouverture = models.DateField(
+        _("Date d'ouverture"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'ouverture de la procédure")
+    )
+    date_cloture = models.DateField(
+        _("Date de clôture"),
+        null=True,
+        blank=True,
+        help_text=_("Date de clôture de la procédure")
+    )
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description de la procédure collective")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Procédure Collective")
+        verbose_name_plural = _("Procédures Collectives")
+
+    def __str__(self):
+        return f"{self.type_procedure} - {self.acheteur.nom}"
+
+
+
+
+class RegistreCommerce(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='registre_commerce',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au registre de commerce")
+    )
+    numero = models.CharField(
+        _("Numéro de registre de commerce"),
+        max_length=255,
+        help_text=_("Numéro de registre de commerce de l'entreprise")
+    )
+    date_inscription = models.DateField(
+        _("Date d'inscription"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'inscription au registre de commerce")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Registre de Commerce")
+        verbose_name_plural = _("Registres de Commerce")
+
+    def __str__(self):
+        return f"Registre de commerce de {self.acheteur.nom}"
+
+
+class Cnss(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='cnss',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au numéro de sécurité sociale")
+    )
+    numero = models.CharField(
+        _("Numéro de sécurité sociale"),
+        max_length=255,
+        help_text=_("Numéro de sécurité sociale de l'entreprise")
+    )
+    date_affiliation = models.DateField(
+        _("Date d'affiliation"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'affiliation à la sécurité sociale")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("CNSS")
+        verbose_name_plural = _("CNSS")
+
+    def __str__(self):
+        return f"CNSS de {self.acheteur.nom}"
+
+
+
+
+class NumeroIdentificationFiscale(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='numero_identification_fiscale',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au numéro d'identification fiscale")
+    )
+    numero = models.CharField(
+        _("Numéro d'identification fiscale"),
+        max_length=255,
+        help_text=_("Numéro d'identification fiscale de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Numéro d'Identification Fiscale")
+        verbose_name_plural = _("Numéros d'Identification Fiscale")
+
+    def __str__(self):
+        return f"Numéro d'identification fiscale de {self.acheteur.nom}"
+
+
+
+
+class NumeroIdentificationUnique(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='numero_identification_unique',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au numéro d'identification unique")
+    )
+    numero = models.CharField(
+        _("Numéro d'identification unique"),
+        max_length=255,
+        help_text=_("Numéro d'identification unique de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Numéro d'Identification Unique")
+        verbose_name_plural = _("Numéros d'Identification Unique")
+
+    def __str__(self):
+        return f"Numéro d'identification unique de {self.acheteur.nom}"
+
+
+
+
+class CodeNaceAcheteur(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='code_nace',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au code NACE")
+    )
+    code = models.CharField(
+        _("Code NACE"),
+        max_length=255,
+        help_text=_("Code NACE de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Code NACE Acheteur")
+        verbose_name_plural = _("Codes NACE Acheteur")
+
+    def __str__(self):
+        return f"Code NACE de {self.acheteur.nom}"
+
+
+
+
+
+class CodeNafAcheteur(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='code_naf',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au code NAF")
+    )
+    code = models.CharField(
+        _("Code NAF"),
+        max_length=255,
+        help_text=_("Code NAF de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Code NAF Acheteur")
+        verbose_name_plural = _("Codes NAF Acheteur")
+
+    def __str__(self):
+        return f"Code NAF de {self.acheteur.nom}"
+
+
+
+##########################################################
+##########################################################
+# Fin Modules Additifs
 ##########################################################
 ##########################################################
 
