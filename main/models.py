@@ -609,22 +609,6 @@ class ModeleRapport(models.Model):
         verbose_name_plural = _("Modèles de rapport")
 
 
-class ModeleAvisCommercial(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
-    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
-    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
-
-    def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
-
-    def is_empty(self):
-        return not self.code and not self.libelle
-
-    class Meta:
-        verbose_name = _("Modèle d'avis commercial")
-        verbose_name_plural = _("Modèles d'avis commercial")
-
 
 class ModeleAlarme(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
@@ -641,6 +625,7 @@ class ModeleAlarme(models.Model):
     class Meta:
         verbose_name = _("Modèle d'alarme")
         verbose_name_plural = _("Modèles d'alarme")
+
 
 
 class ModeleBilan(models.Model):
@@ -660,6 +645,7 @@ class ModeleBilan(models.Model):
         verbose_name_plural = _("Modèles de bilan")
 
 
+
 class ModeleBail(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
@@ -676,6 +662,7 @@ class ModeleBail(models.Model):
         verbose_name = _("Modèle de bail")
         verbose_name_plural = _("Modèles de bail")
         
+   
         
 class ModeleNotation(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
@@ -692,6 +679,26 @@ class ModeleNotation(models.Model):
     class Meta:
         verbose_name = _("Modèle de notation")
         verbose_name_plural = _("Modèles de notation")
+
+
+
+
+class ModeleAvisCommercial(models.Model):
+    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+
+    def is_empty(self):
+        return not self.code and not self.libelle
+
+    class Meta:
+        verbose_name = _("Modèle d'avis commercial")
+        verbose_name_plural = _("Modèles d'avis commercial")
+
 
 
 class ModeleRelationEntreprise(models.Model):
@@ -711,6 +718,7 @@ class ModeleRelationEntreprise(models.Model):
         verbose_name_plural = _("Modèles de relation entreprise")
 
 
+
 class ModeleInformationNotationEntreprise(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
@@ -728,6 +736,7 @@ class ModeleInformationNotationEntreprise(models.Model):
         verbose_name_plural = _("Modèles d'information sur notation entreprise")
 
 
+
 class ModeleComportementPaiement(models.Model):
     code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
@@ -743,6 +752,7 @@ class ModeleComportementPaiement(models.Model):
     class Meta:
         verbose_name = _("Modèle de comportement de paiement")
         verbose_name_plural = _("Modèles de comportement de paiement")
+
 
 
 class ModeleComportementJugement(models.Model):

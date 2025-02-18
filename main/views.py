@@ -378,6 +378,7 @@ def dash_root_forme_juridique(request):
     return render(request, 'main/root/juridique/dash_root_forme_juridique.html', context)
 
 
+
 @login_required
 def dash_root_domaine(request):
     token = request.GET.get('token')
@@ -400,6 +401,259 @@ def dash_root_domaine(request):
         
     }
     return render(request, 'main/root/domaine/dash_root_domaine.html', context)
+
+
+
+@login_required
+def dash_root_modele_bail(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_bail_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_bail.html', context)
+
+
+
+@login_required
+def dash_root_modele_bilan(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_bilan_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_bilan.html', context)
+
+
+
+@login_required
+def dash_root_modele_alarme(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_alarme_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_alarme.html', context)
+
+
+
+@login_required
+def dash_root_modele_rapport(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_rapport_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_rapport.html', context)
+
+
+
+@login_required
+def dash_root_modele_avis_commercial(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_avis_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_avis_commercial.html', context)
+
+
+
+@login_required
+def dash_root_modele_relation_entreprise(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_relation_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_relation_entreprise.html', context)
+
+
+
+@login_required
+def dash_root_modele_notation(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_notation_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_notation.html', context)
+
+
+
+@login_required
+def dash_root_modele_comportement_paiement(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_cpaiement_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_comportement_paiement.html', context)
+
+
+
+@login_required
+def dash_root_modele_comportement_jugement(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_cjugement_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_comportement_jugement.html', context)
+
+
+
+@login_required
+def dash_root_modele_information_notation_entreprise(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'modele_infone_active': 'active',
+        'modele_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/modele/dash_root_modele_information_notation_entreprise.html', context)
+
+
+
 
 @login_required
 def dash_root_poste(request):
@@ -426,6 +680,7 @@ def dash_root_poste(request):
         'domaines': domaines,  # Ajouter les domaines au contexte
     }
     return render(request, 'main/root/poste/dash_root_poste.html', context)
+
 
 
 @login_required
@@ -1412,6 +1667,8 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
     return render(request, 'main/root/acheteur/advice/dash_root_manage_acheteur_advice.html', context)
 
 
+
+
 @login_required
 def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
     token = request.GET.get('token')
@@ -1438,6 +1695,8 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
         
     }
     return render(request, 'main/root/acheteur/geopolitique/dash_root_manage_acheteur_geopolitic.html', context)
+
+
 
 
 @login_required

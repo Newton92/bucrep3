@@ -243,11 +243,6 @@ class ModeleRapportSerializer(BaseModeleSerializer):
         model = ModeleRapport
 
 
-class ModeleAvisCommercialSerializer(BaseModeleSerializer):
-    class Meta(BaseModeleSerializer.Meta):
-        model = ModeleAvisCommercial
-
-
 class ModeleAlarmeSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleAlarme
@@ -266,6 +261,11 @@ class ModeleBailSerializer(BaseModeleSerializer):
 class ModeleNotationSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleNotation
+
+
+class ModeleAvisCommercialSerializer(BaseModeleSerializer):
+    class Meta(BaseModeleSerializer.Meta):
+        model = ModeleAvisCommercial
 
 
 class ModeleRelationEntrepriseSerializer(BaseModeleSerializer):

@@ -9,6 +9,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from main.api.views_localisation import *
 from main.api.views_standard import *
+from main.api.views_modele import *
 from main.api.views_authentication import *
 from main.api.views_acheteur import *
 from main.api.views_modules_acheteur import *
@@ -57,6 +58,19 @@ urlpatterns = [
     path('root-dashboard/standard/liste-des-categories-entreprise', dash_root_category_entreprise, name='dash_root_category_entreprise'),
     path('root-dashboard/standard/liste-des-structures-entreprise', dash_root_structure_entreprise, name='dash_root_structure_entreprise'),
     path('root-dashboard/standard/liste-des-status-entreprise', dash_root_statut_entreprise, name='dash_root_statut_entreprise'),
+    
+    
+    path('root-dashboard/nomenclature/liste-des-modeles-de-bail', dash_root_modele_bail, name='dash_root_modele_bail'),
+    path('root-dashboard/nomenclature/liste-des-modeles-de-bilan', dash_root_modele_bilan, name='dash_root_modele_bilan'),
+    path('root-dashboard/nomenclature/liste-des-modeles-alarme', dash_root_modele_alarme, name='dash_root_modele_alarme'),
+    path('root-dashboard/nomenclature/liste-des-modeles-de-rapport', dash_root_modele_rapport, name='dash_root_modele_rapport'),
+    path('root-dashboard/nomenclature/liste-des-modeles-avis-commercial', dash_root_modele_avis_commercial, name='dash_root_modele_avis_commercial'),
+    path('root-dashboard/nomenclature/liste-des-modeles-de-relation-entreprise', dash_root_modele_relation_entreprise, name='dash_root_modele_relation_entreprise'),
+    path('root-dashboard/nomenclature/liste-des-modeles-de-notation', dash_root_modele_notation, name='dash_root_modele_notation'),
+    path('root-dashboard/nomenclature/liste-des-modeles-de-comportement-paiement', dash_root_modele_comportement_paiement, name='dash_root_modele_comportement_paiement'),
+    path('root-dashboard/nomenclature/liste-des-modeles-de-comportement-jugement', dash_root_modele_comportement_jugement, name='dash_root_modele_comportement_jugement'),
+    path('root-dashboard/nomenclature/liste-des-modeles-information-notation-entreprise', dash_root_modele_information_notation_entreprise, name='dash_root_modele_information_notation_entreprise'),
+    
     
     
     path('root-dashboard/acheteurs/liste-des-acheteurs', dash_root_acheteur, name='dash_root_acheteur'),
@@ -135,6 +149,7 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     
+    # === AUTHENTIFICATION SYSTEME === #
     path('api/login/', CustomLoginView.as_view(), name='login'),
     path('double-factor-auth/', CustomDoubleFactorAuthView.as_view(), name='double-factor-auth'),
     path('forgot-password/', CustomForgotPasswordView.as_view(), name='forgot-password'),
@@ -142,6 +157,13 @@ urlpatterns = [
     path('api/logout/', CustomLogoutView.as_view(), name='api-logout'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     
+    
+    
+    
+    
+    
+    
+    # === MODULES STANDARD === #
     path('api/liste-des-pays/', ListPaysView.as_view(), name='list-pays'),
     path('api/recherche-pays/', SearchPaysView.as_view(), name='search-pays'),
     path('api/ajouter-un-pays/', AddPaysView.as_view(), name='add-pays'),
@@ -238,6 +260,80 @@ urlpatterns = [
     path('api/editer-une-poste/<int:id>/', EditPosteView.as_view(), name='edit-poste'),
     path('api/supprimer-des-postes/', DeletePosteView.as_view(), name='delete-poste'),
     
+    
+    
+    
+    
+    
+    
+    # === MODULES NOMENCLATURE === #
+    path('api/liste-des-modeles-de-rapport/', ListModeleRapportView.as_view(), name='list-modele-de-rapport'),
+    path('api/recherche-modele-de-rapport/', SearchModeleRapportView.as_view(), name='search-modele-de-rapport'),
+    path('api/ajouter-un-modele-de-rapport/', AddModeleRapportView.as_view(), name='add-modele-de-rapport'),
+    path('api/editer-un-modele-de-rapport/<int:id>/', EditModeleRapportView.as_view(), name='edit-modele-de-rapport'),
+    path('api/supprimer-des-modeles-de-rapport/', DeleteModeleRapportView.as_view(), name='delete-modele-de-rapport'),
+    
+    path('api/liste-des-modeles-de-bilan/', ListModeleBilanView.as_view(), name='list-modele-de-bilan'),
+    path('api/recherche-modele-de-bilan/', SearchModeleBilanView.as_view(), name='search-modele-de-bilan'),
+    path('api/ajouter-un-modele-de-bilan/', AddModeleBilanView.as_view(), name='add-modele-de-bilan'),
+    path('api/editer-un-modele-de-bilan/<int:id>/', EditModeleBilanView.as_view(), name='edit-modele-de-bilan'),
+    path('api/supprimer-des-modeles-de-bilan/', DeleteModeleBilanView.as_view(), name='delete-modele-de-bilan'),
+    
+    path('api/liste-des-modeles-de-bail/', ListModeleBailView.as_view(), name='list-modele-de-bail'),
+    path('api/recherche-modele-de-bail/', SearchModeleBailView.as_view(), name='search-modele-de-bail'),
+    path('api/ajouter-un-modele-de-bail/', AddModeleBailView.as_view(), name='add-modele-de-bail'),
+    path('api/editer-un-modele-de-bail/<int:id>/', EditModeleBailView.as_view(), name='edit-modele-de-bail'),
+    path('api/supprimer-des-modeles-de-bail/', DeleteModeleBailView.as_view(), name='delete-modele-de-bail'),
+    
+    path('api/liste-des-modeles-de-notation/', ListModeleNotationView.as_view(), name='list-modele-de-notation'),
+    path('api/recherche-modele-de-notation/', SearchModeleNotationView.as_view(), name='search-modele-de-notation'),
+    path('api/ajouter-un-modele-de-notation/', AddModeleNotationView.as_view(), name='add-modele-de-notation'),
+    path('api/editer-un-modele-de-notation/<int:id>/', EditModeleNotationView.as_view(), name='edit-modele-de-notation'),
+    path('api/supprimer-des-modeles-de-notation/', DeleteModeleNotationView.as_view(), name='delete-modele-de-notation'),
+    
+    path('api/liste-des-modeles-alarme/', ListModeleAlarmeView.as_view(), name='list-modele-alarme'),
+    path('api/recherche-modele-alarme/', SearchModeleAlarmeView.as_view(), name='search-modele-alarme'),
+    path('api/ajouter-un-modele-alarme/', AddModeleAlarmeView.as_view(), name='add-modele-alarme'),
+    path('api/editer-un-modele-alarme/<int:id>/', EditModeleAlarmeView.as_view(), name='edit-modele-alarme'),
+    path('api/supprimer-des-modeles-alarme/', DeleteModeleAlarmeView.as_view(), name='delete-modele-alarme'),
+    
+    path('api/liste-des-modeles-avis-commerciaux/', ListModeleAvisCommercialView.as_view(), name='list-modele-avis-commercial'),
+    path('api/recherche-modele-avis-commercial/', SearchModeleAvisCommercialView.as_view(), name='search-modele-avis-commercial'),
+    path('api/ajouter-un-modele-avis-commercial/', AddModeleAvisCommercialView.as_view(), name='add-modele-avis-commercial'),
+    path('api/editer-un-modele-avis-commercial/<int:id>/', EditModeleAvisCommercialView.as_view(), name='edit-modele-avis-commercial'),
+    path('api/supprimer-des-modeles-avis-commerciaux/', DeleteModeleAvisCommercialView.as_view(), name='delete-modele-avis-commercial'),
+    
+    path('api/liste-des-modeles-de-relation-entreprise/', ListModeleRelationEntrepriseView.as_view(), name='list-modele-relation-entreprise'),
+    path('api/recherche-modele-de-relation-entreprise/', SearchModeleRelationEntrepriseView.as_view(), name='search-modele-relation-entreprise'),
+    path('api/ajouter-un-modele-de-relation-entreprise/', AddModeleRelationEntrepriseView.as_view(), name='add-modele-relation-entreprise'),
+    path('api/editer-un-modele-de-relation-entreprise/<int:id>/', EditModeleRelationEntrepriseView.as_view(), name='edit-modele-relation-entreprise'),
+    path('api/supprimer-des-modeles-de-relation-entreprise/', DeleteModeleRelationEntrepriseView.as_view(), name='delete-modele-relation-entreprise'),
+    
+    path('api/liste-des-modeles-information-notation-entreprise/', ListModeleInformationNotationEntrepriseView.as_view(), name='list-modele-information-notation-entreprise'),
+    path('api/recherche-modele-information-notation-entreprise/', SearchModeleInformationNotationEntrepriseView.as_view(), name='search-modele-information-notation-entreprise'),
+    path('api/ajouter-un-modele-information-notation-entreprise/', AddModeleInformationNotationEntrepriseView.as_view(), name='add-modele-information-notation-entreprise'),
+    path('api/editer-un-modele-information-notation-entreprise/<int:id>/', EditModeleInformationNotationEntrepriseView.as_view(), name='edit-modele-information-notation-entreprise'),
+    path('api/supprimer-des-modeles-information-notation-entreprise/', DeleteModeleInformationNotationEntrepriseView.as_view(), name='delete-modele-information-notation-entreprise'),
+    
+    path('api/liste-des-modeles-comportement-paiement/', ListModeleComportementPaiementView.as_view(), name='list-modele-comportement-paiement'),
+    path('api/recherche-modele-comportement-paiement/', SearchModeleComportementPaiementView.as_view(), name='search-modele-comportement-paiement'),
+    path('api/ajouter-un-modele-comportement-paiement/', AddModeleComportementPaiementView.as_view(), name='add-modele-comportement-paiement'),
+    path('api/editer-un-modele-comportement-paiement/<int:id>/', EditModeleComportementPaiementView.as_view(), name='edit-modele-comportement-paiement'),
+    path('api/supprimer-des-modeles-comportement-paiement/', DeleteModeleComportementPaiementView.as_view(), name='delete-modele-comportement-paiement'),
+    
+    path('api/liste-des-modeles-comportement-jugement/', ListModeleComportementJugementView.as_view(), name='list-modele-comportement-jugement'),
+    path('api/recherche-modele-comportement-jugement/', SearchModeleComportementJugementView.as_view(), name='search-modele-comportement-jugement'),
+    path('api/ajouter-un-modele-comportement-jugement/', AddModeleComportementJugementView.as_view(), name='add-modele-comportement-jugement'),
+    path('api/editer-un-modele-comportement-jugement/<int:id>/', EditModeleComportementJugementView.as_view(), name='edit-modele-comportement-jugement'),
+    path('api/supprimer-des-modeles-comportement-jugement/', DeleteModeleComportementJugementView.as_view(), name='delete-modele-comportement-jugement'),
+    
+    
+    
+    
+    
+    
+    
+    # === MODULES ACHETEUR === #
     path('api/liste-des-acheteurs/', ListAcheteurView.as_view(), name='list-acheteur'),
     path('api/recherche-acheteur/', SearchAcheteurView.as_view(), name='search-acheteur'),
     path('api/ajouter-un-acheteur/', AddAcheteurView.as_view(), name='add-acheteur'),
@@ -245,6 +341,14 @@ urlpatterns = [
     path('api/consulter-un-acheteur/<int:id>/', GetAcheteurView.as_view(), name='get-acheteur'),
     path('api/supprimer-des-acheteurs/', DeleteAcheteurView.as_view(), name='delete-acheteur'),
     
+    
+    
+    
+    
+    
+    
+    
+    # === MODULES LIAISONS ACHETEUR === #
     path('api/acheteur/<int:acheteur_id>/liste-des-resumes/', ListAcheteurResumeView.as_view(), name='list-resume-acheteur'),
     path('api/acheteur/<int:acheteur_id>/recherche-resume/', SearchAcheteurResumeView.as_view(), name='search-resume-acheteur'),
     path('api/acheteur/<int:acheteur_id>/ajouter-un-resume/', AddAcheteurResumeView.as_view(), name='add-resume-acheteur'),
