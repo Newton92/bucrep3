@@ -2717,6 +2717,1849 @@ class DeleteAcheteurBankingView(APIView):
 
         count, _ = banking.delete()
         return Response({'message': f'{count} données bancaires supprimées avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+class ListAcheteurActifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        biens_installations_equipements_min = request.query_params.get('biens_installations_equipements_min', '')
+        biens_installations_equipements_max = request.query_params.get('biens_installations_equipements_max', '')
+
+        try:
+            biens_installations_equipements_min = Decimal(biens_installations_equipements_min) if biens_installations_equipements_min else None
+            biens_installations_equipements_max = Decimal(biens_installations_equipements_max) if biens_installations_equipements_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de biens_installations_equipements_min et biens_installations_equipements_max doivent être des nombres décimaux valides.'}, status=400)
+
+        actif_list = ActifA.objects.filter(
+            Q(biens_installations_equipements__icontains=search_term) |
+            Q(inventaire__icontains=search_term) |
+            Q(creances_commerciales_autres_creances__icontains=search_term) |
+            Q(actif_impots_courant__icontains=search_term) |
+            Q(annee__annee__icontains=search_term) |
+            Q(caisses_banques__icontains=search_term)
+        ).order_by('-created_at')
+
+        if biens_installations_equipements_min is not None:
+            actif_list = actif_list.filter(biens_installations_equipements__gte=biens_installations_equipements_min)
+
+        if biens_installations_equipements_max is not None:
+            actif_list = actif_list.filter(biens_installations_equipements__lte=biens_installations_equipements_max)
+
+        paginator = Paginator(actif_list, 10)
+        actif_page = paginator.get_page(page_number)
+        serializer = ActifASerializer(actif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': actif_page.has_next(),
+            'previous': actif_page.has_previous()
+        })
+
+class SearchAcheteurActifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actif_list = ActifA.objects.filter(
+            Q(biens_installations_equipements__icontains=search_term) |
+            Q(inventaire__icontains=search_term) |
+            Q(creances_commerciales_autres_creances__icontains=search_term) |
+            Q(actif_impots_courant__icontains=search_term) |
+            Q(annee__annee__icontains=search_term) |
+            Q(caisses_banques__icontains=search_term)
+        ).order_by('-created_at')
+
+        paginator = Paginator(actif_list, 10)
+        page_number = request.query_params.get('page', 1)
+        actif_page = paginator.get_page(page_number)
+        serializer = ActifASerializer(actif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': actif_page.has_next(),
+            'previous': actif_page.has_previous()
+        })
+
+class AddAcheteurActifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddActifASerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurActifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, actif_id, *args, **kwargs):
+        actif = ActifA.objects.filter(id=actif_id).first()
+        if not actif:
+            return Response({'detail': 'Actif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetActifASerializer(actif)
+        return Response(serializer.data)
+
+    def put(self, request, actif_id, *args, **kwargs):
+        actif = ActifA.objects.filter(id=actif_id).first()
+        if not actif:
+            return Response({'detail': 'Actif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditActifASerializer(actif, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurActifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actifs = ActifA.objects.filter(id__in=ids)
+        if not actifs.exists():
+            return Response({'error': 'Aucun actif trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = actifs.delete()
+        return Response({'message': f'{count} actifs supprimés avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+
+
+
+
+
+
+
+
+class ListAcheteurPassifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        capital_reserves_min = request.query_params.get('capital_reserves_min', '')
+        capital_reserves_max = request.query_params.get('capital_reserves_max', '')
+
+        try:
+            capital_reserves_min = Decimal(capital_reserves_min) if capital_reserves_min else None
+            capital_reserves_max = Decimal(capital_reserves_max) if capital_reserves_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de capital_reserves_min et capital_reserves_max doivent être des nombres décimaux valides.'}, status=400)
+
+        passif_list = PassifA.objects.filter(
+            Q(capital_reserves__icontains=search_term) |
+            Q(capital_declare__icontains=search_term) |
+            Q(benefices_non_distribues__icontains=search_term) |
+            Q(pret_bancaire__icontains=search_term) |
+            Q(compte_courant_administrateurs__icontains=search_term) |
+            Q(dettes_commerciales_autres_dettes__icontains=search_term) |
+            Q(decouvert_bancaire__icontains=search_term) |
+            Q(impots__icontains=search_term) |
+            Q(annee__annee__icontains=search_term)
+        ).order_by('-created_at')
+
+        if capital_reserves_min is not None:
+            passif_list = passif_list.filter(capital_reserves__gte=capital_reserves_min)
+
+        if capital_reserves_max is not None:
+            passif_list = passif_list.filter(capital_reserves__lte=capital_reserves_max)
+
+        paginator = Paginator(passif_list, 10)
+        passif_page = paginator.get_page(page_number)
+        serializer = PassifASerializer(passif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': passif_page.has_next(),
+            'previous': passif_page.has_previous()
+        })
+
+class SearchAcheteurPassifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        passif_list = PassifA.objects.filter(
+            Q(capital_reserves__icontains=search_term) |
+            Q(capital_declare__icontains=search_term) |
+            Q(benefices_non_distribues__icontains=search_term) |
+            Q(pret_bancaire__icontains=search_term) |
+            Q(compte_courant_administrateurs__icontains=search_term) |
+            Q(dettes_commerciales_autres_dettes__icontains=search_term) |
+            Q(decouvert_bancaire__icontains=search_term) |
+            Q(impots__icontains=search_term)
+        ).order_by('-created_at')
+
+        paginator = Paginator(passif_list, 10)
+        page_number = request.query_params.get('page', 1)
+        passif_page = paginator.get_page(page_number)
+        serializer = PassifASerializer(passif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': passif_page.has_next(),
+            'previous': passif_page.has_previous()
+        })
+
+class AddAcheteurPassifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddPassifASerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurPassifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, passif_id, *args, **kwargs):
+        passif = PassifA.objects.filter(id=passif_id).first()
+        if not passif:
+            return Response({'detail': 'Passif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetPassifASerializer(passif)
+        return Response(serializer.data)
+
+    def put(self, request, passif_id, *args, **kwargs):
+        passif = PassifA.objects.filter(id=passif_id).first()
+        if not passif:
+            return Response({'detail': 'Passif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditPassifASerializer(passif, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurPassifAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        passifs = PassifA.objects.filter(id__in=ids)
+        if not passifs.exists():
+            return Response({'error': 'Aucun passif trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = passifs.delete()
+        return Response({'message': f'{count} passifs supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurResultatAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        produits_activites_ordinaires_min = request.query_params.get('produits_activites_ordinaires_min', '')
+        produits_activites_ordinaires_max = request.query_params.get('produits_activites_ordinaires_max', '')
+
+        try:
+            produits_activites_ordinaires_min = Decimal(produits_activites_ordinaires_min) if produits_activites_ordinaires_min else None
+            produits_activites_ordinaires_max = Decimal(produits_activites_ordinaires_max) if produits_activites_ordinaires_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de produits_activites_ordinaires_min et produits_activites_ordinaires_max doivent être des nombres décimaux valides.'}, status=400)
+
+        resultat_list = ResultatA.objects.filter(
+            Q(produits_activites_ordinaires__icontains=search_term) |
+            Q(ventes__icontains=search_term) |
+            Q(charges_exploitation__icontains=search_term) |
+            Q(frais_vente_generaux_administratifs__icontains=search_term) |
+            Q(autres_revenus__icontains=search_term) |
+            Q(frais_financier__icontains=search_term) |
+            Q(charge_impot_sur_revenu__icontains=search_term) |
+            Q(autres_elements_resultat_global__icontains=search_term) |
+            Q(annee__annee__icontains=search_term)
+        ).order_by('-created_at')
+
+        if produits_activites_ordinaires_min is not None:
+            resultat_list = resultat_list.filter(produits_activites_ordinaires__gte=produits_activites_ordinaires_min)
+
+        if produits_activites_ordinaires_max is not None:
+            resultat_list = resultat_list.filter(produits_activites_ordinaires__lte=produits_activites_ordinaires_max)
+
+        paginator = Paginator(resultat_list, 10)
+        resultat_page = paginator.get_page(page_number)
+        serializer = ResultatASerializer(resultat_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': resultat_page.has_next(),
+            'previous': resultat_page.has_previous()
+        })
+
+class SearchAcheteurResultatAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        resultat_list = ResultatA.objects.filter(
+            Q(produits_activites_ordinaires__icontains=search_term) |
+            Q(ventes__icontains=search_term) |
+            Q(charges_exploitation__icontains=search_term) |
+            Q(frais_vente_generaux_administratifs__icontains=search_term) |
+            Q(autres_revenus__icontains=search_term) |
+            Q(frais_financier__icontains=search_term) |
+            Q(charge_impot_sur_revenu__icontains=search_term) |
+            Q(autres_elements_resultat_global__icontains=search_term)
+        ).order_by('-created_at')
+
+        paginator = Paginator(resultat_list, 10)
+        page_number = request.query_params.get('page', 1)
+        resultat_page = paginator.get_page(page_number)
+        serializer = ResultatASerializer(resultat_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': resultat_page.has_next(),
+            'previous': resultat_page.has_previous()
+        })
+
+class AddAcheteurResultatAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddResultatASerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurResultatAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, resultat_id, *args, **kwargs):
+        resultat = ResultatA.objects.filter(id=resultat_id).first()
+        if not resultat:
+            return Response({'detail': 'Résultat non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetResultatASerializer(resultat)
+        return Response(serializer.data)
+
+    def put(self, request, resultat_id, *args, **kwargs):
+        resultat = ResultatA.objects.filter(id=resultat_id).first()
+        if not resultat:
+            return Response({'detail': 'Résultat non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditResultatASerializer(resultat, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurResultatAnglaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        resultats = ResultatA.objects.filter(id__in=ids)
+        if not resultats.exists():
+            return Response({'error': 'Aucun résultat trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = resultats.delete()
+        return Response({'message': f'{count} résultats supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurActifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        capital_souscrit_non_app_min = request.query_params.get('capital_souscrit_non_app_min', '')
+        capital_souscrit_non_app_max = request.query_params.get('capital_souscrit_non_app_max', '')
+
+        try:
+            capital_souscrit_non_app_min = Decimal(capital_souscrit_non_app_min) if capital_souscrit_non_app_min else None
+            capital_souscrit_non_app_max = Decimal(capital_souscrit_non_app_max) if capital_souscrit_non_app_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de capital_souscrit_non_app_min et capital_souscrit_non_app_max doivent être des nombres décimaux valides.'}, status=400)
+
+        actif_list = ActifC.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if capital_souscrit_non_app_min is not None:
+            actif_list = actif_list.filter(capital_souscrit_non_app__gte=capital_souscrit_non_app_min)
+
+        if capital_souscrit_non_app_max is not None:
+            actif_list = actif_list.filter(capital_souscrit_non_app__lte=capital_souscrit_non_app_max)
+
+        paginator = Paginator(actif_list, 10)
+        actif_page = paginator.get_page(page_number)
+        serializer = ActifCSerializer(actif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': actif_page.has_next(),
+            'previous': actif_page.has_previous()
+        })
+
+class SearchAcheteurActifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actif_list = ActifC.objects.filter(
+            Q(capital_souscrit_non_app__icontains=search_term) |
+            Q(frais_recherche_developpement__icontains=search_term) |
+            Q(brevet_licence_logiciels__icontains=search_term) |
+            Q(fonds_commercial__icontains=search_term) |
+            Q(autres_immobilisations_incorporelles__icontains=search_term) |
+            Q(terrains__icontains=search_term) |
+            Q(constructions__icontains=search_term) |
+            Q(materiels_et_outils__icontains=search_term) |
+            Q(materiel_de_transport__icontains=search_term) |
+            Q(autres_immos_corp__icontains=search_term) |
+            Q(immos_en_cours__icontains=search_term) |
+            Q(avances_et_acptes__icontains=search_term) |
+            Q(participations__icontains=search_term) |
+            Q(prets__icontains=search_term) |
+            Q(autres__icontains=search_term) |
+            Q(stocks_mp__icontains=search_term) |
+            Q(stocks_encours_mp__icontains=search_term) |
+            Q(stocks_pf__icontains=search_term) |
+            Q(stocks_encours_pf__icontains=search_term) |
+            Q(stocks_encours_services__icontains=search_term) |
+            Q(stocks_mses__icontains=search_term) |
+            Q(avances_acptes_verses__icontains=search_term) |
+            Q(clients_et_cptes_rattaches__icontains=search_term) |
+            Q(autres_creances__icontains=search_term) |
+            Q(valeurs_a_encaisser__icontains=search_term) |
+            Q(banques_cheques_postaux_caisse__icontains=search_term) |
+            Q(cca__icontains=search_term) |
+            Q(charges_a_repartir_et_frais_etablissement__icontains=search_term) |
+            Q(primes_de_rbt__icontains=search_term) |
+            Q(eca__icontains=search_term) |
+            Q(ene__icontains=search_term) |
+            Q(effectif__icontains=search_term) |
+            Q(amortissements__icontains=search_term) |
+            Q(provisions_stocks__icontains=search_term) |
+            Q(provisions_creances__icontains=search_term) |
+            Q(provisions_vmp__icontains=search_term)
+        ).order_by('-created_at')
+
+        paginator = Paginator(actif_list, 10)
+        page_number = request.query_params.get('page', 1)
+        actif_page = paginator.get_page(page_number)
+        serializer = ActifCSerializer(actif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': actif_page.has_next(),
+            'previous': actif_page.has_previous()
+        })
+
+class AddAcheteurActifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddActifCSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurActifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, actif_id, *args, **kwargs):
+        actif = ActifC.objects.filter(id=actif_id).first()
+        if not actif:
+            return Response({'detail': 'Actif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetActifCSerializer(actif)
+        return Response(serializer.data)
+
+    def put(self, request, actif_id, *args, **kwargs):
+        actif = ActifC.objects.filter(id=actif_id).first()
+        if not actif:
+            return Response({'detail': 'Actif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditActifCSerializer(actif, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class DeleteAcheteurActifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actifs = ActifC.objects.filter(id__in=ids)
+        if not actifs.exists():
+            return Response({'error': 'Aucun actif trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = actifs.delete()
+        return Response({'message': f'{count} actifs supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+class ListAcheteurPassifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        capital_social_min = request.query_params.get('capital_social_min', '')
+        capital_social_max = request.query_params.get('capital_social_max', '')
+
+        try:
+            capital_social_min = Decimal(capital_social_min) if capital_social_min else None
+            capital_social_max = Decimal(capital_social_max) if capital_social_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de capital_social_min et capital_social_max doivent être des nombres décimaux valides.'}, status=400)
+
+        passif_list = PassifC.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if capital_social_min is not None:
+            passif_list = passif_list.filter(capital_social__gte=capital_social_min)
+
+        if capital_social_max is not None:
+            passif_list = passif_list.filter(capital_social__lte=capital_social_max)
+
+        paginator = Paginator(passif_list, 10)
+        passif_page = paginator.get_page(page_number)
+        serializer = PassifCSerializer(passif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': passif_page.has_next(),
+            'previous': passif_page.has_previous()
+        })
+
+class SearchAcheteurPassifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        passif_list = PassifC.objects.filter(
+            Q(capital_social__icontains=search_term) |
+            Q(primes__icontains=search_term) |
+            Q(ecarts_de_reevaluation__icontains=search_term) |
+            Q(reserve__icontains=search_term) |
+            Q(report_a_nouveau__icontains=search_term) |
+            Q(resultat_exercice__icontains=search_term) |
+            Q(subv_invest__icontains=search_term) |
+            Q(provision_regl__icontains=search_term) |
+            Q(emprunts__icontains=search_term) |
+            Q(dette_credit_bail_contrat_assimile__icontains=search_term) |
+            Q(dettes_financiere_diverses__icontains=search_term) |
+            Q(provision_financiere_risque_charge__icontains=search_term) |
+            Q(dettes_fournisseurs_divers__icontains=search_term) |
+            Q(avance_et_acomptes_recu__icontains=search_term) |
+            Q(dettes__icontains=search_term) |
+            Q(dettes_fiscales_sociales__icontains=search_term) |
+            Q(autres_dettes__icontains=search_term) |
+            Q(banques_credit_escompte__icontains=search_term) |
+            Q(banque_credit_caisse__icontains=search_term) |
+            Q(banques_decouvert__icontains=search_term) |
+            Q(ecart_conversion_passif__icontains=search_term)
+        ).order_by('-created_at')
+
+        paginator = Paginator(passif_list, 10)
+        page_number = request.query_params.get('page', 1)
+        passif_page = paginator.get_page(page_number)
+        serializer = PassifCSerializer(passif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': passif_page.has_next(),
+            'previous': passif_page.has_previous()
+        })
+
+class AddAcheteurPassifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddPassifCSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurPassifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, passif_id, *args, **kwargs):
+        passif = PassifC.objects.filter(id=passif_id).first()
+        if not passif:
+            return Response({'detail': 'Passif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetPassifCSerializer(passif)
+        return Response(serializer.data)
+
+    def put(self, request, passif_id, *args, **kwargs):
+        passif = PassifC.objects.filter(id=passif_id).first()
+        if not passif:
+            return Response({'detail': 'Passif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditPassifCSerializer(passif, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurPassifClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        passifs = PassifC.objects.filter(id__in=ids)
+        if not passifs.exists():
+            return Response({'error': 'Aucun passif trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = passifs.delete()
+        return Response({'message': f'{count} passifs supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurResultatClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        vente_de_mdses_min = request.query_params.get('vente_de_mdses_min', '')
+        vente_de_mdses_max = request.query_params.get('vente_de_mdses_max', '')
+
+        try:
+            vente_de_mdses_min = Decimal(vente_de_mdses_min) if vente_de_mdses_min else None
+            vente_de_mdses_max = Decimal(vente_de_mdses_max) if vente_de_mdses_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de vente_de_mdses_min et vente_de_mdses_max doivent être des nombres décimaux valides.'}, status=400)
+
+        resultat_list = ResultatC.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if vente_de_mdses_min is not None:
+            resultat_list = resultat_list.filter(vente_de_mdses__gte=vente_de_mdses_min)
+
+        if vente_de_mdses_max is not None:
+            resultat_list = resultat_list.filter(vente_de_mdses__lte=vente_de_mdses_max)
+
+        paginator = Paginator(resultat_list, 10)
+        resultat_page = paginator.get_page(page_number)
+        serializer = ResultatCSerializer(resultat_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': resultat_page.has_next(),
+            'previous': resultat_page.has_previous()
+        })
+
+class SearchAcheteurResultatClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        resultat_list = ResultatC.objects.filter(
+            Q(vente_de_mdses__icontains=search_term) |
+            Q(ventes_de_produits_fabriques__icontains=search_term) |
+            Q(travaux_services_vendus__icontains=search_term) |
+            Q(produit_accessoires__icontains=search_term) |
+            Q(production_imblise__icontains=search_term) |
+            Q(subventions_exploitations__icontains=search_term) |
+            Q(production_stockee__icontains=search_term) |
+            Q(reprises_de_provision__icontains=search_term) |
+            Q(transferts_charges__icontains=search_term) |
+            Q(autres_produits__icontains=search_term) |
+            Q(achat_mdses__icontains=search_term) |
+            Q(variation_stock_mdses__icontains=search_term) |
+            Q(achat_mp_autres_appro__icontains=search_term) |
+            Q(var_stk_mp_app__icontains=search_term) |
+            Q(autres_achats__icontains=search_term) |
+            Q(variation_de_stocks_autres_appro__icontains=search_term) |
+            Q(transports__icontains=search_term) |
+            Q(services_ext__icontains=search_term) |
+            Q(impots_taxes__icontains=search_term) |
+            Q(autres_charges_valeur_ajoutee__icontains=search_term) |
+            Q(charges_personnel__icontains=search_term) |
+            Q(dotation_aux_amorts__icontains=search_term) |
+            Q(dotation_aux_provisions__icontains=search_term) |
+            Q(autres_charges_excedent_brute__icontains=search_term) |
+            Q(revenus_fin_assimiles__icontains=search_term) |
+            Q(prof_vmp_et_cre_actif_immo__icontains=search_term) |
+            Q(interets_produit_assim__icontains=search_term) |
+            Q(reprise_prov_et_transfert__icontains=search_term) |
+            Q(diff_positive_de_change__icontains=search_term) |
+            Q(prod_nets_cessions_vmp__icontains=search_term) |
+            Q(dap__icontains=search_term) |
+            Q(frais_fin_charges_assi__icontains=search_term) |
+            Q(diff_negatives_de_change__icontains=search_term) |
+            Q(ch_nettes_cessions_vmp__icontains=search_term) |
+            Q(sur_op_gestion_prod_except__icontains=search_term) |
+            Q(sur_op_en_capital_prod_except__icontains=search_term) |
+            Q(reprise_prov_transfert__icontains=search_term) |
+            Q(sur_op_gestion_charg_except__icontains=search_term) |
+            Q(sur_op_en_capital_charg_except__icontains=search_term) |
+            Q(dap_et_transfert_charg_except__icontains=search_term) |
+            Q(participation_salairies__icontains=search_term) |
+            Q(impot_sur_benefices__icontains=search_term)
+        ).order_by('-created_at')
+
+        paginator = Paginator(resultat_list, 10)
+        page_number = request.query_params.get('page', 1)
+        resultat_page = paginator.get_page(page_number)
+        serializer = ResultatCSerializer(resultat_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': resultat_page.has_next(),
+            'previous': resultat_page.has_previous()
+        })
+
+class AddAcheteurResultatClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddResultatCSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurResultatClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, resultat_id, *args, **kwargs):
+        resultat = ResultatC.objects.filter(id=resultat_id).first()
+        if not resultat:
+            return Response({'detail': 'Résultat non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetResultatCSerializer(resultat)
+        return Response(serializer.data)
+
+    def put(self, request, resultat_id, *args, **kwargs):
+        resultat = ResultatC.objects.filter(id=resultat_id).first()
+        if not resultat:
+            return Response({'detail': 'Résultat non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditResultatCSerializer(resultat, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurResultatClassiqueView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        resultats = ResultatC.objects.filter(id__in=ids)
+        if not resultats.exists():
+            return Response({'error': 'Aucun résultat trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = resultats.delete()
+        return Response({'message': f'{count} résultats supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+class ListAcheteurActifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        frais_developpement_prospection_min = request.query_params.get('frais_developpement_prospection_min', '')
+        frais_developpement_prospection_max = request.query_params.get('frais_developpement_prospection_max', '')
+
+        try:
+            frais_developpement_prospection_min = Decimal(frais_developpement_prospection_min) if frais_developpement_prospection_min else None
+            frais_developpement_prospection_max = Decimal(frais_developpement_prospection_max) if frais_developpement_prospection_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de frais_developpement_prospection_min et frais_developpement_prospection_max doivent être des nombres décimaux valides.'}, status=400)
+
+        actif_list = ActifS.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if frais_developpement_prospection_min is not None:
+            actif_list = actif_list.filter(frais_developpement_prospection__gte=frais_developpement_prospection_min)
+
+        if frais_developpement_prospection_max is not None:
+            actif_list = actif_list.filter(frais_developpement_prospection__lte=frais_developpement_prospection_max)
+
+        paginator = Paginator(actif_list, 10)
+        actif_page = paginator.get_page(page_number)
+        serializer = ActifSysCohadaSerializer(actif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': actif_page.has_next(),
+            'previous': actif_page.has_previous()
+        })
+
+class SearchAcheteurActifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actif_list = ActifS.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(actif_list, 10)
+        page_number = request.query_params.get('page', 1)
+        actif_page = paginator.get_page(page_number)
+        serializer = ActifSysCohadaSerializer(actif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': actif_page.has_next(),
+            'previous': actif_page.has_previous()
+        })
+
+class AddAcheteurActifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddActifSysCohadaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurActifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, actif_id, *args, **kwargs):
+        actif = ActifS.objects.filter(id=actif_id).first()
+        if not actif:
+            return Response({'detail': 'Actif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetActifSysCohadaSerializer(actif)
+        return Response(serializer.data)
+
+    def put(self, request, actif_id, *args, **kwargs):
+        actif = ActifS.objects.filter(id=actif_id).first()
+        if not actif:
+            return Response({'detail': 'Actif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditActifSysCohadaSerializer(actif, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurActifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actifs = ActifS.objects.filter(id__in=ids)
+        if not actifs.exists():
+            return Response({'error': 'Aucun actif trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = actifs.delete()
+        return Response({'message': f'{count} actifs supprimés avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+class ListAcheteurPassifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        capital_min = request.query_params.get('capital_min', '')
+        capital_max = request.query_params.get('capital_max', '')
+
+        try:
+            capital_min = Decimal(capital_min) if capital_min else None
+            capital_max = Decimal(capital_max) if capital_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de capital_min et capital_max doivent être des nombres décimaux valides.'}, status=400)
+
+        passif_list = PassifS.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if capital_min is not None:
+            passif_list = passif_list.filter(capital__gte=capital_min)
+
+        if capital_max is not None:
+            passif_list = passif_list.filter(capital__lte=capital_max)
+
+        paginator = Paginator(passif_list, 10)
+        passif_page = paginator.get_page(page_number)
+        serializer = PassifSysSCohadaSerializer(passif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': passif_page.has_next(),
+            'previous': passif_page.has_previous()
+        })
+
+class SearchAcheteurPassifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        passif_list = PassifS.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(passif_list, 10)
+        page_number = request.query_params.get('page', 1)
+        passif_page = paginator.get_page(page_number)
+        serializer = PassifSysSCohadaSerializer(passif_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': passif_page.has_next(),
+            'previous': passif_page.has_previous()
+        })
+
+class AddAcheteurPassifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddPassifSysCohadaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurPassifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, passif_id, *args, **kwargs):
+        passif = PassifS.objects.filter(id=passif_id).first()
+        if not passif:
+            return Response({'detail': 'Passif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetPassifSysCohadaSerializer(passif)
+        return Response(serializer.data)
+
+    def put(self, request, passif_id, *args, **kwargs):
+        passif = PassifS.objects.filter(id=passif_id).first()
+        if not passif:
+            return Response({'detail': 'Passif non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditPassifSysCohadaSerializer(passif, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurPassifSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        passifs = PassifS.objects.filter(id__in=ids)
+        if not passifs.exists():
+            return Response({'error': 'Aucun passif trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = passifs.delete()
+        return Response({'message': f'{count} passifs supprimés avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+
+class ListAcheteurResultatSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        ventes_marchandises_a_min = request.query_params.get('ventes_marchandises_a_min', '')
+        ventes_marchandises_a_max = request.query_params.get('ventes_marchandises_a_max', '')
+
+        try:
+            ventes_marchandises_a_min = Decimal(ventes_marchandises_a_min) if ventes_marchandises_a_min else None
+            ventes_marchandises_a_max = Decimal(ventes_marchandises_a_max) if ventes_marchandises_a_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de ventes_marchandises_a_min et ventes_marchandises_a_max doivent être des nombres décimaux valides.'}, status=400)
+
+        resultat_list = ResultatS.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if ventes_marchandises_a_min is not None:
+            resultat_list = resultat_list.filter(ventes_marchandises_a__gte=ventes_marchandises_a_min)
+
+        if ventes_marchandises_a_max is not None:
+            resultat_list = resultat_list.filter(ventes_marchandises_a__lte=ventes_marchandises_a_max)
+
+        paginator = Paginator(resultat_list, 10)
+        resultat_page = paginator.get_page(page_number)
+        serializer = ResultatSysCohadaSerializer(resultat_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': resultat_page.has_next(),
+            'previous': resultat_page.has_previous()
+        })
+
+class SearchAcheteurResultatSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        resultat_list = ResultatS.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(resultat_list, 10)
+        page_number = request.query_params.get('page', 1)
+        resultat_page = paginator.get_page(page_number)
+        serializer = ResultatSysCohadaSerializer(resultat_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': resultat_page.has_next(),
+            'previous': resultat_page.has_previous()
+        })
+
+class AddAcheteurResultatSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddResultatSysCohadaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurResultatSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, resultat_id, *args, **kwargs):
+        resultat = ResultatS.objects.filter(id=resultat_id).first()
+        if not resultat:
+            return Response({'detail': 'Résultat non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetResultatSysCohadaSerializer(resultat)
+        return Response(serializer.data)
+
+    def put(self, request, resultat_id, *args, **kwargs):
+        resultat = ResultatS.objects.filter(id=resultat_id).first()
+        if not resultat:
+            return Response({'detail': 'Résultat non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditResultatSysCohadaSerializer(resultat, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurResultatSysCohadaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        resultats = ResultatS.objects.filter(id__in=ids)
+        if not resultats.exists():
+            return Response({'error': 'Aucun résultat trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = resultats.delete()
+        return Response({'message': f'{count} résultats supprimés avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+
+class ListAcheteurAssetsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        caisse_min = request.query_params.get('caisse_min', '')
+        caisse_max = request.query_params.get('caisse_max', '')
+
+        try:
+            caisse_min = Decimal(caisse_min) if caisse_min else None
+            caisse_max = Decimal(caisse_max) if caisse_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de caisse_min et caisse_max doivent être des nombres décimaux valides.'}, status=400)
+
+        assets_list = Assets.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if caisse_min is not None:
+            assets_list = assets_list.filter(caisse__gte=caisse_min)
+
+        if caisse_max is not None:
+            assets_list = assets_list.filter(caisse__lte=caisse_max)
+
+        paginator = Paginator(assets_list, 10)
+        assets_page = paginator.get_page(page_number)
+        serializer = AssetsSerializer(assets_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': assets_page.has_next(),
+            'previous': assets_page.has_previous()
+        })
+
+class SearchAcheteurAssetsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        assets_list = Assets.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(assets_list, 10)
+        page_number = request.query_params.get('page', 1)
+        assets_page = paginator.get_page(page_number)
+        serializer = AssetsSerializer(assets_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': assets_page.has_next(),
+            'previous': assets_page.has_previous()
+        })
+
+class AddAcheteurAssetsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddAssetsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurAssetsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, asset_id, *args, **kwargs):
+        asset = Assets.objects.filter(id=asset_id).first()
+        if not asset:
+            return Response({'detail': 'Asset non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetAssetsSerializer(asset)
+        return Response(serializer.data)
+
+    def put(self, request, asset_id, *args, **kwargs):
+        asset = Assets.objects.filter(id=asset_id).first()
+        if not asset:
+            return Response({'detail': 'Asset non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditAssetsSerializer(asset, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurAssetsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        assets = Assets.objects.filter(id__in=ids)
+        if not assets.exists():
+            return Response({'error': 'Aucun asset trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = assets.delete()
+        return Response({'message': f'{count} assets supprimés avec succès.'}, status=status.HTTP_200_OK)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+class ListAcheteurLiabilitiesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        tresorerie_ccp_min = request.query_params.get('tresorerie_ccp_min', '')
+        tresorerie_ccp_max = request.query_params.get('tresorerie_ccp_max', '')
+
+        try:
+            tresorerie_ccp_min = Decimal(tresorerie_ccp_min) if tresorerie_ccp_min else None
+            tresorerie_ccp_max = Decimal(tresorerie_ccp_max) if tresorerie_ccp_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de tresorerie_ccp_min et tresorerie_ccp_max doivent être des nombres décimaux valides.'}, status=400)
+
+        liabilities_list = Liabilities.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if tresorerie_ccp_min is not None:
+            liabilities_list = liabilities_list.filter(tresorerie_ccp__gte=tresorerie_ccp_min)
+
+        if tresorerie_ccp_max is not None:
+            liabilities_list = liabilities_list.filter(tresorerie_ccp__lte=tresorerie_ccp_max)
+
+        paginator = Paginator(liabilities_list, 10)
+        liabilities_page = paginator.get_page(page_number)
+        serializer = LiabilitiesSerializer(liabilities_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': liabilities_page.has_next(),
+            'previous': liabilities_page.has_previous()
+        })
+
+class SearchAcheteurLiabilitiesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        liabilities_list = Liabilities.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(liabilities_list, 10)
+        page_number = request.query_params.get('page', 1)
+        liabilities_page = paginator.get_page(page_number)
+        serializer = LiabilitiesSerializer(liabilities_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': liabilities_page.has_next(),
+            'previous': liabilities_page.has_previous()
+        })
+
+class AddAcheteurLiabilitiesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddLiabilitiesSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurLiabilitiesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, liability_id, *args, **kwargs):
+        liability = Liabilities.objects.filter(id=liability_id).first()
+        if not liability:
+            return Response({'detail': 'Liability non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetLiabilitiesSerializer(liability)
+        return Response(serializer.data)
+
+    def put(self, request, liability_id, *args, **kwargs):
+        liability = Liabilities.objects.filter(id=liability_id).first()
+        if not liability:
+            return Response({'detail': 'Liability non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditLiabilitiesSerializer(liability, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurLiabilitiesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        liabilities = Liabilities.objects.filter(id__in=ids)
+        if not liabilities.exists():
+            return Response({'error': 'Aucune liability trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = liabilities.delete()
+        return Response({'message': f'{count} liabilities supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurOffBalanceSheetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        en_faveur_des_ets_credit_min = request.query_params.get('en_faveur_des_ets_credit_min', '')
+        en_faveur_des_ets_credit_max = request.query_params.get('en_faveur_des_ets_credit_max', '')
+
+        try:
+            en_faveur_des_ets_credit_min = Decimal(en_faveur_des_ets_credit_min) if en_faveur_des_ets_credit_min else None
+            en_faveur_des_ets_credit_max = Decimal(en_faveur_des_ets_credit_max) if en_faveur_des_ets_credit_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de en_faveur_des_ets_credit_min et en_faveur_des_ets_credit_max doivent être des nombres décimaux valides.'}, status=400)
+
+        off_balance_sheet_list = OffBalanceSheet.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if en_faveur_des_ets_credit_min is not None:
+            off_balance_sheet_list = off_balance_sheet_list.filter(en_faveur_des_ets_credit__gte=en_faveur_des_ets_credit_min)
+
+        if en_faveur_des_ets_credit_max is not None:
+            off_balance_sheet_list = off_balance_sheet_list.filter(en_faveur_des_ets_credit__lte=en_faveur_des_ets_credit_max)
+
+        paginator = Paginator(off_balance_sheet_list, 10)
+        off_balance_sheet_page = paginator.get_page(page_number)
+        serializer = OffBalanceSheetSerializer(off_balance_sheet_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': off_balance_sheet_page.has_next(),
+            'previous': off_balance_sheet_page.has_previous()
+        })
+
+class SearchAcheteurOffBalanceSheetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        off_balance_sheet_list = OffBalanceSheet.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(off_balance_sheet_list, 10)
+        page_number = request.query_params.get('page', 1)
+        off_balance_sheet_page = paginator.get_page(page_number)
+        serializer = OffBalanceSheetSerializer(off_balance_sheet_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': off_balance_sheet_page.has_next(),
+            'previous': off_balance_sheet_page.has_previous()
+        })
+
+class AddAcheteurOffBalanceSheetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddOffBalanceSheetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurOffBalanceSheetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, off_balance_sheet_id, *args, **kwargs):
+        off_balance_sheet = OffBalanceSheet.objects.filter(id=off_balance_sheet_id).first()
+        if not off_balance_sheet:
+            return Response({'detail': 'OffBalanceSheet non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetOffBalanceSheetSerializer(off_balance_sheet)
+        return Response(serializer.data)
+
+    def put(self, request, off_balance_sheet_id, *args, **kwargs):
+        off_balance_sheet = OffBalanceSheet.objects.filter(id=off_balance_sheet_id).first()
+        if not off_balance_sheet:
+            return Response({'detail': 'OffBalanceSheet non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditOffBalanceSheetSerializer(off_balance_sheet, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurOffBalanceSheetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        off_balance_sheets = OffBalanceSheet.objects.filter(id__in=ids)
+        if not off_balance_sheets.exists():
+            return Response({'error': 'Aucun off_balance_sheet trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = off_balance_sheets.delete()
+        return Response({'message': f'{count} off_balance_sheets supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurExpensesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        interet_charges_assimilee_dette_interbancaire_min = request.query_params.get('interet_charges_assimilee_dette_interbancaire_min', '')
+        interet_charges_assimilee_dette_interbancaire_max = request.query_params.get('interet_charges_assimilee_dette_interbancaire_max', '')
+
+        try:
+            interet_charges_assimilee_dette_interbancaire_min = Decimal(interet_charges_assimilee_dette_interbancaire_min) if interet_charges_assimilee_dette_interbancaire_min else None
+            interet_charges_assimilee_dette_interbancaire_max = Decimal(interet_charges_assimilee_dette_interbancaire_max) if interet_charges_assimilee_dette_interbancaire_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de interet_charges_assimilee_dette_interbancaire_min et interet_charges_assimilee_dette_interbancaire_max doivent être des nombres décimaux valides.'}, status=400)
+
+        expenses_list = Expenses.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if interet_charges_assimilee_dette_interbancaire_min is not None:
+            expenses_list = expenses_list.filter(interet_charges_assimilee_dette_interbancaire__gte=interet_charges_assimilee_dette_interbancaire_min)
+
+        if interet_charges_assimilee_dette_interbancaire_max is not None:
+            expenses_list = expenses_list.filter(interet_charges_assimilee_dette_interbancaire__lte=interet_charges_assimilee_dette_interbancaire_max)
+
+        paginator = Paginator(expenses_list, 10)
+        expenses_page = paginator.get_page(page_number)
+        serializer = ExpensesSerializer(expenses_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': expenses_page.has_next(),
+            'previous': expenses_page.has_previous()
+        })
+
+class SearchAcheteurExpensesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        expenses_list = Expenses.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(expenses_list, 10)
+        page_number = request.query_params.get('page', 1)
+        expenses_page = paginator.get_page(page_number)
+        serializer = ExpensesSerializer(expenses_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': expenses_page.has_next(),
+            'previous': expenses_page.has_previous()
+        })
+
+class AddAcheteurExpensesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddExpensesSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurExpensesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, expense_id, *args, **kwargs):
+        expense = Expenses.objects.filter(id=expense_id).first()
+        if not expense:
+            return Response({'detail': 'Expense non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetExpensesSerializer(expense)
+        return Response(serializer.data)
+
+    def put(self, request, expense_id, *args, **kwargs):
+        expense = Expenses.objects.filter(id=expense_id).first()
+        if not expense:
+            return Response({'detail': 'Expense non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditExpensesSerializer(expense, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurExpensesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        expenses = Expenses.objects.filter(id__in=ids)
+        if not expenses.exists():
+            return Response({'error': 'Aucune expense trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = expenses.delete()
+        return Response({'message': f'{count} expenses supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        interets_produit_assimile_sur_pret_avance_interbancaire_min = request.query_params.get('interets_produit_assimile_sur_pret_avance_interbancaire_min', '')
+        interets_produit_assimile_sur_pret_avance_interbancaire_max = request.query_params.get('interets_produit_assimile_sur_pret_avance_interbancaire_max', '')
+
+        try:
+            interets_produit_assimile_sur_pret_avance_interbancaire_min = Decimal(interets_produit_assimile_sur_pret_avance_interbancaire_min) if interets_produit_assimile_sur_pret_avance_interbancaire_min else None
+            interets_produit_assimile_sur_pret_avance_interbancaire_max = Decimal(interets_produit_assimile_sur_pret_avance_interbancaire_max) if interets_produit_assimile_sur_pret_avance_interbancaire_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de interets_produit_assimile_sur_pret_avance_interbancaire_min et interets_produit_assimile_sur_pret_avance_interbancaire_max doivent être des nombres décimaux valides.'}, status=400)
+
+        products_list = Products.objects.filter(
+            annee__annee__icontains=annee
+        ).order_by('-created_at')
+
+        if interets_produit_assimile_sur_pret_avance_interbancaire_min is not None:
+            products_list = products_list.filter(interets_produit_assimile_sur_pret_avance_interbancaire__gte=interets_produit_assimile_sur_pret_avance_interbancaire_min)
+
+        if interets_produit_assimile_sur_pret_avance_interbancaire_max is not None:
+            products_list = products_list.filter(interets_produit_assimile_sur_pret_avance_interbancaire__lte=interets_produit_assimile_sur_pret_avance_interbancaire_max)
+
+        paginator = Paginator(products_list, 10)
+        products_page = paginator.get_page(page_number)
+        serializer = ProductsSerializer(products_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': products_page.has_next(),
+            'previous': products_page.has_previous()
+        })
+
+class SearchAcheteurProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        products_list = Products.objects.filter(
+            # Ajoutez les champs de recherche ici
+        ).order_by('-created_at')
+
+        paginator = Paginator(products_list, 10)
+        page_number = request.query_params.get('page', 1)
+        products_page = paginator.get_page(page_number)
+        serializer = ProductsSerializer(products_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': products_page.has_next(),
+            'previous': products_page.has_previous()
+        })
+
+class AddAcheteurProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddProductsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EditAcheteurProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, product_id, *args, **kwargs):
+        product = Products.objects.filter(id=product_id).first()
+        if not product:
+            return Response({'detail': 'Product non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetProductsSerializer(product)
+        return Response(serializer.data)
+
+    def put(self, request, product_id, *args, **kwargs):
+        product = Products.objects.filter(id=product_id).first()
+        if not product:
+            return Response({'detail': 'Product non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditProductsSerializer(product, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        products = Products.objects.filter(id__in=ids)
+        if not products.exists():
+            return Response({'error': 'Aucun product trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = products.delete()
+        return Response({'message': f'{count} products supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
 
 
 

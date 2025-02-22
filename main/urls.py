@@ -100,6 +100,27 @@ urlpatterns = [
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/conseils/', dash_root_manage_acheteur_advice, name='dash_root_manage_acheteur_advice'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/geopolitiques/', dash_root_manage_acheteur_geopolitic, name='dash_root_manage_acheteur_geopolitic'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/donnees-bancaires/', dash_root_manage_acheteur_banking, name='dash_root_manage_acheteur_banking'),
+    
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/actifs/', dash_root_manage_acheteur_actif_anglais, name='dash_root_manage_acheteur_actif_anglais'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/passifs/', dash_root_manage_acheteur_passif_anglais, name='dash_root_manage_acheteur_passif_anglais'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/resultats/', dash_root_manage_acheteur_resultat_anglais, name='dash_root_manage_acheteur_resultat_anglais'),
+    
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-classique/actifs/', dash_root_manage_acheteur_actif_classique, name='dash_root_manage_acheteur_actif_classique'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-classique/passifs/', dash_root_manage_acheteur_passif_classique, name='dash_root_manage_acheteur_passif_classique'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-classique/resultats/', dash_root_manage_acheteur_resultat_classique, name='dash_root_manage_acheteur_resultat_classique'),
+    
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-syscohada/actifs/', dash_root_manage_acheteur_actif_syscohada, name='dash_root_manage_acheteur_actif_syscohada'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-syscohada/passifs/', dash_root_manage_acheteur_passif_syscohada, name='dash_root_manage_acheteur_passif_syscohada'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-syscohada/resultats/', dash_root_manage_acheteur_resultat_syscohada, name='dash_root_manage_acheteur_resultat_syscohada'),
+    
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/actifs/', dash_root_manage_acheteur_asset_bancaire, name='dash_root_manage_acheteur_asset_bancaire'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/passifs/', dash_root_manage_acheteur_liabilitie_bancaire, name='dash_root_manage_acheteur_liabilitie_bancaire'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/depenses/', dash_root_manage_acheteur_expense_bancaire, name='dash_root_manage_acheteur_expense_bancaire'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/produits/', dash_root_manage_acheteur_product_bancaire, name='dash_root_manage_acheteur_product_bancaire'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/donnees-hors-bilan/', dash_root_manage_acheteur_offbalancesheet_bancaire, name='dash_root_manage_acheteur_offbalancesheet_bancaire'),
+    
+    
+    
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
@@ -491,6 +512,98 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/ajouter-un-donnee-bancaire/', AddAcheteurBankingView.as_view(), name='add-donnee-bancaire-acheteur'),
     path('api/acheteur/<int:acheteur_id>/editer-un-donnee-bancaire/<int:banking_id>/', EditAcheteurBankingView.as_view(), name='edit-donnee-bancaire-acheteur'),
     path('api/acheteur/<int:acheteur_id>/supprimer-des-donnees-bancaires/', DeleteAcheteurBankingView.as_view(), name='delete-donnee-bancaire-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/liste-des-actifs/', ListAcheteurActifAnglaisView.as_view(), name='list-actif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/recherche-actif/', SearchAcheteurActifAnglaisView.as_view(), name='search-actif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/ajouter-un-actif/', AddAcheteurActifAnglaisView.as_view(), name='add-actif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/editer-un-actif/<int:actif_id>/', EditAcheteurActifAnglaisView.as_view(), name='edit-actif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/supprimer-des-actifs/', DeleteAcheteurActifAnglaisView.as_view(), name='delete-actif-anglais-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/liste-des-passifs/', ListAcheteurPassifAnglaisView.as_view(), name='list-passif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/recherche-passif/', SearchAcheteurPassifAnglaisView.as_view(), name='search-passif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/ajouter-un-passif/', AddAcheteurPassifAnglaisView.as_view(), name='add-passif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/editer-un-passif/<int:passif_id>/', EditAcheteurPassifAnglaisView.as_view(), name='edit-passif-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/supprimer-des-passifs/', DeleteAcheteurPassifAnglaisView.as_view(), name='delete-passif-anglais-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/liste-des-resultats/', ListAcheteurResultatAnglaisView.as_view(), name='list-resultat-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/recherche-resultat/', SearchAcheteurResultatAnglaisView.as_view(), name='search-resultat-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/ajouter-un-resultat/', AddAcheteurResultatAnglaisView.as_view(), name='add-resultat-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/editer-un-resultat/<int:resultat_id>/', EditAcheteurResultatAnglaisView.as_view(), name='edit-resultat-anglais-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-anglais/supprimer-des-resultats/', DeleteAcheteurResultatAnglaisView.as_view(), name='delete-resultat-anglais-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/liste-des-actifs/', ListAcheteurActifClassiqueView.as_view(), name='list-actif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/recherche-actif/', SearchAcheteurActifClassiqueView.as_view(), name='search-actif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/ajouter-un-actif/', AddAcheteurActifClassiqueView.as_view(), name='add-actif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/editer-un-actif/<int:actif_id>/', EditAcheteurActifClassiqueView.as_view(), name='edit-actif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/supprimer-des-actifs/', DeleteAcheteurActifClassiqueView.as_view(), name='delete-actif-classique-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/liste-des-passifs/', ListAcheteurPassifClassiqueView.as_view(), name='list-passif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/recherche-passif/', SearchAcheteurPassifClassiqueView.as_view(), name='search-passif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/ajouter-un-passif/', AddAcheteurPassifClassiqueView.as_view(), name='add-passif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/editer-un-passif/<int:passif_id>/', EditAcheteurPassifClassiqueView.as_view(), name='edit-passif-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/supprimer-des-passifs/', DeleteAcheteurPassifClassiqueView.as_view(), name='delete-passif-classique-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/liste-des-resultats/', ListAcheteurResultatClassiqueView.as_view(), name='list-resultat-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/recherche-resultat/', SearchAcheteurResultatClassiqueView.as_view(), name='search-resultat-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/ajouter-un-resultat/', AddAcheteurResultatClassiqueView.as_view(), name='add-resultat-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/editer-un-resultat/<int:resultat_id>/', EditAcheteurResultatClassiqueView.as_view(), name='edit-resultat-classique-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/supprimer-des-resultats/', DeleteAcheteurResultatClassiqueView.as_view(), name='delete-resultat-classique-acheteur'),
+    
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/liste-des-actifs/', ListAcheteurActifSysCohadaView.as_view(), name='list-actif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/recherche-actif/', SearchAcheteurActifSysCohadaView.as_view(), name='search-actif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/ajouter-un-actif/', AddAcheteurActifSysCohadaView.as_view(), name='add-actif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/editer-un-actif/<int:actif_id>/', EditAcheteurActifSysCohadaView.as_view(), name='edit-actif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/supprimer-des-actifs/', DeleteAcheteurActifSysCohadaView.as_view(), name='delete-actif-syscohada-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/liste-des-passifs/', ListAcheteurPassifSysCohadaView.as_view(), name='list-passif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/recherche-passif/', SearchAcheteurPassifSysCohadaView.as_view(), name='search-passif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/ajouter-un-passif/', AddAcheteurPassifSysCohadaView.as_view(), name='add-passif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/editer-un-passif/<int:passif_id>/', EditAcheteurPassifSysCohadaView.as_view(), name='edit-passif-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/supprimer-des-passifs/', DeleteAcheteurPassifSysCohadaView.as_view(), name='delete-passif-syscohada-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/liste-des-resultats/', ListAcheteurResultatSysCohadaView.as_view(), name='list-resultat-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/recherche-resultat/', SearchAcheteurResultatSysCohadaView.as_view(), name='search-resultat-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/ajouter-un-resultat/', AddAcheteurResultatSysCohadaView.as_view(), name='add-resultat-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/editer-un-resultat/<int:resultat_id>/', EditAcheteurResultatSysCohadaView.as_view(), name='edit-resultat-syscohada-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-syscohada/supprimer-des-resultats/', DeleteAcheteurResultatSysCohadaView.as_view(), name='delete-resultat-syscohada-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-actifs/', ListAcheteurAssetsView.as_view(), name='list-assets-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/recherche-actif/', SearchAcheteurAssetsView.as_view(), name='search-assets-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/ajouter-un-actif/', AddAcheteurAssetsView.as_view(), name='add-assets-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/editer-un-actif/<int:asset_id>/', EditAcheteurAssetsView.as_view(), name='edit-assets-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/supprimer-des-actifs/', DeleteAcheteurAssetsView.as_view(), name='delete-assets-acheteur'),
+
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-passifs/', ListAcheteurLiabilitiesView.as_view(), name='list-liabilities-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/recherche-passif/', SearchAcheteurLiabilitiesView.as_view(), name='search-liabilities-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/ajouter-un-passif/', AddAcheteurLiabilitiesView.as_view(), name='add-liabilities-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/editer-un-passif/<int:liability_id>/', EditAcheteurLiabilitiesView.as_view(), name='edit-liabilities-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/supprimer-des-lipassifsabilities/', DeleteAcheteurLiabilitiesView.as_view(), name='delete-liabilities-acheteur'),
+
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-depenses/', ListAcheteurExpensesView.as_view(), name='list-expenses-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/recherche-depense/', SearchAcheteurExpensesView.as_view(), name='search-expenses-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/ajouter-une-depense/', AddAcheteurExpensesView.as_view(), name='add-expenses-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/editer-une-depense/<int:expense_id>/', EditAcheteurExpensesView.as_view(), name='edit-expenses-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/supprimer-des-depenses/', DeleteAcheteurExpensesView.as_view(), name='delete-expenses-acheteur'),
+
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-produits/', ListAcheteurProductsView.as_view(), name='list-products-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/recherche-produit/', SearchAcheteurProductsView.as_view(), name='search-products-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/ajouter-un-produit/', AddAcheteurProductsView.as_view(), name='add-products-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/editer-un-produit/<int:product_id>/', EditAcheteurProductsView.as_view(), name='edit-products-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/supprimer-des-produits/', DeleteAcheteurProductsView.as_view(), name='delete-products-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-donnees-hors-bilan/', ListAcheteurOffBalanceSheetView.as_view(), name='list-off-balance-sheet-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/recherche-donnee-hors-bilan/', SearchAcheteurOffBalanceSheetView.as_view(), name='search-off-balance-sheet-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/ajouter-une-donnee-hors-bilan/', AddAcheteurOffBalanceSheetView.as_view(), name='add-off-balance-sheet-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/editer-une-donnee-hors-bilan/<int:off_balance_sheet_id>/', EditAcheteurOffBalanceSheetView.as_view(), name='edit-off-balance-sheet-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-bancaire/supprimer-des-donnees-hors-bilan/', DeleteAcheteurOffBalanceSheetView.as_view(), name='delete-off-balance-sheet-acheteur'),
+
     
     ########################################################################################################################
     #                                                                                                                      #

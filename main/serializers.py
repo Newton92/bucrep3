@@ -1231,3 +1231,1424 @@ class EditBanquierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banquier
         fields = ['acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville', 'code_postal', 'couleur_commentaire', 'commentaire']
+
+
+
+
+
+
+
+class ActifASerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ActifA
+        fields = '__all__'
+
+    def validate_biens_installations_equipements(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_inventaire(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_creances_commerciales_autres_creances(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_actif_impots_courant(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_caisses_banques(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+class AddActifASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifA
+        fields = [
+            "id", "annee", "acheteur", "biens_installations_equipements", "inventaire",
+            "creances_commerciales_autres_creances", "actif_impots_courant", "caisses_banques",
+            "created_by", "updated_by"
+        ]
+
+class GetActifASerializer(serializers.ModelSerializer):
+    # acheteur = AcheteurSerializer()
+    # annee = AnneeSerializer()
+    # created_by = CustomUserSerializer()
+    # updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ActifA
+        fields = '__all__'
+
+class EditActifASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifA
+        fields = [
+            "id", "annee", "acheteur", "biens_installations_equipements", "inventaire",
+            "creances_commerciales_autres_creances", "actif_impots_courant", "caisses_banques",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+class PassifASerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = PassifA
+        fields = '__all__'
+
+    def validate_capital_reserves(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_capital_declare(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_benefices_non_distribues(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_pret_bancaire(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_compte_courant_administrateurs(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dettes_commerciales_autres_dettes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_decouvert_bancaire(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_impots(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+class AddPassifASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifA
+        fields = [
+            "id", "annee", "acheteur", "capital_reserves", "capital_declare",
+            "benefices_non_distribues", "pret_bancaire", "compte_courant_administrateurs",
+            "dettes_commerciales_autres_dettes", "decouvert_bancaire", "impots",
+            "created_by", "updated_by"
+        ]
+
+class GetPassifASerializer(serializers.ModelSerializer):
+    # acheteur = AcheteurSerializer()
+    # annee = AnneeSerializer()
+    # created_by = CustomUserSerializer()
+    # updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = PassifA
+        fields = '__all__'
+
+class EditPassifASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifA
+        fields = [
+            "id", "annee", "acheteur", "capital_reserves", "capital_declare",
+            "benefices_non_distribues", "pret_bancaire", "compte_courant_administrateurs",
+            "dettes_commerciales_autres_dettes", "decouvert_bancaire", "impots",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+class ResultatASerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ResultatA
+        fields = '__all__'
+
+    def validate_produits_activites_ordinaires(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_ventes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_charges_exploitation(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_frais_vente_generaux_administratifs(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_revenus(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_frais_financier(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_charge_impot_sur_revenu(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_elements_resultat_global(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+class AddResultatASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatA
+        fields = [
+            "id", "annee", "acheteur", "produits_activites_ordinaires", "ventes",
+            "charges_exploitation", "frais_vente_generaux_administratifs",
+            "autres_revenus", "frais_financier", "charge_impot_sur_revenu",
+            "autres_elements_resultat_global", "created_by", "updated_by"
+        ]
+
+class GetResultatASerializer(serializers.ModelSerializer):
+    # acheteur = AcheteurSerializer()
+    # annee = AnneeSerializer()
+    # created_by = CustomUserSerializer()
+    # updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ResultatA
+        fields = '__all__'
+
+class EditResultatASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatA
+        fields = [
+            "id", "annee", "acheteur", "produits_activites_ordinaires", "ventes",
+            "charges_exploitation", "frais_vente_generaux_administratifs",
+            "autres_revenus", "frais_financier", "charge_impot_sur_revenu",
+            "autres_elements_resultat_global", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+class ActifCSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ActifC
+        fields = '__all__'
+
+    def validate_capital_souscrit_non_app(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_frais_recherche_developpement(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_brevet_licence_logiciels(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_fonds_commercial(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_immobilisations_incorporelles(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_terrains(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_constructions(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_materiels_et_outils(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_materiel_de_transport(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_immos_corp(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_immos_en_cours(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_avances_et_acptes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_participations(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_prets(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_stocks_mp(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_stocks_encours_mp(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_stocks_pf(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_stocks_encours_pf(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_stocks_encours_services(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_stocks_mses(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_avances_acptes_verses(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_clients_et_cptes_rattaches(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_creances(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_valeurs_a_encaisser(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_banques_cheques_postaux_caisse(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_cca(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_charges_a_repartir_et_frais_etablissement(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_primes_de_rbt(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_eca(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_ene(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_effectif(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_amortissements(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_provisions_stocks(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_provisions_creances(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_provisions_vmp(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+class AddActifCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifC
+        fields = [
+            "id", "annee", "acheteur", "capital_souscrit_non_app", "frais_recherche_developpement",
+            "brevet_licence_logiciels", "fonds_commercial", "autres_immobilisations_incorporelles",
+            "terrains", "constructions", "materiels_et_outils", "materiel_de_transport",
+            "autres_immos_corp", "immos_en_cours", "avances_et_acptes", "participations",
+            "prets", "autres", "stocks_mp", "stocks_encours_mp", "stocks_pf",
+            "stocks_encours_pf", "stocks_encours_services", "stocks_mses", "avances_acptes_verses",
+            "clients_et_cptes_rattaches", "autres_creances", "valeurs_a_encaisser",
+            "banques_cheques_postaux_caisse", "cca", "charges_a_repartir_et_frais_etablissement",
+            "primes_de_rbt", "eca", "eene", "effectif", "amortissements", "provisions_stocks",
+            "provisions_creances", "provisions_vmp", "created_by", "updated_by"
+        ]
+
+class GetActifCSerializer(serializers.ModelSerializer):
+    # acheteur = AcheteurSerializer()
+    # annee = AnneeSerializer()
+    # created_by = CustomUserSerializer()
+    # updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ActifC
+        fields = '__all__'
+
+class EditActifCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifC
+        fields = [
+            "id", "annee", "acheteur", "capital_souscrit_non_app", "frais_recherche_developpement",
+            "brevet_licence_logiciels", "fonds_commercial", "autres_immobilisations_incorporelles",
+            "terrains", "constructions", "materiels_et_outils", "materiel_de_transport",
+            "autres_immos_corp", "immos_en_cours", "avances_et_acptes", "participations",
+            "prets", "autres", "stocks_mp", "stocks_encours_mp", "stocks_pf",
+            "stocks_encours_pf", "stocks_encours_services", "stocks_mses", "avances_acptes_verses",
+            "clients_et_cptes_rattaches", "autres_creances", "valeurs_a_encaisser",
+            "banques_cheques_postaux_caisse", "cca", "charges_a_repartir_et_frais_etablissement",
+            "primes_de_rbt", "eca", "eene", "effectif", "amortissements", "provisions_stocks",
+            "provisions_creances", "provisions_vmp", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+
+class PassifCSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = PassifC
+        fields = '__all__'
+
+    def validate_capital_social(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_primes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_ecarts_de_reevaluation(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_reserve(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_report_a_nouveau(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_resultat_exercice(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_subv_invest(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_provision_regl(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_emprunts(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dette_credit_bail_contrat_assimile(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dettes_financiere_diverses(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_provision_financiere_risque_charge(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dettes_fournisseurs_divers(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_avance_et_acomptes_recu(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dettes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dettes_fiscales_sociales(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_dettes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_banques_credit_escompte(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_banque_credit_caisse(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_banques_decouvert(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_ecart_conversion_passif(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+class AddPassifCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifC
+        fields = [
+            "id", "annee", "acheteur", "capital_social", "primes", "ecarts_de_reevaluation",
+            "reserve", "report_a_nouveau", "resultat_exercice", "subv_invest",
+            "provision_regl", "emprunts", "dette_credit_bail_contrat_assimile",
+            "dettes_financiere_diverses", "provision_financiere_risque_charge",
+            "dettes_fournisseurs_divers", "avance_et_acomptes_recu", "dettes",
+            "dettes_fiscales_sociales", "autres_dettes", "banques_credit_escompte",
+            "banque_credit_caisse", "banques_decouvert", "ecart_conversion_passif",
+            "created_by", "updated_by"
+        ]
+
+class GetPassifCSerializer(serializers.ModelSerializer):
+    # acheteur = AcheteurSerializer()
+    # annee = AnneeSerializer()
+    # created_by = CustomUserSerializer()
+    # updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = PassifC
+        fields = '__all__'
+
+class EditPassifCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifC
+        fields = [
+            "id", "annee", "acheteur", "capital_social", "primes", "ecarts_de_reevaluation",
+            "reserve", "report_a_nouveau", "resultat_exercice", "subv_invest",
+            "provision_regl", "emprunts", "dette_credit_bail_contrat_assimile",
+            "dettes_financiere_diverses", "provision_financiere_risque_charge",
+            "dettes_fournisseurs_divers", "avance_et_acomptes_recu", "dettes",
+            "dettes_fiscales_sociales", "autres_dettes", "banques_credit_escompte",
+            "banque_credit_caisse", "banques_decouvert", "ecart_conversion_passif",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ResultatCSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ResultatC
+        fields = '__all__'
+
+    def validate_vente_de_mdses(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_ventes_de_produits_fabriques(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_travaux_services_vendus(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_produit_accessoires(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_production_imblise(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_subventions_exploitations(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_production_stockee(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_reprises_de_provision(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_transferts_charges(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_produits(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_achat_mdses(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_variation_stock_mdses(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_achat_mp_autres_appro(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_var_stk_mp_app(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_achats(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_variation_de_stocks_autres_appro(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_transports(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_services_ext(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_impots_taxes(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_charges_valeur_ajoutee(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_charges_personnel(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dotation_aux_amorts(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dotation_aux_provisions(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_autres_charges_excedent_brute(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_revenus_fin_assimiles(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_prof_vmp_et_cre_actif_immo(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_interets_produit_assim(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_reprise_prov_et_transfert(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_diff_positive_de_change(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_prod_nets_cessions_vmp(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dap(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_frais_fin_charges_assi(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_diff_negatives_de_change(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_ch_nettes_cessions_vmp(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_sur_op_gestion_prod_except(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_sur_op_en_capital_prod_except(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_reprise_prov_transfert(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_sur_op_gestion_charg_except(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_sur_op_en_capital_charg_except(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_dap_et_transfert_charg_except(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+class AddResultatCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatC
+        fields = [
+            "id", "annee", "acheteur", "vente_de_mdses", "ventes_de_produits_fabriques",
+            "travaux_services_vendus", "produit_accessoires", "production_imblise",
+            "subventions_exploitations", "production_stockee", "reprises_de_provision",
+            "transferts_charges", "autres_produits", "achat_mdses", "variation_stock_mdses",
+            "achat_mp_autres_appro", "var_stk_mp_app", "autres_achats",
+            "variation_de_stocks_autres_appro", "transports", "services_ext",
+            "impots_taxes", "autres_charges_valeur_ajoutee", "charges_personnel",
+            "dotation_aux_amorts", "dotation_aux_provisions", "autres_charges_excedent_brute",
+            "revenus_fin_assimiles", "prof_vmp_et_cre_actif_immo", "interets_produit_assim",
+            "reprise_prov_et_transfert", "diff_positive_de_change", "prod_nets_cessions_vmp",
+            "dap", "frais_fin_charges_assi", "diff_negatives_de_change",
+            "ch_nettes_cessions_vmp", "sur_op_gestion_prod_except", "sur_op_en_capital_prod_except",
+            "reprise_prov_transfert", "sur_op_gestion_charg_except", "sur_op_en_capital_charg_except",
+            "dap_et_transfert_charg_except", "participation_salairies", "impot_sur_benefices",
+            "created_by", "updated_by"
+        ]
+
+class GetResultatCSerializer(serializers.ModelSerializer):
+    # acheteur = AcheteurSerializer()
+    # annee = AnneeSerializer()
+    # created_by = CustomUserSerializer()
+    # updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ResultatC
+        fields = '__all__'
+
+class EditResultatCSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatC
+        fields = [
+            "id", "annee", "acheteur", "vente_de_mdses", "ventes_de_produits_fabriques",
+            "travaux_services_vendus", "produit_accessoires", "production_imblise",
+            "subventions_exploitations", "production_stockee", "reprises_de_provision",
+            "transferts_charges", "autres_produits", "achat_mdses", "variation_stock_mdses",
+            "achat_mp_autres_appro", "var_stk_mp_app", "autres_achats",
+            "variation_de_stocks_autres_appro", "transports", "services_ext",
+            "impots_taxes", "autres_charges_valeur_ajoutee", "charges_personnel",
+            "dotation_aux_amorts", "dotation_aux_provisions", "autres_charges_excedent_brute",
+            "revenus_fin_assimiles", "prof_vmp_et_cre_actif_immo", "interets_produit_assim",
+            "reprise_prov_et_transfert", "diff_positive_de_change", "prod_nets_cessions_vmp",
+            "dap", "frais_fin_charges_assi", "diff_negatives_de_change",
+            "ch_nettes_cessions_vmp", "sur_op_gestion_prod_except", "sur_op_en_capital_prod_except",
+            "reprise_prov_transfert", "sur_op_gestion_charg_except", "sur_op_en_capital_charg_except",
+            "dap_et_transfert_charg_except", "participation_salairies", "impot_sur_benefices",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+class ActifSysCohadaSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ActifS
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_frais_developpement_prospection(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddActifSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifS
+        fields = [
+            "id", "annee", "acheteur", "frais_developpement_prospection", "brevets_licences_logiciels",
+            "droits_propriete_commerciale_baux", "autres_immo_incorporelles", "terrains",
+            "dons_investissements_net", "batiments", "agencements_amenagements_installations",
+            "materiel_mobilier_actif_biologiques", "materiel_transport", "avances_acompte_immobilisations",
+            "titres_participation", "autres_immobilisations_financieres", "actif_circulant_hao",
+            "stock_encours", "fournisseurs_avances_versee", "clients", "autres_creances",
+            "valeurs_mobilieres_placement", "disponibilites", "banque_cheque_postal_caisse_assimiles",
+            "ecart_conversion_actif", "created_by", "updated_by"
+        ]
+
+class GetActifSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifS
+        fields = '__all__'
+
+class EditActifSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifS
+        fields = [
+            "id", "annee", "acheteur", "frais_developpement_prospection", "brevets_licences_logiciels",
+            "droits_propriete_commerciale_baux", "autres_immo_incorporelles", "terrains",
+            "dons_investissements_net", "batiments", "agencements_amenagements_installations",
+            "materiel_mobilier_actif_biologiques", "materiel_transport", "avances_acompte_immobilisations",
+            "titres_participation", "autres_immobilisations_financieres", "actif_circulant_hao",
+            "stock_encours", "fournisseurs_avances_versee", "clients", "autres_creances",
+            "valeurs_mobilieres_placement", "disponibilites", "banque_cheque_postal_caisse_assimiles",
+            "ecart_conversion_actif", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+class PassifSysSCohadaSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = PassifS
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_capital(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddPassifSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifS
+        fields = [
+            "id", "annee", "acheteur", "capital", "capital_non_appele_apporteurs", "primes_liees_capital_social",
+            "ecart_reevaluation", "reserves_indisponibles", "reserves_libres", "report_nouveau",
+            "resultat_net_exercice", "subventions_investissements", "provisions_reglees",
+            "emprunts_dettes_financieres_diverse", "dettes_location_vente", "provisions_risques_charges",
+            "passif_circulant_hao", "clients_avances_recues", "fournisseurs_exploitation",
+            "dettes_fiscales_sociales", "autres_dettes", "provisions_risques_court_terme",
+            "banques_credit_escompte", "banques_etablissements_financiers_credit_caisse",
+            "ecart_conversion_passif", "created_by", "updated_by"
+        ]
+
+class GetPassifSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifS
+        fields = '__all__'
+
+class EditPassifSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifS
+        fields = [
+            "id", "annee", "acheteur", "capital", "capital_non_appele_apporteurs", "primes_liees_capital_social",
+            "ecart_reevaluation", "reserves_indisponibles", "reserves_libres", "report_nouveau",
+            "resultat_net_exercice", "subventions_investissements", "provisions_reglees",
+            "emprunts_dettes_financieres_diverse", "dettes_location_vente", "provisions_risques_charges",
+            "passif_circulant_hao", "clients_avances_recues", "fournisseurs_exploitation",
+            "dettes_fiscales_sociales", "autres_dettes", "provisions_risques_court_terme",
+            "banques_credit_escompte", "banques_etablissements_financiers_credit_caisse",
+            "ecart_conversion_passif", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+class ResultatSysCohadaSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+    annee = AnneeSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = ResultatS
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_ventes_marchandises_a(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddResultatSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatS
+        fields = [
+            "id", "annee", "acheteur", "ventes_marchandises_a", "achats_marchandises", "variation_stock_marchandises",
+            "ventes_produits_manufactures", "travaux_services_vendus_c", "produits_accessoires_d",
+            "production_stockee", "production_immobilisee", "subvention_exploitation", "autres_produits",
+            "transfert_charges_exploitation", "achats_matieres_premieres_fournitures_connexes",
+            "variation_stock_matieres_premieres_fournitures_connexes", "autres_achats",
+            "variation_stock_autres_fournitures", "transport", "services_exterieurs", "impots_taxes",
+            "autres_depenses", "frais_personnel", "reprise_depreciations_amortissements_provision_pertes_valeurs_p",
+            "reprise_depreciations_amortissements_provision_pertes_valeurs_m", "produits_financiers_assimiles",
+            "reprise_provision_perte_valeur", "transfert_charges_financieres", 
+            "dotations_provisions_depreciations_financieres", "produits_cession_immobilisations",
+            "autres_produits_hao", "valeur_comptable_cessions_actifs_immobilises", "autres_charges_hao",
+            "participation_travailleurs", "charge_impot_revenu", "created_by", "updated_by"
+        ]
+
+class GetResultatSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatS
+        fields = '__all__'
+
+class EditResultatSysCohadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatS
+        fields = [
+            "id", "annee", "acheteur", "ventes_marchandises_a", "achats_marchandises", "variation_stock_marchandises",
+            "ventes_produits_manufactures", "travaux_services_vendus_c", "produits_accessoires_d",
+            "production_stockee", "production_immobilisee", "subvention_exploitation", "autres_produits",
+            "transfert_charges_exploitation", "achats_matieres_premieres_fournitures_connexes",
+            "variation_stock_matieres_premieres_fournitures_connexes", "autres_achats",
+            "variation_stock_autres_fournitures", "transport", "services_exterieurs", "impots_taxes",
+            "autres_depenses", "frais_personnel", "reprise_depreciations_amortissements_provision_pertes_valeurs_p",
+            "reprise_depreciations_amortissements_provision_pertes_valeurs_m", "produits_financiers_assimiles",
+            "reprise_provision_perte_valeur", "transfert_charges_financieres", 
+            "dotations_provisions_depreciations_financieres", "produits_cession_immobilisations",
+            "autres_produits_hao", "valeur_comptable_cessions_actifs_immobilises", "autres_charges_hao",
+            "participation_travailleurs", "charge_impot_revenu", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+class AssetsSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer()
+    acheteur = AcheteurSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = Assets
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_banques_centrales(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddAssetsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assets
+        fields = [
+            "id", "annee", "acheteur", "caisse", "banques_centrales", "tresorerie_cpp",
+            "autres_ets_credit", "a_terme", "credits_campagne", "credits_ordinaire",
+            "credits_campagne_acc", "credits_ordinaire_acc", "creances_ordinaires",
+            "affacturage", "titres_placement", "immobilisation_fin", "operation_credit_bail",
+            "immobilisation_incorporelle", "immobilisation_corporelle", "actionnaire_ou_associe",
+            "autres_actifs", "comptes_commande_divers", "created_by", "updated_by"
+        ]
+
+class GetAssetsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assets
+        fields = '__all__'
+
+class EditAssetsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assets
+        fields = [
+            "id", "annee", "acheteur", "caisse", "banques_centrales", "tresorerie_cpp",
+            "autres_ets_credit", "a_terme", "credits_campagne", "credits_ordinaire",
+            "credits_campagne_acc", "credits_ordinaire_acc", "creances_ordinaires",
+            "affacturage", "titres_placement", "immobilisation_fin", "operation_credit_bail",
+            "immobilisation_incorporelle", "immobilisation_corporelle", "actionnaire_ou_associe",
+            "autres_actifs", "comptes_commande_divers", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class LiabilitiesSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer()
+    acheteur = AcheteurSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = Liabilities
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_tresorerie_ccp(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddLiabilitiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Liabilities
+        fields = [
+            "id", "annee", "acheteur", "tresorerie_ccp", "autres_etablissement_credit",
+            "a_terme", "comptes_epargne_court_terme", "comptes_epargne_terme", "bons_caisse",
+            "autres_dette_a_vue", "autres_dette_a_terme", "titres_creance_autres_dettes",
+            "compte_dordre_divers", "provision_pour_risque_charge", "provision_reglementee",
+            "emprunt_subordonne_tire_emis", "subventions_investissement", "fonds_affecte",
+            "fonds_pour_risque_bancaire_generaux", "capital_ou_dotation", "primes_liees_reserve_capital",
+            "ecarts_reevaluation", "benefices_non_distribue", "resultat_net_exercie",
+            "created_by", "updated_by"
+        ]
+
+class GetLiabilitiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Liabilities
+        fields = '__all__'
+
+class EditLiabilitiesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Liabilities
+        fields = [
+            "id", "annee", "acheteur", "tresorerie_ccp", "autres_etablissement_credit",
+            "a_terme", "comptes_epargne_court_terme", "comptes_epargne_terme", "bons_caisse",
+            "autres_dette_a_vue", "autres_dette_a_terme", "titres_creance_autres_dettes",
+            "compte_dordre_divers", "provision_pour_risque_charge", "provision_reglementee",
+            "emprunt_subordonne_tire_emis", "subventions_investissement", "fonds_affecte",
+            "fonds_pour_risque_bancaire_generaux", "capital_ou_dotation", "primes_liees_reserve_capital",
+            "ecarts_reevaluation", "benefices_non_distribue", "resultat_net_exercie",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+class OffBalanceSheetSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer()
+    acheteur = AcheteurSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = OffBalanceSheet
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_en_faveur_des_ets_credit(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddOffBalanceSheetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OffBalanceSheet
+        fields = [
+            "id", "annee", "acheteur", "en_faveur_des_ets_credit", "en_faveur_clientele",
+            "pour_compte_ets_credit", "pour_compte_clientele", "engagement_sur_titre",
+            "recu_ets_credit", "recu_ets_credit2", "recu_clientele", "engagement_sur_titre2",
+            "created_by", "updated_by"
+        ]
+
+class GetOffBalanceSheetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OffBalanceSheet
+        fields = '__all__'
+
+class EditOffBalanceSheetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OffBalanceSheet
+        fields = [
+            "id", "annee", "acheteur", "en_faveur_des_ets_credit", "en_faveur_clientele",
+            "pour_compte_ets_credit", "pour_compte_clientele", "engagement_sur_titre",
+            "recu_ets_credit", "recu_ets_credit2", "recu_clientele", "engagement_sur_titre2",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+class ExpensesSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer()
+    acheteur = AcheteurSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = Expenses
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_interet_charges_assimilee_dette_interbancaire(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddExpensesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expenses
+        fields = [
+            "id", "annee", "acheteur", "interet_charges_assimilee_dette_interbancaire",
+            "interet_charge_assimilee_dette_clientele", "interet_charge_assimilee_titre_creance",
+            "chargesc_compte_bloque_dactionnaire_emprunt_sub", "autres_interets_charges_assimilee",
+            "charges_sur_op_credit_bail_assimile", "commissions", "charges_sur_titre_placement",
+            "charges_sur_operation_change", "charges_sur_operation_hors_bilan", "frais_divers_exploitation_bancaire",
+            "achat_marchandises", "stocks_vendus", "variations_stocks_marchanides", "frais_personnel",
+            "autres_frais_generaux", "dotations_amortissement_provision_immobilisation",
+            "solde_perte_creance_hors_bilan", "excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux",
+            "charges_exceptionnelle", "pertes_exercice_anterieurs", "impot_sur_revenu", "total_charges",
+            "created_by", "updated_by"
+        ]
+
+class GetExpensesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expenses
+        fields = '__all__'
+
+class EditExpensesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expenses
+        fields = [
+            "id", "annee", "acheteur", "interet_charges_assimilee_dette_interbancaire",
+            "interet_charge_assimilee_dette_clientele", "interet_charge_assimilee_titre_creance",
+            "chargesc_compte_bloque_dactionnaire_emprunt_sub", "autres_interets_charges_assimilee",
+            "charges_sur_op_credit_bail_assimile", "commissions", "charges_sur_titre_placement",
+            "charges_sur_operation_change", "charges_sur_operation_hors_bilan", "frais_divers_exploitation_bancaire",
+            "achat_marchandises", "stocks_vendus", "variations_stocks_marchanides", "frais_personnel",
+            "autres_frais_generaux", "dotations_amortissement_provision_immobilisation",
+            "solde_perte_creance_hors_bilan", "excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux",
+            "charges_exceptionnelle", "pertes_exercice_anterieurs", "impot_sur_revenu", "total_charges",
+            "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+
+class ProductsSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer()
+    acheteur = AcheteurSerializer()
+    created_by = CustomUserSerializer()
+    updated_by = CustomUserSerializer()
+
+    class Meta:
+        model = Products
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    # Ajoutez des validateurs pour chaque champ DecimalField si nécessaire
+    def validate_interets_produit_assimile_sur_pret_avance_interbancaire(self, value):
+        return self.validate_decimal_field(value)
+
+    # Répétez pour chaque champ DecimalField...
+
+class AddProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Products
+        fields = [
+            "id", "annee", "acheteur", "interets_produit_assimile_sur_pret_avance_interbancaire",
+            "ineterets_produit_assimile_pret_avance_clientele", "interet_produit_sur_titre_dinvestissement",
+            "revenu_gains_titre_pret_titre_subordonne", "autres_interets_produits_assimiles",
+            "produits_leansing_operation_connexes", "commissions", "revenus_titre_negociable",
+            "dividendes_produits_assimiles", "revenus_operation_de_change", "produits_opeations_hors_bilan",
+            "produits_bancaire_divers", "marges_vente", "ventes_marchandises", "variation_stocks_marchandises",
+            "produit_dexploitation_generale", "reprise_damortissement_provisions_sur_immobilisation",
+            "solde_resultat_correction_valeur_sur_creance_hors_bilan",
+            "excedent_reprise_fonds_pour_risque_bancaire_generaux", "produits_exceptionnels",
+            "benefice_sur_exercice_anterieur", "perte", "created_by", "updated_by"
+        ]
+
+class GetProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Products
+        fields = '__all__'
+
+class EditProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Products
+        fields = [
+            "id", "annee", "acheteur", "interets_produit_assimile_sur_pret_avance_interbancaire",
+            "ineterets_produit_assimile_pret_avance_clientele", "interet_produit_sur_titre_dinvestissement",
+            "revenu_gains_titre_pret_titre_subordonne", "autres_interets_produits_assimiles",
+            "produits_leansing_operation_connexes", "commissions", "revenus_titre_negociable",
+            "dividendes_produits_assimiles", "revenus_operation_de_change", "produits_opeations_hors_bilan",
+            "produits_bancaire_divers", "marges_vente", "ventes_marchandises", "variation_stocks_marchandises",
+            "produit_dexploitation_generale", "reprise_damortissement_provisions_sur_immobilisation",
+            "solde_resultat_correction_valeur_sur_creance_hors_bilan",
+            "excedent_reprise_fonds_pour_risque_bancaire_generaux", "produits_exceptionnels",
+            "benefice_sur_exercice_anterieur", "perte", "created_by", "updated_by"
+        ]
