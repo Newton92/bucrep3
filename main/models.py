@@ -3148,32 +3148,21 @@ class Logo(models.Model):
 
 
 
-class Telephone(models.Model):
+
+class TelephoneAcheteur(models.Model):
+    telephone = models.TextField(
+        max_length=100,
+        verbose_name=_("Téléphone")
+    )
     acheteur = models.ForeignKey(
         'Acheteur',
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
+        null=True,
+        blank=True,
         related_name='telephones',
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro de téléphone")
+        help_text=_("Acheteur associé au téléphone")
     )
-    numero = models.CharField(
-        _("Numéro de téléphone"),
-        max_length=20,
-        help_text=_("Numéro de téléphone de l'entreprise")
-    )
-    type = models.CharField(
-        _("Type"),
-        max_length=50,
-        choices=[
-            ('fixe', _("Fixe")),
-            ('mobile', _("Mobile")),
-            ('fax', _("Fax")),
-        ],
-        help_text=_("Type de numéro de téléphone")
-    )
-
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création")
@@ -3181,6 +3170,19 @@ class Telephone(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name='telephones_created'
+    )
+    updated_by = models.ForeignKey(
+        'CustomUser',
+        related_name='telephones_updated',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING
     )
 
     class Meta:
@@ -3188,35 +3190,25 @@ class Telephone(models.Model):
         verbose_name_plural = _("Téléphones")
 
     def __str__(self):
-        return f"{self.numero} ({self.type}) - {self.acheteur.nom}"
+        return f"Numéro de téléphone de {self.acheteur.nom}"
 
 
 
 
-class Email(models.Model):
+class PortableAcheteur(models.Model):
+    portable = models.TextField(
+        max_length=100,
+        verbose_name=_("Numéro portable")
+    )
     acheteur = models.ForeignKey(
         'Acheteur',
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='emails',
+        null=True,
+        blank=True,
+        related_name='portables',
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à l'adresse email")
+        help_text=_("Acheteur associé au portable")
     )
-    adresse = models.EmailField(
-        _("Adresse email"),
-        help_text=_("Adresse email de l'entreprise")
-    )
-    type = models.CharField(
-        _("Type"),
-        max_length=50,
-        choices=[
-            ('professionnel', _("Professionnel")),
-            ('personnel', _("Personnel")),
-        ],
-        help_text=_("Type d'adresse email")
-    )
-
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création")
@@ -3225,13 +3217,72 @@ class Email(models.Model):
         auto_now=True,
         verbose_name=_("Date de mise à jour")
     )
+    created_by = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name='portables_created'
+    )
+    updated_by = models.ForeignKey(
+        'CustomUser',
+        related_name='portables_updated',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING
+    )
+
+    class Meta:
+        verbose_name = _("Portable")
+        verbose_name_plural = _("Portables")
+
+    def __str__(self):
+        return f"Numéro de portable de {self.acheteur.nom}"
+
+
+
+
+class EmailAcheteur(models.Model):
+    email = models.TextField(
+        max_length=254,  # Limite la taille à celle d'une adresse email standard
+        verbose_name=_("Adresse email")
+    )
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name='emails',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à l'email")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name='emails_created'
+    )
+    updated_by = models.ForeignKey(
+        'CustomUser',
+        related_name='emails_updated',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING
+    )
 
     class Meta:
         verbose_name = _("Email")
         verbose_name_plural = _("Emails")
 
     def __str__(self):
-        return f"{self.adresse} ({self.type}) - {self.acheteur.nom}"
+        return f"Email de {self.acheteur.nom}"
 
 
 
@@ -3428,7 +3479,9 @@ class RegistreCommerce(models.Model):
         return f"Registre de commerce de {self.acheteur.nom}"
 
 
-class Cnss(models.Model):
+
+
+class Cotisation(models.Model):
     acheteur = models.ForeignKey(
         'Acheteur',
         on_delete=models.DO_NOTHING,
@@ -3460,81 +3513,12 @@ class Cnss(models.Model):
     )
 
     class Meta:
-        verbose_name = _("CNSS")
-        verbose_name_plural = _("CNSS")
+        verbose_name = _("Cotisation Sociale")
+        verbose_name_plural = _("Cotisations Sociales")
 
     def __str__(self):
-        return f"CNSS de {self.acheteur.nom}"
+        return f"Cotisations Sociales de {self.acheteur.nom}"
 
-
-
-
-class NumeroIdentificationFiscale(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='numero_identification_fiscale',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro d'identification fiscale")
-    )
-    numero = models.CharField(
-        _("Numéro d'identification fiscale"),
-        max_length=255,
-        help_text=_("Numéro d'identification fiscale de l'entreprise")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    class Meta:
-        verbose_name = _("Numéro d'Identification Fiscale")
-        verbose_name_plural = _("Numéros d'Identification Fiscale")
-
-    def __str__(self):
-        return f"Numéro d'identification fiscale de {self.acheteur.nom}"
-
-
-
-
-class NumeroIdentificationUnique(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='numero_identification_unique',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro d'identification unique")
-    )
-    numero = models.CharField(
-        _("Numéro d'identification unique"),
-        max_length=255,
-        help_text=_("Numéro d'identification unique de l'entreprise")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    class Meta:
-        verbose_name = _("Numéro d'Identification Unique")
-        verbose_name_plural = _("Numéros d'Identification Unique")
-
-    def __str__(self):
-        return f"Numéro d'identification unique de {self.acheteur.nom}"
 
 
 
@@ -3549,10 +3533,14 @@ class CodeNaceAcheteur(models.Model):
         verbose_name=_("Acheteur"),
         help_text=_("Acheteur associé au code NACE")
     )
-    code = models.CharField(
-        _("Code NACE"),
-        max_length=255,
-        help_text=_("Code NACE de l'entreprise")
+    code = models.ForeignKey(
+        'SubCategoryNaceCode',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='code_nace_acheteur',
+        verbose_name=_("Acheteur"),
+        help_text=_("Code associé au code NACE")
     )
 
     created_at = models.DateTimeField(
@@ -3585,10 +3573,14 @@ class CodeNafAcheteur(models.Model):
         verbose_name=_("Acheteur"),
         help_text=_("Acheteur associé au code NAF")
     )
-    code = models.CharField(
-        _("Code NAF"),
-        max_length=255,
-        help_text=_("Code NAF de l'entreprise")
+    code = models.ForeignKey(
+        'SubCategoryNafCode',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='code_naf_acheteur',
+        verbose_name=_("Acheteur"),
+        help_text=_("Code associé au code NAF")
     )
 
     created_at = models.DateTimeField(

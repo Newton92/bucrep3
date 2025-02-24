@@ -25,6 +25,7 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     path('', index, name='index'),
+    path('report-template/', report, name='report'),
     path('verification/compte/', check_auth, name='check_auth'),
     path('mot-de-passe-oublie/', forgot_auth, name='forgot_auth'),
     path('reinitialisation-mot-de-passe-oublie/', reset_auth, name='reset_auth'),
@@ -119,6 +120,7 @@ urlpatterns = [
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/produits/', dash_root_manage_acheteur_product_bancaire, name='dash_root_manage_acheteur_product_bancaire'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/donnees-hors-bilan/', dash_root_manage_acheteur_offbalancesheet_bancaire, name='dash_root_manage_acheteur_offbalancesheet_bancaire'),
     
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/rapport-version-web/', dash_root_manage_acheteur_report_web, name='dash_root_manage_acheteur_report_web'),
     
     
     ########################################################################################################################

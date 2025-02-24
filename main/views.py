@@ -42,6 +42,10 @@ def index(request):
     return render(request, 'main/index.html')
 
 
+def report(request):
+    return render(request, 'main/report_template.html')
+
+
 def check_auth(request):
     return render(request, 'main/check_auth.html')
 
@@ -2225,6 +2229,35 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
         
     }
     return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_product_bancaire.html', context)
+
+@login_required
+def dash_root_manage_acheteur_report_web(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Recuperer les elements du rapports ici !
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/report/dash_root_manage_acheteur_report_web.html', context)
 
 ########################################################################################################################
 #                                                                                                                      #
