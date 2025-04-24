@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 
+{% load i18n %}
 {% load static %}
+
 
 <!-- ACREMAC | Bucrep 3.0 -->
 <head>
@@ -127,6 +129,27 @@
 
                                                 <!-- Copyright -->
                                                 <div class="text-primary-hover text-body mt-3 text-center"> Copyrights ©2025. Built by <a href="https://www.acremac.com/" class="text-body">ACREMAC</a>. </div>
+                                            
+                                                
+                                                <!-- Translation -->
+                                                <!-- Formulaire de changement de langue -->
+                                                <form id="language-form" action="{% url 'set_language' %}" method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                    <input type="hidden" id="language-input" name="language">
+                                                </form>
+
+                                                <!-- Drapeaux de sélection de langue -->
+                                                <div class="text-primary-hover text-body mt-3 text-center">
+                                                    <a href="#" class="lang-flag" data-lang="fr">
+                                                        <img height="30" width="25" src="{% static 'assets/images/french.png' %}" alt="Français">
+                                                    </a>
+                                                    &nbsp;
+                                                    <a href="#" class="lang-flag" data-lang="en">
+                                                        <img height="30" width="27" src="{% static 'assets/images/english.png' %}" alt="Anglais">
+                                                    </a>
+                                                </div>
+                                            
                                             </form>
                                             <!-- Form END -->
                                         </div>
@@ -216,6 +239,52 @@
         });
     });
 </script>
+
+
+
+<script>
+    $(document).ready(function () {
+        $(".lang-flag").click(function (e) {
+            e.preventDefault(); // Empêche le rechargement immédiat
+    
+            var lang = $(this).data("lang"); // Récupère la langue sélectionnée
+            var url = $("#language-form").attr("action"); // URL du formulaire
+            var csrfToken = $("input[name=csrfmiddlewaretoken]").val(); // Token CSRF
+    
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: {
+                    language: lang,
+                    csrfmiddlewaretoken: csrfToken
+                },
+                success: function () {
+                    console.log("Langue changée avec succès !");
+                    Swal.fire({
+                        title: "Succès",
+                        text: "Langue changée avec succès.",
+                        icon: "success",
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload(true); // Recharge la page après le changement de langue
+                    });
+                },
+                error: function () {
+                    Swal.fire({
+                        title: "Erreur",
+                        text: "Impossible de changer la langue.",
+                        icon: "error"
+                    });
+                }
+            });
+        });
+    });
+    
+    
+    </script>
+    
+    
 
 
 </body>

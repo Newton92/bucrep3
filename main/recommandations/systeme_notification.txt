@@ -1,0 +1,202 @@
+### **📢 Système de Notifications pour le Workflow des Commandes**  
+
+Pour intégrer les notifications dans ton workflow, on peut utiliser **Django Channels** (pour des notifications en temps réel via WebSockets) ou une **base de données** avec un polling AJAX côté frontend.  
+
+Ici, je vais te proposer une **solution basée sur un modèle de Notification**, qui peut être combinée plus tard avec WebSockets si besoin.
+
+---
+
+## **🛠 Modèle `Notification`**
+On va créer un modèle de notification qui enregistre les événements importants (affectation, validation, etc.) et permet aux utilisateurs de les voir dans l'interface.  
+
+```python
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class Notification(models.Model):
+    TYPE_NOTIF = [
+        ("AFFECTATION", "Nouvelle affectation"),
+        ("RAPPORT_SOUMIS", "Rapport soumis"),
+        ("VALIDATION", "Rapport validé"),
+        ("CORRECTION", "Correction demandée"),
+        ("ENVOI_CLIENT", "Rapport envoyé au client"),
+        ("RAPPEL", "Rappel de notification"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications", verbose_name=_("Utilisateur concerné"))
+    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Commande associée"))
+    type = models.CharField(max_length=50, choices=TYPE_NOTIF, verbose_name=_("Type de notification"))
+    message = models.TextField(verbose_name=_("Message de notification"))
+    is_read = models.BooleanField(default=False, verbose_name=_("Lu"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+
+    class Meta:
+        verbose_name = _("Notification")
+        verbose_name_plural = _("Notifications")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.user.username} ({'Lu' if self.is_read else 'Non lu'})"
+```
+
+---
+
+## **📌 Exemples de Génération Automatique des Notifications**
+
+### **1️⃣ Quand une commande est affectée à un analyste**
+Dans ton modèle `AffectationAnalyste`, on peut ajouter un signal pour créer une notification.
+
+```python
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import AffectationAnalyste, Notification
+
+@receiver(post_save, sender=AffectationAnalyste)
+def notifier_analyste_affectation(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            user=instance.analyste,
+            commande=instance.commande,
+            type="AFFECTATION",
+            message=f"Vous avez été affecté à la commande {instance.commande.notre_ref}."
+        )
+```
+
+---
+
+### **2️⃣ Quand un analyste soumet un rapport**
+Dans le modèle `Rapport`, on peut ajouter un signal pour avertir l'analyste validateur.
+
+```python
+@receiver(post_save, sender=Rapport)
+def notifier_validateur_rapport(sender, instance, created, **kwargs):
+    if created:
+        Notification.objects.create(
+            user=instance.validateur,
+            commande=instance.commande,
+            type="RAPPORT_SOUMIS",
+            message=f"Un rapport a été soumis pour la commande {instance.commande.notre_ref}."
+        )
+```
+
+---
+
+### **3️⃣ Quand un rapport est validé**
+Dans `ValidationRapport`, ajoutons une notification pour le client.
+
+```python
+@receiver(post_save, sender=ValidationRapport)
+def notifier_client_validation(sender, instance, created, **kwargs):
+    if created and instance.statut == "VALIDÉ":
+        Notification.objects.create(
+            user=instance.commande.client,
+            commande=instance.commande,
+            type="VALIDATION",
+            message=f"Votre rapport pour la commande {instance.commande.notre_ref} a été validé."
+        )
+```
+
+---
+
+### **📌 Gestion des rappels après 24h**
+Pour envoyer un **rappel automatique**, on peut utiliser **Celery** avec un job programmé toutes les heures.
+
+#### **1️⃣ Ajout d'un champ `rappel_envoye` à `Notification`**
+```python
+rappel_envoye = models.BooleanField(default=False, verbose_name=_("Rappel envoyé"))
+```
+
+#### **2️⃣ Création d'une tâche Celery pour les rappels**
+On va vérifier si une notification est **non lue** après 24h et envoyer une autre notification.
+
+```python
+from celery import shared_task
+from django.utils.timezone import now
+from datetime import timedelta
+from .models import Notification
+
+@shared_task
+def envoyer_rappel_notifications():
+    notifications_a_rappeler = Notification.objects.filter(
+        is_read=False,
+        rappel_envoye=False,
+        created_at__lte=now() - timedelta(hours=24)
+    )
+
+    for notif in notifications_a_rappeler:
+        Notification.objects.create(
+            user=notif.user,
+            commande=notif.commande,
+            type="RAPPEL",
+            message=f"Rappel : {notif.message}"
+        )
+        notif.rappel_envoye = True
+        notif.save()
+```
+
+#### **3️⃣ Configuration de Celery pour exécuter cette tâche toutes les heures**
+Dans `celery.py`, ajoute ceci :
+
+```python
+from celery.schedules import crontab
+
+app.conf.beat_schedule = {
+    'envoyer_rappel_notifications_chaque_heure': {
+        'task': 'ton_app.tasks.envoyer_rappel_notifications',
+        'schedule': crontab(minute=0, hour='*'),
+    },
+}
+```
+
+---
+
+## **🎯 Affichage des notifications dans le Dashboard**
+Dans ton Vue.js frontend ou ton Django template, tu peux afficher les notifications avec un **badge dynamique**.
+
+### **📌 Endpoint API pour récupérer les notifications**
+Ajoute ceci dans ton `views.py` :
+
+```python
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Notification
+
+@login_required
+def notifications_non_lues(request):
+    notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')
+    data = [
+        {
+            "id": notif.id,
+            "message": notif.message,
+            "commande": notif.commande.notre_ref if notif.commande else None,
+            "date": notif.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        for notif in notifications
+    ]
+    return JsonResponse(data, safe=False)
+```
+
+### **📌 Vue.js (Exemple avec Fetch API)**
+```javascript
+async function getNotifications() {
+    let response = await fetch("/api/notifications/");
+    let data = await response.json();
+    document.getElementById("notif-badge").innerText = data.length;
+}
+
+setInterval(getNotifications, 30000); // Vérifie toutes les 30 secondes
+```
+
+---
+
+## **🚀 Conclusion**
+🔹 **Système de notifications en base de données** → Permet d'enregistrer l'historique des notifications.  
+🔹 **Notifications automatiques avec Django Signals** → Création des notifications en fonction des actions des utilisateurs.  
+🔹 **Rappels automatiques avec Celery** → Relance les analystes si une commande n'est pas traitée après 24h.  
+🔹 **Intégration API + Frontend** → Affichage dynamique dans le tableau de bord avec un badge de notifications non lues.
+
+**📢 Tu veux ajouter une gestion en temps réel avec WebSockets (Django Channels) ?** 😃

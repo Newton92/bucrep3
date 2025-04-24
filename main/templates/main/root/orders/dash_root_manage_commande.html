@@ -1,0 +1,333 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Commandes</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAcheteurs">Module de Gestion des Commandes</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une commande de rapport notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Commandes d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                        <!-- Title -->
+                    <div class="ms-2">
+                        <h6 class="card-title mb-0" id="editRaisonSociale"></h6>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editAcheteur"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" target="_blank" class="btn btn-dark-soft mb-0">Client Demandeur</a>
+                    <p class="text-success text-md-end mb-0" id="editClient"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">A propos de la commande</h6>
+                        <strong>Réference ACREMAC : </strong><span class="text-primary" id="editRefAcremac"></span><br>
+                        <strong>Réference Client : </strong><span class="text-primary" id="editRefClient"></span><br>
+
+                        <span><br></span>
+
+                        <strong>Date de Réception : </strong><span class="text-info" id="editDateReception"></span><br>
+                        <strong>Date du Rapport : </strong><span class="text-info" id="editDateRapport"></span><br>
+
+                        <span><br></span>
+                        
+                        <strong>Délai : </strong><span class="text-danger" id="editDelais"></span><br>
+                        <strong>Priorité : </strong><span class="text-danger" id="editPriorite"></span><br>
+                        <strong>Type de Rapport : </strong><span class="text-info" id="editTypeRapport"></span><br>
+                        <strong>Référence Type de Rapport : </strong><span class="text-warning" id="editRefTypeRapport"></span><br>
+
+                        <span><br></span>
+                        
+                        <strong>Crédit Demandé : </strong><span class="text-warning" id="editCreditDemande"></span><br>
+                        <strong>Devise Crédit Demandé : </strong><span class="text-warning" id="editDeviseCreditDemande"></span><br>
+                        <strong>Crédit Recommandé : </strong><span class="text-info" id="editCreditRecommande"></span><br>
+                        <strong>Devise Crédit Recommandé : </strong><span class="text-info" id="editDeviseCreditRecommande"></span><br>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Contats & Adresse</h6>
+                        <strong>Téléphone : </strong><span class="text-info" id="editTelephone"></span><br>
+                        <strong>Email : </strong><span class="text-info" id="editEmail"></span><br>
+                        <strong>Code postal : </strong><span class="text-info" id="editCodePostaleAdresse"></span><br>
+                        <strong>Rue adresse : </strong><span class="text-info" id="editRueAdresse"></span><br>
+                        <strong>Numéro adresse : </strong><span class="text-info" id="editNumeroAdresse"></span><br>
+                        <strong>Pays : </strong><span class="text-info" id="editPays"></span><br>
+                        <strong>Province : </strong><span class="text-info" id="editProvince"></span><br>
+                        <strong>Ville : </strong><span class="text-info" id="editVille"></span><br>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Acheteur</h6>
+                        <span class="text-info" id="editAcheteur2"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Client</h6>
+                        <span class="text-info" id="editClient2"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Statut actuel</h6>
+                        
+                        <a href="#" target="_blank" class="btn btn-default border mb-0"><span class="text-success" id="editStatut"></span></a>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </div>
+        <!-- Card item END -->
+
+        
+
+
+    </div>
+</div>
+<!-- Commandes d'Entreprise END -->
+
+
+<!-- Commandes d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Suivi d'une Commande (statut)</u></h6>
+                <span>A partir de cette interface, vous aurez la possibilite de consulter l'evolution d'une commande dans son traitement !</span>
+                <br><br>
+
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">1. Nouvelle commande &nbsp;</a>
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">2. Affectation commande &nbsp;</a>
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">3. Rapport soumis &nbsp;</a>
+                <br><br>
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">4. Validation &nbsp;</a>
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">5. Correction &nbsp;</a>
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">6. Envoi au Client &nbsp;</a>
+                <br><br>
+                <a href="#" target="_blank" class="btn btn-default border text-success btn-sm mb-0">7. Rappel Notification &nbsp;</a>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Commandes d'Entreprise END -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+
+<script>
+$(document).ready(function() {
+
+    // Load Commande on load
+    $(document).ready(function() {
+        const id = '{{ id_commande }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de la commande est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-une-commande/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log(response);
+                $('#editCommandeId').val(response.id);
+                $('#editRefAcremac').val(response.notre_ref).text(response.notre_ref);
+                $('#editRefClient').val(response.reference_client).text(response.reference_client);
+                $('#editDelais').val(response.delais).text(response.delais);
+
+                if (response.date_recept_commande) {
+                    let parts = response.date_recept_commande.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateReception').val(response.date_recept_commande).text(formattedDate);
+                }
+                if (response.date_rapport) {
+                    let parts = response.date_rapport.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateRapport').val(response.date_rapport).text(formattedDate);
+                }
+                
+                $('#editPriorite').val(response.priorite).text(response.priorite);
+                $('#editRaisonSociale').val(response.raison_sociale).text(response.raison_sociale);
+                $('#editTypeRapport').val(response.type_rapport).text(response.type_rapport);
+                $('#editRefTypeRapport').val(response.ref_type_rapport.libelle).text(response.ref_type_rapport.libelle);
+
+                $('#editCreditDemande').val(response.credit_demande).text(response.credit_demande);
+                $('#editDeviseCreditDemande').val(response.devise_credit_demande.nom).text(response.devise_credit_demande.nom);
+
+                $('#editCreditRecommande').val(response.credit_recommande).text(response.credit_recommande);
+                $('#editDeviseCreditRecommande').val(response.devise_credit_recommande.nom).text(response.devise_credit_recommande.nom);
+
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editCodePostaleAdresse').val(response.code_postale_adresse).text(response.code_postale_adresse);
+                $('#editTelephone').val(response.telephone).text(response.telephone);
+                $('#editEmail').val(response.email).text(response.email);
+
+                $('#editPays').val(response.ville.province.pays.nom).text(response.ville.province.pays.nom);
+                $('#editProvince').val(response.ville.province.nom).text(response.ville.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+                
+                $('#editClient').val(response.client.username).text(response.client.username);
+                $('#editAcheteur').val(response.acheteur.nom).text(response.acheteur.nom);
+                
+                $('#editClient2').val(response.client.username).text(response.client.username);
+                $('#editAcheteur2').val(response.acheteur.nom).text(response.acheteur.nom);
+
+                $('#editStatut').val(response.status).text(response.status);
+                    
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de la commande.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+});
+
+</script>
+
+{% endblock %}

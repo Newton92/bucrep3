@@ -1,18 +1,25 @@
 # main/urls.py
 from django.urls import path
 from django.urls import path, include
-from .views import index
-from .views import *
+from django.conf.urls.i18n import i18n_patterns
+
+
+
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 # from .views import PaysViewSet
 
+
+from main.views import *
 from main.api.views_localisation import *
 from main.api.views_standard import *
 from main.api.views_modele import *
 from main.api.views_authentication import *
 from main.api.views_acheteur import *
 from main.api.views_modules_acheteur import *
+from main.api.views_commande import *
+from main.api.views_warning import *
+from main.api.views_monitoring import *
 
 # router = DefaultRouter()
 # router.register(r'pays', PaysViewSet, basename='pays')
@@ -21,7 +28,19 @@ urlpatterns = [
     
     ########################################################################################################################
     #                                                                                                                      #
-    #  API ROUTES START FOR AUTH                                                                                           #
+    #  API ROUTES START FOR TRANSLATION                                                                                    #
+    #                                                                                                                      #
+    ########################################################################################################################
+    path('i18n/', include('django.conf.urls.i18n')),  # Vue intégrée pour changer de langue
+    ########################################################################################################################
+    #                                                                                                                      #
+    #  API ROUTES END FOR AUTH                                                                                             #
+    #                                                                                                                      #
+    ########################################################################################################################
+    
+    ########################################################################################################################
+    #                                                                                                                      #
+    #  API ROUTES END FOR TRANSLATION                                                                                      #
     #                                                                                                                      #
     ########################################################################################################################
     path('', index, name='index'),
@@ -120,7 +139,31 @@ urlpatterns = [
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/produits/', dash_root_manage_acheteur_product_bancaire, name='dash_root_manage_acheteur_product_bancaire'),
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/donnees-hors-bilan/', dash_root_manage_acheteur_offbalancesheet_bancaire, name='dash_root_manage_acheteur_offbalancesheet_bancaire'),
     
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/comptes-financiers/', dash_root_manage_acheteur_compte_financier_irfs, name='dash_root_manage_acheteur_compte_financier_irfs'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/ratios-financiers/', dash_root_manage_acheteur_ratio_financier_irfs, name='dash_root_manage_acheteur_ratio_financier_irfs'),
+    
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/liste-des-actifs/', dash_root_manage_acheteur_actif_irfs, name='dash_root_manage_acheteur_actif_irfs'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/ajouter-un-actif/', dash_root_manage_acheteur_add_actif_irfs, name='dash_root_manage_acheteur_add_actif_irfs'),
+    
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/liste-des-passifs/', dash_root_manage_acheteur_passif_irfs, name='dash_root_manage_acheteur_passif_irfs'),
+    path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/ajouter-un-passif/', dash_root_manage_acheteur_add_passif_irfs, name='dash_root_manage_acheteur_add_passif_irfs'),
+    
+    
     path('root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/rapport-version-web/', dash_root_manage_acheteur_report_web, name='dash_root_manage_acheteur_report_web'),
+    
+    path('root-dashboard/commandes/liste-des-commandes', dash_root_commande, name='dash_root_commande'),
+    path('root-dashboard/commandes/manager-une-commande/<int:commande_id>/', dash_root_manage_commande, name='dash_root_manage_commande'),
+    
+    path('root-dashboard/warnings/liste-des-alertes/', dash_root_alerte, name='dash_root_alerte'),
+    path('root-dashboard/warnings/ajouter-une-alerte/', dash_root_add_alerte, name='dash_root_add_alerte'),
+    path('root-dashboard/warnings/editer-une-alerte/<int:alerte_id>/', dash_root_edit_alerte, name='dash_root_edit_alerte'),
+    path('root-dashboard/warnings/manager-une-alerte/<int:alerte_id>/', dash_root_manage_alerte, name='dash_root_manage_alerte'),
+    
+    path('root-dashboard/monitoring/liste-des-clients/', dash_root_client, name='dash_root_client'),
+    
+    path('root-dashboard/monitoring/liste-des-portefeuilles/', dash_root_portefeuille, name='dash_root_portefeuille'),
+    path('root-dashboard/monitoring/ajouter-un-portefeuille/', dash_root_add_portefeuille, name='dash_root_add_portefeuille'),
+    path('root-dashboard/warnings/editer-une-portefeuille/<int:portefeuille_id>/', dash_root_edit_portefeuille, name='dash_root_edit_portefeuille'),
     
     
     ########################################################################################################################
@@ -607,6 +650,90 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/bilan-bancaire/supprimer-des-donnees-hors-bilan/', DeleteAcheteurOffBalanceSheetView.as_view(), name='delete-off-balance-sheet-acheteur'),
 
     
+    # === MODULES COMMANDE === #
+    path('api/liste-des-commandes/', ListCommandeView.as_view(), name='list-commande'),
+    path('api/recherche-commande/', SearchCommandeView.as_view(), name='search-commande'),
+    path('api/ajouter-une-commande/', AddCommandeView.as_view(), name='add-commande'),
+    path('api/editer-une-commande/<int:id>/', EditCommandeView.as_view(), name='edit-commande'),
+    path('api/consulter-une-commande/<int:id>/', GetCommandeView.as_view(), name='get-commande'),
+    path('api/supprimer-des-commandes/', DeleteCommandeView.as_view(), name='delete-commande'),
+    
+    
+    path('api/liste-des-alertes/', ListAlerteView.as_view(), name='list-alerte'),
+    path('api/recherche-alerte/', SearchAlerteView.as_view(), name='search-alerte'),
+    path('api/ajouter-une-alerte/', AddAlerteView.as_view(), name='add-alerte'),
+    path('api/editer-une-alerte/<int:id>/', EditAlerteView.as_view(), name='edit-alerte'),
+    path('api/consulter-une-alerte/<int:id>/', GetAlerteView.as_view(), name='get-alerte'),
+    path('api/supprimer-des-alertes/', DeleteAlerteView.as_view(), name='delete-alerte'),
+
+    path('api/liste-des-documents-alerte/', ListDocumentAlerteView.as_view(), name='list-document-alerte'),
+    path('api/ajouter-un-document-alerte/', AddDocumentAlerteView.as_view(), name='add-document-alerte'),
+    path('api/editer-un-document-alerte/<int:id>/', EditDocumentAlerteView.as_view(), name='edit-document-alerte'),
+    path('api/consulter-un-document-alerte/<int:id>/', GetDocumentAlerteView.as_view(), name='get-document-alerte'),
+    path('api/supprimer-des-documents-alerte/', DeleteDocumentAlerteView.as_view(), name='delete-document-alerte'),
+
+    path('api/liste-des-clients/', ListClientView.as_view(), name='list-client'),
+    path('api/ajouter-un-client/', AddClientView.as_view(), name='add-client'),
+    path('api/editer-un-client/<int:id>/', EditClientView.as_view(), name='edit-client'),
+    path('api/consulter-un-client/<int:id>/', GetClientView.as_view(), name='get-client'),
+    path('api/supprimer-des-clients/', DeleteClientView.as_view(), name='delete-client'),
+
+    path('api/liste-des-portefeuilles/', ListPortefeuilleView.as_view(), name='list-portefeuille'),
+    path('api/ajouter-un-portefeuille/', AddPortefeuilleView.as_view(), name='add-portefeuille'),
+    path('api/editer-un-portefeuille/<int:id>/', EditPortefeuilleView.as_view(), name='edit-portefeuille'),
+    path('api/consulter-un-portefeuille/<int:id>/', GetPortefeuilleView.as_view(), name='get-portefeuille'),
+    path('api/supprimer-des-portefeuilles/', DeletePortefeuilleView.as_view(), name='delete-portefeuille'),
+
+    path('api/liste-des-portefeuilles-client/', ListPortefeuilleClientView.as_view(), name='list-portefeuille-client'),
+    
+    path('api/ajouter-un-portefeuille-client/', AddPortefeuilleClientView.as_view(), name='add-portefeuille-client'),
+    path('api/ajouter-un-portefeuille-avec-clients/', AddPortefeuilleWithClientsView.as_view(), name='add-portefeuille-with-client'),
+    path('api/ajouter-un-portefeuille-avec-acheteurs/', AddPortefeuilleWithAcheteursView.as_view(), name='add-portefeuille-with-acheteur'),
+    
+    path('api/editer-un-portefeuille-client/<int:id>/', EditPortefeuilleClientView.as_view(), name='edit-portefeuille-with-client'),
+    path('api/consulter-un-portefeuille-avec-clients/<int:id>/', EditPortefeuilleWithClientsView.as_view(), name='get-portefeuille-client'),
+    path('api/consulter-un-portefeuille-client/<int:id>/', GetPortefeuilleClientView.as_view(), name='get-portefeuille-client'),
+    path('api/supprimer-des-portefeuilles-client/', DeletePortefeuilleClientView.as_view(), name='delete-portefeuille-client'),
+    
+    
+    
+
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-comptes-financiers-irfs/', ListAcheteurCompteFinancierIrfsView.as_view(), name='list-compte-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/recherche-compte-financier-irfs/', SearchAcheteurCompteFinancierIrfsView.as_view(), name='search-compte-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/ajouter-un-compte-financier-irfs/', AddAcheteurCompteFinancierIrfsView.as_view(), name='add-compte-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/editer-un-compte-financier-irfs/<int:compte_irfs_id>/', EditAcheteurCompteFinancierIrfsView.as_view(), name='edit-compte-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/supprimer-des-comptes-financiers-irfs/', DeleteAcheteurCompteFinancierIrfsView.as_view(), name='delete-compte-financier-irfs-acheteur'),
+    
+
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-valeurs-financieres-irfs/', ListAcheteurValeurCompteFinancierIrfsView.as_view(), name='list-valeur-financiere-irfs-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-actifs-financiers-irfs/', ListAcheteurActifFinancierIrfsView.as_view(), name='list-actif-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-passifs-financiers-irfs/', ListAcheteurPassifFinancierIrfsView.as_view(), name='list-passif-financier-irfs-acheteur'),
+    # path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-resultats-financiers-irfs/', ListAcheteurResultatFinancierIrfsView.as_view(), name='list-resultat-financier-irfs-acheteur'),
+    
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/recherche-valeur-financiere-irfs/', SearchAcheteurValeurCompteFinancierIrfsView.as_view(), name='search-valeur-financiere-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/ajouter-une-valeur-financier-irfs/', AddAcheteurValeurCompteFinancierIrfsView.as_view(), name='add-valeur-financiere-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/ajout-une-valeur-financier-irfs/', AjoutAcheteurValeurCompteFinancierIrfsView.as_view(), name='ajout-valeur-financiere-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/editer-une-valeur-financier-irfs/<int:valeur_actif_irfs_id>/', EditAcheteurValeurCompteFinancierIrfsView.as_view(), name='edit-valeur-financiere-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/supprimer-des-valeurs-financieres-irfs/', DeleteAcheteurValeurCompteFinancierIrfsView.as_view(), name='delete-valeur-financiere-irfs-acheteur'),
+
+
+
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-ratios-financiers-irfs/', ListAcheteurRatioFinancierIrfsView.as_view(), name='list-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/recherche-ratio-financier-irfs/', SearchAcheteurRatioFinancierIrfsView.as_view(), name='search-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/ajouter-un-ratio-financier-irfs/', AddAcheteurRatioFinancierIrfsView.as_view(), name='add-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/editer-un-ratio-financier-irfs/<int:ratio_irfs_id>/', EditAcheteurRatioFinancierIrfsView.as_view(), name='edit-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/supprimer-des-ratios-financiers-irfs/', DeleteAcheteurRatioFinancierIrfsView.as_view(), name='delete-ratio-financier-irfs-acheteur'),
+    
+
+
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/liste-des-valeurs-ratios-financiers-irfs/', ListAcheteurValeurRatioFinancierIrfsView.as_view(), name='list-valeur-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/recherche-valeur-ratio-financier-irfs/', SearchAcheteurValeurRatioFinancierIrfsView.as_view(), name='search-valeur-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/ajouter-une-valeur-ratio-financier-irfs/', AddAcheteurValeurRatioFinancierIrfsView.as_view(), name='add-valeur-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/editer-une-valeur-ratio-financier-irfs/<int:valeur_ratio_irfs_id>/', EditAcheteurValeurRatioFinancierIrfsView.as_view(), name='edit-valeur-ratio-financier-irfs-acheteur'),
+    path('api/acheteur/<int:acheteur_id>/bilan-irfs/supprimer-des-valeurs-ratios-financiers-irfs/', DeleteAcheteurValeurRatioFinancierIrfsView.as_view(), name='delete-valeur-ratio-financier-irfs-acheteur'),
+
+
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END                                                                                                      #

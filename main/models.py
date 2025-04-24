@@ -8,6 +8,12 @@ import datetime
 from decimal import Decimal
 import time
 from main.utilitaires.constantes import *
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+# User = get_user_model()
 
 # Create your models here.
 
@@ -773,6 +779,148 @@ class ModeleComportementJugement(models.Model):
         
 
 
+
+
+
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut Modules Portefeuille  & Client
+##########################################################
+##########################################################  
+
+
+
+
+class Client(models.Model):
+    nom = models.CharField(
+        max_length=255,
+        verbose_name=_("Nom"),
+        help_text=_("Nom du client.")
+    )
+    email = models.EmailField(
+        unique=True,
+        verbose_name=_("Email"),
+        help_text=_("Adresse email du client.")
+    )
+    telephone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_("Téléphone"),
+        help_text=_("Numéro de téléphone du client.")
+    )
+    adresse = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Adresse"),
+        help_text=_("Adresse postale du client.")
+    )
+    date_inscription = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date d'inscription"),
+        help_text=_("Date et heure d'inscription du client.")
+    )
+    actif = models.BooleanField(
+        default=True,
+        verbose_name=_("Actif"),
+        help_text=_("Indique si le client est actif.")
+    )
+
+    class Meta:
+        verbose_name = _("Client")
+        verbose_name_plural = _("Clients")
+
+    def __str__(self):
+        return self.nom
+
+
+
+
+
+class Portefeuille(models.Model):
+    client = models.ForeignKey(
+        'Client',
+        on_delete=models.CASCADE,
+        related_name='portefeuilles_client',
+        verbose_name=_("Client"),
+        help_text=_("Client propriétaire du portefeuille.")
+    )
+    nom = models.CharField(
+        max_length=255,
+        verbose_name=_("Nom"),
+        help_text=_("Nom du portefeuille.")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création"),
+        help_text=_("Date et heure de la création du portefeuille.")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour"),
+        help_text=_("Date et heure de la dernière mise à jour du portefeuille.")
+    )
+
+    class Meta:
+        verbose_name = _("Portefeuille")
+        verbose_name_plural = _("Portefeuilles")
+
+    def __str__(self):
+        return f"{self.nom} - {self.client.nom}"
+    
+    
+    
+
+class PortefeuilleClient(models.Model):
+    CATEGORY_CHOICES = [
+        ('grande', 'Grande entreprise'),
+        ('pme', 'Petite et moyenne entreprise'),
+        ('autre', 'Autre'),
+    ]
+
+    portefeuille = models.ForeignKey('Portefeuille', on_delete=models.CASCADE)
+    acheteur = models.ForeignKey('Acheteur', on_delete=models.CASCADE)
+    categorie = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        verbose_name=_("Catégorie"),
+        help_text=_("Catégorie de l'acheteur dans le portefeuille.")
+    )
+
+    class Meta:
+        verbose_name = _("Portefeuille client")
+        verbose_name_plural = _("Portefeuilles client")
+        unique_together = ('portefeuille', 'acheteur')
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_categorie_display()}"
+
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Fin Modules Portefeuille
+##########################################################
+##########################################################  
+
+
+
+
+
+
+
+
+
 ##########################################################
 ##########################################################
 # Debut Modules Acheteur
@@ -1452,6 +1600,9 @@ class OpinionCreditAcremac(models.Model):
     )
     couleur_commentaire = models.ForeignKey(
         'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+    )
+    montant_credit_maximum = models.DecimalField(
+        _("Capital émis"), max_digits=100, decimal_places=2, blank=True, null=True, help_text=_("Montant crédit maximum conseillée")
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
     
@@ -3383,6 +3534,83 @@ class Swot(models.Model):
 
     def __str__(self):
         return f"SWOT de {self.acheteur.nom}"
+    
+    
+    
+    
+class ProduitService(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='produits_services',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé")
+    )
+    produits = models.TextField(
+        _("Produits"),
+        null=True,
+        blank=True,
+        help_text=_("Produits de l'entreprise")
+    )
+    services = models.TextField(
+        _("Services"),
+        null=True,
+        blank=True,
+        help_text=_("Services de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Produit & Service")
+        verbose_name_plural = _("Produits & Services")
+
+    def __str__(self):
+        return f"Produits & Services de {self.acheteur.nom}"
+    
+    
+    
+class Marque(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='marques',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé")
+    )
+    marques = models.TextField(
+        _("Marques"),
+        null=True,
+        blank=True,
+        help_text=_("Marques de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Marque")
+        verbose_name_plural = _("Marques")
+
+    def __str__(self):
+        return f"Marque de {self.acheteur.nom}"
 
 
 
@@ -3612,17 +3840,597 @@ class CodeNafAcheteur(models.Model):
 
 
 
+##########################################################
+##########################################################
+# Debut Modules Commande
+##########################################################
+##########################################################
+class Notification(models.Model):
+    TYPE_NOTIF = [
+        ("AFFECTATION", "Nouvelle affectation"),
+        ("RAPPORT_SOUMIS", "Rapport soumis"),
+        ("VALIDATION", "Rapport validé"),
+        ("CORRECTION", "Correction demandée"),
+        ("ENVOI_CLIENT", "Rapport envoyé au client"),
+        ("RAPPEL", "Rappel de notification"),
+    ]
+
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name="notifications", verbose_name=_("Utilisateur concerné"))
+    # commande = models.ForeignKey('Commande', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Commande associée"))
+    type = models.CharField(max_length=50, choices=TYPE_NOTIF, verbose_name=_("Type de notification"))
+    message = models.TextField(verbose_name=_("Message de notification"))
+    is_read = models.BooleanField(default=False, verbose_name=_("Lu"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+
+    class Meta:
+        verbose_name = _("Notification")
+        verbose_name_plural = _("Notifications")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.user.username} ({'Lu' if self.is_read else 'Non lu'})"
+
+
+
+class Commande(models.Model):
+    
+    STATUS_CHOICES = [
+        ("nouvelle", _("Nouvelle")),
+        ("en_cours", _("En cours de traitement")),
+        ("rapport_soumis", _("Rapport soumis")),
+        ("rapport_valide", _("Rapport validé")),
+        ("envoye_client", _("Envoyé au client")),
+        ("terminee", _("Terminée")),
+        ("annulee", _("Annulée")),
+    ]
+    
+    notre_ref = models.CharField(
+        max_length=100,
+        verbose_name=_("Notre référence"),
+        help_text=_("Référence interne de la commande."),
+        null=True,
+        blank=True
+    )
+    reference_client = models.CharField(
+        max_length=100,
+        verbose_name=_("Référence client"),
+        help_text=_("Référence attribuée par le client."),
+        null=True,
+        blank=True
+    )
+    
+    date_recept_commande = models.DateField(
+        verbose_name=_("Date de réception de la demande"),
+        help_text=_("Date à laquelle la demande a été reçue."),
+        null=True,
+        blank=True
+    )
+    date_rapport = models.DateField(
+        verbose_name=_("Date du rapport"),
+        help_text=_("Date prévue pour l'émission du rapport."),
+        null=True,
+        blank=True
+    )
+    
+    delais = models.CharField(
+        max_length=100,
+        verbose_name=_("Délais"),
+        help_text=_("Délai de traitement de la commande."),
+        null=True,
+        blank=True
+    )
+    priorite = models.CharField(
+        max_length=100,
+        verbose_name=_("Priorité"),
+        help_text=_("Niveau de priorité de la commande."),
+        null=True,
+        blank=True
+    )
+    
+    raison_sociale = models.CharField(
+        max_length=100,
+        verbose_name=_("Raison sociale"),
+        help_text=_("Nom de l'entreprise ou de l'entité concernée par la commande."),
+    )
+    type_rapport = models.CharField(
+        max_length=100,
+        choices=LIEN_TYPE_RAPPORT_CHOICE,
+        default="--------",
+        verbose_name=_("Type de rapport"),
+        help_text=_("Type de rapport demandé par le client."),
+    )
+    ref_type_rapport = models.ForeignKey(
+        'ModeleRapport',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence du modèle de rapport"),
+        help_text=_("Modèle de rapport utilisé pour cette commande."),
+    )
+    
+    credit_demande = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        verbose_name=_("Crédit demandé"),
+        help_text=_("Montant du crédit initialement demandé par le client."),
+        null=True,
+        blank=True
+    )
+    devise_credit_demande = models.ForeignKey(
+        'Devise',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Devise du crédit demandé"),
+        help_text=_("Devise utilisée pour le crédit demandé."),
+        related_name="devise_credit_demande"
+    )
+    
+    credit_recommande = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        verbose_name=_("Crédit recommandé"),
+        help_text=_("Montant du crédit finalement recommandé."),
+        null=True,
+        blank=True
+    )
+    devise_credit_recommande = models.ForeignKey(
+        'Devise',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Devise du crédit recommandé"),
+        help_text=_("Devise utilisée pour le crédit recommandé."),
+        related_name="devise_credit_recommande"
+    )
+    
+    numero_adresse = models.CharField(
+        max_length=100,
+        verbose_name=_("Numéro d'adresse"),
+        help_text=_("Numéro de rue ou d'unité de l'adresse concernée."),
+        null=True,
+        blank=True
+    )
+    rue_adresse = models.CharField(
+        max_length=200,
+        verbose_name=_("Rue adresse"),
+        help_text=_("Nom de la rue de l'adresse concernée."),
+        null=True,
+        blank=True
+    )
+    code_postale_adresse = models.CharField(
+        max_length=200,
+        verbose_name=_("Code postal adresse"),
+        help_text=_("Code postal de l'adresse concernée."),
+        null=True,
+        blank=True
+    )
+    telephone = models.CharField(
+        max_length=100,
+        verbose_name=_("Téléphone"),
+        help_text=_("Numéro de téléphone du contact."),
+        null=True,
+        blank=True
+    )
+    email = models.CharField(
+        max_length=100,
+        verbose_name=_("Email"),
+        help_text=_("Adresse email du contact."),
+        null=True,
+        blank=True
+    )
+    
+    ville = models.ForeignKey(
+        'Ville',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Ville"),
+        help_text=_("Ville où se trouve l'entreprise ou le client."),
+    )
+    client = models.ForeignKey(
+        'CustomUser',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Client"),
+        help_text=_("Client ayant passé la commande."),
+    )
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+        help_text=_("Personne ou entité achetant le service ou produit."),
+    )
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="nouvelle", verbose_name=_("Statut de la commande"))
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création"),
+        help_text=_("Date et heure de la création de la commande."),
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour"),
+        help_text=_("Date et heure de la dernière mise à jour de la commande."),
+    )
+    
+    class Meta:
+        verbose_name = _("Commande")
+        verbose_name_plural = _("Commandes")
+
+    def __str__(self):
+        return f"Commande {self.notre_ref or 'N/A'} - {self.raison_sociale}"
+
+
+
+class SuiviCommande(models.Model):
+    TYPE_ACTIONS = [
+        ("CREATION", "Création"),
+        ("AFFECTATION", "Affectation"),
+        ("SOUMISSION", "Soumission de rapport"),
+        ("VALIDATION", "Validation"),
+        ("CORRECTION", "Correction demandée"),
+        ("ENVOI_CLIENT", "Envoi au client"),
+        ("CLOTURE", "Clôture"),
+        ("ANNULATION", "Annulation"),
+        ("AUTRE", "Autre"),
+    ]
+
+    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, verbose_name=_("Commande"))
+    user = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Utilisateur"))
+    action = models.CharField(max_length=255, verbose_name=_("Action"))
+    type = models.CharField(max_length=50, choices=TYPE_ACTIONS, default="AUTRE", verbose_name=_("Type d'action"))
+    commentaire = models.TextField(null=True, blank=True, verbose_name=_("Commentaire"))
+    date_action = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de l'action"))
+
+    class Meta:
+        verbose_name = _("Suivi de commande")
+        verbose_name_plural = _("Suivis de commande")
+        ordering = ['-date_action']
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.commande.notre_ref} ({self.user.username if self.user else 'Système'})"
+
+
+
+class AffectationAnalyste(models.Model):
+    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, verbose_name=_("Commande"))
+    analyste = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name=_("Analyste"), related_name="analystes")
+    date_affectation = models.DateTimeField(auto_now_add=True, verbose_name=_("Date d'affectation"))
+
+    class Meta:
+        verbose_name = _("Affectation d'analyste")
+        verbose_name_plural = _("Affectations des analystes")
+
+    def __str__(self):
+        return f"Commande {self.commande.notre_ref} affectée à {self.analyste.username}"
+
+
+
+class Rapport(models.Model):
+    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, verbose_name=_("Commande"))
+    analyste = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name=_("Analyste"), related_name="rapports")
+    fichier = models.FileField(upload_to="rapports/", verbose_name=_("Fichier rapport"))
+    date_soumission = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de soumission"))
+
+    class Meta:
+        verbose_name = _("Rapport")
+        verbose_name_plural = _("Rapports")
+
+    def __str__(self):
+        return f"Rapport de {self.analyste.username} pour {self.commande.notre_ref}"
+
+
+
+class ValidationRapport(models.Model):
+    rapport = models.OneToOneField('Rapport', on_delete=models.CASCADE, verbose_name=_("Rapport"))
+    validateur = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name=_("Analyste validateur"), related_name="validations")
+    status = models.CharField(max_length=20, choices=[
+        ("en_attente", _("En attente")),
+        ("valide", _("Validé")),
+        ("a_corriger", _("À corriger")),
+    ], default="en_attente", verbose_name=_("Statut de validation"))
+    commentaire = models.TextField(null=True, blank=True, verbose_name=_("Commentaire du validateur"))
+    date_validation = models.DateTimeField(auto_now=True, verbose_name=_("Date de validation"))
+
+    class Meta:
+        verbose_name = _("Validation de rapport")
+        verbose_name_plural = _("Validations de rapports")
+
+    def __str__(self):
+        return f"Validation de {self.rapport.commande.notre_ref} par {self.validateur.username}"
+
+
 
 
 ##########################################################
 ##########################################################
-# Debut Modules Automatisation Commande
+# Fin Modules Commande
+##########################################################
+##########################################################
+
+
+
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut Module WARNING (Alerte)
+##########################################################
+##########################################################
+class Alerte(models.Model):
+    
+    reference = models.CharField(max_length=255, verbose_name=_("Référence"), help_text=_("Référence de l'alerte.")) 
+    objet = models.CharField(max_length=255, verbose_name=_("Objet"), help_text=_("Objet de l'alerte.")) 
+    content = models.TextField(verbose_name=_("Message"), help_text=_("Message de l'alerte.")) 
+    
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création"),
+        help_text=_("Date et heure de la création de l'alerte."),
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour"),
+        help_text=_("Date et heure de la dernière mise à jour de l'alerte."),
+    ) 
+
+    class Meta:
+        verbose_name = _("Alerte")
+        verbose_name_plural = _("Alertes")
+
+    def __str__(self):
+        return f"{self.reference} - {self.objet}"
+    
+    
+    
+class DocumentAlerte(models.Model):
+    alerte = models.ForeignKey(
+        'Alerte',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='documents_alerte',
+        verbose_name=_("Alerte"),
+        help_text=_("Alerte associé au document")
+    )
+    titre = models.CharField(
+        _("Titre"),
+        max_length=255,
+        help_text=_("Titre du document")
+    )
+    fichier = models.FileField(
+        _("Fichier"),
+        upload_to='alertes/',
+        help_text=_("Fichier du document")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Document alerte")
+        verbose_name_plural = _("Documents alerte")
+
+    def __str__(self):
+        return f"{self.titre} - {self.acheteur.nom}"
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Fin Module WARNING (Alerte)
+##########################################################
+##########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut Module IRFS COBAC
+##########################################################
+##########################################################
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+class CompteFinancierIrfs(models.Model):
+    TYPE_CHOICES = [
+        ('Actif', _('Actif')),
+        ('Passif', _('Passif')),
+        ('Produit', _('Produit')),
+        ('Charge', _('Charge')),
+        ('Compte de Résultat', _('Compte de Résultat')),
+    ]
+
+    SOUS_TYPE_CHOICES = [
+        ('Actif non courant', _('Actif non courant')),
+        ('Passif non courant', _('Passif non courant')),
+        ('Actif courant', _('Actif courant')),
+        ('Capitaux propres', _('Capitaux propres')),
+        ('Passif courant', _('Passif courant')),
+        ('Produits', _('Produits')),
+        ('Charges', _('Charges')),
+        ('Autre', _('Autre')),
+    ]
+
+    nom = models.CharField(
+        _('Nom'),
+        max_length=255
+    )
+    type_compte = models.CharField(
+        _('Type de Compte'),
+        max_length=255,
+        choices=TYPE_CHOICES
+    )
+    sous_type = models.CharField(
+        _('Sous-Type'),
+        max_length=255,
+        choices=SOUS_TYPE_CHOICES,
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return self.nom
+
+    def get_type_compte_display(self):
+        return dict(CompteFinancierIrfs.TYPE_CHOICES).get(self.type_compte, '')
+
+    def get_sous_type_display(self):
+        return dict(CompteFinancierIrfs.SOUS_TYPE_CHOICES).get(self.sous_type, '')
+
+
+
+class ValeurCompteIrfs(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='comptes_financiers_irfs_acheteur',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au registre de commerce")
+    )
+    compte = models.ForeignKey(
+        CompteFinancierIrfs,
+        verbose_name=_('Compte Financier'),
+        on_delete=models.CASCADE
+    )
+    annee = models.ForeignKey(
+        'Annee',
+        verbose_name=_('Année'),
+        on_delete=models.CASCADE
+    )
+    valeur = models.DecimalField(
+        _('Valeur'),
+        max_digits=20,
+        decimal_places=2
+    )
+    devise = models.ForeignKey(
+        'Devise',
+        verbose_name=_('Devise'),
+        on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return f"{self.compte.nom} - {self.annee.nom}"
+
+
+
+class RatioFinancierIrfs(models.Model):
+    TYPE_RATIO_CHOICES = [
+        ('Ratio financier', _('Ratio financier')),
+        ('Liquidité', _('Liquidité')),
+        ('Solvabilité', _('Solvabilité')),
+        ('Rentabilité des ventes', _('Rentabilité des ventes')),
+        ('Gestion', _('Gestion')),
+    ]
+    
+    type_ratio = models.CharField(
+        _('Type de Ratio'),
+        max_length=255,
+        choices=TYPE_RATIO_CHOICES
+    )
+    
+    nom = models.CharField(
+        _('Nom'),
+        max_length=255
+    )
+    formule = models.CharField(
+        _('Formule'),
+        max_length=255
+    )
+
+    def __str__(self):
+        return self.nom
+
+
+
+class ValeurRatioIrfs(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='ratios_irfs_acheteur',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au registre de commerce")
+    )
+    ratio = models.ForeignKey(
+        RatioFinancierIrfs,
+        verbose_name=_('Ratio Financier'),
+        on_delete=models.CASCADE
+    )
+    annee = models.ForeignKey(
+        'Annee',
+        verbose_name=_('Année'),
+        on_delete=models.CASCADE
+    )
+    valeur = models.DecimalField(
+        _('Valeur'),
+        max_digits=10,
+        decimal_places=2
+    )
+
+    def __str__(self):
+        return f"{self.ratio.nom} - {self.annee.nom}"
+
+
+##########################################################
+##########################################################
+# Fin Module IRFS COBAC
+##########################################################
+##########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut Modules Automatisation Commande CREDENDO
 ##########################################################
 ##########################################################
 
 # === Models Commandes client === #
 
 class CredendoCommande(models.Model):
+    sender_id = models.CharField(max_length=255, null=True, blank=True)  # ID unique du mail
     email_id = models.CharField(max_length=255, unique=True)  # ID unique du mail
     reference = models.CharField(max_length=255)  # Our references
     internal_bp_id = models.CharField(max_length=255)  # Internal BP id
@@ -3638,6 +4446,10 @@ class CredendoCommande(models.Model):
     devise = models.CharField(max_length=10, blank=True, null=True)  # Devise
     date_reception = models.DateTimeField()  # Date de réception du mail
 
+    class Meta:
+        verbose_name = _("Commande CREDENDO")
+        verbose_name_plural = _("Commandes CREDENDO")
+
     def __str__(self):
         return f"{self.reference} - {self.nom} - {self.pays}"
 
@@ -3646,6 +4458,6 @@ class CredendoCommande(models.Model):
 
 ##########################################################
 ##########################################################
-# Fin Modules Automatisation Commande
+# Fin Modules Automatisation Commande CREDENDO
 ##########################################################
 ##########################################################

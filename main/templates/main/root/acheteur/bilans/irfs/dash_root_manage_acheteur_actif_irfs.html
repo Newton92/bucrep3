@@ -1,0 +1,657 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-cash-coin fa-fw me-1"></i>Actifs des Comptes Financiers IRFS</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countValeurs">Module de Gestion des Actifs des Comptes Financiers IRFS</h4>
+                    <span>Dans ce module, il vous sera plus facile de gérer les opérations liées aux valeurs des comptes financiers IRFS, telles que l'ajout, la modification, la suppression et la consultation.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- VALEURS FINANCIERES IRFS START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Actifs des Comptes Financiers IRFS</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-6">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-6">
+                        <!-- Add valeur button -->
+                        <div>
+                            <a href="{% url 'dash_root_manage_acheteur_add_actif_irfs' id_acheteur %}?token={{ user.reset_token }}" target="_blank" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
+                                Ajouter un Actif de Compte Financier IRFS
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Valeurs list START -->
+                <div class="table-responsive border-0" id="valeurList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">Type</th>
+                                <th scope="col" class="border-0">Compte</th>
+                                <th scope="col" class="border-0">Année</th>
+                                <th scope="col" class="border-0">Valeur</th>
+                                <th scope="col" class="border-0">Devise</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="valeurTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Valeurs list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- VALEURS FINANCIERES IRFS END -->
+
+<!-- Add Valeur Modal START -->
+<div class="modal fade" id="addValeurModal" tabindex="-1" aria-labelledby="addValeurModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addValeurModalLabel">Ajouter une Valeur de Compte Financier IRFS</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="card border rounded-3">
+                    <!-- Card header START -->
+                    <div class="card-header border-bottom">
+                        <h5 class="card-header-title">Formulaire d'ajout d'un actif IRFS</h5>
+                    </div>
+                    <!-- Card header END -->
+
+                    <!-- Card body START -->
+                    <div class="card-body">
+                        <form id="addValeurForm">
+                            <div class="table-responsive border-0">
+                                <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                                    <tr>
+                                        <th><u><strong>ANNEE CIVILE</strong></u></th>
+                                        <th>
+                                            <select class="form-select" name="annee" required>
+                                                {% for annee in annee_list %}
+                                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th><u><strong>DEVISE</strong></u></th>
+                                        <th>
+                                            <select class="form-select" name="devise" required>
+                                                {% for devise in devise_list %}
+                                                    <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.symbole }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><u><strong>ACTIF NON COURANT</strong></u></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="immobilisations_incorporelles_label" value="Immobilisations incorporelles" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="immobilisations_incorporelles_input" id="immobilisations_incorporelles_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="goodwill_label" value="Goodwill" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="goodwill_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="marques_droits_label" value="Marques et droits d'auteur" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="marques_droits_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="brevets_licences_label" value="Brevets et licences" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="brevets_licences_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="autres_immobilisations_incorporelles_label" value="Autres immobilisations incorporelles" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="brevets_licences_input" value="0.00"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="immobilisations_incorporelles_label" value="Immobilisations corporelles" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="immobilisations_incorporelles_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="terrains_label" value="Terrains" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="terrains_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="batiments_label" value="Bâtiments" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="batiments_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control bg-light" type="text" id="materiel_equipement_label" value="Matériel et équipement" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="materiel_equipement_input" value="0.00"></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="immobilisations_financieres_label" value="Immobilisations financières" readonly step="any"></td>
+                                        <td><input class="form-control" type="number" id="immobilisations_financieres_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="participations_label" value="Participations dans des sociétés" step="any"></td>
+                                        <td><input class="form-control" type="number" id="participations_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="prets_label" value="Prêts à long terme" step="any"></td>
+                                        <td><input class="form-control" type="number" id="prets_input" value="0.00" ></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><input class="form-control border-success bg-light" type="text" id="total_actif_non_courant_label" value="Total Actif non courant" step="any"></td>
+                                        <td>
+                                            <input class="form-control" type="number" id="total_actif_non_courant_input" value="0.00">
+                                        </td>
+                                    </tr>
+
+
+                                    <tr>
+                                        <td colspan="2"><u><strong>ACTIF COURANT</strong></u></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="stocks_label" value="Stocks" step="any"></td>
+                                        <td><input class="form-control" type="number" id="stocks_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="matieres_label" value="Matières premières" step="any"></td>
+                                        <td><input class="form-control" type="number" id="matieres_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="produits_label" value="Produits finis" step="any"></td>
+                                        <td><input class="form-control" type="number" id="produits_input" value="0.00"></td>
+                                    </tr>
+
+
+
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="creances_clients_label" value="Créances clients" step="any"></td>
+                                        <td><input class="form-control" type="number" id="creances_clients_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="creances_court_label" value="Créances à court terme" step="any"></td>
+                                        <td><input class="form-control" type="number" id="creances_court_input" value="0.00"></td>
+                                    </tr>
+
+
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="creances_clients_label" value="Autres créances" step="any"></td>
+                                        <td><input class="form-control" type="number" id="autres_creances_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="avances_label" value="Avances et acomptes" step="any"></td>
+                                        <td><input class="form-control" type="number" id="avances_input" value="0.00 " ></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="creances_diverses_label" value="Créances diverses" step="any"> </td>
+                                        <td><input class="form-control" type="number" id="creances_diverses_input" value="0.00"></td>
+                                    </tr>
+
+
+                                    <tr>
+                                        <td><input class="form-control border-primary bg-light" type="text" id="tresorerie_label" value="Trésorerie et équivalents de trésorerie" step="any"></td>
+                                        <td><input class="form-control" type="number" id="tresorerie_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control" type="text" id="disponibilites_label" value="Disponibilités bancaires" step="any"></td>
+                                        <td><input class="form-control" type="number" id="disponibilites_input" value="0.00"></td>
+                                    </tr>
+
+                                    
+                                    <tr>
+                                        <td><input class="form-control border-success bg-light" type="text" id="total_actif_courant_label" value="Total Actif courant" step="any"></td>
+                                        <td><input class="form-control" type="number" id="total_actif_courant_input" value="0.00"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><input class="form-control border-warning bg-light" type="text" id="total_actif_label" value="Total Actif courant" step="any"></td>
+                                        <td><input class="form-control" type="number" id="total_actif_input" value="0.00"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Valeur Modal END -->
+
+<!-- Edit Valeur Modal START -->
+<div class="modal fade" id="editValeurModal" tabindex="-1" aria-labelledby="editValeurModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editValeurModalLabel">Modifier une Valeur de Compte Financier IRFS</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editValeurForm">
+                    <input type="hidden" id="editValeurId" name="id">
+                    <div class="mb-3">
+                        <label for="editCompte" class="form-label">Compte Financier</label>
+                        <select class="form-select" id="editCompte" name="compte" required>
+                            {% for compte in compte_financier_irfs_list %}
+                                <option value="{{ compte.id }}">{{ compte.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAnnee" class="form-label">Année</label>
+                        <select class="form-select" id="editAnnee" name="annee" required>
+                            {% for annee in annee_list %}
+                                <option value="{{ annee.id }}">{{ annee.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editValeur" class="form-label">Valeur</label>
+                        <input type="text" class="form-control" id="editValeur" name="valeur" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDevise" class="form-label">Devise</label>
+                        <select class="form-select" id="editDevise" name="devise" required>
+                            {% for devise in devise_list %}
+                                <option value="{{ devise.id }}">{{ devise.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Valeur Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    $(document).ready(function() {
+        function calculateAndUpdate() {
+            // Calcul des immobilisations incorporelles
+            const immobilisationsIncorporelles = parseFloat($('#goodwill_input').val()) +
+                                                  parseFloat($('#marques_droits_input').val()) +
+                                                  parseFloat($('#brevets_licences_input').val()) +
+                                                  parseFloat($('#autres_immobilisations_incorporelles_input').val());
+            $('#immobilisations_incorporelles_input').val(immobilisationsIncorporelles.toFixed(2));
+
+            // Calcul des immobilisations corporelles
+            const immobilisationsCorporelles = parseFloat($('#terrains_input').val()) +
+                                              parseFloat($('#batiments_input').val()) +
+                                              parseFloat($('#materiel_equipement_input').val());
+            $('#immobilisations_corporelles_input').val(immobilisationsCorporelles.toFixed(2));
+
+            // Calcul des immobilisations financières
+            const immobilisationsFinancieres = parseFloat($('#participations_input').val()) +
+                                               parseFloat($('#prets_input').val());
+            $('#immobilisations_financieres_input').val(immobilisationsFinancieres.toFixed(2));
+
+            // Calcul du total actif non courant
+            const totalActifNonCourant = immobilisationsIncorporelles + immobilisationsCorporelles + immobilisationsFinancieres;
+            $('#total_actif_non_courant_input').val(totalActifNonCourant.toFixed(2));
+
+            // Calcul des stocks
+            const stocks = parseFloat($('#matieres_input').val()) +
+                          parseFloat($('#produits_input').val());
+            $('#stocks_input').val(stocks.toFixed(2));
+
+            // Calcul des créances clients
+            const creancesClients = parseFloat($('#creances_court_input').val());
+            $('#creances_clients_input').val(creancesClients.toFixed(2));
+
+            // Calcul des autres créances
+            const autresCreances = parseFloat($('#avances_input').val()) +
+                                  parseFloat($('#creances_diverses_input').val());
+            $('#autres_creances_input').val(autresCreances.toFixed(2));
+
+            // Calcul de la trésorerie
+            const tresorerie = parseFloat($('#disponibilites_input').val());
+            $('#tresorerie_input').val(tresorerie.toFixed(2));
+
+            // Calcul du total actif courant
+            const totalActifCourant = stocks + creancesClients + autresCreances + tresorerie;
+            $('#total_actif_courant_input').val(totalActifCourant.toFixed(2));
+
+            // Calcul du total actif
+            const totalActif = totalActifNonCourant + totalActifCourant;
+            $('#total_actif_input').val(totalActif.toFixed(2));
+        }
+
+        // Écoute des événements de saisie
+        $('input[type="number"]').on('input', function() {
+            calculateAndUpdate();
+        });
+
+        // Initialisation des calculs
+        calculateAndUpdate();
+    });
+</script>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        // Function to load valeurs data
+        function loadValeurs(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-irfs/liste-des-actifs-financiers-irfs/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' + (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update valeurs table body
+                    $('#valeurTableBody').html('');
+                    response.results.forEach(function(valeur, index) {
+                        console.log(response);
+                        $('#valeurTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + valeur.compte.type_compte + '</td>' +
+                            '<td>' + valeur.compte.nom + '</td>' +
+                            '<td>' + valeur.annee.annee + '</td>' +
+                            '<td>' + valeur.valeur + '</td>' +
+                            '<td>' + valeur.devise.nom + '</td>' +
+                            '<td><button class="btn btn-light btn-round mb-0 edit-btn" data-id="' + valeur.id + '"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + valeur.id + '"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données.',
+                    });
+                }
+            });
+        }
+
+        // Initial load
+        loadValeurs();
+
+        // Search form submission
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            const search = $('#searchInput').val();
+            loadValeurs(1, search);
+        });
+
+        // Pagination controls
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            const page = $(this).data('page');
+            const search = $('#searchInput').val();
+            loadValeurs(page, search);
+        });
+
+        // Add Valeur form submission
+        $('#addValeurForm').on('submit', function(event) {
+            event.preventDefault();
+            const formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-irfs/ajouter-une-valeur-financier-irfs/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Valeur ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addValeurModal').modal('hide');
+                        loadValeurs();
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout de la valeur.',
+                    });
+                }
+            });
+        });
+
+        // Edit Valeur button click
+        $(document).on('click', '.edit-btn', function() {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-irfs/editer-une-valeur-financier-irfs/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editValeurId').val(response.id);
+                    $('#editCompte').val(response.compte.id);
+                    $('#editAnnee').val(response.annee.id);
+                    $('#editValeur').val(response.valeur);
+                    $('#editDevise').val(response.devise.id);
+                    $('#editValeurModal').modal('show');
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de la valeur.',
+                    });
+                }
+            });
+        });
+
+        // Edit Valeur form submission
+        $('#editValeurForm').on('submit', function(event) {
+            event.preventDefault();
+            const id = $('#editValeurId').val();
+            const formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-irfs/editer-une-valeur-financier-irfs/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Valeur mise à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editValeurModal').modal('hide');
+                        loadValeurs();
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour de la valeur.',
+                    });
+                }
+            });
+        });
+
+        // Delete Valeur button click
+        $(document).on('click', '.delete-btn', function() {
+            const id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-le!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-irfs/supprimer-des-valeurs-financieres-irfs/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function() {
+                            Swal.fire('Supprimé!', 'La valeur a été supprimée.', 'success').then(() => {
+                                loadValeurs();
+                            });
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression de la valeur.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+
+    });
+</script>
+
+{% endblock %}

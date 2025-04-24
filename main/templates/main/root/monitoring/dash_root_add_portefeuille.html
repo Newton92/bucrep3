@@ -1,0 +1,833 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+.color-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: black;
+    margin-left: 5px;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Portefeuilles</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countPortefeuilles">Module de Gestion des Portefeuilles</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un portefeuille client notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Portefeuilless client START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom">
+                <h4 class="card-header-title">Ajout d'un Portefeuille</h4>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body vstack gap-4">
+                <form id="addPortefeuilleForm">
+                    <input type="hidden" id="acheteursId" name="acheteursId[]" />
+
+                    <!-- Généralités item START -->
+                    <div class="card">
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Name  -->
+                            <div class="mb-3">
+                                <label class="form-label">Nom du Portefeuille</label>
+                                <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex. P001" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Forme juridique -->
+                            <div class="mb-3">
+                                <label for="client" class="form-label">Client</label>
+                                <select class="form-select" id="client" name="client" required>
+                                    <option value="">Sélectionnez un client</option>
+                                    {% for client in client_list %}
+                                        <option value="{{ client.id }}" class="text-primary">{{ client.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Search and select START -->
+                            <label for="client" class="form-label">Choix des acheteurs associés au portefeuille</label>
+
+                            <!-- Search and select START -->
+                            <div class="row g-3 align-items-center justify-content-between mb-3">
+                                <!-- Search -->
+                                <div class="col-md-7">
+                                    <div class="rounded position-relative" id="searchForm">
+                                        <input class="form-control pe-5" type="search" placeholder="Rechercher un acheteur..." aria-label="Search" id="searchInput">
+                                        <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="button" id="searchButton">
+                                            <i class="bi bi-search fs-6"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Select option -->
+                                <div class="col-md-5">
+                                    <!-- Short by filter -->
+                                    <div>
+                                        <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addAcheteurModal">
+                                            Ajouter un Acheteur
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Search and select END -->
+
+                            <br>
+
+                            <!-- Acheteurs list START -->
+                            <div class="table-responsive border-0" id="acheteursList">
+                                <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                                    <!-- Table head -->
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col" class="border-0 rounded-start">
+                                                <input type="checkbox" id="allAcheteursId" />
+                                            </th>
+                                            <th scope="col" class="border-0">Code</th>
+                                            <th scope="col" class="border-0">Nom</th>
+                                            <th scope="col" class="border-0">Sigle</th>
+                                        </tr>
+                                    </thead>
+
+                                    <!-- Table body START -->
+                                    <tbody class="border-top-0" id="acheteursTableBody"></tbody>
+                                    <!-- Table body END -->
+                                </table>
+                            </div>
+                            <!-- Acheteurs list END -->
+
+                            <br>
+                        </div>
+                    </div>
+                    <!-- Généralités item END -->
+
+                    <br> <!-- Divider -->
+
+                    <!-- Button -->
+                    <div class="text-end">
+                        <button class="btn btn-primary mb-0" type="submit">
+                            <i class="bi bi-plus-lg"></i> Soumettre le formulaire
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- Card body END -->
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Portefeuilless client END -->
+
+<!-- Add Acheteur Modal START -->
+<div class="modal fade" id="addAcheteurModal" tabindex="-1" aria-labelledby="addAcheteurModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAcheteurModalLabel">Ajouter un Acheteur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <form id="addAcheteurForm">
+
+                    <!-- Généralités item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Généralités sur l'acheteur</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Name  -->
+                            <div class="mb-3">
+                                <label class="form-label">Nom de l'acheteur</label>
+                                <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex. BATI PLUS" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Sigle -->
+                            <div class="mb-3">
+                                <label class="form-label">Sigle</label>
+                                <input type="text" class="form-control" id="sigle" name="sigle" placeholder="Ex. BATI+">
+                            </div>
+
+                            <br>
+
+                            <!-- Date de Création -->
+                            <div>
+                                <label class="form-label">Date de Création</label>
+                                <input type="date" class="form-control flatpickr" id="date_creation" name="date_creation" placeholder="Date de Création" data-date-format="d M Y" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Activité principale -->
+                            <div>
+                                <label class="form-label">Activité principale</label>
+                                <input type="text" class="form-control" id="activite_principale" name="activite_principale" placeholder="Ex. Vente de produits de construction" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Statut -->
+                            <div class="mb-3">
+                                <label for="statut_entreprise" class="form-label">Statut actuel de l'acheteur</label>
+                                <select class="form-select" id="statut_entreprise" name="statut_entreprise" required>
+                                    <option value="">Sélectionnez un statut</option>
+                                    {% for statut in statut_list %}
+                                        <option value="{{ statut.id }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Catégorie -->
+                            <div class="mb-3">
+                                <label for="categorie_entreprise" class="form-label">Catégorie de l'acheteur</label>
+                                <select class="form-select" id="categorie_entreprise" name="categorie_entreprise">
+                                    <option value="">Sélectionnez une catégorie</option>
+                                    {% for categorie in categorie_list %}
+                                        <option value="{{ categorie.id }}">{{ categorie.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Forme juridique -->
+                            <div class="mb-3">
+                                <label for="forme_juridique" class="form-label">Forme juridique de l'acheteur</label>
+                                <select class="form-select" id="forme_juridique" name="forme_juridique" required>
+                                    <option value="">Sélectionnez une forme juridique</option>
+                                    {% for juridique in juridique_list %}
+                                        <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Généralités item END -->
+
+                    <hr> <!-- Divider -->
+
+                    <!-- Contacts item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Contacts de l'acheteur</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Email principal & Fax -->
+                            <div class="mb-3">
+                                <label class="form-label">Email principal & Fax</label>
+                                <div class="input-group">
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Ex. contact@batiplus.ga">
+                                    <input type="text" class="form-control" id="fax" name="fax" placeholder="Ex. (+241) 22 22 22 22">
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <!-- Boite postale & Code postal -->
+                            <div class="mb-3">
+                                <label class="form-label">Boite postale & Code postal</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="boite_postale" name="boite_postale" placeholder="Ex. BP 2022 Libreville, Gabon">
+                                    <input type="text" class="form-control" id="code_postal" name="code_postal" placeholder="Ex. 241">
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <!-- Site internet -->
+                            <div class="mb-3">
+                                <label class="form-label">Site internet</label>
+                                <input type="text" class="form-control" id="site_internet" name="site_internet" placeholder="Ex. https://www.bati-plus.ga">
+                                <small><strong>Note : </strong>Ne pas oublier de mentionner le prefixe suivant pour tout lien : https://</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Contacts item END -->
+
+                    <hr> <!-- Divider -->
+
+                    <!-- Localisation item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Localisation de l'acheteur</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Numero & Rue (adresse) -->
+                            <div class="mb-3">
+                                <label class="form-label">Numero & Rue (adresse)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="numero_adresse" name="numero_adresse" placeholder="Ex. 17345">
+                                    <input type="text" class="form-control" id="rue_adresse" name="rue_adresse" placeholder="Ex. Rue Camp de Gaulle">
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <!-- Pays -->
+                            <div class="mb-3">
+                                <label for="pays" class="form-label">Pays</label>
+                                <select class="form-select" id="pays" name="pays" required>
+                                    <option value="">Sélectionnez un pays</option>
+                                    {% for pays in pays_list %}
+                                        <option value="{{ pays.id }}">{{ pays.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Province -->
+                            <div class="mb-3">
+                                <label for="province" class="form-label">Province</label>
+                                <select class="form-select" id="province" name="province" disabled required>
+                                    <option value="">Sélectionnez une province</option>
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Ville -->
+                            <div class="mb-3">
+                                <label for="ville" class="form-label">Ville</label>
+                                <select class="form-select" id="ville" name="ville" disabled required>
+                                    <option value="">Sélectionnez une ville</option>
+                                </select>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <!-- Localisation item END -->
+
+                    <hr> <!-- Divider -->
+
+                    <!-- Opinion ACREMAC item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Que pensez-vous de cet acheteur ?</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+
+                            <!-- Coloration -->
+                            <div class="mb-3">
+                                <label for="couleur_commentaire" class="form-label">Quelle coloration voulez-vous pour votre commentaire ?</label>
+                                <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}">
+                                            {{ coloration.couleur }} - [{{ coloration.code }}]
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                
+                            </div>
+
+                            <br>
+
+                            <!-- Commentaire -->
+                            <div class="mb-3">
+                                <label for="commentaire" class="form-label">Votre Commentaire</label>
+                                <textarea class="form-control" id="commentaire" name="commentaire"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Opinion ACREMAC item END -->
+
+                    <br> <!-- Divider -->
+
+                    <!-- Button -->
+                    <div class="text-end">
+                        <button class="btn btn-primary mb-0" type="submit">
+                            <i class="bi bi-plus-lg"></i> Soumettre le formulaire
+                        </button>
+                    </div>
+
+                </form>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Acheteur Modal END -->
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        tinymce.init({
+            selector: '#description, #editDescription, #commentaire',
+            setup: function (editor) {
+                editor.on('init', function () {
+                    editor.getContainer().querySelector('iframe').setAttribute('title', 'Éditeur de texte');
+                });
+            },
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 250
+        });
+    });
+</script>
+
+
+
+<script>
+$(document).ready(function() {
+    // Function to load acheteurs data
+    function loadAcheteurs(page = 1, search = '') {
+        $.ajax({
+            url: '/api/liste-des-acheteurs/?page=' + page + '&search=' + search,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+            },
+            success: function(response) {
+                console.log(response); // Vérifiez ce que l'API renvoie
+
+                if (!response.results || response.results.length === 0) {
+                    console.warn("Aucun acheteur trouvé.");
+                    return;
+                }
+
+                // Update pagination info
+                $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                // Update pagination controls
+                $('#paginationControls').html('');
+                if (response.previous) {
+                    $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                }
+                for (let i = 1; i <= response.total_pages; i++) {
+                    if (i === page) {
+                        $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                    } else {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                    }
+                }
+                if (response.next) {
+                    $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                }
+
+                // Update acheteurs table body
+                $('#acheteursTableBody').html('');
+                response.results.forEach(function(acheteur, index) {
+                    $('#acheteursTableBody').append('<tr>' +
+                        '<td><input type="checkbox" class="acheteur-checkbox" data-id="' + acheteur.id + '" /></td>' +
+                        '<td>' + acheteur.code + '</td>' +
+                        '<td title="' + acheteur.nom + '">' + (acheteur.nom.length > 20 ? acheteur.nom.substring(0, 20) + '...' : acheteur.nom) + '</td>' +
+                        '<td>' + acheteur.sigle + '</td>' +
+                    '</tr>');
+                });
+
+                // Update the hidden input with selected acheteurs
+                updateSelectedAcheteurs();
+            },
+            error: function(response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données.',
+                });
+            }
+        });
+    }
+
+    // Initial load
+    loadAcheteurs();
+
+    // Search form submission
+    $('#searchButton').on('click', function(event) {
+        event.preventDefault();
+        var search = $('#searchInput').val();
+        loadAcheteurs(1, search);
+    });
+
+    // Pagination controls
+    $(document).on('click', '#paginationControls .page-link', function(event) {
+        event.preventDefault();
+        var page = $(this).data('page');
+        var search = $('#searchInput').val();
+        loadAcheteurs(page, search);
+    });
+
+    // Handle checkbox change event
+    $(document).on('change', '.acheteur-checkbox', function() {
+        updateSelectedAcheteurs();
+    });
+
+    // Handle select all checkbox
+    $('#allAcheteursId').on('change', function() {
+        var isChecked = $(this).is(':checked');
+        $('.acheteur-checkbox').prop('checked', isChecked);
+        updateSelectedAcheteurs();
+    });
+
+    // Function to update the hidden input with selected acheteurs
+    function updateSelectedAcheteurs() {
+        var selectedAcheteurs = [];
+        $('.acheteur-checkbox:checked').each(function() {
+            selectedAcheteurs.push($(this).data('id'));
+        });
+        $('#acheteursId').val(selectedAcheteurs.join(','));
+        console.log("Selected Acheteurs IDs:", selectedAcheteurs);
+    }
+
+    $('#addPortefeuilleForm').on('submit', function(event) {
+        event.preventDefault();
+
+
+        // Récupérer les valeurs du formulaire
+        var nom = $('#nom').val();
+        var client = $('#client').val();
+        var acheteursIds = $('#acheteursId').val().split(',').map(Number); // Convertir en tableau d'entiers
+
+        // Construire l'objet formData
+        var formData = {
+            client: client,
+            nom: nom,
+            acheteurs: acheteursIds
+        };
+
+        console.log("Données du formulaire :", formData);
+
+        // Vérifier si acheteursId[] est vide
+        if (!nom || !client || acheteursIds.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention!',
+                text: 'Veuillez remplir tous les champs obligatoires.',
+                confirmButtonText: 'OK'
+            });
+            return; // Arrêter la soumission du formulaire
+        }
+
+        $.ajax({
+            url: '/api/ajouter-un-portefeuille-avec-acheteurs/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}' // Utiliser le token stocké
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès!',
+                    text: 'Portefeuille a été ajouté avec succès.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    location.reload(); // Rafraîchir la page après validation
+                });
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur!',
+                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
+                    confirmButtonText: 'Réessayer'
+                });
+            }
+        });
+    });
+
+    // Ajouter un portefeuille
+    $('#addPortefeuilleForm2').on('submit', function(event) {
+        event.preventDefault();
+
+        // Vérifier si acheteursId[] est vide
+        var acheteursId = $('#acheteursId').val();
+        if (!acheteursId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention!',
+                text: 'Veuillez cocher au moins un acheteur.',
+                confirmButtonText: 'OK'
+            });
+            return; // Arrêter la soumission du formulaire
+        }
+
+        
+        var form = $(this);
+        var formData = form.serialize();
+        console.log("Données du formulaire :", formData);
+
+        $.ajax({
+            url: '/api/ajouter-un-portefeuille-avec-acheteurs/',
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}' // Stocke le token dans localStorage
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès!',
+                    text: 'Portefeuille a été ajouté avec succès.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    location.reload(); // Rafraîchir la page après validation
+                });
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur!',
+                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
+                    confirmButtonText: 'Réessayer'
+                });
+            }
+        });
+    });
+
+
+    // Charger les provinces en fonction du pays sélectionné
+    $('#pays').on('change', function() {
+    const paysId = $(this).val();
+    const provinceSelect = $('#province');
+
+    if (paysId) {
+        provinceSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
+
+        $.ajax({
+            url: `/api/provinces/${paysId}/`, 
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}' // Utiliser le token stocké
+            },
+            success: function(response) {
+                provinceSelect.prop('disabled', false).html('<option value="">Sélectionnez une province</option>');
+
+                if (response.results.length > 0) {
+                    response.results.forEach(function(province) {
+                        provinceSelect.append(new Option(province.nom, province.id));
+                    });
+                } else {
+                    provinceSelect.html('<option value="">Aucune province disponible</option>');
+                }
+            },
+            error: function() {
+                provinceSelect.html('<option value="">Erreur lors du chargement</option>');
+            }
+        });
+    } else {
+        provinceSelect.prop('disabled', true).html('<option value="">Sélectionnez un pays d\'abord</option>');
+    }
+});
+
+
+    // Charger les villes en fonction de la province sélectionnée
+    $('#province').on('change', function() {
+        var provinceId = $(this).val();
+        var villeSelect = $('#ville');
+
+        if (provinceId) {
+            villeSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
+
+            $.ajax({
+                url: `/api/villes/${provinceId}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' +  '{{ access }}' // Utiliser le token stocké
+                },
+                success: function(response) {
+                    villeSelect.prop('disabled', false).html('<option value="">Sélectionnez une ville</option>');
+
+                    if (response.results.length > 0) {
+                        response.results.forEach(function(ville) {
+                            villeSelect.append(new Option(ville.nom, ville.id));
+                        });
+                    } else {
+                        villeSelect.html('<option value="">Aucune ville disponible</option>');
+                    }
+                },
+                error: function() {
+                    villeSelect.html('<option value="">Erreur lors du chargement</option>');
+                }
+            });
+        } else {
+            villeSelect.prop('disabled', true).html('<option value="">Sélectionnez une province d\'abord</option>');
+        }
+    });
+
+
+    // Ajouter un acheteur
+    $('#addAcheteurForm').on('submit', function(event) {
+        event.preventDefault();
+
+        // Activer les champs désactivés pour qu'ils soient envoyés avec le formulaire
+        $('#province, #ville').prop('disabled', false);
+
+        var formData = $(this).serialize();
+        console.log("Données du formulaire :", formData);
+
+        $.ajax({
+            url: '/api/ajouter-un-acheteur/',
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}' // Stocke le token dans localStorage
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès!',
+                    text: 'L’acheteur a été ajouté avec succès.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Recharger la liste des acheteurs
+                    loadAcheteurs();
+                });
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur!',
+                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
+                    confirmButtonText: 'Réessayer'
+                });
+            }
+        });
+    });
+
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

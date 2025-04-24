@@ -1,0 +1,266 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+.color-circle {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: black;
+    margin-left: 5px;
+}
+
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-exclamation-triangle fa-fw me-1"></i>Éditer une Alerte</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAlertes">Module de Gestion des Alertes</h4>
+                    <span>Dans ce module, vous pouvez éditer une alerte et gérer ses documents associés.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Édition d'une Alerte START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom">
+                <h4 class="card-header-title">Éditer une Alerte</h4>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body vstack gap-4">
+
+                <form id="editAlerteForm">
+
+                    <input type="hidden" name="id" id="editAlerteId" value="{{ id_alerte }}" />
+
+                    <!-- Généralités item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Détails de l'alerte</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Référence -->
+                            <div class="mb-3">
+                                <label class="form-label">Référence</label>
+                                <input type="text" class="form-control" id="editReference" name="reference" placeholder="Ex. ALRT001" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Objet -->
+                            <div class="mb-3">
+                                <label class="form-label">Objet</label>
+                                <input type="text" class="form-control" id="editObjet" name="objet" placeholder="Ex. Incident de sécurité" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Message -->
+                            <div class="mb-3">
+                                <label class="form-label">Message</label>
+                                <textarea class="form-control" id="editContent" name="content" rows="4" placeholder="Détails de l'alerte..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Généralités item END -->
+
+                    <br>
+
+                    
+
+                    <br>
+
+                    <!-- Button -->
+                    <div class="text-end">
+                        <button class="btn btn-primary mb-0" type="submit">
+                            <i class="bi bi-pencil-square"></i> Mettre à jour l'alerte
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+            <!-- Card body END -->
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Édition d'une Alerte END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        tinymce.init({
+            selector: '#editContent',
+            setup: function (editor) {
+                editor.on('init', function () {
+                    editor.getContainer().querySelector('iframe').setAttribute('title', 'Éditeur de texte');
+                });
+            },
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 500
+        });
+    });
+</script>
+
+<script>
+$(document).ready(function() {
+
+    // Charger les données de l'alerte
+    const id = '{{ id_alerte }}';
+    $.ajax({
+        url: `/api/editer-une-alerte/${id}/`,
+        type: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + '{{ access }}'
+        },
+        success: function(response) {
+            $('#editReference').val(response.reference);
+            $('#editObjet').val(response.objet);
+            $('#editContent').val(response.content);
+
+            tinymce.get('editContent').setContent(response.content);
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Erreur lors de la récupération des données de l\'alerte.',
+            });
+        }
+    });
+
+    // Soumettre le formulaire d'édition
+    $('#editAlerteForm').on('submit', function(event) {
+        event.preventDefault();
+
+        var formData = new FormData(this);
+
+        $.ajax({
+            url: `/api/editer-une-alerte/${id}/`,
+            type: 'PUT',
+            data: formData,
+            contentType: false,
+            processData: false,
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès!',
+                    text: 'L’alerte a été mise à jour avec succès.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // location.reload(); // Rafraîchir la page après validation
+                    // Rediriger vers l'URL souhaitée
+                    window.location.href = '/root-dashboard/warnings/liste-des-alertes/';
+                });
+            },
+            error: function(xhr) {
+                console.error(xhr.responseText);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur!',
+                    text: xhr.responseJSON ? xhr.responseJSON.message : 'Une erreur est survenue.',
+                    confirmButtonText: 'Réessayer'
+                });
+            }
+        });
+    });
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: '{{ refresh }}' }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+});
+</script>
+
+{% endblock %}

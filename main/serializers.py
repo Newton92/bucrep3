@@ -10,7 +10,7 @@ from .models import *
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'avatar', 'code_secret', 'adresse', 'activation', 'auth_a2f', 'telephone', 'profession', 'email_cc']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'avatar', 'code_secret', 'address', 'activation', 'auth_a2f', 'telephone', 'profession', 'email_cc']
 
 
 class PaysSerializer(serializers.ModelSerializer):
@@ -846,8 +846,9 @@ class AddOpinionCreditAcremacSerializer(serializers.ModelSerializer):
         fields = [
             'acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation',
             'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve',
-            'risque_moyen', 'risque_faible', "couleur_commentaire", "commentaire"
+            'risque_moyen', 'risque_faible', "couleur_commentaire", "montant_credit_maximum", "commentaire"
         ]
+
 
 class EditOpinionCreditAcremacSerializer(serializers.ModelSerializer):
     class Meta:
@@ -855,7 +856,7 @@ class EditOpinionCreditAcremacSerializer(serializers.ModelSerializer):
         fields = [
             'acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation',
             'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve',
-            'risque_moyen', 'risque_faible', "couleur_commentaire", "commentaire"
+            'risque_moyen', 'risque_faible', "couleur_commentaire", "montant_credit_maximum", "commentaire"
         ]
 
 
@@ -2651,4 +2652,444 @@ class EditProductsSerializer(serializers.ModelSerializer):
             "solde_resultat_correction_valeur_sur_creance_hors_bilan",
             "excedent_reprise_fonds_pour_risque_bancaire_generaux", "produits_exceptionnels",
             "benefice_sur_exercice_anterieur", "perte", "created_by", "updated_by"
+        ]
+
+
+
+
+
+
+
+
+
+
+class CommandeSerializer(serializers.ModelSerializer):
+    client = CustomUserSerializer()
+    acheteur = AcheteurSerializer()
+    ville = VilleSerializer()
+    ref_type_rapport = ModeleRapportSerializer()
+    devise_credit_demande = DeviseSerializer()
+    devise_credit_recommande = DeviseSerializer()
+
+    class Meta:
+        model = Commande
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_credit_demande(self, value):
+        return self.validate_decimal_field(value)
+
+    def validate_credit_recommande(self, value):
+        return self.validate_decimal_field(value)
+
+class AddCommandeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Commande
+        fields = [
+            "id", "notre_ref", "reference_client", "date_recept_commande", "date_rapport",
+            "delais", "priorite", "raison_sociale", "type_rapport", "ref_type_rapport",
+            "credit_demande", "devise_credit_demande", "credit_recommande", "devise_credit_recommande",
+            "numero_adresse", "rue_adresse", "code_postale_adresse", "telephone", "email",
+            "ville", "client", "acheteur", "status"
+        ]
+
+class GetCommandeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Commande
+        fields = '__all__'
+
+class CheckCommandeSerializer(serializers.ModelSerializer):
+    client = CustomUserSerializer()
+    acheteur = AcheteurSerializer()
+    ville = VilleSerializer()
+    ref_type_rapport = ModeleRapportSerializer()
+    devise_credit_demande = DeviseSerializer()
+    devise_credit_recommande = DeviseSerializer()
+    class Meta:
+        model = Commande
+        fields = '__all__'
+
+    def validate_decimal_field(self, value):
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("La valeur doit être un nombre décimal.")
+        return value
+
+    def validate_credit_demande(self, value):
+        return self.validate_decimal_field(value)
+
+    def validate_credit_recommande(self, value):
+        return self.validate_decimal_field(value)
+
+class EditCommandeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Commande
+        fields = [
+            "id", "notre_ref", "reference_client", "date_recept_commande", "date_rapport",
+            "delais", "priorite", "raison_sociale", "type_rapport", "ref_type_rapport",
+            "credit_demande", "devise_credit_demande", "credit_recommande", "devise_credit_recommande",
+            "numero_adresse", "rue_adresse", "code_postale_adresse", "telephone", "email",
+            "ville", "client", "acheteur", "status"
+        ]
+
+
+
+
+
+
+
+
+
+
+class AlerteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Alerte
+        fields = '__all__'
+
+class AddAlerteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Alerte
+        fields = ['reference', 'objet', 'content']
+
+class EditAlerteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Alerte
+        fields = ['reference', 'objet', 'content']
+
+class DocumentAlerteSerializer(serializers.ModelSerializer):
+    alerte = AlerteSerializer()
+
+    class Meta:
+        model = DocumentAlerte
+        fields = '__all__'
+
+class AddDocumentAlerteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentAlerte
+        fields = ['alerte', 'titre', 'fichier']
+
+class EditDocumentAlerteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentAlerte
+        fields = ['alerte', 'titre', 'fichier']
+
+
+
+
+
+
+
+
+
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = '__all__'
+
+class AddClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = [
+            "id", "nom", "email", "telephone", "adresse",
+            "date_inscription", "actif"
+        ]
+
+class GetClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = '__all__'
+
+class CheckClientSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Client
+        fields = '__all__'
+
+class EditClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Client
+        fields = [
+            "id", "nom", "email", "telephone", "adresse",
+            "date_inscription", "actif"
+        ]
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+class PortefeuilleSerializer(serializers.ModelSerializer):
+    client = ClientSerializer()
+
+    class Meta:
+        model = Portefeuille
+        fields = '__all__'
+        
+
+class AddPortefeuilleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Portefeuille
+        fields = [
+            "id", "client", "nom", "created_at", "updated_at"
+        ]
+        
+        
+class AddPortefeuilleWithAcheteursSerializer(serializers.ModelSerializer):
+    acheteurs = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+
+    class Meta:
+        model = Portefeuille
+        fields = ['client', 'nom', 'acheteurs']
+
+    def create(self, validated_data):
+        acheteurs_data = validated_data.pop('acheteurs')
+        portefeuille = Portefeuille.objects.create(**validated_data)
+
+        for acheteur_id in acheteurs_data:
+            PortefeuilleClient.objects.create(portefeuille=portefeuille, acheteur_id=acheteur_id)
+
+        return portefeuille
+
+
+
+class GetPortefeuilleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Portefeuille
+        fields = '__all__'
+
+
+class CheckPortefeuilleSerializer(serializers.ModelSerializer):
+    client = ClientSerializer()  # Assurez-vous d'avoir un ClientSerializer défini
+
+    class Meta:
+        model = Portefeuille
+        fields = '__all__'
+
+
+
+class EditPortefeuilleSerializer(serializers.ModelSerializer):
+    acheteurs = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
+
+    class Meta:
+        model = Portefeuille
+        fields = [
+            "id", "client", "nom", "created_at", "updated_at", "acheteurs"
+        ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class PortefeuilleClientSerializer(serializers.ModelSerializer):
+    portefeuille = PortefeuilleSerializer()
+    acheteur = AcheteurSerializer()  # Assurez-vous d'avoir un AcheteurSerializer défini
+
+    class Meta:
+        model = PortefeuilleClient
+        fields = '__all__'
+
+
+
+class AddPortefeuilleClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortefeuilleClient
+        fields = [
+            "id", "portefeuille", "acheteur", "categorie"
+        ]
+
+
+
+
+class GetPortefeuilleClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortefeuilleClient
+        fields = '__all__'
+
+
+
+
+class CheckPortefeuilleClientSerializer(serializers.ModelSerializer):
+    portefeuille = PortefeuilleSerializer()
+    acheteur = AcheteurSerializer()  # Assurez-vous d'avoir un AcheteurSerializer défini
+
+    class Meta:
+        model = PortefeuilleClient
+        fields = '__all__'
+
+
+
+
+
+
+
+
+
+
+class CompteFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancierIrfs
+        fields = '__all__'
+
+class AddCompteFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancierIrfs
+        fields = [
+            "id", "nom", "type_compte", "sous_type"
+        ]
+
+class GetCompteFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancierIrfs
+        fields = '__all__'
+
+class CheckCompteFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancierIrfs
+        fields = '__all__'
+
+class EditCompteFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CompteFinancierIrfs
+        fields = [
+            "id", "nom", "type_compte", "sous_type"
+        ]
+
+
+
+
+
+
+
+
+class ValeurCompteIrfsSerializer(serializers.ModelSerializer):
+    
+    compte = CompteFinancierIrfsSerializer()
+    devise = DeviseSerializer()
+    annee = AnneeSerializer()
+    
+    class Meta:
+        model = ValeurCompteIrfs
+        fields = '__all__'
+
+class AddValeurCompteIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurCompteIrfs
+        fields = [
+            "id", "acheteur", "compte", "annee", "valeur", "devise"
+        ]
+
+class GetValeurCompteIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurCompteIrfs
+        fields = '__all__'
+
+class CheckValeurCompteIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurCompteIrfs
+        fields = '__all__'
+
+class EditValeurCompteIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurCompteIrfs
+        fields = [
+            "id", "acheteur", "compte", "annee", "valeur", "devise"
+        ]
+
+
+
+
+
+
+
+
+
+
+class RatioFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RatioFinancierIrfs
+        fields = '__all__'
+
+class AddRatioFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RatioFinancierIrfs
+        fields = [
+            "id", "type_ratio", "nom", "formule"
+        ]
+
+class GetRatioFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RatioFinancierIrfs
+        fields = '__all__'
+
+class CheckRatioFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RatioFinancierIrfs
+        fields = '__all__'
+
+class EditRatioFinancierIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RatioFinancierIrfs
+        fields = [
+            "id", "type_ratio", "nom", "formule"
+        ]
+
+
+
+
+
+
+
+
+
+
+
+
+class ValeurRatioIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurRatioIrfs
+        fields = '__all__'
+
+class AddValeurRatioIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurRatioIrfs
+        fields = [
+            "id", "acheteur", "ratio", "annee", "valeur"
+        ]
+
+class GetValeurRatioIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurRatioIrfs
+        fields = '__all__'
+
+class CheckValeurRatioIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurRatioIrfs
+        fields = '__all__'
+
+class EditValeurRatioIrfsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ValeurRatioIrfs
+        fields = [
+            "id", "acheteur", "ratio", "annee", "valeur"
         ]

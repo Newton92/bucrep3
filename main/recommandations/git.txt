@@ -10,3 +10,50 @@ git push --set-upstream origin fix-detached
 git checkout yannick
 git merge fix-detached
 git push origin yannick
+
+
+Git refuse de changer de branche car tu as des fichiers modifiés qui seraient écrasés. Voici comment résoudre le problème :  
+
+### 1️⃣ **Si tu veux conserver tes modifications et les appliquer plus tard** :  
+Utilise le stash pour enregistrer temporairement tes modifications :  
+```sh
+git stash
+git checkout fix-detached
+```
+Puis, pour récupérer tes modifications après le changement de branche :  
+```sh
+git stash pop
+```
+
+---
+
+### 2️⃣ **Si tu veux valider tes modifications avant de changer de branche** :  
+```sh
+git add .
+git commit -m "Sauvegarde avant changement de branche"
+git checkout fix-detached
+```
+
+---
+
+### 3️⃣ **Si tu veux ignorer les modifications et forcer le changement de branche** *(⚠️ les changements seront perdus !)* :  
+```sh
+git checkout -f fix-detached
+```
+
+---
+
+### 4️⃣ **Si les fichiers listés sont inutiles** *(ex: fichiers `.pyc` et `db.sqlite3`)*, ajoute-les à `.gitignore` :  
+Édite le fichier `.gitignore` et ajoute :  
+```
+__pycache__/
+db.sqlite3
+```
+Puis supprime-les de Git sans les effacer localement :  
+```sh
+git rm --cached -r __pycache__ db.sqlite3
+git commit -m "Supprime les fichiers inutiles du suivi Git"
+git checkout fix-detached
+```
+
+Essaie l'une de ces solutions et dis-moi si ça fonctionne ! 🚀

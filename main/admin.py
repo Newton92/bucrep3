@@ -583,3 +583,206 @@ class BanquierAdmin(admin.ModelAdmin):
 
 admin.site.register(Banquier, BanquierAdmin)
 
+
+
+
+
+
+
+
+
+
+
+
+@admin.register(Logo)
+class LogoAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'image', 'description', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'description')
+    ordering = ('-created_at',)
+
+@admin.register(TelephoneAcheteur)
+class TelephoneAcheteurAdmin(admin.ModelAdmin):
+    list_display = ('telephone', 'acheteur', 'created_at', 'updated_at', 'created_by', 'updated_by')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('telephone', 'acheteur__nom')
+    ordering = ('-created_at',)
+
+@admin.register(PortableAcheteur)
+class PortableAcheteurAdmin(admin.ModelAdmin):
+    list_display = ('portable', 'acheteur', 'created_at', 'updated_at', 'created_by', 'updated_by')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('portable', 'acheteur__nom')
+    ordering = ('-created_at',)
+
+@admin.register(EmailAcheteur)
+class EmailAcheteurAdmin(admin.ModelAdmin):
+    list_display = ('email', 'acheteur', 'created_at', 'updated_at', 'created_by', 'updated_by')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('email', 'acheteur__nom')
+    ordering = ('-created_at',)
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'titre', 'fichier', 'description', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('titre', 'acheteur__nom')
+    ordering = ('-created_at',)
+
+@admin.register(Swot)
+class SwotAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'forces', 'faiblesses', 'opportunites', 'menaces')
+    ordering = ('-created_at',)
+
+@admin.register(ProduitService)
+class ProduitServiceAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'produits', 'services', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'produits', 'services')
+    ordering = ('-created_at',)
+
+@admin.register(Marque)
+class MarqueAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'marques', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'marques')
+    ordering = ('-created_at',)
+
+@admin.register(ProcedureCollective)
+class ProcedureCollectiveAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'type_procedure', 'date_ouverture', 'date_cloture', 'description', 'created_at', 'updated_at')
+    list_filter = ('type_procedure', 'date_ouverture', 'date_cloture', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'type_procedure', 'description')
+    ordering = ('-created_at',)
+
+@admin.register(RegistreCommerce)
+class RegistreCommerceAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'numero', 'date_inscription', 'created_at', 'updated_at')
+    list_filter = ('date_inscription', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'numero')
+    ordering = ('-created_at',)
+
+@admin.register(Cotisation)
+class CotisationAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'numero', 'date_affiliation', 'created_at', 'updated_at')
+    list_filter = ('date_affiliation', 'created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'numero')
+    ordering = ('-created_at',)
+
+@admin.register(CodeNaceAcheteur)
+class CodeNaceAcheteurAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'code', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'code__code')
+    ordering = ('-created_at',)
+
+@admin.register(CodeNafAcheteur)
+class CodeNafAcheteurAdmin(admin.ModelAdmin):
+    list_display = ('acheteur', 'code', 'created_at', 'updated_at')
+    list_filter = ('created_at', 'updated_at')
+    search_fields = ('acheteur__nom', 'code__code')
+    ordering = ('-created_at',)
+
+
+
+
+
+
+
+
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'type', 'message', 'is_read', 'created_at')
+    list_filter = ('type', 'is_read', 'created_at')
+    search_fields = ('user__username', 'message')
+    ordering = ('-created_at',)
+
+@admin.register(Commande)
+class CommandeAdmin(admin.ModelAdmin):
+    list_display = ('notre_ref', 'reference_client', 'status', 'raison_sociale', 'created_at', 'updated_at')
+    list_filter = ('status', 'created_at', 'updated_at')
+    search_fields = ('notre_ref', 'reference_client', 'raison_sociale')
+    ordering = ('-created_at',)
+
+@admin.register(SuiviCommande)
+class SuiviCommandeAdmin(admin.ModelAdmin):
+    list_display = ('commande', 'user', 'action', 'type', 'date_action')
+    list_filter = ('type', 'date_action')
+    search_fields = ('commande__notre_ref', 'user__username', 'action')
+    ordering = ('-date_action',)
+
+@admin.register(AffectationAnalyste)
+class AffectationAnalysteAdmin(admin.ModelAdmin):
+    list_display = ('commande', 'analyste', 'date_affectation')
+    list_filter = ('date_affectation',)
+    search_fields = ('commande__notre_ref', 'analyste__username')
+    ordering = ('-date_affectation',)
+
+@admin.register(Rapport)
+class RapportAdmin(admin.ModelAdmin):
+    list_display = ('commande', 'analyste', 'fichier', 'date_soumission')
+    list_filter = ('date_soumission',)
+    search_fields = ('commande__notre_ref', 'analyste__username')
+    ordering = ('-date_soumission',)
+
+@admin.register(ValidationRapport)
+class ValidationRapportAdmin(admin.ModelAdmin):
+    list_display = ('rapport', 'validateur', 'status', 'date_validation')
+    list_filter = ('status', 'date_validation')
+    search_fields = ('rapport__commande__notre_ref', 'validateur__username')
+    ordering = ('-date_validation',)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@admin.register(CredendoCommande)
+class CredendoCommandeAdmin(admin.ModelAdmin):
+    list_display = ("reference", "nom", "pays", "montant", "devise", "priorite", "date_reception")
+    list_filter = ("pays", "priorite", "devise", "date_reception")
+    search_fields = ("reference", "nom", "internal_bp_id", "email_id")
+    readonly_fields = ("email_id", "texte_complet", "date_reception")
+    ordering = ("-date_reception",)
+
+    fieldsets = (
+        ("Informations Générales", {
+            "fields": ("sender_id", "email_id", "reference", "internal_bp_id", "nom", "identifiants", "priorite", "remarque")
+        }),
+        ("Adresse", {
+            "fields": ("rue", "ville", "pays")
+        }),
+        ("Montant et Devise", {
+            "fields": ("montant", "devise")
+        }),
+        ("Autres", {
+            "fields": ("texte_complet", "date_reception")
+        }),
+    )
+
+

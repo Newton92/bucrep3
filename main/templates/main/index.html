@@ -1,7 +1,9 @@
+{% load i18n %}
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 
-{% load static %}
 
 <!-- ACREMAC | Bucrep 3.0 -->
 <head>
@@ -71,19 +73,19 @@
                                                 <img class="h-50px mb-4" src="{% static 'assets/images/bucrep-image.png' %}" alt="logo">
                                             </a>
                                             <!-- Title -->
-                                            <h1 class="mb-2 h3" style="color: #0A95CA;">CONNEXION</h1>
-                                            <p class="mb-0">Accédez à votre <a href="sign-up.html" style="color: #0A95CA;">espace privé</a> !</p>
+                                            <h1 class="mb-2 h3" style="color: #0A95CA;">{% trans "CONNEXION" %}</h1>
+                                            <p class="mb-0">{% trans "Accédez à votre" %} <a href="#" style="color: #0A95CA;">{% trans "espace privé" %}</a> !</p>
 
                                             <!-- Form START -->
                                             <form id="loginForm" class="mt-4 text-start">
                                                 <!-- Username -->
                                                 <div class="mb-3">
-                                                    <label class="form-label">Pseudo</label>
-                                                    <input type="text" class="form-control" id="username" name="username" required>
+                                                    <label class="form-label">{% trans "Pseudo" %}</label>
+                                                    <input type="text" class="form-control" id="username" name="username" placeholder="John DOE" required>
                                                 </div>
                                                 <!-- Password -->
                                                 <div class="mb-3 position-relative">
-                                                    <label class="form-label">Mot de Passe</label>
+                                                    <label class="form-label">{% trans "Mot de Passe" %}</label>
                                                     <input class="form-control fakepassword" type="password" id="password" name="password" required>
                                                     <span class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3">
                                                         <i class="fakepasswordicon bi bi-eye-slash cursor-pointer p-2"></i>
@@ -92,12 +94,12 @@
                                                 <!-- Remember me -->
                                                 <div class="mb-3 d-sm-flex justify-content-between">
                                                     <div></div>
-                                                    <a href="{% url 'forgot_auth' %}" style="color: #0A95CA;">Mot de passe oublié ?</a>
+                                                    <a href="{% url 'forgot_auth' %}" style="color: #0A95CA;">{% trans "Mot de passe oublié" %} ?</a>
                                                 </div>
                                                 <!-- Button -->
                                                 <div>
                                                     <button type="submit" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
-                                                        connexion
+                                                        {% trans "connexion" %}
                                                     </button>
                                                 </div>
 
@@ -110,7 +112,33 @@
                                                 </div>
 
                                                 <!-- Copyright -->
-                                                <div class="text-primary-hover text-body mt-3 text-center"> Copyrights ©2025. Built by <a href="https://www.acremac.com/" class="text-body">ACREMAC</a>. </div>
+                                                <div class="text-primary-hover text-body mt-3 text-center"> Copyrights ©2025. {% trans "Conçu par" %} <a href="https://www.acremac.com/" class="text-body">ACREMAC</a>. </div>
+
+                                                <!-- Translation -->
+                                                <!-- Formulaire de changement de langue -->
+                                                <form id="language-form" action="{% url 'set_language' %}" method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                    <input type="hidden" id="language-input" name="language">
+                                                </form>
+
+                                                <!-- Drapeaux de sélection de langue -->
+                                                <div class="text-primary-hover text-body mt-3 text-center">
+                                                    <a href="#" class="lang-flag" data-lang="fr">
+                                                        <img height="30" width="25" src="{% static 'assets/images/french.png' %}" alt="Français">
+                                                    </a>
+                                                    &nbsp;
+                                                    <a href="#" class="lang-flag" data-lang="en">
+                                                        <img height="30" width="27" src="{% static 'assets/images/english.png' %}" alt="Anglais">
+                                                    </a>
+                                                </div>
+
+
+
+
+
+                                            
+                                            
                                             </form>
                                             <!-- Form END -->
                                         </div>
@@ -199,6 +227,49 @@
         });
     });
 </script>
+
+<script>
+$(document).ready(function () {
+    $(".lang-flag").click(function (e) {
+        e.preventDefault(); // Empêche le rechargement immédiat
+
+        var lang = $(this).data("lang"); // Récupère la langue sélectionnée
+        var url = $("#language-form").attr("action"); // URL du formulaire
+        var csrfToken = $("input[name=csrfmiddlewaretoken]").val(); // Token CSRF
+
+        $.ajax({
+            type: "POST",
+            url: url,
+            data: {
+                language: lang,
+                csrfmiddlewaretoken: csrfToken
+            },
+            success: function () {
+                console.log("Langue changée avec succès !");
+                Swal.fire({
+                    title: "Succès",
+                    text: "Langue changée avec succès.",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload(true); // Recharge la page après le changement de langue
+                });
+            },
+            error: function () {
+                Swal.fire({
+                    title: "Erreur",
+                    text: "Impossible de changer la langue.",
+                    icon: "error"
+                });
+            }
+        });
+    });
+});
+
+
+</script>
+
 
 
 

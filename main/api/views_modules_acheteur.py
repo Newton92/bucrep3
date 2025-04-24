@@ -4564,3 +4564,633 @@ class DeleteAcheteurProductsView(APIView):
 
 
 
+class ListAcheteurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        type_compte = request.query_params.get('type_compte', '')
+        sous_type = request.query_params.get('sous_type', '')
+
+        comptes_list = CompteFinancierIrfs.objects.all().order_by('nom')
+
+        if type_compte:
+            comptes_list = comptes_list.filter(type_compte__icontains=type_compte)
+
+        if sous_type:
+            comptes_list = comptes_list.filter(sous_type__icontains=sous_type)
+
+        paginator = Paginator(comptes_list, 10)
+        comptes_page = paginator.get_page(page_number)
+        serializer = CompteFinancierIrfsSerializer(comptes_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': comptes_page.has_next(),
+            'previous': comptes_page.has_previous()
+        })
+
+
+
+class SearchAcheteurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comptes_list = CompteFinancierIrfs.objects.filter(
+            nom__icontains=search_term
+        ).order_by('nom')
+
+        paginator = Paginator(comptes_list, 10)
+        page_number = request.query_params.get('page', 1)
+        comptes_page = paginator.get_page(page_number)
+        serializer = CompteFinancierIrfsSerializer(comptes_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': comptes_page.has_next(),
+            'previous': comptes_page.has_previous()
+        })
+
+
+
+
+class AddAcheteurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddCompteFinancierIrfsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class EditAcheteurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, compte_irfs_id, *args, **kwargs):
+        compte = CompteFinancierIrfs.objects.filter(id=compte_irfs_id).first()
+        if not compte:
+            return Response({'detail': 'Compte non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetCompteFinancierIrfsSerializer(compte)
+        return Response(serializer.data)
+
+    def put(self, request, compte_irfs_id, *args, **kwargs):
+        compte = CompteFinancierIrfs.objects.filter(id=compte_irfs_id).first()
+        if not compte:
+            return Response({'detail': 'Compte non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditCompteFinancierIrfsSerializer(compte, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class DeleteAcheteurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comptes = CompteFinancierIrfs.objects.filter(id__in=ids)
+        if not comptes.exists():
+            return Response({'error': 'Aucun compte trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = comptes.delete()
+        return Response({'message': f'{count} comptes supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+class ListAcheteurValeurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        valeur_min = request.query_params.get('valeur_min', '')
+        valeur_max = request.query_params.get('valeur_max', '')
+
+        try:
+            valeur_min = Decimal(valeur_min) if valeur_min else None
+            valeur_max = Decimal(valeur_max) if valeur_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de valeur_min et valeur_max doivent être des nombres décimaux valides.'}, status=400)
+
+        valeurs_list = ValeurCompteIrfs.objects.filter(
+            acheteur__pk=acheteur_id,
+            annee__annee__icontains=annee
+        ).order_by('compte__nom')
+
+        if valeur_min is not None:
+            valeurs_list = valeurs_list.filter(valeur__gte=valeur_min)
+
+        if valeur_max is not None:
+            valeurs_list = valeurs_list.filter(valeur__lte=valeur_max)
+
+        paginator = Paginator(valeurs_list, 10)
+        valeurs_page = paginator.get_page(page_number)
+        serializer = ValeurCompteIrfsSerializer(valeurs_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': valeurs_page.has_next(),
+            'previous': valeurs_page.has_previous()
+        })
+
+
+
+
+
+class ListAcheteurActifFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        valeur_min = request.query_params.get('valeur_min', '')
+        valeur_max = request.query_params.get('valeur_max', '')
+
+        try:
+            valeur_min = Decimal(valeur_min) if valeur_min else None
+            valeur_max = Decimal(valeur_max) if valeur_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de valeur_min et valeur_max doivent être des nombres décimaux valides.'}, status=400)
+
+        valeurs_list = ValeurCompteIrfs.objects.filter(
+            acheteur__pk=acheteur_id,
+            annee__annee__icontains=annee,
+            compte__type_compte__icontains='Actif'
+        ).order_by('compte__nom')
+
+        if valeur_min is not None:
+            valeurs_list = valeurs_list.filter(valeur__gte=valeur_min)
+
+        if valeur_max is not None:
+            valeurs_list = valeurs_list.filter(valeur__lte=valeur_max)
+
+        paginator = Paginator(valeurs_list, 10)
+        valeurs_page = paginator.get_page(page_number)
+        serializer = ValeurCompteIrfsSerializer(valeurs_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': valeurs_page.has_next(),
+            'previous': valeurs_page.has_previous()
+        })
+
+
+
+
+
+class ListAcheteurPassifFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        valeur_min = request.query_params.get('valeur_min', '')
+        valeur_max = request.query_params.get('valeur_max', '')
+
+        try:
+            valeur_min = Decimal(valeur_min) if valeur_min else None
+            valeur_max = Decimal(valeur_max) if valeur_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de valeur_min et valeur_max doivent être des nombres décimaux valides.'}, status=400)
+
+        valeurs_list = ValeurCompteIrfs.objects.filter(
+            acheteur__pk=acheteur_id,
+            annee__annee__icontains=annee,
+            compte__type_compte__icontains='Passif'
+        ).order_by('compte__nom')
+
+        if valeur_min is not None:
+            valeurs_list = valeurs_list.filter(valeur__gte=valeur_min)
+
+        if valeur_max is not None:
+            valeurs_list = valeurs_list.filter(valeur__lte=valeur_max)
+
+        paginator = Paginator(valeurs_list, 10)
+        valeurs_page = paginator.get_page(page_number)
+        serializer = ValeurCompteIrfsSerializer(valeurs_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': valeurs_page.has_next(),
+            'previous': valeurs_page.has_previous()
+        })
+
+
+
+
+
+
+class SearchAcheteurValeurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valeurs_list = ValeurCompteIrfs.objects.filter(
+            acheteur__pk=acheteur_id,
+            compte__nom__icontains=search_term
+        ).order_by('compte__nom')
+
+        paginator = Paginator(valeurs_list, 10)
+        page_number = request.query_params.get('page', 1)
+        valeurs_page = paginator.get_page(page_number)
+        serializer = ValeurCompteIrfsSerializer(valeurs_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': valeurs_page.has_next(),
+            'previous': valeurs_page.has_previous()
+        })
+
+
+
+class AddAcheteurValeurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddValeurCompteIrfsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+import json
+
+class AjoutAcheteurValeurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+
+            # Vérifiez que 'data' est une liste
+            if not isinstance(data, list):
+                return Response({'error': 'Invalid data format'}, status=status.HTTP_400_BAD_REQUEST)
+
+            for item in data:
+                serializer = AddValeurCompteIrfsSerializer(data={
+                    'acheteur': item.get('acheteur_id'),
+                    'compte': item.get('compte'),
+                    'annee': item.get('annee'),
+                    'valeur': item.get('valeur'),
+                    'devise': item.get('devise')
+                })
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'message': 'Données sauvegardées avec succès'}, status=status.HTTP_201_CREATED)
+        except json.JSONDecodeError:
+            return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class EditAcheteurValeurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, valeur_actif_irfs_id, *args, **kwargs):
+        valeur = ValeurCompteIrfs.objects.filter(id=valeur_actif_irfs_id, acheteur__pk=acheteur_id).first()
+        if not valeur:
+            return Response({'detail': 'Valeur non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetValeurCompteIrfsSerializer(valeur)
+        return Response(serializer.data)
+
+    def put(self, request, acheteur_id, valeur_actif_irfs_id, *args, **kwargs):
+        valeur = ValeurCompteIrfs.objects.filter(id=valeur_actif_irfs_id, acheteur__pk=acheteur_id).first()
+        if not valeur:
+            return Response({'detail': 'Valeur non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditValeurCompteIrfsSerializer(valeur, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class DeleteAcheteurValeurCompteFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valeurs = ValeurCompteIrfs.objects.filter(id__in=ids, acheteur__pk=acheteur_id)
+        if not valeurs.exists():
+            return Response({'error': 'Aucune valeur trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = valeurs.delete()
+        return Response({'message': f'{count} valeurs supprimées avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        type_ratio = request.query_params.get('type_ratio', '')
+
+        ratios_list = RatioFinancierIrfs.objects.filter().order_by('nom')
+
+        if type_ratio:
+            ratios_list = ratios_list.filter(type_ratio__icontains=type_ratio)
+
+        paginator = Paginator(ratios_list, 10)
+        ratios_page = paginator.get_page(page_number)
+        serializer = RatioFinancierIrfsSerializer(ratios_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': ratios_page.has_next(),
+            'previous': ratios_page.has_previous()
+        })
+
+
+
+
+class SearchAcheteurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ratios_list = RatioFinancierIrfs.objects.filter(
+            nom__icontains=search_term
+        ).order_by('nom')
+
+        paginator = Paginator(ratios_list, 10)
+        page_number = request.query_params.get('page', 1)
+        ratios_page = paginator.get_page(page_number)
+        serializer = RatioFinancierIrfsSerializer(ratios_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': ratios_page.has_next(),
+            'previous': ratios_page.has_previous()
+        })
+
+
+
+
+
+class AddAcheteurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddRatioFinancierIrfsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class EditAcheteurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, ratio_irfs_id, *args, **kwargs):
+        ratio = RatioFinancierIrfs.objects.filter(id=ratio_irfs_id).first()
+        if not ratio:
+            return Response({'detail': 'Ratio non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetRatioFinancierIrfsSerializer(ratio)
+        return Response(serializer.data)
+
+    def put(self, request, ratio_irfs_id, *args, **kwargs):
+        ratio = RatioFinancierIrfs.objects.filter(id=ratio_irfs_id).first()
+        if not ratio:
+            return Response({'detail': 'Ratio non trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditRatioFinancierIrfsSerializer(ratio, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class DeleteAcheteurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ratios = RatioFinancierIrfs.objects.filter(id__in=ids)
+        if not ratios.exists():
+            return Response({'error': 'Aucun ratio trouvé pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = ratios.delete()
+        return Response({'message': f'{count} ratios supprimés avec succès.'}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurValeurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        search_term = request.query_params.get('search', '')
+        annee = request.query_params.get('annee', '')
+        valeur_min = request.query_params.get('valeur_min', '')
+        valeur_max = request.query_params.get('valeur_max', '')
+
+        try:
+            valeur_min = Decimal(valeur_min) if valeur_min else None
+            valeur_max = Decimal(valeur_max) if valeur_max else None
+        except Decimal.InvalidOperation:
+            return Response({'error': 'Les valeurs de valeur_min et valeur_max doivent être des nombres décimaux valides.'}, status=400)
+
+        valeurs_list = ValeurRatioIrfs.objects.filter(
+            acheteur_id=acheteur_id,
+            annee__nom__icontains=annee
+        ).order_by('ratio__nom')
+
+        if valeur_min is not None:
+            valeurs_list = valeurs_list.filter(valeur__gte=valeur_min)
+
+        if valeur_max is not None:
+            valeurs_list = valeurs_list.filter(valeur__lte=valeur_max)
+
+        paginator = Paginator(valeurs_list, 10)
+        valeurs_page = paginator.get_page(page_number)
+        serializer = ValeurRatioIrfsSerializer(valeurs_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': valeurs_page.has_next(),
+            'previous': valeurs_page.has_previous()
+        })
+
+
+
+
+
+
+class SearchAcheteurValeurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get('search', '')
+        if not search_term:
+            return Response({'detail': 'Terme de recherche manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valeurs_list = ValeurRatioIrfs.objects.filter(
+            acheteur_id=acheteur_id,
+            ratio__nom__icontains=search_term
+        ).order_by('ratio__nom')
+
+        paginator = Paginator(valeurs_list, 10)
+        page_number = request.query_params.get('page', 1)
+        valeurs_page = paginator.get_page(page_number)
+        serializer = ValeurRatioIrfsSerializer(valeurs_page, many=True)
+
+        return Response({
+            'results': serializer.data,
+            'count': paginator.count,
+            'total_pages': paginator.num_pages,
+            'next': valeurs_page.has_next(),
+            'previous': valeurs_page.has_previous()
+        })
+
+
+
+
+
+
+class AddAcheteurValeurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, acheteur_id, *args, **kwargs):
+        serializer = AddValeurRatioIrfsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(acheteur_id=acheteur_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+class EditAcheteurValeurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, valeur_ratio_irfs_id, *args, **kwargs):
+        valeur = ValeurRatioIrfs.objects.filter(id=valeur_ratio_irfs_id, acheteur_id=acheteur_id).first()
+        if not valeur:
+            return Response({'detail': 'Valeur non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = GetValeurRatioIrfsSerializer(valeur)
+        return Response(serializer.data)
+
+    def put(self, request, acheteur_id, valeur_ratio_irfs_id, *args, **kwargs):
+        valeur = ValeurRatioIrfs.objects.filter(id=valeur_ratio_irfs_id, acheteur_id=acheteur_id).first()
+        if not valeur:
+            return Response({'detail': 'Valeur non trouvée.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EditValeurRatioIrfsSerializer(valeur, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+class DeleteAcheteurValeurRatioFinancierIrfsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get('ids', [])
+        if not ids or not isinstance(ids, list):
+            return Response({'error': 'Une liste d\'IDs est requise.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valeurs = ValeurRatioIrfs.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not valeurs.exists():
+            return Response({'error': 'Aucune valeur trouvée pour les IDs fournis.'}, status=status.HTTP_404_NOT_FOUND)
+
+        count, _ = valeurs.delete()
+        return Response({'message': f'{count} valeurs supprimées avec succès.'}, status=status.HTTP_200_OK)
