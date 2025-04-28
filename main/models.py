@@ -1125,6 +1125,12 @@ class Acheteur(models.Model):
         unique_code = f"{current_year}-{timestamp}"
 
         return unique_code
+    
+    
+
+# Prevoir la gestion d'adresse multiple pour un acheteur 
+# Ce qui veut dire que un acheteur peut avoir occuper plusieurs adresses
+# il serait important de les recenser toutes 
 
 
 ##########################################################

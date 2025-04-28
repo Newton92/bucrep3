@@ -101,11 +101,39 @@ def dash_root(request):
     context = {
         'dash_active': 'active',
         
+        
         'user': user,
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
     return render(request, 'main/root/dash_root.html', context)
+
+
+@login_required
+def dash_root_user(request):
+    token = request.GET.get('token')
+    if not token:
+      return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    context = {
+        'users_active': 'active',
+        
+        'pays_list': pays_list,
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+    return render(request, 'main/root/utilisateur/dash_root_user.html', context)
+
 
 @login_required
 def dash_root_pays(request):

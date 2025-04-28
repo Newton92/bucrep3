@@ -3093,3 +3093,60 @@ class EditValeurRatioIrfsSerializer(serializers.ModelSerializer):
         fields = [
             "id", "acheteur", "ratio", "annee", "valeur"
         ]
+
+
+
+from rest_framework import serializers
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    pays = PaysSerializer()
+    date_joined_formatted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+        
+    def get_date_joined_formatted(self, obj):
+        # Formatez la date selon vos besoins
+        return obj.date_joined.strftime('%d.%m.%Y à %H:%M:%S')
+
+class GetCustomUserSerializer(serializers.ModelSerializer):
+    #pays = PaysSerializer()
+    date_joined_formatted = serializers.SerializerMethodField()
+    class Meta:
+        model = CustomUser
+        fields = '__all__'
+        
+    def get_date_joined_formatted(self, obj):
+        # Formatez la date selon vos besoins
+        return obj.date_joined.strftime('%d.%m.%Y à %H:%M:%S')
+
+class AddCustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            "username", "first_name", "last_name", "email", "email_cc",
+            "address", "activation", "telephone", "profession",
+            "role", "pays"
+        ]
+
+class EditCustomUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id", "username", "first_name", "last_name", "email", 
+            "address", "activation", "telephone", "profession",
+            "email_cc", "role", "pays"
+        ]
+
+class EditCustomUserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id", "avatar"
+        ]

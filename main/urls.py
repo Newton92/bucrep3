@@ -20,6 +20,7 @@ from main.api.views_modules_acheteur import *
 from main.api.views_commande import *
 from main.api.views_warning import *
 from main.api.views_monitoring import *
+from main.api.views_users import *
 
 # router = DefaultRouter()
 # router.register(r'pays', PaysViewSet, basename='pays')
@@ -63,6 +64,9 @@ urlpatterns = [
     path('root-dashboard/localisation/liste-des-pays', dash_root_pays, name='dash_root_pays'),
     path('root-dashboard/localisation/liste-des-provinces', dash_root_province, name='dash_root_province'),
     path('root-dashboard/localisation/liste-des-villes', dash_root_ville, name='dash_root_ville'),
+    
+    
+    path('root-dashboard/utilisateurs/liste-des-utilisateurs', dash_root_user, name='dash_root_user'),
     
     
     path('root-dashboard/standard/liste-des-devises', dash_root_devise, name='dash_root_devise'),
@@ -226,6 +230,13 @@ urlpatterns = [
     
     
     
+    # === MODULES UTILISATEURS === #
+    path('api/liste-des-utilisateurs/', ListUtilisateurView.as_view(), name='list-utilisateur'),
+    path('api/recherche-utilisateur/', SearchUtilisateurView.as_view(), name='search-utilisateur'),
+    path('api/ajouter-une-utilisateur/', AddUtilisateurView.as_view(), name='add-utilisateur'),
+    path('api/editer-une-utilisateur/<int:id>/', EditUtilisateurView.as_view(), name='edit-utilisateur'),
+    path('api/editer-avatar-utilisateur/<int:id>/', EditUtilisateurAvatarView.as_view(), name='edit-utilisateur-avatar'),
+    path('api/supprimer-des-utilisateurs/', DeleteUtilisateurView.as_view(), name='delete-utilisateur'),
     
     
     

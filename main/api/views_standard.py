@@ -135,6 +135,8 @@ class DeleteDeviseView(APIView):
         return Response({'detail': 'Les devises ont été supprimées avec succès.'}, status=status.HTTP_204_NO_CONTENT)
 
 
+
+
 class ListAnneeView(APIView):
     permission_classes = [IsAuthenticated]
 
