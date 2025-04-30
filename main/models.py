@@ -3352,6 +3352,54 @@ class TelephoneAcheteur(models.Model):
 
 
 
+
+class AdresseAcheteur(models.Model):
+    adresse = models.TextField(
+        max_length=100,
+        verbose_name=_("Adresse")
+    )
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name='adresses',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au téléphone")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        'CustomUser',
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name='adresses_created'
+    )
+    updated_by = models.ForeignKey(
+        'CustomUser',
+        related_name='adresses_updated',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING
+    )
+
+    class Meta:
+        verbose_name = _("Adresse")
+        verbose_name_plural = _("Adresses")
+
+    def __str__(self):
+        return f"Adresse de {self.acheteur.nom}"
+
+
+
+
+
 class PortableAcheteur(models.Model):
     portable = models.TextField(
         max_length=100,
@@ -3394,6 +3442,7 @@ class PortableAcheteur(models.Model):
 
     def __str__(self):
         return f"Numéro de portable de {self.acheteur.nom}"
+
 
 
 
@@ -3490,6 +3539,7 @@ class Document(models.Model):
 
 
 
+
 class Swot(models.Model):
     acheteur = models.ForeignKey(
         'Acheteur',
@@ -3542,6 +3592,7 @@ class Swot(models.Model):
         return f"SWOT de {self.acheteur.nom}"
     
     
+  
     
     
 class ProduitService(models.Model):
@@ -3585,6 +3636,8 @@ class ProduitService(models.Model):
     
     
     
+    
+    
 class Marque(models.Model):
     acheteur = models.ForeignKey(
         'Acheteur',
@@ -3617,6 +3670,7 @@ class Marque(models.Model):
 
     def __str__(self):
         return f"Marque de {self.acheteur.nom}"
+
 
 
 
@@ -3674,6 +3728,7 @@ class ProcedureCollective(models.Model):
 
 
 
+
 class RegistreCommerce(models.Model):
     acheteur = models.ForeignKey(
         'Acheteur',
@@ -3715,13 +3770,14 @@ class RegistreCommerce(models.Model):
 
 
 
+
 class Cotisation(models.Model):
     acheteur = models.ForeignKey(
         'Acheteur',
         on_delete=models.DO_NOTHING,
         null=True, 
         blank=True, 
-        related_name='cnss',
+        related_name='cotisations',
         verbose_name=_("Acheteur"),
         help_text=_("Acheteur associé au numéro de sécurité sociale")
     )
@@ -4465,5 +4521,292 @@ class CredendoCommande(models.Model):
 ##########################################################
 ##########################################################
 # Fin Modules Automatisation Commande CREDENDO
+##########################################################
+##########################################################
+
+
+
+
+
+
+
+
+
+##########################################################
+##########################################################
+#  Modules Additif
+##########################################################
+##########################################################
+# ----Gestions des logos des acheteurs
+#Telephone Acheteur V2
+
+
+#------ DOCUMENT
+
+class TypeProcedureCollective(models.Model):
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    description = models.TextField(_("Description"), null=True, blank=True)
+    active = models.BooleanField(_("Actif"), default=True)
+
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return f"{self.libelle} - {self.libelle}" if self.libelle else _("Type de procédure sans libellé")
+
+    class Meta:
+        verbose_name = _("Type de procédure collective ")
+        verbose_name_plural = _("Type de procédures collectives")
+        ordering = ["libelle"]
+
+#----- PROCEDURE COLLECTIVE
+class ProcedureCollective(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='procedures_collectives',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à la procédure collective")
+    )
+    type_procedure = models.CharField(
+        _("Type de procédure"),
+        max_length=255,
+        help_text=_("Type de procédure collective")
+    )
+    # Nouvel attribut avec ForeignKey
+    type_procedure_ref = models.ForeignKey(
+        'TypeProcedureCollective', 
+        null=True, blank=True, 
+        on_delete=models.SET_NULL,
+        verbose_name=_("Référence Type de procédure collective")
+    )
+    
+    statut = models.CharField(max_length=50, 
+                              choices=[
+                                  ('Non débutée', 'Non débutée'),
+                                    ('En cours', 'En cours'),
+                                     ('Terminé', 'Terminé')
+                                  ])
+    date_ouverture = models.DateField(
+        _("Date d'ouverture"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'ouverture de la procédure")
+    )
+    deadline = models.DateField(
+        _("Deadline de la procédure"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'ouverture de la procédure")
+    )
+    date_cloture = models.DateField(
+        _("Date de clôture"),
+        null=True,
+        blank=True,
+        help_text=_("Date de clôture de la procédure")
+    )
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description de la procédure collective")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Procédure Collective")
+        verbose_name_plural = _("Procédures Collectives")
+
+    def __str__(self):
+        return f"{self.type_procedure} - {self.acheteur.nom}"
+
+
+
+#------------- REGISTRE COMMERCE
+class RegistreCommerce(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='registre_commerce',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au registre de commerce")
+    )
+    numero = models.CharField(
+        _("Numéro de registre de commerce"),
+        max_length=255,
+        help_text=_("Numéro de registre de commerce de l'entreprise")
+    )
+    date_inscription = models.DateField(
+        _("Date d'inscription"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'inscription au registre de commerce")
+    )
+    description = models.TextField(
+        max_length=10000000, 
+        blank=True, 
+        verbose_name=_("Description")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("Registre de Commerce")
+        verbose_name_plural = _("Registres de Commerce")
+
+    def __str__(self):
+        return f"Registre de commerce de {self.acheteur.nom}"
+
+#-------------- COTISATION SOCIALE
+class Cotisations(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='cnss',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au numéro de sécurité sociale")
+    )
+    libelle = models.CharField(
+        _("Titre"),
+        max_length=255,
+        help_text=_("libelle de la cotisation")
+    )
+    numero = models.CharField(
+        _("Numéro de sécurité sociale"),
+        max_length=255,
+        help_text=_("Numéro de la cotisation de l'entreprise")
+    )
+    date_affiliation = models.DateField(
+        _("Date d'affiliation"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'affiliation à la sécurité sociale")
+    )
+   
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("CNSS")
+        verbose_name_plural = _("CNSS")
+
+    def __str__(self):
+        return f"Cotisations de {self.acheteur.nom}"
+
+#-------------- PRODUITS et SERVICES
+class ProduitServices(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='produitService',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au produit ou service")
+    )
+    libelle = models.CharField(
+        _("Titre"),
+        max_length=255,
+        help_text=_("libelle du produit ou service")
+    )
+    stock_duree = models.PositiveIntegerField(
+        _("Stock ou duréé"),
+        help_text=_("Stock ou durée")
+    )
+    prix = models.DecimalField(
+        _("Prix"),
+        max_digits=15, 
+        decimal_places=2,
+        blank=True, 
+        null=True)  # Prix du produit et service 
+    
+    # prix = models.DecimalField(
+    #     _("Prix"),
+    #     null=True,
+    #     blank=True,
+    #     help_text=_(" Prix du produit ou service")
+    # )
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description du produit/service")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    class Meta:
+        verbose_name = _("ProduitService")
+        verbose_name_plural = _("ProduitService")
+
+    def __str__(self):
+        return f"Cotisations de {self.acheteur.nom}"
+
+class Marque(models.Model):
+    acheteur = models.ForeignKey(
+        'Acheteur',
+        on_delete=models.DO_NOTHING,
+        null=True, 
+        blank=True, 
+        related_name='Marque',
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à la marque")
+    )
+    nom = models.CharField(
+       _("nom"),
+        max_length=255,
+        help_text=_("nom de la marque")
+        )
+    description = models.TextField(blank=True, null=True)
+    logo = models.ImageField(upload_to='marques/', blank=True, null=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour")
+    )
+
+    def __str__(self):
+        return self.nom
+    
+    
+    
+##########################################################
+##########################################################
+# Fin Modules Additif
 ##########################################################
 ##########################################################

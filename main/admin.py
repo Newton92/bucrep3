@@ -643,12 +643,7 @@ class ProduitServiceAdmin(admin.ModelAdmin):
     search_fields = ('acheteur__nom', 'produits', 'services')
     ordering = ('-created_at',)
 
-@admin.register(Marque)
-class MarqueAdmin(admin.ModelAdmin):
-    list_display = ('acheteur', 'marques', 'created_at', 'updated_at')
-    list_filter = ('created_at', 'updated_at')
-    search_fields = ('acheteur__nom', 'marques')
-    ordering = ('-created_at',)
+
 
 @admin.register(ProcedureCollective)
 class ProcedureCollectiveAdmin(admin.ModelAdmin):
