@@ -65,7 +65,7 @@ def get_last_email_id():
     last_email = CredendoCommande.objects.order_by('-id').first()
     return last_email.email_id if last_email else None
 
-def fetch_new_emails():
+def fetch_new_credendo_emails():
     mail = connect_to_email()
     last_email_id = get_last_email_id()
 
@@ -104,4 +104,4 @@ def fetch_new_emails():
     mail.logout()
 
 if __name__ == "__main__":
-    fetch_new_emails()
+    fetch_new_credendo_emails()

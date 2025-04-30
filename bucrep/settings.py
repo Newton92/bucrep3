@@ -49,15 +49,21 @@ EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL')  # Whether to use SSL for SMTP (True/F
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')  # SMTP username (e.g., your_email@gmail.com)
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')  # SMTP password
 
+
+
 # Application definition
 INSTALLED_APPS = [
     
+    
+    # API
     'corsheaders',
     
     # Librairies
     'rest_framework',
     # 'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    
+    'django_extensions',
     
     # Django librairies
     'django.contrib.admin',
@@ -68,6 +74,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     
+    'channels',  # Ajout de Django Channels
+    
     # Mon app
     'main.apps.MainConfig',
 ]
@@ -75,6 +83,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -161,22 +170,29 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGES = [
-    ('en', _('English')),
-    ('fr', _('French')),
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
 ]
 
-LANGUAGE_CODE = 'fr'
+
+LANGUAGE_CODE = 'fr-fr'  # Langue par défaut
+
+# Languages
+LANGUAGES = [
+    ('fr', _('Français')),
+    ('en', _('English')),
+]
 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
+USE_L10N = True
+
 USE_TZ = True
 
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
-]
+
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -211,6 +227,7 @@ if not DEBUG:
     
     
 # CORS Config
+CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:8004',  # Remplace par le domaine de ton frontend
@@ -267,5 +284,31 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 
 
-CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
+
+
+
+
+# settings.py
+
+# Configuration de Redis en tant que broker
+# CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+
+# Pour détecter automatiquement les tâches dans tes apps
+# CELERY_IMPORTS = ('main.tasks',)  # Mets le nom de ton app Django
+
+
+ASGI_APPLICATION = "bucrep.asgi.application"
+
+# Utilisation de Redis comme broker pour les WebSockets
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",  # Pour du local
+        # Pour un environnement de production avec Redis, utilise :
+        # "BACKEND": "channels_redis.core.RedisChannelLayer",
+        # "CONFIG": {
+        #     "hosts": [("127.0.0.1", 6379)],  # Assure-toi que Redis est installé et en marche
+        # },
+    },
+}
 

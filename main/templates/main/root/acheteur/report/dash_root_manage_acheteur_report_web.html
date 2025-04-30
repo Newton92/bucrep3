@@ -1,0 +1,207 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Themes Report CSS -->
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/base_report.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/fancy_report.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'assets/css/style_report.css' %}">
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Rapport Bucrep - Version Web</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countActifs">Module de Visualisation du Rapport en Version Web</h4>
+                    <span>Dans ce module, il vous sera plus facile de consulter ou visualiser le rapport d'un acheteur en version.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                        <!-- Title -->
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
+                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
+                    </div>
+                </div>
+                <br>
+
+            </div>
+        </div>
+        <!-- Card item END -->
+
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- REPORT WEB START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Rapport Web</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-12">
+
+                        
+                        
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- REPORT WEB END -->
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+
+<script>
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log(response);
+                $('#editAcheteurId').val(response.id);
+                $('#editCode').val(response.code).text(response.code);
+                $('#editNom').val(response.nom).text(response.nom);
+                $('#editSigle').val(response.sigle).text(response.sigle);
+                if (response.date_creation) {
+                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                }
+
+                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+                $('#editDescription').html(response.description);
+                $('#editEmail').val(response.email).text(response.email);
+                $('#editFax').val(response.fax).text(response.fax);
+                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editPays').val(response.pays.nom).text(response.pays.nom);
+                $('#editProvince').val(response.province.nom).text(response.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+</script>
+
+
+<!-- Themes Report JS -->
+<script src="{% static 'assets/js/apache_report.js' %}"></script>
+<script src="{% static 'assets/js/viewer_report.js' %}"></script>
+<script src="{% static 'assets/js/pdf2html_report.js' %}"></script>
+
+{% endblock %}

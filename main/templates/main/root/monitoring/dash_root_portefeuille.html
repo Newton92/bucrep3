@@ -1,0 +1,331 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<!-- Include Select2 CSS --><!-- Latest compiled and minified JavaScript --><!-- Latest compiled and minified CSS -->
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-wallet2 fa-fw me-1"></i> Portefeuilles</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countPortefeuille">Module de Gestion des Portefeuilles</h4>
+                    <span>Dans ce module, vous pouvez gérer les portefeuilles et leurs liaisons avec les acheteurs.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- PORTEFEUILLE START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Portefeuilles</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-4">
+                        <a href="{% url 'dash_root_add_portefeuille' %}?token={{ user.reset_token }}" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
+                            Ajouter un Acheteur
+                        </a>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Portefeuille list START -->
+                <div class="table-responsive border-0" id="portefeuilleList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">Nom</th>
+                                <th scope="col" class="border-0">Client</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="portefeuilleTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Portefeuille list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- PORTEFEUILLE END -->
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Include Select2 JS --><!-- (Optional) Latest compiled and minified JavaScript translation files -->
+
+
+
+<script>
+    $(document).ready(function() {
+        
+
+        // Function to load portefeuilles data
+        function loadPortefeuilles(page = 1, search = '') {
+            $.ajax({
+                url: '/api/liste-des-portefeuilles/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' + (page * response.count > response.total ? response.total : page * response.count) + ' de ' + response.total + ' portefeuilles');
+
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    $('#portefeuilleTableBody').html('');
+                    response.results.forEach(function(portefeuille, index) {
+                        $('#portefeuilleTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + portefeuille.nom + '</td>' +
+                            '<td>' + portefeuille.client.nom + '</td>' +
+                            '<td><button class="btn btn-primary btn-round mb-0 edit-btn" data-id="' + portefeuille.id + '"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + portefeuille.id + '"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+                }
+            });
+        }
+
+        // Load data on page load
+        loadPortefeuilles();
+
+        // Handle page change
+        $(document).on('click', '.pagination .page-link', function(e) {
+            e.preventDefault();
+            var page = $(this).data('page');
+            loadPortefeuilles(page);
+        });
+
+        // Handle search
+        $('#searchForm').submit(function(e) {
+            e.preventDefault();
+            var search = $('#searchInput').val();
+            loadPortefeuilles(1, search);
+        });
+
+        // Handle Add Portefeuille Form
+        $('#addPortefeuilleForm').submit(function(e) {
+            e.preventDefault();
+            var formData = {
+                portefeuille: {
+                    nom: $('#nom').val(),
+                    client: $('#client').val()
+                },
+                clients: $('#acheteurs').val().map(function(id) {
+                    return { acheteur: id, categorie: 'pme' };
+                })
+            };
+
+            $.ajax({
+                url: '/api/ajouter-portefeuille-avec-clients/',
+                type: 'POST',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Le portefeuille a été ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addPortefeuilleModal').modal('hide');
+                        loadPortefeuilles();
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'Erreur!',
+                        text: 'Une erreur s\'est produite lors de l\'ajout du portefeuille.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+
+        // Edit Portefeuille button click
+        $(document).on('click', '.edit-btn', function() {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/api/consulter-un-portefeuille/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editPortefeuilleId').val(response.id);
+                    $('#editNom').val(response.nom);
+                    $('#editClient').val(response.client.id).trigger('change');
+                    $('#editAcheteurs').val(response.portefeuille_clients.map(function(pc) { return pc.acheteur.id; })).trigger('change');
+                    $('#editPortefeuilleModal').modal('show');
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données du portefeuille.',
+                    });
+                }
+            });
+        });
+
+        // Handle Edit Portefeuille Form
+        $('#editPortefeuilleForm').submit(function(e) {
+            e.preventDefault();
+            var formData = {
+                portefeuille: {
+                    id: $('#editPortefeuilleId').val(),
+                    nom: $('#editNom').val(),
+                    client: $('#editClient').val()
+                },
+                clients: $('#editAcheteurs').val().map(function(id) {
+                    return { acheteur: id, categorie: 'pme' };
+                })
+            };
+
+            $.ajax({
+                url: '/api/editer-portefeuille-avec-clients/' + $('#editPortefeuilleId').val() + '/',
+                type: 'PUT',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editPortefeuilleModal').modal('hide');
+                    loadPortefeuilles();
+                    Swal.fire({
+                        title: 'Succès!',
+                        text: 'Le portefeuille a été modifié avec succès.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'Erreur!',
+                        text: 'Une erreur s\'est produite lors de la modification du portefeuille.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        });
+
+        // Handle Delete Portefeuille
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: "Ce portefeuille sera définitivement supprimé!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Supprimer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supprimer-des-portefeuilles/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function(response) {
+                            loadPortefeuilles();
+                            Swal.fire({
+                                title: 'Supprimé!',
+                                text: 'Le portefeuille a été supprimé.',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            });
+                        },
+                        error: function() {
+                            Swal.fire({
+                                title: 'Erreur!',
+                                text: 'Une erreur s\'est produite lors de la suppression du portefeuille.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

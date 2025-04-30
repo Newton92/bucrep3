@@ -208,6 +208,26 @@
                         <!-- Table body START -->
                         <tbody class="border-top-0" id="opinionTableBody"></tbody>
                         <!-- Table body END -->
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="opinionModal" tabindex="-1" aria-labelledby="opinionModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                <h5 class="modal-title" id="opinionModalLabel">Détails de l'Opinion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                <p id="montantCreditMaximum"></p>
+                                <p id="commentaire" style="color: #000;"></p> <!-- La couleur sera définie dynamiquement -->
+                                </div>
+                                <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        
                     </table>
                 </div>
                 <!-- Opinions de Crédit list END -->
@@ -307,6 +327,10 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label for="montant_credit_maximum" class="form-label">Montant crédit maximum conseillée</label>
+                        <input type="number" class="form-control" id="montant_credit_maximum" name="montant_credit_maximum" required>
+                    </div>
+                    <div class="mb-3">
                         <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
                         <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
                             {% for coloration in coloration_list %}
@@ -399,6 +423,10 @@
                             <option value="0">0</option>
                             <option value="9">9</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editMontantCreditMaximum" class="form-label">Montant crédit maximum conseillée</label>
+                        <input type="number" class="form-control" id="editMontantCreditMaximum" name="montant_credit_maximum" required>
                     </div>
                     <div class="mb-3">
                         <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
@@ -552,13 +580,26 @@
                         row += addTd(opinion.risque_faible, '#178B16');
 
                         row += '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + opinion.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + opinion.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + opinion.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
+                            '&nbsp; <button class="btn btn-info btn-round mb-0 view-btn" data-id="' + opinion.id + '" data-montant="' + opinion.montant_credit_maximum + '" data-commentaire="' + opinion.commentaire + '" data-couleur="' + opinion.couleur_commentaire + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Voir"><i class="bi bi-eye"></i></button>' +
+                            '</td>' +
                             '</tr>';
 
                         $('#opinionTableBody').append(row);
                     });
 
+                    // Ajouter un gestionnaire d'événements pour les boutons "Voir"
+                    $('.view-btn').on('click', function() {
+                        let montant = $(this).data('montant');
+                        let commentaire = $(this).data('commentaire');
+                        let couleur = $(this).data('couleur');
 
+                        $('#montantCreditMaximum').text('Montant Crédit Maximum: ' + montant);
+                        $('#commentaire').text(commentaire).css('color', couleur);
+                        tinymce.get('commentaire').setContent('<span style="color: ' + couleur + ';">' + commentaire + '</span>');
+
+                        $('#opinionModal').modal('show');
+                    });
 
                 },
                 error: function(response) {
@@ -570,6 +611,7 @@
                 }
             });
         }
+
 
         // Initial load
         loadOpinions();
@@ -642,6 +684,7 @@
                     $('#editRisqueEleve').val(response.risque_eleve);
                     $('#editRisqueMoyen').val(response.risque_moyen);
                     $('#editRisqueFaible').val(response.risque_faible);
+                    $('#editMontantCreditMaximum').val(response.montant_credit_maximum);
                     $('#editCouleurCommentaire').val(response.couleur_commentaire);
                     $('#editCommentaire').val(response.commentaire);
                     $('#editOpinionModal').modal('show');

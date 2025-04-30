@@ -32,6 +32,22 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from main.utilitaires import constantes
 
+from main.commandes.bucrepcontact_test_fetch_mails import fetch_emails
+from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
+import threading
+
+
+    
+# Recuperer les mails ici !
+# Exécuter la récupération des emails en tâche de fond
+def run_fetch_emails():
+    try:
+        fetch_and_save_emails()
+    except Exception as e:
+        print(f"Erreur lors de la récupération des emails : {e}")
+        
+    threading.Thread(target=run_fetch_emails, daemon=True).start()
+
 
 # Create your views here.
 
@@ -40,6 +56,10 @@ from main.utilitaires import constantes
 
 def index(request):
     return render(request, 'main/index.html')
+
+
+def report(request):
+    return render(request, 'main/report_template.html')
 
 
 def check_auth(request):
@@ -81,11 +101,39 @@ def dash_root(request):
     context = {
         'dash_active': 'active',
         
+        
         'user': user,
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
     return render(request, 'main/root/dash_root.html', context)
+
+
+@login_required
+def dash_root_user(request):
+    token = request.GET.get('token')
+    if not token:
+      return render(request, 'main/index.html', {'error': _('Token manquant.')})
+  
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    context = {
+        'users_active': 'active',
+        
+        'pays_list': pays_list,
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
+    return render(request, 'main/root/utilisateur/dash_root_user.html', context)
+
 
 @login_required
 def dash_root_pays(request):
@@ -1734,6 +1782,1199 @@ def dash_root_manage_acheteur_banking(request, acheteur_id):
         
     }
     return render(request, 'main/root/acheteur/banque/dash_root_manage_acheteur_banking.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_actif_anglais.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_passif_anglais.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_resultat_anglais.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/classique/dash_root_manage_acheteur_actif_classique.html', context)
+
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/classique/dash_root_manage_acheteur_passif_classique.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/classique/dash_root_manage_acheteur_resultat_classique.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/syscohada/dash_root_manage_acheteur_actif_syscohada.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/syscohada/dash_root_manage_acheteur_passif_syscohada.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/syscohada/dash_root_manage_acheteur_resultat_syscohada.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_asset_bancaire.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_liabilitie_bancaire.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_offbalancesheet_bancaire.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_expense_bancaire.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/bancaire/dash_root_manage_acheteur_product_bancaire.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_compte_financier_irfs.html', context)
+
+
+@login_required
+def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_ratio_financier_irfs.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les comptes financiers irfs
+    compte_financier_irfs_list = CompteFinancierIrfs.objects.filter(type_compte__icontains='Actif')
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+    # Récupérer tous les devises
+    devise_list = Devise.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        'devise_list': devise_list,
+        'compte_financier_irfs_list': compte_financier_irfs_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_actif_irfs.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les comptes financiers irfs
+    compte_financier_irfs_list = CompteFinancierIrfs.objects.filter(type_compte__icontains='Passif')
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+    # Récupérer tous les devises
+    devise_list = Devise.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        'devise_list': devise_list,
+        'compte_financier_irfs_list': compte_financier_irfs_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_passif_irfs.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les comptes financiers irfs
+    compte_financier_irfs_list = CompteFinancierIrfs.objects.filter(type_compte__icontains='Compte de ')
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+    # Récupérer tous les devises
+    devise_list = Devise.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        'devise_list': devise_list,
+        'compte_financier_irfs_list': compte_financier_irfs_list,
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_passif_irfs.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les comptes financiers irfs
+    compte_financier_irfs_list = CompteFinancierIrfs.objects.filter(type_compte__icontains='Actif')
+    
+    # Récupérer tous les actifs financiers irfs
+    actif_financier_irfs_list = ValeurCompteIrfs.objects.filter(compte__type_compte__icontains='Actif', acheteur__pk=id_acheteur)
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+    # Récupérer tous les devises
+    devise_list = Devise.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        'devise_list': devise_list,
+        'compte_financier_irfs_list': compte_financier_irfs_list,
+        'actif_financier_irfs_list': actif_financier_irfs_list
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_add_actif_irfs.html', context)
+
+
+
+@login_required
+def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Récupérer tous les comptes financiers irfs
+    compte_financier_irfs_list = CompteFinancierIrfs.objects.filter(type_compte__icontains='Passif')
+    
+    # Récupérer tous les actifs financiers irfs
+    actif_financier_irfs_list = ValeurCompteIrfs.objects.filter(compte__type_compte__icontains='Passif', acheteur__pk=id_acheteur)
+    
+    # Récupérer tous les annees
+    annee_list = Annee.objects.all()
+    
+    # Récupérer tous les devises
+    devise_list = Devise.objects.all()
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+        'annee_list': annee_list,
+        'devise_list': devise_list,
+        'compte_financier_irfs_list': compte_financier_irfs_list,
+        'actif_financier_irfs_list': actif_financier_irfs_list
+        
+    }
+    return render(request, 'main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_add_passif_irfs.html', context)
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_report_web(request, acheteur_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+    
+    # Recuperer les elements du rapports ici !
+    
+
+    context = {
+        'acheteur_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_acheteur': id_acheteur,
+        
+    }
+    return render(request, 'main/root/acheteur/report/dash_root_manage_acheteur_report_web.html', context)
+
+
+
+
+
+
+
+
+@login_required
+def dash_root_commande(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer tous les devises
+    devise_list_one = Devise.objects.all()
+    
+    # Récupérer tous les devises
+    devise_list_two = Devise.objects.all()
+    
+    # Récupérer tous les acheteurs
+    acheteur_list = Acheteur.objects.all()
+    
+    # Récupérer tous les clients
+    client_list = CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
+    
+    # Récupérer tous les villes
+    ville_list = Ville.objects.all()
+    
+    # Récupérer tous les modeles de rapport
+    modele_rapport_list = ModeleRapport.objects.all()
+
+    context = {
+        'requests_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'devise_list_one': devise_list_one,
+        'devise_list_two': devise_list_two,
+        'client_list': client_list,
+        'ville_list': ville_list,
+        'acheteur_list': acheteur_list,
+        'modele_rapport_list': modele_rapport_list,
+        
+    }
+    return render(request, 'main/root/orders/dash_root_commande.html', context)
+
+
+
+
+
+
+@login_required
+def dash_root_manage_commande(request, commande_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de la commande
+    id_commande = commande_id
+    
+    # Récupérer tous les categories d'entrepris
+    
+
+    context = {
+        'requests_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_commande': id_commande,
+        
+        
+    }
+    return render(request, 'main/root/orders/dash_root_manage_commande.html', context)
+
+
+
+
+
+
+@login_required
+def dash_root_alerte(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    
+
+    context = {
+        'alerts_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        
+    }
+    return render(request, 'main/root/warning/dash_root_alerte.html', context)
+
+
+
+
+@login_required
+def dash_root_add_alerte(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        'alerts_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+    }
+    return render(request, 'main/root/warning/dash_root_add_alerte.html', context)
+
+
+
+@login_required
+def dash_root_edit_alerte(request, alerte_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'alerte
+    id_alerte = alerte_id
+    
+    # Récupérer tous les documents lies a l'alerte
+    # document_list = DocumentAlerte.objects.fliter(alerte__pk=id_alerte)
+    
+    # Récupérer tous les clients
+    # client_list = CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
+    
+
+    context = {
+        'alerts_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_alerte': id_alerte,
+        
+        # 'document_list': document_list,
+        # 'client_list': client_list,
+        
+    }
+    return render(request, 'main/root/warning/dash_root_edit_alerte.html', context)
+
+
+
+
+@login_required
+def dash_root_manage_alerte(request, alerte_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Recuperer l'id de l'alerte
+    id_alerte = alerte_id
+    
+    # Récupérer l'alerte
+    alerte = Alerte.objects.fliter(alerte__pk=id_alerte).first()
+    
+    # Récupérer tous les documents lies a l'alerte
+    document_list = DocumentAlerte.objects.fliter(alerte__pk=id_alerte)
+    
+    # Récupérer tous les clients
+    client_list = CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
+    
+
+    context = {
+        'alerts_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'id_alerte': id_alerte,
+        
+        'alerte': alerte,
+        'document_list': document_list,
+        'client_list': client_list,
+        
+    }
+    return render(request, 'main/root/warning/dash_root_manage_alerte.html', context)
+
+
+
+
+@login_required
+def dash_root_client(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+
+    context = {
+        'clients_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        
+    }
+    return render(request, 'main/root/monitoring/dash_root_client.html', context)
+
+
+
+
+
+
+
+
+
+@login_required
+def dash_root_portefeuille(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer les clients
+    client_list = Client.objects.all()
+    
+    # Récupérer les acheteurs
+    acheteur_list = Acheteur.objects.all()
+    
+
+    context = {
+        'portefeuilles_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'client_list': client_list,
+        'acheteur_list': acheteur_list,
+        
+        
+    }
+    return render(request, 'main/root/monitoring/dash_root_portefeuille.html', context)
+
+
+
+
+@login_required
+def dash_root_add_portefeuille(request):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer les clients
+    client_list = Client.objects.all()
+    
+    # Récupérer les acheteurs
+    acheteur_list = Acheteur.objects.all()
+    
+    # Récupérer tous les categories d'entreprise
+    categorie_list = CategorieEntreprise.objects.all()
+    
+    # Récupérer tous les formes juridiques
+    juridique_list = FormeJuridique.objects.all()
+    
+    # Récupérer tous les statuts entreprise
+    statut_list = StatutEntreprise.objects.all()
+    
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+    
+    # Récupérer tous les provinces
+    province_list = Province.objects.all()
+    
+    # Récupérer tous les villes
+    ville_list = Ville.objects.all()
+    
+
+    context = {
+        'portefeuilles_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'client_list': client_list,
+        'acheteur_list': acheteur_list,
+        
+        
+    }
+    return render(request, 'main/root/monitoring/dash_root_add_portefeuille.html', context)
+
+
+@login_required
+def dash_root_edit_portefeuille(request, portefeuille_id):
+    token = request.GET.get('token')
+    if not token:
+        return render(request, 'main/index.html', {'error': _('Token manquant.')})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+    
+    # Récupérer le portefeuille à modifier
+    try:
+        portefeuille = Portefeuille.objects.get(id=portefeuille_id)
+    except Portefeuille.DoesNotExist:
+        return render(request, 'main/index.html', {'error': _('Portefeuille non trouvé.')})
+
+    # Récupérer les clients
+    client_list = Client.objects.all()
+    
+    # Récupérer les acheteurs associés à ce portefeuille
+    acheteurs_associes = PortefeuilleClient.objects.filter(portefeuille=portefeuille).values_list('acheteur_id', flat=True)
+    acheteur_list = Acheteur.objects.all()
+
+    context = {
+        'portefeuilles_active': 'active',
+        
+        'user': user,
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        
+        'portefeuille': portefeuille,  # Données du portefeuille à modifier
+        'acheteurs_associes': list(acheteurs_associes),  # Liste des IDs des acheteurs associés
+        
+        'client_list': client_list,
+        'acheteur_list': acheteur_list,
+    }
+    return render(request, 'main/root/monitoring/dash_root_edit_portefeuille.html', context)
+
+
+
 ########################################################################################################################
 #                                                                                                                      #
 #  VIEWS END FOR ROOT                                                                                                  #
