@@ -7,38 +7,122 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0038_remove_notification_commande'),
+        ("main", "0038_remove_notification_commande"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Alerte',
+            name="Alerte",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('reference', models.CharField(help_text="Référence de l'alerte.", max_length=255, verbose_name='Référence')),
-                ('objet', models.CharField(help_text="Objet de l'alerte.", max_length=255, verbose_name='Objet')),
-                ('message', models.TextField(help_text="Message de l'alerte.", verbose_name='Message')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text="Date et heure de la création de l'alerte.", verbose_name='Date de création')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text="Date et heure de la dernière mise à jour de l'alerte.", verbose_name='Date de mise à jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "reference",
+                    models.CharField(
+                        help_text="Référence de l'alerte.",
+                        max_length=255,
+                        verbose_name="Référence",
+                    ),
+                ),
+                (
+                    "objet",
+                    models.CharField(
+                        help_text="Objet de l'alerte.",
+                        max_length=255,
+                        verbose_name="Objet",
+                    ),
+                ),
+                (
+                    "message",
+                    models.TextField(
+                        help_text="Message de l'alerte.", verbose_name="Message"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Date et heure de la création de l'alerte.",
+                        verbose_name="Date de création",
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True,
+                        help_text="Date et heure de la dernière mise à jour de l'alerte.",
+                        verbose_name="Date de mise à jour",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Alerte',
-                'verbose_name_plural': 'Alertes',
+                "verbose_name": "Alerte",
+                "verbose_name_plural": "Alertes",
             },
         ),
         migrations.CreateModel(
-            name='DocumentAlerte',
+            name="DocumentAlerte",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('titre', models.CharField(help_text='Titre du document', max_length=255, verbose_name='Titre')),
-                ('fichier', models.FileField(help_text='Fichier du document', upload_to='alertes/', verbose_name='Fichier')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de mise à jour')),
-                ('alerte', models.ForeignKey(blank=True, help_text='Alerte associé au document', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='documents_alerte', to='main.alerte', verbose_name='Alerte')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "titre",
+                    models.CharField(
+                        help_text="Titre du document",
+                        max_length=255,
+                        verbose_name="Titre",
+                    ),
+                ),
+                (
+                    "fichier",
+                    models.FileField(
+                        help_text="Fichier du document",
+                        upload_to="alertes/",
+                        verbose_name="Fichier",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de mise à jour"
+                    ),
+                ),
+                (
+                    "alerte",
+                    models.ForeignKey(
+                        blank=True,
+                        help_text="Alerte associé au document",
+                        null=True,
+                        on_delete=django.db.models.deletion.DO_NOTHING,
+                        related_name="documents_alerte",
+                        to="main.alerte",
+                        verbose_name="Alerte",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Document alerte',
-                'verbose_name_plural': 'Documents alerte',
+                "verbose_name": "Document alerte",
+                "verbose_name_plural": "Documents alerte",
             },
         ),
     ]

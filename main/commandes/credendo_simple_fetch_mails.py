@@ -1,15 +1,18 @@
-import imaplib
 import email
-from email.policy import default
+import imaplib
 import re
 from datetime import datetime
+from email.policy import default
+
 from django.utils.timezone import make_aware
+
 from main.models import CredendoCommande  # Adapter le chemin vers ton modèle
 
 # Configurer la connexion à l'IMAP
 EMAIL_HOST = "imap.gmail.com"  # Modifier selon ton fournisseur
 EMAIL_USER = "bucrepcontact@gmail.com"
 EMAIL_PASS = "sstowojejndggzxc"
+
 
 def extract_data_from_email(email_body):
     """
@@ -24,7 +27,9 @@ def extract_data_from_email(email_body):
         "pays": re.search(r"Country:\s*(.+)", email_body),
         "remarque": re.search(r"Remark on the request\s*:\s*(.+)?", email_body),
         "priorite": re.search(r"Priority\s*:\s*(\w+)", email_body),
-        "montant": re.search(r"receive your credit advice for an amount up to (\d+,\d+|\d+)", email_body),
+        "montant": re.search(
+            r"receive your credit advice for an amount up to (\d+,\d+|\d+)", email_body
+        ),
     }
 
     for key, match in data.items():
@@ -38,6 +43,7 @@ def extract_data_from_email(email_body):
 
     return data
 
+
 def fetch_emails():
     """
     Récupère les nouveaux emails et enregistre les commandes dans la base de données.
@@ -48,15 +54,17 @@ def fetch_emails():
         mail.select("inbox")  # Modifier si nécessaire
 
         # Rechercher les emails non lus
-        status, messages = mail.search(None, 'UNSEEN')
+        status, messages = mail.search(None, "UNSEEN")
 
         for num in messages[0].split():
-            status, msg_data = mail.fetch(num, '(RFC822)')
+            status, msg_data = mail.fetch(num, "(RFC822)")
             for response_part in msg_data:
                 if isinstance(response_part, tuple):
                     msg = email.message_from_bytes(response_part[1], policy=default)
                     email_id = msg["Message-ID"]
-                    date_reception = make_aware(datetime.strptime(msg["Date"], "%a, %d %b %Y %H:%M:%S %z"))
+                    date_reception = make_aware(
+                        datetime.strptime(msg["Date"], "%a, %d %b %Y %H:%M:%S %z")
+                    )
 
                     # Vérifier si l'email a déjà été traité
                     if CredendoCommande.objects.filter(email_id=email_id).exists():
@@ -67,7 +75,9 @@ def fetch_emails():
                     if msg.is_multipart():
                         for part in msg.walk():
                             if part.get_content_type() == "text/plain":
-                                email_body = part.get_payload(decode=True).decode("utf-8")
+                                email_body = part.get_payload(decode=True).decode(
+                                    "utf-8"
+                                )
                                 break
                     else:
                         email_body = msg.get_payload(decode=True).decode("utf-8")
@@ -86,4 +96,3 @@ def fetch_emails():
         mail.logout()
     except Exception as e:
         print(f"Erreur lors de la récupération des emails : {e}")
-

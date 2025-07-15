@@ -7,18 +7,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0043_comptefinancierirfs_ratiofinancierirfs_and_more'),
+        ("main", "0043_comptefinancierirfs_ratiofinancierirfs_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='valeurcompteirfs',
-            name='acheteur',
-            field=models.ForeignKey(blank=True, help_text='Acheteur associé au registre de commerce', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='comptes_financiers_irfs_acheteur', to='main.acheteur', verbose_name='Acheteur'),
+            model_name="valeurcompteirfs",
+            name="acheteur",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Acheteur associé au registre de commerce",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="comptes_financiers_irfs_acheteur",
+                to="main.acheteur",
+                verbose_name="Acheteur",
+            ),
         ),
         migrations.AddField(
-            model_name='valeurratioirfs',
-            name='acheteur',
-            field=models.ForeignKey(blank=True, help_text='Acheteur associé au registre de commerce', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='ratios_irfs_acheteur', to='main.acheteur', verbose_name='Acheteur'),
+            model_name="valeurratioirfs",
+            name="acheteur",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Acheteur associé au registre de commerce",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="ratios_irfs_acheteur",
+                to="main.acheteur",
+                verbose_name="Acheteur",
+            ),
         ),
     ]

@@ -7,50 +7,171 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0040_rename_message_alerte_content'),
+        ("main", "0040_rename_message_alerte_content"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Client',
+            name="Client",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(help_text='Nom du client.', max_length=255, verbose_name='Nom')),
-                ('email', models.EmailField(help_text='Adresse email du client.', max_length=254, unique=True, verbose_name='Email')),
-                ('telephone', models.CharField(blank=True, help_text='Numéro de téléphone du client.', max_length=20, null=True, verbose_name='Téléphone')),
-                ('adresse', models.TextField(blank=True, help_text='Adresse postale du client.', null=True, verbose_name='Adresse')),
-                ('date_inscription', models.DateTimeField(auto_now_add=True, help_text="Date et heure d'inscription du client.", verbose_name="Date d'inscription")),
-                ('actif', models.BooleanField(default=True, help_text='Indique si le client est actif.', verbose_name='Actif')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nom",
+                    models.CharField(
+                        help_text="Nom du client.", max_length=255, verbose_name="Nom"
+                    ),
+                ),
+                (
+                    "email",
+                    models.EmailField(
+                        help_text="Adresse email du client.",
+                        max_length=254,
+                        unique=True,
+                        verbose_name="Email",
+                    ),
+                ),
+                (
+                    "telephone",
+                    models.CharField(
+                        blank=True,
+                        help_text="Numéro de téléphone du client.",
+                        max_length=20,
+                        null=True,
+                        verbose_name="Téléphone",
+                    ),
+                ),
+                (
+                    "adresse",
+                    models.TextField(
+                        blank=True,
+                        help_text="Adresse postale du client.",
+                        null=True,
+                        verbose_name="Adresse",
+                    ),
+                ),
+                (
+                    "date_inscription",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Date et heure d'inscription du client.",
+                        verbose_name="Date d'inscription",
+                    ),
+                ),
+                (
+                    "actif",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Indique si le client est actif.",
+                        verbose_name="Actif",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Client',
-                'verbose_name_plural': 'Clients',
+                "verbose_name": "Client",
+                "verbose_name_plural": "Clients",
             },
         ),
         migrations.CreateModel(
-            name='Portefeuille',
+            name="Portefeuille",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(help_text='Nom du portefeuille.', max_length=255, verbose_name='Nom')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Date et heure de la création du portefeuille.', verbose_name='Date de création')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Date et heure de la dernière mise à jour du portefeuille.', verbose_name='Date de mise à jour')),
-                ('client', models.ForeignKey(help_text='Client propriétaire du portefeuille.', on_delete=django.db.models.deletion.CASCADE, related_name='portefeuilles_client', to='main.client', verbose_name='Client')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nom",
+                    models.CharField(
+                        help_text="Nom du portefeuille.",
+                        max_length=255,
+                        verbose_name="Nom",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Date et heure de la création du portefeuille.",
+                        verbose_name="Date de création",
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True,
+                        help_text="Date et heure de la dernière mise à jour du portefeuille.",
+                        verbose_name="Date de mise à jour",
+                    ),
+                ),
+                (
+                    "client",
+                    models.ForeignKey(
+                        help_text="Client propriétaire du portefeuille.",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="portefeuilles_client",
+                        to="main.client",
+                        verbose_name="Client",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Portefeuille',
-                'verbose_name_plural': 'Portefeuilles',
+                "verbose_name": "Portefeuille",
+                "verbose_name_plural": "Portefeuilles",
             },
         ),
         migrations.CreateModel(
-            name='PortefeuilleEntreprise',
+            name="PortefeuilleEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('categorie', models.CharField(choices=[('grande', 'Grande entreprise'), ('pme', 'Petite et moyenne entreprise'), ('autre', 'Autre')], help_text="Catégorie de l'acheteur dans le portefeuille.", max_length=20, verbose_name='Catégorie')),
-                ('entreprise', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.acheteur')),
-                ('portefeuille', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.portefeuille')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "categorie",
+                    models.CharField(
+                        choices=[
+                            ("grande", "Grande entreprise"),
+                            ("pme", "Petite et moyenne entreprise"),
+                            ("autre", "Autre"),
+                        ],
+                        help_text="Catégorie de l'acheteur dans le portefeuille.",
+                        max_length=20,
+                        verbose_name="Catégorie",
+                    ),
+                ),
+                (
+                    "entreprise",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="main.acheteur"
+                    ),
+                ),
+                (
+                    "portefeuille",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.portefeuille",
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('portefeuille', 'entreprise')},
+                "unique_together": {("portefeuille", "entreprise")},
             },
         ),
     ]

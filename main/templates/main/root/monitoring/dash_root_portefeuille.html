@@ -57,7 +57,7 @@
                     <!-- Select option -->
                     <div class="col-md-4">
                         <a href="{% url 'dash_root_add_portefeuille' %}?token={{ user.reset_token }}" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
-                            Ajouter un Acheteur
+                            Ajouter un Portefeuille
                         </a>
                     </div>
                 </div>
@@ -71,6 +71,7 @@
                             <tr>
                                 <th scope="col" class="border-0 rounded-start">#</th>
                                 <th scope="col" class="border-0">Nom</th>
+                                <th scope="col" class="border-0">Fréquence des alertes</th>
                                 <th scope="col" class="border-0">Client</th>
                                 <th scope="col" class="border-0 rounded-end">Action</th>
                             </tr>
@@ -112,7 +113,7 @@
 
 <script>
     $(document).ready(function() {
-        
+
 
         // Function to load portefeuilles data
         function loadPortefeuilles(page = 1, search = '') {
@@ -145,8 +146,9 @@
                         $('#portefeuilleTableBody').append('<tr>' +
                             '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
                             '<td>' + portefeuille.nom + '</td>' +
+                            '<td>' + portefeuille.frequence_alertes + '</td>' +
                             '<td>' + portefeuille.client.nom + '</td>' +
-                            '<td><button class="btn btn-primary btn-round mb-0 edit-btn" data-id="' + portefeuille.id + '"><i class="bi bi-pencil"></i></button>' +
+                            '<td><button class="btn btn-primary btn-round mb-0 edit-btn" data-id="' + portefeuille.id + '" data-nom="' + portefeuille.nom + '"><i class="bi bi-pencil"></i></button>' +
                             '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + portefeuille.id + '"><i class="bi bi-trash"></i></button></td>' +
                             '</tr>');
                     });
@@ -242,47 +244,29 @@
         });
 
         // Handle Edit Portefeuille Form
-        $('#editPortefeuilleForm').submit(function(e) {
-            e.preventDefault();
-            var formData = {
-                portefeuille: {
-                    id: $('#editPortefeuilleId').val(),
-                    nom: $('#editNom').val(),
-                    client: $('#editClient').val()
-                },
-                clients: $('#editAcheteurs').val().map(function(id) {
-                    return { acheteur: id, categorie: 'pme' };
-                })
-            };
 
-            $.ajax({
-                url: '/api/editer-portefeuille-avec-clients/' + $('#editPortefeuilleId').val() + '/',
-                type: 'PUT',
-                data: JSON.stringify(formData),
-                contentType: 'application/json',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#editPortefeuilleModal').modal('hide');
-                    loadPortefeuilles();
-                    Swal.fire({
-                        title: 'Succès!',
-                        text: 'Le portefeuille a été modifié avec succès.',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-                },
-                error: function() {
-                    Swal.fire({
-                        title: 'Erreur!',
-                        text: 'Une erreur s\'est produite lors de la modification du portefeuille.',
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
+
+        // Editer portefeuille button click (avec SweetAlert)
+        $(document).on('click', '.edit-btn', function() {
+            var portefeuilleId = $(this).data('id');
+            var portefeuilleNom = $(this).data('nom');
+
+            Swal.fire({
+                title: 'Editer un Portefeuille',
+                html: 'Voulez-vous éditer le portefeuille <b>"' + portefeuilleNom + '"</b> ?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, éditer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/root-dashboard/monitoring/editer-une-portefeuille/' + portefeuilleId + '/?token=' + '{{ user.reset_token }}';
                 }
             });
         });
+
 
         // Handle Delete Portefeuille
         $(document).on('click', '.delete-btn', function() {

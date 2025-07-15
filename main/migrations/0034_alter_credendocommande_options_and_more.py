@@ -6,17 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0033_alter_codenaceacheteur_code_and_more'),
+        ("main", "0033_alter_codenaceacheteur_code_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='credendocommande',
-            options={'verbose_name': 'Commande CREDENDO', 'verbose_name_plural': 'Commandes CREDENDO'},
+            name="credendocommande",
+            options={
+                "verbose_name": "Commande CREDENDO",
+                "verbose_name_plural": "Commandes CREDENDO",
+            },
         ),
         migrations.AddField(
-            model_name='credendocommande',
-            name='sender_id',
+            model_name="credendocommande",
+            name="sender_id",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

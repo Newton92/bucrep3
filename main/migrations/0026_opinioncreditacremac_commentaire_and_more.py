@@ -7,18 +7,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0025_alter_opinioncreditacremac_risque_de_concentration_credit_and_more'),
+        (
+            "main",
+            "0025_alter_opinioncreditacremac_risque_de_concentration_credit_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='opinioncreditacremac',
-            name='commentaire',
-            field=models.TextField(blank=True, max_length=10000000, verbose_name='Commentaire'),
+            model_name="opinioncreditacremac",
+            name="commentaire",
+            field=models.TextField(
+                blank=True, max_length=10000000, verbose_name="Commentaire"
+            ),
         ),
         migrations.AddField(
-            model_name='opinioncreditacremac',
-            name='couleur_commentaire',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.couleurcommentaire', verbose_name='Couleur du commentaire'),
+            model_name="opinioncreditacremac",
+            name="couleur_commentaire",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.couleurcommentaire",
+                verbose_name="Couleur du commentaire",
+            ),
         ),
     ]

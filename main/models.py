@@ -1,24 +1,28 @@
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
-from django.db import models
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
 import datetime
-from decimal import Decimal
 import time
-from main.utilitaires.constantes import *
+
+from django.contrib.auth.models import AbstractUser
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
-from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+
+from main.utilitaires.constantes import *
+
+# from main.tasks import log_responsable_acheteur_changes
+
 
 # User = get_user_model()
 
 # Create your models here.
 
-couleur_validator = RegexValidator(r'^#([0-9A-Fa-f]{3}){1,2}$', 'La couleur doit être au format hexadécimal (#RRGGBB ou #RGB).')
-
+couleur_validator = RegexValidator(
+    r"^#([0-9A-Fa-f]{3}){1,2}$",
+    "La couleur doit être au format hexadécimal (#RRGGBB ou #RGB).",
+)
 
 
 def generate_unique_code():
@@ -33,21 +37,21 @@ def generate_unique_code():
 
     return unique_code
 
+
 # Exemple d'utilisation
 unique_code = generate_unique_code()
 print(unique_code)
 
 
-
-
 # === Models CustomUser === #
 
 ROLES_USERS = [
-    ('Root', 'Root'),
-    ('Validateur', 'Validateur'),
-    ('Analyste', 'Analyste'),
-    ('Client', 'Client'),
+    ("Root", "Root"),
+    ("Validateur", "Validateur"),
+    ("Analyste", "Analyste"),
+    ("Client", "Client"),
 ]
+
 
 class CustomUser(AbstractUser):
     # Attributs par défaut de AbstractUser (masqués)
@@ -81,126 +85,135 @@ class CustomUser(AbstractUser):
 
     # Attributs supplémentaires
     avatar = models.ImageField(
-        _('avatar'),
-        upload_to='avatars/',
+        _("avatar"),
+        upload_to="avatars/",
         null=True,
         blank=True,
-        help_text=_('Upload an image for your avatar.')
+        help_text=_("Upload an image for your avatar."),
     )
     code_secret = models.CharField(
-        _('secret code'),
+        _("secret code"),
         max_length=6,
         null=True,
         blank=True,
-        help_text=_('A 6-digit code for forgot and reset password.')
+        help_text=_("A 6-digit code for forgot and reset password."),
     )
     code_connexion = models.CharField(
-        _('connexion code'),
+        _("connexion code"),
         max_length=6,
         null=True,
         blank=True,
-        help_text=_('A 6-digit code for two-factor authentication.')
+        help_text=_("A 6-digit code for two-factor authentication."),
     )
     address = models.CharField(
-        _('adresse'),
+        _("adresse"),
         max_length=255,
         null=True,
         blank=True,
-        help_text=_('The address of the user.')
+        help_text=_("The address of the user."),
     )
     activation = models.BooleanField(
-        _('activation'),
+        _("activation"),
         default=True,
-        help_text=_('Designates whether the user account is activated.')
+        help_text=_("Designates whether the user account is activated."),
     )
     auth_a2f = models.BooleanField(
-        _('two-factor authentication'),
+        _("two-factor authentication"),
         default=False,
-        help_text=_('Designates whether two-factor authentication is enabled for the user.')
+        help_text=_(
+            "Designates whether two-factor authentication is enabled for the user."
+        ),
     )
     telephone = models.CharField(
-        _('telephone'),
+        _("telephone"),
         max_length=20,
         null=True,
         blank=True,
-        help_text=_('The telephone number of the user.')
+        help_text=_("The telephone number of the user."),
     )
     profession = models.CharField(
-        _('profession'),
+        _("profession"),
         max_length=100,
         null=True,
         blank=True,
-        help_text=_('The profession of the user.')
+        help_text=_("The profession of the user."),
     )
     email_cc = models.EmailField(
-        _('email cc'),
+        _("email cc"),
         null=True,
         blank=True,
-        help_text=_('The carbon copy email address of the user.')
+        help_text=_("The carbon copy email address of the user."),
     )
 
-    role = models.CharField(max_length=100, choices=ROLES_USERS, verbose_name="Droits utilisateur", null=True, blank=True)
-    
+    role = models.CharField(
+        max_length=100,
+        choices=ROLES_USERS,
+        verbose_name="Droits utilisateur",
+        null=True,
+        blank=True,
+    )
+
     reset_token = models.CharField(
-        _('reset token'),
+        _("reset token"),
         max_length=255,
         null=True,
         blank=True,
-        help_text=_('Token for password reset.')
+        help_text=_("Token for password reset."),
     )
 
     pays = models.ForeignKey(
-        'Pays',
+        "Pays",
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
         verbose_name=_("Pays"),
-        help_text=_("Pays où l'employé est affecté")
+        help_text=_("Pays où l'employé est affecté"),
     )
 
     def __str__(self):
         return self.username
 
-    
     def fullname(self):
-        return '%s %s' % (self.first_name, self.last_name)
-    
-    
+        return f"{self.first_name} {self.last_name}"
+
+
 # === Models Localisation === #
 
 
 class Pays(models.Model):
     nom = models.CharField(
-        max_length=50, 
-        unique=True, 
-        verbose_name=_("Nom du pays"), 
-        help_text=_("Nom complet du pays, par exemple 'France' ou 'Cameroun'.")
+        max_length=50,
+        unique=True,
+        verbose_name=_("Nom du pays"),
+        help_text=_("Nom complet du pays, par exemple 'France' ou 'Cameroun'."),
     )
     code = models.CharField(
-        max_length=10, 
-        unique=True, 
-        verbose_name=_("Code du pays"), 
-        help_text=_("Code unique du pays, par exemple 'FR' pour la France ou 'CM' pour le Cameroun.")
+        max_length=10,
+        unique=True,
+        verbose_name=_("Code du pays"),
+        help_text=_(
+            "Code unique du pays, par exemple 'FR' pour la France ou 'CM' pour le Cameroun."
+        ),
     )
     afficher_au_dashboard = models.BooleanField(
-        default=False, 
-        verbose_name=_("Afficher au dashboard"), 
-        help_text=_("Indique si ce pays doit apparaître dans les tableaux de bord.")
+        default=False,
+        verbose_name=_("Afficher au dashboard"),
+        help_text=_("Indique si ce pays doit apparaître dans les tableaux de bord."),
     )
     date_creation = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_("Date de création"), 
-        help_text=_("Date et heure à laquelle ce pays a été ajouté.")
+        auto_now_add=True,
+        verbose_name=_("Date de création"),
+        help_text=_("Date et heure à laquelle ce pays a été ajouté."),
     )
     date_modification = models.DateTimeField(
-        auto_now=True, 
-        verbose_name=_("Date de dernière modification"), 
-        help_text=_("Date et heure de la dernière mise à jour de ce pays.")
+        auto_now=True,
+        verbose_name=_("Date de dernière modification"),
+        help_text=_("Date et heure de la dernière mise à jour de ce pays."),
     )
     is_active = models.BooleanField(
-        default=True, 
-        verbose_name=_("Actif"), 
-        help_text=_("Indique si le pays est actif ou désactivé.")
+        default=True,
+        verbose_name=_("Actif"),
+        help_text=_("Indique si le pays est actif ou désactivé."),
     )
 
     class Meta:
@@ -210,42 +223,46 @@ class Pays(models.Model):
 
     def __str__(self):
         return f"{self.nom} ({self.code})"
-    
+
 
 class Province(models.Model):
     nom = models.CharField(
         max_length=50,
         unique=True,
         verbose_name=_("Nom de la province"),
-        help_text=_("Nom complet de la province, par exemple 'Île-de-France' ou 'Ouest'.")
+        help_text=_(
+            "Nom complet de la province, par exemple 'Île-de-France' ou 'Ouest'."
+        ),
     )
     code = models.CharField(
         max_length=10,
         unique=True,
         verbose_name=_("Code de la province"),
-        help_text=_("Code unique de la province, par exemple 'IDF' pour l'Île-de-France ou 'OUEST' pour l'Ouest.")
+        help_text=_(
+            "Code unique de la province, par exemple 'IDF' pour l'Île-de-France ou 'OUEST' pour l'Ouest."
+        ),
     )
     pays = models.ForeignKey(
-        'Pays',
+        "Pays",
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Pays"),
-        help_text=_("Pays auquel appartient la province.")
+        help_text=_("Pays auquel appartient la province."),
     )
     date_creation = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
-        help_text=_("Date et heure à laquelle cette province a été ajoutée.")
+        help_text=_("Date et heure à laquelle cette province a été ajoutée."),
     )
     date_modification = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Date de dernière modification"),
-        help_text=_("Date et heure de la dernière mise à jour de cette province.")
+        help_text=_("Date et heure de la dernière mise à jour de cette province."),
     )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Actif"),
-        help_text=_("Indique si la province est active ou désactivée.")
+        help_text=_("Indique si la province est active ou désactivée."),
     )
 
     class Meta:
@@ -262,35 +279,37 @@ class Ville(models.Model):
         max_length=50,
         unique=True,
         verbose_name=_("Nom de la ville"),
-        help_text=_("Nom complet de la ville, par exemple 'Paris' ou 'Douala'.")
+        help_text=_("Nom complet de la ville, par exemple 'Paris' ou 'Douala'."),
     )
     code = models.CharField(
         max_length=10,
         unique=True,
         verbose_name=_("Code de la ville"),
-        help_text=_("Code unique de la ville, par exemple 'PAR' pour Paris ou 'DOU' pour Douala.")
+        help_text=_(
+            "Code unique de la ville, par exemple 'PAR' pour Paris ou 'DOU' pour Douala."
+        ),
     )
     province = models.ForeignKey(
-        'Province',
+        "Province",
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Province"),
-        help_text=_("Province à laquelle appartient la ville.")
+        help_text=_("Province à laquelle appartient la ville."),
     )
     date_creation = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
-        help_text=_("Date et heure à laquelle cette ville a été ajoutée.")
+        help_text=_("Date et heure à laquelle cette ville a été ajoutée."),
     )
     date_modification = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Date de dernière modification"),
-        help_text=_("Date et heure de la dernière mise à jour de cette ville.")
+        help_text=_("Date et heure de la dernière mise à jour de cette ville."),
     )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Actif"),
-        help_text=_("Indique si la ville est active ou désactivée.")
+        help_text=_("Indique si la ville est active ou désactivée."),
     )
 
     class Meta:
@@ -306,22 +325,22 @@ class Annee(models.Model):
     annee = models.IntegerField(
         unique=True,
         verbose_name=_("Année"),
-        help_text=_("Année de référence, par exemple 2025.")
+        help_text=_("Année de référence, par exemple 2025."),
     )
     date_creation = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
-        help_text=_("Date et heure de la création de l'année.")
+        help_text=_("Date et heure de la création de l'année."),
     )
     date_modification = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Date de modification"),
-        help_text=_("Date et heure de la dernière modification de l'année.")
+        help_text=_("Date et heure de la dernière modification de l'année."),
     )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Actif"),
-        help_text=_("Indique si l'année est active ou désactivée.")
+        help_text=_("Indique si l'année est active ou désactivée."),
     )
 
     class Meta:
@@ -337,34 +356,38 @@ class Devise(models.Model):
     nom = models.CharField(
         max_length=50,
         verbose_name=_("Nom"),
-        help_text=_("Nom complet de la devise, par exemple 'Dollar américain'.")
+        help_text=_("Nom complet de la devise, par exemple 'Dollar américain'."),
     )
     code = models.CharField(
         max_length=10,
         unique=True,
         verbose_name=_("Code"),
-        help_text=_("Code unique de la devise, par exemple 'USD' pour le Dollar ou 'EUR' pour l'Euro.")
+        help_text=_(
+            "Code unique de la devise, par exemple 'USD' pour le Dollar ou 'EUR' pour l'Euro."
+        ),
     )
     symbole = models.CharField(
         max_length=10,
         blank=True,
         verbose_name=_("Symbole"),
-        help_text=_("Symbole de la devise, par exemple '$' pour le Dollar ou '€' pour l'Euro.")
+        help_text=_(
+            "Symbole de la devise, par exemple '$' pour le Dollar ou '€' pour l'Euro."
+        ),
     )
     date_creation = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
-        help_text=_("Date et heure de la création de la devise.")
+        help_text=_("Date et heure de la création de la devise."),
     )
     date_modification = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Date de modification"),
-        help_text=_("Date et heure de la dernière modification de la devise.")
+        help_text=_("Date et heure de la dernière modification de la devise."),
     )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Actif"),
-        help_text=_("Indique si la devise est active ou désactivée.")
+        help_text=_("Indique si la devise est active ou désactivée."),
     )
 
     class Meta:
@@ -381,14 +404,14 @@ class CouleurCommentaire(models.Model):
         max_length=255,
         blank=True,
         verbose_name=_("Nom de la Couleur"),
-        help_text=_("Nom de la couleur, par exemple '#FF5733'.")
+        help_text=_("Nom de la couleur, par exemple '#FF5733'."),
     )
     code = models.CharField(
         max_length=255,
         blank=True,
         verbose_name=_("Code Couleur"),
         validators=[couleur_validator],
-        help_text=_("Code hexadécimal de la couleur, par exemple '#FF5733'.")
+        help_text=_("Code hexadécimal de la couleur, par exemple '#FF5733'."),
     )
 
     class Meta:
@@ -398,10 +421,12 @@ class CouleurCommentaire(models.Model):
 
     def __str__(self):
         return self.couleur
-        
-        
+
+
 class CategoryNaceCode(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
 
@@ -424,7 +449,9 @@ class SubCategoryNaceCode(models.Model):
         related_name="subcategories",
         verbose_name=_("Catégorie"),
     )
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
 
@@ -432,16 +459,22 @@ class SubCategoryNaceCode(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.libelle else _("Sous-Catégorie Code NACE sans libellé")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.libelle
+            else _("Sous-Catégorie Code NACE sans libellé")
+        )
 
     class Meta:
         verbose_name = _("Sous-Catégorie Code NACE")
         verbose_name_plural = _("Sous-Catégories Code NACE")
         ordering = ["code"]
-        
-        
+
+
 class CategoryNafCode(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
 
@@ -449,7 +482,11 @@ class CategoryNafCode(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.libelle else _("Catégorie Code NAF sans libellé")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.libelle
+            else _("Catégorie Code NAF sans libellé")
+        )
 
     class Meta:
         verbose_name = _("Catégorie Code NAF")
@@ -464,7 +501,9 @@ class SubCategoryNafCode(models.Model):
         related_name="subcategories",
         verbose_name=_("Catégorie"),
     )
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
 
@@ -472,16 +511,22 @@ class SubCategoryNafCode(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.libelle else _("Sous-Catégorie Code NAF sans libellé")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.libelle
+            else _("Sous-Catégorie Code NAF sans libellé")
+        )
 
     class Meta:
         verbose_name = _("Sous-Catégorie Code NAF")
         verbose_name_plural = _("Sous-Catégories Code NAF")
         ordering = ["code"]
-        
-        
+
+
 class FormeJuridique(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     description = models.TextField(_("Description"), null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
@@ -490,17 +535,25 @@ class FormeJuridique(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.libelle else _("Forme juridique sans libellé")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.libelle
+            else _("Forme juridique sans libellé")
+        )
 
     class Meta:
         verbose_name = _("Forme juridique")
         verbose_name_plural = _("Formes juridiques")
         ordering = ["code"]
-        
-        
+
+
 class DomaineEntreprise(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
-    libelle = models.CharField(_("Libellé"), max_length=255, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
+    libelle = models.CharField(
+        _("Libellé"), max_length=255, unique=True, null=True, blank=True
+    )
     description = models.TextField(_("Description"), null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
 
@@ -508,7 +561,11 @@ class DomaineEntreprise(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.libelle else _("Domaine entreprise sans libellé")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.libelle
+            else _("Domaine entreprise sans libellé")
+        )
 
     class Meta:
         verbose_name = _("Domaine entreprise")
@@ -523,7 +580,9 @@ class PosteEntreprise(models.Model):
         related_name="postes",
         verbose_name=_("Domaine Entreprise"),
     )
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     description = models.TextField(_("Description"), null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
@@ -532,13 +591,17 @@ class PosteEntreprise(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.libelle} ({self.domaine.libelle})" if self.domaine else _("Poste entreprise sans domaine")
+        return (
+            f"{self.libelle} ({self.domaine.libelle})"
+            if self.domaine
+            else _("Poste entreprise sans domaine")
+        )
 
     class Meta:
         verbose_name = _("Poste entreprise")
         verbose_name_plural = _("Postes entreprise")
         ordering = ["libelle"]
-        
+
 
 class CategorieEntreprise(models.Model):
     code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
@@ -554,8 +617,8 @@ class CategorieEntreprise(models.Model):
     class Meta:
         verbose_name = _("Catégorie d'Entreprise")
         verbose_name_plural = _("Catégories d'Entreprises")
-        
-        
+
+
 class StructureEntreprise(models.Model):
     code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
@@ -570,8 +633,8 @@ class StructureEntreprise(models.Model):
     class Meta:
         verbose_name = _("Structure d'Entreprise")
         verbose_name_plural = _("Structures d'Entreprises")
-        
-        
+
+
 class StatutEntreprise(models.Model):
     code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
@@ -586,26 +649,25 @@ class StatutEntreprise(models.Model):
     class Meta:
         verbose_name = _("Statut d'Entreprise")
         verbose_name_plural = _("Statuts d'Entreprises")
-        
-
-
-
-
-
-
-
 
 
 # === Models Acheteurs et compagnies === #
 
+
 class ModeleRapport(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -615,15 +677,20 @@ class ModeleRapport(models.Model):
         verbose_name_plural = _("Modèles de rapport")
 
 
-
 class ModeleAlarme(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -633,15 +700,20 @@ class ModeleAlarme(models.Model):
         verbose_name_plural = _("Modèles d'alarme")
 
 
-
 class ModeleBilan(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -651,15 +723,20 @@ class ModeleBilan(models.Model):
         verbose_name_plural = _("Modèles de bilan")
 
 
-
 class ModeleBail(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -667,17 +744,22 @@ class ModeleBail(models.Model):
     class Meta:
         verbose_name = _("Modèle de bail")
         verbose_name_plural = _("Modèles de bail")
-        
-   
-        
+
+
 class ModeleNotation(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -687,16 +769,20 @@ class ModeleNotation(models.Model):
         verbose_name_plural = _("Modèles de notation")
 
 
-
-
 class ModeleAvisCommercial(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -706,15 +792,20 @@ class ModeleAvisCommercial(models.Model):
         verbose_name_plural = _("Modèles d'avis commercial")
 
 
-
 class ModeleRelationEntreprise(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -724,15 +815,20 @@ class ModeleRelationEntreprise(models.Model):
         verbose_name_plural = _("Modèles de relation entreprise")
 
 
-
 class ModeleInformationNotationEntreprise(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -742,15 +838,20 @@ class ModeleInformationNotationEntreprise(models.Model):
         verbose_name_plural = _("Modèles d'information sur notation entreprise")
 
 
-
 class ModeleComportementPaiement(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -760,15 +861,20 @@ class ModeleComportementPaiement(models.Model):
         verbose_name_plural = _("Modèles de comportement de paiement")
 
 
-
 class ModeleComportementJugement(models.Model):
-    code = models.CharField(_("Code"), max_length=50, unique=True, null=True, blank=True)
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.code} - {self.libelle}" if self.code and self.libelle else _("Modèle sans informations complètes")
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
 
     def is_empty(self):
         return not self.code and not self.libelle
@@ -776,60 +882,87 @@ class ModeleComportementJugement(models.Model):
     class Meta:
         verbose_name = _("Modèle de comportement de jugement")
         verbose_name_plural = _("Modèles de comportement de jugement")
-        
-
-
-
-
-
-
-
-
-
 
 
 ##########################################################
 ##########################################################
 # Debut Modules Portefeuille  & Client
 ##########################################################
-##########################################################  
+##########################################################
 
 
+class ElementSurveillance(models.Model):
+    nom = models.CharField(
+        max_length=255,
+        unique=True,  # Chaque élément doit avoir un nom unique
+        verbose_name=_("Nom de l'élément de surveillance"),
+        help_text=_("Ex: Changement de niveau de scoring, Dissolution de l'entreprise"),
+    )
+    code_interne = models.CharField(
+        max_length=100,  # Un code court pour une identification programmatique facile
+        unique=True,
+        verbose_name=_("Code interne"),
+        help_text=_("Ex: SCORING_CHANGE, DISSOLUTION_ENTREPRISE"),
+    )
+    categorie = models.CharField(
+        max_length=150,
+        verbose_name=_("Catégorie de surveillance"),
+        help_text=_("Ex: Santé Financière et Risque de Crédit, Procédures Collectives"),
+    )
+    sous_categorie = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        verbose_name=_("Sous-catégorie de surveillance"),
+        help_text=_("Ex: Évaluation et Notation, Cessation d'Activité"),
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Description détaillée"),
+        help_text=_("Description de ce que cet élément surveille."),
+    )
+    # Potentiellement un champ pour indiquer si l'élément est activable par défaut
+    # actif_par_defaut = models.BooleanField(default=False, verbose_name=_("Activé par défaut pour les nouveaux portefeuilles"))
+
+    class Meta:
+        verbose_name = _("Élément de Surveillance")
+        verbose_name_plural = _("Éléments de Surveillance")
+        ordering = ["categorie", "sous_categorie", "nom"]
+
+    def __str__(self):
+        return f"{self.categorie} - {self.nom}"
 
 
 class Client(models.Model):
     nom = models.CharField(
-        max_length=255,
-        verbose_name=_("Nom"),
-        help_text=_("Nom du client.")
+        max_length=255, verbose_name=_("Nom"), help_text=_("Nom du client.")
     )
     email = models.EmailField(
-        unique=True,
-        verbose_name=_("Email"),
-        help_text=_("Adresse email du client.")
+        unique=True, verbose_name=_("Email"), help_text=_("Adresse email du client.")
     )
     telephone = models.CharField(
         max_length=20,
         blank=True,
         null=True,
         verbose_name=_("Téléphone"),
-        help_text=_("Numéro de téléphone du client.")
+        help_text=_("Numéro de téléphone du client."),
     )
     adresse = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Adresse"),
-        help_text=_("Adresse postale du client.")
+        help_text=_("Adresse postale du client."),
     )
     date_inscription = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date d'inscription"),
-        help_text=_("Date et heure d'inscription du client.")
+        help_text=_("Date et heure d'inscription du client."),
     )
     actif = models.BooleanField(
         default=True,
         verbose_name=_("Actif"),
-        help_text=_("Indique si le client est actif.")
+        help_text=_("Indique si le client est actif."),
     )
 
     class Meta:
@@ -840,31 +973,98 @@ class Client(models.Model):
         return self.nom
 
 
+class Contact(models.Model):
 
+    client = models.ForeignKey(
+        "Client",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name=_("Entreprise du contact"),
+    )
+
+    nom = models.CharField(
+        max_length=255, verbose_name=_("Nom"), help_text=_("Nom du contact.")
+    )
+    email = models.EmailField(
+        unique=True, verbose_name=_("Email"), help_text=_("Adresse email du contact.")
+    )
+    telephone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_("Téléphone"),
+        help_text=_("Numéro de téléphone du contact."),
+    )
+    actif = models.BooleanField(
+        default=True,
+        verbose_name=_("Actif"),
+        help_text=_("Indique si le contact est actif."),
+    )
+
+    class Meta:
+        verbose_name = _("Contact")
+        verbose_name_plural = _("Contacts")
+
+    def __str__(self):
+        return self.nom
 
 
 class Portefeuille(models.Model):
+
+    FREQUENCE_CHOICES = [
+        ("quotidienne", _("Quotidienne")),
+        ("hebdomadaire", _("Hebdomadaire")),
+        ("mensuelle", _("Mensuelle")),
+    ]
+
+    frequence_alertes = models.CharField(
+        max_length=20,
+        choices=FREQUENCE_CHOICES,
+        default="quotidienne",
+        verbose_name=_("Fréquence des Alertes"),
+        help_text=_(
+            "Choisissez la fréquence à laquelle vous souhaitez recevoir des alertes."
+        ),
+    )
+
     client = models.ForeignKey(
-        'Client',
+        "Client",
         on_delete=models.CASCADE,
-        related_name='portefeuilles_client',
+        related_name="portefeuilles_client",
         verbose_name=_("Client"),
-        help_text=_("Client propriétaire du portefeuille.")
+        help_text=_("Client propriétaire du portefeuille."),
     )
     nom = models.CharField(
-        max_length=255,
-        verbose_name=_("Nom"),
-        help_text=_("Nom du portefeuille.")
+        max_length=255, verbose_name=_("Nom"), help_text=_("Nom du portefeuille.")
     )
+
+    elements_surveillance_actifs = models.ManyToManyField(
+        ElementSurveillance,  # Référence au modèle que nous venons de créer
+        blank=True,  # Un portefeuille peut ne choisir aucun élément spécifique (ou utiliser des valeurs par défaut plus tard)
+        verbose_name=_("Éléments de surveillance activés"),
+        help_text=_("Choisissez les événements à surveiller pour ce portefeuille."),
+    )
+
+    # CHAMP AJOUTÉ
+    derniere_verification = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Dernière vérification effectuée le"),
+        help_text=_(
+            "Date de la dernière exécution de la routine de surveillance pour ce portefeuille."
+        ),
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
-        help_text=_("Date et heure de la création du portefeuille.")
+        help_text=_("Date et heure de la création du portefeuille."),
     )
     updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name=_("Date de mise à jour"),
-        help_text=_("Date et heure de la dernière mise à jour du portefeuille.")
+        help_text=_("Date et heure de la dernière mise à jour du portefeuille."),
     )
 
     class Meta:
@@ -873,59 +1073,108 @@ class Portefeuille(models.Model):
 
     def __str__(self):
         return f"{self.nom} - {self.client.nom}"
-    
-    
-    
+
 
 class PortefeuilleClient(models.Model):
     CATEGORY_CHOICES = [
-        ('grande', 'Grande entreprise'),
-        ('pme', 'Petite et moyenne entreprise'),
-        ('autre', 'Autre'),
+        ("grande", "Grande entreprise"),
+        ("pme", "Petite et moyenne entreprise"),
+        ("autre", "Autre"),
     ]
 
-    portefeuille = models.ForeignKey('Portefeuille', on_delete=models.CASCADE)
-    acheteur = models.ForeignKey('Acheteur', on_delete=models.CASCADE)
+    portefeuille = models.ForeignKey("Portefeuille", on_delete=models.CASCADE)
+    acheteur = models.ForeignKey("Acheteur", on_delete=models.CASCADE)
     categorie = models.CharField(
         max_length=20,
         choices=CATEGORY_CHOICES,
         verbose_name=_("Catégorie"),
-        help_text=_("Catégorie de l'acheteur dans le portefeuille.")
+        help_text=_("Catégorie de l'acheteur dans le portefeuille."),
     )
 
     class Meta:
         verbose_name = _("Portefeuille client")
         verbose_name_plural = _("Portefeuilles client")
-        unique_together = ('portefeuille', 'acheteur')
+        unique_together = ("portefeuille", "acheteur")
 
     def __str__(self):
         return f"{self.acheteur.nom} - {self.get_categorie_display()}"
 
 
+class NotificationLog(models.Model):
+    portefeuille = models.ForeignKey(Portefeuille, on_delete=models.CASCADE)
+    code_evenement = models.CharField(max_length=100)
+    date_notification = models.DateTimeField(default=timezone.now)
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Description détaillée"),
+        help_text=_("Description de ce que cet élément surveille."),
+    )
+    actif = models.BooleanField(
+        default=False,
+        verbose_name=_("Actif"),
+        help_text=_("Indique si la notification a été envoyée."),
+    )
+
+    class Meta:
+        verbose_name = _("Journal des Notifications")
+        verbose_name_plural = _("Journaux des Notifications")
+
+    def __str__(self):
+        return f"{self.portefeuille.nom} - {self.code_evenement} - {self.date_notification}"
 
 
+class AlerteLog(models.Model):
+    portefeuille = models.ForeignKey(
+        "Portefeuille", on_delete=models.CASCADE, verbose_name=_("Portefeuille")
+    )
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, verbose_name=_("Acheteur Concerné")
+    )
+    element_surveille = models.ForeignKey(
+        ElementSurveillance,
+        on_delete=models.CASCADE,
+        verbose_name=_("Élément Déclenché"),
+    )
 
+    date_creation = models.DateTimeField(_("Date de création"), default=timezone.now)
+    message = models.TextField(_("Message de l'alerte"))
+
+    lu = models.BooleanField(
+        _("Lu"),
+        default=False,
+        help_text=_("Indique si le client a consulté cette alerte."),
+    )
+
+    # Champ générique pour pointer vers l'objet exact qui a changé (optionnel mais puissant)
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey("content_type", "object_id")
+
+    class Meta:
+        verbose_name = _("Alerte Log")
+        verbose_name_plural = _("Alertes Log")
+        ordering = ["-date_creation"]
+
+    def __str__(self):
+        return f"Alerte pour {self.acheteur.nom} sur '{self.element_surveille.nom}'"
 
 
 ##########################################################
 ##########################################################
 # Fin Modules Portefeuille
 ##########################################################
-##########################################################  
-
-
-
-
-
-
-
+##########################################################
 
 
 ##########################################################
 ##########################################################
 # Debut Modules Acheteur
 ##########################################################
-##########################################################    
+##########################################################
+
 
 class Acheteur(models.Model):
     code = models.CharField(
@@ -933,32 +1182,32 @@ class Acheteur(models.Model):
         max_length=255,
         null=True,
         blank=True,
-        help_text=_("Code unique de l'acheteur")
+        help_text=_("Code unique de l'acheteur"),
     )
 
     categorie_entreprise = models.ForeignKey(
-        'CategorieEntreprise',
+        "CategorieEntreprise",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name=_("Catégorie d'Entreprise"),
-        help_text=_("Catégorie à laquelle appartient l'entreprise")
+        help_text=_("Catégorie à laquelle appartient l'entreprise"),
     )
 
     forme_juridique = models.ForeignKey(
-        'FormeJuridique',
+        "FormeJuridique",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name=_("Forme Juridique"),
-        help_text=_("Forme juridique de l'entreprise")
+        help_text=_("Forme juridique de l'entreprise"),
     )
-    
+
     activite_principale = models.CharField(
         _("Activité Principale"),
         max_length=255,
         blank=True,
-        help_text=_("Activité principale de l'entreprise")
+        help_text=_("Activité principale de l'entreprise"),
     )
 
     nom = models.CharField(
@@ -966,249 +1215,402 @@ class Acheteur(models.Model):
         max_length=1000,
         blank=False,
         unique=True,
-        help_text=_("Nom officiel de l'entreprise")
+        help_text=_("Nom officiel de l'entreprise"),
     )
 
     sigle = models.CharField(
-        _("Sigle"),
-        max_length=255,
-        blank=True,
-        help_text=_("Sigle de l'entreprise")
+        _("Sigle"), max_length=255, blank=True, help_text=_("Sigle de l'entreprise")
     )
 
     description = models.TextField(
         _("Description"),
         null=True,
         blank=True,
-        help_text=_("Description de l'entreprise")
+        help_text=_("Description de l'entreprise"),
     )
 
     date_creation = models.DateField(
         _("Date de Création"),
         null=True,
         blank=True,
-        help_text=_("Date de création de l'entreprise")
+        help_text=_("Date de création de l'entreprise"),
     )
 
     statut_entreprise = models.ForeignKey(
-        'StatutEntreprise',
+        "StatutEntreprise",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name=_("Statut actuel de l'entreprise"),
-        help_text=_("Statut actuel de l'entreprise")
+        help_text=_("Statut actuel de l'entreprise"),
     )
 
     code_postal = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text=_("Code postal de l'entreprise")
+        max_length=200, blank=True, help_text=_("Code postal de l'entreprise")
     )
 
     fax = models.CharField(
-        max_length=300,
-        blank=True,
-        help_text=_("Numéro de fax de l'entreprise")
+        max_length=300, blank=True, help_text=_("Numéro de fax de l'entreprise")
     )
 
     boite_postale = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text=_("Boîte postale de l'entreprise")
+        max_length=200, blank=True, help_text=_("Boîte postale de l'entreprise")
     )
 
-    email = models.EmailField(
-        blank=True,
-        help_text=_("Adresse email de l'entreprise")
-    )
+    email = models.EmailField(blank=True, help_text=_("Adresse email de l'entreprise"))
 
     site_internet = models.URLField(
-        max_length=300,
-        blank=True,
-        help_text=_("Site internet de l'entreprise")
+        max_length=300, blank=True, help_text=_("Site internet de l'entreprise")
     )
 
     numero_adresse = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text=_("Numéro de l'adresse de l'entreprise")
+        max_length=200, blank=True, help_text=_("Numéro de l'adresse de l'entreprise")
     )
 
     rue_adresse = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text=_("Rue de l'adresse de l'entreprise")
+        max_length=200, blank=True, help_text=_("Rue de l'adresse de l'entreprise")
     )
 
     pays = models.ForeignKey(
-        'Pays',
+        "Pays",
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
         verbose_name=_("Pays"),
-        help_text=_("Pays où l'entreprise est située")
+        help_text=_("Pays où l'entreprise est située"),
     )
 
     province = models.ForeignKey(
-        'Province',
+        "Province",
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
         verbose_name=_("Province"),
-        help_text=_("Province où l'entreprise est située")
+        help_text=_("Province où l'entreprise est située"),
     )
 
     ville = models.ForeignKey(
-        'Ville',
+        "Ville",
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
         verbose_name=_("Ville"),
-        help_text=_("Ville où l'entreprise est située")
+        help_text=_("Ville où l'entreprise est située"),
     )
 
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire',
+        "CouleurCommentaire",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        help_text=_("Couleur du commentaire")
+        help_text=_("Couleur du commentaire"),
     )
 
     commentaire = models.TextField(
-        blank=True,
-        help_text=_("Commentaire sur l'entreprise")
+        blank=True, help_text=_("Commentaire sur l'entreprise")
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
         blank=True,
         null=True,
-        help_text=_("Date de création de l'enregistrement")
+        help_text=_("Date de création de l'enregistrement"),
     )
 
     updated_at = models.DateTimeField(
         _("Date de Mise à Jour"),
         auto_now=True,
-        help_text=_("Date de la dernière mise à jour de l'enregistrement")
+        help_text=_("Date de la dernière mise à jour de l'enregistrement"),
     )
 
     class Meta:
         verbose_name = _("Acheteur")
         verbose_name_plural = _("Acheteurs")
-        ordering = ['nom']
-        unique_together = ('nom', 'email')
+        ordering = ["nom"]
+        unique_together = ("nom", "email")
 
-    def __str__(self):
-        return self.nom
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Stocke l'état original des champs surveillés lors de l'initialisation
+        self.__original_data = {
+            "forme_juridique_id": self.forme_juridique_id,
+            "activite_principale": self.activite_principale,
+            "nom": self.nom,  # Raison sociale
+            "statut_entreprise_id": self.statut_entreprise_id,
+            "pays_id": self.pays_id,
+            "province_id": self.province_id,
+            "ville_id": self.ville_id,
+            "email": self.email,
+            "site_internet": self.site_internet,
+            "numero_adresse": self.numero_adresse,
+            "rue_adresse": self.rue_adresse,
+            "code_postal": self.code_postal,
+            "fax": self.fax,
+            "boite_postale": self.boite_postale,
+            # Pourrait aussi surveiller 'taille' (si elle existe) si elle est liée à 'Santé Financière'
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+
+        if not self.code:
+            self.code = self.generate_unique_code()
+
+        super().save(*args, **kwargs)
+
+        # Mettre à jour l'état original après la sauvegarde
+        self.__original_data = {
+            "forme_juridique_id": self.forme_juridique_id,
+            "activite_principale": self.activite_principale,
+            "nom": self.nom,  # Raison sociale
+            "statut_entreprise_id": self.statut_entreprise_id,
+            "pays_id": self.pays_id,
+            "province_id": self.province_id,
+            "ville_id": self.ville_id,
+            "email": self.email,
+            "site_internet": self.site_internet,
+            "numero_adresse": self.numero_adresse,
+            "rue_adresse": self.rue_adresse,
+            "code_postal": self.code_postal,
+            "fax": self.fax,
+            "boite_postale": self.boite_postale,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        # Cartographie des champs aux codes internes des ElementSurveillance
+        # Utiliser les codes de votre liste fournie
+        field_to_element_code = {
+            # Identité et Structure de l'Entreprise
+            "nom": "COMPANY_NAME_CHANGE",  # Raison sociale
+            "forme_juridique_id": "FORME_JURIDIQUE_CHANGE",  # Ajouté, voir plus bas pour le détail
+            "email": "CONTACT_INFO_CHANGE",
+            "site_internet": "CONTACT_INFO_CHANGE",
+            "numero_adresse": "CONTACT_INFO_CHANGE",
+            "rue_adresse": "CONTACT_INFO_CHANGE",
+            "code_postal": "CONTACT_INFO_CHANGE",
+            "fax": "CONTACT_INFO_CHANGE",
+            "boite_postale": "CONTACT_INFO_CHANGE",
+            "pays_id": "CONTACT_INFO_CHANGE",
+            "province_id": "CONTACT_INFO_CHANGE",
+            "ville_id": "CONTACT_INFO_CHANGE",
+            # Activité Commerciale et Contrats (si applicable, ex: changement d'activité principale)
+            "activite_principale": "ACTIVITY_CHANGE",  # Ajout d'un code si vous voulez surveiller ce champ
+            # Santé Financière et Risque de Crédit (si des champs comme scoring ou limite de crédit sont directement dans Acheteur)
+            # Sinon, ces alertes proviendraient de modèles liés
+            "statut_entreprise_id": "STATUT_ENTREPRISE_CHANGE",  # Si le statut peut être "en liquidation", "dissoute", etc.
+        }
+
+        changes_detected = {}  # Pour regrouper les messages par code d'élément
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            # Traitement spécial pour les champs ForeignKey (_id)
+            if field_name.endswith("_id"):
+                if original_value != current_value:
+                    original_obj_display = "vide"
+                    current_obj_display = "vide"
+
+                    # Tenter de récupérer l'objet lié pour un affichage plus lisible
+                    if original_value:
+                        try:
+                            original_obj = getattr(
+                                self, field_name.replace("_id", "")
+                            )._default_manager.get(pk=original_value)
+                            original_obj_display = str(original_obj)
+                        except models.ObjectDoesNotExist:
+                            original_obj_display = "Inconnu (ID: {})".format(
+                                original_value
+                            )
+
+                    if current_value:
+                        try:
+                            current_obj = getattr(
+                                self, field_name.replace("_id", "")
+                            )._default_manager.get(pk=current_value)
+                            current_obj_display = str(current_obj)
+                        except models.ObjectDoesNotExist:
+                            current_obj_display = "Inconnu (ID: {})".format(
+                                current_value
+                            )
+
+                    changes_detected.setdefault(element_code, []).append(
+                        f"Le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_obj_display}' à '{current_obj_display}'."
+                    )
+            else:  # Champs non ForeignKey (CharFields, DateFields, etc.)
+                # Assurez-vous que les comparaisons sont robustes (ex: éviter de comparer None avec '')
+                # Utilisez str() pour les dates ou d'autres types si nécessaire
+                if str(original_value or "") != str(current_value or ""):
+                    changes_detected.setdefault(element_code, []).append(
+                        f"Le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                    )
+
+        # Logique pour les changements de statut d'entreprise qui peuvent impliquer LIQUIDATION ou DISSOLUTION
+        original_statut_id = self.__original_data.get("statut_entreprise_id")
+        current_statut_id = self.statut_entreprise_id
+
+        if original_statut_id != current_statut_id:
+            if current_statut_id:
+                try:
+                    current_statut = StatutEntreprise.objects.get(pk=current_statut_id)
+                    if "liquidation" in current_statut.nom.lower():
+                        changes_detected.setdefault("LIQUIDATION", []).append(
+                            f"Le statut de l'entreprise est passé à '{current_statut.nom}' (Liquidation)."
+                        )
+                    elif "dissolution" in current_statut.nom.lower():
+                        changes_detected.setdefault("DISSOLUTION", []).append(
+                            f"Le statut de l'entreprise est passé à '{current_statut.nom}' (Dissolution)."
+                        )
+                    # Vous pouvez ajouter d'autres conditions pour SAFEGUARD_PROCEDURE, JUDICIAL_RECOVERY_PROCEDURE
+                    # si votre modèle StatutEntreprise peut refléter ces états
+                except StatutEntreprise.DoesNotExist:
+                    pass  # Gérer si le statut n'existe pas
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for (
+                                message
+                            ) in messages:  # Créer une alerte par message de changement
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
 
     def clean(self):
         # Ajouter des validateurs pour éviter les doublons
         if Acheteur.objects.filter(nom=self.nom).exclude(pk=self.pk).exists():
             raise ValidationError(_("Un acheteur avec ce nom existe déjà."))
-        if Acheteur.objects.filter(email=self.email).exclude(pk=self.pk).exists():
-            raise ValidationError(_("Un acheteur avec cet email existe déjà."))
-
-    def save(self, *args, **kwargs):
-        if not self.code:
-            self.code = self.generate_unique_code()
-        super(Acheteur, self).save(*args, **kwargs)
+        # Supprimez ou ajustez cette validation si l'email n'est pas censé être unique par acheteur
+        # if self.email and Acheteur.objects.filter(email=self.email).exclude(pk=self.pk).exists():
+        #     raise ValidationError(_("Un acheteur avec cet email existe déjà."))
 
     def generate_unique_code(self):
-        # Obtenir l'année en cours
+        # ... (votre méthode generate_unique_code existante) ...
         current_year = datetime.datetime.now().year
-
-        # Obtenir le timestamp actuel
         timestamp = int(time.time())
-
-        # Formater le code unique
         unique_code = f"{current_year}-{timestamp}"
-
         return unique_code
-    
-    
 
-# Prevoir la gestion d'adresse multiple pour un acheteur 
+    def __str__(self):
+        return self.nom
+
+
+# Prevoir la gestion d'adresse multiple pour un acheteur
 # Ce qui veut dire que un acheteur peut avoir occuper plusieurs adresses
-# il serait important de les recenser toutes 
+# il serait important de les recenser toutes
 
 
 ##########################################################
 ##########################################################
 # Debut Modules Acheteur
 ##########################################################
-##########################################################    
-    
-    
-    
-    
-    
-    
-    
+##########################################################
+
+
 ##########################################################
 ##########################################################
 # Debut Modules Yannick
 ##########################################################
-##########################################################    
+##########################################################
 class Resume(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur concerné par ce résumé.")
+        help_text=_("Acheteur concerné par ce résumé."),
     )
     devise = models.ForeignKey(
-        'Devise', 
-        null=True, blank=True, 
-        on_delete=models.DO_NOTHING, 
-        verbose_name=_("Devise du capital social"), 
-        related_name="devise_resume"
+        "Devise",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Devise du capital social"),
+        related_name="devise_resume",
     )
     capital_social = models.DecimalField(
-        max_digits=100, decimal_places=0, 
-        blank=True, null=True, 
+        max_digits=100,
+        decimal_places=0,
+        blank=True,
+        null=True,
         verbose_name=_("Capital social"),
-        help_text=_("Capital social de l'acheteur.")
+        help_text=_("Capital social de l'acheteur."),
     )
     chiffre_affaire = models.DecimalField(
-        max_digits=100, decimal_places=0, 
-        blank=True, null=True, 
+        max_digits=100,
+        decimal_places=0,
+        blank=True,
+        null=True,
         verbose_name=_("Chiffre d'affaire"),
-        help_text=_("Chiffre d'affaire annuel de l'acheteur.")
+        help_text=_("Chiffre d'affaire annuel de l'acheteur."),
     )
     resultat_net = models.DecimalField(
-        max_digits=100, decimal_places=0, 
-        blank=True, null=True, 
+        max_digits=100,
+        decimal_places=0,
+        blank=True,
+        null=True,
         verbose_name=_("Résultat net"),
-        help_text=_("Résultat net après impôts.")
+        help_text=_("Résultat net après impôts."),
     )
     capitaux_propre = models.DecimalField(
-        max_digits=100, decimal_places=0, 
-        blank=True, null=True, 
+        max_digits=100,
+        decimal_places=0,
+        blank=True,
+        null=True,
         verbose_name=_("Capitaux propres"),
-        help_text=_("Capitaux propres de l'acheteur.")
+        help_text=_("Capitaux propres de l'acheteur."),
     )
     nombre_employe = models.DecimalField(
-        max_digits=100, decimal_places=0, 
-        blank=True, null=True, 
+        max_digits=100,
+        decimal_places=0,
+        blank=True,
+        null=True,
         verbose_name=_("Nombre d'employés"),
-        help_text=_("Nombre total d'employés dans l'entreprise.")
+        help_text=_("Nombre total d'employés dans l'entreprise."),
     )
     date_creation = models.DateField(
-        null=True, blank=True, 
-        verbose_name=_("Date de création de l'entreprise")
+        null=True, blank=True, verbose_name=_("Date de création de l'entreprise")
     )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, blank=True, 
-        on_delete=models.DO_NOTHING, 
-        verbose_name=_("Couleur du commentaire")
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Dernière mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
 
     class Meta:
         verbose_name = _("Résumé Financier")
@@ -1216,29 +1618,88 @@ class Resume(models.Model):
 
     def __str__(self):
         return f"Résumé {self.pk} - {self.acheteur}"
-    
-    
+
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+# Définition des choix pour la cotation du risque
+RISK_RATING_CHOICES = [
+    ("non_douteux", _("Non douteux")),
+    ("risque_faible", _("Risque faible")),
+    ("risque_modere", _("Risque modéré")),
+    ("mise_en_garde", _("Mise en garde")),
+    ("peu_satisfaisant", _("Peu satisfaisant")),
+    ("inacceptable", _("Inacceptable")),
+]
+
+# Définition des choix pour l'indice du risque
+RISK_INDEX_CHOICES = [
+    ("eleve", _("Élevé")),
+    ("moyen", _("Moyen")),
+    ("faible", _("Faible")),
+]
+
+
 class RiskRating(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, 
+        "Acheteur",
+        null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur concerné par l'évaluation du risque.")
+        help_text=_("Acheteur concerné par l'évaluation du risque."),
     )
-    remboursabilite = models.BooleanField(default=False, verbose_name=_("Remboursabilité"))
-    situation_liquidite = models.BooleanField(default=False, verbose_name=_("Situation de liquidité"))
-    performance_rentabilite = models.BooleanField(default=False, verbose_name=_("Performance et rentabilité"))
-    perspective_secteur = models.BooleanField(default=False, verbose_name=_("Perspective du secteur"))
-    qualite_information_analyse = models.BooleanField(default=False, verbose_name=_("Qualité de l'information analysée"))
-    existence_garantie = models.BooleanField(default=False, verbose_name=_("Existence de garantie"))
-    terme_financier_duree_pret = models.BooleanField(default=False, verbose_name=_("Terme financier et durée du prêt"))
-    mesure_propre_soutenir_credit = models.BooleanField(default=False, verbose_name=_("Mesure propre à soutenir le crédit"))
+    remboursabilite = models.BooleanField(
+        default=False, verbose_name=_("Remboursabilité")
+    )
+    # ... (tous vos autres champsBooleanField existants) ...
+    situation_liquidite = models.BooleanField(
+        default=False, verbose_name=_("Situation de liquidité")
+    )
+    performance_rentabilite = models.BooleanField(
+        default=False, verbose_name=_("Performance et rentabilité")
+    )
+    perspective_secteur = models.BooleanField(
+        default=False, verbose_name=_("Perspective du secteur")
+    )
+    qualite_information_analyse = models.BooleanField(
+        default=False, verbose_name=_("Qualité de l'information analysée")
+    )
+    existence_garantie = models.BooleanField(
+        default=False, verbose_name=_("Existence de garantie")
+    )
+    terme_financier_duree_pret = models.BooleanField(
+        default=False, verbose_name=_("Terme financier et durée du prêt")
+    )
+    mesure_propre_soutenir_credit = models.BooleanField(
+        default=False, verbose_name=_("Mesure propre à soutenir le crédit")
+    )
+
+    # Nouveaux champs pour la cotation et l'indice du risque
+    cotation_du_risque = models.CharField(
+        max_length=50,
+        choices=RISK_RATING_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name=_("Cotation du risque"),
+    )
+    indice_du_risque = models.CharField(
+        max_length=50,
+        choices=RISK_INDEX_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name=_("Indice du risque"),
+    )
+
     interpretation = models.TextField(blank=True, verbose_name=_("Interprétation"))
     analyse = models.TextField(blank=True, verbose_name=_("Analyse détaillée"))
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Dernière mise à jour"))
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
 
     class Meta:
         verbose_name = _("Évaluation du Risque")
@@ -1247,56 +1708,102 @@ class RiskRating(models.Model):
     def __str__(self):
         return f"RiskRating {self.pk} - {self.acheteur}"
 
+    def get_cotation_explication(self):
+        """Retourne l'explication de la cotation du risque."""
+        explications = {
+            "non_douteux": _(
+                "Prêt entièrement garanti par l’encaisse ; Solide capitalisation ; Direction remarquable"
+            ),
+            "risque_faible": _(
+                "Excellents antécédents financiers/tendances ; Direction solide ; Industrie stable/robuste"
+            ),
+            "risque_modere": _(
+                "Direction solide ; Tendances financières stables ; Niveau de capitalisation modéré"
+            ),
+            "mise_en_garde": _(
+                "Insuffisance possible de la garantie ; Insuffisance possible du service de la dette ; Tournure très défavorable des événements"
+            ),
+            "peu_satisfaisant": _(
+                "Cessation des activités ; Changement de direction préjudiciable ; Arriérés en intérêts et capital"
+            ),
+            "inacceptable": _("Actif/garantie en train de disparaître ; Fraude"),
+        }
+        return explications.get(self.cotation_du_risque, "")
+
+    def get_indice_explication(self):
+        """Retourne l'explication de l'indice du risque."""
+        explications = {
+            "eleve": _("Le risque de transaction est relativement élevé."),
+            "moyen": _("Le risque de transaction est relativement modéré."),
+            "faible": _("Le risque de transaction est relativement faible."),
+        }
+        return explications.get(self.indice_du_risque, "")
+
 
 class DonneesEnregistrement(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
-    date_creation = models.DateField(null=True, blank=True, verbose_name=_("Date de création"))
-    date_registre = models.DateField(null=True, blank=True, verbose_name=_("Date d'enregistrement"))
-    
+    date_creation = models.DateField(
+        null=True, blank=True, verbose_name=_("Date de création")
+    )
+    date_registre = models.DateField(
+        null=True, blank=True, verbose_name=_("Date d'enregistrement")
+    )
+
     # Ancien attribut avec choices
     forme_juridique = models.CharField(
-        max_length=4000, 
-        choices=FORMEJURIDIQUE_CHOICES, 
+        max_length=4000,
+        choices=FORMEJURIDIQUE_CHOICES,
         default="Veuillez choisir la forme juridique",
-        verbose_name=_("Forme Juridique")
+        verbose_name=_("Forme Juridique"),
     )
-    
+
     # Nouvel attribut avec ForeignKey
     forme_juridique_ref = models.ForeignKey(
-        'FormeJuridique', 
-        null=True, blank=True, 
+        "FormeJuridique",
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
-        verbose_name=_("Référence Forme Juridique")
+        verbose_name=_("Référence Forme Juridique"),
     )
-    
-    numero_registre_commerce = models.CharField(max_length=50, blank=True, verbose_name=_("Numéro de registre du commerce"))
-    numero_fiscale = models.CharField(max_length=100, blank=True, verbose_name=_("Numéro fiscal"))
-    
+
+    numero_registre_commerce = models.CharField(
+        max_length=50, blank=True, verbose_name=_("Numéro de registre du commerce")
+    )
+    numero_fiscale = models.CharField(
+        max_length=100, blank=True, verbose_name=_("Numéro fiscal")
+    )
+
     # Ancien champ avec choices
     statut_registre = models.CharField(
-        max_length=4000, 
-        choices=LIEN_STATUT_CHOICE, 
+        max_length=4000,
+        choices=LIEN_STATUT_CHOICE,
         default="--------",
-        verbose_name=_("Statut au registre du commerce")
+        verbose_name=_("Statut au registre du commerce"),
     )
 
     # Nouvel attribut avec ForeignKey
     statut_registre_ref = models.ForeignKey(
-        'StatutEntreprise', 
-        null=True, blank=True, 
+        "StatutEntreprise",
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
-        verbose_name=_("Référence Statut au Registre")
+        verbose_name=_("Référence Statut au Registre"),
     )
-    
+
     commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Dernière mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
 
     class Meta:
         verbose_name = _("Données d'Enregistrement")
@@ -1308,34 +1815,40 @@ class DonneesEnregistrement(models.Model):
 
 class Tendance(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        "Acheteur", null=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
-    
+
     # Ancien attribut avec choices
     avis_commercial = models.CharField(
-        max_length=100, 
-        choices=LIEN_AVIS_COMMERCIAL_CHOICE, 
+        max_length=100,
+        choices=LIEN_AVIS_COMMERCIAL_CHOICE,
         blank=True,
-        verbose_name=_("Avis commercial")
+        verbose_name=_("Avis commercial"),
     )
-    
+
     # Nouvel attribut avec ForeignKey
     avis_commercial_ref = models.ForeignKey(
-        'ModeleAvisCommercial', 
-        null=True, blank=True, 
+        "ModeleAvisCommercial",
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
-        verbose_name=_("Référence Avis Commercial")
+        verbose_name=_("Référence Avis Commercial"),
     )
-    
-    presse_media = models.CharField(max_length=100, blank=True, verbose_name=_("Presse et Médias"))
-    principaux_concurrent = models.TextField(blank=True, verbose_name=_("Principaux concurrents"))
+
+    presse_media = models.CharField(
+        max_length=100, blank=True, verbose_name=_("Presse et Médias")
+    )
+    principaux_concurrent = models.TextField(
+        blank=True, verbose_name=_("Principaux concurrents")
+    )
     commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Dernière mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
 
     class Meta:
         verbose_name = _("Tendance")
@@ -1346,37 +1859,46 @@ class Tendance(models.Model):
 
 
 class ResponsableAcheteur(models.Model):
-    STATUS_MASCULIN = 'Masculin'
-    STATUS_FEMININ = 'Feminin'
-    STATUS_CHOICES = (
-        (STATUS_MASCULIN, _('Masculin')),
-        (STATUS_FEMININ, _('Féminin'))
-    )
+    STATUS_MASCULIN = "Masculin"
+    STATUS_FEMININ = "Feminin"
+    STATUS_CHOICES = ((STATUS_MASCULIN, _("Masculin")), (STATUS_FEMININ, _("Féminin")))
 
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
     nom = models.CharField(_("Nom"), max_length=50, blank=True, null=True)
     prenom = models.CharField(_("Prénom"), max_length=50, blank=True, null=True)
-    sexe = models.CharField(_("Sexe"), max_length=20, default=STATUS_MASCULIN, choices=STATUS_CHOICES, blank=True, null=True)
-    
-    poste = models.CharField(_("Poste"), max_length=100, choices=BON_POST_CHOICES_CHOICES, blank=True)
+    sexe = models.CharField(
+        _("Sexe"),
+        max_length=20,
+        default=STATUS_MASCULIN,
+        choices=STATUS_CHOICES,
+        blank=True,
+        null=True,
+    )
+
+    poste = models.CharField(
+        _("Poste"), max_length=100, choices=BON_POST_CHOICES_CHOICES, blank=True
+    )
     poste_ref = models.ForeignKey(
-        'PosteEntreprise', 
-        null=True, blank=True, 
+        "PosteEntreprise",
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
-        verbose_name=_("Référence Poste")
+        verbose_name=_("Référence Poste"),
     )
 
     nationalite = models.CharField(_("Nationalité"), max_length=100, blank=True)
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, blank=True, 
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire")
+        verbose_name=_("Couleur Commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
@@ -1387,29 +1909,148 @@ class ResponsableAcheteur(models.Model):
         verbose_name = _("Responsable Acheteur")
         verbose_name_plural = _("Responsables Acheteurs")
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "nom": self.nom,
+            "prenom": self.prenom,
+            "sexe": self.sexe,
+            "poste_ref_id": self.poste_ref_id,  # Utilisez l'ID pour les FK
+            "nationalite": self.nationalite,
+            # Pour la détection de "Commentaires sur dirigeants"
+            "commentaire": self.commentaire,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+            # Récupérez les données nécessaires et passez-les à la tâche Celery
+            # Vous devrez affiner `changes_detected` pour qu'il soit sérialisable (ex: dict simple)
+            # log_responsable_acheteur_changes.delay(self.pk, changes_detected)
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "nom": self.nom,
+            "prenom": self.prenom,
+            "sexe": self.sexe,
+            "poste_ref_id": self.poste_ref_id,
+            "nationalite": self.nationalite,
+            "commentaire": self.commentaire,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        # Mappage des champs aux codes internes des ElementSurveillance
+        field_to_element_code = {
+            "nom": "EXECUTIVE_CHANGE",
+            "prenom": "EXECUTIVE_CHANGE",
+            "sexe": "EXECUTIVE_CHANGE",
+            "poste_ref_id": "EXECUTIVE_CHANGE",
+            "nationalite": "EXECUTIVE_CHANGE",
+            "commentaire": "EXECUTIVE_REPUTATION",  # Alerte spécifique pour les commentaires
+        }
+
+        changes_detected = {}
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if field_name.endswith("_id"):  # Pour les ForeignKey
+                if original_value != current_value:
+                    original_obj_display = "vide"
+                    current_obj_display = "vide"
+                    if original_value:
+                        try:
+                            original_obj = getattr(
+                                self, field_name.replace("_id", "")
+                            )._default_manager.get(pk=original_value)
+                            original_obj_display = str(original_obj)
+                        except models.ObjectDoesNotExist:
+                            original_obj_display = "Inconnu (ID: {})".format(
+                                original_value
+                            )
+                    if current_value:
+                        try:
+                            current_obj = getattr(
+                                self, field_name.replace("_id", "")
+                            )._default_manager.get(pk=current_value)
+                            current_obj_display = str(current_obj)
+                        except models.ObjectDoesNotExist:
+                            current_obj_display = "Inconnu (ID: {})".format(
+                                current_value
+                            )
+
+                    changes_detected.setdefault(element_code, []).append(
+                        f"Le dirigeant '{self.nom} {self.prenom}' : le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_obj_display}' à '{current_obj_display}'."
+                    )
+            else:  # Champs non ForeignKey
+                if str(original_value or "") != str(current_value or ""):
+                    changes_detected.setdefault(element_code, []).append(
+                        f"Le dirigeant '{self.nom} {self.prenom}' : le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                    )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                    lu=False,  # <-- Assure-toi que c'est bien là
+                                )
+                                print(f"Alerte créée: {message}")
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
     def __str__(self):
         return f"{self.nom} {self.prenom} ({self.acheteur})"
-    
-    
+
+
 class AntecedantsJuridique(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        blank=True, null=True, 
+        "Acheteur",
+        blank=True,
+        null=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
-    dossier_faillite = models.CharField(_("Dossier de Faillite"), max_length=100, blank=True)
+    dossier_faillite = models.CharField(
+        _("Dossier de Faillite"), max_length=100, blank=True
+    )
     jugement_cour = models.CharField(_("Jugement de Cour"), max_length=100, blank=True)
-    antecedant_redressement = models.CharField(_("Antécédent de Redressement"), max_length=100, blank=True)
-    autre = models.CharField(_("Autre"), max_length=100, blank=True)
-    
-    couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, blank=True, 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire")
+    antecedant_redressement = models.CharField(
+        _("Antécédent de Redressement"), max_length=100, blank=True
     )
-    commentaire = models.TextField(_("Commentaire"), max_length=10000000, blank=True, null=True)
+    autre = models.CharField(_("Autre"), max_length=100, blank=True)
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(
+        _("Commentaire"), max_length=10000000, blank=True, null=True
+    )
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -1420,36 +2061,59 @@ class AntecedantsJuridique(models.Model):
 
     def __str__(self):
         return f"Antécédent {self.id} - {self.acheteur}"
-    
-    
+
+
 class RiskManagment(models.Model):
-    STATUS_AUCUN = 'Aucun'
-    STATUS_OUI = 'Oui'
-    STATUS_NON = 'Non'
+    STATUS_AUCUN = "Aucun"
+    STATUS_OUI = "Oui"
+    STATUS_NON = "Non"
     STATUS_CHOICES = (
-        (STATUS_AUCUN, _('Aucun')),
-        (STATUS_OUI, _('Oui')),
-        (STATUS_NON, _('Non'))
+        (STATUS_AUCUN, _("Aucun")),
+        (STATUS_OUI, _("Oui")),
+        (STATUS_NON, _("Non")),
     )
 
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        "Acheteur", null=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
 
-    professionalisme = models.CharField(_("Professionnalisme"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES)
-    organisation = models.CharField(_("Organisation"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES)
-    turn_over = models.CharField(_("Non départ des employés"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES)
-    greve = models.CharField(_("Non grève"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES)
-    degradation_qualite = models.CharField(_("Non dégradation de la qualité du travail"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES)
-    non_respect_condition = models.CharField(_("Respect des Employés"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES)
+    professionalisme = models.CharField(
+        _("Professionnalisme"),
+        max_length=20,
+        default=STATUS_AUCUN,
+        choices=STATUS_CHOICES,
+    )
+    organisation = models.CharField(
+        _("Organisation"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES
+    )
+    turn_over = models.CharField(
+        _("Non départ des employés"),
+        max_length=20,
+        default=STATUS_AUCUN,
+        choices=STATUS_CHOICES,
+    )
+    greve = models.CharField(
+        _("Non grève"), max_length=20, default=STATUS_AUCUN, choices=STATUS_CHOICES
+    )
+    degradation_qualite = models.CharField(
+        _("Non dégradation de la qualité du travail"),
+        max_length=20,
+        default=STATUS_AUCUN,
+        choices=STATUS_CHOICES,
+    )
+    non_respect_condition = models.CharField(
+        _("Respect des Employés"),
+        max_length=20,
+        default=STATUS_AUCUN,
+        choices=STATUS_CHOICES,
+    )
 
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, blank=True, 
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire")
+        verbose_name=_("Couleur Commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
@@ -1462,34 +2126,44 @@ class RiskManagment(models.Model):
 
     def __str__(self):
         return f"Gestion des Risques - {self.acheteur}"
-    
-      
+
+
 class ConseilAdministration(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
-    nom = models.CharField(_("Nom"), max_length=100, default='Neant', blank=True)
-    
-    fonction_dans_le_conseil = models.CharField(_("Fonction dans le Conseil"), max_length=100, choices=BON_POST_CHOICES_CHOICES, blank=True)
+    nom = models.CharField(_("Nom"), max_length=100, default="Neant", blank=True)
+
+    fonction_dans_le_conseil = models.CharField(
+        _("Fonction dans le Conseil"),
+        max_length=100,
+        choices=BON_POST_CHOICES_CHOICES,
+        blank=True,
+    )
     fonction_dans_le_conseil_ref = models.ForeignKey(
-        'PosteEntreprise', 
-        null=True, blank=True, 
+        "PosteEntreprise",
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
-        verbose_name=_("Référence Fonction Conseil")
+        verbose_name=_("Référence Fonction Conseil"),
     )
 
     numero_adresse = models.CharField(_("Numéro Adresse"), max_length=200, blank=True)
     rue_adresse = models.CharField(_("Rue Adresse"), max_length=200, blank=True)
-    code_postale_adresse = models.CharField(_("Code Postal Adresse"), max_length=200, blank=True)
-    
+    code_postale_adresse = models.CharField(
+        _("Code Postal Adresse"), max_length=200, blank=True
+    )
+
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, blank=True, 
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur Commentaire")
+        verbose_name=_("Couleur Commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
@@ -1506,22 +2180,49 @@ class ConseilAdministration(models.Model):
 
 class CompositionCapitalSocial(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
     )
     devise = models.ForeignKey(
-        'Devise', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Dévise capital libéré")
+        "Devise",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Dévise capital libéré"),
     )
     emis = models.DecimalField(
-        _("Capital émis"), max_digits=100, decimal_places=2, blank=True, null=True, help_text=_("Montant du capital émis")
+        _("Capital émis"),
+        max_digits=100,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Montant du capital émis"),
     )
     publie = models.DecimalField(
-        _("Capital publié"), max_digits=100, decimal_places=2, blank=True, null=True, help_text=_("Montant du capital publié")
+        _("Capital publié"),
+        max_digits=100,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Montant du capital publié"),
     )
     libere = models.DecimalField(
-        _("Capital libéré"), max_digits=100, decimal_places=2, blank=True, null=True, help_text=_("Montant du capital libéré")
+        _("Capital libéré"),
+        max_digits=100,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Montant du capital libéré"),
     )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
@@ -1529,7 +2230,11 @@ class CompositionCapitalSocial(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"Capital Social ({self.acheteur})" if self.acheteur else _("Composition Capital Social")
+        return (
+            f"Capital Social ({self.acheteur})"
+            if self.acheteur
+            else _("Composition Capital Social")
+        )
 
     class Meta:
         verbose_name = _("Composition du Capital Social")
@@ -1538,15 +2243,28 @@ class CompositionCapitalSocial(models.Model):
 
 class CompositionAction(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
     )
     nom = models.CharField(_("Nom"), max_length=200, blank=True)
     prenom = models.CharField(_("Prénom"), max_length=200, blank=True)
     pourcentage = models.DecimalField(
-        _("Pourcentage"), max_digits=100, decimal_places=2, blank=True, null=True, help_text=_("Pourcentage de détention d'actions")
+        _("Pourcentage"),
+        max_digits=100,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Pourcentage de détention d'actions"),
     )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
@@ -1554,66 +2272,63 @@ class CompositionAction(models.Model):
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
     def __str__(self):
-        return f"{self.nom} {self.prenom} - {self.pourcentage}%" if self.nom else _("Composition Action")
+        return (
+            f"{self.nom} {self.prenom} - {self.pourcentage}%"
+            if self.nom
+            else _("Composition Action")
+        )
 
     class Meta:
         verbose_name = _("Composition de l'Actionnariat")
         verbose_name_plural = _("Compositions de l'Actionnariat")
-        
-        
-        
+
+
 class OpinionCreditAcremac(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
     risque_de_defaut = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque de défaut")
+        default=0, verbose_name=_("Risque de défaut")
     )
     risque_de_concentration_credit = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque de concentration de crédit")
+        default=0, verbose_name=_("Risque de concentration de crédit")
     )
     risque_de_reputation = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque de réputation")
+        default=0, verbose_name=_("Risque de réputation")
     )
-    risque_pays = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque pays")
-    )
+    risque_pays = models.IntegerField(default=0, verbose_name=_("Risque pays"))
     risque_de_taux_dinteret = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque de taux d'intérêt")
+        default=0, verbose_name=_("Risque de taux d'intérêt")
     )
     risque_de_liquidite = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque de liquidité")
+        default=0, verbose_name=_("Risque de liquidité")
     )
-    risque_eleve = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque élevé")
-    )
-    risque_moyen = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque moyen")
-    )
-    risque_faible = models.IntegerField(
-        default=0, 
-        verbose_name=_("Risque faible")
-    )
+    risque_eleve = models.IntegerField(default=0, verbose_name=_("Risque élevé"))
+    risque_moyen = models.IntegerField(default=0, verbose_name=_("Risque moyen"))
+    risque_faible = models.IntegerField(default=0, verbose_name=_("Risque faible"))
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
     montant_credit_maximum = models.DecimalField(
-        _("Capital émis"), max_digits=100, decimal_places=2, blank=True, null=True, help_text=_("Montant crédit maximum conseillée")
+        _("Capital émis"),
+        max_digits=100,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Montant crédit maximum conseillée"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
         return f"Opinion Credit Acremac for {self.acheteur}"
@@ -1621,7 +2336,6 @@ class OpinionCreditAcremac(models.Model):
     class Meta:
         verbose_name = _("Opinion Credit Acremac")
         verbose_name_plural = _("Opinions Credit Acremac")
-
 
 
 ##########################################################
@@ -1638,19 +2352,38 @@ class OpinionCreditAcremac(models.Model):
 ##########################################################
 class Structure(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
     )
     nom = models.CharField(_("Nom"), max_length=200, blank=True)
-    
-    type_affiliation =  models.CharField(max_length=100,choices=LIEN_ENTREPRISE_CHOICE, blank=True, verbose_name=_("Type d'affiliation"))
+
+    type_affiliation = models.CharField(
+        max_length=100,
+        choices=LIEN_ENTREPRISE_CHOICE,
+        blank=True,
+        verbose_name=_("Type d'affiliation"),
+    )
     type_affiliation_ref = models.ForeignKey(
-        'StructureEntreprise', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence Type d'affiliation")
+        "StructureEntreprise",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence Type d'affiliation"),
     )
     numero_adresse = models.CharField(_("Numéro adresse"), max_length=200, blank=True)
     rue_adresse = models.CharField(_("Rue adresse"), max_length=200, blank=True)
-    code_postale_adresse = models.CharField(_("Code postal adresse"), max_length=200, blank=True)
+    code_postale_adresse = models.CharField(
+        _("Code postal adresse"), max_length=200, blank=True
+    )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
@@ -1667,13 +2400,23 @@ class Structure(models.Model):
 
 class AnalyseSectorielle(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
     )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire")
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(_("Commentaire"), max_length=10000000, blank=True)
-    impact_covid_19 = models.TextField(_("Impact COVID-19"), max_length=10000000, blank=True)
+    impact_covid_19 = models.TextField(
+        _("Impact COVID-19"), max_length=10000000, blank=True
+    )
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -1686,52 +2429,111 @@ class AnalyseSectorielle(models.Model):
         verbose_name_plural = _("Analyses Sectorielles")
 
 
-
 class CompteFinancier(models.Model):
-    
-    XAF = 'XAF'
-    XOF = 'XOF'
-    EUR = 'EUR'
-    USD = 'USD'
-    CHF = 'CHF'
-    
+
+    XAF = "XAF"
+    XOF = "XOF"
+    EUR = "EUR"
+    USD = "USD"
+    CHF = "CHF"
+
     STATUS_CHANGE = (
-        (XAF, 'XAF'),
-        (XOF, 'XOF'),
-        (EUR, 'EUR'),
-        (USD, 'USD'),
-        (CHF, 'CHF'),
+        (XAF, "XAF"),
+        (XOF, "XOF"),
+        (EUR, "EUR"),
+        (USD, "USD"),
+        (CHF, "CHF"),
     )
 
-    acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur"))
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+    )
     cabinet = models.CharField(max_length=200, blank=True, verbose_name=_("Cabinet"))
-    requis_pour_deposer = models.CharField(max_length=200, blank=True, verbose_name=_("Requis pour déposer"))
-    credibilite_cabinet = models.CharField(max_length=200, blank=True, choices=STATUS__OUI_NON, verbose_name=_("Crédibilité du cabinet pour ACREMAC"))
-    source = models.CharField(max_length=200, blank=True, verbose_name=_("Source"))
-    presentation = models.CharField(max_length=200, blank=True, verbose_name=_("Présentation"))
-    
-    date_compte = models.DateField(blank=True, verbose_name=_("Début de période de compte N"))
-    date_fin = models.DateField(blank=True, null=True, verbose_name=_("Fin clôture de compte N"))
-    date_compte_n_moins_un = models.DateField(blank=True, null=True, verbose_name=_("Début de période de compte N-1"))
-    date_fin_n_moins_un = models.DateField(blank=True, null=True, verbose_name=_("Fin clôture de compte N-1"))
-    date_compte_n_moins_deux = models.DateField(blank=True, null=True, verbose_name=_("Début de période de compte N-2"))
-    date_fin_n_moins_deux = models.DateField(blank=True, null=True, verbose_name=_("Fin clôture de compte N-2"))
-    
-    type_compte = models.CharField(max_length=200, null=True, blank=True, verbose_name=_("Type de compte"))
-    devise = models.CharField(max_length=20, default=XAF, choices=STATUS_CHANGE, blank=True, verbose_name=_("Devise"))
-    type_bilan = models.CharField(max_length=255, choices=LIEN_TYPE_BILAN_CHOICE, default="--------", verbose_name=_("Type de bilan"))
-    type_bilan_ref = models.ForeignKey(
-        'ModeleBilan', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence Type de bilan")
+    requis_pour_deposer = models.CharField(
+        max_length=200, blank=True, verbose_name=_("Requis pour déposer")
     )
-    
-    couleur_commentaire = models.ForeignKey('CouleurCommentaire', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur du commentaire"))
-    commentaire = models.TextField(blank=True, max_length=10000000, verbose_name=_("Commentaire"))
+    credibilite_cabinet = models.CharField(
+        max_length=200,
+        blank=True,
+        choices=STATUS__OUI_NON,
+        verbose_name=_("Crédibilité du cabinet pour ACREMAC"),
+    )
+    source = models.CharField(max_length=200, blank=True, verbose_name=_("Source"))
+    presentation = models.CharField(
+        max_length=200, blank=True, verbose_name=_("Présentation")
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    date_compte = models.DateField(
+        blank=True, verbose_name=_("Début de période de compte N")
+    )
+    date_fin = models.DateField(
+        blank=True, null=True, verbose_name=_("Fin clôture de compte N")
+    )
+    date_compte_n_moins_un = models.DateField(
+        blank=True, null=True, verbose_name=_("Début de période de compte N-1")
+    )
+    date_fin_n_moins_un = models.DateField(
+        blank=True, null=True, verbose_name=_("Fin clôture de compte N-1")
+    )
+    date_compte_n_moins_deux = models.DateField(
+        blank=True, null=True, verbose_name=_("Début de période de compte N-2")
+    )
+    date_fin_n_moins_deux = models.DateField(
+        blank=True, null=True, verbose_name=_("Fin clôture de compte N-2")
+    )
+
+    type_compte = models.CharField(
+        max_length=200, null=True, blank=True, verbose_name=_("Type de compte")
+    )
+    devise = models.CharField(
+        max_length=20,
+        default=XAF,
+        choices=STATUS_CHANGE,
+        blank=True,
+        verbose_name=_("Devise"),
+    )
+    type_bilan = models.CharField(
+        max_length=255,
+        choices=LIEN_TYPE_BILAN_CHOICE,
+        default="--------",
+        verbose_name=_("Type de bilan"),
+    )
+    type_bilan_ref = models.ForeignKey(
+        "ModeleBilan",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence Type de bilan"),
+    )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
+    )
+    commentaire = models.TextField(
+        blank=True, max_length=10000000, verbose_name=_("Commentaire")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
-        return f"{self.acheteur} - {self.cabinet}" if self.acheteur else _("Compte Financier")
+        return (
+            f"{self.acheteur} - {self.cabinet}"
+            if self.acheteur
+            else _("Compte Financier")
+        )
 
     class Meta:
         verbose_name = _("Compte Financier")
@@ -1739,17 +2541,35 @@ class CompteFinancier(models.Model):
 
 
 class OperationEtHistorique(models.Model):
-    acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur"))
-    commentaire_ratios = models.TextField(blank=True, verbose_name=_("Commentaire sur les ratios"))
-    description_complete_activite = models.TextField(blank=True, verbose_name=_("Description complète de l'activité"))
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+    )
+    commentaire_ratios = models.TextField(
+        blank=True, verbose_name=_("Commentaire sur les ratios")
+    )
+    description_complete_activite = models.TextField(
+        blank=True, verbose_name=_("Description complète de l'activité")
+    )
     importation = models.TextField(blank=True, verbose_name=_("Importation"))
     historique = models.TextField(blank=True, verbose_name=_("Historique"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
-        return f"{self.acheteur} - {self.description_complete_activite[:50]}..." if self.acheteur else _("Opération et Historique")
+        return (
+            f"{self.acheteur} - {self.description_complete_activite[:50]}..."
+            if self.acheteur
+            else _("Opération et Historique")
+        )
 
     class Meta:
         verbose_name = _("Opération et Historique")
@@ -1757,81 +2577,124 @@ class OperationEtHistorique(models.Model):
 
 
 class ProprieteEtActif(models.Model):
-    acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur"))
-    locaux = models.CharField(max_length=255, choices=LIEN_COMPORTEMENT_PREMISES_CHOICE, blank=True, verbose_name=_("Locaux"))
-    locaux_ref = models.ForeignKey(
-        'ModeleBail', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence sur les locaux")
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
     )
-    
+    locaux = models.CharField(
+        max_length=255,
+        choices=LIEN_COMPORTEMENT_PREMISES_CHOICE,
+        blank=True,
+        verbose_name=_("Locaux"),
+    )
+    locaux_ref = models.ForeignKey(
+        "ModeleBail",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence sur les locaux"),
+    )
+
     branche = models.CharField(max_length=255, blank=True, verbose_name=_("Branche"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
-        return f"{self.acheteur} - {self.branche}" if self.acheteur else _("Propriété et Actif")
+        return (
+            f"{self.acheteur} - {self.branche}"
+            if self.acheteur
+            else _("Propriété et Actif")
+        )
 
     class Meta:
         verbose_name = _("Propriété et Actif")
         verbose_name_plural = _("Propriétés et Actifs")
 
 
-
 class ConditionAchat(models.Model):
-    acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur"))
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+    )
     local = models.CharField(max_length=255, blank=True, verbose_name=_("Local"))
     importation = models.TextField(blank=True, verbose_name=_("Importation"))
     les_clients = models.TextField(blank=True, verbose_name=_("Les clients"))
     fournisseur = models.TextField(blank=True, verbose_name=_("Fournisseur"))
 
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
-        return f"{self.acheteur} - {self.local}" if self.acheteur else _("Condition d'Achat")
+        return (
+            f"{self.acheteur} - {self.local}"
+            if self.acheteur
+            else _("Condition d'Achat")
+        )
 
     class Meta:
         verbose_name = _("Condition d'Achat")
         verbose_name_plural = _("Conditions d'Achat")
 
 
-
 class ConditionDeVente(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, 
-        blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
-    local = models.CharField(
-        max_length=255, 
-        blank=True, 
-        verbose_name=_("Local")
-    )
-    
+    local = models.CharField(max_length=255, blank=True, verbose_name=_("Local"))
+
     recouvrement_de_dette_jugement = models.CharField(
-        max_length=255, 
-        choices=LIEN_COMPORTEMENT_JUGEMENT_CHOICE, 
+        max_length=255,
+        choices=LIEN_COMPORTEMENT_JUGEMENT_CHOICE,
         default="--------",
-        verbose_name=_("Recouvrement de dette jugement")
+        verbose_name=_("Recouvrement de dette jugement"),
     )
     recouvrement_de_dette_jugement_ref = models.ForeignKey(
-        'ModeleComportementJugement', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence sur les locaux")
+        "ModeleComportementJugement",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence sur les locaux"),
     )
-    
+
     comportement_de_paiement = models.CharField(
-        max_length=255, 
-        choices=LIEN_COMPORTEMENT_PAIEMENT_CHOICE, 
+        max_length=255,
+        choices=LIEN_COMPORTEMENT_PAIEMENT_CHOICE,
         default="--------",
-        verbose_name=_("Comportement de paiement")
+        verbose_name=_("Comportement de paiement"),
     )
     comportement_de_paiement_ref = models.ForeignKey(
-        'ModeleComportementPaiement', null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Référence sur les locaux")
+        "ModeleComportementPaiement",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence sur les locaux"),
     )
-    
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
         return f"Condition de vente for {self.acheteur} - {self.local}"
@@ -1843,26 +2706,28 @@ class ConditionDeVente(models.Model):
 
 class SommaireEtAvis(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, 
-        blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, 
-        blank=True, 
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur du commentaire")
+        verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Commentaire")
+        max_length=10000000, blank=True, verbose_name=_("Commentaire")
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
         return f"Sommaire et avis for {self.acheteur}"
@@ -1874,32 +2739,26 @@ class SommaireEtAvis(models.Model):
 
 class Advice(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
     points_forts = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Points forts")
+        max_length=10000000, blank=True, verbose_name=_("Points forts")
     )
     points_faibles = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Points faibles")
+        max_length=10000000, blank=True, verbose_name=_("Points faibles")
     )
     dynamisme_court_terme = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Dynamisme à court terme")
+        max_length=10000000, blank=True, verbose_name=_("Dynamisme à court terme")
     )
     dynamisme_long_terme = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Dynamisme à long terme")
+        max_length=10000000, blank=True, verbose_name=_("Dynamisme à long terme")
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
         return f"Conseils pour {self.acheteur}"
@@ -1911,22 +2770,20 @@ class Advice(models.Model):
 
 class Geopolitics(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
     donnees_politiques = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Données politiques")
+        max_length=10000000, blank=True, verbose_name=_("Données politiques")
     )
     donnees_economiques = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Données économiques")
+        max_length=10000000, blank=True, verbose_name=_("Données économiques")
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
-    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Date de mise à jour"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
 
     def __str__(self):
         return f"Geopolitics for {self.acheteur}"
@@ -1936,72 +2793,49 @@ class Geopolitics(models.Model):
         verbose_name_plural = _("Géopolitiques")
 
 
-
 class Banquier(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, 
-        blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
     nom_banque = models.CharField(
-        blank=True, 
-        max_length=200,
-        verbose_name=_("Nom de la banque")
+        blank=True, max_length=200, verbose_name=_("Nom de la banque")
     )
     numero_compte = models.CharField(
-        default="", 
-        max_length=500, 
-        blank=True, 
+        default="",
+        max_length=500,
+        blank=True,
         null=True,
-        verbose_name=_("Numéro de compte")
+        verbose_name=_("Numéro de compte"),
     )
     type_relation = models.CharField(
-        blank=True, 
-        max_length=200, 
-        null=True,
-        verbose_name=_("Type de relation")
+        blank=True, max_length=200, null=True, verbose_name=_("Type de relation")
     )
-    numero = models.CharField(
-        max_length=200, 
-        blank=True,
-        verbose_name=_("Numéro")
-    )
-    rue = models.CharField(
-        max_length=200, 
-        blank=True,
-        verbose_name=_("Rue")
-    )
+    numero = models.CharField(max_length=200, blank=True, verbose_name=_("Numéro"))
+    rue = models.CharField(max_length=200, blank=True, verbose_name=_("Rue"))
     ville = models.ForeignKey(
-        'Ville', 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Ville")
+        "Ville", on_delete=models.DO_NOTHING, verbose_name=_("Ville")
     )
     code_postal = models.CharField(
-        max_length=200, 
-        blank=True,
-        verbose_name=_("Code postal")
+        max_length=200, blank=True, verbose_name=_("Code postal")
     )
     couleur_commentaire = models.ForeignKey(
-        'CouleurCommentaire', 
-        null=True, 
-        blank=True, 
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur du commentaire")
-    )
-    commentaire = models.TextField(
+        "CouleurCommentaire",
+        null=True,
         blank=True,
-        verbose_name=_("Commentaire")
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur du commentaire"),
     )
-    
+    commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
+
     created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True, 
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     def __str__(self):
@@ -2019,12 +2853,6 @@ class Banquier(models.Model):
 ##########################################################
 
 
-
-
-
-
-
-
 ##########################################################
 ##########################################################
 # Fin Modules Bilan Anglais
@@ -2032,170 +2860,307 @@ class Banquier(models.Model):
 ##########################################################
 class ActifA(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    biens_installations_equipements = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Biens, installations et équipements"))
-    inventaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True)
-    creances_commerciales_autres_creances = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Créances commerciales et autres"))
-    actif_impots_courant = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Actif d'Impôts courant"))
-    caisses_banques = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Caisse et banque"))
+    biens_installations_equipements = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Biens, installations et équipements"),
+    )
+    inventaire = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True
+    )
+    creances_commerciales_autres_creances = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Créances commerciales et autres"),
+    )
+    actif_impots_courant = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Actif d'Impôts courant"),
+    )
+    caisses_banques = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Caisse et banque"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='actifa_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="actifa_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Actif bilan anglais : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Actif bilan anglais : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Actif bilan anglais")
         verbose_name_plural = _("Actifs bilans anglais")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  total_actifs_non_courants
     #  total_actif_circulant
     #  total_actif_circulant
-        
-        
-        
+
+
 class PassifA(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    capital_reserves = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Capital et Réserves"))
-    capital_declare = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Capital déclaré"))
-    benefices_non_distribues = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Bénéfices non distribués"))
+    capital_reserves = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Capital et Réserves"),
+    )
+    capital_declare = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Capital déclaré"),
+    )
+    benefices_non_distribues = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Bénéfices non distribués"),
+    )
 
-    pret_bancaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prêt bancaire"))
-    compte_courant_administrateurs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Compte courant des administrateurs"))
+    pret_bancaire = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Prêt bancaire"),
+    )
+    compte_courant_administrateurs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Compte courant des administrateurs"),
+    )
 
-    dettes_commerciales_autres_dettes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes commerciales et autres dettes"))
-    decouvert_bancaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Découvert bancaire"))
-    impots = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Impôts"))
+    dettes_commerciales_autres_dettes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes commerciales et autres dettes"),
+    )
+    decouvert_bancaire = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Découvert bancaire"),
+    )
+    impots = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Impôts"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='passifa_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="passifa_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Passif bilan anglais : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Passif bilan anglais : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Passif bilan anglais")
         verbose_name_plural = _("Passifs bilans anglais")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  total_fonds_propres
     #  total_passif_long_terme
     #  total_passif_circulant
     #  total_passif
     #  Total_fonds_propres_passif
-        
-        
-        
-        
+
+
 class ResultatA(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    produits_activites_ordinaires = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('Produits des activités ordinaires'))
-    ventes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True)
-    charges_exploitation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Charges d'exploitation"))
-    frais_vente_generaux_administratifs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('Frais de vente, généraux et administratifs'))
-    autres_revenus = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True)
-    frais_financier = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True)
-    charge_impot_sur_revenu = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Charge d'impôt sur le revenu"))
-    autres_elements_resultat_global = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('Autres éléments du résultat global'))
+    produits_activites_ordinaires = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Produits des activités ordinaires"),
+    )
+    ventes = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True
+    )
+    charges_exploitation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Charges d'exploitation"),
+    )
+    frais_vente_generaux_administratifs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Frais de vente, généraux et administratifs"),
+    )
+    autres_revenus = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True
+    )
+    frais_financier = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True
+    )
+    charge_impot_sur_revenu = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Charge d'impôt sur le revenu"),
+    )
+    autres_elements_resultat_global = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres éléments du résultat global"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='resultata_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="resultata_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Résultat bilan anglais : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Résultat bilan anglais : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Résultat bilan anglais")
         verbose_name_plural = _("Résultat bilans anglais")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  marge_brut
     #  resultat_exploitation
     #  benefice_avant_cout_financier_impots
     #  resultat_avant_impots
     #  benefice_annee
     #  benefices_non_distribues
-    
-    
-    
-    
-    
+
+
 #  Calcul des ratios
 
 #  init(self, acheteur, annee)
@@ -2220,19 +3185,11 @@ class ResultatA(models.Model):
 #  ratio_endettement_g_score
 
 
-
-
 ##########################################################
 ##########################################################
 # Fin Modules Bilan Anglais
 ##########################################################
 ##########################################################
-
-
-
-
-
-
 
 
 ##########################################################
@@ -2241,88 +3198,300 @@ class ResultatA(models.Model):
 ##########################################################
 ##########################################################
 
+
 class ActifC(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    capital_souscrit_non_app = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Capital sousc. non app"))
-    frais_recherche_developpement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Frais recherche developpement"))
-    brevet_licence_logiciels = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Brevet licence logiciels"))
-    fonds_commercial = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Fonds commercial"))
-    autres_immobilisations_incorporelles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres immobilisations incorporelles"))
+    capital_souscrit_non_app = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Capital sousc. non app"),
+    )
+    frais_recherche_developpement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Frais recherche developpement"),
+    )
+    brevet_licence_logiciels = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Brevet licence logiciels"),
+    )
+    fonds_commercial = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Fonds commercial"),
+    )
+    autres_immobilisations_incorporelles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres immobilisations incorporelles"),
+    )
 
-    terrains = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Terrains"))
-    constructions = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Constructions"))
-    materiels_et_outils = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Materiels et outils"))
-    materiel_de_transport = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Materiel de transport"))
-    autres_immos_corp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres immos corp"))
-    immos_en_cours = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Immos en cours"))
-    avances_et_acptes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Avances et acptes"))
+    terrains = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Terrains"),
+    )
+    constructions = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Constructions"),
+    )
+    materiels_et_outils = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Materiels et outils"),
+    )
+    materiel_de_transport = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Materiel de transport"),
+    )
+    autres_immos_corp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres immos corp"),
+    )
+    immos_en_cours = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Immos en cours"),
+    )
+    avances_et_acptes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Avances et acptes"),
+    )
 
-    participations = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Participations"))
-    prets = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prets"))
-    autres = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres"))
+    participations = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Participations"),
+    )
+    prets = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prets")
+    )
+    autres = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres"),
+    )
 
-    stocks_mp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stocks mp"))
-    stocks_encours_mp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stocks encours mp"))
-    stocks_pf = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stocks pf"))
-    stocks_encours_pf = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stocks encours pf"))
-    stocks_encours_services = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stocks encours services"))
-    stocks_mses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stocks mses"))
+    stocks_mp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stocks mp"),
+    )
+    stocks_encours_mp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stocks encours mp"),
+    )
+    stocks_pf = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stocks pf"),
+    )
+    stocks_encours_pf = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stocks encours pf"),
+    )
+    stocks_encours_services = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stocks encours services"),
+    )
+    stocks_mses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stocks mses"),
+    )
 
-    avances_acptes_verses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Avances acptes verses"))
-    clients_et_cptes_rattaches = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Clients et cptes rattaches"))
-    autres_creances = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres creances"))
+    avances_acptes_verses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Avances acptes verses"),
+    )
+    clients_et_cptes_rattaches = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Clients et cptes rattaches"),
+    )
+    autres_creances = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres creances"),
+    )
 
-    valeurs_a_encaisser = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Valeurs a encaisser"))
-    banques_cheques_postaux_caisse = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banques cheques postaux caisse"))
+    valeurs_a_encaisser = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Valeurs a encaisser"),
+    )
+    banques_cheques_postaux_caisse = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banques cheques postaux caisse"),
+    )
 
-    cca = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Cca"))
-    charges_a_repartir_et_frais_etablissement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Charges a repartir et frais etablissement"))
-    primes_de_rbt = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Primes de rbt"))
-    eca = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca"))
+    cca = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Cca")
+    )
+    charges_a_repartir_et_frais_etablissement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Charges a repartir et frais etablissement"),
+    )
+    primes_de_rbt = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Primes de rbt"),
+    )
+    eca = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca")
+    )
 
-    eene = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eene"))
-    effectif = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Effectif"))
-    amortissements = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Amortissements"))
-    provisions_stocks = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provisions stocks"))
-    provisions_creances = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provisions creances"))
-    provisions_vmp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provisions vmp"))
+    eene = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eene")
+    )
+    effectif = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Effectif"),
+    )
+    amortissements = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Amortissements"),
+    )
+    provisions_stocks = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provisions stocks"),
+    )
+    provisions_creances = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provisions creances"),
+    )
+    provisions_vmp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provisions vmp"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='actif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="actif_classique_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Actif bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Actif bilan classique : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Actif bilan classique")
         verbose_name_plural = _("Actifs bilans classiques")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  elements_incorporels
     #  elements_corporels
     #  elements_financiers
@@ -2334,169 +3503,565 @@ class ActifC(models.Model):
     #  compte_regul
     #  total_III
     #  general_total
-    
-    
+
+
 class PassifC(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    capital_social = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Capital social"))
-    primes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Primes"))
-    ecarts_de_reevaluation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca"))
-    reserve = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reserve"))
-    report_a_nouveau = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Report a nouveau"))
-    resultat_exercice = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Resultat exercice"))
-    subv_invest = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Subventions investies"))
-    provision_regl = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provision regle"))
+    capital_social = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Capital social"),
+    )
+    primes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Primes"),
+    )
+    ecarts_de_reevaluation = models.DecimalField(
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca")
+    )
+    reserve = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Reserve"),
+    )
+    report_a_nouveau = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Report a nouveau"),
+    )
+    resultat_exercice = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Resultat exercice"),
+    )
+    subv_invest = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Subventions investies"),
+    )
+    provision_regl = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provision regle"),
+    )
 
-    emprunts = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Emprunts"))
-    dette_credit_bail_contrat_assimile = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Credit lease debts and related contracts"))
-    dettes_financiere_diverses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes financiere diverses"))
-    provision_financiere_risque_charge = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provision financiere risque charge"))
+    emprunts = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Emprunts"),
+    )
+    dette_credit_bail_contrat_assimile = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Credit lease debts and related contracts"),
+    )
+    dettes_financiere_diverses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes financiere diverses"),
+    )
+    provision_financiere_risque_charge = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provision financiere risque charge"),
+    )
 
-    dettes_fournisseurs_divers = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes fournisseurs divers"))
-    avance_et_acomptes_recu = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Avance et acomptes recu"))
-    dettes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes"))
-    dettes_fiscales_sociales = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes fiscales sociales"))
-    autres_dettes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres dettes"))
+    dettes_fournisseurs_divers = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes fournisseurs divers"),
+    )
+    avance_et_acomptes_recu = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Avance et acomptes recu"),
+    )
+    dettes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes"),
+    )
+    dettes_fiscales_sociales = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes fiscales sociales"),
+    )
+    autres_dettes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres dettes"),
+    )
 
-    banques_credit_escompte = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banques credit escompte"))
-    banque_credit_caisse = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banque credit caisse"))
-    banques_decouvert = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banques decouvert"))
+    banques_credit_escompte = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banques credit escompte"),
+    )
+    banque_credit_caisse = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banque credit caisse"),
+    )
+    banques_decouvert = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banques decouvert"),
+    )
 
-    ecart_conversion_passif = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Ecart conversion passif"))
+    ecart_conversion_passif = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Ecart conversion passif"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='passif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="passif_classique_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Passif bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Passif bilan classique : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Passif bilan classique")
         verbose_name_plural = _("Passifs bilans classiques")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  total_I
     #  total_II
     #  total_III
     #  total_IV
     #  total_general
-    
-    
+
+
 class ResultatC(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    vente_de_mdses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Vente de mdses"))
-    ventes_de_produits_fabriques = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Ventes de produits fabriques"))
-    travaux_services_vendus = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Travaux services vendus"))
-    produit_accessoires = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Produit accessoires"))
-    production_imblise = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Production imblise"))
+    vente_de_mdses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Vente de mdses"),
+    )
+    ventes_de_produits_fabriques = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Ventes de produits fabriques"),
+    )
+    travaux_services_vendus = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Travaux services vendus"),
+    )
+    produit_accessoires = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Produit accessoires"),
+    )
+    production_imblise = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Production imblise"),
+    )
 
-    subventions_exploitations = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Subventions exploitations"))
-    production_stockee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Production stockee"))
-    reprises_de_provision = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reprises de provision"))
-    transferts_charges = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Transferts charges"))
-    autres_produits = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres produits"))
+    subventions_exploitations = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Subventions exploitations"),
+    )
+    production_stockee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Production stockee"),
+    )
+    reprises_de_provision = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Reprises de provision"),
+    )
+    transferts_charges = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Transferts charges"),
+    )
+    autres_produits = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres produits"),
+    )
 
-    achat_mdses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Achat mdses"))
-    variation_stock_mdses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Variation stock mdses"))
+    achat_mdses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Achat mdses"),
+    )
+    variation_stock_mdses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Variation stock mdses"),
+    )
 
-    achat_mp_autres_appro = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Achat mp autres appro"))
-    var_stk_mp_app = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Var stk mp app"))
-    autres_achats = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres achats"))
-    variation_de_stocks_autres_appro = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Variation de stocks autres appro"))
-    transports = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Transports"))
-    services_ext = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Services ext"))
-    impots_taxes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Impots taxes"))
-    autres_charges_valeur_ajoutee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres charges valeur ajoutee"))
+    achat_mp_autres_appro = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Achat mp autres appro"),
+    )
+    var_stk_mp_app = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Var stk mp app"),
+    )
+    autres_achats = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres achats"),
+    )
+    variation_de_stocks_autres_appro = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Variation de stocks autres appro"),
+    )
+    transports = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Transports"),
+    )
+    services_ext = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Services ext"),
+    )
+    impots_taxes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Impots taxes"),
+    )
+    autres_charges_valeur_ajoutee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres charges valeur ajoutee"),
+    )
 
-    charges_personnel = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Charges personnel"))
+    charges_personnel = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Charges personnel"),
+    )
 
-    dotation_aux_amorts = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dotation aux amorts"))
-    dotation_aux_provisions = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dotation aux provisions"))
-    autres_charges_excedent_brute = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres charges excedent brute"))
+    dotation_aux_amorts = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dotation aux amorts"),
+    )
+    dotation_aux_provisions = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dotation aux provisions"),
+    )
+    autres_charges_excedent_brute = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres charges excedent brute"),
+    )
 
-    revenus_fin_assimiles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Revenus fin assimiles"))
-    prof_vmp_et_cre_actif_immo = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prof vmp et cre actif immo"))
-    interets_produit_assim = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Interets produit assim"))
-    reprise_prov_et_transfert = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reprise prov et transfert"))
-    diff_positive_de_change = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Diff positive de change"))
-    prod_nets_cessions_vmp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prod nets cessions vmp"))
+    revenus_fin_assimiles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Revenus fin assimiles"),
+    )
+    prof_vmp_et_cre_actif_immo = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Prof vmp et cre actif immo"),
+    )
+    interets_produit_assim = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Interets produit assim"),
+    )
+    reprise_prov_et_transfert = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Reprise prov et transfert"),
+    )
+    diff_positive_de_change = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Diff positive de change"),
+    )
+    prod_nets_cessions_vmp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Prod nets cessions vmp"),
+    )
 
-    dap = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dot. aux prov. & depreciations"))
-    frais_fin_charges_assi = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Frais fin. & chrges assimilées"))
-    diff_negatives_de_change = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Diff negatives de change"))
-    ch_nettes_cessions_vmp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Ch nettes cessions vmp"))
+    dap = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dot. aux prov. & depreciations"),
+    )
+    frais_fin_charges_assi = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Frais fin. & chrges assimilées"),
+    )
+    diff_negatives_de_change = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Diff negatives de change"),
+    )
+    ch_nettes_cessions_vmp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Ch nettes cessions vmp"),
+    )
 
-    sur_op_gestion_prod_except = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Sur op gestion prod except"))
-    sur_op_en_capital_prod_except = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Sur op en capital prod except"))
-    reprise_prov_transfert = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reprise prov transfert"))
+    sur_op_gestion_prod_except = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Sur op gestion prod except"),
+    )
+    sur_op_en_capital_prod_except = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Sur op en capital prod except"),
+    )
+    reprise_prov_transfert = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Reprise prov transfert"),
+    )
 
-    sur_op_gestion_charg_except = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Sur op gestion charg except"))
-    sur_op_en_capital_charg_except = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Sur op en capital charg except"))
-    dap_et_transfert_charg_except = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dap et transfert charg except"))
-    participation_salairies = models.DecimalField(_("Participations des salariés"), max_digits=100, decimal_places=2, null=True, blank=True)
-    impot_sur_benefices = models.DecimalField(_("Impôts sur les bénéfices"), max_digits=100, decimal_places=2, null=True, blank=True)
+    sur_op_gestion_charg_except = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Sur op gestion charg except"),
+    )
+    sur_op_en_capital_charg_except = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Sur op en capital charg except"),
+    )
+    dap_et_transfert_charg_except = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dap et transfert charg except"),
+    )
+    participation_salairies = models.DecimalField(
+        _("Participations des salariés"),
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    impot_sur_benefices = models.DecimalField(
+        _("Impôts sur les bénéfices"),
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='resultat_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="resultat_classique_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Résultat bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Résultat bilan classique : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Résultat bilan classique")
         verbose_name_plural = _("Résultats bilans classiques")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  ca
     #  total_I
     #  marge_brute
@@ -2511,13 +4076,8 @@ class ResultatC(models.Model):
     #  excep_total_II
     #  resultat_excep
     #  resultat_exercice
-    
 
 
-
-
-
-    
 #  Calcul des ratios
 
 #  init(self, acheteur, annee)
@@ -2541,18 +4101,11 @@ class ResultatC(models.Model):
 #  credits_fournisseurs
 
 
-
 ##########################################################
 ##########################################################
 # Fin Modules Bilan Classique
 ##########################################################
 ##########################################################
-
-
-
-
-
-
 
 
 ##########################################################
@@ -2561,73 +4114,337 @@ class ResultatC(models.Model):
 ##########################################################
 ##########################################################
 
+# Enumération des types de bilan
+TYPE_BILAN_CHOICES = (
+    ("annuel", "Bilan annuel"),
+    ("semestriel", "Bilan semestriel"),
+)
+
+# Ajoute cette énumération quelque part au-dessus de la classe Assets
+SEMESTRE_CHOICES = (
+    (1, "1er semestre (Janvier - Juin)"),
+    (2, "2e semestre (Juillet - Décembre)"),
+)
+
+
+# Actifs
 class Assets(models.Model):
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
+    )
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    caisse = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Caisse"))
+    caisse = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Caisse"),
+    )
     # ASSETS
     # At Sight
-    banques_centrales = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Banques centrales'))
-    tresorerie_cpp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Trésorerie, CCP'))
-    autres_ets_credit = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Autres établissements de crédit'))
+    banques_centrales = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Banques centrales"),
+    )
+    tresorerie_cpp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Trésorerie, CCP"),
+    )
+    autres_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Autres établissements de crédit"),
+    )
 
-    a_terme = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('A Terme'))
+    a_terme = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("A Terme"),
+    )
 
     # Claims on Customers
     ## Commercial paper portofolio
-    credits_campagne = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Crédits de campagne'))
-    credits_ordinaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Crédits ordinaires'))
+    credits_campagne = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Crédits de campagne"),
+    )
+    credits_ordinaire = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Crédits ordinaires"),
+    )
     ## Other Customer Contests
-    credits_campagne_acc = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Crédits de campagne'))
-    credits_ordinaire_acc = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Crédits ordinaires'))
+    credits_campagne_acc = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Crédits de campagne"),
+    )
+    credits_ordinaire_acc = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Crédits ordinaires"),
+    )
 
-    creances_ordinaires = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('Créances ordinaires'))
-    affacturage = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('Affacturage'))
+    creances_ordinaires = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Créances ordinaires"),
+    )
+    affacturage = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Affacturage"),
+    )
 
-    titres_placement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('TITRES DE PLACEMENT'))
-    immobilisation_fin = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('IMMOBILISATIONS FINANCIÈRES'))
-    operation_credit_bail = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('OPÉRATIONS DE CRÉDIT-BAIL ET ASSIMILÉES'))
-    immobilisation_incorporelle = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('IMMOBILISATIONS INCORPORELLES'))
-    immobilisation_corporelle = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('IMMOBILISATIONS CORPORELLES'))
-    actionnaire_ou_associe = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('ACTIONNAIRES OU ASSOCIÉS'))
-    autres_actifs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('AUTRES ACTIFS'))
-    comptes_commande_divers = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('COMPTES DE COMMANDES ET DIVERS'))
+    titres_placement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("TITRES DE PLACEMENT"),
+    )
+    immobilisation_fin = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("IMMOBILISATIONS FINANCIÈRES"),
+    )
+    operation_credit_bail = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("OPÉRATIONS DE CRÉDIT-BAIL ET ASSIMILÉES"),
+    )
+    immobilisation_incorporelle = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("IMMOBILISATIONS INCORPORELLES"),
+    )
+    immobilisation_corporelle = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("IMMOBILISATIONS CORPORELLES"),
+    )
+    actionnaire_ou_associe = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("ACTIONNAIRES OU ASSOCIÉS"),
+    )
+    autres_actifs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("AUTRES ACTIFS"),
+    )
+    comptes_commande_divers = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("COMPTES DE COMMANDES ET DIVERS"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='assets_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="assets_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Actif bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        libelle = f"{_('Actif bilan bancaire')} : {self.id}. {self.acheteur}"
+        if self.annee:
+            libelle += f" ({self.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"  # Utilisation de la méthode intégrée
+        return libelle
 
     class Meta:
         verbose_name = _("Actif bilan bancaire")
         verbose_name_plural = _("Actifs bilans bancaires")
-        
-        
+
+    # ---------------------------------------------------
     #  Liste des methodes utiles pour ce model
-    
+    # ---------------------------------------------------
+
+    @property
+    def a_vue(self):
+        """
+        Calcule la somme des avoirs à vue.
+        """
+        fields_to_sum = [
+            self.banques_centrales,
+            self.tresorerie_cpp,
+            self.autres_ets_credit,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def pret_interbancaire(self):
+        """
+        Calcule le total des prêts interbancaires (à vue + à terme).
+        """
+        return self.a_vue + (self.a_terme or 0)
+
+    @property
+    def porteuille_papier_commercial(self):
+        """
+        Calcule le total du portefeuille de papiers commerciaux.
+        """
+        fields_to_sum = [self.credits_campagne, self.credits_ordinaire]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def autres_concours_clients(self):
+        """
+        Calcule le total des autres concours à la clientèle.
+        """
+        fields_to_sum = [self.credits_campagne_acc, self.credits_ordinaire_acc]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def creance_sur_la_clientele(self):
+        """
+        Calcule le total des créances sur la clientèle.
+        """
+        return (
+            self.porteuille_papier_commercial
+            + self.autres_concours_clients
+            + (self.creances_ordinaires or 0)
+            + (self.affacturage or 0)
+        )
+
+    @property
+    def total_assets(self):
+        """
+        Calcule et retourne la somme de tous les champs financiers de l'actif.
+        Traite les valeurs None comme 0 pour éviter les erreurs de calcul.
+        """
+        fields_to_sum = [
+            self.caisse,
+            self.banques_centrales,
+            self.tresorerie_cpp,
+            self.autres_ets_credit,
+            self.a_terme,
+            self.credits_campagne,
+            self.credits_ordinaire,
+            self.credits_campagne_acc,
+            self.credits_ordinaire_acc,
+            self.creances_ordinaires,
+            self.affacturage,
+            self.titres_placement,
+            self.immobilisation_fin,
+            self.operation_credit_bail,
+            self.immobilisation_incorporelle,
+            self.immobilisation_corporelle,
+            self.actionnaire_ou_associe,
+            self.autres_actifs,
+            self.comptes_commande_divers,
+        ]
+
+        # La syntaxe (field or 0) convertit les None en 0 avant la somme
+        total = sum(field or 0 for field in fields_to_sum)
+        return total @ property
+
+    def total_assets(self):
+        """
+        Calcule et retourne la somme de tous les champs financiers de l'actif.
+        Traite les valeurs None comme 0 pour éviter les erreurs de calcul.
+        """
+        fields_to_sum = [
+            self.caisse,
+            self.banques_centrales,
+            self.tresorerie_cpp,
+            self.autres_ets_credit,
+            self.a_terme,
+            self.credits_campagne,
+            self.credits_ordinaire,
+            self.credits_campagne_acc,
+            self.credits_ordinaire_acc,
+            self.creances_ordinaires,
+            self.affacturage,
+            self.titres_placement,
+            self.immobilisation_fin,
+            self.operation_credit_bail,
+            self.immobilisation_incorporelle,
+            self.immobilisation_corporelle,
+            self.actionnaire_ou_associe,
+            self.autres_actifs,
+            self.comptes_commande_divers,
+        ]
+
+        # La syntaxe (field or 0) convertit les None en 0 avant la somme
+        total = sum(field or 0 for field in fields_to_sum)
+        return total
+
+    #  Liste des methodes utiles pour ce model
+
     #  pret_interbancaire
     #  a_vue
     #  creance_sur_la_clientele
@@ -2636,281 +4453,1110 @@ class Assets(models.Model):
     #  total_assets
 
 
-
-
+# Passifs
 class Liabilities(models.Model):
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
+    )
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
     # Interbank debt
-    tresorerie_ccp = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Trésorerie, CCP'))
-    autres_etablissement_credit = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('-Autres établissements de crédit'))
+    tresorerie_ccp = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Trésorerie, CCP"),
+    )
+    autres_etablissement_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("-Autres établissements de crédit"),
+    )
     ## At term
-    a_terme = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('A Terme'))
+    a_terme = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("A Terme"),
+    )
     # Debts Owed To Customers
-    comptes_epargne_court_terme = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Comptes d'épargne à court terme"))
-    comptes_epargne_terme = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Comptes d'épargne à terme"))
-    bons_caisse = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Bons de caisse"))
-    autres_dette_a_vue = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres dettes à vue"))
-    autres_dette_a_terme = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres dettes à terme"))
+    comptes_epargne_court_terme = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Comptes d'épargne à court terme"),
+    )
+    comptes_epargne_terme = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Comptes d'épargne à terme"),
+    )
+    bons_caisse = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Bons de caisse"),
+    )
+    autres_dette_a_vue = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres dettes à vue"),
+    )
+    autres_dette_a_terme = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres dettes à terme"),
+    )
 
-    titres_creance_autres_dettes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("TITRES DE CRÉANCE AUTRES DETTES"))
-    compte_dordre_divers = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("COMPTES D'ORDRE ET DIVERS"))
-    provision_pour_risque_charge = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("PROVISIONS POUR RISQUES ET CHARGES"))
-    provision_reglementee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("PROVISIONS RÉGLEMENTÉES"))
-    emprunt_subordonne_tire_emis = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("EMPRUNTS SUBORDONNÉS ET TITRES ÉMIS"))
-    subventions_investissement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("SUBVENTIONS D'INVESTISSEMENT"))
-    fonds_affecte = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("FONDS AFFECTÉS"))
-    fonds_pour_risque_bancaire_generaux = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("FONDS POUR RISQUES BANCAIRES GÉNÉRAUX"))
-    capital_ou_dotation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("CAPITAL OU DOTATIONS"))
-    primes_liees_reserve_capital = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("PRIMES LIÉES AUX RÉSERVES DE CAPITAL"))
-    ecarts_reevaluation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("ÉCARTS DE RÉÉVALUATION"))
-    benefices_non_distribue = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("BÉNÉFICES NON DISTRIBUÉS (+/-)"))
-    resultat_net_exercie = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("RÉSULTAT NET DE L'EXERCICE (+/-)"))
+    titres_creance_autres_dettes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("TITRES DE CRÉANCE AUTRES DETTES"),
+    )
+    compte_dordre_divers = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("COMPTES D'ORDRE ET DIVERS"),
+    )
+    provision_pour_risque_charge = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("PROVISIONS POUR RISQUES ET CHARGES"),
+    )
+    provision_reglementee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("PROVISIONS RÉGLEMENTÉES"),
+    )
+    emprunt_subordonne_tire_emis = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("EMPRUNTS SUBORDONNÉS ET TITRES ÉMIS"),
+    )
+    subventions_investissement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("SUBVENTIONS D'INVESTISSEMENT"),
+    )
+    fonds_affecte = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("FONDS AFFECTÉS"),
+    )
+    fonds_pour_risque_bancaire_generaux = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("FONDS POUR RISQUES BANCAIRES GÉNÉRAUX"),
+    )
+    capital_ou_dotation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("CAPITAL OU DOTATIONS"),
+    )
+    primes_liees_reserve_capital = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("PRIMES LIÉES AUX RÉSERVES DE CAPITAL"),
+    )
+    ecarts_reevaluation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("ÉCARTS DE RÉÉVALUATION"),
+    )
+    benefices_non_distribue = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("BÉNÉFICES NON DISTRIBUÉS (+/-)"),
+    )
+    resultat_net_exercie = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("RÉSULTAT NET DE L'EXERCICE (+/-)"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='liabilities_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="liabilities_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Passif bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        libelle = f"{_('Passif bilan bancaire')} : {self.id}. {self.acheteur}"
+        if self.annee:
+            libelle += f" ({self.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"
+        return libelle
 
     class Meta:
         verbose_name = _("Passif bilan bancaire")
         verbose_name_plural = _("Passifs bilans bancaires")
-        
-        
+
+    # ---------------------------------------------------
     #  Liste des methodes utiles pour ce model
-    
-    #  dette_interbancaire
-    #  a_vue
-    #  dette_envers_clientelle
-    #  total_passif
-    
-    
-  
-    
-class OffBalanceSheet(models.Model):
-    annee = models.ForeignKey(
-        'Annee',
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
-    )
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
-    )
+    # ---------------------------------------------------
 
-    en_faveur_des_ets_credit = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("En faveur des établissements de crédit"))
-    en_faveur_clientele = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("En faveur de la clientèle"))
-    pour_compte_ets_credit = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Pour le compte des établissements de crédit"))
-    pour_compte_clientele = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('Pour le compte de la clientèle'))
+    @property
+    def a_vue(self):
+        """Calcule la somme des dettes interbancaires à vue."""
+        return (self.tresorerie_ccp or 0) + (self.autres_etablissement_credit or 0)
 
-    engagement_sur_titre = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_('ENGAGEMENTS SUR TITRES'))
-    recu_ets_credit = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reçus d'établissements de crédit"))
-    recu_ets_credit2 = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reçus d'établissements de crédit"))
-    recu_clientele = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Reçus de la clientèle"))
-    engagement_sur_titre2 = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("ENGAGEMENTS SUR TITRES"))
+    @property
+    def dette_interbancaire(self):
+        """Calcule le total des dettes interbancaires (à vue + à terme)."""
+        return self.a_vue + (self.a_terme or 0)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
+    @property
+    def dette_envers_clientelle(self):
+        """Calcule le total des dettes envers la clientèle."""
+        fields_to_sum = [
+            self.comptes_epargne_court_terme,
+            self.comptes_epargne_terme,
+            self.bons_caisse,
+            self.autres_dette_a_vue,
+            self.autres_dette_a_terme,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='offbalance_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    @property
+    def total_liabilities(self):
+        """
+        Calcule et retourne la somme de tous les champs financiers du passif.
+        Traite les valeurs None comme 0 pour éviter les erreurs de calcul.
+        """
+        fields_to_sum = [
+            self.tresorerie_ccp,
+            self.autres_etablissement_credit,
+            self.a_terme,
+            self.comptes_epargne_court_terme,
+            self.comptes_epargne_terme,
+            self.bons_caisse,
+            self.autres_dette_a_vue,
+            self.autres_dette_a_terme,
+            self.titres_creance_autres_dettes,
+            self.compte_dordre_divers,
+            self.provision_pour_risque_charge,
+            self.provision_reglementee,
+            self.emprunt_subordonne_tire_emis,
+            self.subventions_investissement,
+            self.fonds_affecte,
+            self.fonds_pour_risque_bancaire_generaux,
+            self.capital_ou_dotation,
+            self.primes_liees_reserve_capital,
+            self.ecarts_reevaluation,
+            self.benefices_non_distribue,
+            self.resultat_net_exercie,
+        ]
 
-    def __str__(self):
-        return _("Hors bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        # La syntaxe (field or 0) convertit les None en 0 avant la somme
+        total = sum(field or 0 for field in fields_to_sum)
+        return total
 
-    class Meta:
-        verbose_name = _("Hors Bilan bancaire")
-        verbose_name_plural = _("Hors Bilans bancaires")
-        
-        
-    #  Liste des methodes utiles pour ce model
-    
-    #  engagement_donne
-    #  engagement_financement
-    #  engagement_de_garantie
-    #  engagement_recu
-    #  engagement_financement2
-    #  engagement_de_garantie2
-    
-    
-    
-    
+
+# Depenses
 class Expenses(models.Model):
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
+    )
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    interet_charges_assimilee_dette_interbancaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Intérêts et charges assimilées sur dettes interbancaires"))
-    interet_charge_assimilee_dette_clientele = models.DecimalField(max_digits=100, decimal_places=2, help_text="", verbose_name=_("Intérêts et charges assimilées sur dettes envers la clientèle"))
-    interet_charge_assimilee_titre_creance = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Intérêts et charges assimilées sur titres de créances"))
-    chargesc_compte_bloque_dactionnaire_emprunt_sub = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Charges sur comptes bloqués d'actionnaires emprunts sur titres subordonnés"))
-    autres_interets_charges_assimilee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Autres Intérêts et charges assimilées"))
-    charges_sur_op_credit_bail_assimile = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("CHARGES SUR OPÉRATIONS DE CRÉDIT-BAIL ET ASSIMILÉES"))
-    commissions = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("COMMISSIONS"))
+    interet_charges_assimilee_dette_interbancaire = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("Intérêts et charges assimilées sur dettes interbancaires"),
+    )
+    interet_charge_assimilee_dette_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        help_text="",
+        verbose_name=_("Intérêts et charges assimilées sur dettes envers la clientèle"),
+    )
+    interet_charge_assimilee_titre_creance = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("Intérêts et charges assimilées sur titres de créances"),
+    )
+    chargesc_compte_bloque_dactionnaire_emprunt_sub = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "Charges sur comptes bloqués d'actionnaires emprunts sur titres subordonnés"
+        ),
+    )
+    autres_interets_charges_assimilee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("Autres Intérêts et charges assimilées"),
+    )
+    charges_sur_op_credit_bail_assimile = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("CHARGES SUR OPÉRATIONS DE CRÉDIT-BAIL ET ASSIMILÉES"),
+    )
+    commissions = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("COMMISSIONS"),
+    )
 
-    charges_sur_titre_placement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text=_("Charges sur titres de placement"), verbose_name=_("Charges sur titres de placement"))
-    charges_sur_operation_change = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text=_("Charges sur titres de placement"), verbose_name=_("Charges sur opérations de change"))
-    charges_sur_operation_hors_bilan = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Charges sur opérations hors bilan"))
-    frais_divers_exploitation_bancaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("FRAIS DIVERS D'EXPLOITATION BANCAIRE"))
-    achat_marchandises = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("ACHAT DE MARCHANDISES"))
-    stocks_vendus = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("STOCKS VENDUS"))
-    variations_stocks_marchanides = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("VARIATIONS DES STOCKS DE MARCHANDISES"))
-    frais_personnel = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Frais de personnel"))
+    charges_sur_titre_placement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Charges sur titres de placement"),
+        verbose_name=_("Charges sur titres de placement"),
+    )
+    charges_sur_operation_change = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Charges sur opérations de change"),
+        verbose_name=_("Charges sur opérations de change"),
+    )
+    charges_sur_operation_hors_bilan = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("Charges sur opérations hors bilan"),
+    )
+    frais_divers_exploitation_bancaire = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("FRAIS DIVERS D'EXPLOITATION BANCAIRE"),
+    )
+    achat_marchandises = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("ACHAT DE MARCHANDISES"),
+    )
+    stocks_vendus = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("STOCKS VENDUS"),
+    )
+    variations_stocks_marchanides = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("VARIATIONS DES STOCKS DE MARCHANDISES"),
+    )
+    frais_personnel = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Frais de personnel"),
+    )
 
-    autres_frais_generaux = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres frais généraux"))
-    dotations_amortissement_provision_immobilisation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("DOTATIONS AUX AMORTISSEMENTS ET PROVISIONS SUR IMMOBILISATIONS"))
-    solde_perte_creance_hors_bilan = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("SOLDE DES PERTES SUR CRÉANCES ET HORS BILAN"))
-    excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("EXCÉDENT DES DOTATIONS SUR LES REPRISES DU FONDS POUR RISQUES BANCAIRES GÉNÉRAUX"))
-    charges_exceptionnelle = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("LES CHARGES EXCEPTIONNELLES"))
-    pertes_exercice_anterieurs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("PERTES SUR EXERCICES ANTÉRIEURS"))
-    impot_sur_revenu = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("IMPÔTS SUR LE REVENU"))
-    total_charges = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("TOTAL DES CHARGES"))
+    autres_frais_generaux = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres frais généraux"),
+    )
+    dotations_amortissement_provision_immobilisation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "DOTATIONS AUX AMORTISSEMENTS ET PROVISIONS SUR IMMOBILISATIONS"
+        ),
+    )
+    solde_perte_creance_hors_bilan = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("SOLDE DES PERTES SUR CRÉANCES ET HORS BILAN"),
+    )
+    excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "EXCÉDENT DES DOTATIONS SUR LES REPRISES DU FONDS POUR RISQUES BANCAIRES GÉNÉRAUX"
+        ),
+    )
+    charges_exceptionnelle = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("LES CHARGES EXCEPTIONNELLES"),
+    )
+    pertes_exercice_anterieurs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("PERTES SUR EXERCICES ANTÉRIEURS"),
+    )
+    impot_sur_revenu = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("IMPÔTS SUR LE REVENU"),
+    )
+    total_charges = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("TOTAL DES CHARGES"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='expenses_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="expenses_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
+    # --- MÉTHODE __str__ AMÉLIORÉE ---
     def __str__(self):
-        return _("Dépense bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        """
+        Fournit une représentation textuelle claire de l'objet.
+        """
+        libelle = f"{_('Dépense bilan bancaire')} : {self.id}. {self.acheteur or 'N/A'}"
+        if self.annee:
+            libelle += f" ({self.annee.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"
+        return libelle
 
     class Meta:
         verbose_name = _("Dépense bilan bancaire")
         verbose_name_plural = _("Dépenses bilans bancaires")
-        
-        
-    #  Liste des methodes utiles pour ce model
-    
-    #  interet_charges_assimilee
-    #  charge_sur_operation_financiere
-    #  frais_generaux_dexploitation
-    #  prestation
-    #  total_charges
-    
-    
-    
 
+    # ----------------------------------------
+    #  Liste des méthodes utiles pour ce modèle
+    # ----------------------------------------
+
+    @property
+    def interet_charges_assimilee(self):
+        """Calcule le total des intérêts et charges assimilées."""
+        fields_to_sum = [
+            self.interet_charges_assimilee_dette_interbancaire,
+            self.interet_charge_assimilee_dette_clientele,
+            self.interet_charge_assimilee_titre_creance,
+            self.chargesc_compte_bloque_dactionnaire_emprunt_sub,
+            self.autres_interets_charges_assimilee,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def charge_sur_operation_financiere(self):
+        """Calcule le total des charges sur opérations financières."""
+        fields_to_sum = [
+            self.charges_sur_op_credit_bail_assimile,
+            self.commissions,
+            self.charges_sur_titre_placement,
+            self.charges_sur_operation_change,
+            self.charges_sur_operation_hors_bilan,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def prestation(self):
+        """Calcule le coût des marchandises vendues."""
+        return (
+            (self.achat_marchandises or 0)
+            + (self.variations_stocks_marchanides or 0)
+            - (self.stocks_vendus or 0)
+        )
+
+    @property
+    def frais_generaux_dexploitation(self):
+        """Calcule le total des frais généraux d'exploitation."""
+        fields_to_sum = [
+            self.frais_divers_exploitation_bancaire,
+            self.frais_personnel,
+            self.autres_frais_generaux,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def total_des_charges(self):
+        """
+        Calcule et retourne la somme de TOUTES les charges de l'instance.
+        Cette méthode est la source de vérité pour le total.
+        """
+        fields_to_sum = [
+            self.interet_charges_assimilee,  # Utilise la propriété déjà calculée
+            self.charge_sur_operation_financiere,  # Utilise la propriété déjà calculée
+            self.prestation,  # Utilise la propriété déjà calculée
+            self.frais_generaux_dexploitation,  # Utilise la propriété déjà calculée
+            self.dotations_amortissement_provision_immobilisation,
+            self.solde_perte_creance_hors_bilan,
+            self.excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux,
+            self.charges_exceptionnelle,
+            self.pertes_exercice_anterieurs,
+            self.impot_sur_revenu,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+
+# Produits
 class Products(models.Model):
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
+    )
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    interets_produit_assimile_sur_pret_avance_interbancaire = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Intérêts et produits assimilés sur prêts et avances interbancaires"))
-    ineterets_produit_assimile_pret_avance_clientele = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Intérêts et produits assimilés sur prêts et avances à la clientèle"))
-    interet_produit_sur_titre_dinvestissement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Intérêts et produits assimilés sur titres d'investissement"))
-    revenu_gains_titre_pret_titre_subordonne = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Revenus et gains sur titres de prêts et titres subordonnés émis"))
+    interets_produit_assimile_sur_pret_avance_interbancaire = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "Intérêts et produits assimilés sur prêts et avances interbancaires"
+        ),
+    )
+    ineterets_produit_assimile_pret_avance_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "Intérêts et produits assimilés sur prêts et avances à la clientèle"
+        ),
+    )
+    interet_produit_sur_titre_dinvestissement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Intérêts et produits assimilés sur titres d'investissement"),
+    )
+    revenu_gains_titre_pret_titre_subordonne = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "Revenus et gains sur titres de prêts et titres subordonnés émis"
+        ),
+    )
 
-    autres_interets_produits_assimiles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres intérêts et produits assimilés"))
-    produits_leansing_operation_connexes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("PRODUITS DE LEASING ET OPÉRATIONS CONNEXES "))
-    commissions = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("COMMISSIONS"))
+    autres_interets_produits_assimiles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres intérêts et produits assimilés"),
+    )
+    produits_leansing_operation_connexes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("PRODUITS DE LEASING ET OPÉRATIONS CONNEXES "),
+    )
+    commissions = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("COMMISSIONS"),
+    )
 
-    revenus_titre_negociable = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Revenus de titres négociables"))
-    dividendes_produits_assimiles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dividendes et produits assimilés"))
-    revenus_operation_de_change = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Revenus d'opérations de change"))
-    produits_opeations_hors_bilan = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("Produits des opérations hors bilan"))
+    revenus_titre_negociable = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Revenus de titres négociables"),
+    )
+    dividendes_produits_assimiles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dividendes et produits assimilés"),
+    )
+    revenus_operation_de_change = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Revenus d'opérations de change"),
+    )
+    produits_opeations_hors_bilan = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("Produits des opérations hors bilan"),
+    )
 
-    produits_bancaire_divers = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("PRODUITS BANCAIRES DIVERS"))
-    marges_vente = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("MARGES DE VENTE"))
-    ventes_marchandises = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("VENTES DE MARCHANDISES"))
-    variation_stocks_marchandises = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("VARIATION DES STOCKS DE MARCHANDISES"))
-    produit_dexploitation_generale = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("PRODUITS D'EXPLOITATION GÉNÉRALE"))
+    produits_bancaire_divers = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("PRODUITS BANCAIRES DIVERS"),
+    )
+    marges_vente = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("MARGES DE VENTE"),
+    )
+    ventes_marchandises = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("VENTES DE MARCHANDISES"),
+    )
+    variation_stocks_marchandises = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("VARIATION DES STOCKS DE MARCHANDISES"),
+    )
+    produit_dexploitation_generale = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("PRODUITS D'EXPLOITATION GÉNÉRALE"),
+    )
 
-    reprise_damortissement_provisions_sur_immobilisation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("REPRISES D'AMORTISSEMENTS ET DE PROVISIONS SUR IMMOBILISATIONS"))
-    solde_resultat_correction_valeur_sur_creance_hors_bilan = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("SOLDE DU RÉSULTAT DES CORRECTIONS DE VALEUR SUR CRÉANCES ET HORS BILAN"))
-    excedent_reprise_fonds_pour_risque_bancaire_generaux = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("EXCÉDENT DES REPRISES DU FONDS POUR RISQUES BANCAIRES GÉNÉRAUX"))
+    reprise_damortissement_provisions_sur_immobilisation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "REPRISES D'AMORTISSEMENTS ET DE PROVISIONS SUR IMMOBILISATIONS"
+        ),
+    )
+    solde_resultat_correction_valeur_sur_creance_hors_bilan = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "SOLDE DU RÉSULTAT DES CORRECTIONS DE VALEUR SUR CRÉANCES ET HORS BILAN"
+        ),
+    )
+    excedent_reprise_fonds_pour_risque_bancaire_generaux = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_(
+            "EXCÉDENT DES REPRISES DU FONDS POUR RISQUES BANCAIRES GÉNÉRAUX"
+        ),
+    )
 
-    produits_exceptionnels = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("PRODUITS EXCEPTIONNELS"))
-    benefice_sur_exercice_anterieur = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("BÉNÉFICES SUR EXERCICES ANTÉRIEURS"))
-    perte = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, help_text="", verbose_name=_("PERTES"))
+    produits_exceptionnels = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("PRODUITS EXCEPTIONNELS"),
+    )
+    benefice_sur_exercice_anterieur = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("BÉNÉFICES SUR EXERCICES ANTÉRIEURS"),
+    )
+    perte = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="",
+        verbose_name=_("PERTES"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='product_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="product_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
+    # --- MÉTHODE __str__ AMÉLIORÉE ---
     def __str__(self):
-        return _("Produit bilan bancaire : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        libelle = f"{_('Produit bilan bancaire')} : {self.id}. {self.acheteur or 'N/A'}"
+        if self.annee:
+            libelle += f" ({self.annee.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"
+        return libelle
 
     class Meta:
         verbose_name = _("Produit bilan bancaire")
         verbose_name_plural = _("Produits bilans bancaires")
-        
-        
-    #  Liste des methodes utiles pour ce model
-    
-    #  interet_produit_assimile
-    #  revenu_dopeation_financiere
-    #  total_produit
+
+    # ----------------------------------------
+    #  Liste des méthodes utiles pour ce modèle
+    # ----------------------------------------
+
+    @property
+    def interet_produit_assimile(self):
+        """Calcule le total des intérêts et produits assimilés."""
+        fields_to_sum = [
+            self.interets_produit_assimile_sur_pret_avance_interbancaire,
+            self.ineterets_produit_assimile_pret_avance_clientele,
+            self.interet_produit_sur_titre_dinvestissement,
+            self.revenu_gains_titre_pret_titre_subordonne,
+            self.autres_interets_produits_assimiles,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def revenu_d_operation_financiere(self):
+        """Calcule le total des revenus sur opérations financières (corrigé)."""
+        fields_to_sum = [
+            self.produits_leansing_operation_connexes,
+            self.commissions,
+            self.revenus_titre_negociable,
+            self.dividendes_produits_assimiles,
+            self.revenus_operation_de_change,
+            self.produits_opeations_hors_bilan,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    # NOUVELLE propriété pour plus de clarté
+    @property
+    def autres_produits_exploitation(self):
+        """Calcule les autres produits liés à l'exploitation."""
+        fields_to_sum = [
+            self.produits_bancaire_divers,
+            self.marges_vente,
+            self.ventes_marchandises,
+            self.variation_stocks_marchandises,
+            self.produit_dexploitation_generale,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def total_produit(self):
+        """Calcule et retourne la somme de TOUS les produits de l'instance."""
+        # On additionne les sous-totaux et les champs restants
+        # La perte est soustraite
+        total = (
+            self.interet_produit_assimile
+            + self.revenu_d_operation_financiere
+            + self.autres_produits_exploitation
+            + (self.reprise_damortissement_provisions_sur_immobilisation or 0)
+            + (self.solde_resultat_correction_valeur_sur_creance_hors_bilan or 0)
+            + (self.excedent_reprise_fonds_pour_risque_bancaire_generaux or 0)
+            + (self.produits_exceptionnels or 0)
+            + (self.benefice_sur_exercice_anterieur or 0)
+            - (self.perte or 0)
+        )
+        return total
+
+
+# Hors bilan
+class OffBalanceSheet(models.Model):
+    # --- Champs d'identification (inchangés) ---
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
+    )
+    annee = models.ForeignKey(
+        "Annee",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
+    )
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+    )
+
+    # --- ENGAGEMENTS DONNÉS ---
+    # Catégorie : Engagements de financement donnés
+    engagement_financement_donne_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_(
+            "Engagements de financement donnés en faveur des établissements de crédit"
+        ),
+    )
+    engagement_financement_donne_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement donnés en faveur de la clientèle"),
+    )
+
+    # Catégorie : Engagements de garantie donnés
+    engagement_garantie_donne_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_(
+            "Engagements de garantie donnés pour le compte des établissements de crédit"
+        ),
+    )
+    engagement_garantie_donne_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de garantie donnés pour le compte de la clientèle"),
+    )
+
+    # Catégorie : Engagements sur titres donnés
+    engagement_sur_titres_donnes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements sur titres donnés"),
+    )
+
+    # --- ENGAGEMENTS REÇUS ---
+    # Catégorie : Engagements de financement reçus
+    engagement_financement_recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement reçus d'établissements de crédit"),
+    )
+    engagement_financement_recu_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement reçus de la clientèle"),
+    )
+
+    # Catégorie : Engagements de garantie reçus
+    engagement_garantie_recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de garantie reçus d'établissements de crédit"),
+    )
+
+    # Catégorie : Engagements sur titres reçus
+    engagement_sur_titres_recus = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements sur titres reçus"),
+    )
+
+    # --- Champs de suivi (inchangés) ---
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="offbalance_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    # --- MÉTHODE __str__ AMÉLIORÉE ---
+    def __str__(self):
+        """
+        Fournit une représentation textuelle claire et sécurisée de l'instance,
+        inspirée du modèle Products.
+        """
+        libelle = f"{_('Hors bilan bancaire')} : {self.id}. {self.acheteur or 'N/A'}"
+        if self.annee:
+            libelle += f" ({self.annee.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"
+        return libelle
+
+    class Meta:
+        verbose_name = _("Hors Bilan bancaire")
+        verbose_name_plural = _("Hors Bilans bancaires")
+
+    # ----------------------------------------
+    #  Liste des méthodes utiles pour ce modèle
+    # ----------------------------------------
+
+    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS DONNÉS ---
+
+    @property
+    def total_engagement_financement_donne(self):
+        """Calcule le total des engagements de financement DONNÉS."""
+        fields_to_sum = [
+            self.engagement_financement_donne_ets_credit,
+            self.engagement_financement_donne_clientele,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def total_engagement_garantie_donne(self):
+        """Calcule le total des engagements de garantie DONNÉS."""
+        fields_to_sum = [
+            self.engagement_garantie_donne_ets_credit,
+            self.engagement_garantie_donne_clientele,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS DONNÉS ---
+
+    @property
+    def total_engagements_donnes(self):
+        """Calcule le total de TOUS les engagements DONNÉS."""
+        return (
+            self.total_engagement_financement_donne
+            + self.total_engagement_garantie_donne
+            + (self.engagement_sur_titres_donnes or 0)
+        )
+
+    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS REÇUS ---
+
+    @property
+    def total_engagement_financement_recu(self):
+        """Calcule le total des engagements de financement REÇUS."""
+        fields_to_sum = [
+            self.engagement_financement_recu_ets_credit,
+            self.engagement_financement_recu_clientele,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS REÇUS ---
+
+    @property
+    def total_engagements_recus(self):
+        """Calcule le total de TOUS les engagements REÇUS."""
+        # Note : Il n'y a qu'un seul champ de garantie reçu dans le modèle, donc on l'ajoute directement.
+        return (
+            self.total_engagement_financement_recu
+            + (self.engagement_garantie_recu_ets_credit or 0)
+            + (self.engagement_sur_titres_recus or 0)
+        )
+
 
 ##########################################################
 ##########################################################
@@ -2919,96 +5565,235 @@ class Products(models.Model):
 ##########################################################
 
 
-
-
-
-
-
-
 ##########################################################
 ##########################################################
 # Debut Modules Bilan SysCohada
 ##########################################################
 ##########################################################
 
+
 class ActifS(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
     # Immobilisation incorporelles
-    frais_developpement_prospection = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Frais de développement et prospection"))
-    brevets_licences_logiciels = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Brevets, licences et logiciels"))
-    droits_propriete_commerciale_baux = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Droits de propriété commerciale et baux"))
-    autres_immo_incorporelles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres immobilisations incorporelles"))
+    frais_developpement_prospection = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Frais de développement et prospection"),
+    )
+    brevets_licences_logiciels = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Brevets, licences et logiciels"),
+    )
+    droits_propriete_commerciale_baux = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Droits de propriété commerciale et baux"),
+    )
+    autres_immo_incorporelles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres immobilisations incorporelles"),
+    )
 
     # Immobilisations corporelles
-    terrains = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Terrains"))
-    dons_investissements_net = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dons et investissements nets"))
-    batiments = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Bâtiments"))
+    terrains = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Terrains"),
+    )
+    dons_investissements_net = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dons et investissements nets"),
+    )
+    batiments = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Bâtiments"),
+    )
 
     # dons_investissements_net2 = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True)
-    agencements_amenagements_installations = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Agencements, aménagements et installations"))
-    materiel_mobilier_actif_biologiques = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Matériel, mobilier et actifs biologiques"))
-    materiel_transport = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Matériel de transport"))
+    agencements_amenagements_installations = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Agencements, aménagements et installations"),
+    )
+    materiel_mobilier_actif_biologiques = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Matériel, mobilier et actifs biologiques"),
+    )
+    materiel_transport = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Matériel de transport"),
+    )
 
     # Avances et acomptes sur immobilisations
-    avances_acompte_immobilisations = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Avances et acomptes sur immobilisations"))
+    avances_acompte_immobilisations = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Avances et acomptes sur immobilisations"),
+    )
     # Immobilisations financieres
-    titres_participation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Titres de participation"))
-    autres_immobilisations_financieres = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres immobilisations financières"))
+    titres_participation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Titres de participation"),
+    )
+    autres_immobilisations_financieres = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres immobilisations financières"),
+    )
 
     # Actif circulant de HAO
-    actif_circulant_hao = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Actif circulant HAO"))
+    actif_circulant_hao = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Actif circulant HAO"),
+    )
 
     # Stock et En-cours (calcule)
-    stock_encours = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Stock et en-cours"))
+    stock_encours = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Stock et en-cours"),
+    )
 
     # Creances et emplois similaires (calcule)
-    fournisseurs_avances_versee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Fournisseurs, avances versées"))
-    clients = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Clients"))
-    autres_creances = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres créances"))
+    fournisseurs_avances_versee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Fournisseurs, avances versées"),
+    )
+    clients = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Clients"),
+    )
+    autres_creances = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres créances"),
+    )
 
     # Total de l'actif circulant
-    valeurs_mobilieres_placement = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Valeurs mobilières de placement"))
-    disponibilites = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Disponibilités"))
-    banque_cheque_postal_caisse_assimiles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banque, chèque postal, caisse et assimilés"))
+    valeurs_mobilieres_placement = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Valeurs mobilières de placement"),
+    )
+    disponibilites = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Disponibilités"),
+    )
+    banque_cheque_postal_caisse_assimiles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banque, chèque postal, caisse et assimilés"),
+    )
 
     # Total de la trésorerie et des équivalents de trésorerie
-    ecart_conversion_actif = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Écart de conversion actif"))
+    ecart_conversion_actif = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Écart de conversion actif"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='actifs_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="actifs_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Actif bilan SYSCOHADA : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Actif bilan SYSCOHADA : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Actif bilan SYSCOHADA")
         verbose_name_plural = _("Actifs bilans SYSCOHADA")
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  immobilisation_incorporelles
     #  immobilisations_corporelles
     #  immobilisations_financieres
@@ -3017,82 +5802,221 @@ class ActifS(models.Model):
     #  total_actif_circulant
     #  total_tresorerie_equivalents
     #  total_actif
-    
-    
-    
-
 
 
 class PassifS(models.Model):
     annee = models.ForeignKey(
-        'Annee',
+        "Annee",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
 
-    capital = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Capital"))
-    capital_non_appele_apporteurs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Capital non appelé des apporteurs"))
-    primes_liees_capital_social = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Primes liées au capital social"))
-    ecart_reevaluation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Écart de réévaluation"))
-    reserves_indisponibles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Réserves indisponibles"))
-    reserves_libres = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Réserves libres"))
-    report_nouveau = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Report à nouveau (+ ou -)"))
-    resultat_net_exercice = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Résultat net de l'exercice (bénéfice + ou perte -)"))
-    subventions_investissements = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Subventions d'investissement"))
-    provisions_reglees = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provisions réglées"))
+    capital = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Capital"),
+    )
+    capital_non_appele_apporteurs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Capital non appelé des apporteurs"),
+    )
+    primes_liees_capital_social = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Primes liées au capital social"),
+    )
+    ecart_reevaluation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Écart de réévaluation"),
+    )
+    reserves_indisponibles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Réserves indisponibles"),
+    )
+    reserves_libres = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Réserves libres"),
+    )
+    report_nouveau = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Report à nouveau (+ ou -)"),
+    )
+    resultat_net_exercice = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Résultat net de l'exercice (bénéfice + ou perte -)"),
+    )
+    subventions_investissements = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Subventions d'investissement"),
+    )
+    provisions_reglees = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provisions réglées"),
+    )
 
     # Total des capitaux propres et ressources similaires
-    emprunts_dettes_financieres_diverse = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Emprunts et dettes financières diverses"))
-    dettes_location_vente = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes de location-vente"))
-    provisions_risques_charges = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provisions pour risques et charges"))
+    emprunts_dettes_financieres_diverse = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Emprunts et dettes financières diverses"),
+    )
+    dettes_location_vente = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes de location-vente"),
+    )
+    provisions_risques_charges = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provisions pour risques et charges"),
+    )
 
     # Total des dettes financières et ressources assimilées
     # Total des ressources stables
-    passif_circulant_hao = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Passif circulant HAO"))
-    clients_avances_recues = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Clients, avances reçues"))
-    fournisseurs_exploitation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Fournisseurs d'exploitation"))
-    dettes_fiscales_sociales = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Dettes fiscales et sociales"))
-    autres_dettes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Autres dettes"))
-    provisions_risques_court_terme = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Provisions pour risques à court terme"))
+    passif_circulant_hao = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Passif circulant HAO"),
+    )
+    clients_avances_recues = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Clients, avances reçues"),
+    )
+    fournisseurs_exploitation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Fournisseurs d'exploitation"),
+    )
+    dettes_fiscales_sociales = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Dettes fiscales et sociales"),
+    )
+    autres_dettes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Autres dettes"),
+    )
+    provisions_risques_court_terme = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Provisions pour risques à court terme"),
+    )
 
     # Total des passifs courants
-    banques_credit_escompte = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banques, crédits d'escompte"))
-    banques_etablissements_financiers_credit_caisse = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Banques, établissements financiers et crédits de caisse"))
+    banques_credit_escompte = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banques, crédits d'escompte"),
+    )
+    banques_etablissements_financiers_credit_caisse = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Banques, établissements financiers et crédits de caisse"),
+    )
 
     # Total de la trésorerie et des équivalents de trésorerie
-    ecart_conversion_passif = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Écarts de conversion - Passif"))
+    ecart_conversion_passif = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Écarts de conversion - Passif"),
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='passifs_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="passifs_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return _("Passif bilan SYSCOHADA : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
+        return (
+            _("Passif bilan SYSCOHADA : ")
+            + str(self.id)
+            + ". "
+            + str(self.acheteur)
+            + " ("
+            + str(self.annee)
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Passif bilan SYSCOHADA")
         verbose_name_plural = _("Passifs bilans SYSCOHADA")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  total_capitaux_propres_ressources_similaires
     #  total_dettes_financieres_ressources_similaires
     #  total_ressources_stables
@@ -3101,98 +6025,303 @@ class PassifS(models.Model):
     #  total_passifs
 
 
-
-
-
 class ResultatS(models.Model):
     annee = models.ForeignKey(
-        'Annee', 
-        null=True, 
-        blank=True, 
+        "Annee",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile")
+        verbose_name=_("Année Civile"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur', 
-        null=True, 
-        blank=True, 
+        "Acheteur",
+        null=True,
+        blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur")
+        verbose_name=_("Acheteur"),
     )
-    
 
-    ventes_marchandises_a = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Ventes de marchandises A (+)')
-    achats_marchandises = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Achats de marchandises (-)')
-    variation_stock_marchandises = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Variation des stocks de marchandises (-/+)')
-    
+    ventes_marchandises_a = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Ventes de marchandises A (+)",
+    )
+    achats_marchandises = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Achats de marchandises (-)",
+    )
+    variation_stock_marchandises = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Variation des stocks de marchandises (-/+)",
+    )
+
     # Marge commerciale
-    ventes_produits_manufactures = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Ventes de produits manufacturés B (+)')
-    travaux_services_vendus_c = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Travaux, services vendus C (+)')
-    produits_accessoires_d = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Produits accessoires D (+)')
-    
+    ventes_produits_manufactures = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Ventes de produits manufacturés B (+)",
+    )
+    travaux_services_vendus_c = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Travaux, services vendus C (+)",
+    )
+    produits_accessoires_d = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Produits accessoires D (+)",
+    )
+
     # Chiffre d'affaires
-    production_stockee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Production stockée (ou déstockage) (-/+)')
-    production_immobilisee = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Production Immobilisée (+)')
-    subvention_exploitation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Subvention d\'exploitation (+)')
-    autres_produits = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Autres produits (+)')
-    transfert_charges_exploitation = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Transfert de charges d\'exploitation (+)')
-    achats_matieres_premieres_fournitures_connexes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Achats de matières premières et fournitures connexes (-)')
-    variation_stock_matieres_premieres_fournitures_connexes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Variation des stocks de matières premières et fournitures connexes (-/+)')
-    autres_achats = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Autres achats (-)')
-    variation_stock_autres_fournitures = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Variation des stocks d\'autres fournitures (-/+)')
-    transport = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Transport (-)')
-    services_exterieurs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Services extérieurs (-)')
-    impots_taxes = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Impots et taxes (-)')
-    autres_depenses = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Autres dépenses (-)')
-    
+    production_stockee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Production stockée (ou déstockage) (-/+)",
+    )
+    production_immobilisee = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Production Immobilisée (+)",
+    )
+    subvention_exploitation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Subvention d'exploitation (+)",
+    )
+    autres_produits = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Autres produits (+)",
+    )
+    transfert_charges_exploitation = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Transfert de charges d'exploitation (+)",
+    )
+    achats_matieres_premieres_fournitures_connexes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Achats de matières premières et fournitures connexes (-)",
+    )
+    variation_stock_matieres_premieres_fournitures_connexes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Variation des stocks de matières premières et fournitures connexes (-/+)",
+    )
+    autres_achats = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Autres achats (-)",
+    )
+    variation_stock_autres_fournitures = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Variation des stocks d'autres fournitures (-/+)",
+    )
+    transport = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Transport (-)",
+    )
+    services_exterieurs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Services extérieurs (-)",
+    )
+    impots_taxes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Impots et taxes (-)",
+    )
+    autres_depenses = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Autres dépenses (-)",
+    )
+
     # Valeur ajoutee
-    frais_personnel = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Frais de personnel (-)')
-    
+    frais_personnel = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Frais de personnel (-)",
+    )
+
     # Excedent brut d'exploitation
-    reprise_depreciations_amortissements_provision_pertes_valeurs_p = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Reprises de dépréciations, amortissements, provisions et pertes de valeur (+)')
-    reprise_depreciations_amortissements_provision_pertes_valeurs_m = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)')
-    
+    reprise_depreciations_amortissements_provision_pertes_valeurs_p = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Reprises de dépréciations, amortissements, provisions et pertes de valeur (+)",
+    )
+    reprise_depreciations_amortissements_provision_pertes_valeurs_m = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)",
+    )
+
     # Resultat d'exploitation
-    produits_financiers_assimiles = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Produits financiers et assimilés (+)')
-    reprise_provision_perte_valeur = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Reprises sur provisions et pertes de valeur (+)')
-    transfert_charges_financieres = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Transfert de charges financières (+)')
-    charges_financieres_assimilees = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Charges financières et assimilées (-)')
-    dotations_provisions_depreciations_financieres = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Dotations aux provisions et dépréciations financières (-)')
-    
+    produits_financiers_assimiles = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Produits financiers et assimilés (+)",
+    )
+    reprise_provision_perte_valeur = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Reprises sur provisions et pertes de valeur (+)",
+    )
+    transfert_charges_financieres = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Transfert de charges financières (+)",
+    )
+    charges_financieres_assimilees = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Charges financières et assimilées (-)",
+    )
+    dotations_provisions_depreciations_financieres = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Dotations aux provisions et dépréciations financières (-)",
+    )
+
     # Resultat Financier
     # Resultat des activites ordinaires (XE + XF)
-    produits_cession_immobilisations = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Produits des cessions d\'immobilisations (+)')
-    autres_produits_hao = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Autres produits HAO (+)')
-    valeur_comptable_cessions_actifs_immobilises = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Valeur comptable des cessions d\'actifs immobilisés (-)')
-    autres_charges_hao = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Autres charges HAO (-)')
-    
+    produits_cession_immobilisations = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Produits des cessions d'immobilisations (+)",
+    )
+    autres_produits_hao = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Autres produits HAO (+)",
+    )
+    valeur_comptable_cessions_actifs_immobilises = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Valeur comptable des cessions d'actifs immobilisés (-)",
+    )
+    autres_charges_hao = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Autres charges HAO (-)",
+    )
+
     # Resultats des activites ordinaires (Somme TN à RP)
-    participation_travailleurs = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Participation des travailleurs (-)')
-    charge_impot_revenu = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True, verbose_name='Charge d\'impôt sur le revenu (-)')
-    #Resultat net (XG + XH + RQ +RS)
-    
+    participation_travailleurs = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Participation des travailleurs (-)",
+    )
+    charge_impot_revenu = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Charge d'impôt sur le revenu (-)",
+    )
+    # Resultat net (XG + XH + RQ +RS)
+
     created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True, 
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='resultats_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="resultats_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     def __str__(self):
-        return "Résultat bilan SYSCOHADA : " + self.id + ". " +  self.acheteur + " (" + self.annee + ")"
+        return (
+            "Résultat bilan SYSCOHADA : "
+            + self.id
+            + ". "
+            + self.acheteur
+            + " ("
+            + self.annee
+            + ")"
+        )
 
     class Meta:
         verbose_name = _("Résultat bilan SYSCOHADA")
         verbose_name_plural = _("Résultats bilans SYSCOHADA")
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  marge_commerciale
     #  chiffre_affaires
     #  valeur_ajoutee
@@ -3202,11 +6331,9 @@ class ResultatS(models.Model):
     #  resultat_activites_ordinaires_xe
     #  resultat_activites_ordinaires_tn
     #  resultat_net
-    
-        
-        
+
     #  Liste des methodes utiles pour ce model
-    
+
     #  marge_commerciale
     #  chiffre_affaires
     #  valeur_ajoutee
@@ -3216,8 +6343,8 @@ class ResultatS(models.Model):
     #  resultat_activites_ordinaires_xe
     #  resultat_activites_ordinaires_tn
     #  resultat_net
-    
-    
+
+
 # Ratios Bilan SYSCOHADA
 
 #  fonds_de_roulement
@@ -3254,8 +6381,669 @@ class ResultatS(models.Model):
 ##########################################################
 ##########################################################
 
+##########################################################
+##########################################################
+# Debut Modules Bilan IRFS COBAC
+##########################################################
+##########################################################
+# Fichier: DANS VOTRE FICHIER models.py
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+# Ces énumérations sont déjà définies dans votre code, nous les réutilisons.
+TYPE_BILAN_CHOICES = (
+    ("annuel", "Bilan annuel"),
+    ("semestriel", "Bilan semestriel"),
+)
+SEMESTRE_CHOICES = (
+    (1, "1er semestre (Janvier - Juin)"),
+    (2, "2e semestre (Juillet - Décembre)"),
+)
 
 
+class BilanIFRSBase(models.Model):
+    """
+    Modèle abstrait de base pour les états financiers IFRS.
+    Contient les champs communs d'identification et de suivi.
+    """
+
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+    )
+    annee = models.ForeignKey(
+        "Annee",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,  # Utiliser PROTECT pour éviter la suppression accidentelle
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
+    )
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        verbose_name=_("Acheteur"),
+    )
+
+    # Champs de suivi
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "CustomUser",
+        related_name="%(class)s_created",
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="%(class)s_updated",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+
+    class Meta:
+        abstract = True  # Indique que ce modèle est abstrait
+        unique_together = (
+            "acheteur",
+            "annee",
+            "semestre",
+        )  # Assure qu'il n'y a qu'un seul bilan par période et par acheteur
+        ordering = ["-annee", "-semestre"]
+
+    def __str__(self):
+        """
+        Fournit une représentation textuelle claire de l'objet.
+        """
+        libelle = f"{self.acheteur or 'N/A'}"
+        if self.annee:
+            libelle += f" ({self.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"
+        return libelle
+
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+# Assurez-vous que BilanIFRSBase est défini au-dessus de cette classe.
+
+
+class ActifIFRS(BilanIFRSBase):
+    """
+    Modèle pour l'Actif du bilan, basé sur la structure fournie.
+    """
+
+    # === ACTIF NON COURANT ===
+
+    # --- Immobilisations incorporelles ---
+    goodwill = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Goodwill")
+    )
+    marques_et_droits_auteur = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Marques et droits d'auteur"),
+    )
+    brevets_et_licences = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Brevets et licences"),
+    )
+    autres_immobilisations_incorporelles = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Autres immobilisations incorporelles"),
+    )
+
+    # --- Immobilisations corporelles ---
+    terrains = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Terrains")
+    )
+    batiments = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Bâtiments")
+    )
+    materiel_et_equipement = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Matériel et équipement"),
+    )
+
+    # --- Immobilisations financières ---
+    participations_dans_des_societes = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Participations dans des sociétés"),
+    )
+    prets_a_long_terme = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Prêts à long terme")
+    )
+
+    # === ACTIF COURANT ===
+
+    # --- Stocks ---
+    matieres_premieres = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Matières premières")
+    )
+    produits_finis = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Produits finis")
+    )
+
+    # --- Créances ---
+    creances_a_court_terme = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Créances à court terme"),
+    )
+    avances_et_acomptes = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Avances et acomptes"),
+    )
+    creances_diverses = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Créances diverses")
+    )
+
+    # --- Trésorerie ---
+    disponibilites_bancaires = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Disponibilités bancaires"),
+    )
+
+    # === PROPRIÉTÉS DE CALCUL AUTOMATIQUE ===
+
+    @property
+    def total_actif_non_courant(self):
+        """Calcule le total de l'actif non courant."""
+        fields = [
+            self.goodwill,
+            self.marques_et_droits_auteur,
+            self.brevets_et_licences,
+            self.autres_immobilisations_incorporelles,
+            self.terrains,
+            self.batiments,
+            self.materiel_et_equipement,
+            self.participations_dans_des_societes,
+            self.prets_a_long_terme,
+        ]
+        return sum(field or 0 for field in fields)
+
+    @property
+    def total_actif_courant(self):
+        """Calcule le total de l'actif courant."""
+        fields = [
+            self.matieres_premieres,
+            self.produits_finis,
+            self.creances_a_court_terme,
+            self.avances_et_acomptes,
+            self.creances_diverses,
+            self.disponibilites_bancaires,
+        ]
+        return sum(field or 0 for field in fields)
+
+    @property
+    def total_actif(self):
+        """Calcule le total général de l'actif."""
+        return self.total_actif_non_courant + self.total_actif_courant
+
+    class Meta(BilanIFRSBase.Meta):
+        verbose_name = _("Actif IFRS")
+        verbose_name_plural = _("Actifs IFRS")
+
+
+class PassifIFRS(BilanIFRSBase):
+    """
+    Modèle pour le Passif et les Capitaux Propres du bilan, basé sur la nouvelle structure.
+    """
+
+    # === CAPITAUX PROPRES ===
+    capital_social = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Capital social")
+    )
+    primes_emission = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Primes d'émission")
+    )
+    reserves_legales = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Réserves légales")
+    )
+    reserves_statutaires = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Réserves statutaires"),
+    )
+    reserves_facultatives = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Réserves facultatives"),
+    )
+    autres_reserves = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Autres réserves")
+    )
+    resultat_net_reporte = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Résultat net reporté"),
+    )
+
+    # === PASSIF NON COURANT ===
+    emprunts_bancaires_long_terme = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Emprunts bancaires à long terme"),
+    )
+    obligations = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Obligations")
+    )
+    provisions_pour_retraites_et_pensions = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Provisions pour retraites et pensions"),
+    )
+    autres_provisions = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Autres provisions")
+    )
+
+    # === PASSIF COURANT ===
+    dettes_fournisseurs_a_court_terme = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Dettes fournisseurs à court terme"),
+    )
+    impots_sur_le_revenu = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Impôts sur le revenu"),
+    )
+    cotisations_sociales = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Cotisations sociales"),
+    )
+    emprunts_bancaires_court_terme = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Emprunts bancaires à court terme"),
+    )
+    dettes_diverses = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Dettes diverses")
+    )
+    dividendes_a_payer = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Dividendes à payer")
+    )
+
+    # === PROPRIÉTÉS DE CALCUL AUTOMATIQUE ===
+
+    @property
+    def total_capitaux_propres(self):
+        """Calcule le total des capitaux propres."""
+        return sum(
+            field or 0
+            for field in [
+                self.capital_social,
+                self.primes_emission,
+                self.reserves_legales,
+                self.reserves_statutaires,
+                self.reserves_facultatives,
+                self.autres_reserves,
+                self.resultat_net_reporte,
+            ]
+        )
+
+    @property
+    def total_passif_non_courant(self):
+        """Calcule le total du passif non courant."""
+        return sum(
+            field or 0
+            for field in [
+                self.emprunts_bancaires_long_terme,
+                self.obligations,
+                self.provisions_pour_retraites_et_pensions,
+                self.autres_provisions,
+            ]
+        )
+
+    @property
+    def total_passif_courant(self):
+        """Calcule le total du passif courant."""
+        return sum(
+            field or 0
+            for field in [
+                self.dettes_fournisseurs_a_court_terme,
+                self.impots_sur_le_revenu,
+                self.cotisations_sociales,
+                self.emprunts_bancaires_court_terme,
+                self.dettes_diverses,
+                self.dividendes_a_payer,
+            ]
+        )
+
+    @property
+    def total_passif(self):
+        """Calcule le total général du passif (Passif + Capitaux Propres)."""
+        return (
+            self.total_capitaux_propres
+            + self.total_passif_non_courant
+            + self.total_passif_courant
+        )
+
+    class Meta(BilanIFRSBase.Meta):
+        verbose_name = _("Passif IFRS")
+        verbose_name_plural = _("Passifs IFRS")
+
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+# Assurez-vous que votre classe de base BilanIFRSBase est définie au-dessus.
+
+
+class ResultatIFRS(BilanIFRSBase):
+    """
+    Modèle pour le Compte de Résultat, basé sur la nouvelle structure.
+    """
+
+    # === PRODUITS ===
+    ventes_biens = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Ventes de biens")
+    )
+    ventes_services = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Ventes de services")
+    )
+    subventions_exploitation = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Subventions d'exploitation"),
+    )
+    revenus_exceptionnels = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Revenus exceptionnels"),
+    )
+    revenus_financiers = models.DecimalField(
+        max_digits=18, decimal_places=2, default=0, verbose_name=_("Revenus financiers")
+    )
+
+    # === CHARGES ===
+    achats_matieres_premieres = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Achats de matières premières"),
+    )
+    autres_couts_directs = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Autres coûts directs"),
+    )
+    salaires_et_charges_sociales = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Salaires et charges sociales"),
+    )
+    loyer_et_charges_locatives = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Loyer et charges locatives"),
+    )
+    autres_charges_exploitation = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Autres charges d'exploitation"),
+    )
+    amortissement_des_immobilisations = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Amortissement des immobilisations"),
+    )
+    provisions_pour_risques_et_charges = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Provisions pour risques et charges"),
+    )
+    charges_financieres = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Charges financières (Charges d'intérêts)"),
+    )
+    impot_sur_les_societes = models.DecimalField(
+        max_digits=18,
+        decimal_places=2,
+        default=0,
+        verbose_name=_("Impôt sur les sociétés"),
+    )
+
+    # === PROPRIÉTÉS DE CALCUL AUTOMATIQUE (SOLDES INTERMÉDIAIRES) ===
+
+    @property
+    def chiffre_affaires(self):
+        return (self.ventes_biens or 0) + (self.ventes_services or 0)
+
+    @property
+    def autres_produits_operationnels(self):
+        return (self.subventions_exploitation or 0) + (self.revenus_exceptionnels or 0)
+
+    @property
+    def total_produits(self):
+        return self.chiffre_affaires + self.autres_produits_operationnels
+
+    @property
+    def cout_des_ventes(self):
+        return (self.achats_matieres_premieres or 0) + (self.autres_couts_directs or 0)
+
+    @property
+    def charges_operationnelles(self):
+        return (
+            (self.salaires_et_charges_sociales or 0)
+            + (self.loyer_et_charges_locatives or 0)
+            + (self.autres_charges_exploitation or 0)
+        )
+
+    @property
+    def amortissements_et_provisions(self):
+        return (self.amortissement_des_immobilisations or 0) + (
+            self.provisions_pour_risques_et_charges or 0
+        )
+
+    @property
+    def total_charges(self):
+        # Exclut les charges financières et l'impôt qui sont traités plus bas
+        return (
+            self.cout_des_ventes
+            + self.charges_operationnelles
+            + self.amortissements_et_provisions
+        )
+
+    @property
+    def resultat_operationnel(self):
+        return self.total_produits - self.total_charges
+
+    @property
+    def resultat_financier(self):
+        return (self.revenus_financiers or 0) - (self.charges_financieres or 0)
+
+    @property
+    def resultat_avant_impot(self):
+        return self.resultat_operationnel + self.resultat_financier
+
+    @property
+    def resultat_net(self):
+        return self.resultat_avant_impot - (self.impot_sur_les_societes or 0)
+
+    class Meta(BilanIFRSBase.Meta):
+        verbose_name = _("Compte de Résultat IFRS")
+        verbose_name_plural = _("Comptes de Résultat IFRS")
+
+
+# Fichier: models.py
+
+
+class RatiosIFRS(models.Model):
+    """
+    Modèle pour calculer et afficher les ratios financiers clés.
+    """
+
+    actif = models.OneToOneField(ActifIFRS, on_delete=models.CASCADE, related_name="+")
+    passif = models.OneToOneField(
+        PassifIFRS, on_delete=models.CASCADE, related_name="+"
+    )
+    resultat = models.OneToOneField(
+        ResultatIFRS, on_delete=models.CASCADE, related_name="+"
+    )
+
+    annee = models.ForeignKey("Annee", on_delete=models.CASCADE, null=True)
+    acheteur = models.ForeignKey("Acheteur", on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return f"Ratios pour {self.acheteur} ({self.annee})"
+
+    # --- Fonctions utilitaires pour éviter les erreurs de division par zéro ---
+    def _safe_divide(self, numerator, denominator, percentage=False):
+        numerator = numerator or 0
+        denominator = denominator or 0
+        if denominator == 0:
+            return 0
+        ratio = numerator / denominator
+        return ratio * 100 if percentage else ratio
+
+    # === RATIOS DE RENTABILITÉ FINANCIÈRE ===
+    @property
+    def roa(self):  # Return on Assets
+        return self._safe_divide(
+            self.resultat.resultat_net, self.actif.total_actif, percentage=True
+        )
+
+    @property
+    def roe(self):  # Return on Equity
+        return self._safe_divide(
+            self.resultat.resultat_net,
+            self.passif.total_capitaux_propres,
+            percentage=True,
+        )
+
+    # === RATIOS DE LIQUIDITÉ ===
+    @property
+    def liquidite_generale(self):  # Current Ratio
+        return self._safe_divide(
+            self.actif.total_actif_courant, self.passif.total_passif_courant
+        )
+
+    @property
+    def liquidite_immediate(self):  # Quick Ratio
+        # Actif courant - Stocks
+        quick_assets = (self.actif.total_actif_courant or 0) - (
+            (self.actif.matieres_premieres or 0) + (self.actif.produits_finis or 0)
+        )
+        return self._safe_divide(quick_assets, self.passif.total_passif_courant)
+
+    # === RATIOS DE SOLVABILITÉ ===
+    @property
+    def ratio_endettement_total(self):  # Debt Ratio
+        return self._safe_divide(
+            self.passif.total_passif, self.actif.total_actif, percentage=True
+        )
+
+    @property
+    def ratio_couverture_interets(self):  # Interest Coverage Ratio
+        return self._safe_divide(
+            self.resultat.resultat_avant_impot, self.resultat.charges_financieres
+        )
+
+    # === RATIOS DE RENTABILITÉ DES VENTES ===
+    @property
+    def marge_brute(self):
+        # Marge Brute = (Chiffre d'affaires - Coût des ventes) / Chiffre d'affaires
+        gross_profit = (self.resultat.chiffre_affaires or 0) - (
+            self.resultat.cout_des_ventes or 0
+        )
+        return self._safe_divide(
+            gross_profit, self.resultat.chiffre_affaires, percentage=True
+        )
+
+    @property
+    def marge_operationnelle(self):
+        return self._safe_divide(
+            self.resultat.resultat_operationnel,
+            self.resultat.chiffre_affaires,
+            percentage=True,
+        )
+
+    @property
+    def marge_nette(self):
+        return self._safe_divide(
+            self.resultat.resultat_net, self.resultat.chiffre_affaires, percentage=True
+        )
+
+    # === RATIOS DE GESTION ===
+    @property
+    def rotation_des_actifs(self):  # Asset Turnover
+        return self._safe_divide(
+            self.resultat.chiffre_affaires, self.actif.total_actif, percentage=True
+        )
+
+    @property
+    def dso(self):  # Days Sales Outstanding
+        # DSO = (Créances clients / Chiffre d'affaires) * 365
+        receivables = (
+            self.actif.creances_a_court_terme or 0
+        )  # Simplification, ajustez si nécessaire
+        turnover = self.resultat.chiffre_affaires
+        if turnover:
+            return (receivables / turnover) * 365
+        return 0
+
+    class Meta:
+        verbose_name = _("Ratio IFRS")
+        verbose_name_plural = _("Ratios IFRS")
+        unique_together = ("acheteur", "annee")
+
+
+##########################################################
+##########################################################
+# Fin Modules Bilan IRFS COBAC
+##########################################################
+##########################################################
 
 
 ##########################################################
@@ -3265,35 +7053,30 @@ class ResultatS(models.Model):
 ##########################################################
 class Logo(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='logo',
+        null=True,
+        blank=True,
+        related_name="logo",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au logo")
+        help_text=_("Acheteur associé au logo"),
     )
     image = models.ImageField(
         _("Image"),
-        upload_to='logos/',
+        upload_to="logos/",
         null=True,
         blank=True,
-        help_text=_("Image du logo de l'entreprise")
+        help_text=_("Image du logo de l'entreprise"),
     )
     description = models.TextField(
-        _("Description"),
-        null=True,
-        blank=True,
-        help_text=_("Description du logo")
+        _("Description"), null=True, blank=True, help_text=_("Description du logo")
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3304,42 +7087,35 @@ class Logo(models.Model):
         return f"Logo de {self.acheteur.nom}"
 
 
-
-
 class TelephoneAcheteur(models.Model):
-    telephone = models.TextField(
-        max_length=100,
-        verbose_name=_("Téléphone")
-    )
+    telephone = models.TextField(max_length=100, verbose_name=_("Téléphone"))
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name='telephones',
+        related_name="telephones",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au téléphone")
+        help_text=_("Acheteur associé au téléphone"),
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        'CustomUser',
+        "CustomUser",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name='telephones_created'
+        related_name="telephones_created",
     )
     updated_by = models.ForeignKey(
-        'CustomUser',
-        related_name='telephones_updated',
+        "CustomUser",
+        related_name="telephones_updated",
         null=True,
         blank=True,
-        on_delete=models.DO_NOTHING
+        on_delete=models.DO_NOTHING,
     )
 
     class Meta:
@@ -3350,43 +7126,35 @@ class TelephoneAcheteur(models.Model):
         return f"Numéro de téléphone de {self.acheteur.nom}"
 
 
-
-
-
 class AdresseAcheteur(models.Model):
-    adresse = models.TextField(
-        max_length=100,
-        verbose_name=_("Adresse")
-    )
+    adresse = models.TextField(max_length=100, verbose_name=_("Adresse"))
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name='adresses',
+        related_name="adresses",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au téléphone")
+        help_text=_("Acheteur associé au téléphone"),
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        'CustomUser',
+        "CustomUser",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name='adresses_created'
+        related_name="adresses_created",
     )
     updated_by = models.ForeignKey(
-        'CustomUser',
-        related_name='adresses_updated',
+        "CustomUser",
+        related_name="adresses_updated",
         null=True,
         blank=True,
-        on_delete=models.DO_NOTHING
+        on_delete=models.DO_NOTHING,
     )
 
     class Meta:
@@ -3397,43 +7165,35 @@ class AdresseAcheteur(models.Model):
         return f"Adresse de {self.acheteur.nom}"
 
 
-
-
-
 class PortableAcheteur(models.Model):
-    portable = models.TextField(
-        max_length=100,
-        verbose_name=_("Numéro portable")
-    )
+    portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"))
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name='portables',
+        related_name="portables",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au portable")
+        help_text=_("Acheteur associé au portable"),
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        'CustomUser',
+        "CustomUser",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name='portables_created'
+        related_name="portables_created",
     )
     updated_by = models.ForeignKey(
-        'CustomUser',
-        related_name='portables_updated',
+        "CustomUser",
+        related_name="portables_updated",
         null=True,
         blank=True,
-        on_delete=models.DO_NOTHING
+        on_delete=models.DO_NOTHING,
     )
 
     class Meta:
@@ -3444,43 +7204,38 @@ class PortableAcheteur(models.Model):
         return f"Numéro de portable de {self.acheteur.nom}"
 
 
-
-
-
 class EmailAcheteur(models.Model):
     email = models.TextField(
         max_length=254,  # Limite la taille à celle d'une adresse email standard
-        verbose_name=_("Adresse email")
+        verbose_name=_("Adresse email"),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name='emails',
+        related_name="emails",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à l'email")
+        help_text=_("Acheteur associé à l'email"),
     )
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        'CustomUser',
+        "CustomUser",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name='emails_created'
+        related_name="emails_created",
     )
     updated_by = models.ForeignKey(
-        'CustomUser',
-        related_name='emails_updated',
+        "CustomUser",
+        related_name="emails_updated",
         null=True,
         blank=True,
-        on_delete=models.DO_NOTHING
+        on_delete=models.DO_NOTHING,
     )
 
     class Meta:
@@ -3491,42 +7246,31 @@ class EmailAcheteur(models.Model):
         return f"Email de {self.acheteur.nom}"
 
 
-
-
 class Document(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='documents',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au document")
-    )
-    titre = models.CharField(
-        _("Titre"),
-        max_length=255,
-        help_text=_("Titre du document")
-    )
-    fichier = models.FileField(
-        _("Fichier"),
-        upload_to='documents/',
-        help_text=_("Fichier du document")
-    )
-    description = models.TextField(
-        _("Description"),
         null=True,
         blank=True,
-        help_text=_("Description du document")
+        related_name="documents",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au document"),
+    )
+    titre = models.CharField(
+        _("Titre"), max_length=255, help_text=_("Titre du document")
+    )
+    fichier = models.FileField(
+        _("Fichier"), upload_to="documents/", help_text=_("Fichier du document")
+    )
+    description = models.TextField(
+        _("Description"), null=True, blank=True, help_text=_("Description du document")
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3537,51 +7281,40 @@ class Document(models.Model):
         return f"{self.titre} - {self.acheteur.nom}"
 
 
-
-
-
 class Swot(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='swot',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à l'analyse SWOT")
-    )
-    forces = models.TextField(
-        _("Forces"),
         null=True,
         blank=True,
-        help_text=_("Forces de l'entreprise")
+        related_name="swot",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à l'analyse SWOT"),
+    )
+    forces = models.TextField(
+        _("Forces"), null=True, blank=True, help_text=_("Forces de l'entreprise")
     )
     faiblesses = models.TextField(
         _("Faiblesses"),
         null=True,
         blank=True,
-        help_text=_("Faiblesses de l'entreprise")
+        help_text=_("Faiblesses de l'entreprise"),
     )
     opportunites = models.TextField(
         _("Opportunités"),
         null=True,
         blank=True,
-        help_text=_("Opportunités de l'entreprise")
+        help_text=_("Opportunités de l'entreprise"),
     )
     menaces = models.TextField(
-        _("Menaces"),
-        null=True,
-        blank=True,
-        help_text=_("Menaces de l'entreprise")
+        _("Menaces"), null=True, blank=True, help_text=_("Menaces de l'entreprise")
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3590,41 +7323,30 @@ class Swot(models.Model):
 
     def __str__(self):
         return f"SWOT de {self.acheteur.nom}"
-    
-    
-  
-    
-    
+
+
 class ProduitService(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='produits_services',
+        null=True,
+        blank=True,
+        related_name="produits_services",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé")
+        help_text=_("Acheteur associé"),
     )
     produits = models.TextField(
-        _("Produits"),
-        null=True,
-        blank=True,
-        help_text=_("Produits de l'entreprise")
+        _("Produits"), null=True, blank=True, help_text=_("Produits de l'entreprise")
     )
     services = models.TextField(
-        _("Services"),
-        null=True,
-        blank=True,
-        help_text=_("Services de l'entreprise")
+        _("Services"), null=True, blank=True, help_text=_("Services de l'entreprise")
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3633,35 +7355,27 @@ class ProduitService(models.Model):
 
     def __str__(self):
         return f"Produits & Services de {self.acheteur.nom}"
-    
-    
-    
-    
-    
+
+
 class Marque(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='marques',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé")
-    )
-    marques = models.TextField(
-        _("Marques"),
         null=True,
         blank=True,
-        help_text=_("Marques de l'entreprise")
+        related_name="marques",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé"),
+    )
+    marques = models.TextField(
+        _("Marques"), null=True, blank=True, help_text=_("Marques de l'entreprise")
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3672,50 +7386,45 @@ class Marque(models.Model):
         return f"Marque de {self.acheteur.nom}"
 
 
-
-
-
 class ProcedureCollective(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='procedures_collectives',
+        null=True,
+        blank=True,
+        related_name="procedures_collectives",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à la procédure collective")
+        help_text=_("Acheteur associé à la procédure collective"),
     )
     type_procedure = models.CharField(
         _("Type de procédure"),
         max_length=255,
-        help_text=_("Type de procédure collective")
+        help_text=_("Type de procédure collective"),
     )
     date_ouverture = models.DateField(
         _("Date d'ouverture"),
         null=True,
         blank=True,
-        help_text=_("Date d'ouverture de la procédure")
+        help_text=_("Date d'ouverture de la procédure"),
     )
     date_cloture = models.DateField(
         _("Date de clôture"),
         null=True,
         blank=True,
-        help_text=_("Date de clôture de la procédure")
+        help_text=_("Date de clôture de la procédure"),
     )
     description = models.TextField(
         _("Description"),
         null=True,
         blank=True,
-        help_text=_("Description de la procédure collective")
+        help_text=_("Description de la procédure collective"),
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3726,38 +7435,33 @@ class ProcedureCollective(models.Model):
         return f"{self.type_procedure} - {self.acheteur.nom}"
 
 
-
-
-
 class RegistreCommerce(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='registre_commerce',
+        null=True,
+        blank=True,
+        related_name="registre_commerce",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au registre de commerce")
+        help_text=_("Acheteur associé au registre de commerce"),
     )
     numero = models.CharField(
         _("Numéro de registre de commerce"),
         max_length=255,
-        help_text=_("Numéro de registre de commerce de l'entreprise")
+        help_text=_("Numéro de registre de commerce de l'entreprise"),
     )
     date_inscription = models.DateField(
         _("Date d'inscription"),
         null=True,
         blank=True,
-        help_text=_("Date d'inscription au registre de commerce")
+        help_text=_("Date d'inscription au registre de commerce"),
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3768,38 +7472,33 @@ class RegistreCommerce(models.Model):
         return f"Registre de commerce de {self.acheteur.nom}"
 
 
-
-
-
 class Cotisation(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='cotisations',
+        null=True,
+        blank=True,
+        related_name="cotisations",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro de sécurité sociale")
+        help_text=_("Acheteur associé au numéro de sécurité sociale"),
     )
     numero = models.CharField(
         _("Numéro de sécurité sociale"),
         max_length=255,
-        help_text=_("Numéro de sécurité sociale de l'entreprise")
+        help_text=_("Numéro de sécurité sociale de l'entreprise"),
     )
     date_affiliation = models.DateField(
         _("Date d'affiliation"),
         null=True,
         blank=True,
-        help_text=_("Date d'affiliation à la sécurité sociale")
+        help_text=_("Date d'affiliation à la sécurité sociale"),
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3810,36 +7509,31 @@ class Cotisation(models.Model):
         return f"Cotisations Sociales de {self.acheteur.nom}"
 
 
-
-
-
 class CodeNaceAcheteur(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='code_nace',
+        null=True,
+        blank=True,
+        related_name="code_nace",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au code NACE")
+        help_text=_("Acheteur associé au code NACE"),
     )
     code = models.ForeignKey(
-        'SubCategoryNaceCode',
+        "SubCategoryNaceCode",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='code_nace_acheteur',
+        null=True,
+        blank=True,
+        related_name="code_nace_acheteur",
         verbose_name=_("Acheteur"),
-        help_text=_("Code associé au code NACE")
+        help_text=_("Code associé au code NACE"),
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3850,36 +7544,31 @@ class CodeNaceAcheteur(models.Model):
         return f"Code NACE de {self.acheteur.nom}"
 
 
-
-
-
 class CodeNafAcheteur(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='code_naf',
+        null=True,
+        blank=True,
+        related_name="code_naf",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au code NAF")
+        help_text=_("Acheteur associé au code NAF"),
     )
     code = models.ForeignKey(
-        'SubCategoryNafCode',
+        "SubCategoryNafCode",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='code_naf_acheteur',
+        null=True,
+        blank=True,
+        related_name="code_naf_acheteur",
         verbose_name=_("Acheteur"),
-        help_text=_("Code associé au code NAF")
+        help_text=_("Code associé au code NAF"),
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -3890,16 +7579,524 @@ class CodeNafAcheteur(models.Model):
         return f"Code NAF de {self.acheteur.nom}"
 
 
+# Tables supplementaires
+
+# Assuming you already have an Acheteur model defined elsewhere
+# For example:
+# class Acheteur(models.Model):
+#     nom = models.CharField(max_length=255)
+#     # ... other fields for the buyer
+
+
+class Certification(models.Model):
+    """
+    Represents certifications obtained by an Acheteur.
+    """
+
+    TYPES = [
+        ("management_risque", "Management du risque"),
+        ("securite_information", "Management de la sécurité de l'information"),
+        ("risk_manager", "Risk Manager & Méthodes d'Appréciation du Risque"),
+        ("continuite_activite", "Management de la continuité d'activité (SMCA)"),
+        ("anti_corruption", "Management Anti–Corruption"),
+        ("cybersecurity_manager", "Lead Cybersecurity Manager"),
+        ("qualite", "Management de la Qualité"),
+        ("dpo_rgpd", "DPO : RGPD, Certified Data Protection Officer"),
+        ("bon_payeur", "Certificat de Bon payeur"),
+        ("autre", "Autre certification"),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="certifications"
+    )
+    type_certification = models.CharField(
+        max_length=50, choices=TYPES, verbose_name="Type de Certification"
+    )
+    nom_certification = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Nom Spécifique de la Certification",
+    )
+    date_obtention = models.DateField(
+        blank=True, null=True, verbose_name="Date d'Obtention"
+    )
+    organisme_delivreur = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="Organisme Délivreur"
+    )
+    description = models.TextField(
+        blank=True, null=True, verbose_name="Description / Commentaires"
+    )
+
+    class Meta:
+        verbose_name = "Certification"
+        verbose_name_plural = "Certifications"
+        unique_together = ("acheteur", "type_certification", "nom_certification")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_certification": self.type_certification,
+            "nom_certification": self.nom_certification,
+            "date_obtention": self.date_obtention,
+            "organisme_delivreur": self.organisme_delivreur,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_certification": self.type_certification,
+            "nom_certification": self.nom_certification,
+            "date_obtention": self.date_obtention,
+            "organisme_delivreur": self.organisme_delivreur,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        # Mappage des champs aux codes internes des ElementSurveillance
+        field_to_element_code = {
+            "type_certification": "CERTIFICATION_CHANGE",  # Un changement de type est un changement de certification
+            "nom_certification": "CERTIFICATION_CHANGE",  # Idem
+            "date_obtention": "CERTIFICATION_CHANGE",  # Idem
+            "organisme_delivreur": "CERTIFICATION_CHANGE",  # Idem
+        }
+
+        changes_detected = {}
+
+        # Pour NEW_CERTIFICATION: Si c'est un nouvel enregistrement
+        if self.pk is None:  # Si l'objet est nouveau
+            changes_detected.setdefault("NEW_CERTIFICATION", []).append(
+                f"Une nouvelle certification a été ajoutée : '{self.nom_certification or self.get_type_certification_display()}'."
+            )
+
+        # Pour CERTIFICATION_LOSS: Si une certification est supprimée, cela est plus complexe à gérer avec save()
+        # car save() est appelé sur l'instance qui est modifiée/créée.
+        # Pour une suppression, vous devriez utiliser un signal `post_delete` ou un Manager personnalisé.
+        # Pour l'instant, nous nous concentrons sur les modifications via save().
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                changes_detected.setdefault(element_code, []).append(
+                    f"La certification '{self.nom_certification or self.get_type_certification_display()}' "
+                    f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                    f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_type_certification_display()}"
+
+
+class InnovationDeveloppement(models.Model):
+    """
+    Represents innovation and development activities of an Acheteur.
+    """
+
+    TYPES_INNOVATION = [
+        ("nouveau_produit_service", "Développement de Nouveau produit ou service"),
+        ("nouveaux_outils_production", "Acquisition de nouveaux outils de production"),
+        ("innovation_produit", "L'innovation de produit"),
+        ("innovation_procede", "L'innovation de procédé"),
+        ("innovation_commercialisation", "L'innovation de commercialisation"),
+        ("innovation_organisation", "L'innovation d'organisation"),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="innovations"
+    )
+    type_innovation = models.CharField(
+        max_length=50, choices=TYPES_INNOVATION, verbose_name="Type d'Innovation"
+    )
+    titre = models.CharField(
+        max_length=255, verbose_name="Titre de l'Innovation", blank=True, null=True
+    )
+    description = models.TextField(
+        blank=True, null=True, verbose_name="Description / Commentaires"
+    )
+    date_debut = models.DateField(blank=True, null=True, verbose_name="Date de Début")
+    date_fin = models.DateField(
+        blank=True, null=True, verbose_name="Date de Fin (si applicable)"
+    )
+
+    class Meta:
+        verbose_name = "Innovation et Développement"
+        verbose_name_plural = "Innovations et Développements"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_innovation": self.type_innovation,
+            "titre": self.titre,
+            "date_debut": self.date_debut,
+            "date_fin": self.date_fin,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_innovation": self.type_innovation,
+            "titre": self.titre,
+            "date_debut": self.date_debut,
+            "date_fin": self.date_fin,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        field_to_element_code = {
+            "type_innovation": "NEW_PRODUCT_SERVICE",  # Si le type d'innovation est "nouveau produit/service"
+            "titre": "INNOVATION_CHANGE",  # Générique pour toute autre modification
+            "date_debut": "INNOVATION_CHANGE",
+            "date_fin": "INNOVATION_CHANGE",
+        }
+
+        changes_detected = {}
+
+        if self.pk is None and self.type_innovation == "nouveau_produit_service":
+            changes_detected.setdefault("NEW_PRODUCT_SERVICE", []).append(
+                f"Un nouveau produit ou service a été ajouté : '{self.titre or 'Non spécifié'}'."
+            )
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                # Éviter de dupliquer si déjà capturé par 'NEW_PRODUCT_SERVICE' lors de la création
+                if not (self.pk is None and element_code == "NEW_PRODUCT_SERVICE"):
+                    changes_detected.setdefault(element_code, []).append(
+                        f"L'innovation '{self.titre or self.get_type_innovation_display()}' "
+                        f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                    )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_type_innovation_display()}"
+
+
+class StrategiePlanification(models.Model):
+    """
+    Represents strategic and planning approaches of an Acheteur.
+    """
+
+    TYPES_STRATEGIE = [
+        ("specialisation", "La spécialisation (faire une seule activité)"),
+        ("diversification_liees", "La diversification (activités liées)"),
+        ("diversification_non_liees", "La diversification (activités non liées)"),
+        ("integration", "L'intégration (faire tout, seul)"),
+        ("externalisation", "L'externalisation (faire-faire)"),
+        (
+            "planification_strategique",
+            "Planification stratégique (objectifs long terme)",
+        ),
+        (
+            "planification_tactique",
+            "Planification tactique (implémentation stratégies)",
+        ),
+        (
+            "planification_operationnelle",
+            "Planification opérationnelle (détails quotidiens)",
+        ),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="strategies"
+    )
+    type_strategie = models.CharField(
+        max_length=50, choices=TYPES_STRATEGIE, verbose_name="Type de Stratégie"
+    )
+    description = models.TextField(
+        blank=True, null=True, verbose_name="Description / Commentaires"
+    )
+    date_mise_en_place = models.DateField(
+        blank=True, null=True, verbose_name="Date de Mise en Place"
+    )
+
+    class Meta:
+        verbose_name = "Stratégie et Planification"
+        verbose_name_plural = "Stratégies et Planifications"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_strategie": self.type_strategie,
+            "date_mise_en_place": self.date_mise_en_place,
+            # Pour la détection de "Nouveau partenariat stratégique" ou "Changement de politique de prix"
+            # Il faudrait des champs spécifiques pour ces éléments, ou analyser 'description'
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_strategie": self.type_strategie,
+            "date_mise_en_place": self.date_mise_en_place,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        field_to_element_code = {
+            "type_strategie": "STRATEGY_CHANGE",  # Générique pour tout changement de stratégie
+            "date_mise_en_place": "STRATEGY_CHANGE",
+        }
+
+        # Logique pour les éléments spécifiques comme NEW_STRATEGIC_PARTNERSHIP ou PRICING_POLICY_CHANGE
+        # Si ces éléments ne sont pas gérés par des champs dédiés,
+        # vous devrez soit:
+        # 1. Ajouter des champs spécifiques (ex: is_strategic_partnership_change = BooleanField)
+        # 2. Faire une analyse textuelle du champ 'description', ce qui est moins fiable et plus coûteux.
+        # Pour l'instant, je vais les ajouter comme des codes génériques si le type_strategie correspond.
+
+        changes_detected = {}
+
+        if self.pk is None:  # Si c'est une nouvelle stratégie/planification
+            if self.type_strategie == "planification_strategique":
+                changes_detected.setdefault("STRATEGIC_PLANNING_ADDED", []).append(
+                    f"Une nouvelle planification stratégique a été ajoutée pour l'acheteur : '{self.titre or 'Non spécifié'}'."
+                )
+            # Vous pouvez ajouter d'autres conditions ici pour NEW_STRATEGIC_PARTNERSHIP si votre logique le permet
+            # Par exemple, si vous avez un champ 'partenariat_strategique_recent' ou si le 'description' contient des mots clés
+            # Pour 'COMMERCIAL_STRATEGY_CHANGE' et 'PRICING_POLICY_CHANGE', il faudrait soit un champ dédié, soit une détection dans 'description'
+            # Je vais assumer un code générique pour les modifications si un champ spécifique n'est pas présent.
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                changes_detected.setdefault(element_code, []).append(
+                    f"La stratégie '{self.get_type_strategie_display()}' "
+                    f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                    f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_type_strategie_display()}"
+
+
+class ConformiteReglementation(models.Model):
+    """
+    Represents compliance and regulatory status of an Acheteur.
+    """
+
+    TYPES_CONFORMITE = [
+        ("reglementaire", "La conformité réglementaire"),
+        ("sectorielle", "La conformité sectorielle"),
+        ("donnees", "La conformité des données"),
+        ("non_conformite", "Non-conformité aux principes établis"),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="conformites"
+    )
+    type_conformite = models.CharField(
+        max_length=50, choices=TYPES_CONFORMITE, verbose_name="Type de Conformité"
+    )
+    statut = models.BooleanField(
+        default=True, verbose_name="Est Conforme ?"
+    )  # True for conform, False for non-conformité
+    details_non_conformite = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Détails de la Non-conformité (si applicable)",
+    )
+    date_verification = models.DateField(
+        blank=True, null=True, verbose_name="Date de la dernière vérification"
+    )
+    organisme_controle = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="Organisme de Contrôle"
+    )
+    commentaires = models.TextField(blank=True, null=True, verbose_name="Commentaires")
+
+    class Meta:
+        verbose_name = "Conformité et Réglementation"
+        verbose_name_plural = "Conformités et Réglementations"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_conformite": self.type_conformite,
+            "statut": self.statut,
+            "date_verification": self.date_verification,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_conformite": self.type_conformite,
+            "statut": self.statut,
+            "date_verification": self.date_verification,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        field_to_element_code = {
+            "type_conformite": "COMPLIANCE_CHANGE",  # Générique
+            "date_verification": "COMPLIANCE_CHANGE",
+        }
+
+        changes_detected = {}
+
+        # Spécifique pour les alertes de non-conformité
+        original_statut = self.__original_data.get("statut")
+        current_statut = self.statut
+        self.__original_data.get("type_conformite")
+        current_type = self.type_conformite
+
+        # Alerte si le statut passe à NON-CONFORME
+        if original_statut is True and current_statut is False:
+            changes_detected.setdefault("NON_COMPLIANCE_ALERT", []).append(
+                f"L'acheteur est maintenant en non-conformité pour le type '{self.get_type_conformite_display()}'."
+                f" Détails: {self.details_non_conformite or 'Aucun'}"
+            )
+        # Alerte si une nouvelle réglementation applicable est ajoutée (si le type correspond à 'reglementaire' et que c'est une création)
+        if self.pk is None and current_type == "reglementaire":
+            changes_detected.setdefault("NEW_REGULATION", []).append(
+                f"Une nouvelle réglementation applicable a été ajoutée : '{self.description or 'Non spécifié'}'."
+            )
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                # Éviter de dupliquer si déjà capturé par des règles spécifiques (NON_COMPLIANCE_ALERT, NEW_REGULATION)
+                if not (
+                    (field_name == "statut" and element_code == "NON_COMPLIANCE_ALERT")
+                    or (
+                        self.pk is None
+                        and field_name == "type_conformite"
+                        and element_code == "NEW_REGULATION"
+                    )
+                ):
+                    changes_detected.setdefault(element_code, []).append(
+                        f"La conformité '{self.get_type_conformite_display()}' "
+                        f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                    )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        status = "Conforme" if self.statut else "Non-conforme"
+        return f"{self.acheteur.nom} - {self.get_type_conformite_display()} ({status})"
+
 
 ##########################################################
 ##########################################################
 # Fin Modules Additifs
 ##########################################################
 ##########################################################
-
-
-
-
 
 
 ##########################################################
@@ -3917,12 +8114,21 @@ class Notification(models.Model):
         ("RAPPEL", "Rappel de notification"),
     ]
 
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name="notifications", verbose_name=_("Utilisateur concerné"))
+    user = models.ForeignKey(
+        "CustomUser",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        verbose_name=_("Utilisateur concerné"),
+    )
     # commande = models.ForeignKey('Commande', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Commande associée"))
-    type = models.CharField(max_length=50, choices=TYPE_NOTIF, verbose_name=_("Type de notification"))
+    type = models.CharField(
+        max_length=50, choices=TYPE_NOTIF, verbose_name=_("Type de notification")
+    )
     message = models.TextField(verbose_name=_("Message de notification"))
     is_read = models.BooleanField(default=False, verbose_name=_("Lu"))
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de création"))
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
 
     class Meta:
         verbose_name = _("Notification")
@@ -3933,9 +8139,8 @@ class Notification(models.Model):
         return f"{self.get_type_display()} - {self.user.username} ({'Lu' if self.is_read else 'Non lu'})"
 
 
-
 class Commande(models.Model):
-    
+
     STATUS_CHOICES = [
         ("nouvelle", _("Nouvelle")),
         ("en_cours", _("En cours de traitement")),
@@ -3945,50 +8150,50 @@ class Commande(models.Model):
         ("terminee", _("Terminée")),
         ("annulee", _("Annulée")),
     ]
-    
+
     notre_ref = models.CharField(
         max_length=100,
         verbose_name=_("Notre référence"),
         help_text=_("Référence interne de la commande."),
         null=True,
-        blank=True
+        blank=True,
     )
     reference_client = models.CharField(
         max_length=100,
         verbose_name=_("Référence client"),
         help_text=_("Référence attribuée par le client."),
         null=True,
-        blank=True
+        blank=True,
     )
-    
+
     date_recept_commande = models.DateField(
         verbose_name=_("Date de réception de la demande"),
         help_text=_("Date à laquelle la demande a été reçue."),
         null=True,
-        blank=True
+        blank=True,
     )
     date_rapport = models.DateField(
         verbose_name=_("Date du rapport"),
         help_text=_("Date prévue pour l'émission du rapport."),
         null=True,
-        blank=True
+        blank=True,
     )
-    
+
     delais = models.CharField(
         max_length=100,
         verbose_name=_("Délais"),
         help_text=_("Délai de traitement de la commande."),
         null=True,
-        blank=True
+        blank=True,
     )
     priorite = models.CharField(
         max_length=100,
         verbose_name=_("Priorité"),
         help_text=_("Niveau de priorité de la commande."),
         null=True,
-        blank=True
+        blank=True,
     )
-    
+
     raison_sociale = models.CharField(
         max_length=100,
         verbose_name=_("Raison sociale"),
@@ -4002,88 +8207,88 @@ class Commande(models.Model):
         help_text=_("Type de rapport demandé par le client."),
     )
     ref_type_rapport = models.ForeignKey(
-        'ModeleRapport',
+        "ModeleRapport",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Référence du modèle de rapport"),
         help_text=_("Modèle de rapport utilisé pour cette commande."),
     )
-    
+
     credit_demande = models.DecimalField(
         max_digits=100,
         decimal_places=5,
         verbose_name=_("Crédit demandé"),
         help_text=_("Montant du crédit initialement demandé par le client."),
         null=True,
-        blank=True
+        blank=True,
     )
     devise_credit_demande = models.ForeignKey(
-        'Devise',
+        "Devise",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Devise du crédit demandé"),
         help_text=_("Devise utilisée pour le crédit demandé."),
-        related_name="devise_credit_demande"
+        related_name="devise_credit_demande",
     )
-    
+
     credit_recommande = models.DecimalField(
         max_digits=100,
         decimal_places=5,
         verbose_name=_("Crédit recommandé"),
         help_text=_("Montant du crédit finalement recommandé."),
         null=True,
-        blank=True
+        blank=True,
     )
     devise_credit_recommande = models.ForeignKey(
-        'Devise',
+        "Devise",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Devise du crédit recommandé"),
         help_text=_("Devise utilisée pour le crédit recommandé."),
-        related_name="devise_credit_recommande"
+        related_name="devise_credit_recommande",
     )
-    
+
     numero_adresse = models.CharField(
         max_length=100,
         verbose_name=_("Numéro d'adresse"),
         help_text=_("Numéro de rue ou d'unité de l'adresse concernée."),
         null=True,
-        blank=True
+        blank=True,
     )
     rue_adresse = models.CharField(
         max_length=200,
         verbose_name=_("Rue adresse"),
         help_text=_("Nom de la rue de l'adresse concernée."),
         null=True,
-        blank=True
+        blank=True,
     )
     code_postale_adresse = models.CharField(
         max_length=200,
         verbose_name=_("Code postal adresse"),
         help_text=_("Code postal de l'adresse concernée."),
         null=True,
-        blank=True
+        blank=True,
     )
     telephone = models.CharField(
         max_length=100,
         verbose_name=_("Téléphone"),
         help_text=_("Numéro de téléphone du contact."),
         null=True,
-        blank=True
+        blank=True,
     )
     email = models.CharField(
         max_length=100,
         verbose_name=_("Email"),
         help_text=_("Adresse email du contact."),
         null=True,
-        blank=True
+        blank=True,
     )
-    
+
     ville = models.ForeignKey(
-        'Ville',
+        "Ville",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -4091,7 +8296,7 @@ class Commande(models.Model):
         help_text=_("Ville où se trouve l'entreprise ou le client."),
     )
     client = models.ForeignKey(
-        'CustomUser',
+        "CustomUser",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -4099,16 +8304,21 @@ class Commande(models.Model):
         help_text=_("Client ayant passé la commande."),
     )
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
         help_text=_("Personne ou entité achetant le service ou produit."),
     )
-    
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="nouvelle", verbose_name=_("Statut de la commande"))
-    
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="nouvelle",
+        verbose_name=_("Statut de la commande"),
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
@@ -4119,14 +8329,13 @@ class Commande(models.Model):
         verbose_name=_("Date de mise à jour"),
         help_text=_("Date et heure de la dernière mise à jour de la commande."),
     )
-    
+
     class Meta:
         verbose_name = _("Commande")
         verbose_name_plural = _("Commandes")
 
     def __str__(self):
         return f"Commande {self.notre_ref or 'N/A'} - {self.raison_sociale}"
-
 
 
 class SuiviCommande(models.Model):
@@ -4142,27 +8351,50 @@ class SuiviCommande(models.Model):
         ("AUTRE", "Autre"),
     ]
 
-    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, verbose_name=_("Commande"))
-    user = models.ForeignKey('CustomUser', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Utilisateur"))
+    commande = models.ForeignKey(
+        "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
+    )
+    user = models.ForeignKey(
+        "CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Utilisateur"),
+    )
     action = models.CharField(max_length=255, verbose_name=_("Action"))
-    type = models.CharField(max_length=50, choices=TYPE_ACTIONS, default="AUTRE", verbose_name=_("Type d'action"))
+    type = models.CharField(
+        max_length=50,
+        choices=TYPE_ACTIONS,
+        default="AUTRE",
+        verbose_name=_("Type d'action"),
+    )
     commentaire = models.TextField(null=True, blank=True, verbose_name=_("Commentaire"))
-    date_action = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de l'action"))
+    date_action = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de l'action")
+    )
 
     class Meta:
         verbose_name = _("Suivi de commande")
         verbose_name_plural = _("Suivis de commande")
-        ordering = ['-date_action']
+        ordering = ["-date_action"]
 
     def __str__(self):
         return f"{self.get_type_display()} - {self.commande.notre_ref} ({self.user.username if self.user else 'Système'})"
 
 
-
 class AffectationAnalyste(models.Model):
-    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, verbose_name=_("Commande"))
-    analyste = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name=_("Analyste"), related_name="analystes")
-    date_affectation = models.DateTimeField(auto_now_add=True, verbose_name=_("Date d'affectation"))
+    commande = models.ForeignKey(
+        "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
+    )
+    analyste = models.ForeignKey(
+        "CustomUser",
+        on_delete=models.CASCADE,
+        verbose_name=_("Analyste"),
+        related_name="analystes",
+    )
+    date_affectation = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date d'affectation")
+    )
 
     class Meta:
         verbose_name = _("Affectation d'analyste")
@@ -4172,12 +8404,20 @@ class AffectationAnalyste(models.Model):
         return f"Commande {self.commande.notre_ref} affectée à {self.analyste.username}"
 
 
-
 class Rapport(models.Model):
-    commande = models.ForeignKey('Commande', on_delete=models.CASCADE, verbose_name=_("Commande"))
-    analyste = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name=_("Analyste"), related_name="rapports")
+    commande = models.ForeignKey(
+        "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
+    )
+    analyste = models.ForeignKey(
+        "CustomUser",
+        on_delete=models.CASCADE,
+        verbose_name=_("Analyste"),
+        related_name="rapports",
+    )
     fichier = models.FileField(upload_to="rapports/", verbose_name=_("Fichier rapport"))
-    date_soumission = models.DateTimeField(auto_now_add=True, verbose_name=_("Date de soumission"))
+    date_soumission = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de soumission")
+    )
 
     class Meta:
         verbose_name = _("Rapport")
@@ -4187,17 +8427,32 @@ class Rapport(models.Model):
         return f"Rapport de {self.analyste.username} pour {self.commande.notre_ref}"
 
 
-
 class ValidationRapport(models.Model):
-    rapport = models.OneToOneField('Rapport', on_delete=models.CASCADE, verbose_name=_("Rapport"))
-    validateur = models.ForeignKey('CustomUser', on_delete=models.CASCADE, verbose_name=_("Analyste validateur"), related_name="validations")
-    status = models.CharField(max_length=20, choices=[
-        ("en_attente", _("En attente")),
-        ("valide", _("Validé")),
-        ("a_corriger", _("À corriger")),
-    ], default="en_attente", verbose_name=_("Statut de validation"))
-    commentaire = models.TextField(null=True, blank=True, verbose_name=_("Commentaire du validateur"))
-    date_validation = models.DateTimeField(auto_now=True, verbose_name=_("Date de validation"))
+    rapport = models.OneToOneField(
+        "Rapport", on_delete=models.CASCADE, verbose_name=_("Rapport")
+    )
+    validateur = models.ForeignKey(
+        "CustomUser",
+        on_delete=models.CASCADE,
+        verbose_name=_("Analyste validateur"),
+        related_name="validations",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("en_attente", _("En attente")),
+            ("valide", _("Validé")),
+            ("a_corriger", _("À corriger")),
+        ],
+        default="en_attente",
+        verbose_name=_("Statut de validation"),
+    )
+    commentaire = models.TextField(
+        null=True, blank=True, verbose_name=_("Commentaire du validateur")
+    )
+    date_validation = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de validation")
+    )
 
     class Meta:
         verbose_name = _("Validation de rapport")
@@ -4207,20 +8462,11 @@ class ValidationRapport(models.Model):
         return f"Validation de {self.rapport.commande.notre_ref} par {self.validateur.username}"
 
 
-
-
 ##########################################################
 ##########################################################
 # Fin Modules Commande
 ##########################################################
 ##########################################################
-
-
-
-
-
-
-
 
 
 ##########################################################
@@ -4229,11 +8475,19 @@ class ValidationRapport(models.Model):
 ##########################################################
 ##########################################################
 class Alerte(models.Model):
-    
-    reference = models.CharField(max_length=255, verbose_name=_("Référence"), help_text=_("Référence de l'alerte.")) 
-    objet = models.CharField(max_length=255, verbose_name=_("Objet"), help_text=_("Objet de l'alerte.")) 
-    content = models.TextField(verbose_name=_("Message"), help_text=_("Message de l'alerte.")) 
-    
+
+    reference = models.CharField(
+        max_length=255,
+        verbose_name=_("Référence"),
+        help_text=_("Référence de l'alerte."),
+    )
+    objet = models.CharField(
+        max_length=255, verbose_name=_("Objet"), help_text=_("Objet de l'alerte.")
+    )
+    content = models.TextField(
+        verbose_name=_("Message"), help_text=_("Message de l'alerte.")
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name=_("Date de création"),
@@ -4243,7 +8497,7 @@ class Alerte(models.Model):
         auto_now=True,
         verbose_name=_("Date de mise à jour"),
         help_text=_("Date et heure de la dernière mise à jour de l'alerte."),
-    ) 
+    )
 
     class Meta:
         verbose_name = _("Alerte")
@@ -4251,37 +8505,30 @@ class Alerte(models.Model):
 
     def __str__(self):
         return f"{self.reference} - {self.objet}"
-    
-    
-    
+
+
 class DocumentAlerte(models.Model):
     alerte = models.ForeignKey(
-        'Alerte',
+        "Alerte",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='documents_alerte',
+        null=True,
+        blank=True,
+        related_name="documents_alerte",
         verbose_name=_("Alerte"),
-        help_text=_("Alerte associé au document")
+        help_text=_("Alerte associé au document"),
     )
     titre = models.CharField(
-        _("Titre"),
-        max_length=255,
-        help_text=_("Titre du document")
+        _("Titre"), max_length=255, help_text=_("Titre du document")
     )
     fichier = models.FileField(
-        _("Fichier"),
-        upload_to='alertes/',
-        help_text=_("Fichier du document")
+        _("Fichier"), upload_to="alertes/", help_text=_("Fichier du document")
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
+        auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
+        auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
     class Meta:
@@ -4289,11 +8536,7 @@ class DocumentAlerte(models.Model):
         verbose_name_plural = _("Documents alerte")
 
     def __str__(self):
-        return f"{self.titre} - {self.acheteur.nom}"
-
-
-
-
+        return f"{self.titre}"
 
 
 ##########################################################
@@ -4301,18 +8544,6 @@ class DocumentAlerte(models.Model):
 # Fin Module WARNING (Alerte)
 ##########################################################
 ##########################################################
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 ##########################################################
@@ -4323,144 +8554,109 @@ class DocumentAlerte(models.Model):
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+
 class CompteFinancierIrfs(models.Model):
     TYPE_CHOICES = [
-        ('Actif', _('Actif')),
-        ('Passif', _('Passif')),
-        ('Produit', _('Produit')),
-        ('Charge', _('Charge')),
-        ('Compte de Résultat', _('Compte de Résultat')),
+        ("Actif", _("Actif")),
+        ("Passif", _("Passif")),
+        ("Produit", _("Produit")),
+        ("Charge", _("Charge")),
+        ("Compte de Résultat", _("Compte de Résultat")),
     ]
 
     SOUS_TYPE_CHOICES = [
-        ('Actif non courant', _('Actif non courant')),
-        ('Passif non courant', _('Passif non courant')),
-        ('Actif courant', _('Actif courant')),
-        ('Capitaux propres', _('Capitaux propres')),
-        ('Passif courant', _('Passif courant')),
-        ('Produits', _('Produits')),
-        ('Charges', _('Charges')),
-        ('Autre', _('Autre')),
+        ("Actif non courant", _("Actif non courant")),
+        ("Passif non courant", _("Passif non courant")),
+        ("Actif courant", _("Actif courant")),
+        ("Capitaux propres", _("Capitaux propres")),
+        ("Passif courant", _("Passif courant")),
+        ("Produits", _("Produits")),
+        ("Charges", _("Charges")),
+        ("Autre", _("Autre")),
     ]
 
-    nom = models.CharField(
-        _('Nom'),
-        max_length=255
-    )
+    nom = models.CharField(_("Nom"), max_length=255)
     type_compte = models.CharField(
-        _('Type de Compte'),
-        max_length=255,
-        choices=TYPE_CHOICES
+        _("Type de Compte"), max_length=255, choices=TYPE_CHOICES
     )
     sous_type = models.CharField(
-        _('Sous-Type'),
-        max_length=255,
-        choices=SOUS_TYPE_CHOICES,
-        blank=True,
-        null=True
+        _("Sous-Type"), max_length=255, choices=SOUS_TYPE_CHOICES, blank=True, null=True
     )
 
     def __str__(self):
         return self.nom
 
     def get_type_compte_display(self):
-        return dict(CompteFinancierIrfs.TYPE_CHOICES).get(self.type_compte, '')
+        return dict(CompteFinancierIrfs.TYPE_CHOICES).get(self.type_compte, "")
 
     def get_sous_type_display(self):
-        return dict(CompteFinancierIrfs.SOUS_TYPE_CHOICES).get(self.sous_type, '')
-
+        return dict(CompteFinancierIrfs.SOUS_TYPE_CHOICES).get(self.sous_type, "")
 
 
 class ValeurCompteIrfs(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='comptes_financiers_irfs_acheteur',
+        null=True,
+        blank=True,
+        related_name="comptes_financiers_irfs_acheteur",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au registre de commerce")
+        help_text=_("Acheteur associé au registre de commerce"),
     )
     compte = models.ForeignKey(
         CompteFinancierIrfs,
-        verbose_name=_('Compte Financier'),
-        on_delete=models.CASCADE
+        verbose_name=_("Compte Financier"),
+        on_delete=models.CASCADE,
     )
     annee = models.ForeignKey(
-        'Annee',
-        verbose_name=_('Année'),
-        on_delete=models.CASCADE
+        "Annee", verbose_name=_("Année"), on_delete=models.CASCADE
     )
-    valeur = models.DecimalField(
-        _('Valeur'),
-        max_digits=20,
-        decimal_places=2
-    )
+    valeur = models.DecimalField(_("Valeur"), max_digits=20, decimal_places=2)
     devise = models.ForeignKey(
-        'Devise',
-        verbose_name=_('Devise'),
-        on_delete=models.CASCADE
+        "Devise", verbose_name=_("Devise"), on_delete=models.CASCADE
     )
 
     def __str__(self):
         return f"{self.compte.nom} - {self.annee.nom}"
 
 
-
 class RatioFinancierIrfs(models.Model):
     TYPE_RATIO_CHOICES = [
-        ('Ratio financier', _('Ratio financier')),
-        ('Liquidité', _('Liquidité')),
-        ('Solvabilité', _('Solvabilité')),
-        ('Rentabilité des ventes', _('Rentabilité des ventes')),
-        ('Gestion', _('Gestion')),
+        ("Ratio financier", _("Ratio financier")),
+        ("Liquidité", _("Liquidité")),
+        ("Solvabilité", _("Solvabilité")),
+        ("Rentabilité des ventes", _("Rentabilité des ventes")),
+        ("Gestion", _("Gestion")),
     ]
-    
+
     type_ratio = models.CharField(
-        _('Type de Ratio'),
-        max_length=255,
-        choices=TYPE_RATIO_CHOICES
+        _("Type de Ratio"), max_length=255, choices=TYPE_RATIO_CHOICES
     )
-    
-    nom = models.CharField(
-        _('Nom'),
-        max_length=255
-    )
-    formule = models.CharField(
-        _('Formule'),
-        max_length=255
-    )
+
+    nom = models.CharField(_("Nom"), max_length=255)
+    formule = models.CharField(_("Formule"), max_length=255)
 
     def __str__(self):
         return self.nom
 
 
-
 class ValeurRatioIrfs(models.Model):
     acheteur = models.ForeignKey(
-        'Acheteur',
+        "Acheteur",
         on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='ratios_irfs_acheteur',
+        null=True,
+        blank=True,
+        related_name="ratios_irfs_acheteur",
         verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au registre de commerce")
+        help_text=_("Acheteur associé au registre de commerce"),
     )
     ratio = models.ForeignKey(
-        RatioFinancierIrfs,
-        verbose_name=_('Ratio Financier'),
-        on_delete=models.CASCADE
+        RatioFinancierIrfs, verbose_name=_("Ratio Financier"), on_delete=models.CASCADE
     )
     annee = models.ForeignKey(
-        'Annee',
-        verbose_name=_('Année'),
-        on_delete=models.CASCADE
+        "Annee", verbose_name=_("Année"), on_delete=models.CASCADE
     )
-    valeur = models.DecimalField(
-        _('Valeur'),
-        max_digits=10,
-        decimal_places=2
-    )
+    valeur = models.DecimalField(_("Valeur"), max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.ratio.nom} - {self.annee.nom}"
@@ -4473,16 +8669,6 @@ class ValeurRatioIrfs(models.Model):
 ##########################################################
 
 
-
-
-
-
-
-
-
-
-
-
 ##########################################################
 ##########################################################
 # Debut Modules Automatisation Commande CREDENDO
@@ -4491,8 +8677,11 @@ class ValeurRatioIrfs(models.Model):
 
 # === Models Commandes client === #
 
+
 class CredendoCommande(models.Model):
-    sender_id = models.CharField(max_length=255, null=True, blank=True)  # ID unique du mail
+    sender_id = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # ID unique du mail
     email_id = models.CharField(max_length=255, unique=True)  # ID unique du mail
     reference = models.CharField(max_length=255)  # Our references
     internal_bp_id = models.CharField(max_length=255)  # Internal BP id
@@ -4504,7 +8693,9 @@ class CredendoCommande(models.Model):
     remarque = models.TextField(blank=True, null=True)  # Remark on the request
     priorite = models.CharField(max_length=50)  # Priority
     texte_complet = models.TextField()  # Texte après "Priority"
-    montant = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)  # Montant demandé
+    montant = models.DecimalField(
+        max_digits=15, decimal_places=2, blank=True, null=True
+    )  # Montant demandé
     devise = models.CharField(max_length=10, blank=True, null=True)  # Devise
     date_reception = models.DateTimeField()  # Date de réception du mail
 
@@ -4516,297 +8707,8 @@ class CredendoCommande(models.Model):
         return f"{self.reference} - {self.nom} - {self.pays}"
 
 
-
-
 ##########################################################
 ##########################################################
 # Fin Modules Automatisation Commande CREDENDO
-##########################################################
-##########################################################
-
-
-
-
-
-
-
-
-
-##########################################################
-##########################################################
-#  Modules Additif
-##########################################################
-##########################################################
-# ----Gestions des logos des acheteurs
-#Telephone Acheteur V2
-
-
-#------ DOCUMENT
-
-class TypeProcedureCollective(models.Model):
-    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
-    description = models.TextField(_("Description"), null=True, blank=True)
-    active = models.BooleanField(_("Actif"), default=True)
-
-    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
-
-    def __str__(self):
-        return f"{self.libelle} - {self.libelle}" if self.libelle else _("Type de procédure sans libellé")
-
-    class Meta:
-        verbose_name = _("Type de procédure collective ")
-        verbose_name_plural = _("Type de procédures collectives")
-        ordering = ["libelle"]
-
-#----- PROCEDURE COLLECTIVE
-class ProcedureCollective(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='procedures_collectives',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à la procédure collective")
-    )
-    type_procedure = models.CharField(
-        _("Type de procédure"),
-        max_length=255,
-        help_text=_("Type de procédure collective")
-    )
-    # Nouvel attribut avec ForeignKey
-    type_procedure_ref = models.ForeignKey(
-        'TypeProcedureCollective', 
-        null=True, blank=True, 
-        on_delete=models.SET_NULL,
-        verbose_name=_("Référence Type de procédure collective")
-    )
-    
-    statut = models.CharField(max_length=50, 
-                              choices=[
-                                  ('Non débutée', 'Non débutée'),
-                                    ('En cours', 'En cours'),
-                                     ('Terminé', 'Terminé')
-                                  ])
-    date_ouverture = models.DateField(
-        _("Date d'ouverture"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'ouverture de la procédure")
-    )
-    deadline = models.DateField(
-        _("Deadline de la procédure"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'ouverture de la procédure")
-    )
-    date_cloture = models.DateField(
-        _("Date de clôture"),
-        null=True,
-        blank=True,
-        help_text=_("Date de clôture de la procédure")
-    )
-    description = models.TextField(
-        _("Description"),
-        null=True,
-        blank=True,
-        help_text=_("Description de la procédure collective")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    class Meta:
-        verbose_name = _("Procédure Collective")
-        verbose_name_plural = _("Procédures Collectives")
-
-    def __str__(self):
-        return f"{self.type_procedure} - {self.acheteur.nom}"
-
-
-
-#------------- REGISTRE COMMERCE
-class RegistreCommerce(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='registre_commerce',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au registre de commerce")
-    )
-    numero = models.CharField(
-        _("Numéro de registre de commerce"),
-        max_length=255,
-        help_text=_("Numéro de registre de commerce de l'entreprise")
-    )
-    date_inscription = models.DateField(
-        _("Date d'inscription"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'inscription au registre de commerce")
-    )
-    description = models.TextField(
-        max_length=10000000, 
-        blank=True, 
-        verbose_name=_("Description")
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    class Meta:
-        verbose_name = _("Registre de Commerce")
-        verbose_name_plural = _("Registres de Commerce")
-
-    def __str__(self):
-        return f"Registre de commerce de {self.acheteur.nom}"
-
-#-------------- COTISATION SOCIALE
-class Cotisations(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='cnss',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro de sécurité sociale")
-    )
-    libelle = models.CharField(
-        _("Titre"),
-        max_length=255,
-        help_text=_("libelle de la cotisation")
-    )
-    numero = models.CharField(
-        _("Numéro de sécurité sociale"),
-        max_length=255,
-        help_text=_("Numéro de la cotisation de l'entreprise")
-    )
-    date_affiliation = models.DateField(
-        _("Date d'affiliation"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'affiliation à la sécurité sociale")
-    )
-   
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    class Meta:
-        verbose_name = _("CNSS")
-        verbose_name_plural = _("CNSS")
-
-    def __str__(self):
-        return f"Cotisations de {self.acheteur.nom}"
-
-#-------------- PRODUITS et SERVICES
-class ProduitServices(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='produitService',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au produit ou service")
-    )
-    libelle = models.CharField(
-        _("Titre"),
-        max_length=255,
-        help_text=_("libelle du produit ou service")
-    )
-    stock_duree = models.PositiveIntegerField(
-        _("Stock ou duréé"),
-        help_text=_("Stock ou durée")
-    )
-    prix = models.DecimalField(
-        _("Prix"),
-        max_digits=15, 
-        decimal_places=2,
-        blank=True, 
-        null=True)  # Prix du produit et service 
-    
-    # prix = models.DecimalField(
-    #     _("Prix"),
-    #     null=True,
-    #     blank=True,
-    #     help_text=_(" Prix du produit ou service")
-    # )
-    description = models.TextField(
-        _("Description"),
-        null=True,
-        blank=True,
-        help_text=_("Description du produit/service")
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    class Meta:
-        verbose_name = _("ProduitService")
-        verbose_name_plural = _("ProduitService")
-
-    def __str__(self):
-        return f"Cotisations de {self.acheteur.nom}"
-
-class Marque(models.Model):
-    acheteur = models.ForeignKey(
-        'Acheteur',
-        on_delete=models.DO_NOTHING,
-        null=True, 
-        blank=True, 
-        related_name='Marque',
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à la marque")
-    )
-    nom = models.CharField(
-       _("nom"),
-        max_length=255,
-        help_text=_("nom de la marque")
-        )
-    description = models.TextField(blank=True, null=True)
-    logo = models.ImageField(upload_to='marques/', blank=True, null=True)
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("Date de mise à jour")
-    )
-
-    def __str__(self):
-        return self.nom
-    
-    
-    
-##########################################################
-##########################################################
-# Fin Modules Additif
 ##########################################################
 ##########################################################

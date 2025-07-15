@@ -7,18 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0028_proprieteetactif_locaux_ref'),
+        ("main", "0028_proprieteetactif_locaux_ref"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='conditiondevente',
-            name='comportement_de_paiement_ref',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.modelecomportementpaiement', verbose_name='Référence sur les locaux'),
+            model_name="conditiondevente",
+            name="comportement_de_paiement_ref",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.modelecomportementpaiement",
+                verbose_name="Référence sur les locaux",
+            ),
         ),
         migrations.AddField(
-            model_name='conditiondevente',
-            name='recouvrement_de_dette_jugement_ref',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.modelecomportementjugement', verbose_name='Référence sur les locaux'),
+            model_name="conditiondevente",
+            name="recouvrement_de_dette_jugement_ref",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.modelecomportementjugement",
+                verbose_name="Référence sur les locaux",
+            ),
         ),
     ]

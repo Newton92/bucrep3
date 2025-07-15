@@ -6,40 +6,102 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0014_alter_categorieentreprise_active'),
+        ("main", "0014_alter_categorieentreprise_active"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='StatutEntreprise',
+            name="StatutEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=255, null=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Description')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Code"
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Description"),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': "Statut d'Entreprise",
-                'verbose_name_plural': "Statuts d'Entreprises",
+                "verbose_name": "Statut d'Entreprise",
+                "verbose_name_plural": "Statuts d'Entreprises",
             },
         ),
         migrations.CreateModel(
-            name='StructureEntreprise',
+            name="StructureEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=255, null=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Description')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Code"
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Description"),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': "Structure d'Entreprise",
-                'verbose_name_plural': "Structures d'Entreprises",
+                "verbose_name": "Structure d'Entreprise",
+                "verbose_name_plural": "Structures d'Entreprises",
             },
         ),
     ]

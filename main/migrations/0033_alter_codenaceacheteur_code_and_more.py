@@ -7,18 +7,34 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0032_rename_cnss_cotisation_and_more'),
+        ("main", "0032_rename_cnss_cotisation_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='codenaceacheteur',
-            name='code',
-            field=models.ForeignKey(blank=True, help_text='Code associé au code NACE', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='code_nace_acheteur', to='main.subcategorynacecode', verbose_name='Acheteur'),
+            model_name="codenaceacheteur",
+            name="code",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Code associé au code NACE",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="code_nace_acheteur",
+                to="main.subcategorynacecode",
+                verbose_name="Acheteur",
+            ),
         ),
         migrations.AlterField(
-            model_name='codenafacheteur',
-            name='code',
-            field=models.ForeignKey(blank=True, help_text='Code associé au code NAF', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='code_naf_acheteur', to='main.subcategorynafcode', verbose_name='Acheteur'),
+            model_name="codenafacheteur",
+            name="code",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Code associé au code NAF",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                related_name="code_naf_acheteur",
+                to="main.subcategorynafcode",
+                verbose_name="Acheteur",
+            ),
         ),
     ]

@@ -1,8 +1,8 @@
 (function() {
     /*
-     pdf2htmlEX.js: Core UI functions for pdf2htmlEX 
-     Copyright 2012,2013 Lu Wang <coolwanglu@gmail.com> and other contributors 
-     https://github.com/pdf2htmlEX/pdf2htmlEX/blob/master/share/LICENSE 
+     pdf2htmlEX.js: Core UI functions for pdf2htmlEX
+     Copyright 2012,2013 Lu Wang <coolwanglu@gmail.com> and other contributors
+     https://github.com/pdf2htmlEX/pdf2htmlEX/blob/master/share/LICENSE
     */
     var pdf2htmlEX = window.pdf2htmlEX = window.pdf2htmlEX || {},
         CSS_CLASS_NAMES = {

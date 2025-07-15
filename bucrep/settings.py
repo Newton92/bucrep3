@@ -11,115 +11,184 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
-import environ
-from django.utils.translation import gettext_lazy as _
-from pathlib import Path
-
 # Configurer les paramètres de JWT
 from datetime import timedelta
+
+import environ
+from celery.schedules import crontab
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Initialiser environ
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('DJANGO_SECRET_KEY')
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DJANGO_DEBUG', default=True)
+DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
-ALLOWED_HOSTS = env.list('DJANGO_ALLOWED_HOSTS', default=['*'])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 # User autorisé
-AUTH_USER_MODEL = 'main.CustomUser'
+AUTH_USER_MODEL = "main.CustomUser"
 
 # Email Configuration using SMTP for sending emails
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = env('EMAIL_HOST')  # SMTP server host
-EMAIL_PORT = env('EMAIL_PORT')  # SMTP server port
-EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')  # Whether to use TLS for SMTP (True/False)
-EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL')  # Whether to use SSL for SMTP (True/False)
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')  # SMTP username (e.g., your_email@gmail.com)
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')  # SMTP password
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = env("EMAIL_HOST")  # SMTP server host
+EMAIL_PORT = env("EMAIL_PORT")  # SMTP server port
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")  # Whether to use TLS for SMTP (True/False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL")  # Whether to use SSL for SMTP (True/False)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")  # SMTP username (e.g., your_email@gmail.com)
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")  # SMTP password
+DEFAULT_FROM_EMAIL = "bucrepcontact@gmail.com"  # Ou env('EMAIL_HOST_USER')
 
+
+# settings.py
+
+# Configuration de Redis en tant que broker
+# CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+
+# Pour détecter automatiquement les tâches dans tes apps
+#
+
+# Configuration de Celery
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Africa/Libreville"
+CELERY_IMPORTS = ("main.tasks",)  # Mets le nom de ton app Django
+
+
+# Backend pour stocker les résultats des tâches
+CELERY_RESULT_BACKEND = "django-db"  # Utilise la base de données Django
+
+# Pour que Celery Beat utilise le planificateur de la BDD Django
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+
+# Pour Celery Beat (planification)
+CELERY_BEAT_SCHEDULE = {
+    "send-daily-alerts": {
+        "task": "main.tasks.send_monitoring_alerts",  # Chemin vers votre tâche
+        "schedule": timezone.timedelta(
+            seconds=10
+        ),  # Tous les jours | timezone.timedelta(seconds=10) | timezone.timedelta(days=1)
+        #'schedule': crontab(minute='*/1'),  # toutes les 10 minutes = */10
+        "args": ("quotidienne",),  # Argument pour filtrer les fréquences
+    },
+    "send-weekly-alerts": {
+        "task": "main.tasks.send_monitoring_alerts",
+        #'schedule': timezone.timedelta(seconds=20), # Toutes les semaines | timezone.timedelta(weeks=1)
+        "schedule": crontab(minute="*/20"),  # toutes les 20 minutes
+        "args": ("hebdomadaire",),
+    },
+    "send-monthly-alerts": {
+        "task": "main.tasks.send_monitoring_alerts",
+        #'schedule': timezone.timedelta(seconds=30), # Environ tous les mois | timezone.timedelta(days=30)
+        "schedule": crontab(minute="*/30"),  # toutes les 30 minutes
+        "args": ("mensuelle",),
+    },
+    "send-daily-emails": {
+        "task": "main.tasks.test_email_task",  # Chemin vers votre tâche
+        "schedule": 30.0,  # Tous les jours | timezone.timedelta(seconds=10) | timezone.timedelta(days=1)
+        #'schedule': crontab(minute='*/1'),  # toutes les 10 minutes = */10
+        "args": ("quotidienne",),  # Argument pour filtrer les fréquences
+    },
+}
 
 
 # Application definition
 INSTALLED_APPS = [
-    
-    
     # API
-    'corsheaders',
-    
+    "corsheaders",
     # Librairies
-    'rest_framework',
+    "rest_framework",
     # 'rest_framework.authtoken',
-    'rest_framework_simplejwt',
-    
-    'django_extensions',
-    
+    "rest_framework_simplejwt",
+    "django_extensions",
     # Django librairies
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-    
-    'channels',  # Ajout de Django Channels
-    
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "django.contrib.humanize",
+    "channels",  # Ajout de Django Channels
     # Mon app
-    'main.apps.MainConfig',
+    "main.apps.MainConfig",
+    "django_celery_results",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    
-    'django.middleware.locale.LocaleMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'bucrep.urls'
+ROOT_URLCONF = "bucrep.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates/'), ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            os.path.join(BASE_DIR, "templates/"),
+        ],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'bucrep.wsgi.application'
+WSGI_APPLICATION = "bucrep.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Commentez ou supprimez l'ancienne configuration SQLite
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+#     }
+# }
+
+# Nouvelle configuration pour PostgreSQL
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("LOCAL_DB_NAME"),  # Le nom de la base de données créée à l'étape 2
+        "USER": env("LOCAL_DB_USER"),  # Le nom de l'utilisateur créé à l'étape 2
+        "PASSWORD": env("LOCAL_DB_PASS"),  # Le mot de passe que vous avez noté
+        "HOST": "localhost",  # ou '127.0.0.1'
+        "PORT": "5432",  # Le port par défaut de PostgreSQL
     }
 }
 
@@ -130,7 +199,7 @@ DATABASES = {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'your_postgresql_database_name',  # Nom de votre base de données PostgreSQL
 #         'USER': 'your_postgresql_database_user',  # Nom d'utilisateur de la base de données PostgreSQL
-#         'PASSWORD': 'your_postgresql_database_password',  # Mot de passe de la base de données PostgreSQL
+#         'PASSWORD': env("LOCAL_DB_PASS"),  # Mot de passe de la base de données PostgreSQL
 #         'HOST': 'localhost',  # Adresse de l'hôte de la base de données PostgreSQL
 #         'PORT': '5432',  # Port de la base de données PostgreSQL (par défaut 5432)
 #     }
@@ -143,7 +212,7 @@ DATABASES = {
 #         'ENGINE': 'django.db.backends.mysql',
 #         'NAME': 'your_mysql_database_name',  # Nom de votre base de données MySQL
 #         'USER': 'your_mysql_database_user',  # Nom d'utilisateur de la base de données MySQL
-#         'PASSWORD': 'your_mysql_database_password',  # Mot de passe de la base de données MySQL
+#         'PASSWORD': env("LOCAL_DB_PASS"),  # Mot de passe de la base de données MySQL
 #         'HOST': 'localhost',  # Adresse de l'hôte de la base de données MySQL
 #         'PORT': '3306',  # Port de la base de données MySQL (par défaut 3306)
 #     }
@@ -154,16 +223,16 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -171,19 +240,19 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
+    os.path.join(BASE_DIR, "locale"),
 ]
 
 
-LANGUAGE_CODE = 'fr-fr'  # Langue par défaut
+LANGUAGE_CODE = "fr-fr"  # Langue par défaut
 
 # Languages
 LANGUAGES = [
-    ('fr', _('Français')),
-    ('en', _('English')),
+    ("fr", _("Français")),
+    ("en", _("English")),
 ]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Africa/Libreville"
 
 USE_I18N = True
 
@@ -192,26 +261,24 @@ USE_L10N = True
 USE_TZ = True
 
 
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'main/static/'),
+    os.path.join(BASE_DIR, "main/static/"),
 ]
 
 # Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'main/media/')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "main/media/")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SITE_ID = 1
 
@@ -223,50 +290,50 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    X_FRAME_OPTIONS = 'DENY'
-    
-    
+    X_FRAME_OPTIONS = "DENY"
+
+
 # CORS Config
 CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
-    'http://localhost:8004',  # Remplace par le domaine de ton frontend
+    "http://localhost:8004",  # Remplace par le domaine de ton frontend
 ]
 CORS_ALLOW_HEADERS = [
-    'authorization',
-    'content-type',
+    "authorization",
+    "content-type",
 ]
-    
-    
+
+
 # settings.py
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
     ],
 }
 
 
 # SimpleJWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
 }
 
 
@@ -283,21 +350,6 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # from rest_framework.authtoken.models import Token
 
 
-
-
-
-
-
-# settings.py
-
-# Configuration de Redis en tant que broker
-# CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
-
-# Pour détecter automatiquement les tâches dans tes apps
-# CELERY_IMPORTS = ('main.tasks',)  # Mets le nom de ton app Django
-
-
 ASGI_APPLICATION = "bucrep.asgi.application"
 
 # Utilisation de Redis comme broker pour les WebSockets
@@ -312,3 +364,47 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+# settings.py
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",  # Ou INFO
+            "class": "logging.StreamHandler",
+            "formatter": "simple",  # Ou verbose
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "main": {  # Assurez-vous d'avoir une entrée pour votre app 'main'
+            "handlers": ["console"],
+            "level": "INFO",  # Définir le niveau ici
+            "propagate": False,
+        },
+        "celery": {  # Pour les logs de Celery lui-même
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+}

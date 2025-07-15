@@ -7,25 +7,56 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0041_client_portefeuille_portefeuilleentreprise'),
+        ("main", "0041_client_portefeuille_portefeuilleentreprise"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PortefeuilleClient',
+            name="PortefeuilleClient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('categorie', models.CharField(choices=[('grande', 'Grande entreprise'), ('pme', 'Petite et moyenne entreprise'), ('autre', 'Autre')], help_text="Catégorie de l'acheteur dans le portefeuille.", max_length=20, verbose_name='Catégorie')),
-                ('acheteur', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.acheteur')),
-                ('portefeuille', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.portefeuille')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "categorie",
+                    models.CharField(
+                        choices=[
+                            ("grande", "Grande entreprise"),
+                            ("pme", "Petite et moyenne entreprise"),
+                            ("autre", "Autre"),
+                        ],
+                        help_text="Catégorie de l'acheteur dans le portefeuille.",
+                        max_length=20,
+                        verbose_name="Catégorie",
+                    ),
+                ),
+                (
+                    "acheteur",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="main.acheteur"
+                    ),
+                ),
+                (
+                    "portefeuille",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.portefeuille",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Portefeuille client',
-                'verbose_name_plural': 'Portefeuilles client',
-                'unique_together': {('portefeuille', 'acheteur')},
+                "verbose_name": "Portefeuille client",
+                "verbose_name_plural": "Portefeuilles client",
+                "unique_together": {("portefeuille", "acheteur")},
             },
         ),
         migrations.DeleteModel(
-            name='PortefeuilleEntreprise',
+            name="PortefeuilleEntreprise",
         ),
     ]

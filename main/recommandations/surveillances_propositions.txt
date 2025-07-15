@@ -1,0 +1,487 @@
+from celery import shared_task
+from main.commandes.credendo_fetch_mails import fetch_new_credendo_emails
+from main.commandes.bucrepcontact_fetch_mails import fetch_new_bucrepcontact_emails
+from celery import shared_task
+from django.utils import timezone
+from django.core.mail import send_mail
+from .models import NotificationLog, Portefeuille
+
+@shared_task
+def check_new_emails():
+    fetch_new_credendo_emails()
+    fetch_new_bucrepcontact_emails()
+
+
+
+@shared_task
+def send_notifications():
+    portefeuilles = Portefeuille.objects.all()
+    for portefeuille in portefeuilles:
+        if portefeuille.frequence_alertes == 'quotidienne':
+            send_daily_notifications(portefeuille)
+        elif portefeuille.frequence_alertes == 'hebdomadaire':
+            send_weekly_notifications(portefeuille)
+        elif portefeuille.frequence_alertes == 'mensuelle':
+            send_monthly_notifications(portefeuille)
+
+def send_daily_notifications(portefeuille):
+    # Récupérer les notifications non envoyées pour le portefeuille
+    notifications = NotificationLog.objects.filter(portefeuille=portefeuille, actif=False)
+    if notifications.exists():
+        # Envoyer un email avec les notifications
+        send_mail(
+            'Notifications Quotidiennes',
+            '\n'.join([notification.description for notification in notifications]),
+            'from@example.com',
+            [portefeuille.client.email],
+            fail_silently=False,
+        )
+        # Marquer les notifications comme envoyées
+        notifications.update(actif=True)
+
+def send_weekly_notifications(portefeuille):
+    # Récupérer les notifications non envoyées pour le portefeuille
+    notifications = NotificationLog.objects.filter(portefeuille=portefeuille, actif=False)
+    if notifications.exists():
+        # Envoyer un email avec les notifications
+        send_mail(
+            'Notifications Hebdomadaires',
+            '\n'.join([notification.description for notification in notifications]),
+            'from@example.com',
+            [portefeuille.client.email],
+            fail_silently=False,
+        )
+        # Marquer les notifications comme envoyées
+        notifications.update(actif=True)
+
+def send_monthly_notifications(portefeuille):
+    # Récupérer les notifications non envoyées pour le portefeuille
+    notifications = NotificationLog.objects.filter(portefeuille=portefeuille, actif=False)
+    if notifications.exists():
+        # Envoyer un email avec les notifications
+        send_mail(
+            'Notifications Mensuelles',
+            '\n'.join([notification.description for notification in notifications]),
+            'from@example.com',
+            [portefeuille.client.email],
+            fail_silently=False,
+        )
+        # Marquer les notifications comme envoyées
+        notifications.update(actif=True)
+
+
+
+
+# surveillance/tasks.py
+
+from celery import shared_task
+from django.utils import timezone
+from main.models import Portefeuille, PortefeuilleClient
+from main.checkers import CHECKER_REGISTRY
+
+@shared_task
+def run_surveillance_for_frequency(frequency):
+    """
+    Tâche Celery pour exécuter la surveillance pour une fréquence donnée.
+    'frequency' peut être 'quotidienne', 'hebdomadaire', 'mensuelle'.
+    """
+    print(f"--- Lancement de la surveillance {frequency} ---")
+
+    # 1. Récupérer les portefeuilles concernés
+    portefeuilles_a_verifier = Portefeuille.objects.filter(frequence_alertes=frequency)
+
+    for portefeuille in portefeuilles_a_verifier:
+        print(f"Vérification du portefeuille : {portefeuille.nom}")
+
+        # Date de la dernière vérification pour ce portefeuille
+        last_check_date = portefeuille.derniere_verification
+
+        # 2. Récupérer les acheteurs liés à ce portefeuille
+        acheteurs_surveilles = portefeuille.portefeuilleclient_set.all().select_related('acheteur')
+
+        # 3. Récupérer les éléments de surveillance actifs pour ce portefeuille
+        elements_actifs = portefeuille.elements_surveillance_actifs.all()
+
+        for item_portefeuille_client in acheteurs_surveilles:
+            acheteur = item_portefeuille_client.acheteur
+            print(f"  -> Surveillance de l'acheteur : {acheteur.nom}")
+
+            for element in elements_actifs:
+                # 4. Trouver la fonction de vérification correspondante dans notre "Registry"
+                checker_function = CHECKER_REGISTRY.get(element.code_interne)
+
+                if checker_function:
+                    # 5. Exécuter la logique de vérification !
+                    checker_function(
+                        portefeuille=portefeuille,
+                        acheteur=acheteur,
+                        element_surveille=element,
+                        last_check_date=last_check_date
+                    )
+
+        # 6. Mettre à jour la date de dernière vérification pour ne pas re-scanner
+        portefeuille.derniere_verification = timezone.now()
+        portefeuille.save(update_fields=['derniere_verification'])
+
+    return f"Surveillance {frequency} terminée avec succès pour {portefeuilles_a_verifier.count()} portefeuilles."
+
+
+
+
+
+from celery import shared_task
+from .models import Portefeuille, ResponsableAcheteur
+
+@shared_task
+def check_surveillance_elements():
+    portefeuilles = Portefeuille.objects.all()
+    for portefeuille in portefeuilles:
+        if portefeuille.frequence_alertes == 'quotidienne':
+            # Logique pour vérifier les changements quotidiens
+            check_dirigeant_changes_for_portfolio(portefeuille)
+
+def check_dirigeant_changes_for_portfolio(portefeuille):
+    dirigeants = ResponsableAcheteur.objects.filter(acheteur__portefeuilleclient__portefeuille=portefeuille)
+    for dirigeant in dirigeants:
+        # Logique pour vérifier les changements et envoyer des alertes
+        pass
+
+
+from celery import shared_task
+from django.core.mail import send_mail
+from .models import Portefeuille, NotificationLog
+
+@shared_task
+def send_daily_alerts():
+    portefeuilles = Portefeuille.objects.filter(frequence_alertes='quotidienne')
+    for portefeuille in portefeuilles:
+        # Logique pour vérifier les changements et préparer les alertes
+        notifications = prepare_notifications(portefeuille)
+        for notification in notifications:
+            send_alert_email(portefeuille.client.email, notification)
+
+def prepare_notifications(portefeuille):
+    # Logique pour préparer les notifications
+    notifications = []
+    # Ajoutez les notifications à la liste
+    return notifications
+
+def send_alert_email(email, notification):
+    send_mail(
+        'Alerte Quotidienne',
+        notification,
+        'from@example.com',
+        [email],
+        fail_silently=False,
+    )
+
+
+
+# Importation de modules pour la compatibilité avec les versions futures de Python
+from __future__ import absolute_import, unicode_literals
+
+# Importation du module os pour interagir avec le système d'exploitation
+import os
+
+# Importation de Celery pour la gestion des tâches asynchrones
+from celery import Celery
+
+# Importation de crontab pour la planification des tâches périodiques
+from celery.schedules import crontab
+
+from django.utils import timezone
+
+# Définit le module de configuration de Django par défaut pour le programme 'celery'.
+# Cela permet à Celery de savoir où trouver les paramètres de configuration de Django.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bucrep.settings')
+
+# Crée une instance de Celery avec le nom 'bucrep'.
+# Cette instance sera utilisée pour configurer et exécuter les tâches Celery.
+app = Celery('bucrep')
+
+# Configuration des tâches périodiques
+# beat_schedule est un dictionnaire qui définit les tâches périodiques à exécuter.
+app.conf.beat_schedule = {
+    # 'check-emails-every-10-minutes': {
+    #     'task': 'main.tasks.check_new_emails',
+    #     'schedule': crontab(minute='*/10'),  # Toutes les 10 minutes
+    # },
+    # 'send-notifications-every-day': {
+    #     'task': 'myapp.tasks.send_notifications',
+    #     'schedule': crontab(minute=0, hour=0),  # Exécuter tous les jours à minuit
+    # },
+    'send-notifications-daily': {
+        'task': 'main.tasks.send_daily_notifications',
+        'schedule': crontab(minute=0, hour=0),  # Exécuter tous les jours à minuit
+    },
+    'send-notifications-weekly': {
+        'task': 'main.tasks.send_weekly_notifications',
+        'schedule': crontab(minute=0, hour=0, day_of_week='monday'),  # Exécuter tous les lundis à minuit
+    },
+    'send-notifications-monthly': {
+        'task': 'main.tasks.send_monthly_notifications',
+        'schedule': crontab(minute=0, hour=0, day_of_month='1'),  # Exécuter le premier jour de chaque mois à minuit
+    },
+    'send-daily-alerts': {
+        'task': 'main.tasks.send_daily_alerts',
+        'schedule': crontab(hour=0, minute=0),  # Exécute la tâche tous les jours à minuit
+    },
+
+    'lancer-surveillance-quotidienne': {
+        'task': 'main.tasks.run_surveillance_for_frequency',
+        'schedule': crontab(hour=1, minute=0),  # Tous les jours à 1h00 du matin
+        'args': ('quotidienne',),
+    },
+    'lancer-surveillance-hebdomadaire': {
+        'task': 'main.tasks.run_surveillance_for_frequency',
+        'schedule': crontab(day_of_week='monday', hour=2, minute=0),  # Tous les lundis à 2h00
+        'args': ('hebdomadaire',),
+    },
+    'lancer-surveillance-mensuelle': {
+        'task': 'main.tasks.run_surveillance_for_frequency',
+        'schedule': crontab(day_of_month='1', hour=3, minute=0),  # Le 1er de chaque mois à 3h00
+        'args': ('mensuelle',),
+    },
+
+
+    'surveillance-quotidienne': {
+        'task': 'votre_app.tasks.surveiller_portefeuilles',
+        'schedule': crontab(hour=8, minute=0),  # Tous les jours à 8h
+    },
+    'nettoyage-historique': {
+        'task': 'votre_app.tasks.nettoyer_historique',
+        'schedule': crontab(hour=2, minute=0, day_of_week=1),  # Chaque lundi à 2h
+    },
+
+
+    'send-daily-alerts': {
+        'task': 'votre_app_monitoring.tasks.send_monitoring_alerts', # Chemin vers votre tâche
+        'schedule': timezone.timedelta(days=1), # Tous les jours
+        'args': ('quotidienne',), # Argument pour filtrer les fréquences
+    },
+    'send-weekly-alerts': {
+        'task': 'votre_app_monitoring.tasks.send_monitoring_alerts',
+        'schedule': timezone.timedelta(weeks=1), # Toutes les semaines
+        'args': ('hebdomadaire',),
+    },
+    'send-monthly-alerts': {
+        'task': 'votre_app_monitoring.tasks.send_monitoring_alerts',
+        'schedule': timezone.timedelta(days=30), # Environ tous les mois
+        'args': ('mensuelle',),
+    },
+}
+
+# Charge les paramètres de configuration à partir du fichier settings.py
+# Cela permet à Celery de lire les paramètres de configuration de Django.
+app.config_from_object('django.conf:settings', namespace='CELERY')
+
+# Auto-découverte des tâches définies dans l'app Django
+# Cela permet à Celery de découvrir automatiquement les tâches définies dans les applications Django.
+app.autodiscover_tasks()
+
+# Définition d'une tâche de débogage
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request!r}')
+
+# Pour démarrer Celery, vous pouvez utiliser la commande suivante dans votre terminal :
+# celery -A myproject worker --loglevel=info
+
+# Pour démarrer le beat scheduler de Celery, utilisez la commande suivante :
+# celery -A myproject beat --loglevel=info
+# celery -A votre_projet beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.mail import send_mail
+from django.conf import settings
+from main.models import CredendoCommande, CustomUser
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from main.models import Notification
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+from datetime import timedelta
+import logging
+from celery import shared_task
+
+logger = logging.getLogger(__name__)
+
+from main.models import *
+
+
+
+@receiver(post_save, sender=CredendoCommande)
+def envoyer_email_aux_analystes_et_validateurs(sender, instance, created, **kwargs):
+    if created:  # Vérifie si la commande vient d'être créée
+        pays_commande = instance.pays  # Récupère le pays de la commande
+
+        # Rechercher les utilisateurs Analyste et Validateur avec le même pays
+        utilisateurs_cibles = CustomUser.objects.filter(
+            role__in=['Analyste', 'Validateur'],
+            pays__code=pays_commande  # Si "pays" est une ForeignKey
+        ) | CustomUser.objects.filter(
+            role__in=['Analyste', 'Validateur'],
+            pays=pays_commande  # Si "pays" est stocké en texte
+        )
+
+        if utilisateurs_cibles.exists():
+            emails = utilisateurs_cibles.values_list('email', flat=True)  # Récupérer leurs emails
+
+            sujet = "Nouvelle commande enregistrée"
+            message = f"Une nouvelle commande a été enregistrée pour {pays_commande}.\n\n"
+            message += f"Référence: {instance.reference}\nNom: {instance.nom}\nMontant: {instance.montant} {instance.devise}\n\n"
+            message += "Connectez-vous pour plus de détails."
+
+            send_mail(
+                sujet,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                list(emails),
+                fail_silently=False,
+            )
+
+
+
+def send_ws_notification(user, type_notif, message, commande=None):
+    """Envoie une notification en temps réel via WebSockets."""
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"user_{user.id}",
+        {
+            "type": "send_notification",
+            "message": message,
+            "type": type_notif,
+            "commande": commande.notre_ref if commande else None,
+        }
+    )
+
+@receiver(post_save, sender=Notification)
+def notifier_utilisateur(sender, instance, created, **kwargs):
+    """Quand une notification est créée, on l'envoie aussi en temps réel."""
+    if created:
+        send_ws_notification(instance.user, instance.type, instance.message, instance.commande)
+
+
+
+
+
+@receiver(post_save, sender=Acheteur)
+def create_acheteur_notification(sender, instance, created, **kwargs):
+    if not created:
+        # Créer une notification pour la modification de l'acheteur
+        NotificationLog.objects.create(
+            portefeuille=instance.portefeuille_set.first(),  # Assurez-vous que l'acheteur a un portefeuille associé
+            code_evenement="ACHETEUR_MODIFIE",
+            description=f"L'acheteur {instance.nom} a été modifié."
+        )
+
+@receiver(post_save, sender=ProcedureCollective)
+def create_procedure_collective_notification(sender, instance, created, **kwargs):
+    if not created:
+        # Créer une notification pour la modification de la procédure collective
+        NotificationLog.objects.create(
+            portefeuille=instance.acheteur.portefeuille_set.first(),  # Assurez-vous que l'acheteur a un portefeuille associé
+            code_evenement="PROCEDURE_COLLECTIVE_MODIFIEE",
+            description=f"La procédure collective pour l'acheteur {instance.acheteur.nom} a été modifiée."
+        )
+
+@receiver(post_save, sender=AntecedantsJuridique)
+def create_antecedent_juridique_notification(sender, instance, created, **kwargs):
+    if not created:
+        # Créer une notification pour la modification de l'antécédent juridique
+        NotificationLog.objects.create(
+            portefeuille=instance.acheteur.portefeuille_set.first(),  # Assurez-vous que l'acheteur a un portefeuille associé
+            code_evenement="ANTECEDENT_JURIDIQUE_MODIFIE",
+            description=f"L'antécédent juridique pour l'acheteur {instance.acheteur.nom} a été modifié."
+        )
+
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.core.mail import send_mail
+from main.models import ResponsableAcheteur
+
+@receiver(post_save, sender=ResponsableAcheteur)
+def check_dirigeant_changes(sender, instance, created, **kwargs):
+    if not created:
+        # Logique pour détecter les changements et envoyer des alertes
+        send_alert_email(instance)
+
+def send_alert_email(dirigeant):
+    # Logique pour envoyer un email d'alerte
+    send_mail(
+        'Changement de Dirigeant',
+        f'Le dirigeant {dirigeant.nom} a été modifié.',
+        'from@example.com',
+        ['to@example.com'],
+        fail_silently=False,
+    )
+
+
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from django.contrib.contenttypes.models import ContentType
+
+@receiver(post_save, sender='main.Acheteur')
+def acheteur_change_handler(sender, instance, created, **kwargs):
+    if not created:
+        portefeuilles_clients = PortefeuilleClient.objects.filter(acheteur=instance)
+
+        for pc in portefeuilles_clients:
+            from .tasks import traiter_changement_temps_reel
+            traiter_changement_temps_reel.delay(pc.portefeuille.id, instance.id, 'Acheteur')
+
+@receiver(post_save, sender='main.ResponsableAcheteur')
+def dirigeant_change_handler(sender, instance, created, **kwargs):
+    if instance.acheteur:
+        portefeuilles_clients = PortefeuilleClient.objects.filter(acheteur=instance.acheteur)
+
+        for pc in portefeuilles_clients:
+            if pc.portefeuille.elements_surveillance_actifs.filter(code_interne='EXECUTIVE_CHANGE').exists():
+                from .tasks import traiter_changement_temps_reel
+                traiter_changement_temps_reel.delay(pc.portefeuille.id, instance.acheteur.id, 'ResponsableAcheteur')
+
+@shared_task
+def traiter_changement_temps_reel(portefeuille_id, acheteur_id, model_name):
+    try:
+        portefeuille = Portefeuille.objects.get(id=portefeuille_id)
+        acheteur = Acheteur.objects.get(id=acheteur_id)
+
+        evenements = []  # SurveillanceService.detecter_changements(acheteur, portefeuille)
+
+        if evenements:
+            logger.info(f"Changement temps réel détecté pour {acheteur.nom} dans {portefeuille.nom}")
+
+    except Exception as e:
+        logger.error(f"Erreur lors du traitement temps réel: {str(e)}")
+
+
+@shared_task
+def nettoyer_historique():
+    from .models import HistoriqueDonnees, EvenementSurveillance
+
+    limite_date = timezone.now() - timedelta(days=180)
+
+    anciens_historiques = HistoriqueDonnees.objects.filter(date_capture__lt=limite_date)
+    count_historiques = anciens_historiques.count()
+    anciens_historiques.delete()
+
+    limite_evenements = timezone.now() - timedelta(days=90)
+    anciens_evenements = EvenementSurveillance.objects.filter(
+        traite=True,
+        date_traitement__lt=limite_evenements
+    )
+    count_evenements = anciens_evenements.count()
+    anciens_evenements.delete()
+
+    logger.info(f"Nettoyage terminé: {count_historiques} historiques et {count_evenements} événements supprimés")

@@ -119,7 +119,7 @@ var e = {
         e.trafficsplineChart(),
         e.trafficroomChart()
         e.pCounter()
-        
+
     },
     isVariableDefined: function (el) {
         return typeof !!el && (el) != 'undefined' && el != null;
@@ -247,7 +247,7 @@ var e = {
         return document.querySelectorAll(selectors);
     },
 
-    
+
 
     // START: 01 Preloader
     preLoader: function () {
@@ -344,7 +344,7 @@ var e = {
               var sliderHoverPause = slider1.getAttribute('data-hoverpause') === 'true'; //option: true or false
               if (e.isVariableDefined(e.select('.custom-thumb'))) {
                 var sliderNavContainer = e.select('.custom-thumb');
-              } 
+              }
               var sliderLoop = slider1.getAttribute('data-loop') !== 'false'; //option: true or false
               var sliderRewind = slider1.getAttribute('data-rewind') === 'true'; //option: true or false
               var sliderAutoHeight = slider1.getAttribute('data-autoheight') === 'true'; //option: true or false
@@ -410,7 +410,7 @@ var e = {
                       }
                   }
               });
-          }); 
+          });
         }
     },
     // END: Tiny Slider
@@ -485,7 +485,7 @@ var e = {
     // START: 10 Choices
     choicesSelect: function () {
        var choice = e.select('.js-choice');
-       
+
        if (e.isVariableDefined(choice)) {
          var element = document.querySelectorAll('.js-choice');
 
@@ -673,7 +673,7 @@ var e = {
             autoplay    :true,
             cover      : true,
         } );
-        
+
         // Set the thumbnails slider as a sync target and then call mount.
         primarySlider.sync( secondarySlider ).mount();
 
@@ -691,12 +691,12 @@ var e = {
           var nouiMax = parseInt(slider.getAttribute('data-range-max'));
           var nouiSelectedMin = parseInt(slider.getAttribute('data-range-selected-min'));
           var nouiSelectedMax = parseInt(slider.getAttribute('data-range-selected-max'));
-          
+
           var rangeText = slider.previousElementSibling;
           var imin = rangeText.firstElementChild;
           var imax = rangeText.lastElementChild;
           var inputs = [imin, imax];
-          
+
           noUiSlider.create(slider, {
               start: [nouiSelectedMin, nouiSelectedMax],
               connect: true,
@@ -706,7 +706,7 @@ var e = {
                   max: [nouiMax]
               }
           });
-          
+
           slider.noUiSlider.on("update", function(values, handle) {
               inputs[handle].value = values[handle];
           });
@@ -748,7 +748,7 @@ var e = {
               new Dropzone(e, c);
             }));
         }
-    
+
         // 2. Custom cover and list previews Dropzone Initialization
         if (e.isVariableDefined(e.select(".dropzone-custom"))) {
           e.selectAll(".dropzone-custom").forEach((d => {
@@ -789,7 +789,7 @@ var e = {
       if (e.isVariableDefined(e.select('.fakepassword'))) {
         var password = document.querySelector('.fakepassword');
         var toggler = document.querySelector('.fakepasswordicon');
-      
+
         var showHidePassword = () => {
           if (password.type == 'password') {
             password.setAttribute('type', 'text');
@@ -799,7 +799,7 @@ var e = {
             password.setAttribute('type', 'password');
           }
         };
-      
+
         toggler.addEventListener('click', showHidePassword);
       }
     },
@@ -837,91 +837,91 @@ var e = {
       let child = 0;
       let rooms =1;
       let totalAdults = 2;
-    
+
       let selectionResult = document.querySelector('.selection-result');
-    
+
       let adultValue = document.querySelector('.adults');
       let adultAdd = document.querySelector('.adult-add');
       let adultRemove = document.querySelector('.adult-remove');
-    
+
       let childValue = document.querySelector('.child');
       let childAdd = document.querySelector('.child-add');
       let childRemove = document.querySelector('.child-remove');
-    
+
       let roomValue = document.querySelector('.rooms');
       let roomAdd = document.querySelector('.room-add');
       let roomRemove = document.querySelector('.room-remove');
-    
+
       function addElement(type){
         if(type == 'adult'){
           adults++;
           totalAdults = adults + child;
-    
+
           showElements();
         }else if(type == 'child'){
           child = child + 1;
           console.log(child);
           totalAdults = adults + child;
-    
+
           showElements();
         }else if(type == 'room'){
           rooms++;
-          
+
           showElements();
         }
       }
-    
+
       function showElements(){
         adultValue.innerText = adults;
         childValue.innerText = child;
         roomValue.innerText = rooms;
-    
+
         let roomText = rooms > 1 ? 'Rooms' : 'Room';
         let guestText = totalAdults > 1 ? 'Guests': 'Guest';
-    
+
         let resultText = totalAdults+' '+guestText+' '+rooms+' '+roomText;
-    
+
         selectionResult.setAttribute('value', resultText);
       }
-    
+
       function removeElement(type){
         if(type == 'adult'){
           adults = adults > 0 ?  adults - 1 : adults;
           totalAdults = adults + child;
-    
+
           showElements();
         }else if(type == 'child'){
           child = child > 0 ? child - 1 : child;
           totalAdults = adults + child;
-    
+
           showElements();
         }else if(type == 'room'){
           rooms = rooms > 0 ? rooms - 1 : rooms;
-          
+
           showElements();
         }
       }
-    
+
       adultAdd.addEventListener('click',function(){
         addElement('adult');
       });
-    
+
       adultRemove.addEventListener('click',function(){
         removeElement('adult');
       });
-    
+
       childAdd.addEventListener('click',function(){
         addElement('child');
       });
-    
+
       childRemove.addEventListener('click',function(){
         removeElement('child');
       });
-    
+
       roomAdd.addEventListener('click',function(){
         addElement('room');
       });
-    
+
       roomRemove.addEventListener('click',function(){
         removeElement('room');
       });
@@ -1022,7 +1022,7 @@ var e = {
         chart.render();
       }
     },
-    // END: Traffic Chart 
+    // END: Traffic Chart
 
     // START: 26 Traffic Chart 2
     trafficChart: function () {

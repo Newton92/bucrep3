@@ -1,7 +1,7 @@
 /*
- Copyright 2012 Mozilla Foundation 
+ Copyright 2012 Mozilla Foundation
  Copyright 2013 Lu Wang <coolwanglu@gmail.com>
- Apachine License Version 2.0 
+ Apachine License Version 2.0
 */
 (function() {
     function b(a, b, e, f) {

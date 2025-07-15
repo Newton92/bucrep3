@@ -7,35 +7,56 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0019_remove_acheteur_capital_social'),
+        ("main", "0019_remove_acheteur_capital_social"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='acheteur',
-            name='pays',
+            model_name="acheteur",
+            name="pays",
         ),
         migrations.RemoveField(
-            model_name='acheteur',
-            name='province',
+            model_name="acheteur",
+            name="province",
         ),
         migrations.RemoveField(
-            model_name='acheteur',
-            name='ville',
+            model_name="acheteur",
+            name="ville",
         ),
         migrations.AddField(
-            model_name='acheteur',
-            name='pays',
-            field=models.ForeignKey(blank=True, help_text="Pays où l'entreprise est située", null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.pays', verbose_name='Pays'),
+            model_name="acheteur",
+            name="pays",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Pays où l'entreprise est située",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.pays",
+                verbose_name="Pays",
+            ),
         ),
         migrations.AddField(
-            model_name='acheteur',
-            name='province',
-            field=models.ForeignKey(blank=True, help_text="Province où l'entreprise est située", null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.province', verbose_name='Province'),
+            model_name="acheteur",
+            name="province",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Province où l'entreprise est située",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.province",
+                verbose_name="Province",
+            ),
         ),
         migrations.AddField(
-            model_name='acheteur',
-            name='ville',
-            field=models.ForeignKey(blank=True, help_text="Ville où l'entreprise est située", null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.ville', verbose_name='Ville'),
+            model_name="acheteur",
+            name="ville",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Ville où l'entreprise est située",
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.ville",
+                verbose_name="Ville",
+            ),
         ),
     ]

@@ -7,252 +7,801 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0011_alter_couleurcommentaire_options_and_more'),
+        ("main", "0011_alter_couleurcommentaire_options_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CategoryNaceCode',
+            name="CategoryNaceCode",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Catégorie Code NACE',
-                'verbose_name_plural': 'Catégories Code NACE',
-                'ordering': ['code'],
+                "verbose_name": "Catégorie Code NACE",
+                "verbose_name_plural": "Catégories Code NACE",
+                "ordering": ["code"],
             },
         ),
         migrations.CreateModel(
-            name='CategoryNafCode',
+            name="CategoryNafCode",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Catégorie Code NAF',
-                'verbose_name_plural': 'Catégories Code NAF',
-                'ordering': ['code'],
+                "verbose_name": "Catégorie Code NAF",
+                "verbose_name_plural": "Catégories Code NAF",
+                "ordering": ["code"],
             },
         ),
         migrations.CreateModel(
-            name='DomaineEntreprise',
+            name="DomaineEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, unique=True, verbose_name='Libellé')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Description')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        unique=True,
+                        verbose_name="Libellé",
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Description"),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Domaine entreprise',
-                'verbose_name_plural': 'Domaines entreprise',
-                'ordering': ['libelle'],
+                "verbose_name": "Domaine entreprise",
+                "verbose_name_plural": "Domaines entreprise",
+                "ordering": ["libelle"],
             },
         ),
         migrations.CreateModel(
-            name='FormeJuridique',
+            name="FormeJuridique",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Description')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Description"),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Forme juridique',
-                'verbose_name_plural': 'Formes juridiques',
-                'ordering': ['code'],
+                "verbose_name": "Forme juridique",
+                "verbose_name_plural": "Formes juridiques",
+                "ordering": ["code"],
             },
         ),
         migrations.CreateModel(
-            name='ModeleAlarme',
+            name="ModeleAlarme",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': "Modèle d'alarme",
-                'verbose_name_plural': "Modèles d'alarme",
+                "verbose_name": "Modèle d'alarme",
+                "verbose_name_plural": "Modèles d'alarme",
             },
         ),
         migrations.CreateModel(
-            name='ModeleAvisCommercial',
+            name="ModeleAvisCommercial",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': "Modèle d'avis commercial",
-                'verbose_name_plural': "Modèles d'avis commercial",
+                "verbose_name": "Modèle d'avis commercial",
+                "verbose_name_plural": "Modèles d'avis commercial",
             },
         ),
         migrations.CreateModel(
-            name='ModeleBail',
+            name="ModeleBail",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Modèle de bail',
-                'verbose_name_plural': 'Modèles de bail',
+                "verbose_name": "Modèle de bail",
+                "verbose_name_plural": "Modèles de bail",
             },
         ),
         migrations.CreateModel(
-            name='ModeleBilan',
+            name="ModeleBilan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Modèle de bilan',
-                'verbose_name_plural': 'Modèles de bilan',
+                "verbose_name": "Modèle de bilan",
+                "verbose_name_plural": "Modèles de bilan",
             },
         ),
         migrations.CreateModel(
-            name='ModeleComportementJugement',
+            name="ModeleComportementJugement",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Modèle de comportement de jugement',
-                'verbose_name_plural': 'Modèles de comportement de jugement',
+                "verbose_name": "Modèle de comportement de jugement",
+                "verbose_name_plural": "Modèles de comportement de jugement",
             },
         ),
         migrations.CreateModel(
-            name='ModeleComportementPaiement',
+            name="ModeleComportementPaiement",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Modèle de comportement de paiement',
-                'verbose_name_plural': 'Modèles de comportement de paiement',
+                "verbose_name": "Modèle de comportement de paiement",
+                "verbose_name_plural": "Modèles de comportement de paiement",
             },
         ),
         migrations.CreateModel(
-            name='ModeleInformationNotationEntreprise',
+            name="ModeleInformationNotationEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': "Modèle d'information sur notation entreprise",
-                'verbose_name_plural': "Modèles d'information sur notation entreprise",
+                "verbose_name": "Modèle d'information sur notation entreprise",
+                "verbose_name_plural": "Modèles d'information sur notation entreprise",
             },
         ),
         migrations.CreateModel(
-            name='ModeleRapport',
+            name="ModeleRapport",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Modèle de rapport',
-                'verbose_name_plural': 'Modèles de rapport',
+                "verbose_name": "Modèle de rapport",
+                "verbose_name_plural": "Modèles de rapport",
             },
         ),
         migrations.CreateModel(
-            name='ModeleRelationEntreprise',
+            name="ModeleRelationEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Modèle de relation entreprise',
-                'verbose_name_plural': 'Modèles de relation entreprise',
+                "verbose_name": "Modèle de relation entreprise",
+                "verbose_name_plural": "Modèles de relation entreprise",
             },
         ),
         migrations.CreateModel(
-            name='PosteEntreprise',
+            name="PosteEntreprise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='Description')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
-                ('domaine', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='postes', to='main.domaineentreprise', verbose_name='Domaine Entreprise')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(blank=True, null=True, verbose_name="Description"),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
+                (
+                    "domaine",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="postes",
+                        to="main.domaineentreprise",
+                        verbose_name="Domaine Entreprise",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Poste entreprise',
-                'verbose_name_plural': 'Postes entreprise',
-                'ordering': ['libelle'],
+                "verbose_name": "Poste entreprise",
+                "verbose_name_plural": "Postes entreprise",
+                "ordering": ["libelle"],
             },
         ),
         migrations.CreateModel(
-            name='SubCategoryNaceCode',
+            name="SubCategoryNaceCode",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subcategories', to='main.categorynacecode', verbose_name='Catégorie')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subcategories",
+                        to="main.categorynacecode",
+                        verbose_name="Catégorie",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sous-Catégorie Code NACE',
-                'verbose_name_plural': 'Sous-Catégories Code NACE',
-                'ordering': ['code'],
+                "verbose_name": "Sous-Catégorie Code NACE",
+                "verbose_name_plural": "Sous-Catégories Code NACE",
+                "ordering": ["code"],
             },
         ),
         migrations.CreateModel(
-            name='SubCategoryNafCode',
+            name="SubCategoryNafCode",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(blank=True, max_length=50, null=True, unique=True, verbose_name='Code')),
-                ('libelle', models.CharField(blank=True, max_length=255, null=True, verbose_name='Libellé')),
-                ('active', models.BooleanField(default=True, verbose_name='Actif')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Date de Création')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Date de Mise à Jour')),
-                ('category', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subcategories', to='main.categorynafcode', verbose_name='Catégorie')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        blank=True,
+                        max_length=50,
+                        null=True,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "libelle",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="Libellé"
+                    ),
+                ),
+                ("active", models.BooleanField(default=True, verbose_name="Actif")),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, verbose_name="Date de Création"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, verbose_name="Date de Mise à Jour"
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subcategories",
+                        to="main.categorynafcode",
+                        verbose_name="Catégorie",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sous-Catégorie Code NAF',
-                'verbose_name_plural': 'Sous-Catégories Code NAF',
-                'ordering': ['code'],
+                "verbose_name": "Sous-Catégorie Code NAF",
+                "verbose_name_plural": "Sous-Catégories Code NAF",
+                "ordering": ["code"],
             },
         ),
     ]

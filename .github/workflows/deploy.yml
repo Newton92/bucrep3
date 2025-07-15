@@ -4,20 +4,36 @@ on:
   push:
     branches:
       # Branche sur laquelle on veut executer le deploiement
-      - '**' 
+      - '**'
   pull_request:
-    branches:  
-      - '**' 
+    branches:
+      - '**'
 
 jobs:
-  build:
+  test:
     # Precise et confirme l'utilisation de ubuntu derniere version (latest)
     runs-on: ubuntu-latest
-  
+
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+
     steps:
     - name: Checkout Code
-    # Consulter documentation de l'action : checkout@v3
+      # Consulter documentation de l'action : checkout@v3
       uses: actions/checkout@v3
+
+    - name: Utilisation python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Installation dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run test
+      run: python manage.py test
 
     - name: Run SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@master
@@ -26,6 +42,22 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+
+
+
+
+
+
+
+  build:
+    # Precise et confirme l'utilisation de ubuntu derniere version (latest)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      # Consulter documentation de l'action : checkout@v3
+      uses: actions/checkout@v3
 
     - name: Set up Docker Buildx
     # Consulter documentation de l'action docker : setup-buildx-action@v3
@@ -50,7 +82,7 @@ jobs:
         dockerhub-password: ${{ secrets.DOCKER_PASSWORD }}
         command: cves
 
-   
+
 
 
     # - name: Deploy to VPS via SSH
@@ -67,7 +99,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     # Precise et confirme l'utilisation de ubuntu derniere version (latest)
     runs-on: ubuntu-latest
-  
+
     steps:
     - name: Push Docker Image
       run: |

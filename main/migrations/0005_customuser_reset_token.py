@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0004_customuser_code_connexion_and_more'),
+        ("main", "0004_customuser_code_connexion_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='customuser',
-            name='reset_token',
-            field=models.CharField(blank=True, help_text='Token for password reset.', max_length=255, null=True, verbose_name='reset token'),
+            model_name="customuser",
+            name="reset_token",
+            field=models.CharField(
+                blank=True,
+                help_text="Token for password reset.",
+                max_length=255,
+                null=True,
+                verbose_name="reset token",
+            ),
         ),
     ]

@@ -6,13 +6,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0002_remove_customuser_adresse_customuser_address_and_more'),
+        ("main", "0002_remove_customuser_adresse_customuser_address_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='customuser',
-            name='role',
-            field=models.CharField(blank=True, choices=[('Root', 'Root'), ('Validateur', 'Validateur'), ('Analyste', 'Analyste'), ('Client', 'Client')], max_length=100, null=True, verbose_name='Droits utilisateur'),
+            model_name="customuser",
+            name="role",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("Root", "Root"),
+                    ("Validateur", "Validateur"),
+                    ("Analyste", "Analyste"),
+                    ("Client", "Client"),
+                ],
+                max_length=100,
+                null=True,
+                verbose_name="Droits utilisateur",
+            ),
         ),
     ]

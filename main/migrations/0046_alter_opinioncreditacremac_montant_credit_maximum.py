@@ -6,13 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0045_opinioncreditacremac_montant_credit_maximum'),
+        ("main", "0045_opinioncreditacremac_montant_credit_maximum"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='opinioncreditacremac',
-            name='montant_credit_maximum',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Montant crédit maximum conseillée', max_digits=100, null=True, verbose_name='Capital émis'),
+            model_name="opinioncreditacremac",
+            name="montant_credit_maximum",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Montant crédit maximum conseillée",
+                max_digits=100,
+                null=True,
+                verbose_name="Capital émis",
+            ),
         ),
     ]

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur de Scoring d'Entreprise</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Change to flex-start for longer content */
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .form-group input[type="text"],
+        .form-group select {
+            width: calc(100% - 22px); /* Adjust for padding and border */
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        .nace-input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .nace-input-group .nace-code {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .nace-input-group .nace-risk-level {
+            min-width: 150px; /* Adjust as needed */
+            margin-right: 10px;
+        }
+
+
+        .nace-input-group .remove-nace,
+        #addNace {
+            padding: 10px 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        #addNace {
+            background-color: #2ecc71;
+            margin-top: 5px;
+        }
+
+        .nace-input-group .remove-nace:hover {
+            background-color: #c0392b;
+        }
+
+        #addNace:hover {
+            background-color: #27ae60;
+        }
+
+        .submit-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .submit-button:hover {
+            background-color: #2980b9;
+        }
+
+        #resultsContainer {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #scoreInterpretation {
+            font-size: 18px;
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* Interpretation styles */
+        .interpretation-tres-faible { background-color: #d4efdf; color: #1e8449; }
+        .interpretation-faible { background-color: #eafaf1; color: #27ae60; }
+        .interpretation-modere { background-color: #fef9e7; color: #f39c12; }
+        .interpretation-eleve { background-color: #fdedec; color: #e74c3c; }
+        .interpretation-tres-eleve { background-color: #f5b7b1; color: #c0392b; }
+
+
+        .charts-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start; /* Align items to the top if they have different heights */
+            flex-wrap: wrap; /* Allow charts to wrap on smaller screens */
+            margin-bottom: 20px;
+        }
+
+        .chart-wrapper {
+            width: 100%; /* Full width on small screens */
+            max-width: 380px; /* Max width for side-by-side display */
+            margin-bottom: 20px; /* Space below each chart, especially when wrapped */
+            padding: 10px;
+            box-sizing: border-box; /* Include padding in width calculation */
+        }
+
+        .chart-wrapper h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .details-table {
+            margin-top: 20px;
+        }
+
+        .details-table h3 {
+            margin-bottom: 10px;
+        }
+
+        #pointsDetailTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #pointsDetailTable th,
+        #pointsDetailTable td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        #pointsDetailTable th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .chart-wrapper {
+                max-width: 90%; /* Allow charts to be larger on smaller screens when stacked */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulateur de Scoring d'Entreprise (Sans Bilan)</h1>
+
+        <form id="scoringForm">
+            <div class="form-group">
+                <label for="nomEntreprise">Nom de l'entreprise (Optionnel) :</label>
+                <input type="text" id="nomEntreprise" name="nomEntreprise">
+            </div>
+
+            <div class="form-group">
+                <label for="formeJuridique">Forme Juridique :</label>
+                <select id="formeJuridique" name="formeJuridique">
+                    <option value="EI">Entreprise Individuelle (EI)</option>
+                    <option value="EURL">EURL</option>
+                    <option value="SARL">SARL</option>
+                    <option value="SAS">SAS</option>
+                    <option value="SA">SA</option>
+                    <option value="AutreFJ">Autre</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="anneesExistence">Nombre d'années d'existence :</label>
+                <select id="anneesExistence" name="anneesExistence">
+                    <option value="0-1">Moins d'1 an</option>
+                    <option value="1-3">1 à 3 ans</option>
+                    <option value="3-5">3 à 5 ans</option>
+                    <option value="5-10">5 à 10 ans</option>
+                    <option value="10+">Plus de 10 ans</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Code(s) NACE :</label>
+                <div id="naceCodesContainer">
+                    <div class="nace-input-group">
+                        <input type="text" name="nace[]" class="nace-code" placeholder="Ex: 62.01Z">
+                        <select name="nace_risk[]" class="nace-risk-level">
+                            <option value="faible">Risque Faible (ex: Santé, certains services spécialisés)</option>
+                            <option value="modere" selected>Risque Modéré (ex: Commerce de détail standard, services courants)</option>
+                            <option value="eleve">Risque Élevé (ex: Secteurs très concurrentiels, nouvelles technologies non éprouvées)</option>
+                        </select>
+                        <button type="button" class="remove-nace" style="display:none;">-</button>
+                    </div>
+                </div>
+                <button type="button" id="addNace">Ajouter un code NACE</button>
+            </div>
+
+            <div class="form-group">
+                <label for="secteurActivite">Secteur d'Activité Principal (Simplifié) :</label>
+                <select id="secteurActivite" name="secteurActivite">
+                    <option value="Technologie">Technologie</option>
+                    <option value="ServicesB2B">Services B2B</option>
+                    <option value="Commerce">Commerce de détail</option>
+                    <option value="Industrie">Industrie</option>
+                    <option value="Construction">Construction</option>
+                    <option value="Sante">Santé</option>
+                    <option value="AutreSecteur">Autre</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="tailleEntreprise">Taille de l'Entreprise (Nombre d'employés) :</label>
+                <select id="tailleEntreprise" name="tailleEntreprise">
+                    <option value="1-9">1-9 employés</option>
+                    <option value="10-49">10-49 employés</option>
+                    <option value="50-249">50-249 employés</option>
+                    <option value="250+">250+ employés</option>
+                </select>
+            </div>
+
+            <button type="submit" class="submit-button">Calculer le Scoring</button>
+        </form>
+
+        <div id="resultsContainer" style="display:none;">
+            <h2 id="resultTitle">Résultats du Scoring pour : <span id="entrepriseNomResult"></span></h2>
+            <div class="score-display">
+                Score Total : <span id="totalScore"></span> / 100
+            </div>
+            <div id="scoreInterpretation"></div>
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>Répartition du Score par Critère</h3>
+                    <canvas id="scoreBreakdownChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>Jauge de Score</h3>
+                    <canvas id="scoreGaugeChart"></canvas>
+                </div>
+            </div>
+             <div class="details-table">
+                <h3>Détail des Points par Critère</h3>
+                <table id="pointsDetailTable">
+                    <thead>
+                        <tr>
+                            <th>Critère</th>
+                            <th>Valeur Choisie</th>
+                            <th>Points Obtenus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let scoreBreakdownChartInstance = null;
+            let scoreGaugeChartInstance = null;
+
+            // Logique pour ajouter/supprimer des champs de code NACE
+            $('#addNace').click(function() {
+                const naceInputGroup = `
+                    <div class="nace-input-group">
+                        <input type="text" name="nace[]" class="nace-code" placeholder="Ex: 62.01Z">
+                        <select name="nace_risk[]" class="nace-risk-level">
+                            <option value="faible">Risque Faible</option>
+                            <option value="modere" selected>Risque Modéré</option>
+                            <option value="eleve">Risque Élevé</option>
+                        </select>
+                        <button type="button" class="remove-nace">-</button>
+                    </div>`;
+                $('#naceCodesContainer').append(naceInputGroup);
+                // Afficher le bouton de suppression pour le premier champ s'il est désormais cloné
+                $('#naceCodesContainer .nace-input-group:first-child .remove-nace').show();
+            });
+
+            $('#naceCodesContainer').on('click', '.remove-nace', function() {
+                $(this).closest('.nace-input-group').remove();
+                // Cacher le bouton de suppression s'il ne reste qu'un seul champ
+                if ($('#naceCodesContainer .nace-input-group').length === 1) {
+                    $('#naceCodesContainer .nace-input-group:first-child .remove-nace').hide();
+                }
+            });
+            // Cacher initialement le bouton de suppression du premier champ
+            if ($('#naceCodesContainer .nace-input-group').length === 1) {
+                $('#naceCodesContainer .nace-input-group:first-child .remove-nace').hide();
+            }
+
+
+            $('#scoringForm').submit(function(event) {
+                event.preventDefault();
+
+                const pointsCriteria = {
+                    formeJuridique: 0,
+                    anneesExistence: 0,
+                    codesNACE: 0,
+                    secteurActivite: 0,
+                    tailleEntreprise: 0
+                };
+
+                const details = [];
+
+                // 1. Forme Juridique (Max 15 points)
+                const formeJuridique = $('#formeJuridique').val();
+                let pointsFormeJuridique = 0;
+                switch (formeJuridique) {
+                    case 'SA':
+                    case 'SAS':
+                        pointsFormeJuridique = 15;
+                        break;
+                    case 'SARL':
+                        pointsFormeJuridique = 10;
+                        break;
+                    case 'EURL':
+                        pointsFormeJuridique = 7;
+                        break;
+                    case 'EI':
+                        pointsFormeJuridique = 5;
+                        break;
+                    case 'AutreFJ':
+                        pointsFormeJuridique = 2;
+                        break;
+                }
+                pointsCriteria.formeJuridique = pointsFormeJuridique;
+                details.push({ critere: "Forme Juridique", valeur: $('#formeJuridique option:selected').text(), points: pointsFormeJuridique });
+
+                // 2. Années d'Existence (Max 25 points)
+                const anneesExistence = $('#anneesExistence').val();
+                let pointsAnneesExistence = 0;
+                switch (anneesExistence) {
+                    case '0-1': pointsAnneesExistence = 2; break;
+                    case '1-3': pointsAnneesExistence = 8; break;
+                    case '3-5': pointsAnneesExistence = 15; break;
+                    case '5-10': pointsAnneesExistence = 20; break;
+                    case '10+': pointsAnneesExistence = 25; break;
+                }
+                pointsCriteria.anneesExistence = pointsAnneesExistence;
+                details.push({ critere: "Années d'Existence", valeur: $('#anneesExistence option:selected').text(), points: pointsAnneesExistence });
+
+                // 3. Codes NACE (Max 30 points) - Logique simplifiée
+                let totalPointsNACE = 0;
+                let naceCount = 0;
+                const naceDetails = [];
+
+                $('input[name="nace[]"]').each(function(index) {
+                    const code = $(this).val().trim();
+                    const riskLevel = $('select[name="nace_risk[]"]').eq(index).val();
+                    if (code) { // Seulement si un code NACE est saisi
+                        let pointsPourCeNACE = 0;
+                        switch (riskLevel) {
+                            case 'faible': pointsPourCeNACE = 10; break; // Max 10 points par NACE "faible risque"
+                            case 'modere': pointsPourCeNACE = 6; break;  // 6 points par NACE "risque modéré"
+                            case 'eleve': pointsPourCeNACE = 2; break;   // 2 points par NACE "risque élevé"
+                        }
+                        totalPointsNACE += pointsPourCeNACE;
+                        naceCount++;
+                        naceDetails.push(${code} (Risque ${riskLevel}): ${pointsPourCeNACE} pts);
+                    }
+                });
+
+                // Plafonner les points NACE à 30 et gérer le cas où aucun NACE n'est entré
+                pointsCriteria.codesNACE = naceCount > 0 ? Math.min(totalPointsNACE, 30) : 0;
+                details.push({ critere: "Codes NACE", valeur: naceDetails.length > 0 ? naceDetails.join('; ') : "Non spécifié", points: pointsCriteria.codesNACE });
+
+
+                // 4. Secteur d'Activité (Simplifié) (Max 15 points)
+                const secteurActivite = $('#secteurActivite').val();
+                let pointsSecteur = 0;
+                switch (secteurActivite) {
+                    case 'Technologie': pointsSecteur = 15; break;
+                    case 'Sante': pointsSecteur = 13; break;
+                    case 'ServicesB2B': pointsSecteur = 12; break;
+                    case 'Commerce': pointsSecteur = 10; break;
+                    case 'Industrie': pointsSecteur = 8; break;
+                    case 'Construction': pointsSecteur = 6; break;
+                    case 'AutreSecteur': pointsSecteur = 4; break;
+                }
+                pointsCriteria.secteurActivite = pointsSecteur;
+                details.push({ critere: "Secteur d'Activité", valeur: $('#secteurActivite option:selected').text(), points: pointsSecteur });
+
+
+                // 5. Taille de l'Entreprise (Max 15 points)
+                const tailleEntreprise = $('#tailleEntreprise').val();
+                let pointsTaille = 0;
+                switch (tailleEntreprise) {
+                    case '1-9': pointsTaille = 5; break;
+                    case '10-49': pointsTaille = 10; break;
+                    case '50-249': pointsTaille = 13; break;
+                    case '250+': pointsTaille = 15; break;
+                }
+                pointsCriteria.tailleEntreprise = pointsTaille;
+                details.push({ critere: "Taille de l'Entreprise", valeur: $('#tailleEntreprise option:selected').text(), points: pointsTaille });
+
+                // Calcul du score total
+                const totalScore = Object.values(pointsCriteria).reduce((sum, points) => sum + points, 0);
+
+                // Affichage des résultats
+                $('#entrepriseNomResult').text($('#nomEntreprise').val() || "Non spécifiée");
+                $('#totalScore').text(totalScore);
+
+                // Interprétation du score
+                let interpretationText = "";
+                let interpretationClass = "";
+                if (totalScore >= 81) {
+                    interpretationText = "Risque Très Faible (Excellente santé apparente)";
+                    interpretationClass = "interpretation-tres-faible";
+                } else if (totalScore >= 61) {
+                    interpretationText = "Risque Faible (Bonne situation apparente)";
+                    interpretationClass = "interpretation-faible";
+                } else if (totalScore >= 41) {
+                    interpretationText = "Risque Modéré (Quelques points de vigilance)";
+                    interpretationClass = "interpretation-modere";
+                } else if (totalScore >= 21) {
+                    interpretationText = "Risque Élevé (Prudence requise)";
+                    interpretationClass = "interpretation-eleve";
+                } else {
+                    interpretationText = "Risque Très Élevé (Situation préoccupante)";
+                    interpretationClass = "interpretation-tres-eleve";
+                }
+                $('#scoreInterpretation').text(interpretationText).attr('class', interpretationClass);
+
+                $('#resultsContainer').slideDown();
+                $('html, body').animate({
+                    scrollTop: $("#resultsContainer").offset().top
+                }, 1000);
+
+
+                // Tableau de détails des points
+                const $tableBody = $('#pointsDetailTable tbody');
+                $tableBody.empty(); // Vider les anciennes lignes
+                details.forEach(detail => {
+                    $tableBody.append(<tr><td>${detail.critere}</td><td>${detail.valeur}</td><td>${detail.points}</td></tr>);
+                });
+
+
+                // Graphique de Répartition du Score (Camembert)
+                const breakdownCtx = document.getElementById('scoreBreakdownChart').getContext('2d');
+                if (scoreBreakdownChartInstance) {
+                    scoreBreakdownChartInstance.destroy();
+                }
+                scoreBreakdownChartInstance = new Chart(breakdownCtx, {
+                    type: 'doughnut', // ou 'pie'
+                    data: {
+                        labels: [
+                            "Forme Juridique (" + pointsCriteria.formeJuridique + ")",
+                            "Années d'Existence (" + pointsCriteria.anneesExistence + ")",
+                            "Codes NACE (" + pointsCriteria.codesNACE + ")",
+                            "Secteur Activité (" + pointsCriteria.secteurActivite + ")",
+                            "Taille Entreprise (" + pointsCriteria.tailleEntreprise + ")"
+                        ],
+                        datasets: [{
+                            label: 'Points par Critère',
+                            data: [
+                                pointsCriteria.formeJuridique,
+                                pointsCriteria.anneesExistence,
+                                pointsCriteria.codesNACE,
+                                pointsCriteria.secteurActivite,
+                                pointsCriteria.tailleEntreprise
+                            ],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' points';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Graphique Jauge de Score (Barre Horizontale stylisée ou Doughnut modifié)
+                const gaugeCtx = document.getElementById('scoreGaugeChart').getContext('2d');
+                if(scoreGaugeChartInstance) {
+                    scoreGaugeChartInstance.destroy();
+                }
+                scoreGaugeChartInstance = new Chart(gaugeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Score Atteint', 'Score Restant'],
+                        datasets: [{
+                            data: [totalScore, 100 - totalScore],
+                            backgroundColor: [
+                                totalScore >= 81 ? '#2ecc71' : totalScore >= 61 ? '#f1c40f' : totalScore >= 41 ? '#e67e22' : '#e74c3c', // Vert, Jaune, Orange, Rouge
+                                '#e0e0e0' // Gris pour le reste
+                            ],
+                            borderColor: [
+                                totalScore >= 81 ? '#2ecc71' : totalScore >= 61 ? '#f1c40f' : totalScore >= 41 ? '#e67e22' : '#e74c3c',
+                                '#d0d0d0'
+                            ],
+                            borderWidth: 1,
+                            circumference: 180, // Demi-cercle
+                            rotation: 270, // Commence en bas
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%', // Fait un effet de jauge plus prononcé
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false },
+                            title: {
+                                display: true,
+                                text: Score: ${totalScore}/100,
+                                position: 'bottom',
+                                font: { size: 16 }
+                            }
+                        },
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

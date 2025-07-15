@@ -69,8 +69,9 @@
 
             <!-- Card body START -->
             <div class="card-body vstack gap-4">
+
                 <form id="editPortefeuilleForm">
-                    <input type="hidden" id="portefeuilleId" value="{{ portefeuille.id }}" />
+                    <input type="hidden" id="portefeuilleId" value="{{ portefeuille_id }}" />
 
                     <!-- Généralités item START -->
                     <div class="card">
@@ -84,7 +85,47 @@
 
                             <br>
 
-                            <!-- Forme juridique -->
+                            <!-- Fréquence des alertes -->
+                            <div class="mb-3">
+                                <label for="frequence_alertes" class="form-label">Fréquence des alertes</label>
+                                <select class="form-select" id="frequence_alertes" name="frequence_alertes" required>
+                                    <option value="">Sélectionnez une fréquence</option>
+                                    {% for value, label in frequences %}
+                                        <option value="{{ value }}" {% if value == portefeuille.frequence_alertes %}selected{% endif %} class="text-primary">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Éléments de surveillance -->
+                            <div class="mb-3">
+                                <!-- Afficher les éléments de surveillance groupés par catégorie -->
+                                <fieldset>
+                                    <label>Événements générateurs d'alertes</label><br><br>
+                                    <div class="row g-3">
+                                        {% for categorie, elements in surveillances_by_category.items %}
+                                        <div class="col-md-4">
+                                            <div class="category-group">
+                                                <label><strong>{{ categorie }}</strong></label>
+                                                {% for element in elements %}
+                                                    <div class="checkbox-item">
+                                                        <label>
+                                                            <input type="checkbox" name="elements_surveillance_actifs" value="{{ element.id }}" {% if element.id in selected_elements %}checked{% endif %}> {{ element.nom }}
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            <br>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            <br>
+
+                            <!-- Clients dans le portefeuille -->
                             <div class="mb-3">
                                 <label for="client" class="form-label">Client</label>
                                 <select class="form-select" id="client" name="client" required>
@@ -144,7 +185,18 @@
                                     </thead>
 
                                     <!-- Table body START -->
-                                    <tbody class="border-top-0" id="acheteursTableBody"></tbody>
+                                    <tbody class="border-top-0" id="acheteursTableBody2">
+                                        {% for acheteur in acheteur_list %}
+                                        <tr>
+                                            <td class="border-0">
+                                                <input type="checkbox" name="acheteurs" value="{{ acheteur.id }}" {% if acheteur.id in acheteurs_associes %}checked{% endif %}>
+                                            </td>
+                                            <td class="border-0">{{ acheteur.code }}</td>
+                                            <td class="border-0">{{ acheteur.nom }}</td>
+                                            <td class="border-0">{{ acheteur.sigle }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
                                     <!-- Table body END -->
                                 </table>
                             </div>
@@ -164,6 +216,7 @@
                         </button>
                     </div>
                 </form>
+
             </div>
             <!-- Card body END -->
         </div>
@@ -384,7 +437,7 @@
                                     <option value="">Sélectionnez une ville</option>
                                 </select>
                             </div>
-                            
+
                         </div>
                     </div>
                     <!-- Localisation item END -->
@@ -418,7 +471,7 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                                
+
                             </div>
 
                             <br>
@@ -442,7 +495,7 @@
                     </div>
 
                 </form>
-                
+
             </div>
         </div>
     </div>
@@ -472,71 +525,53 @@
 
 <script>
 $(document).ready(function() {
-    
-    // Récupérer les acheteurs associés au portefeuille
-    var acheteursAssocies = {{ acheteurs_associes|safe }};
 
-    // Fonction pour charger les acheteurs
-    function loadAcheteurs(page = 1, search = '') {
-        $.ajax({
-            url: '/api/liste-des-acheteurs/?page=' + page + '&search=' + search,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
-            },
-            success: function(response) {
-                console.log(response);
 
-                if (!response.results || response.results.length === 0) {
-                    console.warn("Aucun acheteur trouvé.");
-                    return;
-                }
-
-                // Mettre à jour le tableau des acheteurs
-                $('#acheteursTableBody').html('');
-                response.results.forEach(function(acheteur) {
-                    var isChecked = acheteursAssocies.includes(acheteur.id);
-                    $('#acheteursTableBody').append('<tr>' +
-                        '<td><input type="checkbox" class="acheteur-checkbox" data-id="' + acheteur.id + '" ' + (isChecked ? 'checked' : '') + ' /></td>' +
-                        '<td>' + acheteur.code + '</td>' +
-                        '<td>' + acheteur.nom + '</td>' +
-                        '<td>' + acheteur.sigle + '</td>' +
-                    '</tr>');
-                });
-
-                // Mettre à jour les acheteurs sélectionnés
-                updateSelectedAcheteurs();
-            },
-            error: function(response) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données.',
-                });
-            }
-        });
-    }
-
-    // Charger les acheteurs au démarrage
-    loadAcheteurs();
-
-    // Gestion de la soumission du formulaire de modification
     $('#editPortefeuilleForm').on('submit', function(event) {
         event.preventDefault();
 
-        // Récupérer les données du formulaire
+        // Récupérer les valeurs du formulaire
+        var nom = $('#nom').val();
+        var client = $('#client').val();
+        var frequenceAlertes = $('#frequence_alertes').val();
+        var elementsSurveillanceActifs = [];
+
+        // Récupérer les éléments de surveillance sélectionnés
+        $('input[name="elements_surveillance_actifs"]:checked').each(function() {
+            elementsSurveillanceActifs.push(parseInt($(this).val()));
+        });
+
+        // Récupérer les acheteurs sélectionnés
+        var acheteursIds = [];
+        $('input[name="acheteurs"]:checked').each(function() {
+            acheteursIds.push(parseInt($(this).val()));
+        });
+
+        if (acheteursIds.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention!',
+                text: 'Veuillez cocher au moins un acheteur.',
+                confirmButtonText: 'OK'
+            });
+            return; // Arrêter la soumission du formulaire
+        }
+
+        // Construire l'objet formData
         var formData = {
             id: $('#portefeuilleId').val(),
-            nom: $('#nom').val(),
-            client: $('#client').val(),
-            acheteurs: $('#acheteursId').val().split(',').map(Number)
+            client: client,
+            nom: nom,
+            frequence_alertes: frequenceAlertes,
+            elements_surveillance_actifs: elementsSurveillanceActifs,
+            acheteurs: acheteursIds
         };
 
         console.log("Données du formulaire :", formData);
 
         // Envoyer la requête PUT à l'API
         $.ajax({
-            url: '/api/editer-portefeuille/' + formData.id + '/',
+            url: '/api/editer-un-portefeuille/' + formData.id + '/',
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(formData),
@@ -550,7 +585,7 @@ $(document).ready(function() {
                     text: 'Portefeuille mis à jour avec succès.',
                     confirmButtonText: 'OK'
                 }).then(() => {
-                    window.location.href = '/dash-root-portefeuilles/';
+                    window.location.reload(true);
                 });
             },
             error: function(xhr) {

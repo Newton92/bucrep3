@@ -7,45 +7,166 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0042_portefeuilleclient_delete_portefeuilleentreprise'),
+        ("main", "0042_portefeuilleclient_delete_portefeuilleentreprise"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CompteFinancierIrfs',
+            name="CompteFinancierIrfs",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=255, verbose_name='Nom')),
-                ('type_compte', models.CharField(choices=[('Actif', 'Actif'), ('Passif', 'Passif'), ('Produit', 'Produit'), ('Charge', 'Charge'), ('Compte de Résultat', 'Compte de Résultat')], max_length=255, verbose_name='Type de Compte')),
-                ('sous_type', models.CharField(blank=True, choices=[('Actif non courant', 'Actif non courant'), ('Passif non courant', 'Passif non courant'), ('Actif courant', 'Actif courant'), ('Capitaux propres', 'Capitaux propres'), ('Passif courant', 'Passif courant'), ('Produits', 'Produits'), ('Charges', 'Charges'), ('Autre', 'Autre')], max_length=255, null=True, verbose_name='Sous-Type')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=255, verbose_name="Nom")),
+                (
+                    "type_compte",
+                    models.CharField(
+                        choices=[
+                            ("Actif", "Actif"),
+                            ("Passif", "Passif"),
+                            ("Produit", "Produit"),
+                            ("Charge", "Charge"),
+                            ("Compte de Résultat", "Compte de Résultat"),
+                        ],
+                        max_length=255,
+                        verbose_name="Type de Compte",
+                    ),
+                ),
+                (
+                    "sous_type",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("Actif non courant", "Actif non courant"),
+                            ("Passif non courant", "Passif non courant"),
+                            ("Actif courant", "Actif courant"),
+                            ("Capitaux propres", "Capitaux propres"),
+                            ("Passif courant", "Passif courant"),
+                            ("Produits", "Produits"),
+                            ("Charges", "Charges"),
+                            ("Autre", "Autre"),
+                        ],
+                        max_length=255,
+                        null=True,
+                        verbose_name="Sous-Type",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='RatioFinancierIrfs',
+            name="RatioFinancierIrfs",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type_ratio', models.CharField(choices=[('Ratio financier', 'Ratio financier'), ('Liquidité', 'Liquidité'), ('Solvabilité', 'Solvabilité'), ('Rentabilité des ventes', 'Rentabilité des ventes'), ('Gestion', 'Gestion')], max_length=255, verbose_name='Type de Ratio')),
-                ('nom', models.CharField(max_length=255, verbose_name='Nom')),
-                ('formule', models.CharField(max_length=255, verbose_name='Formule')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "type_ratio",
+                    models.CharField(
+                        choices=[
+                            ("Ratio financier", "Ratio financier"),
+                            ("Liquidité", "Liquidité"),
+                            ("Solvabilité", "Solvabilité"),
+                            ("Rentabilité des ventes", "Rentabilité des ventes"),
+                            ("Gestion", "Gestion"),
+                        ],
+                        max_length=255,
+                        verbose_name="Type de Ratio",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=255, verbose_name="Nom")),
+                ("formule", models.CharField(max_length=255, verbose_name="Formule")),
             ],
         ),
         migrations.CreateModel(
-            name='ValeurCompteIrfs',
+            name="ValeurCompteIrfs",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('valeur', models.DecimalField(decimal_places=2, max_digits=20, verbose_name='Valeur')),
-                ('annee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.annee', verbose_name='Année')),
-                ('compte', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.comptefinancierirfs', verbose_name='Compte Financier')),
-                ('devise', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.devise', verbose_name='Devise')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "valeur",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=20, verbose_name="Valeur"
+                    ),
+                ),
+                (
+                    "annee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.annee",
+                        verbose_name="Année",
+                    ),
+                ),
+                (
+                    "compte",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.comptefinancierirfs",
+                        verbose_name="Compte Financier",
+                    ),
+                ),
+                (
+                    "devise",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.devise",
+                        verbose_name="Devise",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ValeurRatioIrfs',
+            name="ValeurRatioIrfs",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('valeur', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Valeur')),
-                ('annee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.annee', verbose_name='Année')),
-                ('ratio', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='main.ratiofinancierirfs', verbose_name='Ratio Financier')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "valeur",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=10, verbose_name="Valeur"
+                    ),
+                ),
+                (
+                    "annee",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.annee",
+                        verbose_name="Année",
+                    ),
+                ),
+                (
+                    "ratio",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="main.ratiofinancierirfs",
+                        verbose_name="Ratio Financier",
+                    ),
+                ),
             ],
         ),
     ]

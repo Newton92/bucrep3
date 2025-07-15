@@ -1,5 +1,7 @@
 import json
+
 from channels.generic.websocket import AsyncWebsocketConsumer
+
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -19,8 +21,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         pass  # On ne reçoit pas de messages des utilisateurs ici
 
     async def send_notification(self, event):
-        await self.send(text_data=json.dumps({
-            "message": event["message"],
-            "type": event["type"],
-            "commande": event.get("commande", None),
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "message": event["message"],
+                    "type": event["type"],
+                    "commande": event.get("commande", None),
+                }
+            )
+        )

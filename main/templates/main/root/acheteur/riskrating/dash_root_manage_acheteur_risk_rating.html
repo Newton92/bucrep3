@@ -75,15 +75,17 @@
                         <strong>Existence de Garantie : </strong><span id="">EXSTGA</span><br>
                         <strong>Terme Financier : </strong><span id="">TERMFI</span><br>
                         <strong>Mesure de Soutien : </strong><span id="">MESDS</span><br>
+                        <strong>Cotation du Risque : </strong><span id="">CODRI</span><br>
+                        <strong>Indice du Risque : </strong><span id="">INDDRI</span><br>
                     </div>
                 </div>
                 <br>
-                
+
                 <div class="d-flex align-items-center">
                     <!-- Content -->
                     <div class="ms-3">
                         <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page 
+                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
                             de gestion de l'acheteur sur lequel vous etes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
                     </div>
                 </div>
@@ -94,7 +96,7 @@
         </div>
         <!-- Card item END -->
 
-        
+
 
 
     </div>
@@ -153,6 +155,8 @@
                                 <th scope="col" class="border-0">EXSTGA</th>
                                 <th scope="col" class="border-0">TERMFI</th>
                                 <th scope="col" class="border-0">MESDS</th>
+                                <th scope="col" class="border-0">CODRI</th>
+                                <th scope="col" class="border-0">INDDRI</th>
                                 <th scope="col" class="border-0 rounded-end">Action</th>
                             </tr>
                         </thead>
@@ -252,6 +256,25 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label for="cotation_du_risque" class="form-label">Cotation du risque</label>
+                        <select class="form-select" id="cotation_du_risque" name="cotation_du_risque" required>
+                            <option value="non_douteux">Non douteux</option>
+                            <option value="risque_faible">Risque faible</option>
+                            <option value="risque_modere">Risque modéré</option>
+                            <option value="mise_en_garde">Mise en garde</option>
+                            <option value="peu_satisfaisant">Peu satisfaisant</option>
+                            <option value="inacceptable">Inacceptable</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="indice_du_risque" class="form-label">Indice du risque</label>
+                        <select class="form-select" id="indice_du_risque" name="indice_du_risque" required>
+                            <option value="eleve">Élevé</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="faible">Faible</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="interpretation" class="form-label">Interprétation</label>
                         <textarea class="form-control" id="interpretation" name="interpretation" rows="3"></textarea>
                     </div>
@@ -335,6 +358,25 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label for="cotation_du_risque" class="form-label">Cotation du risque</label>
+                        <select class="form-select" id="editCotationDuRisque" name="cotation_du_risque" required>
+                            <option value="non_douteux">Non douteux</option>
+                            <option value="risque_faible">Risque faible</option>
+                            <option value="risque_modere">Risque modéré</option>
+                            <option value="mise_en_garde">Mise en garde</option>
+                            <option value="peu_satisfaisant">Peu satisfaisant</option>
+                            <option value="inacceptable">Inacceptable</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="indice_du_risque" class="form-label">Indice du risque</label>
+                        <select class="form-select" id="editIndiceDuRisque" name="indice_du_risque" required>
+                            <option value="eleve">Élevé</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="faible">Faible</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="editInterpretation" class="form-label">Interprétation</label>
                         <textarea class="form-control" id="editInterpretation" name="interpretation" rows="3"></textarea>
                     </div>
@@ -397,7 +439,7 @@
 
                     $('#editDateCreation').val(response.date_creation).text(formattedDate);
                 }
-                
+
                 $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
                 $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
                 $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
@@ -413,7 +455,7 @@
                 $('#editPays').val(response.pays.nom).text(response.pays.nom);
                 $('#editProvince').val(response.province.nom).text(response.province.nom);
                 $('#editVille').val(response.ville.nom).text(response.ville.nom);
-                    
+
             },
             error: function(xhr) {
                 Swal.fire({
@@ -425,11 +467,75 @@
             }
         });
     });
-    
+
 </script>
 
 <script>
     $(document).ready(function() {
+        // Définition des explications pour les popovers
+        const riskRatingExplanations = {
+            'non_douteux': "Prêt entièrement garanti par l’encaisse ; Solide capitalisation ; Direction remarquable",
+            'risque_faible': "Excellents antécédents financiers/tendances ; Direction solide ; Industrie stable/robuste",
+            'risque_modere': "Direction solide ; Tendances financières stables ; Niveau de capitalisation modéré",
+            'mise_en_garde': "Insuffisance possible de la garantie ; Insuffisance possible du service de la dette ; Tournure très défavorable des événements",
+            'peu_satisfaisant': "Cessation des activités ; Changement de direction préjudiciable ; Arriérés en intérêts et capital",
+            'inacceptable': "Actif/garantie en train de disparaître ; Fraude",
+        };
+
+        const riskIndexExplanations = {
+            'eleve': "Le risque de transaction est relativement élevé.",
+            'moyen': "Le risque de transaction est relativement modéré.",
+            'faible': "Le risque de transaction est relativement faible.",
+        };
+
+        // Fonction pour obtenir la valeur lisible et l'explication
+        function getDisplayValueAndExplanation(value, type) {
+            let displayValue = '';
+            let explanation = '';
+
+            if (type === 'rating') {
+                switch (value) {
+                    case 'non_douteux':
+                        displayValue = 'Non douteux';
+                        break;
+                    case 'risque_faible':
+                        displayValue = 'Risque faible';
+                        break;
+                    case 'risque_modere':
+                        displayValue = 'Risque modéré';
+                        break;
+                    case 'mise_en_garde':
+                        displayValue = 'Mise en garde';
+                        break;
+                    case 'peu_satisfaisant':
+                        displayValue = 'Peu satisfaisant';
+                        break;
+                    case 'inacceptable':
+                        displayValue = 'Inacceptable';
+                        break;
+                    default:
+                        displayValue = 'N/A';
+                }
+                explanation = riskRatingExplanations[value] || '';
+            } else if (type === 'index') {
+                switch (value) {
+                    case 'eleve':
+                        displayValue = 'Élevé';
+                        break;
+                    case 'moyen':
+                        displayValue = 'Moyen';
+                        break;
+                    case 'faible':
+                        displayValue = 'Faible';
+                        break;
+                    default:
+                        displayValue = 'N/A';
+                }
+                explanation = riskIndexExplanations[value] || '';
+            }
+
+            return { displayValue, explanation };
+        }
         // Function to load risk ratings data
         function loadRiskRatings(page = 1, search = '') {
             $.ajax({
@@ -462,6 +568,11 @@
                     $('#riskRatingTableBody').html('');
                     response.results.forEach(function(riskRating, index) {
                         console.log(response);
+
+                        const cotationData = getDisplayValueAndExplanation(riskRating.cotation_du_risque, 'rating');
+                        const indiceData = getDisplayValueAndExplanation(riskRating.indice_du_risque, 'index');
+
+
                         $('#riskRatingTableBody').append('<tr>' +
                             '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
                             '<td>' + (riskRating.remboursabilite ? 'Oui' : 'Non') + '</td>' +
@@ -472,10 +583,24 @@
                             '<td>' + (riskRating.existence_garantie ? 'Oui' : 'Non') + '</td>' +
                             '<td>' + (riskRating.terme_financier_duree_pret ? 'Oui' : 'Non') + '</td>' +
                             '<td>' + (riskRating.mesure_propre_soutenir_credit ? 'Oui' : 'Non') + '</td>' +
+
+                            // Champs avec popover pour la cotation et l'indice du risque
+                            '<td><span data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" data-bs-content="' + cotationData.explanation + '">' + cotationData.displayValue + '</span></td>' +
+                            '<td><span data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" data-bs-content="' + indiceData.explanation + '">' + indiceData.displayValue + '</span></td>' +
+
+
                             '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
                             '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
                             '</tr>');
                     });
+
+                    // Initialiser les popovers après avoir ajouté les éléments au DOM
+                    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+                    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                        return new bootstrap.Popover(popoverTriggerEl, {
+                            container: 'body' // Important pour éviter les problèmes de positionnement dans un tableau
+                        })
+                    })
                 },
                 error: function(response) {
                     Swal.fire({
@@ -561,6 +686,9 @@
                     $('#editExistenceGarantie').val(response.existence_garantie ? "true" : "false");
                     $('#editTermeFinancierDureePret').val(response.terme_financier_duree_pret ? "true" : "false");
                     $('#editMesurePropreSoutenirCredit').val(response.mesure_propre_soutenir_credit ? "true" : "false");
+
+                    $('#editCotationDuRisque').val(response.cotation_du_risque);
+                    $('#editIndiceDuRisque').val(response.indice_du_risque);
 
                     $('#editInterpretation').val(response.interpretation);
                     $('#editAnalyse').val(response.analyse);

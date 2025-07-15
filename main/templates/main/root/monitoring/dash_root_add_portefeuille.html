@@ -13,13 +13,11 @@
     height: 400px; /* Hauteur fixe */
     border: 2px solid #ddd; /* Bordure grise légère */
 }
-
 #map {
     height: 100%;
     width: 100%;
     border-radius: 15px; /* Bordures arrondies pour la carte aussi */
 }
-
 .color-circle {
     display: inline-block;
     width: 10px;
@@ -27,6 +25,21 @@
     border-radius: 50%;
     background-color: black;
     margin-left: 5px;
+}
+.category-group {
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+.checkbox-item {
+    margin: 5px 0;
+}
+.checkbox-item label {
+    display: flex;
+    align-items: center;
+}
+.checkbox-item input[type="checkbox"] {
+    margin-right: 10px;
 }
 </style>
 {% endblock %}
@@ -80,6 +93,48 @@
                             <div class="mb-3">
                                 <label class="form-label">Nom du Portefeuille</label>
                                 <input type="text" class="form-control" id="nom" name="nom" placeholder="Ex. P001" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Forme juridique -->
+                            <div class="mb-3">
+                                <label for="frequence_alertes" class="form-label">Fréquence des alertes</label>
+                                <select class="form-select" id="frequence_alertes" name="frequence_alertes" required>
+                                    <option value="">Sélectionnez une fréquence</option>
+                                    {% for value, label in frequences %}
+                                        <option value="{{ value }}" class="text-primary">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Forme juridique -->
+                            <div class="mb-3">
+                                <!-- Afficher les éléments de surveillance groupés par catégorie -->
+                                <fieldset>
+                                    <label>Événements générateurs d'alertes</label><br><br>
+                                    <div class="row g-3">
+
+                                        {% for categorie, elements in surveillances_by_category.items %}
+                                        <div class="col-md-4">
+                                            <div class="category-group">
+                                                <label><strong>{{ categorie }}</strong></label>
+                                                {% for element in elements %}
+                                                    <div class="checkbox-item">
+                                                        <label>
+                                                            <input type="checkbox" name="elements_surveillance_actifs" value="{{ element.id }}" {% if element.id in selected_elements %}checked{% endif %}> {{ element.nom }}
+                                                        </label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            <br>
+                                        </div>
+                                        {% endfor %}
+
+                                    </div>
+                                </fieldset>
                             </div>
 
                             <br>
@@ -384,7 +439,7 @@
                                     <option value="">Sélectionnez une ville</option>
                                 </select>
                             </div>
-                            
+
                         </div>
                     </div>
                     <!-- Localisation item END -->
@@ -418,7 +473,7 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                                
+
                             </div>
 
                             <br>
@@ -442,7 +497,7 @@
                     </div>
 
                 </form>
-                
+
             </div>
         </div>
     </div>
@@ -575,19 +630,39 @@ $(document).ready(function() {
         console.log("Selected Acheteurs IDs:", selectedAcheteurs);
     }
 
+
+
     $('#addPortefeuilleForm').on('submit', function(event) {
         event.preventDefault();
-
 
         // Récupérer les valeurs du formulaire
         var nom = $('#nom').val();
         var client = $('#client').val();
+        var frequenceAlertes = $('#frequence_alertes').val();
+        var elementsSurveillanceActifs = [];
+
+        // Récupérer les éléments de surveillance sélectionnés
+        $('input[name="elements_surveillance_actifs"]:checked').each(function() {
+            elementsSurveillanceActifs.push(parseInt($(this).val()));
+        });
+
         var acheteursIds = $('#acheteursId').val().split(',').map(Number); // Convertir en tableau d'entiers
+        if (!acheteursId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention!',
+                text: 'Veuillez cocher au moins un acheteur.',
+                confirmButtonText: 'OK'
+            });
+            return; // Arrêter la soumission du formulaire
+        }
 
         // Construire l'objet formData
         var formData = {
             client: client,
             nom: nom,
+            frequence_alertes: frequenceAlertes,
+            elements_surveillance_actifs: elementsSurveillanceActifs,
             acheteurs: acheteursIds
         };
 
@@ -634,6 +709,8 @@ $(document).ready(function() {
         });
     });
 
+
+
     // Ajouter un portefeuille
     $('#addPortefeuilleForm2').on('submit', function(event) {
         event.preventDefault();
@@ -650,7 +727,7 @@ $(document).ready(function() {
             return; // Arrêter la soumission du formulaire
         }
 
-        
+
         var form = $(this);
         var formData = form.serialize();
         console.log("Données du formulaire :", formData);
@@ -694,7 +771,7 @@ $(document).ready(function() {
         provinceSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
 
         $.ajax({
-            url: `/api/provinces/${paysId}/`, 
+            url: `/api/provinces/${paysId}/`,
             type: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + '{{ access }}' // Utiliser le token stocké

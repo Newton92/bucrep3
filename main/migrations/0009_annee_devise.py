@@ -6,40 +6,128 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0008_province_ville_delete_article'),
+        ("main", "0008_province_ville_delete_article"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Annee',
+            name="Annee",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('annee', models.IntegerField(help_text='Année de référence, par exemple 2025.', unique=True, verbose_name='Année')),
-                ('date_creation', models.DateTimeField(auto_now_add=True, help_text="Date et heure de la création de l'année.", verbose_name='Date de création')),
-                ('date_modification', models.DateTimeField(auto_now=True, help_text="Date et heure de la dernière modification de l'année.", verbose_name='Date de modification')),
-                ('is_active', models.BooleanField(default=True, help_text="Indique si l'année est active ou désactivée.", verbose_name='Actif')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "annee",
+                    models.IntegerField(
+                        help_text="Année de référence, par exemple 2025.",
+                        unique=True,
+                        verbose_name="Année",
+                    ),
+                ),
+                (
+                    "date_creation",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Date et heure de la création de l'année.",
+                        verbose_name="Date de création",
+                    ),
+                ),
+                (
+                    "date_modification",
+                    models.DateTimeField(
+                        auto_now=True,
+                        help_text="Date et heure de la dernière modification de l'année.",
+                        verbose_name="Date de modification",
+                    ),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Indique si l'année est active ou désactivée.",
+                        verbose_name="Actif",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Année civile',
-                'verbose_name_plural': 'Années civiles',
-                'ordering': ['annee'],
+                "verbose_name": "Année civile",
+                "verbose_name_plural": "Années civiles",
+                "ordering": ["annee"],
             },
         ),
         migrations.CreateModel(
-            name='Devise',
+            name="Devise",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(help_text="Nom complet de la devise, par exemple 'Dollar américain'.", max_length=50, verbose_name='Nom')),
-                ('code', models.CharField(help_text="Code unique de la devise, par exemple 'USD' pour le Dollar ou 'EUR' pour l'Euro.", max_length=10, unique=True, verbose_name='Code')),
-                ('symbole', models.CharField(blank=True, help_text="Symbole de la devise, par exemple '$' pour le Dollar ou '€' pour l'Euro.", max_length=10, verbose_name='Symbole')),
-                ('date_creation', models.DateTimeField(auto_now_add=True, help_text='Date et heure de la création de la devise.', verbose_name='Date de création')),
-                ('date_modification', models.DateTimeField(auto_now=True, help_text='Date et heure de la dernière modification de la devise.', verbose_name='Date de modification')),
-                ('is_active', models.BooleanField(default=True, help_text='Indique si la devise est active ou désactivée.', verbose_name='Actif')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nom",
+                    models.CharField(
+                        help_text="Nom complet de la devise, par exemple 'Dollar américain'.",
+                        max_length=50,
+                        verbose_name="Nom",
+                    ),
+                ),
+                (
+                    "code",
+                    models.CharField(
+                        help_text="Code unique de la devise, par exemple 'USD' pour le Dollar ou 'EUR' pour l'Euro.",
+                        max_length=10,
+                        unique=True,
+                        verbose_name="Code",
+                    ),
+                ),
+                (
+                    "symbole",
+                    models.CharField(
+                        blank=True,
+                        help_text="Symbole de la devise, par exemple '$' pour le Dollar ou '€' pour l'Euro.",
+                        max_length=10,
+                        verbose_name="Symbole",
+                    ),
+                ),
+                (
+                    "date_creation",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Date et heure de la création de la devise.",
+                        verbose_name="Date de création",
+                    ),
+                ),
+                (
+                    "date_modification",
+                    models.DateTimeField(
+                        auto_now=True,
+                        help_text="Date et heure de la dernière modification de la devise.",
+                        verbose_name="Date de modification",
+                    ),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Indique si la devise est active ou désactivée.",
+                        verbose_name="Actif",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Devise',
-                'verbose_name_plural': 'Devises',
-                'ordering': ['nom'],
+                "verbose_name": "Devise",
+                "verbose_name_plural": "Devises",
+                "ordering": ["nom"],
             },
         ),
     ]

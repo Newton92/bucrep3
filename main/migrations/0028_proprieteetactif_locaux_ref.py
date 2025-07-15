@@ -7,13 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0027_alter_structure_options_and_more'),
+        ("main", "0027_alter_structure_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='proprieteetactif',
-            name='locaux_ref',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='main.modelebail', verbose_name='Référence sur les locaux'),
+            model_name="proprieteetactif",
+            name="locaux_ref",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.DO_NOTHING,
+                to="main.modelebail",
+                verbose_name="Référence sur les locaux",
+            ),
         ),
     ]

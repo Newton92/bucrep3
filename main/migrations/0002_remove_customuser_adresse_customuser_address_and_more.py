@@ -6,32 +6,56 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0001_initial'),
+        ("main", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='customuser',
-            name='adresse',
+            model_name="customuser",
+            name="adresse",
         ),
         migrations.AddField(
-            model_name='customuser',
-            name='address',
-            field=models.CharField(blank=True, help_text='The address of the user.', max_length=255, null=True, verbose_name='adresse'),
+            model_name="customuser",
+            name="address",
+            field=models.CharField(
+                blank=True,
+                help_text="The address of the user.",
+                max_length=255,
+                null=True,
+                verbose_name="adresse",
+            ),
         ),
         migrations.AddField(
-            model_name='customuser',
-            name='email_cc',
-            field=models.EmailField(blank=True, help_text='The carbon copy email address of the user.', max_length=254, null=True, verbose_name='email cc'),
+            model_name="customuser",
+            name="email_cc",
+            field=models.EmailField(
+                blank=True,
+                help_text="The carbon copy email address of the user.",
+                max_length=254,
+                null=True,
+                verbose_name="email cc",
+            ),
         ),
         migrations.AddField(
-            model_name='customuser',
-            name='profession',
-            field=models.CharField(blank=True, help_text='The profession of the user.', max_length=100, null=True, verbose_name='profession'),
+            model_name="customuser",
+            name="profession",
+            field=models.CharField(
+                blank=True,
+                help_text="The profession of the user.",
+                max_length=100,
+                null=True,
+                verbose_name="profession",
+            ),
         ),
         migrations.AddField(
-            model_name='customuser',
-            name='telephone',
-            field=models.CharField(blank=True, help_text='The telephone number of the user.', max_length=20, null=True, verbose_name='telephone'),
+            model_name="customuser",
+            name="telephone",
+            field=models.CharField(
+                blank=True,
+                help_text="The telephone number of the user.",
+                max_length=20,
+                null=True,
+                verbose_name="telephone",
+            ),
         ),
     ]

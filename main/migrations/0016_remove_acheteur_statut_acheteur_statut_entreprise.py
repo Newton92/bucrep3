@@ -7,17 +7,24 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0015_statutentreprise_structureentreprise'),
+        ("main", "0015_statutentreprise_structureentreprise"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='acheteur',
-            name='statut',
+            model_name="acheteur",
+            name="statut",
         ),
         migrations.AddField(
-            model_name='acheteur',
-            name='statut_entreprise',
-            field=models.ForeignKey(blank=True, help_text="Statut actuel de l'entreprise", null=True, on_delete=django.db.models.deletion.SET_NULL, to='main.statutentreprise', verbose_name="Statut actuel de l'entreprise"),
+            model_name="acheteur",
+            name="statut_entreprise",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Statut actuel de l'entreprise",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="main.statutentreprise",
+                verbose_name="Statut actuel de l'entreprise",
+            ),
         ),
     ]

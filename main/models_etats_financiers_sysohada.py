@@ -1,21 +1,7 @@
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db import models
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
-import datetime
-from decimal import Decimal
-import time
-from main.utilitaires.constantes import *
-from django.db import models
-from django.utils.translation import gettext_lazy as _
-from django.utils import timezone
-from django.contrib.auth import get_user_model
 
 # Create your models here.
 
-from django.db import models
 
 class ActifSysOhada(models.Model):
     exercice_n = models.CharField(max_length=10)
@@ -44,12 +30,23 @@ class ActifSysOhada(models.Model):
     disponibilites = models.DecimalField(max_digits=20, decimal_places=2)
 
     def total_actif(self):
-        return (self.frais_developpement + self.brevets_licences + self.droits_propriete +
-                self.autres_incorporelles + self.terrains + self.batiments + self.agencements +
-                self.materiel_mobilier + self.materiel_transport + self.titres_participation +
-                self.autres_financieres + self.stocks_encours + self.creances_emplois +
-                self.valeurs_mobilieres + self.disponibilites)
-
+        return (
+            self.frais_developpement
+            + self.brevets_licences
+            + self.droits_propriete
+            + self.autres_incorporelles
+            + self.terrains
+            + self.batiments
+            + self.agencements
+            + self.materiel_mobilier
+            + self.materiel_transport
+            + self.titres_participation
+            + self.autres_financieres
+            + self.stocks_encours
+            + self.creances_emplois
+            + self.valeurs_mobilieres
+            + self.disponibilites
+        )
 
 
 class PassifSysOhada(models.Model):
@@ -69,17 +66,20 @@ class PassifSysOhada(models.Model):
     provisions_risques = models.DecimalField(max_digits=20, decimal_places=2)
 
     def total_capitaux_propres(self):
-        return (self.capital + self.primes_capital + self.ecarts_reevaluation +
-                self.reserves_indisponibles + self.resultat_net + self.report_nouveau)
+        return (
+            self.capital
+            + self.primes_capital
+            + self.ecarts_reevaluation
+            + self.reserves_indisponibles
+            + self.resultat_net
+            + self.report_nouveau
+        )
 
     def total_dettes(self):
         return self.emprunts_dettes + self.dettes_location + self.provisions_risques
 
     def total_passif(self):
         return self.total_capitaux_propres() + self.total_dettes()
-
-
-
 
 
 class ResultatSysOhada(models.Model):
@@ -90,10 +90,11 @@ class ResultatSysOhada(models.Model):
     variation_stocks = models.DecimalField(max_digits=20, decimal_places=2)
 
     def marge_commerciale(self):
-        return self.ventes_marchandises - self.achats_marchandises + self.variation_stocks
+        return (
+            self.ventes_marchandises - self.achats_marchandises + self.variation_stocks
+        )
 
     # Ajoutez d'autres champs et méthodes pour le chiffre d'affaires, les charges, etc.
-
 
 
 class RatioSysOhada(models.Model):
@@ -121,22 +122,22 @@ class RatioSysOhada(models.Model):
         pass
 
 
-
-
 class ScoringAvecBilanSysOhada(models.Model):
     exercice_n = models.CharField(max_length=10)
 
     frais_financiers_ebitda = models.DecimalField(max_digits=20, decimal_places=2)
-    creances_douteuses_credit_clients = models.DecimalField(max_digits=20, decimal_places=2)
+    creances_douteuses_credit_clients = models.DecimalField(
+        max_digits=20, decimal_places=2
+    )
     excedent_ca_actif = models.DecimalField(max_digits=20, decimal_places=2)
-    actif_circulant_passif_circulant = models.DecimalField(max_digits=20, decimal_places=2)
+    actif_circulant_passif_circulant = models.DecimalField(
+        max_digits=20, decimal_places=2
+    )
     cash_ventes = models.DecimalField(max_digits=20, decimal_places=2)
 
     def calculate_score(self):
         # Logique pour calculer le score de défaillance
         pass
-
-
 
 
 class ScoringSansBilanSysOhada(models.Model):

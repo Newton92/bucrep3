@@ -1,97 +1,188 @@
 # main/serializers.py
-from rest_framework import serializers
-from django.core.exceptions import ValidationError
 import decimal
-from django.utils import timezone
+
+from django.core.exceptions import ValidationError
+from rest_framework import serializers
+
 from .models import *
 
 # Vos serializers ici !
 
+
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'avatar', 'code_secret', 'address', 'activation', 'auth_a2f', 'telephone', 'profession', 'email_cc']
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "avatar",
+            "code_secret",
+            "address",
+            "activation",
+            "auth_a2f",
+            "telephone",
+            "profession",
+            "email_cc",
+        ]
 
 
 class PaysSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pays
-        fields = ['id', 'nom', 'code', 'afficher_au_dashboard', 'is_active', 'date_creation', 'date_modification']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-        
-        
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "afficher_au_dashboard",
+            "is_active",
+            "date_creation",
+            "date_modification",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class ProvinceSerializer(serializers.ModelSerializer):
     pays = PaysSerializer()  # Utilisez le sérialiseur pour inclure les détails du pays
+
     class Meta:
         model = Province
-        fields = ['id', 'nom', 'code', 'pays', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-        
-        
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "pays",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class AddProvinceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Province
-        fields = ['id', 'nom', 'code', 'pays', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-        
-        
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "pays",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class UpdateProvinceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Province
-        fields = ['id', 'nom', 'code', 'pays', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-    
-    
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "pays",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class VilleSerializer(serializers.ModelSerializer):
-    province = ProvinceSerializer()  # Utilisez le sérialiseur pour inclure les détails du pays
+    province = (
+        ProvinceSerializer()
+    )  # Utilisez le sérialiseur pour inclure les détails du pays
+
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-    
-    
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "province",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class VilleProvinceSerializer(serializers.ModelSerializer):
-    province = ProvinceSerializer()  # Utilisez le sérialiseur pour inclure les détails du pays
+    province = (
+        ProvinceSerializer()
+    )  # Utilisez le sérialiseur pour inclure les détails du pays
+
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-    
-    
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "province",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class AddVilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-    
-    
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "province",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class UpdateVilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ville
-        fields = ['id', 'nom', 'code', 'province', 'date_creation', 'date_modification', 'is_active']
-        read_only_fields = ['id', 'date_creation', 'date_modification']
-        
-        
+        fields = [
+            "id",
+            "nom",
+            "code",
+            "province",
+            "date_creation",
+            "date_modification",
+            "is_active",
+        ]
+        read_only_fields = ["id", "date_creation", "date_modification"]
+
+
 class AnneeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Annee
         fields = "__all__"  # Inclut tous les champs du modèle
-        read_only_fields = ["date_creation", "date_modification"]  # Ces champs seront uniquement en lecture
-        
-        
+        read_only_fields = [
+            "date_creation",
+            "date_modification",
+        ]  # Ces champs seront uniquement en lecture
+
+
 class DeviseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Devise
         fields = "__all__"  # Inclut tous les champs du modèle
-        read_only_fields = ["date_creation", "date_modification"]  # Ces champs seront uniquement en lecture
-        
-        
+        read_only_fields = [
+            "date_creation",
+            "date_modification",
+        ]  # Ces champs seront uniquement en lecture
+
+
 class CouleurCommentaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = CouleurCommentaire
-        fields = ['id', 'couleur', 'code']
-        
-        
+        fields = ["id", "couleur", "code"]
 
 
 class AddCategoryNaceCodeSerializer(serializers.ModelSerializer):
@@ -100,36 +191,61 @@ class AddCategoryNaceCodeSerializer(serializers.ModelSerializer):
         model = CategoryNaceCode
         fields = ["id", "code", "libelle", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class AddSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCategoryNaceCode
-        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "category",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class CategoryNaceCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryNaceCode
-        fields = ['id', 'code', 'libelle']
-        
-        
+        fields = ["id", "code", "libelle"]
+
+
 class EditSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
     category = CategoryNaceCodeSerializer()
+
     class Meta:
         model = SubCategoryNaceCode
-        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "category",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
     category = CategoryNaceCodeSerializer()
 
     class Meta:
         model = SubCategoryNaceCode
-        fields = ['id', 'category', 'code', 'libelle', 'active', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
+        fields = [
+            "id",
+            "category",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class CategoryNaceCodeSerializer(serializers.ModelSerializer):
@@ -137,33 +253,64 @@ class CategoryNaceCodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CategoryNaceCode
-        fields = ["id", "code", "libelle", "active", "created_at", "updated_at", "subcategories"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+            "subcategories",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
-        
-        
+
+
 class AddSubCategoryNafCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCategoryNafCode
-        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
-        read_only_fields = ["created_at", "updated_at"] 
-             
+        fields = [
+            "id",
+            "category",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class CategoryNafCodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CategoryNafCode
-        fields = ["id", "code", "libelle", "active", "created_at", "updated_at", "subcategories"]
-        read_only_fields = ["created_at", "updated_at"]        
-        
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+            "subcategories",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+
 class SubCategoryNafCodeSerializer(serializers.ModelSerializer):
     category = CategoryNafCodeSerializer()
+
     class Meta:
         model = SubCategoryNafCode
-        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
-        read_only_fields = ["created_at", "updated_at"]     
+        fields = [
+            "id",
+            "category",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class AddCategoryNafCodeSerializer(serializers.ModelSerializer):
@@ -179,24 +326,47 @@ class CategoryNafCodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CategoryNafCode
-        fields = ["id", "code", "libelle", "active", "created_at", "updated_at", "subcategories"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+            "subcategories",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class EditSubCategoryNafCodeSerializer(serializers.ModelSerializer):
     category = CategoryNafCodeSerializer()
+
     class Meta:
         model = SubCategoryNafCode
-        fields = ["id", "category", "code", "libelle", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "category",
+            "code",
+            "libelle",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
-        
-        
+
+
 class FormeJuridiqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = FormeJuridique
-        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
 
 
@@ -204,29 +374,65 @@ class DomaineEntrepriseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DomaineEntreprise
-        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
+
+
 class AddPosteEntrepriseSerializer(serializers.ModelSerializer):
     class Meta:
         model = PosteEntreprise
-        fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
-        
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "domaine",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
+
+
 class EditPosteEntrepriseSerializer(serializers.ModelSerializer):
     domaine = DomaineEntrepriseSerializer()
+
     class Meta:
         model = PosteEntreprise
-        fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
-        
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "domaine",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
+
+
 class PosteEntrepriseSerializer(serializers.ModelSerializer):
     domaine = DomaineEntrepriseSerializer()
+
     class Meta:
         model = PosteEntreprise
-        fields = ["id", "code", "libelle", "description", "domaine", "active", "created_at", "updated_at"]
-        
-        
-
-
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "domaine",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class BaseModeleSerializer(serializers.ModelSerializer):
@@ -288,103 +494,186 @@ class ModeleComportementJugementSerializer(BaseModeleSerializer):
         model = ModeleComportementJugement
 
 
-
-
-
-        
-        
 class CategorieEntrepriseSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategorieEntreprise
-        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class StructureEntrepriseSerializer(serializers.ModelSerializer):
     class Meta:
         model = StructureEntreprise
-        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class StatutEntrepriseSerializer(serializers.ModelSerializer):
     class Meta:
         model = StatutEntreprise
-        fields = ["id", "code", "libelle", "description", "active", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "description",
+            "active",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+
 class AcheteurSerializer(serializers.ModelSerializer):
     categorie_entreprise = CategorieEntrepriseSerializer()
     forme_juridique = FormeJuridiqueSerializer()
     statut_entreprise = StatutEntrepriseSerializer()
-    
+
     pays = PaysSerializer()
     province = ProvinceSerializer()
     ville = VilleSerializer()
+
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", 
-            "categorie_entreprise", "forme_juridique", "activite_principale", 
-            "nom", "sigle", 
-            "description", "date_creation", "statut_entreprise", 
-            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
-            "ville", "province", "pays", "couleur_commentaire", "commentaire", 
-            "created_at", "updated_at"]
+            "id",
+            "code",
+            "categorie_entreprise",
+            "forme_juridique",
+            "activite_principale",
+            "nom",
+            "sigle",
+            "description",
+            "date_creation",
+            "statut_entreprise",
+            "code_postal",
+            "fax",
+            "boite_postale",
+            "email",
+            "site_internet",
+            "numero_adresse",
+            "rue_adresse",
+            "ville",
+            "province",
+            "pays",
+            "couleur_commentaire",
+            "commentaire",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class AddAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description",  
-            "date_creation", "statut_entreprise",
-            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
-            "ville", "province", "pays", "couleur_commentaire", "commentaire"]
+            "id",
+            "categorie_entreprise",
+            "forme_juridique",
+            "activite_principale",
+            "nom",
+            "sigle",
+            "description",
+            "date_creation",
+            "statut_entreprise",
+            "code_postal",
+            "fax",
+            "boite_postale",
+            "email",
+            "site_internet",
+            "numero_adresse",
+            "rue_adresse",
+            "ville",
+            "province",
+            "pays",
+            "couleur_commentaire",
+            "commentaire",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class EditAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description", 
-            "date_creation", "statut_entreprise",
-            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
-            "ville", "province", "pays", "couleur_commentaire", "commentaire"]
+            "id",
+            "code",
+            "categorie_entreprise",
+            "forme_juridique",
+            "activite_principale",
+            "nom",
+            "sigle",
+            "description",
+            "date_creation",
+            "statut_entreprise",
+            "code_postal",
+            "fax",
+            "boite_postale",
+            "email",
+            "site_internet",
+            "numero_adresse",
+            "rue_adresse",
+            "ville",
+            "province",
+            "pays",
+            "couleur_commentaire",
+            "commentaire",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
+
+
 class GetAcheteurSerializer(serializers.ModelSerializer):
     categorie_entreprise = CategorieEntrepriseSerializer()
     forme_juridique = FormeJuridiqueSerializer()
     statut_entreprise = StatutEntrepriseSerializer()
-    
+
     pays = PaysSerializer()
     province = ProvinceSerializer()
     ville = VilleSerializer()
-    
+
     class Meta:
         model = Acheteur
         fields = [
-            "id", "code", "categorie_entreprise", "forme_juridique", "activite_principale", "nom", "sigle", "description", 
-            "date_creation", "statut_entreprise",
-            "code_postal", "fax", "boite_postale", "email", "site_internet", "numero_adresse", "rue_adresse", 
-            "ville", "province", "pays", "couleur_commentaire", "commentaire"]
+            "id",
+            "code",
+            "categorie_entreprise",
+            "forme_juridique",
+            "activite_principale",
+            "nom",
+            "sigle",
+            "description",
+            "date_creation",
+            "statut_entreprise",
+            "code_postal",
+            "fax",
+            "boite_postale",
+            "email",
+            "site_internet",
+            "numero_adresse",
+            "rue_adresse",
+            "ville",
+            "province",
+            "pays",
+            "couleur_commentaire",
+            "commentaire",
+        ]
         read_only_fields = ["created_at", "updated_at"]
-        
-        
-        
 
 
 class RiskRatingSerializer(serializers.ModelSerializer):
@@ -392,7 +681,7 @@ class RiskRatingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RiskRating
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_remboursabilite(self, value):
         if value not in [True, False]:
@@ -434,36 +723,56 @@ class RiskRatingSerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être True ou False.")
         return value
 
-        
-        
+
 class GetRiskRatingSerializer(serializers.ModelSerializer):
-    
+
     acheteur = AcheteurSerializer()
+
     class Meta:
         model = RiskRating
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddRiskRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskRating
         fields = [
-            "id", "acheteur", "remboursabilite", "situation_liquidite", "performance_rentabilite", "perspective_secteur", 
-            "qualite_information_analyse", "existence_garantie", 
-            "terme_financier_duree_pret", "mesure_propre_soutenir_credit", "interpretation", "analyse"]
-        
-        
+            "id",
+            "acheteur",
+            "remboursabilite",
+            "situation_liquidite",
+            "performance_rentabilite",
+            "perspective_secteur",
+            "qualite_information_analyse",
+            "existence_garantie",
+            "terme_financier_duree_pret",
+            "mesure_propre_soutenir_credit",
+            "cotation_du_risque",
+            "indice_du_risque",
+            "interpretation",
+            "analyse",
+        ]
+
+
 class EditRiskRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskRating
         fields = [
-            "id", "acheteur", "remboursabilite", "situation_liquidite", "performance_rentabilite", "perspective_secteur", 
-            "qualite_information_analyse", "existence_garantie", 
-            "terme_financier_duree_pret", "mesure_propre_soutenir_credit", "interpretation", "analyse"]
-        
-        
-
-
+            "id",
+            "acheteur",
+            "remboursabilite",
+            "situation_liquidite",
+            "performance_rentabilite",
+            "perspective_secteur",
+            "qualite_information_analyse",
+            "existence_garantie",
+            "terme_financier_duree_pret",
+            "mesure_propre_soutenir_credit",
+            "cotation_du_risque",
+            "indice_du_risque",
+            "interpretation",
+            "analyse",
+        ]
 
 
 class ResumeSerializer(serializers.ModelSerializer):
@@ -473,7 +782,7 @@ class ResumeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Resume
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_capital_social(self, value):
         if not isinstance(value, (int, float, decimal.Decimal)):
@@ -500,37 +809,52 @@ class ResumeSerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
-        
-        
+
 class AddResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = [
-            "id", "acheteur", "devise", "capital_social", "chiffre_affaire", "resultat_net", "capitaux_propre", "nombre_employe", 
-            "date_creation", "couleur_commentaire", "commentaire"]
-   
-        
+            "id",
+            "acheteur",
+            "devise",
+            "capital_social",
+            "chiffre_affaire",
+            "resultat_net",
+            "capitaux_propre",
+            "nombre_employe",
+            "date_creation",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class GetResumeSerializer(serializers.ModelSerializer):
-    
+
     acheteur = AcheteurSerializer()
     devise = DeviseSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
-    
+
     class Meta:
         model = Resume
-        fields = '__all__'
-    
-        
+        fields = "__all__"
+
+
 class EditResumeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resume
         fields = [
-            "id", "acheteur", "devise", "capital_social", "chiffre_affaire", "resultat_net", "capitaux_propre", "nombre_employe", 
-            "date_creation", "couleur_commentaire", "commentaire"]
-
-
-
-
+            "id",
+            "acheteur",
+            "devise",
+            "capital_social",
+            "chiffre_affaire",
+            "resultat_net",
+            "capitaux_propre",
+            "nombre_employe",
+            "date_creation",
+            "couleur_commentaire",
+            "commentaire",
+        ]
 
 
 class DonneesEnregistrementSerializer(serializers.ModelSerializer):
@@ -540,287 +864,381 @@ class DonneesEnregistrementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DonneesEnregistrement
-        fields = '__all__'
+        fields = "__all__"
 
-        
-        
+
 class GetDonneesEnregistrementSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
+
     class Meta:
         model = DonneesEnregistrement
-        fields = '__all__'  
-        
-        
+        fields = "__all__"
+
+
 class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DonneesEnregistrement   
+        model = DonneesEnregistrement
         fields = [
-            "id", "acheteur", "date_creation", "date_registre", "forme_juridique", "forme_juridique_ref", "numero_registre_commerce", "numero_fiscale", 
-            "statut_registre", "statut_registre_ref", "commentaire"]
-        
-        
+            "id",
+            "acheteur",
+            "date_creation",
+            "date_registre",
+            "forme_juridique",
+            "forme_juridique_ref",
+            "numero_registre_commerce",
+            "numero_fiscale",
+            "statut_registre",
+            "statut_registre_ref",
+            "commentaire",
+        ]
+
+
 class EditDonneesEnregistrementSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
-        model = DonneesEnregistrement   
+        model = DonneesEnregistrement
         fields = [
-            "id", "acheteur", "date_creation", "date_registre", "forme_juridique", "forme_juridique_ref", "numero_registre_commerce", "numero_fiscale", 
-            "statut_registre", "statut_registre_ref", "commentaire"]     
-
-
-
-
-
+            "id",
+            "acheteur",
+            "date_creation",
+            "date_registre",
+            "forme_juridique",
+            "forme_juridique_ref",
+            "numero_registre_commerce",
+            "numero_fiscale",
+            "statut_registre",
+            "statut_registre_ref",
+            "commentaire",
+        ]
 
 
 class TendanceSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     avis_commercial_ref = ModeleAvisCommercialSerializer()
+
     class Meta:
         model = Tendance
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetTendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tendance
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddTendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tendance
         fields = [
-            "id", "acheteur", "avis_commercial", "avis_commercial_ref", "presse_media", "principaux_concurrent", "commentaire"]  
-        
-        
+            "id",
+            "acheteur",
+            "avis_commercial",
+            "avis_commercial_ref",
+            "presse_media",
+            "principaux_concurrent",
+            "commentaire",
+        ]
+
+
 class EditTendanceSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     avis_commercial_ref = ModeleAvisCommercialSerializer()
+
     class Meta:
         model = Tendance
         fields = [
-            "id", "acheteur", "avis_commercial", "avis_commercial_ref", "presse_media", "principaux_concurrent", "commentaire"]  
-        
-        
-        
-
-
+            "id",
+            "acheteur",
+            "avis_commercial",
+            "avis_commercial_ref",
+            "presse_media",
+            "principaux_concurrent",
+            "commentaire",
+        ]
 
 
 class ResponsableAcheteurSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     poste_ref = PosteEntrepriseSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
+
     class Meta:
         model = ResponsableAcheteur
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetResponsableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableAcheteur
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableAcheteur
         fields = [
-            "id", "acheteur", "nom", "prenom", "sexe", "poste", "poste_ref", "nationalite", "couleur_commentaire", "commentaire"] 
-        
-        
+            "id",
+            "acheteur",
+            "nom",
+            "prenom",
+            "sexe",
+            "poste",
+            "poste_ref",
+            "nationalite",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponsableAcheteur
         fields = [
-            "id", "acheteur", "nom", "prenom", "sexe", "poste", "poste_ref", "nationalite", "couleur_commentaire", "commentaire"] 
-        
-        
-        
+            "id",
+            "acheteur",
+            "nom",
+            "prenom",
+            "sexe",
+            "poste",
+            "poste_ref",
+            "nationalite",
+            "couleur_commentaire",
+            "commentaire",
+        ]
 
-
-
-        
 
 class AntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
+
     class Meta:
         model = AntecedantsJuridique
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = AntecedantsJuridique
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = AntecedantsJuridique
         fields = [
-            "id", "acheteur", "dossier_faillite", "jugement_cour", "antecedant_redressement", "autre", "couleur_commentaire", "commentaire"] 
-        
-        
+            "id",
+            "acheteur",
+            "dossier_faillite",
+            "jugement_cour",
+            "antecedant_redressement",
+            "autre",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = AntecedantsJuridique
         fields = [
-            "id", "acheteur", "dossier_faillite", "jugement_cour", "antecedant_redressement", "autre", "couleur_commentaire", "commentaire"] 
-        
-        
-        
-        
-        
-        
+            "id",
+            "acheteur",
+            "dossier_faillite",
+            "jugement_cour",
+            "antecedant_redressement",
+            "autre",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
 
 class RiskManagmentSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
+
     class Meta:
         model = RiskManagment
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetRiskManagmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskManagment
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddRiskManagmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskManagment
         fields = [
-            "id", "acheteur", "professionalisme", "organisation", "turn_over", "greve", 
-            "degradation_qualite", "non_respect_condition", "couleur_commentaire", "commentaire"] 
-        
-        
+            "id",
+            "acheteur",
+            "professionalisme",
+            "organisation",
+            "turn_over",
+            "greve",
+            "degradation_qualite",
+            "non_respect_condition",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class EditRiskManagmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskManagment
         fields = [
-            "id", "acheteur", "professionalisme", "organisation", "turn_over", "greve", 
-            "degradation_qualite", "non_respect_condition", "couleur_commentaire", "commentaire"]          
-        
-        
-   
-   
-   
-   
+            "id",
+            "acheteur",
+            "professionalisme",
+            "organisation",
+            "turn_over",
+            "greve",
+            "degradation_qualite",
+            "non_respect_condition",
+            "couleur_commentaire",
+            "commentaire",
+        ]
 
-   
-        
-        
 
 class ConseilAdministrationSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     fonction_dans_le_conseil_ref = PosteEntrepriseSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
+
     class Meta:
         model = ConseilAdministration
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetConseilAdministrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConseilAdministration
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddConseilAdministrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConseilAdministration
         fields = [
-            "id", "acheteur", "nom", "fonction_dans_le_conseil", "fonction_dans_le_conseil_ref", "numero_adresse", "rue_adresse", 
-            "code_postale_adresse", "couleur_commentaire", "commentaire"] 
-        
-        
+            "id",
+            "acheteur",
+            "nom",
+            "fonction_dans_le_conseil",
+            "fonction_dans_le_conseil_ref",
+            "numero_adresse",
+            "rue_adresse",
+            "code_postale_adresse",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class EditConseilAdministrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConseilAdministration
         fields = [
-            "id", "acheteur", "nom", "fonction_dans_le_conseil", "fonction_dans_le_conseil_ref", "numero_adresse", "rue_adresse", 
-            "code_postale_adresse", "couleur_commentaire", "commentaire"] 
-        
-        
-        
-        
-        
-        
-        
-        
-        
+            "id",
+            "acheteur",
+            "nom",
+            "fonction_dans_le_conseil",
+            "fonction_dans_le_conseil_ref",
+            "numero_adresse",
+            "rue_adresse",
+            "code_postale_adresse",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
 
 class CompositionCapitalSocialSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     devise = DeviseSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
+
     class Meta:
         model = CompositionCapitalSocial
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetCompositionCapitalSocialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompositionCapitalSocial
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddCompositionCapitalSocialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompositionCapitalSocial
         fields = [
-            "id", "acheteur", "devise", "emis", "publie", "libere", "couleur_commentaire", "commentaire"] 
-        
-        
+            "id",
+            "acheteur",
+            "devise",
+            "emis",
+            "publie",
+            "libere",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class EditCompositionCapitalSocialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompositionCapitalSocial
         fields = [
-            "id", "acheteur", "devise", "emis", "publie", "libere", "couleur_commentaire", "commentaire"] 
-        
-        
-        
-        
-        
-        
-        
-       
+            "id",
+            "acheteur",
+            "devise",
+            "emis",
+            "publie",
+            "libere",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
 
 class CompositionActionSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
+
     class Meta:
         model = CompositionAction
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetCompositionActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompositionAction
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class AddCompositionActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompositionAction
         fields = [
-            "id", "acheteur", "nom", "prenom", "pourcentage", "couleur_commentaire", "commentaire"] 
-        
-        
+            "id",
+            "acheteur",
+            "nom",
+            "prenom",
+            "pourcentage",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
+
 class EditCompositionActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompositionAction
         fields = [
-            "id", "acheteur", "nom", "prenom", "pourcentage", "couleur_commentaire", "commentaire"] 
-
-
-
-
-
+            "id",
+            "acheteur",
+            "nom",
+            "prenom",
+            "pourcentage",
+            "couleur_commentaire",
+            "commentaire",
+        ]
 
 
 class OpinionCreditAcremacSerializer(serializers.ModelSerializer):
@@ -829,24 +1247,33 @@ class OpinionCreditAcremacSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OpinionCreditAcremac
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetOpinionCreditAcremacSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OpinionCreditAcremac
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
 
 class AddOpinionCreditAcremacSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpinionCreditAcremac
         fields = [
-            'acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation',
-            'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve',
-            'risque_moyen', 'risque_faible', "couleur_commentaire", "montant_credit_maximum", "commentaire"
+            "acheteur",
+            "risque_de_defaut",
+            "risque_de_concentration_credit",
+            "risque_de_reputation",
+            "risque_pays",
+            "risque_de_taux_dinteret",
+            "risque_de_liquidite",
+            "risque_eleve",
+            "risque_moyen",
+            "risque_faible",
+            "couleur_commentaire",
+            "montant_credit_maximum",
+            "commentaire",
         ]
 
 
@@ -854,18 +1281,20 @@ class EditOpinionCreditAcremacSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpinionCreditAcremac
         fields = [
-            'acheteur', 'risque_de_defaut', 'risque_de_concentration_credit', 'risque_de_reputation',
-            'risque_pays', 'risque_de_taux_dinteret', 'risque_de_liquidite', 'risque_eleve',
-            'risque_moyen', 'risque_faible', "couleur_commentaire", "montant_credit_maximum", "commentaire"
+            "acheteur",
+            "risque_de_defaut",
+            "risque_de_concentration_credit",
+            "risque_de_reputation",
+            "risque_pays",
+            "risque_de_taux_dinteret",
+            "risque_de_liquidite",
+            "risque_eleve",
+            "risque_moyen",
+            "risque_faible",
+            "couleur_commentaire",
+            "montant_credit_maximum",
+            "commentaire",
         ]
-
-
-
-
-
-
-
-
 
 
 class StructureSerializer(serializers.ModelSerializer):
@@ -875,35 +1304,45 @@ class StructureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Structure
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetStructureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Structure
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddStructureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Structure
         fields = [
-            'acheteur', 'nom', 'type_affiliation', 'type_affiliation_ref',
-            'numero_adresse', 'rue_adresse', 'code_postale_adresse',
-            'couleur_commentaire', 'commentaire'
+            "acheteur",
+            "nom",
+            "type_affiliation",
+            "type_affiliation_ref",
+            "numero_adresse",
+            "rue_adresse",
+            "code_postale_adresse",
+            "couleur_commentaire",
+            "commentaire",
         ]
+
 
 class EditStructureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Structure
         fields = [
-            'acheteur', 'nom', 'type_affiliation', 'type_affiliation_ref',
-            'numero_adresse', 'rue_adresse', 'code_postale_adresse',
-            'couleur_commentaire', 'commentaire'
+            "acheteur",
+            "nom",
+            "type_affiliation",
+            "type_affiliation_ref",
+            "numero_adresse",
+            "rue_adresse",
+            "code_postale_adresse",
+            "couleur_commentaire",
+            "commentaire",
         ]
-
-
-
-
-
 
 
 class AnalyseSectorielleSerializer(serializers.ModelSerializer):
@@ -912,35 +1351,25 @@ class AnalyseSectorielleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AnalyseSectorielle
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetAnalyseSectorielleSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnalyseSectorielle
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddAnalyseSectorielleSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnalyseSectorielle
-        fields = [
-            'acheteur', 'couleur_commentaire', 'commentaire', 'impact_covid_19'
-        ]
+        fields = ["acheteur", "couleur_commentaire", "commentaire", "impact_covid_19"]
+
 
 class EditAnalyseSectorielleSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnalyseSectorielle
-        fields = [
-            'acheteur', 'couleur_commentaire', 'commentaire', 'impact_covid_19'
-        ]
-
-
-
-
-
-
-
-
-
+        fields = ["acheteur", "couleur_commentaire", "commentaire", "impact_covid_19"]
 
 
 class CompteFinancierSerializer(serializers.ModelSerializer):
@@ -950,46 +1379,63 @@ class CompteFinancierSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CompteFinancier
-        fields = '__all__'
-        
-        
+        fields = "__all__"
+
+
 class GetCompteFinancierSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancier
-        fields = '__all__'
-
+        fields = "__all__"
 
 
 class AddCompteFinancierSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancier
         fields = [
-            'acheteur', 'cabinet', 'requis_pour_deposer', 'credibilite_cabinet',
-            'source', 'presentation', 'date_compte', 'date_fin',
-            'date_compte_n_moins_un', 'date_fin_n_moins_un',
-            'date_compte_n_moins_deux', 'date_fin_n_moins_deux',
-            'type_compte', 'devise', 'type_bilan', 'type_bilan_ref', 'couleur_commentaire', 'commentaire'
+            "acheteur",
+            "cabinet",
+            "requis_pour_deposer",
+            "credibilite_cabinet",
+            "source",
+            "presentation",
+            "date_compte",
+            "date_fin",
+            "date_compte_n_moins_un",
+            "date_fin_n_moins_un",
+            "date_compte_n_moins_deux",
+            "date_fin_n_moins_deux",
+            "type_compte",
+            "devise",
+            "type_bilan",
+            "type_bilan_ref",
+            "couleur_commentaire",
+            "commentaire",
         ]
-
 
 
 class EditCompteFinancierSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancier
         fields = [
-            'acheteur', 'cabinet', 'requis_pour_deposer', 'credibilite_cabinet',
-            'source', 'presentation', 'date_compte', 'date_fin',
-            'date_compte_n_moins_un', 'date_fin_n_moins_un',
-            'date_compte_n_moins_deux', 'date_fin_n_moins_deux',
-            'type_compte', 'devise', 'type_bilan', 'type_bilan_ref', 'couleur_commentaire', 'commentaire'
+            "acheteur",
+            "cabinet",
+            "requis_pour_deposer",
+            "credibilite_cabinet",
+            "source",
+            "presentation",
+            "date_compte",
+            "date_fin",
+            "date_compte_n_moins_un",
+            "date_fin_n_moins_un",
+            "date_compte_n_moins_deux",
+            "date_fin_n_moins_deux",
+            "type_compte",
+            "devise",
+            "type_bilan",
+            "type_bilan_ref",
+            "couleur_commentaire",
+            "commentaire",
         ]
-
-
-
-
-
-
-
 
 
 class OperationEtHistoriqueSerializer(serializers.ModelSerializer):
@@ -997,66 +1443,66 @@ class OperationEtHistoriqueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OperationEtHistorique
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetOperationEtHistoriqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = OperationEtHistorique
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddOperationEtHistoriqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = OperationEtHistorique
         fields = [
-            'acheteur', 'commentaire_ratios', 'description_complete_activite',
-            'importation', 'historique'
+            "acheteur",
+            "commentaire_ratios",
+            "description_complete_activite",
+            "importation",
+            "historique",
         ]
+
 
 class EditOperationEtHistoriqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = OperationEtHistorique
         fields = [
-            'acheteur', 'commentaire_ratios', 'description_complete_activite',
-            'importation', 'historique'
+            "acheteur",
+            "commentaire_ratios",
+            "description_complete_activite",
+            "importation",
+            "historique",
         ]
-
-
-
-
-
-
-
-
 
 
 class ProprieteEtActifSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
-    locaux_ref = ModeleBailSerializer()  # Utilisez un sérialiseur imbriqué pour la référence sur les locaux
+    locaux_ref = (
+        ModeleBailSerializer()
+    )  # Utilisez un sérialiseur imbriqué pour la référence sur les locaux
 
     class Meta:
         model = ProprieteEtActif
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetProprieteEtActifSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProprieteEtActif
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddProprieteEtActifSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProprieteEtActif
-        fields = [
-            'acheteur', 'locaux', 'locaux_ref', 'branche'
-        ]
+        fields = ["acheteur", "locaux", "locaux_ref", "branche"]
+
 
 class EditProprieteEtActifSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProprieteEtActif
-        fields = [
-            'acheteur', 'locaux', 'locaux_ref', 'branche'
-        ]
-
-
+        fields = ["acheteur", "locaux", "locaux_ref", "branche"]
 
 
 class ConditionAchatSerializer(serializers.ModelSerializer):
@@ -1064,29 +1510,25 @@ class ConditionAchatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConditionAchat
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetConditionAchatSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionAchat
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddConditionAchatSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionAchat
-        fields = ['acheteur', 'local', 'importation', 'les_clients', 'fournisseur']
+        fields = ["acheteur", "local", "importation", "les_clients", "fournisseur"]
+
 
 class EditConditionAchatSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionAchat
-        fields = ['acheteur', 'local', 'importation', 'les_clients', 'fournisseur']
-        
-        
-        
-
-
-
-
+        fields = ["acheteur", "local", "importation", "les_clients", "fournisseur"]
 
 
 class ConditionDeVenteSerializer(serializers.ModelSerializer):
@@ -1096,35 +1538,39 @@ class ConditionDeVenteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConditionDeVente
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetConditionDeVenteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionDeVente
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddConditionDeVenteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionDeVente
         fields = [
-            'acheteur', 'local', 'recouvrement_de_dette_jugement',
-            'recouvrement_de_dette_jugement_ref', 'comportement_de_paiement',
-            'comportement_de_paiement_ref'
+            "acheteur",
+            "local",
+            "recouvrement_de_dette_jugement",
+            "recouvrement_de_dette_jugement_ref",
+            "comportement_de_paiement",
+            "comportement_de_paiement_ref",
         ]
+
 
 class EditConditionDeVenteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionDeVente
         fields = [
-            'acheteur', 'local', 'recouvrement_de_dette_jugement',
-            'recouvrement_de_dette_jugement_ref', 'comportement_de_paiement',
-            'comportement_de_paiement_ref'
+            "acheteur",
+            "local",
+            "recouvrement_de_dette_jugement",
+            "recouvrement_de_dette_jugement_ref",
+            "comportement_de_paiement",
+            "comportement_de_paiement_ref",
         ]
-
-
-
-
-
 
 
 class SommaireEtAvisSerializer(serializers.ModelSerializer):
@@ -1133,28 +1579,25 @@ class SommaireEtAvisSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SommaireEtAvis
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetSommaireEtAvisSerializer(serializers.ModelSerializer):
     class Meta:
         model = SommaireEtAvis
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddSommaireEtAvisSerializer(serializers.ModelSerializer):
     class Meta:
         model = SommaireEtAvis
-        fields = ['acheteur', 'couleur_commentaire', 'commentaire']
+        fields = ["acheteur", "couleur_commentaire", "commentaire"]
+
 
 class EditSommaireEtAvisSerializer(serializers.ModelSerializer):
     class Meta:
         model = SommaireEtAvis
-        fields = ['acheteur', 'couleur_commentaire', 'commentaire']
-        
-        
-        
-
-
-
+        fields = ["acheteur", "couleur_commentaire", "commentaire"]
 
 
 class AdviceSerializer(serializers.ModelSerializer):
@@ -1162,24 +1605,37 @@ class AdviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advice
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
-        fields = ['acheteur', 'points_forts', 'points_faibles', 'dynamisme_court_terme', 'dynamisme_long_terme']
+        fields = [
+            "acheteur",
+            "points_forts",
+            "points_faibles",
+            "dynamisme_court_terme",
+            "dynamisme_long_terme",
+        ]
+
 
 class EditAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
-        fields = ['acheteur', 'points_forts', 'points_faibles', 'dynamisme_court_terme', 'dynamisme_long_terme']
-
-
+        fields = [
+            "acheteur",
+            "points_forts",
+            "points_faibles",
+            "dynamisme_court_terme",
+            "dynamisme_long_terme",
+        ]
 
 
 class GeopoliticsSerializer(serializers.ModelSerializer):
@@ -1187,26 +1643,25 @@ class GeopoliticsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Geopolitics
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetGeopoliticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geopolitics
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddGeopoliticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geopolitics
-        fields = ['acheteur', 'donnees_politiques', 'donnees_economiques']
+        fields = ["acheteur", "donnees_politiques", "donnees_economiques"]
+
 
 class EditGeopoliticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geopolitics
-        fields = ['acheteur', 'donnees_politiques', 'donnees_economiques']
-        
-        
-        
-
+        fields = ["acheteur", "donnees_politiques", "donnees_economiques"]
 
 
 class BanquierSerializer(serializers.ModelSerializer):
@@ -1216,27 +1671,47 @@ class BanquierSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Banquier
-        fields = '__all__'
+        fields = "__all__"
+
 
 class GetBanquierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banquier
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddBanquierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banquier
-        fields = ['acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville', 'code_postal', 'couleur_commentaire', 'commentaire']
+        fields = [
+            "acheteur",
+            "nom_banque",
+            "numero_compte",
+            "type_relation",
+            "numero",
+            "rue",
+            "ville",
+            "code_postal",
+            "couleur_commentaire",
+            "commentaire",
+        ]
+
 
 class EditBanquierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banquier
-        fields = ['acheteur', 'nom_banque', 'numero_compte', 'type_relation', 'numero', 'rue', 'ville', 'code_postal', 'couleur_commentaire', 'commentaire']
-
-
-
-
-
+        fields = [
+            "acheteur",
+            "nom_banque",
+            "numero_compte",
+            "type_relation",
+            "numero",
+            "rue",
+            "ville",
+            "code_postal",
+            "couleur_commentaire",
+            "commentaire",
+        ]
 
 
 class ActifASerializer(serializers.ModelSerializer):
@@ -1247,7 +1722,7 @@ class ActifASerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActifA
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_biens_installations_equipements(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -1274,14 +1749,23 @@ class ActifASerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
+
 class AddActifASerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifA
         fields = [
-            "id", "annee", "acheteur", "biens_installations_equipements", "inventaire",
-            "creances_commerciales_autres_creances", "actif_impots_courant", "caisses_banques",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "biens_installations_equipements",
+            "inventaire",
+            "creances_commerciales_autres_creances",
+            "actif_impots_courant",
+            "caisses_banques",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetActifASerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
@@ -1291,21 +1775,24 @@ class GetActifASerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActifA
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditActifASerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifA
         fields = [
-            "id", "annee", "acheteur", "biens_installations_equipements", "inventaire",
-            "creances_commerciales_autres_creances", "actif_impots_courant", "caisses_banques",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "biens_installations_equipements",
+            "inventaire",
+            "creances_commerciales_autres_creances",
+            "actif_impots_courant",
+            "caisses_banques",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
 
 
 class PassifASerializer(serializers.ModelSerializer):
@@ -1316,7 +1803,7 @@ class PassifASerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PassifA
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_capital_reserves(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -1358,15 +1845,26 @@ class PassifASerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
+
 class AddPassifASerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifA
         fields = [
-            "id", "annee", "acheteur", "capital_reserves", "capital_declare",
-            "benefices_non_distribues", "pret_bancaire", "compte_courant_administrateurs",
-            "dettes_commerciales_autres_dettes", "decouvert_bancaire", "impots",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital_reserves",
+            "capital_declare",
+            "benefices_non_distribues",
+            "pret_bancaire",
+            "compte_courant_administrateurs",
+            "dettes_commerciales_autres_dettes",
+            "decouvert_bancaire",
+            "impots",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetPassifASerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
@@ -1376,25 +1874,27 @@ class GetPassifASerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PassifA
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditPassifASerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifA
         fields = [
-            "id", "annee", "acheteur", "capital_reserves", "capital_declare",
-            "benefices_non_distribues", "pret_bancaire", "compte_courant_administrateurs",
-            "dettes_commerciales_autres_dettes", "decouvert_bancaire", "impots",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital_reserves",
+            "capital_declare",
+            "benefices_non_distribues",
+            "pret_bancaire",
+            "compte_courant_administrateurs",
+            "dettes_commerciales_autres_dettes",
+            "decouvert_bancaire",
+            "impots",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
 
 
 class ResultatASerializer(serializers.ModelSerializer):
@@ -1405,7 +1905,7 @@ class ResultatASerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResultatA
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_produits_activites_ordinaires(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -1447,15 +1947,26 @@ class ResultatASerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
+
 class AddResultatASerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatA
         fields = [
-            "id", "annee", "acheteur", "produits_activites_ordinaires", "ventes",
-            "charges_exploitation", "frais_vente_generaux_administratifs",
-            "autres_revenus", "frais_financier", "charge_impot_sur_revenu",
-            "autres_elements_resultat_global", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "produits_activites_ordinaires",
+            "ventes",
+            "charges_exploitation",
+            "frais_vente_generaux_administratifs",
+            "autres_revenus",
+            "frais_financier",
+            "charge_impot_sur_revenu",
+            "autres_elements_resultat_global",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetResultatASerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
@@ -1465,25 +1976,27 @@ class GetResultatASerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResultatA
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditResultatASerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatA
         fields = [
-            "id", "annee", "acheteur", "produits_activites_ordinaires", "ventes",
-            "charges_exploitation", "frais_vente_generaux_administratifs",
-            "autres_revenus", "frais_financier", "charge_impot_sur_revenu",
-            "autres_elements_resultat_global", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "produits_activites_ordinaires",
+            "ventes",
+            "charges_exploitation",
+            "frais_vente_generaux_administratifs",
+            "autres_revenus",
+            "frais_financier",
+            "charge_impot_sur_revenu",
+            "autres_elements_resultat_global",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
 
 
 class ActifCSerializer(serializers.ModelSerializer):
@@ -1494,7 +2007,7 @@ class ActifCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActifC
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_capital_souscrit_non_app(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -1676,21 +2189,54 @@ class ActifCSerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
+
 class AddActifCSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifC
         fields = [
-            "id", "annee", "acheteur", "capital_souscrit_non_app", "frais_recherche_developpement",
-            "brevet_licence_logiciels", "fonds_commercial", "autres_immobilisations_incorporelles",
-            "terrains", "constructions", "materiels_et_outils", "materiel_de_transport",
-            "autres_immos_corp", "immos_en_cours", "avances_et_acptes", "participations",
-            "prets", "autres", "stocks_mp", "stocks_encours_mp", "stocks_pf",
-            "stocks_encours_pf", "stocks_encours_services", "stocks_mses", "avances_acptes_verses",
-            "clients_et_cptes_rattaches", "autres_creances", "valeurs_a_encaisser",
-            "banques_cheques_postaux_caisse", "cca", "charges_a_repartir_et_frais_etablissement",
-            "primes_de_rbt", "eca", "eene", "effectif", "amortissements", "provisions_stocks",
-            "provisions_creances", "provisions_vmp", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital_souscrit_non_app",
+            "frais_recherche_developpement",
+            "brevet_licence_logiciels",
+            "fonds_commercial",
+            "autres_immobilisations_incorporelles",
+            "terrains",
+            "constructions",
+            "materiels_et_outils",
+            "materiel_de_transport",
+            "autres_immos_corp",
+            "immos_en_cours",
+            "avances_et_acptes",
+            "participations",
+            "prets",
+            "autres",
+            "stocks_mp",
+            "stocks_encours_mp",
+            "stocks_pf",
+            "stocks_encours_pf",
+            "stocks_encours_services",
+            "stocks_mses",
+            "avances_acptes_verses",
+            "clients_et_cptes_rattaches",
+            "autres_creances",
+            "valeurs_a_encaisser",
+            "banques_cheques_postaux_caisse",
+            "cca",
+            "charges_a_repartir_et_frais_etablissement",
+            "primes_de_rbt",
+            "eca",
+            "eene",
+            "effectif",
+            "amortissements",
+            "provisions_stocks",
+            "provisions_creances",
+            "provisions_vmp",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetActifCSerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
@@ -1700,32 +2246,55 @@ class GetActifCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActifC
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditActifCSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifC
         fields = [
-            "id", "annee", "acheteur", "capital_souscrit_non_app", "frais_recherche_developpement",
-            "brevet_licence_logiciels", "fonds_commercial", "autres_immobilisations_incorporelles",
-            "terrains", "constructions", "materiels_et_outils", "materiel_de_transport",
-            "autres_immos_corp", "immos_en_cours", "avances_et_acptes", "participations",
-            "prets", "autres", "stocks_mp", "stocks_encours_mp", "stocks_pf",
-            "stocks_encours_pf", "stocks_encours_services", "stocks_mses", "avances_acptes_verses",
-            "clients_et_cptes_rattaches", "autres_creances", "valeurs_a_encaisser",
-            "banques_cheques_postaux_caisse", "cca", "charges_a_repartir_et_frais_etablissement",
-            "primes_de_rbt", "eca", "eene", "effectif", "amortissements", "provisions_stocks",
-            "provisions_creances", "provisions_vmp", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital_souscrit_non_app",
+            "frais_recherche_developpement",
+            "brevet_licence_logiciels",
+            "fonds_commercial",
+            "autres_immobilisations_incorporelles",
+            "terrains",
+            "constructions",
+            "materiels_et_outils",
+            "materiel_de_transport",
+            "autres_immos_corp",
+            "immos_en_cours",
+            "avances_et_acptes",
+            "participations",
+            "prets",
+            "autres",
+            "stocks_mp",
+            "stocks_encours_mp",
+            "stocks_pf",
+            "stocks_encours_pf",
+            "stocks_encours_services",
+            "stocks_mses",
+            "avances_acptes_verses",
+            "clients_et_cptes_rattaches",
+            "autres_creances",
+            "valeurs_a_encaisser",
+            "banques_cheques_postaux_caisse",
+            "cca",
+            "charges_a_repartir_et_frais_etablissement",
+            "primes_de_rbt",
+            "eca",
+            "eene",
+            "effectif",
+            "amortissements",
+            "provisions_stocks",
+            "provisions_creances",
+            "provisions_vmp",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
-
 
 
 class PassifCSerializer(serializers.ModelSerializer):
@@ -1736,7 +2305,7 @@ class PassifCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PassifC
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_capital_social(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -1843,19 +2412,39 @@ class PassifCSerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
+
 class AddPassifCSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifC
         fields = [
-            "id", "annee", "acheteur", "capital_social", "primes", "ecarts_de_reevaluation",
-            "reserve", "report_a_nouveau", "resultat_exercice", "subv_invest",
-            "provision_regl", "emprunts", "dette_credit_bail_contrat_assimile",
-            "dettes_financiere_diverses", "provision_financiere_risque_charge",
-            "dettes_fournisseurs_divers", "avance_et_acomptes_recu", "dettes",
-            "dettes_fiscales_sociales", "autres_dettes", "banques_credit_escompte",
-            "banque_credit_caisse", "banques_decouvert", "ecart_conversion_passif",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital_social",
+            "primes",
+            "ecarts_de_reevaluation",
+            "reserve",
+            "report_a_nouveau",
+            "resultat_exercice",
+            "subv_invest",
+            "provision_regl",
+            "emprunts",
+            "dette_credit_bail_contrat_assimile",
+            "dettes_financiere_diverses",
+            "provision_financiere_risque_charge",
+            "dettes_fournisseurs_divers",
+            "avance_et_acomptes_recu",
+            "dettes",
+            "dettes_fiscales_sociales",
+            "autres_dettes",
+            "banques_credit_escompte",
+            "banque_credit_caisse",
+            "banques_decouvert",
+            "ecart_conversion_passif",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetPassifCSerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
@@ -1865,32 +2454,40 @@ class GetPassifCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PassifC
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditPassifCSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifC
         fields = [
-            "id", "annee", "acheteur", "capital_social", "primes", "ecarts_de_reevaluation",
-            "reserve", "report_a_nouveau", "resultat_exercice", "subv_invest",
-            "provision_regl", "emprunts", "dette_credit_bail_contrat_assimile",
-            "dettes_financiere_diverses", "provision_financiere_risque_charge",
-            "dettes_fournisseurs_divers", "avance_et_acomptes_recu", "dettes",
-            "dettes_fiscales_sociales", "autres_dettes", "banques_credit_escompte",
-            "banque_credit_caisse", "banques_decouvert", "ecart_conversion_passif",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital_social",
+            "primes",
+            "ecarts_de_reevaluation",
+            "reserve",
+            "report_a_nouveau",
+            "resultat_exercice",
+            "subv_invest",
+            "provision_regl",
+            "emprunts",
+            "dette_credit_bail_contrat_assimile",
+            "dettes_financiere_diverses",
+            "provision_financiere_risque_charge",
+            "dettes_fournisseurs_divers",
+            "avance_et_acomptes_recu",
+            "dettes",
+            "dettes_fiscales_sociales",
+            "autres_dettes",
+            "banques_credit_escompte",
+            "banque_credit_caisse",
+            "banques_decouvert",
+            "ecart_conversion_passif",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
-
-
-
 
 
 class ResultatCSerializer(serializers.ModelSerializer):
@@ -1901,7 +2498,7 @@ class ResultatCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResultatC
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_vente_de_mdses(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2103,26 +2700,60 @@ class ResultatCSerializer(serializers.ModelSerializer):
             raise ValidationError("La valeur doit être un nombre décimal.")
         return value
 
+
 class AddResultatCSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatC
         fields = [
-            "id", "annee", "acheteur", "vente_de_mdses", "ventes_de_produits_fabriques",
-            "travaux_services_vendus", "produit_accessoires", "production_imblise",
-            "subventions_exploitations", "production_stockee", "reprises_de_provision",
-            "transferts_charges", "autres_produits", "achat_mdses", "variation_stock_mdses",
-            "achat_mp_autres_appro", "var_stk_mp_app", "autres_achats",
-            "variation_de_stocks_autres_appro", "transports", "services_ext",
-            "impots_taxes", "autres_charges_valeur_ajoutee", "charges_personnel",
-            "dotation_aux_amorts", "dotation_aux_provisions", "autres_charges_excedent_brute",
-            "revenus_fin_assimiles", "prof_vmp_et_cre_actif_immo", "interets_produit_assim",
-            "reprise_prov_et_transfert", "diff_positive_de_change", "prod_nets_cessions_vmp",
-            "dap", "frais_fin_charges_assi", "diff_negatives_de_change",
-            "ch_nettes_cessions_vmp", "sur_op_gestion_prod_except", "sur_op_en_capital_prod_except",
-            "reprise_prov_transfert", "sur_op_gestion_charg_except", "sur_op_en_capital_charg_except",
-            "dap_et_transfert_charg_except", "participation_salairies", "impot_sur_benefices",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "vente_de_mdses",
+            "ventes_de_produits_fabriques",
+            "travaux_services_vendus",
+            "produit_accessoires",
+            "production_imblise",
+            "subventions_exploitations",
+            "production_stockee",
+            "reprises_de_provision",
+            "transferts_charges",
+            "autres_produits",
+            "achat_mdses",
+            "variation_stock_mdses",
+            "achat_mp_autres_appro",
+            "var_stk_mp_app",
+            "autres_achats",
+            "variation_de_stocks_autres_appro",
+            "transports",
+            "services_ext",
+            "impots_taxes",
+            "autres_charges_valeur_ajoutee",
+            "charges_personnel",
+            "dotation_aux_amorts",
+            "dotation_aux_provisions",
+            "autres_charges_excedent_brute",
+            "revenus_fin_assimiles",
+            "prof_vmp_et_cre_actif_immo",
+            "interets_produit_assim",
+            "reprise_prov_et_transfert",
+            "diff_positive_de_change",
+            "prod_nets_cessions_vmp",
+            "dap",
+            "frais_fin_charges_assi",
+            "diff_negatives_de_change",
+            "ch_nettes_cessions_vmp",
+            "sur_op_gestion_prod_except",
+            "sur_op_en_capital_prod_except",
+            "reprise_prov_transfert",
+            "sur_op_gestion_charg_except",
+            "sur_op_en_capital_charg_except",
+            "dap_et_transfert_charg_except",
+            "participation_salairies",
+            "impot_sur_benefices",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetResultatCSerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
@@ -2132,34 +2763,61 @@ class GetResultatCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResultatC
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditResultatCSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatC
         fields = [
-            "id", "annee", "acheteur", "vente_de_mdses", "ventes_de_produits_fabriques",
-            "travaux_services_vendus", "produit_accessoires", "production_imblise",
-            "subventions_exploitations", "production_stockee", "reprises_de_provision",
-            "transferts_charges", "autres_produits", "achat_mdses", "variation_stock_mdses",
-            "achat_mp_autres_appro", "var_stk_mp_app", "autres_achats",
-            "variation_de_stocks_autres_appro", "transports", "services_ext",
-            "impots_taxes", "autres_charges_valeur_ajoutee", "charges_personnel",
-            "dotation_aux_amorts", "dotation_aux_provisions", "autres_charges_excedent_brute",
-            "revenus_fin_assimiles", "prof_vmp_et_cre_actif_immo", "interets_produit_assim",
-            "reprise_prov_et_transfert", "diff_positive_de_change", "prod_nets_cessions_vmp",
-            "dap", "frais_fin_charges_assi", "diff_negatives_de_change",
-            "ch_nettes_cessions_vmp", "sur_op_gestion_prod_except", "sur_op_en_capital_prod_except",
-            "reprise_prov_transfert", "sur_op_gestion_charg_except", "sur_op_en_capital_charg_except",
-            "dap_et_transfert_charg_except", "participation_salairies", "impot_sur_benefices",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "vente_de_mdses",
+            "ventes_de_produits_fabriques",
+            "travaux_services_vendus",
+            "produit_accessoires",
+            "production_imblise",
+            "subventions_exploitations",
+            "production_stockee",
+            "reprises_de_provision",
+            "transferts_charges",
+            "autres_produits",
+            "achat_mdses",
+            "variation_stock_mdses",
+            "achat_mp_autres_appro",
+            "var_stk_mp_app",
+            "autres_achats",
+            "variation_de_stocks_autres_appro",
+            "transports",
+            "services_ext",
+            "impots_taxes",
+            "autres_charges_valeur_ajoutee",
+            "charges_personnel",
+            "dotation_aux_amorts",
+            "dotation_aux_provisions",
+            "autres_charges_excedent_brute",
+            "revenus_fin_assimiles",
+            "prof_vmp_et_cre_actif_immo",
+            "interets_produit_assim",
+            "reprise_prov_et_transfert",
+            "diff_positive_de_change",
+            "prod_nets_cessions_vmp",
+            "dap",
+            "frais_fin_charges_assi",
+            "diff_negatives_de_change",
+            "ch_nettes_cessions_vmp",
+            "sur_op_gestion_prod_except",
+            "sur_op_en_capital_prod_except",
+            "reprise_prov_transfert",
+            "sur_op_gestion_charg_except",
+            "sur_op_en_capital_charg_except",
+            "dap_et_transfert_charg_except",
+            "participation_salairies",
+            "impot_sur_benefices",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
 
 
 class ActifSysCohadaSerializer(serializers.ModelSerializer):
@@ -2170,7 +2828,7 @@ class ActifSysCohadaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActifS
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2183,44 +2841,79 @@ class ActifSysCohadaSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddActifSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifS
         fields = [
-            "id", "annee", "acheteur", "frais_developpement_prospection", "brevets_licences_logiciels",
-            "droits_propriete_commerciale_baux", "autres_immo_incorporelles", "terrains",
-            "dons_investissements_net", "batiments", "agencements_amenagements_installations",
-            "materiel_mobilier_actif_biologiques", "materiel_transport", "avances_acompte_immobilisations",
-            "titres_participation", "autres_immobilisations_financieres", "actif_circulant_hao",
-            "stock_encours", "fournisseurs_avances_versee", "clients", "autres_creances",
-            "valeurs_mobilieres_placement", "disponibilites", "banque_cheque_postal_caisse_assimiles",
-            "ecart_conversion_actif", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "frais_developpement_prospection",
+            "brevets_licences_logiciels",
+            "droits_propriete_commerciale_baux",
+            "autres_immo_incorporelles",
+            "terrains",
+            "dons_investissements_net",
+            "batiments",
+            "agencements_amenagements_installations",
+            "materiel_mobilier_actif_biologiques",
+            "materiel_transport",
+            "avances_acompte_immobilisations",
+            "titres_participation",
+            "autres_immobilisations_financieres",
+            "actif_circulant_hao",
+            "stock_encours",
+            "fournisseurs_avances_versee",
+            "clients",
+            "autres_creances",
+            "valeurs_mobilieres_placement",
+            "disponibilites",
+            "banque_cheque_postal_caisse_assimiles",
+            "ecart_conversion_actif",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetActifSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifS
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditActifSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActifS
         fields = [
-            "id", "annee", "acheteur", "frais_developpement_prospection", "brevets_licences_logiciels",
-            "droits_propriete_commerciale_baux", "autres_immo_incorporelles", "terrains",
-            "dons_investissements_net", "batiments", "agencements_amenagements_installations",
-            "materiel_mobilier_actif_biologiques", "materiel_transport", "avances_acompte_immobilisations",
-            "titres_participation", "autres_immobilisations_financieres", "actif_circulant_hao",
-            "stock_encours", "fournisseurs_avances_versee", "clients", "autres_creances",
-            "valeurs_mobilieres_placement", "disponibilites", "banque_cheque_postal_caisse_assimiles",
-            "ecart_conversion_actif", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "frais_developpement_prospection",
+            "brevets_licences_logiciels",
+            "droits_propriete_commerciale_baux",
+            "autres_immo_incorporelles",
+            "terrains",
+            "dons_investissements_net",
+            "batiments",
+            "agencements_amenagements_installations",
+            "materiel_mobilier_actif_biologiques",
+            "materiel_transport",
+            "avances_acompte_immobilisations",
+            "titres_participation",
+            "autres_immobilisations_financieres",
+            "actif_circulant_hao",
+            "stock_encours",
+            "fournisseurs_avances_versee",
+            "clients",
+            "autres_creances",
+            "valeurs_mobilieres_placement",
+            "disponibilites",
+            "banque_cheque_postal_caisse_assimiles",
+            "ecart_conversion_actif",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
 
 
 class PassifSysSCohadaSerializer(serializers.ModelSerializer):
@@ -2231,7 +2924,7 @@ class PassifSysSCohadaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PassifS
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2244,43 +2937,79 @@ class PassifSysSCohadaSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddPassifSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifS
         fields = [
-            "id", "annee", "acheteur", "capital", "capital_non_appele_apporteurs", "primes_liees_capital_social",
-            "ecart_reevaluation", "reserves_indisponibles", "reserves_libres", "report_nouveau",
-            "resultat_net_exercice", "subventions_investissements", "provisions_reglees",
-            "emprunts_dettes_financieres_diverse", "dettes_location_vente", "provisions_risques_charges",
-            "passif_circulant_hao", "clients_avances_recues", "fournisseurs_exploitation",
-            "dettes_fiscales_sociales", "autres_dettes", "provisions_risques_court_terme",
-            "banques_credit_escompte", "banques_etablissements_financiers_credit_caisse",
-            "ecart_conversion_passif", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital",
+            "capital_non_appele_apporteurs",
+            "primes_liees_capital_social",
+            "ecart_reevaluation",
+            "reserves_indisponibles",
+            "reserves_libres",
+            "report_nouveau",
+            "resultat_net_exercice",
+            "subventions_investissements",
+            "provisions_reglees",
+            "emprunts_dettes_financieres_diverse",
+            "dettes_location_vente",
+            "provisions_risques_charges",
+            "passif_circulant_hao",
+            "clients_avances_recues",
+            "fournisseurs_exploitation",
+            "dettes_fiscales_sociales",
+            "autres_dettes",
+            "provisions_risques_court_terme",
+            "banques_credit_escompte",
+            "banques_etablissements_financiers_credit_caisse",
+            "ecart_conversion_passif",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetPassifSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifS
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditPassifSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PassifS
         fields = [
-            "id", "annee", "acheteur", "capital", "capital_non_appele_apporteurs", "primes_liees_capital_social",
-            "ecart_reevaluation", "reserves_indisponibles", "reserves_libres", "report_nouveau",
-            "resultat_net_exercice", "subventions_investissements", "provisions_reglees",
-            "emprunts_dettes_financieres_diverse", "dettes_location_vente", "provisions_risques_charges",
-            "passif_circulant_hao", "clients_avances_recues", "fournisseurs_exploitation",
-            "dettes_fiscales_sociales", "autres_dettes", "provisions_risques_court_terme",
-            "banques_credit_escompte", "banques_etablissements_financiers_credit_caisse",
-            "ecart_conversion_passif", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "capital",
+            "capital_non_appele_apporteurs",
+            "primes_liees_capital_social",
+            "ecart_reevaluation",
+            "reserves_indisponibles",
+            "reserves_libres",
+            "report_nouveau",
+            "resultat_net_exercice",
+            "subventions_investissements",
+            "provisions_reglees",
+            "emprunts_dettes_financieres_diverse",
+            "dettes_location_vente",
+            "provisions_risques_charges",
+            "passif_circulant_hao",
+            "clients_avances_recues",
+            "fournisseurs_exploitation",
+            "dettes_fiscales_sociales",
+            "autres_dettes",
+            "provisions_risques_court_terme",
+            "banques_credit_escompte",
+            "banques_etablissements_financiers_credit_caisse",
+            "ecart_conversion_passif",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
 
 
 class ResultatSysCohadaSerializer(serializers.ModelSerializer):
@@ -2291,7 +3020,7 @@ class ResultatSysCohadaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ResultatS
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2304,50 +3033,99 @@ class ResultatSysCohadaSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddResultatSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatS
         fields = [
-            "id", "annee", "acheteur", "ventes_marchandises_a", "achats_marchandises", "variation_stock_marchandises",
-            "ventes_produits_manufactures", "travaux_services_vendus_c", "produits_accessoires_d",
-            "production_stockee", "production_immobilisee", "subvention_exploitation", "autres_produits",
-            "transfert_charges_exploitation", "achats_matieres_premieres_fournitures_connexes",
-            "variation_stock_matieres_premieres_fournitures_connexes", "autres_achats",
-            "variation_stock_autres_fournitures", "transport", "services_exterieurs", "impots_taxes",
-            "autres_depenses", "frais_personnel", "reprise_depreciations_amortissements_provision_pertes_valeurs_p",
-            "reprise_depreciations_amortissements_provision_pertes_valeurs_m", "produits_financiers_assimiles",
-            "reprise_provision_perte_valeur", "transfert_charges_financieres", 
-            "dotations_provisions_depreciations_financieres", "produits_cession_immobilisations",
-            "autres_produits_hao", "valeur_comptable_cessions_actifs_immobilises", "autres_charges_hao",
-            "participation_travailleurs", "charge_impot_revenu", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "ventes_marchandises_a",
+            "achats_marchandises",
+            "variation_stock_marchandises",
+            "ventes_produits_manufactures",
+            "travaux_services_vendus_c",
+            "produits_accessoires_d",
+            "production_stockee",
+            "production_immobilisee",
+            "subvention_exploitation",
+            "autres_produits",
+            "transfert_charges_exploitation",
+            "achats_matieres_premieres_fournitures_connexes",
+            "variation_stock_matieres_premieres_fournitures_connexes",
+            "autres_achats",
+            "variation_stock_autres_fournitures",
+            "transport",
+            "services_exterieurs",
+            "impots_taxes",
+            "autres_depenses",
+            "frais_personnel",
+            "reprise_depreciations_amortissements_provision_pertes_valeurs_p",
+            "reprise_depreciations_amortissements_provision_pertes_valeurs_m",
+            "produits_financiers_assimiles",
+            "reprise_provision_perte_valeur",
+            "transfert_charges_financieres",
+            "dotations_provisions_depreciations_financieres",
+            "produits_cession_immobilisations",
+            "autres_produits_hao",
+            "valeur_comptable_cessions_actifs_immobilises",
+            "autres_charges_hao",
+            "participation_travailleurs",
+            "charge_impot_revenu",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetResultatSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatS
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditResultatSysCohadaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatS
         fields = [
-            "id", "annee", "acheteur", "ventes_marchandises_a", "achats_marchandises", "variation_stock_marchandises",
-            "ventes_produits_manufactures", "travaux_services_vendus_c", "produits_accessoires_d",
-            "production_stockee", "production_immobilisee", "subvention_exploitation", "autres_produits",
-            "transfert_charges_exploitation", "achats_matieres_premieres_fournitures_connexes",
-            "variation_stock_matieres_premieres_fournitures_connexes", "autres_achats",
-            "variation_stock_autres_fournitures", "transport", "services_exterieurs", "impots_taxes",
-            "autres_depenses", "frais_personnel", "reprise_depreciations_amortissements_provision_pertes_valeurs_p",
-            "reprise_depreciations_amortissements_provision_pertes_valeurs_m", "produits_financiers_assimiles",
-            "reprise_provision_perte_valeur", "transfert_charges_financieres", 
-            "dotations_provisions_depreciations_financieres", "produits_cession_immobilisations",
-            "autres_produits_hao", "valeur_comptable_cessions_actifs_immobilises", "autres_charges_hao",
-            "participation_travailleurs", "charge_impot_revenu", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "ventes_marchandises_a",
+            "achats_marchandises",
+            "variation_stock_marchandises",
+            "ventes_produits_manufactures",
+            "travaux_services_vendus_c",
+            "produits_accessoires_d",
+            "production_stockee",
+            "production_immobilisee",
+            "subvention_exploitation",
+            "autres_produits",
+            "transfert_charges_exploitation",
+            "achats_matieres_premieres_fournitures_connexes",
+            "variation_stock_matieres_premieres_fournitures_connexes",
+            "autres_achats",
+            "variation_stock_autres_fournitures",
+            "transport",
+            "services_exterieurs",
+            "impots_taxes",
+            "autres_depenses",
+            "frais_personnel",
+            "reprise_depreciations_amortissements_provision_pertes_valeurs_p",
+            "reprise_depreciations_amortissements_provision_pertes_valeurs_m",
+            "produits_financiers_assimiles",
+            "reprise_provision_perte_valeur",
+            "transfert_charges_financieres",
+            "dotations_provisions_depreciations_financieres",
+            "produits_cession_immobilisations",
+            "autres_produits_hao",
+            "valeur_comptable_cessions_actifs_immobilises",
+            "autres_charges_hao",
+            "participation_travailleurs",
+            "charge_impot_revenu",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
 
 
 class AssetsSerializer(serializers.ModelSerializer):
@@ -2358,7 +3136,7 @@ class AssetsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assets
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2371,46 +3149,73 @@ class AssetsSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddAssetsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assets
         fields = [
-            "id", "annee", "acheteur", "caisse", "banques_centrales", "tresorerie_cpp",
-            "autres_ets_credit", "a_terme", "credits_campagne", "credits_ordinaire",
-            "credits_campagne_acc", "credits_ordinaire_acc", "creances_ordinaires",
-            "affacturage", "titres_placement", "immobilisation_fin", "operation_credit_bail",
-            "immobilisation_incorporelle", "immobilisation_corporelle", "actionnaire_ou_associe",
-            "autres_actifs", "comptes_commande_divers", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "caisse",
+            "banques_centrales",
+            "tresorerie_cpp",
+            "autres_ets_credit",
+            "a_terme",
+            "credits_campagne",
+            "credits_ordinaire",
+            "credits_campagne_acc",
+            "credits_ordinaire_acc",
+            "creances_ordinaires",
+            "affacturage",
+            "titres_placement",
+            "immobilisation_fin",
+            "operation_credit_bail",
+            "immobilisation_incorporelle",
+            "immobilisation_corporelle",
+            "actionnaire_ou_associe",
+            "autres_actifs",
+            "comptes_commande_divers",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetAssetsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assets
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditAssetsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assets
         fields = [
-            "id", "annee", "acheteur", "caisse", "banques_centrales", "tresorerie_cpp",
-            "autres_ets_credit", "a_terme", "credits_campagne", "credits_ordinaire",
-            "credits_campagne_acc", "credits_ordinaire_acc", "creances_ordinaires",
-            "affacturage", "titres_placement", "immobilisation_fin", "operation_credit_bail",
-            "immobilisation_incorporelle", "immobilisation_corporelle", "actionnaire_ou_associe",
-            "autres_actifs", "comptes_commande_divers", "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "caisse",
+            "banques_centrales",
+            "tresorerie_cpp",
+            "autres_ets_credit",
+            "a_terme",
+            "credits_campagne",
+            "credits_ordinaire",
+            "credits_campagne_acc",
+            "credits_ordinaire_acc",
+            "creances_ordinaires",
+            "affacturage",
+            "titres_placement",
+            "immobilisation_fin",
+            "operation_credit_bail",
+            "immobilisation_incorporelle",
+            "immobilisation_corporelle",
+            "actionnaire_ou_associe",
+            "autres_actifs",
+            "comptes_commande_divers",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class LiabilitiesSerializer(serializers.ModelSerializer):
@@ -2421,7 +3226,7 @@ class LiabilitiesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Liabilities
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2434,45 +3239,77 @@ class LiabilitiesSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddLiabilitiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Liabilities
         fields = [
-            "id", "annee", "acheteur", "tresorerie_ccp", "autres_etablissement_credit",
-            "a_terme", "comptes_epargne_court_terme", "comptes_epargne_terme", "bons_caisse",
-            "autres_dette_a_vue", "autres_dette_a_terme", "titres_creance_autres_dettes",
-            "compte_dordre_divers", "provision_pour_risque_charge", "provision_reglementee",
-            "emprunt_subordonne_tire_emis", "subventions_investissement", "fonds_affecte",
-            "fonds_pour_risque_bancaire_generaux", "capital_ou_dotation", "primes_liees_reserve_capital",
-            "ecarts_reevaluation", "benefices_non_distribue", "resultat_net_exercie",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "tresorerie_ccp",
+            "autres_etablissement_credit",
+            "a_terme",
+            "comptes_epargne_court_terme",
+            "comptes_epargne_terme",
+            "bons_caisse",
+            "autres_dette_a_vue",
+            "autres_dette_a_terme",
+            "titres_creance_autres_dettes",
+            "compte_dordre_divers",
+            "provision_pour_risque_charge",
+            "provision_reglementee",
+            "emprunt_subordonne_tire_emis",
+            "subventions_investissement",
+            "fonds_affecte",
+            "fonds_pour_risque_bancaire_generaux",
+            "capital_ou_dotation",
+            "primes_liees_reserve_capital",
+            "ecarts_reevaluation",
+            "benefices_non_distribue",
+            "resultat_net_exercie",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetLiabilitiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Liabilities
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditLiabilitiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Liabilities
         fields = [
-            "id", "annee", "acheteur", "tresorerie_ccp", "autres_etablissement_credit",
-            "a_terme", "comptes_epargne_court_terme", "comptes_epargne_terme", "bons_caisse",
-            "autres_dette_a_vue", "autres_dette_a_terme", "titres_creance_autres_dettes",
-            "compte_dordre_divers", "provision_pour_risque_charge", "provision_reglementee",
-            "emprunt_subordonne_tire_emis", "subventions_investissement", "fonds_affecte",
-            "fonds_pour_risque_bancaire_generaux", "capital_ou_dotation", "primes_liees_reserve_capital",
-            "ecarts_reevaluation", "benefices_non_distribue", "resultat_net_exercie",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "tresorerie_ccp",
+            "autres_etablissement_credit",
+            "a_terme",
+            "comptes_epargne_court_terme",
+            "comptes_epargne_terme",
+            "bons_caisse",
+            "autres_dette_a_vue",
+            "autres_dette_a_terme",
+            "titres_creance_autres_dettes",
+            "compte_dordre_divers",
+            "provision_pour_risque_charge",
+            "provision_reglementee",
+            "emprunt_subordonne_tire_emis",
+            "subventions_investissement",
+            "fonds_affecte",
+            "fonds_pour_risque_bancaire_generaux",
+            "capital_ou_dotation",
+            "primes_liees_reserve_capital",
+            "ecarts_reevaluation",
+            "benefices_non_distribue",
+            "resultat_net_exercie",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
 
 
 class OffBalanceSheetSerializer(serializers.ModelSerializer):
@@ -2483,7 +3320,7 @@ class OffBalanceSheetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OffBalanceSheet
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2496,36 +3333,53 @@ class OffBalanceSheetSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddOffBalanceSheetSerializer(serializers.ModelSerializer):
     class Meta:
         model = OffBalanceSheet
         fields = [
-            "id", "annee", "acheteur", "en_faveur_des_ets_credit", "en_faveur_clientele",
-            "pour_compte_ets_credit", "pour_compte_clientele", "engagement_sur_titre",
-            "recu_ets_credit", "recu_ets_credit2", "recu_clientele", "engagement_sur_titre2",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "en_faveur_des_ets_credit",
+            "en_faveur_clientele",
+            "pour_compte_ets_credit",
+            "pour_compte_clientele",
+            "engagement_sur_titre",
+            "recu_ets_credit",
+            "recu_ets_credit2",
+            "recu_clientele",
+            "engagement_sur_titre2",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetOffBalanceSheetSerializer(serializers.ModelSerializer):
     class Meta:
         model = OffBalanceSheet
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditOffBalanceSheetSerializer(serializers.ModelSerializer):
     class Meta:
         model = OffBalanceSheet
         fields = [
-            "id", "annee", "acheteur", "en_faveur_des_ets_credit", "en_faveur_clientele",
-            "pour_compte_ets_credit", "pour_compte_clientele", "engagement_sur_titre",
-            "recu_ets_credit", "recu_ets_credit2", "recu_clientele", "engagement_sur_titre2",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "en_faveur_des_ets_credit",
+            "en_faveur_clientele",
+            "pour_compte_ets_credit",
+            "pour_compte_clientele",
+            "engagement_sur_titre",
+            "recu_ets_credit",
+            "recu_ets_credit2",
+            "recu_clientele",
+            "engagement_sur_titre2",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
 
 
 class ExpensesSerializer(serializers.ModelSerializer):
@@ -2536,7 +3390,7 @@ class ExpensesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Expenses
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2549,51 +3403,81 @@ class ExpensesSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddExpensesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expenses
         fields = [
-            "id", "annee", "acheteur", "interet_charges_assimilee_dette_interbancaire",
-            "interet_charge_assimilee_dette_clientele", "interet_charge_assimilee_titre_creance",
-            "chargesc_compte_bloque_dactionnaire_emprunt_sub", "autres_interets_charges_assimilee",
-            "charges_sur_op_credit_bail_assimile", "commissions", "charges_sur_titre_placement",
-            "charges_sur_operation_change", "charges_sur_operation_hors_bilan", "frais_divers_exploitation_bancaire",
-            "achat_marchandises", "stocks_vendus", "variations_stocks_marchanides", "frais_personnel",
-            "autres_frais_generaux", "dotations_amortissement_provision_immobilisation",
-            "solde_perte_creance_hors_bilan", "excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux",
-            "charges_exceptionnelle", "pertes_exercice_anterieurs", "impot_sur_revenu", "total_charges",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "interet_charges_assimilee_dette_interbancaire",
+            "interet_charge_assimilee_dette_clientele",
+            "interet_charge_assimilee_titre_creance",
+            "chargesc_compte_bloque_dactionnaire_emprunt_sub",
+            "autres_interets_charges_assimilee",
+            "charges_sur_op_credit_bail_assimile",
+            "commissions",
+            "charges_sur_titre_placement",
+            "charges_sur_operation_change",
+            "charges_sur_operation_hors_bilan",
+            "frais_divers_exploitation_bancaire",
+            "achat_marchandises",
+            "stocks_vendus",
+            "variations_stocks_marchanides",
+            "frais_personnel",
+            "autres_frais_generaux",
+            "dotations_amortissement_provision_immobilisation",
+            "solde_perte_creance_hors_bilan",
+            "excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux",
+            "charges_exceptionnelle",
+            "pertes_exercice_anterieurs",
+            "impot_sur_revenu",
+            "total_charges",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetExpensesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expenses
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditExpensesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expenses
         fields = [
-            "id", "annee", "acheteur", "interet_charges_assimilee_dette_interbancaire",
-            "interet_charge_assimilee_dette_clientele", "interet_charge_assimilee_titre_creance",
-            "chargesc_compte_bloque_dactionnaire_emprunt_sub", "autres_interets_charges_assimilee",
-            "charges_sur_op_credit_bail_assimile", "commissions", "charges_sur_titre_placement",
-            "charges_sur_operation_change", "charges_sur_operation_hors_bilan", "frais_divers_exploitation_bancaire",
-            "achat_marchandises", "stocks_vendus", "variations_stocks_marchanides", "frais_personnel",
-            "autres_frais_generaux", "dotations_amortissement_provision_immobilisation",
-            "solde_perte_creance_hors_bilan", "excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux",
-            "charges_exceptionnelle", "pertes_exercice_anterieurs", "impot_sur_revenu", "total_charges",
-            "created_by", "updated_by"
+            "id",
+            "annee",
+            "acheteur",
+            "interet_charges_assimilee_dette_interbancaire",
+            "interet_charge_assimilee_dette_clientele",
+            "interet_charge_assimilee_titre_creance",
+            "chargesc_compte_bloque_dactionnaire_emprunt_sub",
+            "autres_interets_charges_assimilee",
+            "charges_sur_op_credit_bail_assimile",
+            "commissions",
+            "charges_sur_titre_placement",
+            "charges_sur_operation_change",
+            "charges_sur_operation_hors_bilan",
+            "frais_divers_exploitation_bancaire",
+            "achat_marchandises",
+            "stocks_vendus",
+            "variations_stocks_marchanides",
+            "frais_personnel",
+            "autres_frais_generaux",
+            "dotations_amortissement_provision_immobilisation",
+            "solde_perte_creance_hors_bilan",
+            "excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux",
+            "charges_exceptionnelle",
+            "pertes_exercice_anterieurs",
+            "impot_sur_revenu",
+            "total_charges",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
-
 
 
 class ProductsSerializer(serializers.ModelSerializer):
@@ -2604,7 +3488,7 @@ class ProductsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Products
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2617,50 +3501,79 @@ class ProductsSerializer(serializers.ModelSerializer):
 
     # Répétez pour chaque champ DecimalField...
 
+
 class AddProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
         fields = [
-            "id", "annee", "acheteur", "interets_produit_assimile_sur_pret_avance_interbancaire",
-            "ineterets_produit_assimile_pret_avance_clientele", "interet_produit_sur_titre_dinvestissement",
-            "revenu_gains_titre_pret_titre_subordonne", "autres_interets_produits_assimiles",
-            "produits_leansing_operation_connexes", "commissions", "revenus_titre_negociable",
-            "dividendes_produits_assimiles", "revenus_operation_de_change", "produits_opeations_hors_bilan",
-            "produits_bancaire_divers", "marges_vente", "ventes_marchandises", "variation_stocks_marchandises",
-            "produit_dexploitation_generale", "reprise_damortissement_provisions_sur_immobilisation",
+            "id",
+            "annee",
+            "acheteur",
+            "interets_produit_assimile_sur_pret_avance_interbancaire",
+            "ineterets_produit_assimile_pret_avance_clientele",
+            "interet_produit_sur_titre_dinvestissement",
+            "revenu_gains_titre_pret_titre_subordonne",
+            "autres_interets_produits_assimiles",
+            "produits_leansing_operation_connexes",
+            "commissions",
+            "revenus_titre_negociable",
+            "dividendes_produits_assimiles",
+            "revenus_operation_de_change",
+            "produits_opeations_hors_bilan",
+            "produits_bancaire_divers",
+            "marges_vente",
+            "ventes_marchandises",
+            "variation_stocks_marchandises",
+            "produit_dexploitation_generale",
+            "reprise_damortissement_provisions_sur_immobilisation",
             "solde_resultat_correction_valeur_sur_creance_hors_bilan",
-            "excedent_reprise_fonds_pour_risque_bancaire_generaux", "produits_exceptionnels",
-            "benefice_sur_exercice_anterieur", "perte", "created_by", "updated_by"
+            "excedent_reprise_fonds_pour_risque_bancaire_generaux",
+            "produits_exceptionnels",
+            "benefice_sur_exercice_anterieur",
+            "perte",
+            "created_by",
+            "updated_by",
         ]
+
 
 class GetProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
         fields = [
-            "id", "annee", "acheteur", "interets_produit_assimile_sur_pret_avance_interbancaire",
-            "ineterets_produit_assimile_pret_avance_clientele", "interet_produit_sur_titre_dinvestissement",
-            "revenu_gains_titre_pret_titre_subordonne", "autres_interets_produits_assimiles",
-            "produits_leansing_operation_connexes", "commissions", "revenus_titre_negociable",
-            "dividendes_produits_assimiles", "revenus_operation_de_change", "produits_opeations_hors_bilan",
-            "produits_bancaire_divers", "marges_vente", "ventes_marchandises", "variation_stocks_marchandises",
-            "produit_dexploitation_generale", "reprise_damortissement_provisions_sur_immobilisation",
+            "id",
+            "annee",
+            "acheteur",
+            "interets_produit_assimile_sur_pret_avance_interbancaire",
+            "ineterets_produit_assimile_pret_avance_clientele",
+            "interet_produit_sur_titre_dinvestissement",
+            "revenu_gains_titre_pret_titre_subordonne",
+            "autres_interets_produits_assimiles",
+            "produits_leansing_operation_connexes",
+            "commissions",
+            "revenus_titre_negociable",
+            "dividendes_produits_assimiles",
+            "revenus_operation_de_change",
+            "produits_opeations_hors_bilan",
+            "produits_bancaire_divers",
+            "marges_vente",
+            "ventes_marchandises",
+            "variation_stocks_marchandises",
+            "produit_dexploitation_generale",
+            "reprise_damortissement_provisions_sur_immobilisation",
             "solde_resultat_correction_valeur_sur_creance_hors_bilan",
-            "excedent_reprise_fonds_pour_risque_bancaire_generaux", "produits_exceptionnels",
-            "benefice_sur_exercice_anterieur", "perte", "created_by", "updated_by"
+            "excedent_reprise_fonds_pour_risque_bancaire_generaux",
+            "produits_exceptionnels",
+            "benefice_sur_exercice_anterieur",
+            "perte",
+            "created_by",
+            "updated_by",
         ]
-
-
-
-
-
-
-
-
 
 
 class CommandeSerializer(serializers.ModelSerializer):
@@ -2673,7 +3586,7 @@ class CommandeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commande
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2686,21 +3599,42 @@ class CommandeSerializer(serializers.ModelSerializer):
     def validate_credit_recommande(self, value):
         return self.validate_decimal_field(value)
 
+
 class AddCommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = [
-            "id", "notre_ref", "reference_client", "date_recept_commande", "date_rapport",
-            "delais", "priorite", "raison_sociale", "type_rapport", "ref_type_rapport",
-            "credit_demande", "devise_credit_demande", "credit_recommande", "devise_credit_recommande",
-            "numero_adresse", "rue_adresse", "code_postale_adresse", "telephone", "email",
-            "ville", "client", "acheteur", "status"
+            "id",
+            "notre_ref",
+            "reference_client",
+            "date_recept_commande",
+            "date_rapport",
+            "delais",
+            "priorite",
+            "raison_sociale",
+            "type_rapport",
+            "ref_type_rapport",
+            "credit_demande",
+            "devise_credit_demande",
+            "credit_recommande",
+            "devise_credit_recommande",
+            "numero_adresse",
+            "rue_adresse",
+            "code_postale_adresse",
+            "telephone",
+            "email",
+            "ville",
+            "client",
+            "acheteur",
+            "status",
         ]
+
 
 class GetCommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CheckCommandeSerializer(serializers.ModelSerializer):
     client = CustomUserSerializer()
@@ -2709,9 +3643,10 @@ class CheckCommandeSerializer(serializers.ModelSerializer):
     ref_type_rapport = ModeleRapportSerializer()
     devise_credit_demande = DeviseSerializer()
     devise_credit_recommande = DeviseSerializer()
+
     class Meta:
         model = Commande
-        fields = '__all__'
+        fields = "__all__"
 
     def validate_decimal_field(self, value):
         if not isinstance(value, (int, float, Decimal)):
@@ -2724,149 +3659,232 @@ class CheckCommandeSerializer(serializers.ModelSerializer):
     def validate_credit_recommande(self, value):
         return self.validate_decimal_field(value)
 
+
 class EditCommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = [
-            "id", "notre_ref", "reference_client", "date_recept_commande", "date_rapport",
-            "delais", "priorite", "raison_sociale", "type_rapport", "ref_type_rapport",
-            "credit_demande", "devise_credit_demande", "credit_recommande", "devise_credit_recommande",
-            "numero_adresse", "rue_adresse", "code_postale_adresse", "telephone", "email",
-            "ville", "client", "acheteur", "status"
+            "id",
+            "notre_ref",
+            "reference_client",
+            "date_recept_commande",
+            "date_rapport",
+            "delais",
+            "priorite",
+            "raison_sociale",
+            "type_rapport",
+            "ref_type_rapport",
+            "credit_demande",
+            "devise_credit_demande",
+            "credit_recommande",
+            "devise_credit_recommande",
+            "numero_adresse",
+            "rue_adresse",
+            "code_postale_adresse",
+            "telephone",
+            "email",
+            "ville",
+            "client",
+            "acheteur",
+            "status",
         ]
-
-
-
-
-
-
-
-
 
 
 class AlerteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alerte
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddAlerteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alerte
-        fields = ['reference', 'objet', 'content']
+        fields = ["reference", "objet", "content"]
+
 
 class EditAlerteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alerte
-        fields = ['reference', 'objet', 'content']
+        fields = ["reference", "objet", "content"]
+
 
 class DocumentAlerteSerializer(serializers.ModelSerializer):
     alerte = AlerteSerializer()
 
     class Meta:
         model = DocumentAlerte
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddDocumentAlerteSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentAlerte
-        fields = ['alerte', 'titre', 'fichier']
+        fields = ["titre", "fichier", "alerte"]
+
 
 class EditDocumentAlerteSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentAlerte
-        fields = ['alerte', 'titre', 'fichier']
-
-
-
-
-
-
-
-
-
+        fields = ["alerte", "titre", "fichier"]
 
 
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = [
-            "id", "nom", "email", "telephone", "adresse",
-            "date_inscription", "actif"
+            "id",
+            "nom",
+            "email",
+            "telephone",
+            "adresse",
+            "date_inscription",
+            "actif",
         ]
+
 
 class GetClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CheckClientSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = [
-            "id", "nom", "email", "telephone", "adresse",
-            "date_inscription", "actif"
+            "id",
+            "nom",
+            "email",
+            "telephone",
+            "adresse",
+            "date_inscription",
+            "actif",
         ]
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
+
+class ContactSerializer(serializers.ModelSerializer):
+    client = (
+        ClientSerializer()
+    )  # Utilisez le sérialiseur pour inclure les détails du pays
+
+    class Meta:
+        model = Contact
+        fields = [
+            "id",
+            "client",
+            "nom",
+            "email",
+            "telephone",
+            "actif",
+        ]
+
+
+class AddContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            "id",
+            "client",
+            "nom",
+            "email",
+            "telephone",
+            "actif",
+        ]
+
+
+class GetContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = "__all__"
+
+
+class CheckContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = "__all__"
+
+
+class EditContactSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contact
+        fields = [
+            "id",
+            "client",
+            "nom",
+            "email",
+            "telephone",
+            "actif",
+        ]
+
 
 class PortefeuilleSerializer(serializers.ModelSerializer):
     client = ClientSerializer()
 
     class Meta:
         model = Portefeuille
-        fields = '__all__'
-        
+        fields = "__all__"
+
 
 class AddPortefeuilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Portefeuille
+        fields = "__all__"
+
+
+class AddPortefeuilleWithAcheteursSerializer(serializers.ModelSerializer):
+    elements_surveillance_actifs = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=ElementSurveillance.objects.all(), required=False
+    )
+
+    class Meta:
+        model = Portefeuille
         fields = [
-            "id", "client", "nom", "created_at", "updated_at"
+            "id",
+            "client",
+            "frequence_alertes",
+            "nom",
+            "elements_surveillance_actifs",
+            "created_at",
+            "updated_at",
         ]
-        
-        
+
+
 class AddPortefeuilleWithAcheteursSerializer(serializers.ModelSerializer):
     acheteurs = serializers.ListField(child=serializers.IntegerField(), write_only=True)
 
     class Meta:
         model = Portefeuille
-        fields = ['client', 'nom', 'acheteurs']
+        fields = ["client", "nom", "acheteurs"]
 
     def create(self, validated_data):
-        acheteurs_data = validated_data.pop('acheteurs')
+        acheteurs_data = validated_data.pop("acheteurs")
         portefeuille = Portefeuille.objects.create(**validated_data)
 
         for acheteur_id in acheteurs_data:
-            PortefeuilleClient.objects.create(portefeuille=portefeuille, acheteur_id=acheteur_id)
+            PortefeuilleClient.objects.create(
+                portefeuille=portefeuille, acheteur_id=acheteur_id
+            )
 
         return portefeuille
-
 
 
 class GetPortefeuilleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Portefeuille
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CheckPortefeuilleSerializer(serializers.ModelSerializer):
@@ -2874,31 +3892,25 @@ class CheckPortefeuilleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Portefeuille
-        fields = '__all__'
-
+        fields = "__all__"
 
 
 class EditPortefeuilleSerializer(serializers.ModelSerializer):
-    acheteurs = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
+    elements_surveillance_actifs = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=ElementSurveillance.objects.all(), required=False
+    )
 
     class Meta:
         model = Portefeuille
         fields = [
-            "id", "client", "nom", "created_at", "updated_at", "acheteurs"
+            "id",
+            "client",
+            "frequence_alertes",
+            "nom",
+            "elements_surveillance_actifs",
+            "created_at",
+            "updated_at",
         ]
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class PortefeuilleClientSerializer(serializers.ModelSerializer):
@@ -2907,26 +3919,19 @@ class PortefeuilleClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PortefeuilleClient
-        fields = '__all__'
-
+        fields = "__all__"
 
 
 class AddPortefeuilleClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortefeuilleClient
-        fields = [
-            "id", "portefeuille", "acheteur", "categorie"
-        ]
-
-
+        fields = ["id", "portefeuille", "acheteur", "categorie"]
 
 
 class GetPortefeuilleClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortefeuilleClient
-        fields = '__all__'
-
-
+        fields = "__all__"
 
 
 class CheckPortefeuilleClientSerializer(serializers.ModelSerializer):
@@ -2935,169 +3940,136 @@ class CheckPortefeuilleClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PortefeuilleClient
-        fields = '__all__'
-
-
-
-
-
-
-
-
+        fields = "__all__"
 
 
 class CompteFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancierIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddCompteFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancierIrfs
-        fields = [
-            "id", "nom", "type_compte", "sous_type"
-        ]
+        fields = ["id", "nom", "type_compte", "sous_type"]
+
 
 class GetCompteFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancierIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CheckCompteFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancierIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditCompteFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancierIrfs
-        fields = [
-            "id", "nom", "type_compte", "sous_type"
-        ]
-
-
-
-
-
-
+        fields = ["id", "nom", "type_compte", "sous_type"]
 
 
 class ValeurCompteIrfsSerializer(serializers.ModelSerializer):
-    
+
     compte = CompteFinancierIrfsSerializer()
     devise = DeviseSerializer()
     annee = AnneeSerializer()
-    
+
     class Meta:
         model = ValeurCompteIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddValeurCompteIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurCompteIrfs
-        fields = [
-            "id", "acheteur", "compte", "annee", "valeur", "devise"
-        ]
+        fields = ["id", "acheteur", "compte", "annee", "valeur", "devise"]
+
 
 class GetValeurCompteIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurCompteIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CheckValeurCompteIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurCompteIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditValeurCompteIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurCompteIrfs
-        fields = [
-            "id", "acheteur", "compte", "annee", "valeur", "devise"
-        ]
-
-
-
-
-
-
-
-
+        fields = ["id", "acheteur", "compte", "annee", "valeur", "devise"]
 
 
 class RatioFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatioFinancierIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddRatioFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatioFinancierIrfs
-        fields = [
-            "id", "type_ratio", "nom", "formule"
-        ]
+        fields = ["id", "type_ratio", "nom", "formule"]
+
 
 class GetRatioFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatioFinancierIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CheckRatioFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatioFinancierIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditRatioFinancierIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = RatioFinancierIrfs
-        fields = [
-            "id", "type_ratio", "nom", "formule"
-        ]
-
-
-
-
-
-
-
-
-
-
+        fields = ["id", "type_ratio", "nom", "formule"]
 
 
 class ValeurRatioIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurRatioIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class AddValeurRatioIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurRatioIrfs
-        fields = [
-            "id", "acheteur", "ratio", "annee", "valeur"
-        ]
+        fields = ["id", "acheteur", "ratio", "annee", "valeur"]
+
 
 class GetValeurRatioIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurRatioIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CheckValeurRatioIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurRatioIrfs
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EditValeurRatioIrfsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ValeurRatioIrfs
-        fields = [
-            "id", "acheteur", "ratio", "annee", "valeur"
-        ]
+        fields = ["id", "acheteur", "ratio", "annee", "valeur"]
 
 
-
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
 CustomUser = get_user_model()
 
@@ -3108,45 +4080,996 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = '__all__'
-        
+        fields = "__all__"
+
     def get_date_joined_formatted(self, obj):
         # Formatez la date selon vos besoins
-        return obj.date_joined.strftime('%d.%m.%Y à %H:%M:%S')
+        return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
+
 
 class GetCustomUserSerializer(serializers.ModelSerializer):
-    #pays = PaysSerializer()
+    # pays = PaysSerializer()
     date_joined_formatted = serializers.SerializerMethodField()
+
     class Meta:
         model = CustomUser
-        fields = '__all__'
-        
+        fields = "__all__"
+
     def get_date_joined_formatted(self, obj):
         # Formatez la date selon vos besoins
-        return obj.date_joined.strftime('%d.%m.%Y à %H:%M:%S')
+        return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
+
 
 class AddCustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            "username", "first_name", "last_name", "email", "email_cc",
-            "address", "activation", "telephone", "profession",
-            "role", "pays"
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "email_cc",
+            "address",
+            "activation",
+            "telephone",
+            "profession",
+            "role",
+            "pays",
         ]
+
 
 class EditCustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
         fields = [
-            "id", "username", "first_name", "last_name", "email", 
-            "address", "activation", "telephone", "profession",
-            "email_cc", "role", "pays"
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "address",
+            "activation",
+            "telephone",
+            "profession",
+            "email_cc",
+            "role",
+            "pays",
         ]
+
 
 class EditCustomUserAvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
+        fields = ["id", "avatar"]
+
+
+from rest_framework import serializers
+
+from .models import ElementSurveillance
+
+
+class ListElementSurveillanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ElementSurveillance
         fields = [
-            "id", "avatar"
+            "id",
+            "nom",
+            "code_interne",
+            "categorie",
+            "sous_categorie",
+            "description",
+        ]
+
+
+class AddElementSurveillanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ElementSurveillance
+        fields = ["nom", "code_interne", "categorie", "sous_categorie", "description"]
+
+
+class DetailElementSurveillanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ElementSurveillance
+        fields = [
+            "id",
+            "nom",
+            "code_interne",
+            "categorie",
+            "sous_categorie",
+            "description",
+        ]
+
+
+class EditElementSurveillanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ElementSurveillance
+        fields = [
+            "id",
+            "nom",
+            "code_interne",
+            "categorie",
+            "sous_categorie",
+            "description",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},  # Le champ 'id' est en lecture seule
+        }
+
+
+class SearchElementSurveillanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ElementSurveillance
+        fields = [
+            "id",
+            "nom",
+            "code_interne",
+            "categorie",
+            "sous_categorie",
+            "description",
+        ]
+
+
+from rest_framework import serializers
+
+from .models import (Certification, ConformiteReglementation,
+                     InnovationDeveloppement, StrategiePlanification)
+
+
+class ListCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "id",
+            "acheteur",
+            "type_certification",
+            "nom_certification",
+            "date_obtention",
+            "organisme_delivreur",
+            "description",
+        ]
+
+
+class AddCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "acheteur",
+            "type_certification",
+            "nom_certification",
+            "date_obtention",
+            "organisme_delivreur",
+            "description",
+        ]
+
+
+class DetailCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "id",
+            "acheteur",
+            "type_certification",
+            "nom_certification",
+            "date_obtention",
+            "organisme_delivreur",
+            "description",
+        ]
+
+
+class EditCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "id",
+            "acheteur",
+            "type_certification",
+            "nom_certification",
+            "date_obtention",
+            "organisme_delivreur",
+            "description",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+class SearchCertificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = [
+            "id",
+            "acheteur",
+            "type_certification",
+            "nom_certification",
+            "date_obtention",
+            "organisme_delivreur",
+            "description",
+        ]
+
+
+class ListInnovationDeveloppementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            "id",
+            "acheteur",
+            "type_innovation",
+            "titre",
+            "description",
+            "date_debut",
+            "date_fin",
+        ]
+
+
+class AddInnovationDeveloppementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            "acheteur",
+            "type_innovation",
+            "titre",
+            "description",
+            "date_debut",
+            "date_fin",
+        ]
+
+
+class DetailInnovationDeveloppementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            "id",
+            "acheteur",
+            "type_innovation",
+            "titre",
+            "description",
+            "date_debut",
+            "date_fin",
+        ]
+
+
+class EditInnovationDeveloppementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            "id",
+            "acheteur",
+            "type_innovation",
+            "titre",
+            "description",
+            "date_debut",
+            "date_fin",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+class SearchInnovationDeveloppementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            "id",
+            "acheteur",
+            "type_innovation",
+            "titre",
+            "description",
+            "date_debut",
+            "date_fin",
+        ]
+
+
+class ListStrategiePlanificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            "id",
+            "acheteur",
+            "type_strategie",
+            "description",
+            "date_mise_en_place",
+        ]
+
+
+class AddStrategiePlanificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StrategiePlanification
+        fields = ["acheteur", "type_strategie", "description", "date_mise_en_place"]
+
+
+class DetailStrategiePlanificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            "id",
+            "acheteur",
+            "type_strategie",
+            "description",
+            "date_mise_en_place",
+        ]
+
+
+class EditStrategiePlanificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            "id",
+            "acheteur",
+            "type_strategie",
+            "description",
+            "date_mise_en_place",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+class SearchStrategiePlanificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            "id",
+            "acheteur",
+            "type_strategie",
+            "description",
+            "date_mise_en_place",
+        ]
+
+
+class ListConformiteReglementationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            "id",
+            "acheteur",
+            "type_conformite",
+            "statut",
+            "details_non_conformite",
+            "date_verification",
+            "organisme_controle",
+            "commentaires",
+        ]
+
+
+class AddConformiteReglementationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            "acheteur",
+            "type_conformite",
+            "statut",
+            "details_non_conformite",
+            "date_verification",
+            "organisme_controle",
+            "commentaires",
+        ]
+
+
+class DetailConformiteReglementationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            "id",
+            "acheteur",
+            "type_conformite",
+            "statut",
+            "details_non_conformite",
+            "date_verification",
+            "organisme_controle",
+            "commentaires",
+        ]
+
+
+class EditConformiteReglementationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            "id",
+            "acheteur",
+            "type_conformite",
+            "statut",
+            "details_non_conformite",
+            "date_verification",
+            "organisme_controle",
+            "commentaires",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+class SearchConformiteReglementationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            "id",
+            "acheteur",
+            "type_conformite",
+            "statut",
+            "details_non_conformite",
+            "date_verification",
+            "organisme_controle",
+            "commentaires",
+        ]
+
+
+from rest_framework import serializers
+
+from main.models import AlerteLog
+
+
+class ListAlerteLogSerializer(serializers.ModelSerializer):
+    portefeuille = PortefeuilleSerializer()
+    acheteur = AcheteurSerializer()
+    element_surveille = ListElementSurveillanceSerializer()
+
+    class Meta:
+        model = AlerteLog
+        fields = [
+            "id",
+            "portefeuille",
+            "acheteur",
+            "element_surveille",
+            "date_creation",
+            "message",
+            "lu",
+        ]
+
+
+class AddAlerteLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlerteLog
+        fields = [
+            "portefeuille",
+            "acheteur",
+            "element_surveille",
+            "message",
+            "content_type",
+            "object_id",
+        ]
+
+
+class DetailAlerteLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlerteLog
+        fields = [
+            "id",
+            "portefeuille",
+            "acheteur",
+            "element_surveille",
+            "date_creation",
+            "message",
+            "lu",
+            "content_type",
+            "object_id",
+        ]
+
+
+class EditAlerteLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlerteLog
+        fields = [
+            "id",
+            "portefeuille",
+            "acheteur",
+            "element_surveille",
+            "message",
+            "lu",
+            "content_type",
+            "object_id",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+class SearchAlerteLogSerializer(serializers.ModelSerializer):
+    portefeuille = PortefeuilleSerializer()
+    acheteur = AcheteurSerializer()
+    element_surveille = ListElementSurveillanceSerializer()
+
+    class Meta:
+        model = AlerteLog
+        fields = [
+            "id",
+            "portefeuille",
+            "acheteur",
+            "element_surveille",
+            "date_creation",
+            "message",
+            "lu",
+            "content_type",
+            "object_id",
+        ]
+
+
+class AssetsSerializer(serializers.ModelSerializer):
+    """Serializer générique pour la lecture (liste et détail)."""
+
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = Assets
+        fields = "__all__"  # Affiche tous les champs du modèle
+
+
+class AddAssetsSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'un nouvel actif."""
+
+    class Meta:
+        model = Assets
+        # Exclut les champs auto-gérés
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def create(self, validated_data):
+        # Assigne l'utilisateur connecté à created_by
+        validated_data["created_by"] = self.context["request"].user
+        return super().create(validated_data)
+
+
+class DetailAssetsSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'un nouvel actif."""
+
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = Assets
+        fields = "__all__"  # Affiche tous les champs du modèle
+
+
+class EditAssetsSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'un actif."""
+
+    class Meta:
+        model = Assets
+        # Permet de modifier tous les champs sauf les IDs et les infos de création
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def update(self, instance, validated_data):
+        # Assigne l'utilisateur connecté à updated_by
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+class LiabilitiesSerializer(serializers.ModelSerializer):
+    """
+    Serializer générique pour la lecture des passifs (liste et détail).
+    Affiche les détails des objets liés (Année, Acheteur, etc.).
+    """
+
+    # Relations avec d'autres modèles (en lecture seule)
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Propriétés calculées du modèle
+    a_vue = serializers.ReadOnlyField()
+    dette_interbancaire = serializers.ReadOnlyField()
+    dette_envers_clientelle = serializers.ReadOnlyField()
+    total_liabilities = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Liabilities
+        # Inclut tous les champs du modèle et les propriétés définies ci-dessus
+        fields = "__all__"
+
+
+# ---
+
+
+class AddLiabilitiesSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'ajout (création) d'un nouvel enregistrement de passif.
+    """
+
+    class Meta:
+        model = Liabilities
+        # Exclut les champs qui sont gérés automatiquement par le système
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def create(self, validated_data):
+        """
+        Personnalise la méthode de création pour assigner automatiquement
+        l'utilisateur connecté au champ 'created_by'.
+        """
+        # Récupère l'utilisateur depuis le contexte de la requête
+        user = self.context["request"].user
+        validated_data["created_by"] = user
+
+        # Crée l'objet Liabilities
+        liabilities = Liabilities.objects.create(**validated_data)
+        return liabilities
+
+    def update(self, instance, validated_data):
+        """
+        Personnalise la méthode de mise à jour pour assigner automatiquement
+        l'utilisateur connecté au champ 'updated_by'.
+        """
+        # Assigne l'utilisateur qui fait la mise à jour
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+class ExpensesSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture des Dépenses (liste et détail).
+
+    Ce serializer inclut les détails des objets liés (Année, Acheteur, etc.)
+    et expose les propriétés calculées du modèle comme des champs en lecture seule.
+    """
+
+    # Relations avec d'autres modèles (en lecture seule pour l'affichage)
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Propriétés calculées du modèle exposées en lecture seule
+    interet_charges_assimilee = serializers.ReadOnlyField()
+    charge_sur_operation_financiere = serializers.ReadOnlyField()
+    prestation = serializers.ReadOnlyField()
+    frais_generaux_dexploitation = serializers.ReadOnlyField()
+    total_des_charges = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Expenses
+        # Inclut tous les champs du modèle ainsi que les propriétés définies ci-dessus
+        fields = "__all__"
+
+
+# ---
+
+
+class AddExpensesSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'ajout et la modification d'un enregistrement de Dépense.
+    """
+
+    class Meta:
+        model = Expenses
+        # Exclut les champs gérés automatiquement par le système.
+        # Le champ 'total_charges' est aussi exclu car il est calculé par la propriété.
+        exclude = (
+            "total_charges",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        )
+
+    def create(self, validated_data):
+        """
+        Personnalise la méthode de création pour assigner automatiquement
+        l'utilisateur connecté au champ 'created_by'.
+        """
+        # Récupère l'utilisateur depuis le contexte de la requête
+        user = self.context["request"].user
+        validated_data["created_by"] = user
+
+        # Crée l'objet Expenses
+        expense = Expenses.objects.create(**validated_data)
+        return expense
+
+    def update(self, instance, validated_data):
+        """
+        Personnalise la méthode de mise à jour pour assigner automatiquement
+        l'utilisateur connecté au champ 'updated_by'.
+        """
+        # Assigne l'utilisateur qui fait la mise à jour
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture des Produits (Compte de Résultat).
+    Expose les champs du modèle ainsi que les totaux calculés via les propriétés.
+    """
+
+    # Nested serializers pour afficher les détails des objets liés
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Exposition des propriétés du modèle comme des champs en lecture seule
+    interet_produit_assimile = serializers.ReadOnlyField()
+    revenu_d_operation_financiere = serializers.ReadOnlyField()
+    autres_produits_exploitation = serializers.ReadOnlyField()
+    total_produit = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Products
+        fields = "__all__"
+
+
+# ---
+
+
+class AddProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'ajout et la modification d'un enregistrement de Produit.
+    """
+
+    class Meta:
+        model = Products
+        # Exclut les champs qui sont automatiquement gérés par le système
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def create(self, validated_data):
+        """
+        Assigne automatiquement l'utilisateur connecté lors de la création.
+        """
+        user = self.context["request"].user
+        validated_data["created_by"] = user
+        return Products.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        """
+        Assigne automatiquement l'utilisateur connecté lors de la mise à jour.
+        """
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+class OffBalanceSheetSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture des données du Hors Bilan.
+    Expose les champs du modèle ainsi que les totaux calculés via les propriétés.
+    """
+
+    # Nested serializers pour afficher les détails des objets liés
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Exposition des propriétés du modèle comme des champs en lecture seule
+    total_engagement_financement_donne = serializers.ReadOnlyField()
+    total_engagement_garantie_donne = serializers.ReadOnlyField()
+    total_engagements_donnes = serializers.ReadOnlyField()
+    total_engagement_financement_recu = serializers.ReadOnlyField()
+    total_engagements_recus = serializers.ReadOnlyField()
+
+    class Meta:
+        model = OffBalanceSheet
+        fields = "__all__"  # Inclut tous les champs du modèle et ceux définis ci-dessus
+
+
+class AddOffBalanceSheetSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la création et la mise à jour d'une instance OffBalanceSheet.
+    N'inclut que les champs modifiables.
+    """
+
+    class Meta:
+        model = OffBalanceSheet
+        fields = [
+            # Champs d'identification
+            "type_bilan",
+            "annee",
+            "semestre",
+            "acheteur",
+            # Champs des engagements donnés
+            "engagement_financement_donne_ets_credit",
+            "engagement_financement_donne_clientele",
+            "engagement_garantie_donne_ets_credit",
+            "engagement_garantie_donne_clientele",
+            "engagement_sur_titres_donnes",
+            # Champs des engagements reçus
+            "engagement_financement_recu_ets_credit",
+            "engagement_financement_recu_clientele",
+            "engagement_garantie_recu_ets_credit",
+            "engagement_sur_titres_recus",
+        ]
+
+    def create(self, validated_data):
+        # Logique pour associer l'utilisateur créateur, si nécessaire
+        # Par exemple : validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Logique pour associer l'utilisateur modificateur, si nécessaire
+        # Par exemple : validated_data['updated_by'] = self.context['request'].user
+        return super().update(instance, validated_data)
+
+
+# Fichier: DANS VOTRE FICHIER serializers.py
+
+from rest_framework import serializers
+
+from .models import ActifIFRS, PassifIFRS, RatiosIFRS, ResultatIFRS
+
+# Assurez-vous d'importer vos autres serializers (AnneeSerializer, etc.)
+# from .serializers import AnneeSerializer, AcheteurSerializer, CustomUserSerializer
+
+
+class ActifIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture (détail) d'un actif IFRS.
+    Inclut les objets liés et le total calculé.
+    """
+
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Propriété calculée du modèle
+    total_actif_non_courant = serializers.ReadOnlyField()
+    total_actif_courant = serializers.ReadOnlyField()
+    total_actif = serializers.ReadOnlyField()
+
+    class Meta:
+        model = ActifIFRS
+        fields = "__all__"
+
+
+class AddActifIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'ajout et la modification d'un actif IFRS.
+    """
+
+    class Meta:
+        model = ActifIFRS
+        # Exclut les champs auto-gérés
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def create(self, validated_data):
+        # Assigne l'utilisateur qui effectue la création
+        validated_data["created_by"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Assigne l'utilisateur qui effectue la mise à jour
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+# Fichier: DANS VOTRE FICHIER serializers.py
+
+
+class PassifIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture d'un passif et capitaux propres IFRS.
+    """
+
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Propriétés calculées
+    total_capitaux_propres = serializers.ReadOnlyField()
+    total_passif_non_courant = serializers.ReadOnlyField()
+    total_passif_courant = serializers.ReadOnlyField()
+    total_passif = serializers.ReadOnlyField()
+
+    class Meta:
+        model = PassifIFRS
+        fields = "__all__"
+
+
+class AddPassifIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la création et la modification d'un passif IFRS.
+    """
+
+    class Meta:
+        model = PassifIFRS
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def create(self, validated_data):
+        validated_data["created_by"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+# Fichier: DANS VOTRE FICHIER serializers.py
+
+
+class ResultatIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture d'un compte de résultat IFRS.
+    """
+
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Exposition des soldes intermédiaires de gestion
+    # --- DÉBUT DE LA MODIFICATION ---
+    # Déclaration des nouvelles propriétés de calcul
+    chiffre_affaires = serializers.ReadOnlyField()
+    autres_produits_operationnels = serializers.ReadOnlyField()
+    total_produits = serializers.ReadOnlyField()
+    cout_des_ventes = serializers.ReadOnlyField()
+    charges_operationnelles = serializers.ReadOnlyField()
+    amortissements_et_provisions = serializers.ReadOnlyField()
+    total_charges = serializers.ReadOnlyField()
+    resultat_operationnel = serializers.ReadOnlyField()
+    resultat_financier = serializers.ReadOnlyField()
+    resultat_avant_impot = serializers.ReadOnlyField()
+    resultat_net = serializers.ReadOnlyField()
+    # --- FIN DE LA MODIFICATION ---
+
+    class Meta:
+        model = ResultatIFRS
+        fields = "__all__"
+
+
+class AddResultatIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'ajout et la modification d'un compte de résultat IFRS.
+    """
+
+    class Meta:
+        model = ResultatIFRS
+        exclude = ("created_at", "updated_at", "created_by", "updated_by")
+
+    def create(self, validated_data):
+        validated_data["created_by"] = self.context["request"].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data["updated_by"] = self.context["request"].user
+        return super().update(instance, validated_data)
+
+
+# Fichier: serializers.py
+
+# Fichier: serializers.py
+
+
+class RatiosIFRSSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour la lecture des ratios financiers.
+    """
+
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+
+    # Assurez-vous que TOUS ces ratios sont déclarés ici
+    roa = serializers.ReadOnlyField()
+    roe = serializers.ReadOnlyField()
+    liquidite_generale = serializers.ReadOnlyField()
+    liquidite_immediate = serializers.ReadOnlyField()
+    ratio_endettement_total = serializers.ReadOnlyField()
+    ratio_couverture_interets = serializers.ReadOnlyField()
+    marge_brute = serializers.ReadOnlyField()
+    marge_operationnelle = serializers.ReadOnlyField()
+    marge_nette = serializers.ReadOnlyField()
+    rotation_des_actifs = serializers.ReadOnlyField()
+    dso = serializers.ReadOnlyField()
+
+    class Meta:
+        model = RatiosIFRS
+        # La liste fields DOIT contenir les noms exacts des ratios
+        fields = [
+            "id",
+            "annee",
+            "acheteur",
+            "roa",
+            "roe",
+            "liquidite_generale",  # <--- Ce champ doit être ici
+            "liquidite_immediate",
+            "ratio_endettement_total",  # <--- Et celui-ci aussi
+            "ratio_couverture_interets",
+            "marge_brute",
+            "marge_operationnelle",
+            "marge_nette",
+            "rotation_des_actifs",
+            "dso",
         ]
