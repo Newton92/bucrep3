@@ -187,8 +187,8 @@ DATABASES = {
         "NAME": env("LOCAL_DB_NAME"),  # Le nom de la base de données créée à l'étape 2
         "USER": env("LOCAL_DB_USER"),  # Le nom de l'utilisateur créé à l'étape 2
         "PASSWORD": env("LOCAL_DB_PASS"),  # Le mot de passe que vous avez noté
-        "HOST": "localhost",  # ou '127.0.0.1'
-        "PORT": "5432",  # Le port par défaut de PostgreSQL
+        "HOST": env("LOCAL_DB_HOST"),  # ou '127.0.0.1'
+        "PORT": env("LOCAL_DB_PORT"),  # Le port par défaut de PostgreSQL
     }
 }
 
