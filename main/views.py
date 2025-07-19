@@ -220,7 +220,7 @@ def forgot_auth(request):
 
 
 
-def new_admin():
+def new_admin(request):
     username = "admin_bucrep"
     email = "yannickabohthierry@gmail.com"
     role = "Root"
