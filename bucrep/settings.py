@@ -408,3 +408,6 @@ LOGGING = {
         "level": "WARNING",
     },
 }
+
+
+LOGIN_URL = '/verification/compte/'

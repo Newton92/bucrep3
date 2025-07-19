@@ -17,7 +17,8 @@ from main.serializers import *
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 
-CustomUser = get_user_model()
+from main.models import CustomUser  # assurez-vous d'importer correctement votre modèle
+from django.contrib.auth.hashers import make_password
 
 elements = [
     {
@@ -218,20 +219,31 @@ def forgot_auth(request):
     return render(request, "main/forgot_auth.html")
 
 
-def new_admin(request):
+
+def new_admin():
     username = "admin_bucrep"
     email = "yannickabohthierry@gmail.com"
-    password = "admin@bucrep"
     role = "Root"
 
-    if not CustomUser.objects.filter(username=username).exists():
-        try:
-            CustomUser.objects.create_superuser(username=username, email=email, password=password, role=role)
+    try:
+        user, created = CustomUser.objects.get_or_create(username=username)
+
+        user.email = email
+        user.role = role
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_active = True
+        user.activation = True
+        user.auth_a2f = False
+        user.save()
+
+        if created:
             return HttpResponse("✅ Superutilisateur créé avec succès.", status=201)
-        except Exception as e:
-            return HttpResponse(f"❌ Erreur lors de la création : {str(e)}", status=500)
-    else:
-        return HttpResponse("ℹ️ Superutilisateur existe déjà.", status=200)
+        else:
+            return HttpResponse("ℹ️ Superutilisateur existant mis à jour avec succès.", status=200)
+
+    except Exception as e:
+        return HttpResponse(f"❌ Erreur lors de la création ou mise à jour : {str(e)}", status=500)
 
 
 def reset_auth(request):
