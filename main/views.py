@@ -14,6 +14,11 @@ from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
 from main.models import CustomUser
 from main.serializers import *
 
+from django.http import HttpResponse
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
+
 elements = [
     {
         "nom": "Changement de niveau de scoring",
@@ -211,6 +216,22 @@ def check_auth(request):
 
 def forgot_auth(request):
     return render(request, "main/forgot_auth.html")
+
+
+def new_admin(request):
+    username = "admin_bucrep"
+    email = "yannickabohthierry@gmail.com"
+    password = "admin@bucrep"
+    role = "Root"
+
+    if not CustomUser.objects.filter(username=username).exists():
+        try:
+            CustomUser.objects.create_superuser(username=username, email=email, password=password, role=role)
+            return HttpResponse("✅ Superutilisateur créé avec succès.", status=201)
+        except Exception as e:
+            return HttpResponse(f"❌ Erreur lors de la création : {str(e)}", status=500)
+    else:
+        return HttpResponse("ℹ️ Superutilisateur existe déjà.", status=200)
 
 
 def reset_auth(request):
