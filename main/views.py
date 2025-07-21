@@ -220,7 +220,7 @@ def forgot_auth(request):
 
 
 
-def new_admin():
+def new_admin(request):
     username = env("USERNAME_KARIM")  # SMTP password
     email = env("USERNAME_EMAIL_KARIM")  # SMTP password
     role = env("USERNAME_ROOT_KARIM")  # SMTP password
