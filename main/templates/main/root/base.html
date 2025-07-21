@@ -751,8 +751,36 @@
     });
 
 
-    </script>
+</script>
 
+
+<script>
+    $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (settings.type == "POST" || settings.type == "PUT" || settings.type == "DELETE") {
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrfToken = getCookie('csrftoken');
+            const accessToken = getCookie('access_token');
+            xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+        }
+    }
+});
+
+</script>
 
 
 {% block scripts %}{% endblock %}

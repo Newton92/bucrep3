@@ -298,6 +298,8 @@ CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:8004",  # Remplace par le domaine de ton frontend
+    "http://10.0.57.47",  # Remplace par le domaine de ton frontend
+    "http://3.236.213.114:26354",  # Remplace par le domaine de ton frontend
 ]
 CORS_ALLOW_HEADERS = [
     "authorization",
