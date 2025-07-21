@@ -271,12 +271,17 @@ def dash_root(request):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
     try:
+        # Attempt to create an AccessToken from the provided token
         access_token = AccessToken(token)
         user_id = access_token['user_id']
         user = CustomUser.objects.get(pk=user_id)
-        login(request, user)  # Authentifie manuellement l'utilisateur
-    except Exception as _:
+        login(request, user)  # Manually authenticate the user
+    except TokenError:
+        # Handle the case where the token is invalid
         return render(request, "main/index.html", {"error": _("Token invalide.")})
+    except CustomUser.DoesNotExist:
+        # Handle the case where the user does not exist
+        return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
 
     refresh = RefreshToken.for_user(user)
     context = {
