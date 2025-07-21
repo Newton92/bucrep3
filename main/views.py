@@ -10,6 +10,7 @@ from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
 from main.models import CustomUser
@@ -264,6 +265,9 @@ def reset_auth(request):
 #                                                                                                                      #
 ########################################################################################################################
 
+
+# Ensure CustomUser is correctly imported or defined
+CustomUser = get_user_model()
 
 def dash_root(request):
     token = request.GET.get("token")
