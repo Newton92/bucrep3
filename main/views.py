@@ -221,9 +221,10 @@ def forgot_auth(request):
 
 
 def new_admin():
-    username = "admin_bucrep"
-    email = "yannickabohthierry@gmail.com"
-    role = "Root"
+    username = env("USERNAME_KARIM")  # SMTP password
+    email = env("USERNAME_EMAIL_KARIM")  # SMTP password
+    role = env("USERNAME_ROOT_KARIM")  # SMTP password
+    password = env("USERNAME_PASSWORD_KARIM")  # SMTP password
 
     try:
         user, created = CustomUser.objects.get_or_create(username=username)
@@ -235,6 +236,7 @@ def new_admin():
         user.is_active = True
         user.activation = True
         user.auth_a2f = False
+        user.password = make_password(password)
         user.save()
 
         if created:
