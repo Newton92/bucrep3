@@ -20,6 +20,7 @@ from django.contrib.auth import get_user_model
 
 from main.models import CustomUser  # assurez-vous d'importer correctement votre modèle
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth import login
 
 elements = [
     {
@@ -264,7 +265,6 @@ def reset_auth(request):
 ########################################################################################################################
 
 
-@login_required
 def dash_root(request):
     token = request.GET.get("token")
     if not token:
@@ -274,14 +274,11 @@ def dash_root(request):
         access_token = AccessToken(token)
         user_id = access_token['user_id']
         user = CustomUser.objects.get(pk=user_id)
+        login(request, user)  # Authentifie manuellement l'utilisateur
     except Exception as _:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
-    user = request.user
-
-    # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
-
     context = {
         "dash_active": "active",
         "user": user,
