@@ -220,7 +220,7 @@ def forgot_auth(request):
 
 
 
-def new_admin(request):
+def new_admin():
     username = "admin_bucrep"
     email = "yannickabohthierry@gmail.com"
     role = "Root"
@@ -263,7 +263,7 @@ def reset_auth(request):
 ########################################################################################################################
 
 
-@login_required
+#@login_required
 def dash_root(request):
     token = request.GET.get("token")
     if not token:
@@ -283,7 +283,7 @@ def dash_root(request):
     return render(request, "main/root/dash_root.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_user(request):
     token = request.GET.get("token")
     if not token:
@@ -307,7 +307,7 @@ def dash_root_user(request):
     return render(request, "main/root/utilisateur/dash_root_user.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_pays(request):
     token = request.GET.get("token")
     if not token:
@@ -327,7 +327,7 @@ def dash_root_pays(request):
     return render(request, "main/root/pays/dash_root_pays.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_province(request):
     token = request.GET.get("token")
     if not token:
@@ -351,7 +351,7 @@ def dash_root_province(request):
     return render(request, "main/root/province/dash_root_province.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_ville(request):
     token = request.GET.get("token")
     if not token:
@@ -379,7 +379,7 @@ def dash_root_ville(request):
     return render(request, "main/root/ville/dash_root_ville.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_devise(request):
     token = request.GET.get("token")
     if not token:
@@ -408,7 +408,7 @@ def dash_root_devise(request):
     return render(request, "main/root/devise/dash_root_devise.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_annee(request):
     token = request.GET.get("token")
     if not token:
@@ -435,7 +435,7 @@ def dash_root_annee(request):
     return render(request, "main/root/annee/dash_root_annee.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_coloration(request):
     token = request.GET.get("token")
     if not token:
@@ -456,7 +456,7 @@ def dash_root_coloration(request):
     return render(request, "main/root/coloration/dash_root_coloration.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_category_nace(request):
     token = request.GET.get("token")
     if not token:
@@ -477,7 +477,7 @@ def dash_root_category_nace(request):
     return render(request, "main/root/nace/dash_root_category_nace.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_category_naf(request):
     token = request.GET.get("token")
     if not token:
@@ -498,7 +498,7 @@ def dash_root_category_naf(request):
     return render(request, "main/root/naf/dash_root_category_naf.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_code_nace(request):
     token = request.GET.get("token")
     if not token:
@@ -523,7 +523,7 @@ def dash_root_code_nace(request):
     return render(request, "main/root/nace/dash_root_code_nace.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_code_naf(request):
     token = request.GET.get("token")
     if not token:
@@ -548,7 +548,7 @@ def dash_root_code_naf(request):
     return render(request, "main/root/naf/dash_root_code_naf.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_forme_juridique(request):
     token = request.GET.get("token")
     if not token:
@@ -571,7 +571,7 @@ def dash_root_forme_juridique(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_domaine(request):
     token = request.GET.get("token")
     if not token:
@@ -592,7 +592,7 @@ def dash_root_domaine(request):
     return render(request, "main/root/domaine/dash_root_domaine.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_modele_bail(request):
     token = request.GET.get("token")
     if not token:
@@ -613,7 +613,7 @@ def dash_root_modele_bail(request):
     return render(request, "main/root/modele/dash_root_modele_bail.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_modele_bilan(request):
     token = request.GET.get("token")
     if not token:
@@ -634,7 +634,7 @@ def dash_root_modele_bilan(request):
     return render(request, "main/root/modele/dash_root_modele_bilan.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_modele_alarme(request):
     token = request.GET.get("token")
     if not token:
@@ -655,7 +655,7 @@ def dash_root_modele_alarme(request):
     return render(request, "main/root/modele/dash_root_modele_alarme.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_modele_rapport(request):
     token = request.GET.get("token")
     if not token:
@@ -676,7 +676,7 @@ def dash_root_modele_rapport(request):
     return render(request, "main/root/modele/dash_root_modele_rapport.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_modele_avis_commercial(request):
     token = request.GET.get("token")
     if not token:
@@ -699,7 +699,7 @@ def dash_root_modele_avis_commercial(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_modele_relation_entreprise(request):
     token = request.GET.get("token")
     if not token:
@@ -722,7 +722,7 @@ def dash_root_modele_relation_entreprise(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_modele_notation(request):
     token = request.GET.get("token")
     if not token:
@@ -743,7 +743,7 @@ def dash_root_modele_notation(request):
     return render(request, "main/root/modele/dash_root_modele_notation.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_modele_comportement_paiement(request):
     token = request.GET.get("token")
     if not token:
@@ -766,7 +766,7 @@ def dash_root_modele_comportement_paiement(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_modele_comportement_jugement(request):
     token = request.GET.get("token")
     if not token:
@@ -789,7 +789,7 @@ def dash_root_modele_comportement_jugement(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_modele_information_notation_entreprise(request):
     token = request.GET.get("token")
     if not token:
@@ -814,7 +814,7 @@ def dash_root_modele_information_notation_entreprise(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_poste(request):
     token = request.GET.get("token")
     if not token:
@@ -839,7 +839,7 @@ def dash_root_poste(request):
     return render(request, "main/root/poste/dash_root_poste.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_category_entreprise(request):
     token = request.GET.get("token")
     if not token:
@@ -862,7 +862,7 @@ def dash_root_category_entreprise(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_structure_entreprise(request):
     token = request.GET.get("token")
     if not token:
@@ -885,7 +885,7 @@ def dash_root_structure_entreprise(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_statut_entreprise(request):
     token = request.GET.get("token")
     if not token:
@@ -906,7 +906,7 @@ def dash_root_statut_entreprise(request):
     return render(request, "main/root/statut/dash_root_statut_entreprise.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_acheteur(request):
     token = request.GET.get("token")
     if not token:
@@ -926,7 +926,7 @@ def dash_root_acheteur(request):
     return render(request, "main/root/acheteur/dash_root_acheteur.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_add_acheteur(request):
     token = request.GET.get("token")
     if not token:
@@ -974,7 +974,7 @@ def dash_root_add_acheteur(request):
     return render(request, "main/root/acheteur/dash_root_add_acheteur.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_edit_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1026,7 +1026,7 @@ def dash_root_edit_acheteur(request, acheteur_id):
     return render(request, "main/root/acheteur/dash_root_edit_acheteur.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1078,7 +1078,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_resume(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1118,7 +1118,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1146,7 +1146,7 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_data_save(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1182,7 +1182,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_tendance(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1214,7 +1214,7 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_responsable(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1250,7 +1250,7 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_antecedent(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1282,7 +1282,7 @@ def dash_root_manage_acheteur_antecedent(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1314,7 +1314,7 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1350,7 +1350,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1386,7 +1386,7 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1418,7 +1418,7 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1450,7 +1450,7 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_filiale(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1486,7 +1486,7 @@ def dash_root_manage_acheteur_filiale(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1522,7 +1522,7 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1558,7 +1558,7 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1590,7 +1590,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1622,7 +1622,7 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1650,7 +1650,7 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1686,7 +1686,7 @@ def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1718,7 +1718,7 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_advice(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1746,7 +1746,7 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1774,7 +1774,7 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_banking(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1810,7 +1810,7 @@ def dash_root_manage_acheteur_banking(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1842,7 +1842,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1874,7 +1874,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1906,7 +1906,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1938,7 +1938,7 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -1970,7 +1970,7 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2002,7 +2002,7 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2034,7 +2034,7 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2066,7 +2066,7 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2098,7 +2098,7 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2130,7 +2130,7 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2162,7 +2162,7 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2194,7 +2194,7 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2226,7 +2226,7 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2258,7 +2258,7 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2286,7 +2286,7 @@ def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2314,7 +2314,7 @@ def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2356,7 +2356,7 @@ def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2398,7 +2398,7 @@ def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2440,7 +2440,7 @@ def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2488,7 +2488,7 @@ def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2536,7 +2536,7 @@ def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_report_web(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -2566,7 +2566,7 @@ def dash_root_manage_acheteur_report_web(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_commande(request):
     token = request.GET.get("token")
     if not token:
@@ -2612,7 +2612,7 @@ def dash_root_commande(request):
     return render(request, "main/root/orders/dash_root_commande.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_manage_commande(request, commande_id):
     token = request.GET.get("token")
     if not token:
@@ -2638,7 +2638,7 @@ def dash_root_manage_commande(request, commande_id):
     return render(request, "main/root/orders/dash_root_manage_commande.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_alerte(request):
     token = request.GET.get("token")
     if not token:
@@ -2665,7 +2665,7 @@ def dash_root_alerte(request):
     return render(request, "main/root/warning/dash_root_alerte.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_add_alerte(request):
     token = request.GET.get("token")
     if not token:
@@ -2697,7 +2697,7 @@ def dash_root_add_alerte(request):
     return render(request, "main/root/warning/dash_root_add_alerte.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_edit_new_alerte(request, reference):
 
     token = request.GET.get("token")
@@ -2729,7 +2729,7 @@ def dash_root_edit_new_alerte(request, reference):
     return render(request, "main/root/warning/dash_root_edit_new_alerte.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_document_alerte(request, reference):
 
     token = request.GET.get("token")
@@ -2763,7 +2763,7 @@ def dash_root_document_alerte(request, reference):
     )
 
 
-@login_required
+#@login_required
 def dash_root_client_alerte(request, reference):
 
     token = request.GET.get("token")
@@ -2799,7 +2799,7 @@ def dash_root_client_alerte(request, reference):
     return render(request, "main/root/warning/dash_root_client_alerte.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_edit_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
@@ -2831,7 +2831,7 @@ def dash_root_edit_alerte(request, alerte_id):
     return render(request, "main/root/warning/dash_root_edit_alerte.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_manage_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
@@ -2869,7 +2869,7 @@ def dash_root_manage_alerte(request, alerte_id):
     return render(request, "main/root/warning/dash_root_manage_alerte.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_client(request):
     token = request.GET.get("token")
     if not token:
@@ -2889,7 +2889,7 @@ def dash_root_client(request):
     return render(request, "main/root/monitoring/dash_root_client.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_carnet(request):
     token = request.GET.get("token")
     if not token:
@@ -2909,7 +2909,7 @@ def dash_root_carnet(request):
     return render(request, "main/root/monitoring/dash_root_carnet.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_portefeuille(request):
     token = request.GET.get("token")
     if not token:
@@ -2937,7 +2937,7 @@ def dash_root_portefeuille(request):
     return render(request, "main/root/monitoring/dash_root_portefeuille.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_add_portefeuille(request, portefeuille_id=None):
     token = request.GET.get("token")
     if not token:
@@ -2994,7 +2994,7 @@ def dash_root_add_portefeuille(request, portefeuille_id=None):
     )
 
 
-@login_required
+#@login_required
 def dash_root_edit_portefeuille(request, portefeuille_id):
     token = request.GET.get("token")
     if not token:
@@ -3067,7 +3067,7 @@ def dash_root_edit_portefeuille(request, portefeuille_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_simulateur_scoring_sb(request):
     token = request.GET.get("token")
     if not token:
@@ -3097,7 +3097,7 @@ def dash_root_simulateur_scoring_sb(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_element_surveillance(request):
     token = request.GET.get("token")
     if not token:
@@ -3139,7 +3139,7 @@ def dash_root_element_surveillance(request):
     )
 
 
-@login_required
+#@login_required
 def dash_root_alerte_log(request):
     token = request.GET.get("token")
     if not token:
@@ -3175,7 +3175,7 @@ def dash_root_alerte_log(request):
     return render(request, "main/root/monitoring/dash_root_alerte_log.html", context)
 
 
-@login_required
+#@login_required
 def dash_root_certification_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -3207,7 +3207,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_innovation_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -3239,7 +3239,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_strategie_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -3271,7 +3271,7 @@ def dash_root_strategie_acheteur(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_conformite_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -3303,7 +3303,7 @@ def dash_root_conformite_acheteur(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
@@ -3365,7 +3365,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
     # En haut de votre fichier views.py, ajoutez cet import
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
     """
     Vue pour gérer les bilans (Actifs, Passifs, Dépenses, Produits) d'un acheteur,
@@ -3457,7 +3457,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
     )
 
 
-@login_required
+#@login_required
 def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
     """
     Vue pour gérer les états financiers IFRS (Actif, Passif, Résultat, Ratios)
@@ -3551,16 +3551,16 @@ def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
 ########################################################################################################################
 
 
-@login_required
+#@login_required
 def dash_validateur(request):
     return render(request, "main/validateur/dash_validateur.html")
 
 
-@login_required
+#@login_required
 def dash_analyste(request):
     return render(request, "main/analyste/dash_analyste.html")
 
 
-@login_required
+#@login_required
 def dash_client(request):
     return render(request, "main/client/dash_client.html")
