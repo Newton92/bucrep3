@@ -224,7 +224,7 @@ def new_admin(request):
     username = "admin2"
     email = "karimmaabmara@gmail.com"
     role = "Root"
-    password = "Bucrep@1234" # SMTP password
+    # password = "Bucrep@1234"
 
     try:
         user, created = CustomUser.objects.get_or_create(username=username)
@@ -236,7 +236,7 @@ def new_admin(request):
         user.is_active = True
         user.activation = True
         user.auth_a2f = False
-        user.password = make_password(password)
+        # user.password = make_password(password)
         user.save()
 
         if created:
