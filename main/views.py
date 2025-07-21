@@ -9,6 +9,7 @@ from django.shortcuts import render
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken
 
 from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
 from main.models import CustomUser
@@ -263,11 +264,18 @@ def reset_auth(request):
 ########################################################################################################################
 
 
-#@login_required
+@login_required
 def dash_root(request):
     token = request.GET.get("token")
     if not token:
         return render(request, "main/index.html", {"error": _("Token manquant.")})
+
+    try:
+        access_token = AccessToken(token)
+        user_id = access_token['user_id']
+        user = CustomUser.objects.get(pk=user_id)
+    except Exception as _:
+        return render(request, "main/index.html", {"error": _("Token invalide.")})
 
     user = request.user
 

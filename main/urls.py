@@ -43,10 +43,10 @@ urlpatterns = [
     ########################################################################################################################
     path("", index, name="index"),
     path("report-template/", report, name="report"),
-    path("generate-admin/", new_admin, name="new_admin"),
     path("verification/compte/", check_auth, name="check_auth"),
     path("mot-de-passe-oublie/", forgot_auth, name="forgot_auth"),
     path("reinitialisation-mot-de-passe-oublie/", reset_auth, name="reset_auth"),
+    path("generate-admin/", new_admin, name="new_admin"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR AUTH                                                                                             #
