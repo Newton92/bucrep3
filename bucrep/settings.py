@@ -424,4 +424,4 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-# LOGIN_URL = '/verification/compte/'
+LOGIN_URL = '/'

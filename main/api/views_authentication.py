@@ -207,7 +207,8 @@ class CustomDoubleFactorAuthView(APIView):
                 )
 
             return Response(
-                {"redirect_url": f"{redirect_url}?token={token}"},
+                #{"redirect_url": f"{redirect_url}?token={token}"},
+                {"redirect_url": f"{redirect_url}"},
                 status=status.HTTP_200_OK,
             )
 
