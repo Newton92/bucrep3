@@ -224,8 +224,8 @@ def forgot_auth(request):
 
 
 def new_admin(request):
-    username = "admin2"
-    email = "karimmaabmara@gmail.com"
+    username = "bucrep"
+    email = "yannickabohthierry@gmail.com"
     role = "Root"
 
     try:
@@ -238,6 +238,9 @@ def new_admin(request):
         user.is_active = True
         user.activation = True
         user.auth_a2f = False
+
+        # 🛡️ Définit le mot de passe de manière sécurisée
+        # user.set_password(raw_password)
         user.save()
 
         if created:
@@ -264,32 +267,65 @@ def reset_auth(request):
 #  VIEWS START FOR ROOT                                                                                                #
 #                                                                                                                      #
 ########################################################################################################################
+from django.contrib.auth import get_user_model
+import logging
 
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Ensure CustomUser is correctly imported or defined
 CustomUser = get_user_model()
 
-def dash_root(request):
+@login_required
+def dash_root_2(request):
     token = request.GET.get("token")
+    logger.debug(f"Token received: {token}")
+
     if not token:
+        logger.error("Token is missing.")
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
     try:
         # Attempt to create an AccessToken from the provided token
         access_token = AccessToken(token)
         user_id = access_token['user_id']
+        logger.debug(f"User ID extracted from token: {user_id}")
+
         user = CustomUser.objects.get(pk=user_id)
         login(request, user)  # Manually authenticate the user
-    except TokenError:
+        logger.debug(f"User {user.username} logged in successfully.")
+    except TokenError as e:
+        logger.error(f"Token error: {e}")
         # Handle the case where the token is invalid
         return render(request, "main/index.html", {"error": _("Token invalide.")})
-    except CustomUser.DoesNotExist:
+    except CustomUser.DoesNotExist as e:
+        logger.error(f"User not found: {e}")
         # Handle the case where the user does not exist
         return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
 
     refresh = RefreshToken.for_user(user)
     context = {
         "dash_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
+    return render(request, "main/root/dash_root.html", context)
+
+
+@login_required
+def dash_root(request):
+    token = request.GET.get("token")
+    if not token:
+        return render(request, "main/index.html", {"error": _("Token manquant.")})
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    context = {
+        "users_active": "active",
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),

@@ -64,7 +64,7 @@ DEFAULT_FROM_EMAIL = "bucrepcontact@gmail.com"  # Ou env('EMAIL_HOST_USER')
 
 # Configuration de Celery
 CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+# CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -264,7 +264,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATICFILES_DIRS = [
@@ -292,14 +292,20 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = "DENY"
 
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_HTTPONLY = False
+    CSRF_COOKIE_HTTPONLY = False
+
 
 # CORS Config
 CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:8004",  # Remplace par le domaine de ton frontend
-    "http://10.0.57.47",  # Remplace par le domaine de ton frontend
-    "http://3.236.213.114:26354",  # Remplace par le domaine de ton frontend
+    #"http://10.0.57.47",  # Remplace par le domaine de ton frontend
+    #"http://3.236.213.114:26354",  # Remplace par le domaine de ton frontend
 ]
 CORS_ALLOW_HEADERS = [
     "authorization",
@@ -411,5 +417,11 @@ LOGGING = {
     },
 }
 
+# settings.py
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    # Add any other custom authentication backends here
+]
 
-LOGIN_URL = '/verification/compte/'
+
+# LOGIN_URL = '/verification/compte/'
