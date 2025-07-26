@@ -314,7 +314,7 @@ def dash_root_2(request):
 
 
 @login_required
-def dash_root(request):
+def dash_root_3(request):
     token = request.GET.get("token")
     if not token:
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -329,6 +329,24 @@ def dash_root(request):
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+    }
+    return render(request, "main/root/dash_root.html", context)
+
+
+#@login_required
+def dash_root(request):
+    print(f"DEBUG: dash_root - Utilisateur authentifié ? {request.user.is_authenticated}")
+    if request.user.is_authenticated:
+        print(f"DEBUG: dash_root - Nom d'utilisateur : {request.user.username}")
+        print(f"DEBUG: dash_root - Clé de session : {request.session.session_key}")
+    else:
+        print("DEBUG: dash_root - Utilisateur non authentifié malgré @login_required (devrait rediriger).")
+
+    user = request.user
+    context = {
+        "users_active": "active",
+        "user": user,
+        # Supprimez la génération de tokens refresh/access ici comme suggéré précédemment
     }
     return render(request, "main/root/dash_root.html", context)
 
