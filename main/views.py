@@ -224,7 +224,7 @@ def forgot_auth(request):
 
 
 def new_admin(request):
-    username = "bucrep"
+    username = "admin"
     email = "yannickabohthierry@gmail.com"
     role = "Root"
 
