@@ -1,0 +1,54 @@
+{% load i18n humanize %}
+
+{% comment %}
+    Reusable pagination partial.
+    - page_obj: The paginator page object from the view.
+    - param_name: The name of the URL query parameter for this specific pagination (e.g., 'page_actifs').
+{% endcomment %}
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4 d-flex justify-content-end">
+    <ul class="pagination">
+
+        {# Bouton Précédent #}
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{{ param_name }}={{ page_obj.previous_page_number }}">{% trans "Précédent" %}</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">{% trans "Précédent" %}</a>
+            </li>
+        {% endif %}
+
+        {# Numéros de page #}
+        {% for i in page_obj.paginator.get_elided_page_range %}
+            {% if page_obj.number == i %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">{{ i }}</span>
+                </li>
+            {% else %}
+                {% if i == page_obj.paginator.ELLIPSIS %}
+                     <li class="page-item disabled"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{{ param_name }}={{ i }}">{{ i }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        {# Bouton Suivant #}
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{{ param_name }}={{ page_obj.next_page_number }}">{% trans "Suivant" %}</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">{% trans "Suivant" %}</a>
+            </li>
+        {% endif %}
+
+    </ul>
+</nav>
+{% endif %}

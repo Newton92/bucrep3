@@ -5,10 +5,42 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models.functions import TruncMonth
+from django.db.models import Count
 
 from main.serializers import *
 
 # === Vues Acheteur === #
+
+class AcheteursParMois(APIView):
+    def get(self, request):
+        acheteurs_par_mois = Acheteur.objects.annotate(
+            mois=TruncMonth('created_at')
+        ).values('mois').annotate(
+            total=Count('id')
+        ).order_by('mois')
+
+        # Dictionnaire pour mapper les noms des mois en français
+        mois_en_francais = {
+            'January': 'Janvier',
+            'February': 'Février',
+            'March': 'Mars',
+            'April': 'Avril',
+            'May': 'Mai',
+            'June': 'Juin',
+            'July': 'Juillet',
+            'August': 'Août',
+            'September': 'Septembre',
+            'October': 'Octobre',
+            'November': 'Novembre',
+            'December': 'Décembre'
+        }
+
+        data = {
+            'labels': [mois_en_francais[entry['mois'].strftime('%B')]  for entry in acheteurs_par_mois],
+            'data': [entry['total'] for entry in acheteurs_par_mois]
+        }
+        return Response(data)
 
 
 class ListAcheteurView(APIView):

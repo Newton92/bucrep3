@@ -230,7 +230,7 @@ class CustomForgotPasswordView(APIView):
             )
 
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.filter(email=email).first()
             code_secret = generate_token(6)
             reset_token = generate_token()
 

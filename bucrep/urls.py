@@ -20,6 +20,23 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+from django.urls import path, re_path
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="ACREMAC - API BUCREP",
+        default_version='v3',
+        description="Description de l'API BUCREP Version III",
+        terms_of_service="https://www.acremac.com/termes-et-conditions/",
+        contact=openapi.Contact(email="support@acremac.com"),
+        license=openapi.License(name="License ACREMAC"),
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
+)
 
 router = DefaultRouter()
 # router.register(r'users', CustomUserViewSet)
@@ -28,6 +45,12 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # path('', include(router.urls)),
     # path('api-token-auth/', CustomAuthToken.as_view()),
+
+    # Documentation Swagger
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
     # App urls
     path("", include("main.urls")),
 ]

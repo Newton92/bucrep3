@@ -1,0 +1,724 @@
+{% extends 'main/analyste/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-cart fa-fw me-1"></i>Commandes</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countCommandes">Module de Gestion des Commandes</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une commande notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Commandes START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Commandes</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-7">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-5">
+                        <!-- Short by filter -->
+                        <div>
+                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addCommandeModal">
+                                Ajouter une Commande
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Commandes list START -->
+                <div class="table-responsive border-0" id="commandesList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">Référence</th>
+                                <th scope="col" class="border-0">Client</th>
+                                <th scope="col" class="border-0">Raison Sociale</th>
+                                <th scope="col" class="border-0">Statut</th>
+                                <th scope="col" class="border-0">Date de Création</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="commandesTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Commandes list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- Commandes END -->
+
+<!-- Add Commande Modal START -->
+<div class="modal fade" id="addCommandeModal" tabindex="-1" aria-labelledby="addCommandeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCommandeModalLabel">Ajouter une Commande</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCommandeForm">
+                    <div class="mb-3">
+                        <label for="notre_ref" class="form-label">Notre Référence</label>
+                        <input type="text" class="form-control" id="notre_ref" name="notre_ref">
+                    </div>
+                    <div class="mb-3">
+                        <label for="reference_client" class="form-label">Référence Client</label>
+                        <input type="text" class="form-control" id="reference_client" name="reference_client">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_recept_commande" class="form-label">Date de Réception</label>
+                        <input type="date" class="form-control" id="date_recept_commande" name="date_recept_commande">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_rapport" class="form-label">Date du Rapport</label>
+                        <input type="date" class="form-control" id="date_rapport" name="date_rapport">
+                    </div>
+                    <div class="mb-3">
+                        <label for="delais" class="form-label">Délais</label>
+                        <input type="text" class="form-control" id="delais" name="delais">
+                    </div>
+                    <div class="mb-3">
+                        <label for="priorite" class="form-label">Priorité</label>
+                        <input type="text" class="form-control" id="priorite" name="priorite">
+                    </div>
+                    <div class="mb-3">
+                        <label for="raison_sociale" class="form-label">Raison Sociale</label>
+                        <input type="text" class="form-control" id="raison_sociale" name="raison_sociale">
+                    </div>
+                    <div class="mb-3">
+                        <label for="type_rapport" class="form-label">Type de Rapport</label>
+                        <select class="form-select" id="type_rapport" name="type_rapport" data-live-search="true">
+                            <option value="">Selectionnez un Type</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="Flash">Flash</option>
+                            <option value="Super flash">Super flash</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ref_type_rapport" class="form-label">Référence du Modèle de Rapport</label>
+                        <select class="form-select" id="ref_type_rapport" name="ref_type_rapport" data-live-search="true">
+                            <option value="">Selectionnez une Référence</option>
+                            {% for modele in modele_rapport_list %}
+                                <option value="{{ modele.id }}">{{ modele.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="credit_demande" class="form-label">Crédit Demandé</label>
+                        <input type="number" class="form-control" id="credit_demande" name="credit_demande">
+                    </div>
+                    <div class="mb-3">
+                        <label for="devise_credit_demande" class="form-label">Devise du Crédit Demandé</label>
+                        <select class="form-select" id="devise_credit_demande" name="devise_credit_demande" data-live-search="true">
+                            <option value="">Selectionnez une Devise</option>
+                            {% for devise in devise_list_one %}
+                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="credit_recommande" class="form-label">Crédit Recommandé</label>
+                        <input type="number" class="form-control" id="credit_recommande" name="credit_recommande">
+                    </div>
+                    <div class="mb-3">
+                        <label for="devise_credit_recommande" class="form-label">Devise du Crédit Recommandé</label>
+                        <select class="form-select" id="devise_credit_recommande" name="devise_credit_recommande" data-live-search="true">
+                            <option value="">Selectionnez une Devise</option>
+                            {% for devise in devise_list_two %}
+                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="numero_adresse" class="form-label">Numéro d'Adresse</label>
+                        <input type="text" class="form-control" id="numero_adresse" name="numero_adresse">
+                    </div>
+                    <div class="mb-3">
+                        <label for="rue_adresse" class="form-label">Rue Adresse</label>
+                        <input type="text" class="form-control" id="rue_adresse" name="rue_adresse">
+                    </div>
+                    <div class="mb-3">
+                        <label for="code_postale_adresse" class="form-label">Code Postal</label>
+                        <input type="text" class="form-control" id="code_postale_adresse" name="code_postale_adresse">
+                    </div>
+                    <div class="mb-3">
+                        <label for="telephone" class="form-label">Téléphone</label>
+                        <input type="text" class="form-control" id="telephone" name="telephone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ville" class="form-label">Ville</label>
+                        <select class="form-select" id="ville" name="ville" data-live-search="true">
+                            <option value="">Selectionnez une Ville</option>
+                            {% for ville in ville_list %}
+                                <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="client" class="form-label">Client</label>
+                        <select class="form-select" id="client" name="client" data-live-search="true">
+                            <option value="">Selectionnez un Client</option>
+                            {% for client in client_list %}
+                                <option value="{{ client.id }}">{{ client.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="acheteur" class="form-label">Acheteur</label>
+                        <select class="form-select" id="acheteur" name="acheteur" data-live-search="true">
+                            <option value="">Selectionnez un Acheteur</option>
+                            {% for acheteur in acheteur_list %}
+                                <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Statut</label>
+                        <select class="form-select" id="status" name="status" data-live-search="true">
+                            <option value="">Selectionnez un Statut</option>
+                            <option value="nouvelle">Nouvelle</option>
+                            <option value="en_cours">En cours de traitement</option>
+                            <option value="rapport_soumis">Rapport soumis</option>
+                            <option value="rapport_valide">Rapport validé</option>
+                            <option value="envoye_client">Envoyé au client</option>
+                            <option value="terminee">Terminée</option>
+                            <option value="annulee">Annulée</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Commande Modal END -->
+
+<!-- Edit Commande Modal START -->
+<div class="modal fade" id="editCommandeModal" tabindex="-1" aria-labelledby="editCommandeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCommandeModalLabel">Editer une Commande</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCommandeForm">
+                    <input type="hidden" id="editCommandeId" name="id">
+                    <div class="mb-3">
+                        <label for="editNotreRef" class="form-label">Notre Référence</label>
+                        <input type="text" class="form-control" id="editNotreRef" name="notre_ref">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editReferenceClient" class="form-label">Référence Client</label>
+                        <input type="text" class="form-control" id="editReferenceClient" name="reference_client">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDateReceptCommande" class="form-label">Date de Réception</label>
+                        <input type="date" class="form-control" id="editDateReceptCommande" name="date_recept_commande">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDateRapport" class="form-label">Date du Rapport</label>
+                        <input type="date" class="form-control" id="editDateRapport" name="date_rapport">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDelais" class="form-label">Délais</label>
+                        <input type="text" class="form-control" id="editDelais" name="delais">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPriorite" class="form-label">Priorité</label>
+                        <input type="text" class="form-control" id="editPriorite" name="priorite">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRaisonSociale" class="form-label">Raison Sociale</label>
+                        <input type="text" class="form-control" id="editRaisonSociale" name="raison_sociale">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTypeRapport" class="form-label">Type de Rapport</label>
+                        <select class="form-select" id="editTypeRapport" name="type_rapport" data-live-search="true">
+                            <option value="">Selectionnez un Type</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Urgent">Urgent</option>
+                            <option value="Flash">Flash</option>
+                            <option value="Super flash">Super flash</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRefTypeRapport" class="form-label">Référence du Modèle de Rapport</label>
+                        <select class="form-select" id="editRefTypeRapport" name="ref_type_rapport" data-live-search="true">
+                            <option value="">Selectionnez une Référence</option>
+                            {% for modele in modele_rapport_list %}
+                                <option value="{{ modele.id }}">{{ modele.code }} - {{ modele.libelle }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCreditDemande" class="form-label">Crédit Demandé</label>
+                        <input type="number" class="form-control" id="editCreditDemande" name="credit_demande">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDeviseCreditDemande" class="form-label">Devise du Crédit Demandé</label>
+                        <select class="form-select" id="editDeviseCreditDemande" name="devise_credit_demande" data-live-search="true">
+                            <option value="">Selectionnez une Devise</option>
+                            {% for devise in devise_list_one %}
+                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCreditRecommande" class="form-label">Crédit Recommandé</label>
+                        <input type="number" class="form-control" id="editCreditRecommande" name="credit_recommande">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDeviseCreditRecommande" class="form-label">Devise du Crédit Recommandé</label>
+                        <select class="form-select" id="editDeviseCreditRecommande" name="devise_credit_recommande" data-live-search="true">
+                            <option value="">Selectionnez une Devise</option>
+                            {% for devise in devise_list_two %}
+                                <option value="{{ devise.id }}">{{ devise.nom }} ({{ devise.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNumeroAdresse" class="form-label">Numéro d'Adresse</label>
+                        <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRueAdresse" class="form-label">Rue Adresse</label>
+                        <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCodePostaleAdresse" class="form-label">Code Postal</label>
+                        <input type="text" class="form-control" id="editCodePostaleAdresse" name="code_postale_adresse">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTelephone" class="form-label">Téléphone</label>
+                        <input type="text" class="form-control" id="editTelephone" name="telephone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editVille" class="form-label">Ville</label>
+                        <select class="form-select" id="editVille" name="ville" data-live-search="true">
+                            <option value="">Selectionnez une Ville</option>
+                            {% for ville in ville_list %}
+                                <option value="{{ ville.id }}">{{ ville.nom }} ({{ ville.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClient" class="form-label">Client</label>
+                        <select class="form-select" id="editClient" name="client" data-live-search="true">
+                            <option value="">Selectionnez un Client</option>
+                            {% for client in client_list %}
+                                <option value="{{ client.id }}">{{ client.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAcheteur" class="form-label">Acheteur</label>
+                        <select class="form-select" id="editAcheteur" name="acheteur" data-live-search="true">
+                            <option value="">Selectionnez un Acheteur</option>
+                            {% for acheteur in acheteur_list %}
+                                <option value="{{ acheteur.id }}">{{ acheteur.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editStatus" class="form-label">Statut</label>
+                        <select class="form-select" id="editStatus" name="status" data-live-search="true">
+                            <option value="">Selectionnez un Statut</option>
+                            <option value="nouvelle">Nouvelle</option>
+                            <option value="en_cours">En cours de traitement</option>
+                            <option value="rapport_soumis">Rapport soumis</option>
+                            <option value="rapport_valide">Rapport validé</option>
+                            <option value="envoye_client">Envoyé au client</option>
+                            <option value="terminee">Terminée</option>
+                            <option value="annulee">Annulée</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Commande Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+
+<!-- (Optional) Latest compiled and minified JavaScript translation files -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/i18n/defaults-*.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Function to load commandes data
+        function loadCommandes(page = 1, search = '') {
+            $.ajax({
+                url: '/api/liste-des-commandes/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update commandes table body
+                    $('#commandesTableBody').html('');
+                    response.results.forEach(function(commande, index) {
+                        console.log(response);
+                        $('#commandesTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + (commande.notre_ref || 'N/A') + '</td>' +
+                            '<td>' + commande.client.username + '</td>' +
+                            '<td>' + commande.raison_sociale + '</td>' +
+                            '<td>' + commande.status + '</td>' +
+                            '<td>' + new Date(commande.created_at).toLocaleDateString() + '</td>' +
+                            '<td>' +
+                                '<button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + commande.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                                '&nbsp; <button class="btn btn-info btn-round mb-0 manage-btn" data-id="' + commande.id + '" data-ref="' + commande.notre_ref + '"  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Manager"><i class="bi bi-gear"></i></button>' +
+                                '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + commande.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
+                            '</td>' +
+                        '</tr>');
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données.',
+                    });
+                }
+            });
+        }
+
+        // Initial load
+        loadCommandes();
+
+        // Search form submission
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadCommandes(1, search);
+        });
+
+        // Pagination controls
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadCommandes(page, search);
+        });
+
+        // Add Commande form submission
+        $('#addCommandeForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/ajouter-une-commande/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Commande ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addCommandeModal').modal('hide');
+                        loadCommandes();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout de la commande.',
+                    });
+                }
+            });
+        });
+
+        // Edit Commande button click
+        $(document).on('click', '.edit-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/editer-une-commande/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    $('#editCommandeId').val(response.id);
+                    $('#editNotreRef').val(response.notre_ref);
+                    $('#editReferenceClient').val(response.reference_client);
+                    $('#editDateReceptCommande').val(response.date_recept_commande);
+                    $('#editDateRapport').val(response.date_rapport);
+                    $('#editDelais').val(response.delais);
+                    $('#editPriorite').val(response.priorite);
+                    $('#editRaisonSociale').val(response.raison_sociale);
+                    $('#editTypeRapport').val(response.type_rapport);
+                    $('#editRefTypeRapport').val(response.ref_type_rapport);
+                    $('#editCreditDemande').val(response.credit_demande);
+                    $('#editDeviseCreditDemande').val(response.devise_credit_demande);
+                    $('#editCreditRecommande').val(response.credit_recommande);
+                    $('#editDeviseCreditRecommande').val(response.devise_credit_recommande);
+                    $('#editNumeroAdresse').val(response.numero_adresse);
+                    $('#editRueAdresse').val(response.rue_adresse);
+                    $('#editCodePostaleAdresse').val(response.code_postale_adresse);
+                    $('#editTelephone').val(response.telephone);
+                    $('#editEmail').val(response.email);
+                    $('#editVille').val(response.ville);
+                    $('#editClient').val(response.client);
+                    $('#editAcheteur').val(response.acheteur);
+                    $('#editStatus').val(response.status);
+                    $('#editCommandeModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de la commande.',
+                    });
+                }
+            });
+        });
+
+        // Edit Commande form submission
+        $('#editCommandeForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editCommandeId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/editer-une-commande/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Commande mise à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editCommandeModal').modal('hide');
+                        loadCommandes();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour de la commande.',
+                    });
+                }
+            });
+        });
+
+        // Manage Acheteur button click (avec SweetAlert)
+        $(document).on('click', '.manage-btn', function() {
+            var commandeId = $(this).data('id');
+            var commandeRef = $(this).data('ref');
+
+            Swal.fire({
+                title: 'Manager Commande',
+                html: 'Voulez-vous manager la commande <b>"' + commandeRef + '"</b> ?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, manager',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/root-dashboard/commandes/manager-une-commande/' + commandeId + '/?token=' + '{{ user.reset_token }}';
+                }
+            });
+        });
+
+        // Delete Commande button click
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-le!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supprimer-des-commandes/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'La commande a été supprimée.',
+                                'success'
+                            ).then(() => {
+                                loadCommandes();
+                            });
+                        },
+                        error: function(response) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression de la commande.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

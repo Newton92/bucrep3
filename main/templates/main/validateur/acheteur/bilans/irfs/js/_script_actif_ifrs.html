@@ -1,0 +1,182 @@
+{% load i18n humanize %}
+
+<script>
+$(document).ready(function() {
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const accessToken = '{{ access }}';
+    const csrfToken = '{{ csrf_token }}';
+
+    // ===================================================================
+    // CALCULS POUR LES FORMULAIRES D'AJOUT MULTI-ANNÉES
+    // ===================================================================
+    function initializeActifIFRSCalculations(suffix) {
+        function calculateTotals() {
+            let total = 0;
+            // Calcule le total en additionnant la valeur de tous les champs de la classe correspondante
+            $(`.actif-ifrs-input-${suffix}`).each(function() {
+                total += parseFloat($(this).val()) || 0;
+            });
+            const opts = { style: 'currency', currency: 'XAF', minimumFractionDigits: 0, maximumFractionDigits: 0 };
+            // Affiche le total formaté dans le champ 'readonly'
+            $(`#total_actif_ifrs_${suffix}`).val(total.toLocaleString('fr-FR', opts));
+        }
+
+        // Attache l'événement de calcul à chaque fois qu'un chiffre est saisi dans la section
+        $(`#collapseActif${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotals);
+
+        // Calcul initial au chargement de la page
+        calculateTotals();
+    }
+
+    // Initialise les calculs pour les trois sections (N, N-1, N-2)
+    ['n', 'n1', 'n2'].forEach(suffix => initializeActifIFRSCalculations(suffix));
+
+
+    // ===================================================================
+    // SOUMISSION DU FORMULAIRE D'AJOUT MULTI-ANNÉES
+    // ===================================================================
+    $('#form-actifs-ifrs-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const btn = $('#btn-submit-form-actifs-ifrs');
+        const originalText = btn.html();
+
+        $.ajax({
+            url: "{% url 'ifrs-add-multi-actifs' %}",
+            type: 'POST',
+            data: form.serialize(),
+            headers: { 'X-CSRFToken': csrfToken, 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> {% trans "Enregistrement..." %}'),
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '{% trans "Succès !" %}',
+                    text: '{% trans "Les actifs IFRS ont été enregistrés avec succès." %}'
+                }).then(() => window.location.reload());
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '{% trans "Erreur" %}',
+                    text: '{% trans "Un problème est survenu. Veuillez vérifier vos données." %}'
+                });
+            },
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+
+    // ===================================================================
+    // MODAL DE CONSULTATION (VIEW)
+    // ===================================================================
+    $('body').on('click', '.btn-view-actif-ifrs', function() {
+        const id = $(this).data('id');
+        const modal = $('#modal-view-actif-ifrs');
+        const loader = modal.find('.modal-loader');
+        const content = modal.find('.modal-details-content');
+
+        loader.show();
+        content.hide();
+
+        $.ajax({
+            url: `{% url 'ifrs-get-actif' 0 %}`.replace('0', id),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                // Met à jour le titre du modal
+                modal.find('.modal-title-period').text(`Bilan ${data.annee.annee} - ${data.get_type_bilan_display}`);
+
+                // Génère dynamiquement le contenu de la table
+                let tableHtml = '';
+                const fieldsToShow = [
+                    'caisse_banques_centrales_ccp', 'actifs_financiers_juste_valeur_par_resultat',
+                    'actifs_financiers_disponibles_vente', 'actifs_financiers_detenus_jusqu_echeance',
+                    'prets_creances_etablissements_credit', 'prets_creances_clientele',
+                    'ecart_acquisition', 'immobilisations_incorporelles',
+                    'immobilisations_corporelles', 'immeubles_placement',
+                    'actifs_impots_exigibles', 'actifs_impots_differes',
+                    'comptes_regularisation_assimiles', 'actifs_non_courants_cedes'
+                ];
+
+                fieldsToShow.forEach(key => {
+                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const value = data[key] ? formatCurrency(data[key]) : formatCurrency(0);
+                    tableHtml += `<tr><td>${label}</td><td class="text-end">${value}</td></tr>`;
+                });
+
+                modal.find('.details-table-body').html(tableHtml);
+                modal.find('.total-value').text(formatCurrency(data.total_actif));
+
+                loader.hide();
+                content.show();
+            },
+            error: function() {
+                loader.hide();
+                content.html('<div class="alert alert-danger">{% trans "Impossible de charger les détails." %}</div>').show();
+            }
+        });
+    });
+
+    // ===================================================================
+    // MODAL DE MODIFICATION (EDIT)
+    // ===================================================================
+
+    // -- 1. Peupler le formulaire de modification --
+    $('body').on('click', '.btn-edit-actif-ifrs', function() {
+        const id = $(this).data('id');
+        const formContent = $('#modal-edit-actif-ifrs .edit-form-content');
+
+        formContent.html('<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div></div>');
+
+        $.ajax({
+            url: `{% url 'ifrs-get-actif' 0 %}`.replace('0', id),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#edit-actif-ifrs-id').val(data.id);
+
+                // On réutilise le template de formulaire pour la cohérence
+                const formHtml = `
+                    {% include 'main/root/acheteur/bilans/irfs/forms/_form_content_actif_ifrs.html' with suffix='edit' %}
+                `;
+                formContent.html(formHtml);
+
+                // On remplit les valeurs du formulaire généré avec les données de l'API
+                for (const [key, value] of Object.entries(data)) {
+                    formContent.find(`[name="${key}_edit"]`).val(value);
+                }
+                // Cas spéciaux pour les clés étrangères (année)
+                if(data.annee) {
+                    formContent.find('[name="annee_edit"]').val(data.annee.id);
+                }
+
+                // Initialise les calculs pour le formulaire de modification
+                initializeActifIFRSCalculations('edit');
+            },
+            error: function() {
+                formContent.html('<div class="alert alert-danger">{% trans "Impossible de charger le formulaire de modification." %}</div>');
+            }
+        });
+    });
+
+    // -- 2. Soumettre le formulaire de modification --
+    $('#form-edit-actif-ifrs').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const id = $('#edit-actif-ifrs-id').val();
+        const btn = $('#btn-save-actif-ifrs-changes');
+        const originalText = btn.html();
+
+        $.ajax({
+            url: `{% url 'ifrs-edit-actif' 0 %}`.replace('0', id),
+            type: 'PUT',
+            data: form.serialize(),
+            headers: { 'X-CSRFToken': csrfToken, 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> {% trans "Sauvegarde..." %}'),
+            success: function(response) {
+                $('#modal-edit-actif-ifrs').modal('hide');
+                Swal.fire('{% trans "Modifié !" %}', '{% trans "L\'actif IFRS a été mis à jour." %}', 'success').then(() => window.location.reload());
+            },
+            error: () => Swal.fire('{% trans "Erreur" %}', '{% trans "Veuillez vérifier les données saisies." %}', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

@@ -1,0 +1,796 @@
+{% extends 'main/analyste/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Ajoutez ici vos styles CSS spécifiques si nécessaire -->
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan Bancaire - Passifs de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countPassifs">Module de Gestion des Passifs</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un passif notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-md-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                    <!-- Title -->
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <strong>Trésorerie, CCP : </strong><span id="">TCCP</span><br>
+                        <strong>Autres établissements de crédit : </strong><span id="">AEC</span><br>
+                        <strong>A Terme : </strong><span id="">AT</span><br>
+                        <strong>Comptes d'épargne à court terme : </strong><span id="">CECT</span><br>
+                        <strong>Comptes d'épargne à terme : </strong><span id="">CET</span><br>
+                        <strong>Bons de caisse : </strong><span id="">BC</span><br>
+                        <strong>Autres dettes à vue : </strong><span id="">ADV</span><br>
+                        <strong>Autres dettes à terme : </strong><span id="">ADT</span><br>
+                        <strong>Titres de créance autres dettes : </strong><span id="">TCAD</span><br>
+                        <strong>Comptes d'ordre et divers : </strong><span id="">COD</span><br>
+                        <strong>Provisions pour risques et charges : </strong><span id="">PRC</span><br>
+                        <strong>Provisions réglementées : </strong><span id="">PR</span><br>
+                        <strong>Emprunts subordonnés et titres émis : </strong><span id="">ESTE</span><br>
+                        <strong>Subventions d'investissement : </strong><span id="">SI</span><br>
+                        <strong>Fonds affectés : </strong><span id="">FA</span><br>
+                        <strong>Fonds pour risques bancaires généraux : </strong><span id="">FRBG</span><br>
+                        <strong>Capital ou dotations : </strong><span id="">COD</span><br>
+                        <strong>Primes liées aux réserves de capital : </strong><span id="">PLRC</span><br>
+                        <strong>Écarts de réévaluation : </strong><span id="">ER</span><br>
+                        <strong>Bénéfices non distribués : </strong><span id="">BND</span><br>
+                        <strong>Résultat net de l'exercice : </strong><span id="">RNE</span><br>
+                    </div>
+                </div>
+                <br>
+
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
+                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
+                    </div>
+                </div>
+                <br>
+
+            </div>
+        </div>
+        <!-- Card item END -->
+
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- PASSIFS START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Passifs</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-4">
+                        <!-- Short by filter -->
+                        <div>
+                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addLiabilityModal">
+                                Ajouter un Passif
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Passif list START -->
+                <div class="table-responsive border-0" id="liabilityList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">TCCP</th>
+                                <th scope="col" class="border-0">AEC</th>
+                                <th scope="col" class="border-0">AT</th>
+                                <th scope="col" class="border-0">CECT</th>
+                                <th scope="col" class="border-0">CET</th>
+                                <th scope="col" class="border-0">BC</th>
+                                <th scope="col" class="border-0">ADV</th>
+                                <th scope="col" class="border-0">ADT</th>
+                                <th scope="col" class="border-0">TCAD</th>
+                                <th scope="col" class="border-0">COD</th>
+                                <th scope="col" class="border-0">PRC</th>
+                                <th scope="col" class="border-0">PR</th>
+                                <th scope="col" class="border-0">ESTE</th>
+                                <th scope="col" class="border-0">SI</th>
+                                <th scope="col" class="border-0">FA</th>
+                                <th scope="col" class="border-0">FRBG</th>
+                                <th scope="col" class="border-0">COD</th>
+                                <th scope="col" class="border-0">PLRC</th>
+                                <th scope="col" class="border-0">ER</th>
+                                <th scope="col" class="border-0">BND</th>
+                                <th scope="col" class="border-0">RNE</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="liabilityTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Passif list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- PASSIFS END -->
+
+<!-- Add Passif Modal START -->
+<div class="modal fade" id="addLiabilityModal" tabindex="-1" aria-labelledby="addLiabilityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addLiabilityModalLabel">Ajouter un Passif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addLiabilityForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="tresorerie_ccp" class="form-label">Trésorerie, CCP</label>
+                        <input type="number" class="form-control" id="tresorerie_ccp" name="tresorerie_ccp" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="autres_etablissement_credit" class="form-label">Autres établissements de crédit</label>
+                        <input type="number" class="form-control" id="autres_etablissement_credit" name="autres_etablissement_credit" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="a_terme" class="form-label">A Terme</label>
+                        <input type="number" class="form-control" id="a_terme" name="a_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comptes_epargne_court_terme" class="form-label">Comptes d'épargne à court terme</label>
+                        <input type="number" class="form-control" id="comptes_epargne_court_terme" name="comptes_epargne_court_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="comptes_epargne_terme" class="form-label">Comptes d'épargne à terme</label>
+                        <input type="number" class="form-control" id="comptes_epargne_terme" name="comptes_epargne_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bons_caisse" class="form-label">Bons de caisse</label>
+                        <input type="number" class="form-control" id="bons_caisse" name="bons_caisse" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="autres_dette_a_vue" class="form-label">Autres dettes à vue</label>
+                        <input type="number" class="form-control" id="autres_dette_a_vue" name="autres_dette_a_vue" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="autres_dette_a_terme" class="form-label">Autres dettes à terme</label>
+                        <input type="number" class="form-control" id="autres_dette_a_terme" name="autres_dette_a_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="titres_creance_autres_dettes" class="form-label">Titres de créance autres dettes</label>
+                        <input type="number" class="form-control" id="titres_creance_autres_dettes" name="titres_creance_autres_dettes" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="compte_dordre_divers" class="form-label">Comptes d'ordre et divers</label>
+                        <input type="number" class="form-control" id="compte_dordre_divers" name="compte_dordre_divers" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="provision_pour_risque_charge" class="form-label">Provisions pour risques et charges</label>
+                        <input type="number" class="form-control" id="provision_pour_risque_charge" name="provision_pour_risque_charge" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="provision_reglementee" class="form-label">Provisions réglementées</label>
+                        <input type="number" class="form-control" id="provision_reglementee" name="provision_reglementee" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="emprunt_subordonne_tire_emis" class="form-label">Emprunts subordonnés et titres émis</label>
+                        <input type="number" class="form-control" id="emprunt_subordonne_tire_emis" name="emprunt_subordonne_tire_emis" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subventions_investissement" class="form-label">Subventions d'investissement</label>
+                        <input type="number" class="form-control" id="subventions_investissement" name="subventions_investissement" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fonds_affecte" class="form-label">Fonds affectés</label>
+                        <input type="number" class="form-control" id="fonds_affecte" name="fonds_affecte" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fonds_pour_risque_bancaire_generaux" class="form-label">Fonds pour risques bancaires généraux</label>
+                        <input type="number" class="form-control" id="fonds_pour_risque_bancaire_generaux" name="fonds_pour_risque_bancaire_generaux" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="capital_ou_dotation" class="form-label">Capital ou dotations</label>
+                        <input type="number" class="form-control" id="capital_ou_dotation" name="capital_ou_dotation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="primes_liees_reserve_capital" class="form-label">Primes liées aux réserves de capital</label>
+                        <input type="number" class="form-control" id="primes_liees_reserve_capital" name="primes_liees_reserve_capital" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ecarts_reevaluation" class="form-label">Écarts de réévaluation</label>
+                        <input type="number" class="form-control" id="ecarts_reevaluation" name="ecarts_reevaluation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="benefices_non_distribue" class="form-label">Bénéfices non distribués</label>
+                        <input type="number" class="form-control" id="benefices_non_distribue" name="benefices_non_distribue" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resultat_net_exercie" class="form-label">Résultat net de l'exercice</label>
+                        <input type="number" class="form-control" id="resultat_net_exercie" name="resultat_net_exercie" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="annee" class="form-label">Année</label>
+                        <select class="form-select" id="annee" name="annee" required>
+                            {% for annee in annee_list %}
+                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Passif Modal END -->
+
+<!-- Edit Passif Modal START -->
+<div class="modal fade" id="editLiabilityModal" tabindex="-1" aria-labelledby="editLiabilityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editLiabilityModalLabel">Editer un Passif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editLiabilityForm">
+                    <input type="hidden" id="editLiabilityId" name="id">
+                    <div class="mb-3">
+                        <label for="editTresorerieCcp" class="form-label">Trésorerie, CCP</label>
+                        <input type="number" class="form-control" id="editTresorerieCcp" name="tresorerie_ccp" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAutresEtablissementCredit" class="form-label">Autres établissements de crédit</label>
+                        <input type="number" class="form-control" id="editAutresEtablissementCredit" name="autres_etablissement_credit" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editATerme" class="form-label">A Terme</label>
+                        <input type="number" class="form-control" id="editATerme" name="a_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editComptesEpargneCourtTerme" class="form-label">Comptes d'épargne à court terme</label>
+                        <input type="number" class="form-control" id="editComptesEpargneCourtTerme" name="comptes_epargne_court_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editComptesEpargneTerme" class="form-label">Comptes d'épargne à terme</label>
+                        <input type="number" class="form-control" id="editComptesEpargneTerme" name="comptes_epargne_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBonsCaisse" class="form-label">Bons de caisse</label>
+                        <input type="number" class="form-control" id="editBonsCaisse" name="bons_caisse" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAutresDetteAVue" class="form-label">Autres dettes à vue</label>
+                        <input type="number" class="form-control" id="editAutresDetteAVue" name="autres_dette_a_vue" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAutresDetteATerme" class="form-label">Autres dettes à terme</label>
+                        <input type="number" class="form-control" id="editAutresDetteATerme" name="autres_dette_a_terme" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTitresCreanceAutresDettes" class="form-label">Titres de créance autres dettes</label>
+                        <input type="number" class="form-control" id="editTitresCreanceAutresDettes" name="titres_creance_autres_dettes" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCompteDordreDivers" class="form-label">Comptes d'ordre et divers</label>
+                        <input type="number" class="form-control" id="editCompteDordreDivers" name="compte_dordre_divers" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProvisionPourRisqueCharge" class="form-label">Provisions pour risques et charges</label>
+                        <input type="number" class="form-control" id="editProvisionPourRisqueCharge" name="provision_pour_risque_charge" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProvisionReglementee" class="form-label">Provisions réglementées</label>
+                        <input type="number" class="form-control" id="editProvisionReglementee" name="provision_reglementee" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmpruntSubordonneTireEmis" class="form-label">Emprunts subordonnés et titres émis</label>
+                        <input type="number" class="form-control" id="editEmpruntSubordonneTireEmis" name="emprunt_subordonne_tire_emis" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSubventionsInvestissement" class="form-label">Subventions d'investissement</label>
+                        <input type="number" class="form-control" id="editSubventionsInvestissement" name="subventions_investissement" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFondsAffecte" class="form-label">Fonds affectés</label>
+                        <input type="number" class="form-control" id="editFondsAffecte" name="fonds_affecte" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFondsPourRisqueBancaireGeneraux" class="form-label">Fonds pour risques bancaires généraux</label>
+                        <input type="number" class="form-control" id="editFondsPourRisqueBancaireGeneraux" name="fonds_pour_risque_bancaire_generaux" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCapitalOuDotation" class="form-label">Capital ou dotations</label>
+                        <input type="number" class="form-control" id="editCapitalOuDotation" name="capital_ou_dotation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPrimesLieesReserveCapital" class="form-label">Primes liées aux réserves de capital</label>
+                        <input type="number" class="form-control" id="editPrimesLieesReserveCapital" name="primes_liees_reserve_capital" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEcartsReevaluation" class="form-label">Écarts de réévaluation</label>
+                        <input type="number" class="form-control" id="editEcartsReevaluation" name="ecarts_reevaluation" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBeneficesNonDistribue" class="form-label">Bénéfices non distribués</label>
+                        <input type="number" class="form-control" id="editBeneficesNonDistribue" name="benefices_non_distribue" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editResultatNetExercie" class="form-label">Résultat net de l'exercice</label>
+                        <input type="number" class="form-control" id="editResultatNetExercie" name="resultat_net_exercie" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAnnee" class="form-label">Année</label>
+                        <select class="form-select" id="editAnnee" name="annee" required>
+                            {% for annee in annee_list %}
+                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Passif Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    $(document).ready(function() {
+        // Initialiser TinyMCE
+        tinymce.init({
+            selector: '#description, #editDescription, #editCommentaire, #commentaire',  // Sélecteurs pour les textareas
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 250
+        });
+
+        // Votre script JavaScript existant ici
+    });
+</script>
+
+<script>
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log(response);
+                $('#editAcheteurId').val(response.id);
+                $('#editCode').val(response.code).text(response.code);
+                $('#editNom').val(response.nom).text(response.nom);
+                $('#editSigle').val(response.sigle).text(response.sigle);
+                if (response.date_creation) {
+                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                }
+
+                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+                $('#editDescription').html(response.description);
+                $('#editEmail').val(response.email).text(response.email);
+                $('#editFax').val(response.fax).text(response.fax);
+                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editPays').val(response.pays.nom).text(response.pays.nom);
+                $('#editProvince').val(response.province.nom).text(response.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+</script>
+
+<script>
+    $(document).ready(function() {
+        // Function to load liabilities data
+        function loadLiabilities(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-bancaire/liste-des-passifs/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update liabilities table body
+                    $('#liabilityTableBody').html('');
+                    response.results.forEach(function(liability, index) {
+                        $('#liabilityTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td class="text-success">' + liability.tresorerie_ccp + '</td>' +
+                            '<td class="text-success">' + liability.autres_etablissement_credit + '</td>' +
+                            '<td class="text-success">' + liability.a_terme + '</td>' +
+                            '<td class="text-success">' + liability.comptes_epargne_court_terme + '</td>' +
+                            '<td class="text-success">' + liability.comptes_epargne_terme + '</td>' +
+                            '<td class="text-success">' + liability.bons_caisse + '</td>' +
+                            '<td class="text-success">' + liability.autres_dette_a_vue + '</td>' +
+                            '<td class="text-success">' + liability.autres_dette_a_terme + '</td>' +
+                            '<td class="text-success">' + liability.titres_creance_autres_dettes + '</td>' +
+                            '<td class="text-success">' + liability.compte_dordre_divers + '</td>' +
+                            '<td class="text-success">' + liability.provision_pour_risque_charge + '</td>' +
+                            '<td class="text-success">' + liability.provision_reglementee + '</td>' +
+                            '<td class="text-success">' + liability.emprunt_subordonne_tire_emis + '</td>' +
+                            '<td class="text-success">' + liability.subventions_investissement + '</td>' +
+                            '<td class="text-success">' + liability.fonds_affecte + '</td>' +
+                            '<td class="text-success">' + liability.fonds_pour_risque_bancaire_generaux + '</td>' +
+                            '<td class="text-success">' + liability.capital_ou_dotation + '</td>' +
+                            '<td class="text-success">' + liability.primes_liees_reserve_capital + '</td>' +
+                            '<td class="text-success">' + liability.ecarts_reevaluation + '</td>' +
+                            '<td class="text-success">' + liability.benefices_non_distribue + '</td>' +
+                            '<td class="text-success">' + liability.resultat_net_exercie + '</td>' +
+                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + liability.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + liability.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données.',
+                    });
+                }
+            });
+        }
+
+        // Initial load
+        loadLiabilities();
+
+        // Search form submission
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadLiabilities(1, search);
+        });
+
+        // Pagination controls
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadLiabilities(page, search);
+        });
+
+        // Add Liability form submission
+        $('#addLiabilityForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            console.log(formData);
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-bancaire/ajouter-un-passif/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Passif ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addLiabilityModal').modal('hide');
+                        loadLiabilities();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout du passif.',
+                    });
+                }
+            });
+        });
+
+        // Edit Liability button click
+        $(document).on('click', '.edit-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-bancaire/editer-un-passif/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    $('#editLiabilityId').val(response.id);
+                    $('#editTresorerieCcp').val(response.tresorerie_ccp);
+                    $('#editAutresEtablissementCredit').val(response.autres_etablissement_credit);
+                    $('#editATerme').val(response.a_terme);
+                    $('#editComptesEpargneCourtTerme').val(response.comptes_epargne_court_terme);
+                    $('#editComptesEpargneTerme').val(response.comptes_epargne_terme);
+                    $('#editBonsCaisse').val(response.bons_caisse);
+                    $('#editAutresDetteAVue').val(response.autres_dette_a_vue);
+                    $('#editAutresDetteATerme').val(response.autres_dette_a_terme);
+                    $('#editTitresCreanceAutresDettes').val(response.titres_creance_autres_dettes);
+                    $('#editCompteDordreDivers').val(response.compte_dordre_divers);
+                    $('#editProvisionPourRisqueCharge').val(response.provision_pour_risque_charge);
+                    $('#editProvisionReglementee').val(response.provision_reglementee);
+                    $('#editEmpruntSubordonneTireEmis').val(response.emprunt_subordonne_tire_emis);
+                    $('#editSubventionsInvestissement').val(response.subventions_investissement);
+                    $('#editFondsAffecte').val(response.fonds_affecte);
+                    $('#editFondsPourRisqueBancaireGeneraux').val(response.fonds_pour_risque_bancaire_generaux);
+                    $('#editCapitalOuDotation').val(response.capital_ou_dotation);
+                    $('#editPrimesLieesReserveCapital').val(response.primes_liees_reserve_capital);
+                    $('#editEcartsReevaluation').val(response.ecarts_reevaluation);
+                    $('#editBeneficesNonDistribue').val(response.benefices_non_distribue);
+                    $('#editResultatNetExercie').val(response.resultat_net_exercie);
+                    $('#editAnnee').val(response.annee);
+                    $('#editLiabilityModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données du passif.',
+                    });
+                }
+            });
+        });
+
+        // Edit Liability form submission
+        $('#editLiabilityForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editLiabilityId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-bancaire/editer-un-passif/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Passif mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editLiabilityModal').modal('hide');
+                        loadLiabilities();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour du passif.',
+                    });
+                }
+            });
+        });
+
+        // Delete Liability button click
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-le!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-bancaire/supprimer-des-lipassifsabilities/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'Le passif a été supprimé.',
+                                'success'
+                            ).then(() => {
+                                loadLiabilities();
+                            });
+                        },
+                        error: function(response) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression du passif.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

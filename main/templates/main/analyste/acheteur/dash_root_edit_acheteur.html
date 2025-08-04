@@ -1,0 +1,574 @@
+{% extends 'main/analyste/base.html' %}
+
+{% load static %}
+
+{% block css %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Acheteurs</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAcheteurs">Module de Gestion des Acheteurs</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un acheteur d'entreprise notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom">
+                <h4 class="card-header-title">Editer un Acheteur</h4>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body vstack gap-4">
+
+                <form id="editAcheteurForm">
+
+                    <input type="hidden" name="id" id="editAcheteurId" />
+
+                    <!-- Généralités item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Généralités sur l'acheteur</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Name -->
+                            <div class="mb-3">
+                                <label class="form-label">Nom de l'acheteur</label>
+                                <input type="text" class="form-control" id="editNom" name="nom" placeholder="Ex. BATI PLUS" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Sigle -->
+                            <div class="mb-3">
+                                <label class="form-label">Sigle</label>
+                                <input type="text" class="form-control" id="editSigle" name="sigle" placeholder="Ex. BATI+">
+                            </div>
+
+                            <br>
+
+                            <!-- Date de Création -->
+                            <div>
+                                <label class="form-label">Date de Création</label>
+                                <input type="date" class="form-control flatpickr" id="editDateCreation" name="date_creation" placeholder="Date de Création" data-date-format="d M Y" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Activité principale -->
+                            <div>
+                                <label class="form-label">Activité principale</label>
+                                <input type="text" class="form-control" id="editActivitePrincipale" name="activite_principale" placeholder="Ex. Vente de produits de construction" required>
+                            </div>
+
+                            <br>
+
+                            <!-- Statut -->
+                            <div class="mb-3">
+                                <label for="statut_entreprise" class="form-label">Statut actuel de l'acheteur</label>
+                                <select class="form-select" id="editStatutEntreprise" name="statut_entreprise" required>
+                                    {% for statut in statut_list %}
+                                        <option value="{{ statut.id }}">{{ statut.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Catégorie -->
+                            <div class="mb-3">
+                                <label for="categorie_entreprise" class="form-label">Catégorie de l'acheteur</label>
+                                <select class="form-select" id="editCategorieEntreprise" name="categorie_entreprise">
+                                    {% for categorie in categorie_list %}
+                                        <option value="{{ categorie.id }}">{{ categorie.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Forme juridique -->
+                            <div class="mb-3">
+                                <label for="forme_juridique" class="form-label">Forme juridique de l'acheteur</label>
+                                <select class="form-select" id="editFormeJuridique" name="forme_juridique" required>
+                                    {% for juridique in juridique_list %}
+                                        <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Description -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="editDescription" name="description"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Généralités item END -->
+
+                    <hr> <!-- Divider -->
+
+                    <!-- Contacts item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Contacts de l'acheteur</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Email principal & Fax -->
+                            <div class="mb-3">
+                                <label class="form-label">Email principal & Fax</label>
+                                <div class="input-group">
+                                    <input type="email" class="form-control" id="editEmail" name="email" placeholder="Ex. contact@batiplus.ga">
+                                    <input type="text" class="form-control" id="editFax" name="fax" placeholder="Ex. (+241) 22 22 22 22">
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <!-- Boite postale & Code postal -->
+                            <div class="mb-3">
+                                <label class="form-label">Boite postale & Code postal</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="editBoitePostale" name="boite_postale" placeholder="Ex. BP 2022 Libreville, Gabon">
+                                    <input type="text" class="form-control" id="editCodePostal" name="code_postal" placeholder="Ex. 241">
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <!-- Site internet -->
+                            <div class="mb-3">
+                                <label class="form-label">Site internet</label>
+                                <input type="text" class="form-control" id="editSiteInternet" name="site_internet" placeholder="Ex. https://www.bati-plus.ga">
+                                <small><strong>Note : </strong>Ne pas oublier de mentionner le prefixe suivant pour tout lien : https://</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Contacts item END -->
+
+                    <hr> <!-- Divider -->
+
+                    <!-- Localisation item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Localisation de l'acheteur</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+                            <!-- Numero & Rue (adresse) -->
+                            <div class="mb-3">
+                                <label class="form-label">Numero & Rue (adresse)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="editNumeroAdresse" name="numero_adresse" placeholder="Ex. 17345">
+                                    <input type="text" class="form-control" id="editRueAdresse" name="rue_adresse" placeholder="Ex. Rue Camp de Gaulle">
+                                </div>
+                            </div>
+
+                            <br>
+
+                            <!-- Pays -->
+                            <div class="mb-3">
+                                <label for="pays" class="form-label">Pays</label>
+                                <select class="form-select" id="editPays" name="pays" required>
+                                    <option value="">Sélectionnez un pays</option>
+                                    {% for pays in pays_list %}
+                                        <option value="{{ pays.id }}">{{ pays.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Province -->
+                            <div class="mb-3">
+                                <label for="province" class="form-label">Province</label>
+                                <select class="form-select" id="editProvince" name="province" required>
+                                    <option value="">Sélectionnez une province</option>
+                                    {% for province in province_list %}
+                                        <option value="{{ province.id }}">{{ province.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Ville -->
+                            <div class="mb-3">
+                                <label for="ville" class="form-label">Ville</label>
+                                <select class="form-select" id="editVille" name="ville" required>
+                                    <option value="">Sélectionnez une ville</option>
+                                    {% for ville in ville_list %}
+                                        <option value="{{ ville.id }}">{{ ville.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+                    <!-- Localisation item END -->
+
+                    <hr> <!-- Divider -->
+
+                    <!-- Opinion ACREMAC item START -->
+                    <div class="card">
+                        <!-- Card header -->
+                        <div class="card-header d-flex justify-content-between align-items-center p-0">
+                            <!-- Avatar -->
+                            <div class="d-flex">
+                                <!-- Info -->
+                                <div class="mb-3">
+                                    <h6 class="mb-0">Que pensez-vous de cet acheteur ?</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- card body -->
+                        <div class="card-body p-0 pt-3">
+
+                            <!-- Coloration -->
+                            <div class="mb-3">
+                                <label for="couleur_commentaire" class="form-label">Quelle coloration voulez-vous pour votre commentaire ?</label>
+                                <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}">{{ coloration.couleur }} - [{{ coloration.code }}]</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <br>
+
+                            <!-- Commentaire -->
+                            <div class="mb-3">
+                                <label for="commentaire" class="form-label">Votre Commentaire</label>
+                                <textarea class="form-control" id="editCommentaire" name="commentaire"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Opinion ACREMAC item END -->
+
+                    <br> <!-- Divider -->
+
+                    <!-- Button -->
+                    <div class="text-end">
+                        <button class="btn btn-primary mb-0" type="submit">
+                            <i class="bi bi-plus-lg"></i> Soumettre le formulaire
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+            <!-- Card body END -->
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+
+
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        tinymce.init({
+            selector: '#description, #editDescription, #commentaire, #editCommentaire',
+            setup: function (editor) {
+                editor.on('init', function () {
+                    editor.getContainer().querySelector('iframe').setAttribute('title', 'Éditeur de texte');
+                });
+            },
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 250
+        });
+    });
+</script>
+
+
+
+<script>
+$(document).ready(function() {
+
+    // Charger les provinces en fonction du pays sélectionné
+    $('#editPays').on('change', function() {
+        const paysId = $(this).val();
+        const provinceSelect = $('#editProvince');
+
+        if (paysId) {
+            provinceSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
+
+            $.ajax({
+                url: `/api/provinces/${paysId}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    provinceSelect.prop('disabled', false).html('<option value="">Sélectionnez une province</option>');
+
+                    if (response.results.length > 0) {
+                        response.results.forEach(function(province) {
+                            provinceSelect.append(new Option(province.nom, province.id));
+                        });
+
+                        // Sélectionner automatiquement la province de l'acheteur si disponible
+                        const selectedProvince = '{{ acheteur.province }}';
+                        if (selectedProvince) {
+                            provinceSelect.val(selectedProvince).trigger('change');
+                        }
+                    } else {
+                        provinceSelect.html('<option value="">Aucune province disponible</option>');
+                    }
+                },
+                error: function() {
+                    provinceSelect.html('<option value="">Erreur lors du chargement</option>');
+                }
+            });
+        } else {
+            provinceSelect.prop('disabled', true).html('<option value="">Sélectionnez un pays d\'abord</option>');
+        }
+    });
+
+    // Charger les villes en fonction de la province sélectionnée
+    $('#editProvince').on('change', function() {
+        const provinceId = $(this).val();
+        const villeSelect = $('#editVille');
+
+        if (provinceId) {
+            villeSelect.prop('disabled', true).html('<option value="">Chargement...</option>');
+
+            $.ajax({
+                url: `/api/villes/${provinceId}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    villeSelect.prop('disabled', false).html('<option value="">Sélectionnez une ville</option>');
+
+                    if (response.results.length > 0) {
+                        response.results.forEach(function(ville) {
+                            villeSelect.append(new Option(ville.nom, ville.id));
+                        });
+
+                        // Sélectionner automatiquement la ville de l'acheteur si disponible
+                        const selectedVille = '{{ acheteur.ville }}';
+                        if (selectedVille) {
+                            villeSelect.val(selectedVille);
+                        }
+                    } else {
+                        villeSelect.html('<option value="">Aucune ville disponible</option>');
+                    }
+                },
+                error: function() {
+                    villeSelect.html('<option value="">Erreur lors du chargement</option>');
+                }
+            });
+        } else {
+            villeSelect.prop('disabled', true).html('<option value="">Sélectionnez une province d\'abord</option>');
+        }
+    });
+
+
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/editer-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                $('#editAcheteurId').val(response.id);
+                $('#editNom').val(response.nom);
+                $('#editSigle').val(response.sigle);
+                $('#editDateCreation').val(response.date_creation);
+                $('#editActivitePrincipale').val(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise);
+                $('#editFormeJuridique').val(response.forme_juridique);
+                $('#editDescription').val(response.description);
+                $('#editEmail').val(response.email);
+                $('#editFax').val(response.fax);
+                $('#editBoitePostale').val(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse);
+                $('#editPays').val(response.pays);
+                $('#editProvince').val(response.province);
+                $('#editVille').val(response.ville);
+                $('#editCouleurCommentaire').val(response.couleur_commentaire);
+                $('#editCommentaire').val(response.commentaire);
+
+                // Re-initialize TinyMCE for the editDescription textarea
+                tinymce.get('editDescription').setContent(response.description);
+                tinymce.get('editCommentaire').setContent(response.commentaire);
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+
+    // Edit Acheteur form submission
+    $('#editAcheteurForm').on('submit', function(event) {
+        event.preventDefault();
+        const id = $('#editAcheteurId').val();
+        const formData = $(this).serialize();
+        $.ajax({
+            url: '/api/editer-un-acheteur/' + id + '/',
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Acheteur mis à jour avec succès.',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    location.reload(); // Rafraîchir la page après validation
+                });
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la mise à jour de l\'acheteur.',
+                });
+            }
+        });
+    });
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+});
+
+</script>
+
+{% endblock %}

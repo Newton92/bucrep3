@@ -1,0 +1,831 @@
+{% extends 'main/analyste/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Évaluations de Risque de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countRiskRatings">Module de Gestion des Évaluations de Risque</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une évaluation de risque notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                        <!-- Title -->
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <strong>Remboursabilité : </strong><span id="">RBSLT</span><br>
+                        <strong>Situation de Liquidité : </strong><span id="">SIDLQT</span><br>
+                        <strong>Performance et Rentabilité : </strong><span id="">PFRENT</span><br>
+                        <strong>Perspective du Secteur : </strong><span id="">PERSDS</span><br>
+                        <strong>Qualité de l'Information : </strong><span id="">QUALDI</span><br>
+                        <strong>Existence de Garantie : </strong><span id="">EXSTGA</span><br>
+                        <strong>Terme Financier : </strong><span id="">TERMFI</span><br>
+                        <strong>Mesure de Soutien : </strong><span id="">MESDS</span><br>
+                        <strong>Cotation du Risque : </strong><span id="">CODRI</span><br>
+                        <strong>Indice du Risque : </strong><span id="">INDDRI</span><br>
+                    </div>
+                </div>
+                <br>
+
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
+                            de gestion de l'acheteur sur lequel vous etes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
+                    </div>
+                </div>
+                <br>
+
+
+            </div>
+        </div>
+        <!-- Card item END -->
+
+
+
+
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+
+
+<!-- Risk Rating START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Évaluations de Risque</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-7">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-5">
+                        <!-- Short by filter -->
+                        <div>
+                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addRiskRatingModal">
+                                Ajouter une Évaluation de Risque
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Risk Rating list START -->
+                <div class="table-responsive border-0" id="riskRatingList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">RBSLT</th>
+                                <th scope="col" class="border-0">SIDLQT</th>
+                                <th scope="col" class="border-0">PFRENT</th>
+                                <th scope="col" class="border-0">PERSDS</th>
+                                <th scope="col" class="border-0">QUALDI</th>
+                                <th scope="col" class="border-0">EXSTGA</th>
+                                <th scope="col" class="border-0">TERMFI</th>
+                                <th scope="col" class="border-0">MESDS</th>
+                                <th scope="col" class="border-0">CODRI</th>
+                                <th scope="col" class="border-0">INDDRI</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="riskRatingTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Risk Rating list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- Risk Rating END -->
+
+<!-- Add Risk Rating Modal START -->
+<div class="modal fade" id="addRiskRatingModal" tabindex="-1" aria-labelledby="addRiskRatingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRiskRatingModalLabel">Ajouter une Évaluation de Risque</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRiskRatingForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="remboursabilite" class="form-label">Remboursabilité</label>
+                        <select class="form-select" id="remboursabilite" name="remboursabilite" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="situation_liquidite" class="form-label">Situation de Liquidité</label>
+                        <select class="form-select" id="situation_liquidite" name="situation_liquidite" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="performance_rentabilite" class="form-label">Performance et Rentabilité</label>
+                        <select class="form-select" id="performance_rentabilite" name="performance_rentabilite" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="perspective_secteur" class="form-label">Perspective du Secteur</label>
+                        <select class="form-select" id="perspective_secteur" name="perspective_secteur" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="qualite_information_analyse" class="form-label">Qualité de l'Information</label>
+                        <select class="form-select" id="qualite_information_analyse" name="qualite_information_analyse" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="existence_garantie" class="form-label">Existence de Garantie</label>
+                        <select class="form-select" id="existence_garantie" name="existence_garantie" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="terme_financier_duree_pret" class="form-label">Terme Financier et Durée du Prêt</label>
+                        <select class="form-select" id="terme_financier_duree_pret" name="terme_financier_duree_pret" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mesure_propre_soutenir_credit" class="form-label">Mesure Propre à Soutenir le Crédit</label>
+                        <select class="form-select" id="mesure_propre_soutenir_credit" name="mesure_propre_soutenir_credit" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cotation_du_risque" class="form-label">Cotation du risque</label>
+                        <select class="form-select" id="cotation_du_risque" name="cotation_du_risque" required>
+                            <option value="non_douteux">Non douteux</option>
+                            <option value="risque_faible">Risque faible</option>
+                            <option value="risque_modere">Risque modéré</option>
+                            <option value="mise_en_garde">Mise en garde</option>
+                            <option value="peu_satisfaisant">Peu satisfaisant</option>
+                            <option value="inacceptable">Inacceptable</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="indice_du_risque" class="form-label">Indice du risque</label>
+                        <select class="form-select" id="indice_du_risque" name="indice_du_risque" required>
+                            <option value="eleve">Élevé</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="faible">Faible</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="interpretation" class="form-label">Interprétation</label>
+                        <textarea class="form-control" id="interpretation" name="interpretation" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="analyse" class="form-label">Analyse Détaillée</label>
+                        <textarea class="form-control" id="analyse" name="analyse" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Risk Rating Modal END -->
+
+<!-- Edit Risk Rating Modal START -->
+<div class="modal fade" id="editRiskRatingModal" tabindex="-1" aria-labelledby="editRiskRatingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRiskRatingModalLabel">Editer une Évaluation de Risque</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRiskRatingForm">
+                    <input type="hidden" id="editRiskRatingId" name="id">
+                    <div class="mb-3">
+                        <label for="editRemboursabilite" class="form-label">Remboursabilité</label>
+                        <select class="form-select" id="editRemboursabilite" name="remboursabilite" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editSituationLiquidite" class="form-label">Situation de Liquidité</label>
+                        <select class="form-select" id="editSituationLiquidite" name="situation_liquidite" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPerformanceRentabilite" class="form-label">Performance et Rentabilité</label>
+                        <select class="form-select" id="editPerformanceRentabilite" name="performance_rentabilite" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPerspectiveSecteur" class="form-label">Perspective du Secteur</label>
+                        <select class="form-select" id="editPerspectiveSecteur" name="perspective_secteur" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQualiteInformationAnalyse" class="form-label">Qualité de l'Information</label>
+                        <select class="form-select" id="editQualiteInformationAnalyse" name="qualite_information_analyse" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editExistenceGarantie" class="form-label">Existence de Garantie</label>
+                        <select class="form-select" id="editExistenceGarantie" name="existence_garantie" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTermeFinancierDureePret" class="form-label">Terme Financier et Durée du Prêt</label>
+                        <select class="form-select" id="editTermeFinancierDureePret" name="terme_financier_duree_pret" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editMesurePropreSoutenirCredit" class="form-label">Mesure Propre à Soutenir le Crédit</label>
+                        <select class="form-select" id="editMesurePropreSoutenirCredit" name="mesure_propre_soutenir_credit" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cotation_du_risque" class="form-label">Cotation du risque</label>
+                        <select class="form-select" id="editCotationDuRisque" name="cotation_du_risque" required>
+                            <option value="non_douteux">Non douteux</option>
+                            <option value="risque_faible">Risque faible</option>
+                            <option value="risque_modere">Risque modéré</option>
+                            <option value="mise_en_garde">Mise en garde</option>
+                            <option value="peu_satisfaisant">Peu satisfaisant</option>
+                            <option value="inacceptable">Inacceptable</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="indice_du_risque" class="form-label">Indice du risque</label>
+                        <select class="form-select" id="editIndiceDuRisque" name="indice_du_risque" required>
+                            <option value="eleve">Élevé</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="faible">Faible</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editInterpretation" class="form-label">Interprétation</label>
+                        <textarea class="form-control" id="editInterpretation" name="interpretation" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAnalyse" class="form-label">Analyse Détaillée</label>
+                        <textarea class="form-control" id="editAnalyse" name="analyse" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Risk Rating Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    $(document).ready(function() {
+        // Initialiser TinyMCE
+        tinymce.init({
+            selector: '#interpretation, #editInterpretation, #editAnalyse, #analyse',  // Sélecteurs pour les textareas
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 250
+        });
+
+        // Votre script JavaScript existant ici
+    });
+</script>
+
+<script>
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                $('#editAcheteurId').val(response.id);
+                $('#editCode').val(response.code).text(response.code);
+                $('#editNom').val(response.nom).text(response.nom);
+                $('#editSigle').val(response.sigle).text(response.sigle);
+                if (response.date_creation) {
+                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                }
+
+                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+                $('#editDescription').html(response.description);
+                $('#editEmail').val(response.email).text(response.email);
+                $('#editFax').val(response.fax).text(response.fax);
+                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editPays').val(response.pays.nom).text(response.pays.nom);
+                $('#editProvince').val(response.province.nom).text(response.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+</script>
+
+<script>
+    $(document).ready(function() {
+        // Définition des explications pour les popovers
+        const riskRatingExplanations = {
+            'non_douteux': "Prêt entièrement garanti par l’encaisse ; Solide capitalisation ; Direction remarquable",
+            'risque_faible': "Excellents antécédents financiers/tendances ; Direction solide ; Industrie stable/robuste",
+            'risque_modere': "Direction solide ; Tendances financières stables ; Niveau de capitalisation modéré",
+            'mise_en_garde': "Insuffisance possible de la garantie ; Insuffisance possible du service de la dette ; Tournure très défavorable des événements",
+            'peu_satisfaisant': "Cessation des activités ; Changement de direction préjudiciable ; Arriérés en intérêts et capital",
+            'inacceptable': "Actif/garantie en train de disparaître ; Fraude",
+        };
+
+        const riskIndexExplanations = {
+            'eleve': "Le risque de transaction est relativement élevé.",
+            'moyen': "Le risque de transaction est relativement modéré.",
+            'faible': "Le risque de transaction est relativement faible.",
+        };
+
+        // Fonction pour obtenir la valeur lisible et l'explication
+        function getDisplayValueAndExplanation(value, type) {
+            let displayValue = '';
+            let explanation = '';
+
+            if (type === 'rating') {
+                switch (value) {
+                    case 'non_douteux':
+                        displayValue = 'Non douteux';
+                        break;
+                    case 'risque_faible':
+                        displayValue = 'Risque faible';
+                        break;
+                    case 'risque_modere':
+                        displayValue = 'Risque modéré';
+                        break;
+                    case 'mise_en_garde':
+                        displayValue = 'Mise en garde';
+                        break;
+                    case 'peu_satisfaisant':
+                        displayValue = 'Peu satisfaisant';
+                        break;
+                    case 'inacceptable':
+                        displayValue = 'Inacceptable';
+                        break;
+                    default:
+                        displayValue = 'N/A';
+                }
+                explanation = riskRatingExplanations[value] || '';
+            } else if (type === 'index') {
+                switch (value) {
+                    case 'eleve':
+                        displayValue = 'Élevé';
+                        break;
+                    case 'moyen':
+                        displayValue = 'Moyen';
+                        break;
+                    case 'faible':
+                        displayValue = 'Faible';
+                        break;
+                    default:
+                        displayValue = 'N/A';
+                }
+                explanation = riskIndexExplanations[value] || '';
+            }
+
+            return { displayValue, explanation };
+        }
+        // Function to load risk ratings data
+        function loadRiskRatings(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-evaluations-de-risque/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update risk ratings table body
+                    $('#riskRatingTableBody').html('');
+                    response.results.forEach(function(riskRating, index) {
+                        console.log(response);
+
+                        const cotationData = getDisplayValueAndExplanation(riskRating.cotation_du_risque, 'rating');
+                        const indiceData = getDisplayValueAndExplanation(riskRating.indice_du_risque, 'index');
+
+
+                        $('#riskRatingTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + (riskRating.remboursabilite ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.situation_liquidite ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.performance_rentabilite ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.perspective_secteur ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.qualite_information_analyse ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.existence_garantie ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.terme_financier_duree_pret ? 'Oui' : 'Non') + '</td>' +
+                            '<td>' + (riskRating.mesure_propre_soutenir_credit ? 'Oui' : 'Non') + '</td>' +
+
+                            // Champs avec popover pour la cotation et l'indice du risque
+                            '<td><span data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" data-bs-content="' + cotationData.explanation + '">' + cotationData.displayValue + '</span></td>' +
+                            '<td><span data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" data-bs-content="' + indiceData.explanation + '">' + indiceData.displayValue + '</span></td>' +
+
+
+                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+
+                    // Initialiser les popovers après avoir ajouté les éléments au DOM
+                    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+                    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                        return new bootstrap.Popover(popoverTriggerEl, {
+                            container: 'body' // Important pour éviter les problèmes de positionnement dans un tableau
+                        })
+                    })
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données.',
+                    });
+                }
+            });
+        }
+
+        // Initial load
+        loadRiskRatings();
+
+        // Search form submission
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadRiskRatings(1, search);
+        });
+
+        // Pagination controls
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadRiskRatings(page, search);
+        });
+
+        // Add Risk Rating form submission
+        $('#addRiskRatingForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-evaluation-risque/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Évaluation de risque ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addRiskRatingModal').modal('hide');
+                        loadRiskRatings();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout de l\'évaluation de risque.',
+                    });
+                }
+            });
+        });
+
+        // Edit Risk Rating button click
+        $(document).on('click', '.edit-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-evaluation-risque/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    console.log(response);
+
+                    $('#editRiskRatingId').val(response.id);
+
+                    // Mettre à jour les champs de sélection en fonction des valeurs booléennes
+                    $('#editRemboursabilite').val(response.remboursabilite ? "true" : "false");
+                    $('#editSituationLiquidite').val(response.situation_liquidite ? "true" : "false");
+                    $('#editPerformanceRentabilite').val(response.performance_rentabilite ? "true" : "false");
+                    $('#editPerspectiveSecteur').val(response.perspective_secteur ? "true" : "false");
+                    $('#editQualiteInformationAnalyse').val(response.qualite_information_analyse ? "true" : "false");
+                    $('#editExistenceGarantie').val(response.existence_garantie ? "true" : "false");
+                    $('#editTermeFinancierDureePret').val(response.terme_financier_duree_pret ? "true" : "false");
+                    $('#editMesurePropreSoutenirCredit').val(response.mesure_propre_soutenir_credit ? "true" : "false");
+
+                    $('#editCotationDuRisque').val(response.cotation_du_risque);
+                    $('#editIndiceDuRisque').val(response.indice_du_risque);
+
+                    $('#editInterpretation').val(response.interpretation);
+                    $('#editAnalyse').val(response.analyse);
+                    $('#editRiskRatingModal').modal('show');
+
+                    tinymce.get('editInterpretation').setContent(response.interpretation);
+                    tinymce.get('editAnalyse').setContent(response.analyse);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'évaluation de risque.',
+                    });
+                }
+            });
+        });
+
+
+        // Edit Risk Rating form submission
+        $('#editRiskRatingForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editRiskRatingId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-evaluation-risque/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Évaluation de risque mise à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editRiskRatingModal').modal('hide');
+                        loadRiskRatings();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour de l\'évaluation de risque.',
+                    });
+                }
+            });
+        });
+
+        // Delete Risk Rating button click
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-le!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-evaluation-risque/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'L\'évaluation de risque a été supprimée.',
+                                'success'
+                            ).then(() => {
+                                loadRiskRatings();
+                            });
+                        },
+                        error: function(response) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression de l\'évaluation de risque.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

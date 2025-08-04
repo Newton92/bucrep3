@@ -1,0 +1,323 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-exclamation-triangle fa-fw me-1"></i> Alertes ACREMAC</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAlertes">Module de Gestion des Alertes (Warnings)</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une alerte notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Alertes START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Alertes</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-7">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-5">
+                        <!-- Short by filter -->
+                        <div>
+                            <a href="{% url 'dash_root_add_alerte' %}?token={{ user.reset_token }}" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
+                                Ajouter une Alerte
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Alertes list START -->
+                <div class="table-responsive border-0" id="alertesList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">Référence</th>
+                                <th scope="col" class="border-0">Objet</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="alertesTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Alertes list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-sm-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- Alertes END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+    $(document).ready(function() {
+
+        // Function to load alertes data
+        function loadAlertes(page = 1, search = '') {
+            $.ajax({
+                url: '/api/liste-des-alertes/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+
+                    console.log(response); // Vérifiez ce que l'API renvoie
+
+                    if (!response.results || response.results.length === 0) {
+                        console.warn("Aucune alerte trouvée.");
+                        return;
+                    }
+
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update alertes table body
+                    $('#alertesTableBody').html('');
+                    response.results.forEach(function(alerte, index) {
+                        $('#alertesTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + alerte.reference + '</td>' +
+                            '<td>' + alerte.objet + '</td>' +
+                            '<td>' +
+                                '<button class="btn btn-warning btn-round mb-0 edit-btn" data-id="' + alerte.id + '" data-objet="' + alerte.objet + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Éditer"><i class="bi bi-pencil"></i></button>' +
+                                '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + alerte.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
+                                '&nbsp; <button class="btn btn-info btn-round mb-0 manage-btn" data-id="' + alerte.id + '" data-objet="' + alerte.objet + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Manager"><i class="bi bi-eye"></i></button>' +
+                            '</td>' +
+                        '</tr>');
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données.',
+                    });
+                }
+            });
+        }
+
+        // Initial load
+        loadAlertes();
+
+        // Search form submission
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadAlertes(1, search);
+        });
+
+        // Pagination controls
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadAlertes(page, search);
+        });
+
+        // Edit Alerte button click (avec SweetAlert)
+        $(document).on('click', '.edit-btn', function() {
+            var alerteId = $(this).data('id');
+            var alerteObjet = $(this).data('objet');
+
+            Swal.fire({
+                title: 'Modifier Alerte',
+                html: 'Voulez-vous modifier l\'alerte <b>"' + alerteObjet + '"</b> ?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, modifier',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/root-dashboard/warnings/editer-une-alerte/' + alerteId + '/?token=' + '{{ user.reset_token }}';
+                }
+            });
+        });
+
+        // Manage Alerte button click (avec SweetAlert)
+        $(document).on('click', '.manage-btn', function() {
+            var alerteId = $(this).data('id');
+            var alerteObjet = $(this).data('objet');
+
+            Swal.fire({
+                title: 'Manager Alerte',
+                html: 'Voulez-vous manager l\'alerte <b>"' + alerteObjet + '"</b> ?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, manager',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/root-dashboard/warnings/manager-une-alerte/' + alerteId + '/?token=' + '{{ user.reset_token }}';
+                }
+            });
+        });
+
+        // Delete Alerte button click
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-le!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supprimer-des-alertes/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'L\'alerte a été supprimée.',
+                                'success'
+                            );
+                            loadAlertes();
+                        },
+                        error: function(response) {
+                            Swal.fire(
+                                'Erreur!',
+                                'Une erreur est survenue lors de la suppression.',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+
+    });
+</script>
+
+{% endblock %}

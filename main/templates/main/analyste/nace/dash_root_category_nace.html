@@ -1,0 +1,427 @@
+{% extends 'main/analyste/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-diagram-3 fa-fw me-1"></i>Catégories NACE</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countCategories">Module de Gestion des Catégories NACE</h4>
+                    <span>Dans ce module, vous pouvez gérer les catégories NACE, y compris leur ajout, modification, suppression et consultation.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- NACE CATEGORY START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Catégories NACE</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Add button -->
+                    <div class="col-md-4">
+                        <div>
+                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                Ajouter une Catégorie
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- NACE category list START -->
+                <div class="table-responsive border-0" id="categoryList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">Code</th>
+                                <th scope="col" class="border-0">Libellé</th>
+                                <th scope="col" class="border-0">Status</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="categoryTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- NACE category list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- NACE CATEGORY END -->
+
+<!-- Add Category Modal START -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">Ajouter une Catégorie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoryForm">
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Code</label>
+                        <input type="text" class="form-control" id="code" name="code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="libelle" class="form-label">Libellé</label>
+                        <input type="text" class="form-control" id="libelle" name="libelle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="is_active" class="form-label">Actif</label>
+                        <select class="form-select" id="active" name="active" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Category Modal END -->
+
+<!-- Edit Category Modal START -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">Modifier une Catégorie</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCategoryForm">
+                    <input type="hidden" id="editCategoryId" name="id">
+                    <div class="mb-3">
+                        <label for="editCode" class="form-label">Code</label>
+                        <input type="text" class="form-control" id="editCode" name="code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLibelle" class="form-label">Libellé</label>
+                        <input type="text" class="form-control" id="editLibelle" name="libelle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editIsActive" class="form-label">Actif</label>
+                        <select class="form-select" id="editActive" name="active" required>
+                            <option value="true">Oui</option>
+                            <option value="false">Non</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Category Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Fonction pour charger les catégories NACE
+        function loadCategories(page = 1, search = '') {
+            $.ajax({
+                url: '/api/liste-des-categories-nace/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    // Mettre à jour les informations de pagination
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' + (page * response.count > response.total ? response.total : page * response.count) + ' sur ' + response.total + ' catégories');
+
+                    // Mettre à jour les contrôles de pagination
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Précédent</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Suivant</a></li>');
+                    }
+
+                    // Mettre à jour le tableau des catégories
+                    $('#categoryTableBody').html('');
+                    response.results.forEach(function(category, index) {
+                        $('#categoryTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td>' + category.code + '</td>' +
+                            '<td>' + category.libelle + '</td>' +
+                            '<td>' + (category.active ? 'Actif' : 'Inactif') + '</td>' +
+                            '<td><button class="btn btn-light btn-round mb-0 edit-btn" data-id="' + category.id + '"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-light btn-round mb-0 delete-btn" data-id="' + category.id + '"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les catégories.',
+                    });
+                }
+            });
+        }
+
+        // Chargement initial
+        loadCategories();
+
+        // Recherche
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            const search = $('#searchInput').val();
+            loadCategories(1, search);
+        });
+
+        // Contrôles de pagination
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            const page = $(this).data('page');
+            const search = $('#searchInput').val();
+            loadCategories(page, search);
+        });
+
+        // Soumission du formulaire d'ajout
+        $('#addCategoryForm').on('submit', function(event) {
+            event.preventDefault();
+            const formData = $(this).serialize();
+            $.ajax({
+                url: '/api/ajouter-une-categorie-nace/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Catégorie ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addCategoryModal').modal('hide');
+                        loadCategories();
+                        window.location.reload(true);
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible d\'ajouter la catégorie.',
+                    });
+                }
+            });
+        });
+
+        // Modifier une catégorie
+        $(document).on('click', '.edit-btn', function() {
+            const id = $(this).data('id');
+            $.ajax({
+                url: '/api/editer-une-categorie-nace/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editCategoryId').val(response.id);
+                    $('#editLibelle').val(response.libelle);
+                    $('#editCode').val(response.code);
+                    $('#editCategoryModal').modal('show');
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de récupérer les informations de la catégorie.',
+                    });
+                }
+            });
+        });
+
+        // Soumission du formulaire de modification
+        $('#editCategoryForm').on('submit', function(event) {
+            event.preventDefault();
+            const id = $('#editCategoryId').val();
+            const formData = $(this).serialize();
+            $.ajax({
+                url: '/api/editer-une-categorie-nace/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function() {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Catégorie mise à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editCategoryModal').modal('hide');
+                        loadCategories();
+                    });
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de mettre à jour la catégorie.',
+                    });
+                }
+            });
+        });
+
+        // Supprimer une catégorie
+        $(document).on('click', '.delete-btn', function() {
+            const id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-la!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/supprimer-des-categories-nace/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function() {
+                            Swal.fire('Supprimée!', 'La catégorie a été supprimée.', 'success').then(() => {
+                                loadCategories();
+                            });
+                        },
+                        error: function() {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Erreur',
+                                text: 'Impossible de supprimer la catégorie.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+
+
+
+    });
+</script>
+
+{% endblock %}

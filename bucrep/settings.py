@@ -116,6 +116,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # Librairies
     "rest_framework",
+    "drf_yasg",
     # 'rest_framework.authtoken',
     "rest_framework_simplejwt",
     "django_extensions",
