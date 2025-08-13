@@ -5354,7 +5354,7 @@ class Products(models.Model):
 
 
 # Hors bilan
-class OffBalanceSheet(models.Model):
+class OffBalanceSheetOld(models.Model):
     # --- Champs d'identification (inchangés) ---
     type_bilan = models.CharField(
         max_length=20,
@@ -5565,7 +5565,7 @@ class OffBalanceSheet(models.Model):
 
 
 # Hors bilan
-class OffBalanceSheet2(models.Model):
+class OffBalanceSheet(models.Model):
     # --- Champs d'identification (inchangés) ---
     type_bilan = models.CharField(
         max_length=20,
