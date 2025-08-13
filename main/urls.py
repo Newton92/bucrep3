@@ -14,6 +14,7 @@ from main.api.views_monitoring import *
 from main.api.views_standard import *
 from main.api.views_users import *
 from main.api.views_warning import *
+from main.api.views_account import *
 from main.views import *
 
 # from .views import PaysViewSet
@@ -42,11 +43,12 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     path("", index, name="index"),
-    path("report-template/", report, name="report"),
     path("verification/compte/", check_auth, name="check_auth"),
     path("mot-de-passe-oublie/", forgot_auth, name="forgot_auth"),
     path("reinitialisation-mot-de-passe-oublie/", reset_auth, name="reset_auth"),
     path("generate-admin/", new_admin, name="new_admin"),
+    path("report-modele/", report_modele, name="report_modele"),
+    path("report-template/", report, name="report"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR AUTH                                                                                             #
@@ -58,6 +60,7 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     path("root-dashboard/", dash_root, name="dash_root"),
+    path("root-dashboard/profile/", dash_root_profile_page, name="dash_root_profile_page"),
     path(
         "root-dashboard/localisation/liste-des-pays",
         dash_root_pays,
@@ -543,11 +546,73 @@ urlpatterns = [
         dash_root_alerte_log,
         name="dash_root_alerte_log",
     ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/documents/",
+        dash_root_manage_acheteur_document,
+        name="dash_root_manage_acheteur_document",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/portables/",
+        dash_root_manage_acheteur_portable,
+        name="dash_root_manage_acheteur_portable",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/telephones/",
+        dash_root_manage_acheteur_telephone,
+        name="dash_root_manage_acheteur_telephone",
+    ),
+    
+    
+    
+    
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/marques/",
+        dash_root_manage_marque_acheteur,
+        name="dash_root_manage_marque_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/produits-services/",
+        dash_root_manage_produit_service_acheteur,
+        name="dash_root_manage_produit_service_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/cotisations/",
+        dash_root_manage_cotisation_acheteur,
+        name="dash_root_manage_cotisation_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/swot/",
+        dash_root_manage_swot_acheteur,
+        name="dash_root_manage_swot_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/registre-commerce/",
+        dash_root_manage_registre_commerce_acheteur,
+        name="dash_root_manage_registre_commerce_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/procedures-collectives/",
+        dash_root_manage_procedure_collective_acheteur,
+        name="dash_root_manage_procedure_collective_acheteur",
+    ),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #
     #                                                                                                                      #
     ########################################################################################################################
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES START FOR VALIDATEUR                                                                                     #
@@ -1040,8 +1105,6 @@ urlpatterns = [
         dash_validateur_alerte_log,
         name="dash_validateur_alerte_log",
     ),
-
-
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR VALIDATEUR                                                                                       #
@@ -1540,12 +1603,26 @@ urlpatterns = [
         name="dash_analyste_alerte_log",
     ),
 
-
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ANALYSTE                                                                                         #
     #                                                                                                                      #
     ########################################################################################################################
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES START FOR CLIENT                                                                                         #
@@ -1557,6 +1634,25 @@ urlpatterns = [
     #  API ROUTES END FOR CLIENT                                                                                           #
     #                                                                                                                      #
     ########################################################################################################################
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES START                                                                                                    #
@@ -3722,6 +3818,492 @@ urlpatterns = [
         GetRatioIFRSView.as_view(),
         name="ifrs-get-ratio",
     ),
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-portables/",
+        ListAcheteurPortableView.as_view(),
+        name="list-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-portable/",
+        SearchAcheteurPortableView.as_view(),
+        name="search-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-portable/",
+        AddAcheteurPortableView.as_view(),
+        name="add-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-portable/<int:portable_id>/",
+        EditAcheteurPortableView.as_view(),
+        name="edit-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-portables/",
+        DeleteAcheteurPortableView.as_view(),
+        name="delete-portable-acheteur",
+    ),
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-emails/",
+        ListAcheteurEmailView.as_view(),
+        name="list-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-email/",
+        SearchAcheteurEmailView.as_view(),
+        name="search-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-email/",
+        AddAcheteurEmailView.as_view(),
+        name="add-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-email/<int:email_id>/",
+        EditAcheteurEmailView.as_view(),
+        name="edit-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-emails/",
+        DeleteAcheteurEmailView.as_view(),
+        name="delete-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-adresses/",
+        ListAcheteurAdresseView.as_view(),
+        name="list-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-adresse/",
+        SearchAcheteurAdresseView.as_view(),
+        name="search-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-adresse/",
+        AddAcheteurAdresseView.as_view(),
+        name="add-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-adresse/<int:adresse_id>/",
+        EditAcheteurAdresseView.as_view(),
+        name="edit-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-adresses/",
+        DeleteAcheteurAdresseView.as_view(),
+        name="delete-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-analyses-swot/",
+        ListAcheteurSwotView.as_view(),
+        name="list-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-swot/",
+        SearchAcheteurSwotView.as_view(),
+        name="search-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-analyse-swot/",
+        AddAcheteurSwotView.as_view(),
+        name="add-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-analyse-swot/<int:swot_id>/",
+        EditAcheteurSwotView.as_view(),
+        name="edit-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-analyses-swot/",
+        DeleteAcheteurSwotView.as_view(),
+        name="delete-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-produits-services/",
+        ListAcheteurProduitServiceView.as_view(),
+        name="list-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-produit-service/",
+        SearchAcheteurProduitServiceView.as_view(),
+        name="search-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-produit-service/",
+        AddAcheteurProduitServiceView.as_view(),
+        name="add-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-produit-service/<int:ps_id>/",
+        EditAcheteurProduitServiceView.as_view(),
+        name="edit-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-produits-services/",
+        DeleteAcheteurProduitServiceView.as_view(),
+        name="delete-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-marques/",
+        ListAcheteurMarqueView.as_view(),
+        name="list-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-marque/",
+        SearchAcheteurMarqueView.as_view(),
+        name="search-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-marque/",
+        AddAcheteurMarqueView.as_view(),
+        name="add-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-marque/<int:marque_id>/",
+        EditAcheteurMarqueView.as_view(),
+        name="edit-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-marques/",
+        DeleteAcheteurMarqueView.as_view(),
+        name="delete-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-procedures-collectives/",
+        ListAcheteurProcedureCollectiveView.as_view(),
+        name="list-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-procedure-collective/",
+        SearchAcheteurProcedureCollectiveView.as_view(),
+        name="search-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-procedure-collective/",
+        AddAcheteurProcedureCollectiveView.as_view(),
+        name="add-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-procedure-collective/<int:pc_id>/",
+        EditAcheteurProcedureCollectiveView.as_view(),
+        name="edit-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-procedures-collectives/",
+        DeleteAcheteurProcedureCollectiveView.as_view(),
+        name="delete-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-registres-commerce/",
+        ListAcheteurRegistreCommerceView.as_view(),
+        name="list-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-registre-commerce/",
+        SearchAcheteurRegistreCommerceView.as_view(),
+        name="search-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-registre-commerce/",
+        AddAcheteurRegistreCommerceView.as_view(),
+        name="add-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-registre-commerce/<int:rc_id>/",
+        EditAcheteurRegistreCommerceView.as_view(),
+        name="edit-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-registres-commerce/",
+        DeleteAcheteurRegistreCommerceView.as_view(),
+        name="delete-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
+        ListAcheteurCotisationView.as_view(),
+        name="list-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-cotisation/",
+        SearchAcheteurCotisationView.as_view(),
+        name="search-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-cotisation/",
+        AddAcheteurCotisationView.as_view(),
+        name="add-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-cotisation/<int:cotisation_id>/",
+        EditAcheteurCotisationView.as_view(),
+        name="edit-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-cotisations/",
+        DeleteAcheteurCotisationView.as_view(),
+        name="delete-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-documents/",
+        ListAcheteurDocumentView.as_view(),
+        name="list-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-document/",
+        SearchAcheteurDocumentView.as_view(),
+        name="search-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-document/",
+        AddAcheteurDocumentView.as_view(),
+        name="add-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-document/<int:document_id>/",
+        EditAcheteurDocumentView.as_view(),
+        name="edit-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-documents/",
+        DeleteAcheteurDocumentView.as_view(),
+        name="delete-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
+        ListAcheteurCotisationView.as_view(),
+        name="list-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-cotisation/",
+        SearchAcheteurCotisationView.as_view(),
+        name="search-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-cotisation/",
+        AddAcheteurCotisationView.as_view(),
+        name="add-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-cotisation/<int:cotisation_id>/",
+        EditAcheteurCotisationView.as_view(),
+        name="edit-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-cotisations/",
+        DeleteAcheteurCotisationView.as_view(),
+        name="delete-cotisation-acheteur",
+    ),
+    
+    # Liste et recherche des numéros de téléphone pour un acheteur donné
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-telephones/",
+        ListAcheteurTelephoneView.as_view(),
+        name="list-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-telephone/",
+        AddAcheteurTelephoneView.as_view(),
+        name="add-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-telephone/<int:telephone_id>/",
+        EditAcheteurTelephoneView.as_view(),
+        name="edit-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-telephones/",
+        DeleteAcheteurTelephoneView.as_view(),
+        name="delete-telephone-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-marques/",
+        ListAcheteurMarqueView.as_view(),
+        name="list-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-marque/",
+        SearchAcheteurMarqueView.as_view(),
+        name="search-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-marque/",
+        AddAcheteurMarqueView.as_view(),
+        name="add-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-marque/<int:marque_id>/",
+        EditAcheteurMarqueView.as_view(),
+        name="edit-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-marque/<int:marque_id>/",
+        DetailAcheteurMarqueView.as_view(),
+        name="detail-marque-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-marques/",
+        DeleteAcheteurMarqueView.as_view(),
+        name="delete-marque-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-produits-services/",
+        ListAcheteurProduitServiceView.as_view(),
+        name="list-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-produit-service/",
+        SearchAcheteurProduitServiceView.as_view(),
+        name="search-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-un-produit-service/",
+        AddAcheteurProduitServiceView.as_view(),
+        name="add-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-un-produit-service/<int:produit_service_id>/",
+        EditAcheteurProduitServiceView.as_view(),
+        name="edit-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-produit-service/<int:produit_service_id>/",
+        DetailAcheteurProduitServiceView.as_view(),
+        name="detail-produit-service-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-produits-services/",
+        DeleteAcheteurProduitServiceView.as_view(),
+        name="delete-produit-service-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
+        ListAcheteurCotisationView.as_view(),
+        name="list-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-cotisation/",
+        SearchAcheteurCotisationView.as_view(),
+        name="search-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-une-cotisation/",
+        AddAcheteurCotisationView.as_view(),
+        name="add-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-une-cotisation/<int:cotisation_id>/",
+        EditAcheteurCotisationView.as_view(),
+        name="edit-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-cotisation/<int:cotisation_id>/",
+        DetailAcheteurCotisationView.as_view(),
+        name="detail-cotisation-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-cotisations/",
+        DeleteAcheteurCotisationView.as_view(),
+        name="delete-cotisation-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-swot/",
+        ListAcheteurSwotView.as_view(),
+        name="list-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-swot/",
+        AddAcheteurSwotView.as_view(),
+        name="add-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-swot/",
+        DetailAcheteurSwotView.as_view(),
+        name="detail-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-swot/",
+        EditAcheteurSwotView.as_view(),
+        name="edit-swot-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-swot/",
+        DeleteAcheteurSwotView.as_view(),
+        name="delete-swot-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-registre-commerce/",
+        ListAcheteurRegistreCommerceView.as_view(),
+        name="list-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-registre-commerce/",
+        AddAcheteurRegistreCommerceView.as_view(),
+        name="add-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-registre-commerce/",
+        DetailAcheteurRegistreCommerceView.as_view(),
+        name="detail-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-registre-commerce/",
+        EditAcheteurRegistreCommerceView.as_view(),
+        name="edit-registre-commerce-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-registre-commerce/",
+        DeleteAcheteurRegistreCommerceView.as_view(),
+        name="delete-registre-commerce-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-procedures-collectives/",
+        ListAcheteurProcedureCollectiveView.as_view(),
+        name="list-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-procedure-collective/",
+        SearchAcheteurProcedureCollectiveView.as_view(),
+        name="search-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-procedure-collective/",
+        AddAcheteurProcedureCollectiveView.as_view(),
+        name="add-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-procedure-collective/<int:procedure_id>/",
+        DetailAcheteurProcedureCollectiveView.as_view(),
+        name="detail-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-procedure-collective/<int:procedure_id>/",
+        EditAcheteurProcedureCollectiveView.as_view(),
+        name="edit-procedure-collective-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-procedures-collectives/",
+        DeleteAcheteurProcedureCollectiveView.as_view(),
+        name="delete-procedure-collective-acheteur",
+    ),
+    
+    
+    path("api/profile/", UserProfileView.as_view(), name="user-profile"),
+    path("api/profile/avatar/", UserAvatarView.as_view(), name="user-avatar-update"),
+    path("api/profile/change-password/", ChangePasswordView.as_view(), name="change-password"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END                                                                                                      #

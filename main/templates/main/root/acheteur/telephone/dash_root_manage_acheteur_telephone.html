@@ -1,0 +1,229 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block body %}
+
+<div class="row">
+    <div class="col-12">
+        <h2 class="section-title">{% trans "Gestion des numéros de téléphone pour" %} : **{{ acheteur.nom }}**</h2>
+    </div>
+</div>
+
+<div class="row my-3">
+    <div class="col-12 text-right">
+        <button class="btn btn-primary" id="addPortableBtn">
+            {% trans "Ajouter un numéro de téléphone" %}
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>{% trans "Numéro de téléphone" %}</th>
+                        <th>{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody id="portablesTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addEditPortableModal" tabindex="-1" role="dialog" aria-labelledby="addEditPortableModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addEditPortableModalLabel">{% trans "Ajouter un numéro de téléphone" %}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addEditPortableForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="portableIdToEdit">
+                    <div class="form-group">
+                        <label for="portableNumberInput">{% trans "Numéro de téléphone" %}</label>
+                        <input type="text" class="form-control" id="portableNumberInput" name="telephone" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Fermer" %}</button>
+                <button type="button" class="btn btn-primary" id="savePortableBtn">{% trans "Enregistrer" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const acheteurId = "{{ id_acheteur }}";
+        const accessToken = "{{ access }}";
+        const addPortableBtn = document.getElementById('addPortableBtn');
+        const savePortableBtn = document.getElementById('savePortableBtn');
+        const addEditPortableModal = $('#addEditPortableModal');
+        const portableNumberInput = $('#portableNumberInput');
+        const portableIdToEdit = $('#portableIdToEdit');
+
+        function loadPortables() {
+            $.ajax({
+                url: `/api/acheteur/${acheteurId}/liste-des-telephones/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                },
+                success: function(response) {
+                    const tbody = $('#portablesTableBody');
+                    tbody.empty();
+                    if (response.results.length === 0) {
+                        tbody.append(`<tr><td colspan="2">{% trans "Aucun numéro de téléphone trouvé." %}</td></tr>`);
+                    } else {
+                        response.results.forEach(portable => {
+                            tbody.append(`
+                                <tr>
+                                    <td>${portable.telephone}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info edit-portable-btn" data-id="${portable.id}" data-telephone="${portable.telephone}">{% trans "Modifier" %}</button>
+                                        <button class="btn btn-sm btn-danger delete-portable-btn" data-id="${portable.id}">{% trans "Supprimer" %}</button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: '{% trans "Erreur lors du chargement des téléphones." %}'
+                    });
+                }
+            });
+        }
+
+        // Événement pour ouvrir la modale d'ajout
+        addPortableBtn.addEventListener('click', function() {
+            $('#addEditPortableModalLabel').text('{% trans "Ajouter un numéro de téléphone" %}');
+            portableNumberInput.val('');
+            portableIdToEdit.val('');
+            addEditPortableModal.modal('show');
+        });
+
+        // Événement pour ouvrir la modale d'édition
+        $(document).on('click', '.edit-portable-btn', function() {
+            const portableId = $(this).data('id');
+            const telephone = $(this).data('telephone');
+            $('#addEditPortableModalLabel').text('{% trans "Modifier le numéro de téléphone" %}');
+            portableIdToEdit.val(portableId);
+            portableNumberInput.val(telephone);
+            addEditPortableModal.modal('show');
+        });
+
+        // Événement pour enregistrer un téléphone (ajout ou édition)
+        savePortableBtn.addEventListener('click', function() {
+            const portableId = portableIdToEdit.val();
+            const portableNumber = portableNumberInput.val();
+            let url = `/api/acheteur/${acheteurId}/ajouter-un-telephone/`;
+            let type = 'POST';
+
+            if (portableId) {
+                url = `/api/acheteur/${acheteurId}/editer-un-telephone/${portableId}/`;
+                type = 'PUT';
+            }
+
+            $.ajax({
+                url: url,
+                type: type,
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({ telephone: portableNumber }),
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: '{% trans "Opération réussie." %}',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        addEditPortableModal.modal('hide');
+                        loadPortables();
+                    });
+                },
+                error: function(xhr) {
+                    let errorMessage = '{% trans "Erreur lors de l\'opération. Veuillez vérifier le numéro." %}';
+                    if (xhr.responseJSON && xhr.responseJSON.telephone) {
+                        errorMessage = xhr.responseJSON.telephone[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage
+                    });
+                }
+            });
+        });
+
+        // Événement pour la suppression
+        $(document).on('click', '.delete-portable-btn', function() {
+            const portableId = $(this).data('id');
+            Swal.fire({
+                title: '{% trans "Êtes-vous sûr?" %}',
+                text: '{% trans "Cette action est irréversible !" %}',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '{% trans "Oui, supprimer!" %}',
+                cancelButtonText: '{% trans "Annuler" %}'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/api/acheteur/${acheteurId}/supprimer-des-telephones/`,
+                        type: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Content-Type': 'application/json'
+                        },
+                        data: JSON.stringify({ ids: [portableId] }),
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: response.message
+                            });
+                            loadPortables();
+                        },
+                        error: function(xhr) {
+                            let errorMessage = '{% trans "Erreur lors de la suppression." %}';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMessage = xhr.responseJSON.error;
+                            }
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: errorMessage
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Chargement initial des téléphones
+        loadPortables();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,460 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .rc-card {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        margin-bottom: 20px;
+    }
+    .rc-title {
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #343a40;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+    }
+    .rc-info {
+        margin-bottom: 10px;
+    }
+    .rc-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    .rc-value {
+        color: #212529;
+    }
+    .rc-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i> Registre de Commerce de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countRegistreCommerce">Module de Gestion du Registre de Commerce</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter ou modifier le registre de commerce de l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span id="">Cher agent, si vous souhaitez retourner à la page de gestion de l'acheteur, cliquez sur son nom.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Registre Commerce START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-header-title">Registre de Commerce</h5>
+                <div>
+                    {% if not registre_existe %}
+                    <button type="button" class="btn btn-primary" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addRegistreCommerceModal">
+                        <i class="bi bi-plus-lg me-1"></i> Ajouter un registre
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-primary" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#editRegistreCommerceModal">
+                        <i class="bi bi-pencil-square me-1"></i> Éditer le registre
+                    </button>
+                    <button type="button" class="btn btn-danger" id="deleteRegistreCommerceBtn">
+                        <i class="bi bi-trash me-1"></i> Supprimer
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="registreCommerceContainer">
+                    {% if not registre_existe %}
+                    <div class="alert alert-info">
+                        Aucun registre de commerce enregistré pour cet acheteur.
+                    </div>
+                    {% else %}
+                    <div class="rc-card">
+                        <div class="rc-title">
+                            <i class="bi bi-file-earmark-text me-2"></i> Registre de Commerce
+                        </div>
+                        <div class="rc-info">
+                            <div class="rc-label">Numéro de registre :</div>
+                            <div class="rc-value" id="rcNumero"></div>
+                        </div>
+                        <div class="rc-info">
+                            <div class="rc-label">Date d'inscription :</div>
+                            <div class="rc-value" id="rcDateInscription"></div>
+                        </div>
+                        <div class="rc-date">
+                            <small>Dernière mise à jour : <span id="rcUpdatedAt"></span></small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Registre Commerce END -->
+<!-- Add Registre Commerce Modal START -->
+<div class="modal fade" id="addRegistreCommerceModal" tabindex="-1" aria-labelledby="addRegistreCommerceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRegistreCommerceModalLabel">Ajouter un Registre de Commerce</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRegistreCommerceForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="numero" class="form-label">Numéro de registre de commerce <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="numero" name="numero" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_inscription" class="form-label">Date d'inscription</label>
+                        <input type="date" class="form-control" id="date_inscription" name="date_inscription">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Registre Commerce Modal END -->
+<!-- Edit Registre Commerce Modal START -->
+<div class="modal fade" id="editRegistreCommerceModal" tabindex="-1" aria-labelledby="editRegistreCommerceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRegistreCommerceModalLabel">Éditer le Registre de Commerce</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRegistreCommerceForm">
+                    <input type="hidden" id="editRegistreCommerceId" name="id">
+                    <div class="mb-3">
+                        <label for="editNumero" class="form-label">Numéro de registre de commerce <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editNumero" name="numero" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDateInscription" class="form-label">Date d'inscription</label>
+                        <input type="date" class="form-control" id="editDateInscription" name="date_inscription">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Registre Commerce Modal END -->
+{% endblock %}
+{% block scripts %}
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Jamais";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    // Fonction pour formater les dates (date -> JJ.MM.AAAA)
+    function formatSimpleDate(dateString) {
+        if (!dateString) return "Non spécifiée";
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+        return dateString;
+    }
+
+    $(document).ready(function() {
+        var registreExiste = false;
+
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger le registre de commerce
+        function loadRegistreCommerce() {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-registre-commerce/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    registreExiste = true;
+                    $('#rcNumero').text(response.numero);
+                    $('#rcDateInscription').text(formatSimpleDate(response.date_inscription));
+                    $('#rcUpdatedAt').text(formatDateTime(response.updated_at));
+
+                    // Pré-remplir le formulaire d'édition
+                    $('#editRegistreCommerceId').val(response.id);
+                    $('#editNumero').val(response.numero);
+                    $('#editDateInscription').val(response.date_inscription);
+
+                    // Mettre à jour l'interface
+                    $('#registreCommerceContainer').html(`
+                        <div class="rc-card">
+                            <div class="rc-title">
+                                <i class="bi bi-file-earmark-text me-2"></i> Registre de Commerce
+                            </div>
+                            <div class="rc-info">
+                                <div class="rc-label">Numéro de registre :</div>
+                                <div class="rc-value">${response.numero}</div>
+                            </div>
+                            <div class="rc-info">
+                                <div class="rc-label">Date d'inscription :</div>
+                                <div class="rc-value">${formatSimpleDate(response.date_inscription)}</div>
+                            </div>
+                            <div class="rc-date">
+                                <small>Dernière mise à jour : ${formatDateTime(response.updated_at)}</small>
+                            </div>
+                        </div>
+                    `);
+                },
+                error: function(response) {
+                    if (response.status === 404) {
+                        registreExiste = false;
+                        $('#registreCommerceContainer').html(`
+                            <div class="alert alert-info">
+                                Aucun registre de commerce enregistré pour cet acheteur.
+                            </div>
+                        `);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la récupération du registre de commerce.',
+                        });
+                    }
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout
+        $('#addRegistreCommerceForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-registre-commerce/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Registre de commerce ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addRegistreCommerceModal').modal('hide');
+                        $('#addRegistreCommerceForm')[0].reset();
+                        loadRegistreCommerce();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout du registre de commerce.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition
+        $('#editRegistreCommerceForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editRegistreCommerceId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-registre-commerce/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Registre de commerce mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editRegistreCommerceModal').modal('hide');
+                        loadRegistreCommerce();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour du registre de commerce.',
+                    });
+                }
+            });
+        });
+
+        // Supprimer le registre de commerce
+        $('#deleteRegistreCommerceBtn').on('click', function() {
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous allez supprimer le registre de commerce de cet acheteur!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer!',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-registre-commerce/',
+                        type: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'Le registre de commerce a été supprimé.',
+                                'success'
+                            ).then(() => {
+                                loadRegistreCommerce();
+                            });
+                        },
+                        error: function(response) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression du registre de commerce.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadRegistreCommerce();
+    });
+</script>
+{% endblock %}

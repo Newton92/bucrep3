@@ -5558,6 +5558,298 @@ class OffBalanceSheet(models.Model):
         )
 
 
+
+
+
+
+
+
+# Hors bilan
+class OffBalanceSheet2(models.Model):
+    # --- Champs d'identification (inchangés) ---
+    type_bilan = models.CharField(
+        max_length=20,
+        choices=TYPE_BILAN_CHOICES,
+        default="annuel",
+        verbose_name=_("Type de bilan"),
+        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
+    )
+    annee = models.ForeignKey(
+        "Annee",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Année Civile"),
+    )
+    semestre = models.PositiveSmallIntegerField(
+        choices=SEMESTRE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name=_("Semestre"),
+        help_text=_("Laisser vide si le bilan est annuel."),
+    )
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+    )
+
+    # --- NOUVEAUX CHAMPS DE L'ANCIENNE TABLE ---
+    # Ces champs sont rendus null et blank pour ne pas perturber les données existantes
+    en_faveur_des_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements en faveur des établissements de crédit"),
+    )
+    en_faveur_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements en faveur de la clientèle"),
+    )
+    pour_compte_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements pour le compte des établissements de crédit"),
+    )
+    pour_compte_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements pour le compte de la clientèle"),
+    )
+    engagement_sur_titre = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Anciens engagements sur titres"),
+    )
+    recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Anciens engagements reçus d'établissements de crédit"),
+    )
+    recu_ets_credit2 = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Anciens engagements reçus d'établissements de crédit (2)"),
+    )
+    recu_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Anciens engagements reçus de la clientèle"),
+    )
+    engagement_sur_titre2 = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Anciens engagements sur titres (2)"),
+    )
+
+    # --- ENGAGEMENTS DONNÉS ---
+    # Catégorie : Engagements de financement donnés
+    engagement_financement_donne_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_(
+            "Engagements de financement donnés en faveur des établissements de crédit"
+        ),
+    )
+    engagement_financement_donne_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement donnés en faveur de la clientèle"),
+    )
+
+    # Catégorie : Engagements de garantie donnés
+    engagement_garantie_donne_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_(
+            "Engagements de garantie donnés pour le compte des établissements de crédit"
+        ),
+    )
+    engagement_garantie_donne_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de garantie donnés pour le compte de la clientèle"),
+    )
+
+    # Catégorie : Engagements sur titres donnés
+    engagement_sur_titres_donnes = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements sur titres donnés"),
+    )
+
+    # --- ENGAGEMENTS REÇUS ---
+    # Catégorie : Engagements de financement reçus
+    engagement_financement_recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement reçus d'établissements de crédit"),
+    )
+    engagement_financement_recu_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement reçus de la clientèle"),
+    )
+
+    # Catégorie : Engagements de garantie reçus
+    engagement_garantie_recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de garantie reçus d'établissements de crédit"),
+    )
+
+    # Catégorie : Engagements sur titres reçus
+    engagement_sur_titres_recus = models.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements sur titres reçus"),
+    )
+
+    # --- Champs de suivi (inchangés) ---
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey(
+        "CustomUser",
+        related_name="offbalance_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+    
+    # --- Champs de l'ancienne table à ne pas utiliser ---
+    deleted = models.DateTimeField(null=True, blank=True)
+    deleted_by_cascade = models.BooleanField(default=False)
+
+    # --- MÉTHODE __str__ AMÉLIORÉE ---
+    def __str__(self):
+        """
+        Fournit une représentation textuelle claire et sécurisée de l'instance,
+        inspirée du modèle Products.
+        """
+        libelle = f"{_('Hors bilan bancaire')} : {self.id}. {self.acheteur or 'N/A'}"
+        if self.annee:
+            libelle += f" ({self.annee.annee})"
+        if self.semestre:
+            libelle += f" - {self.get_semestre_display()}"
+        return libelle
+
+    class Meta:
+        verbose_name = _("Hors Bilan bancaire")
+        verbose_name_plural = _("Hors Bilans bancaires")
+
+    # ----------------------------------------
+    #   Liste des méthodes utiles pour ce modèle
+    # ----------------------------------------
+
+    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS DONNÉS ---
+
+    @property
+    def total_engagement_financement_donne(self):
+        """Calcule le total des engagements de financement DONNÉS."""
+        fields_to_sum = [
+            self.engagement_financement_donne_ets_credit,
+            self.engagement_financement_donne_clientele,
+            # Ajout des anciens champs
+            self.en_faveur_des_ets_credit,
+            self.en_faveur_clientele,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    @property
+    def total_engagement_garantie_donne(self):
+        """Calcule le total des engagements de garantie DONNÉS."""
+        fields_to_sum = [
+            self.engagement_garantie_donne_ets_credit,
+            self.engagement_garantie_donne_clientele,
+            # Ajout des anciens champs
+            self.pour_compte_ets_credit,
+            self.pour_compte_clientele,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS DONNÉS ---
+
+    @property
+    def total_engagements_donnes(self):
+        """Calcule le total de TOUS les engagements DONNÉS."""
+        return (
+            self.total_engagement_financement_donne
+            + self.total_engagement_garantie_donne
+            + (self.engagement_sur_titres_donnes or 0)
+            + (self.engagement_sur_titre or 0)  # Ajout de l'ancien champ
+        )
+
+    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS REÇUS ---
+
+    @property
+    def total_engagement_financement_recu(self):
+        """Calcule le total des engagements de financement REÇUS."""
+        fields_to_sum = [
+            self.engagement_financement_recu_ets_credit,
+            self.engagement_financement_recu_clientele,
+            # Ajout des anciens champs
+            self.recu_ets_credit,
+            self.recu_clientele,
+        ]
+        return sum(field or 0 for field in fields_to_sum)
+
+    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS REÇUS ---
+
+    @property
+    def total_engagements_recus(self):
+        """Calcule le total de TOUS les engagements REÇUS."""
+        return (
+            self.total_engagement_financement_recu
+            + (self.engagement_garantie_recu_ets_credit or 0)
+            + (self.engagement_sur_titres_recus or 0)
+            + (self.recu_ets_credit2 or 0)  # Ajout de l'ancien champ
+            + (self.engagement_sur_titre2 or 0)  # Ajout de l'ancien champ
+        )
+
+
 ##########################################################
 ##########################################################
 # Fin Modules Bilan Bancaire
@@ -7399,7 +7691,7 @@ class ProcedureCollective(models.Model):
     type_procedure = models.CharField(
         _("Type de procédure"),
         max_length=255,
-        help_text=_("Type de procédure collective"),
+        help_text=_("Type de procédure collective (ex: Redressement judiciaire, Liquidation...)"),
     )
     date_ouverture = models.DateField(
         _("Date d'ouverture"),
@@ -7413,12 +7705,47 @@ class ProcedureCollective(models.Model):
         blank=True,
         help_text=_("Date de clôture de la procédure"),
     )
+    #tribunal = models.CharField(
+        #_("Tribunal compétent"),
+        #max_length=255,
+        #null=True,
+        #blank=True,
+        #help_text=_("Nom du tribunal compétent"),
+    #)
+    #numero_dossier = models.CharField(
+        #_("Numéro de dossier"),
+        #max_length=100,
+        #null=True,
+        #blank=True,
+        #help_text=_("Référence officielle du dossier"),
+    #)
+    #secteur_activite = models.CharField(
+        #_("Secteur d'activité"),
+        #max_length=255,
+        #null=True,
+        #blank=True,
+        #help_text=_("Secteur d'activité de l'entreprise concernée"),
+    #)
     description = models.TextField(
         _("Description"),
         null=True,
         blank=True,
-        help_text=_("Description de la procédure collective"),
+        help_text=_("Description détaillée de la procédure collective"),
     )
+    #montant_creance = models.DecimalField(
+        #_("Montant total des créances déclarées"),
+        #max_digits=15,
+        #decimal_places=2,
+        #null=True,
+        #blank=True,
+        #help_text=_("Montant en FCFA"),
+    #)
+    #impact_assureur = models.TextField(
+        #_("Impact pour l’assureur crédit"),
+        #null=True,
+        #blank=True,
+        #help_text=_("Résumé de l’impact et des mesures prises par l’assureur crédit"),
+    #)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -7432,7 +7759,7 @@ class ProcedureCollective(models.Model):
         verbose_name_plural = _("Procédures Collectives")
 
     def __str__(self):
-        return f"{self.type_procedure} - {self.acheteur.nom}"
+        return f"{self.type_procedure} - {self.acheteur.nom if self.acheteur else ''}"
 
 
 class RegistreCommerce(models.Model):

@@ -4288,6 +4288,9 @@ class SearchCertificationSerializer(serializers.ModelSerializer):
         ]
 
 
+
+
+
 class ListInnovationDeveloppementSerializer(serializers.ModelSerializer):
     class Meta:
         model = InnovationDeveloppement
@@ -5073,3 +5076,571 @@ class RatiosIFRSSerializer(serializers.ModelSerializer):
             "rotation_des_actifs",
             "dso",
         ]
+
+
+
+class TelephoneAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = TelephoneAcheteur
+        fields = "__all__"
+
+class GetTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = "__all__"
+
+class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = [
+            "telephone",
+            "acheteur",
+        ]
+
+class EditTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = [
+            "telephone",
+        ]
+ 
+ 
+ 
+        
+        
+class AdresseAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = AdresseAcheteur
+        fields = "__all__"
+
+class GetAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = "__all__"
+
+class AddAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = [
+            "adresse",
+            "acheteur",
+        ]
+
+class EditAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = [
+            "adresse",
+        ]
+        
+        
+        
+        
+        
+        
+class PortableAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = PortableAcheteur
+        fields = "__all__"
+
+class GetPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = "__all__"
+
+class AddPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = [
+            "portable",
+            "acheteur",
+        ]
+
+class EditPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = [
+            "portable",
+        ]
+        
+        
+        
+        
+        
+class EmailAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = EmailAcheteur
+        fields = "__all__"
+
+class GetEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = "__all__"
+
+class AddEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = [
+            "email",
+            "acheteur",
+        ]
+
+class EditEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = [
+            "email",
+        ]
+        
+        
+        
+        
+        
+        
+class DocumentSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = Document
+        fields = "__all__"
+
+class GetDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = "__all__"
+
+class AddDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = [
+            "acheteur",
+            "titre",
+            "fichier",
+            "description",
+        ]
+
+class EditDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = [
+            "titre",
+            "description",
+            "fichier", # Le fichier est inclus car on pourrait vouloir le remplacer
+        ]
+        
+        
+        
+        
+        
+class SwotSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = Swot
+        fields = "__all__"
+
+class GetSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = "__all__"
+
+class AddSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = [
+            "acheteur",
+            "forces",
+            "faiblesses",
+            "opportunites",
+            "menaces",
+        ]
+
+class EditSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = [
+            "forces",
+            "faiblesses",
+            "opportunites",
+            "menaces",
+        ]
+        
+        
+        
+        
+        
+        
+class ProduitServiceSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = ProduitService
+        fields = "__all__"
+
+class GetProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = "__all__"
+
+class AddProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = [
+            "acheteur",
+            "produits",
+            "services",
+        ]
+
+class EditProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = [
+            "produits",
+            "services",
+        ]
+        
+        
+        
+        
+        
+class MarqueSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = Marque
+        fields = "__all__"
+
+class GetMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = "__all__"
+
+class AddMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = [
+            "acheteur",
+            "marques",
+        ]
+
+class EditMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = [
+            "marques",
+        ]
+        
+        
+        
+        
+        
+class ProcedureCollectiveSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = ProcedureCollective
+        fields = "__all__"
+
+class GetProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = "__all__"
+
+class AddProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = [
+            "acheteur",
+            "type_procedure",
+            "date_ouverture",
+            "date_cloture",
+            "description",
+        ]
+
+class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = [
+            "type_procedure",
+            "date_ouverture",
+            "date_cloture",
+            "description",
+        ]
+        
+        
+        
+        
+        
+class RegistreCommerceSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = RegistreCommerce
+        fields = "__all__"
+
+class GetRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = "__all__"
+
+class AddRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = [
+            "acheteur",
+            "numero",
+            "date_inscription",
+        ]
+
+class EditRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = [
+            "numero",
+            "date_inscription",
+        ]
+        
+        
+        
+
+class CotisationSerializer(serializers.ModelSerializer):
+    acheteur = AcheteurSerializer()
+
+    class Meta:
+        model = Cotisation
+        fields = "__all__"
+
+class GetCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = "__all__"
+
+class AddCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = [
+            "acheteur",
+            "numero",
+            "date_affiliation",
+        ]
+
+class EditCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = [
+            "numero",
+            "date_affiliation",
+        ]    
+        
+
+        
+        
+        
+        
+        
+        
+# serializers.py
+from rest_framework import serializers
+from .models import Marque
+
+class ListMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+
+class AddMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ["acheteur", "marques"]
+
+class DetailMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+
+class EditMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchMarqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+
+
+
+
+
+
+
+
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import ProduitService
+
+class ListProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+
+class AddProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ["acheteur", "produits", "services"]
+
+class DetailProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+
+class EditProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchProduitServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+
+
+
+
+
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Cotisation
+
+class ListCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+
+class AddCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ["acheteur", "numero", "date_affiliation"]
+
+class DetailCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+
+class EditCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchCotisationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+
+
+
+
+
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Swot
+
+class ListSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "created_at", "updated_at"]
+
+class AddSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = ["acheteur", "forces", "faiblesses", "opportunites", "menaces"]
+
+class DetailSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "created_at", "updated_at"]
+
+class EditSwotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+
+
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import RegistreCommerce
+
+class ListRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = ["id", "acheteur", "numero", "date_inscription", "created_at", "updated_at"]
+
+class AddRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = ["acheteur", "numero", "date_inscription"]
+
+class DetailRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = ["id", "acheteur", "numero", "date_inscription", "created_at", "updated_at"]
+
+class EditRegistreCommerceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = ["id", "acheteur", "numero", "date_inscription", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+
+
+
+
+
+
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import ProcedureCollective
+
+class ListProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
+
+class AddProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = ["acheteur", "type_procedure", "date_ouverture", "date_cloture", "description"]
+
+class DetailProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
+
+class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
