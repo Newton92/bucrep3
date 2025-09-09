@@ -117,7 +117,7 @@ INSTALLED_APPS = [
     # Librairies
     "rest_framework",
     "drf_yasg",
-    # 'rest_framework.authtoken',
+    "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "django_extensions",
     # Django librairies
@@ -307,6 +307,7 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:8004",  # Remplace par le domaine de ton frontend
     "http://10.0.57.47",  # Remplace par le domaine de ton frontend
     "http://3.236.213.114:26354",  # Remplace par le domaine de ton frontend
+    "http://preprod.bucrep3.bucrep.net",
 ]
 CORS_ALLOW_HEADERS = [
     "authorization",
@@ -318,6 +319,8 @@ CORS_ALLOW_HEADERS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication", # Optional but useful for the browsable API
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
@@ -425,4 +428,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-# LOGIN_URL = '/'
+LOGIN_URL = '/'
+
+
+DEFAULT_CHARSET = 'utf-8'

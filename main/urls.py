@@ -4,8 +4,13 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from main.api.views_acheteur import *
 from main.api.views_authentication import *
+
 from main.api.views_bilans_bancaires import *
 from main.api.views_bilans_irfs_cobac import *
+from main.api.views_bilans_classiques import *
+from main.api.views_bilans_sysohada import *
+from main.api.views_bilans_anglais import *
+
 from main.api.views_commande import *
 from main.api.views_localisation import *
 from main.api.views_modele import *
@@ -15,6 +20,7 @@ from main.api.views_standard import *
 from main.api.views_users import *
 from main.api.views_warning import *
 from main.api.views_account import *
+from main.api.views_report import *
 from main.views import *
 
 # from .views import PaysViewSet
@@ -546,21 +552,7 @@ urlpatterns = [
         dash_root_alerte_log,
         name="dash_root_alerte_log",
     ),
-    path(
-        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/documents/",
-        dash_root_manage_acheteur_document,
-        name="dash_root_manage_acheteur_document",
-    ),
-    path(
-        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/portables/",
-        dash_root_manage_acheteur_portable,
-        name="dash_root_manage_acheteur_portable",
-    ),
-    path(
-        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/telephones/",
-        dash_root_manage_acheteur_telephone,
-        name="dash_root_manage_acheteur_telephone",
-    ),
+    
     
     
     
@@ -594,6 +586,57 @@ urlpatterns = [
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/procedures-collectives/",
         dash_root_manage_procedure_collective_acheteur,
         name="dash_root_manage_procedure_collective_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/documents/",
+        dash_root_manage_document_acheteur,
+        name="dash_root_manage_document_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/adresses/",
+        dash_root_manage_adresse_acheteur,
+        name="dash_root_manage_adresse_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/portables/",
+        dash_root_manage_portable_acheteur,
+        name="dash_root_manage_portable_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/telephones/",
+        dash_root_manage_telephone_acheteur,
+        name="dash_root_manage_telephone_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/emails/",
+        dash_root_manage_email_acheteur,
+        name="dash_root_manage_email_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/codes-nace/",
+        dash_root_manage_code_nace_acheteur,
+        name="dash_root_manage_code_nace_acheteur",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/codes-naf/",
+        dash_root_manage_code_naf_acheteur,
+        name="dash_root_manage_code_naf_acheteur",
+    ),
+    # --- URL pour la gestion du Bilan Classique ---
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-classique/",
+        dash_root_manage_acheteur_bilan_classique,
+        name="dash_root_manage_acheteur_bilan_classique",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-syscohada/",
+        dash_root_manage_acheteur_bilan_syscohada,
+        name="dash_root_manage_acheteur_bilan_syscohada",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/",
+        dash_root_manage_acheteur_bilan_anglais,
+        name="dash_root_manage_acheteur_bilan_anglais",
     ),
     ########################################################################################################################
     #                                                                                                                      #
@@ -1602,6 +1645,7 @@ urlpatterns = [
         dash_analyste_alerte_log,
         name="dash_analyste_alerte_log",
     ),
+    
 
     ########################################################################################################################
     #                                                                                                                      #
@@ -1661,10 +1705,11 @@ urlpatterns = [
     # === AUTHENTIFICATION SYSTEME === #
     path("api/login/", CustomLoginView.as_view(), name="login"),
     path(
-        "double-factor-auth/",
+        "api/double-factor-auth/",
         CustomDoubleFactorAuthView.as_view(),
         name="double-factor-auth",
     ),
+    path('api/init-session/', SessionInitView.as_view(), name='api_init_session'), # La nouvelle URL
     path(
         "forgot-password/", CustomForgotPasswordView.as_view(), name="forgot-password"
     ),
@@ -1716,6 +1761,8 @@ urlpatterns = [
     path("api/ajouter-un-pays/", AddPaysView.as_view(), name="add-pays"),
     path("api/editer-un-pays/<int:id>/", EditPaysView.as_view(), name="edit-pays"),
     path("api/supprimer-des-pays/", DeletePaysView.as_view(), name="delete-pays"),
+    path("api/update-selected-pays/", UpdateSelectedPaysView.as_view(), name="update-selected-pays"),
+    path('api/pays-list/', PaysListView.as_view(), name='pays_list'),  # API pour lister les pays
     path(
         "api/liste-des-provinces/", ListProvincesView.as_view(), name="list_provinces"
     ),
@@ -3182,6 +3229,8 @@ urlpatterns = [
         DeleteCommandeView.as_view(),
         name="delete-commande",
     ),
+    path('api/commande-details/<int:commande_id>/', CommandeDetailsView.as_view(), name='commande-details'),
+    
     path("api/liste-des-alertes/", ListAlerteView.as_view(), name="list-alerte"),
     path("api/recherche-alerte/", SearchAlerteView.as_view(), name="search-alerte"),
     path("api/ajouter-une-alerte/", AddAlerteView.as_view(), name="add-alerte"),
@@ -4298,6 +4347,513 @@ urlpatterns = [
         "api/acheteur/<int:acheteur_id>/supprimer-procedures-collectives/",
         DeleteAcheteurProcedureCollectiveView.as_view(),
         name="delete-procedure-collective-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-documents/",
+        ListAcheteurDocumentView.as_view(),
+        name="list-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-document/",
+        SearchAcheteurDocumentView.as_view(),
+        name="search-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-document/",
+        AddAcheteurDocumentView.as_view(),
+        name="add-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-document/<int:document_id>/",
+        DetailAcheteurDocumentView.as_view(),
+        name="detail-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-document/<int:document_id>/",
+        EditAcheteurDocumentView.as_view(),
+        name="edit-document-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-documents/",
+        DeleteAcheteurDocumentView.as_view(),
+        name="delete-document-acheteur",
+    ),
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-adresses/",
+        ListAcheteurAdresseView.as_view(),
+        name="list-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-adresse/",
+        AddAcheteurAdresseView.as_view(),
+        name="add-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-adresse/<int:adresse_id>/",
+        DetailAcheteurAdresseView.as_view(),
+        name="detail-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-adresse/<int:adresse_id>/",
+        EditAcheteurAdresseView.as_view(),
+        name="edit-adresse-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-adresses/",
+        DeleteAcheteurAdresseView.as_view(),
+        name="delete-adresse-acheteur",
+    ),
+    
+    
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-portables/",
+        ListAcheteurPortableView.as_view(),
+        name="list-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-portable/",
+        SearchAcheteurPortableView.as_view(),
+        name="search-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-portable/",
+        AddAcheteurPortableView.as_view(),
+        name="add-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-portable/<int:portable_id>/",
+        DetailAcheteurPortableView.as_view(),
+        name="detail-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-portable/<int:portable_id>/",
+        EditAcheteurPortableView.as_view(),
+        name="edit-portable-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-portables/",
+        DeleteAcheteurPortableView.as_view(),
+        name="delete-portable-acheteur",
+    ),
+    
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-telephones/",
+        ListAcheteurTelephoneView.as_view(),
+        name="list-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-telephone/",
+        SearchAcheteurTelephoneView.as_view(),
+        name="search-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-telephone/",
+        AddAcheteurTelephoneView.as_view(),
+        name="add-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-telephone/<int:telephone_id>/",
+        DetailAcheteurTelephoneView.as_view(),
+        name="detail-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-telephone/<int:telephone_id>/",
+        EditAcheteurTelephoneView.as_view(),
+        name="edit-telephone-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-telephones/",
+        DeleteAcheteurTelephoneView.as_view(),
+        name="delete-telephone-acheteur",
+    ),
+    
+    
+    
+    
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-emails/",
+        ListAcheteurEmailView.as_view(),
+        name="list-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-email/",
+        SearchAcheteurEmailView.as_view(),
+        name="search-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-email/",
+        AddAcheteurEmailView.as_view(),
+        name="add-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-email/<int:email_id>/",
+        DetailAcheteurEmailView.as_view(),
+        name="detail-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-email/<int:email_id>/",
+        EditAcheteurEmailView.as_view(),
+        name="edit-email-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-emails/",
+        DeleteAcheteurEmailView.as_view(),
+        name="delete-email-acheteur",
+    ),
+    
+    
+    # Codes NACE
+    path(
+        "api/codes-nace/subcategories/",
+        ListAllSubCategoriesView.as_view(),
+        name="list-all-subcategories-nace-code",
+    ),
+    path(
+        "api/codes-nace/categories/",
+        ListCategoryNaceCodeView.as_view(),
+        name="list-category-nace-code",
+    ),
+    path(
+        "api/codes-nace/categories/<int:category_id>/subcategories/",
+        ListSubCategoryNaceCodeView.as_view(),
+        name="list-subcategory-nace-code",
+    ),
+    # Codes NACE Acheteur
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-codes-nace/",
+        ListAcheteurCodeNaceView.as_view(),
+        name="list-code-nace-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-code-nace/",
+        SearchAcheteurCodeNaceView.as_view(),
+        name="search-code-nace-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-code-nace/",
+        AddAcheteurCodeNaceView.as_view(),
+        name="add-code-nace-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-code-nace/<int:code_nace_id>/",
+        DetailAcheteurCodeNaceView.as_view(),
+        name="detail-code-nace-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-code-nace/<int:code_nace_id>/",
+        EditAcheteurCodeNaceView.as_view(),
+        name="edit-code-nace-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-codes-nace/",
+        DeleteAcheteurCodeNaceView.as_view(),
+        name="delete-code-nace-acheteur",
+    ),
+    
+    
+    path(
+        "api/codes-naf/categories/",
+        ListCategoryNafCodeView.as_view(),
+        name="list-category-naf-code",
+    ),
+    path(
+        "api/codes-naf/subcategories/",
+        ListAllSubCategoryNafCodeView.as_view(),
+        name="list-all-subcategories-naf-code",
+    ),
+    path(
+        "api/codes-naf/categories/<int:category_id>/subcategories/",
+        ListSubCategoryNafCodeView.as_view(),
+        name="list-subcategory-naf-code",
+    ),
+    # Codes NAF Acheteur
+    path(
+        "api/acheteur/<int:acheteur_id>/liste-codes-naf/",
+        ListAcheteurCodeNafView.as_view(),
+        name="list-code-naf-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/recherche-code-naf/",
+        SearchAcheteurCodeNafView.as_view(),
+        name="search-code-naf-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/ajouter-code-naf/",
+        AddAcheteurCodeNafView.as_view(),
+        name="add-code-naf-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/detail-code-naf/<int:code_naf_id>/",
+        DetailAcheteurCodeNafView.as_view(),
+        name="detail-code-naf-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/editer-code-naf/<int:code_naf_id>/",
+        EditAcheteurCodeNafView.as_view(),
+        name="edit-code-naf-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-codes-naf/",
+        DeleteAcheteurCodeNafView.as_view(),
+        name="delete-code-naf-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/generer-report/",
+        GenerateReport.as_view(),
+        name="generer-report",
+    ),
+    
+    
+    
+    # --- URLs pour les Actifs Classiques ---
+    path(
+        "api/bilan-classique/actif/liste/<int:acheteur_id>/",
+        ListActifCView.as_view(),
+        name="list-actif-c-by-acheteur",
+    ),
+    path(
+        "api/bilan-classique/actif/ajouter/",
+        AddMultiYearActifCView.as_view(),
+        name="add-multi-year-actif-c",
+    ),
+    path(
+        "api/bilan-classique/actif/detail/<int:actif_id>/",
+        GetActifCView.as_view(),
+        name="get-actif-c",
+    ),
+    path(
+        "api/bilan-classique/actif/editer/<int:actif_id>/",
+        EditActifCView.as_view(),
+        name="edit-actif-c",
+    ),
+    path(
+        "api/bilan-classique/actif/supprimer/",
+        DeleteActifCView.as_view(),
+        name="delete-actif-c",
+    ),
+
+    # --- URLs pour les Passifs Classiques ---
+    path(
+        "api/bilan-classique/passif/liste/<int:acheteur_id>/",
+        ListPassifCView.as_view(),
+        name="list-passif-c-by-acheteur",
+    ),
+    path(
+        "api/bilan-classique/passif/ajouter/",
+        AddMultiYearPassifCView.as_view(),
+        name="add-multi-year-passif-c",
+    ),
+    path(
+        "api/bilan-classique/passif/detail/<int:passif_id>/",
+        GetPassifCView.as_view(),
+        name="get-passif-c",
+    ),
+    path(
+        "api/bilan-classique/passif/editer/<int:passif_id>/",
+        EditPassifCView.as_view(),
+        name="edit-passif-c",
+    ),
+    path(
+        "api/bilan-classique/passif/supprimer/",
+        DeletePassifCView.as_view(),
+        name="delete-passif-c",
+    ),
+
+    # --- URLs pour les Résultats Classiques ---
+    path(
+        "api/bilan-classique/resultat/liste/<int:acheteur_id>/",
+        ListResultatCView.as_view(),
+        name="list-resultat-c-by-acheteur",
+    ),
+    path(
+        "api/bilan-classique/resultat/ajouter/",
+        AddMultiYearResultatCView.as_view(),
+        name="add-multi-year-resultat-c",
+    ),
+    path(
+        "api/bilan-classique/resultat/detail/<int:resultat_id>/",
+        GetResultatCView.as_view(),
+        name="get-resultat-c",
+    ),
+    path(
+        "api/bilan-classique/resultat/editer/<int:resultat_id>/",
+        EditResultatCView.as_view(),
+        name="edit-resultat-c",
+    ),
+    path(
+        "api/bilan-classique/resultat/supprimer/",
+        DeleteResultatCView.as_view(),
+        name="delete-resultat-c",
+    ),
+    
+    
+    
+    
+    path(
+        "api/bilan-syscohada/actif/ajouter/",
+        AddMultiYearActifSView.as_view(),
+        name="add-multi-year-actif-s",
+    ),
+    path(
+        "api/bilan-syscohada/actif/detail/<int:actif_id>/",
+        GetActifSView.as_view(),
+        name="get-actif-s",
+    ),
+    path(
+        "api/bilan-syscohada/actif/editer/<int:actif_id>/",
+        EditActifSView.as_view(),
+        name="edit-actif-s",
+    ),
+    path(
+        "api/bilan-syscohada/actif/supprimer/",
+        DeleteActifSView.as_view(),
+        name="delete-actif-s",
+    ),
+
+    # --- URLs pour les Passifs SYSCOHADA ---
+    path(
+        "api/bilan-syscohada/passif/liste/<int:acheteur_id>/",
+        ListPassifSView.as_view(),
+        name="list-passif-s-by-acheteur",
+    ),
+    path(
+        "api/bilan-syscohada/passif/ajouter/",
+        AddMultiYearPassifSView.as_view(),
+        name="add-multi-year-passif-s",
+    ),
+    path(
+        "api/bilan-syscohada/passif/detail/<int:passif_id>/",
+        GetPassifSView.as_view(),
+        name="get-passif-s",
+    ),
+    path(
+        "api/bilan-syscohada/passif/editer/<int:passif_id>/",
+        EditPassifSView.as_view(),
+        name="edit-passif-s",
+    ),
+    path(
+        "api/bilan-syscohada/passif/supprimer/",
+        DeletePassifSView.as_view(),
+        name="delete-passif-s",
+    ),
+
+    # --- URLs pour les Résultats SYSCOHADA ---
+    path(
+        "api/bilan-syscohada/resultat/liste/<int:acheteur_id>/",
+        ListResultatSView.as_view(),
+        name="list-resultat-s-by-acheteur",
+    ),
+    path(
+        "api/bilan-syscohada/resultat/ajouter/",
+        AddMultiYearResultatSView.as_view(),
+        name="add-multi-year-resultat-s",
+    ),
+    path(
+        "api/bilan-syscohada/resultat/detail/<int:resultat_id>/",
+        GetResultatSView.as_view(),
+        name="get-resultat-s",
+    ),
+    path(
+        "api/bilan-syscohada/resultat/editer/<int:resultat_id>/",
+        EditResultatSView.as_view(),
+        name="edit-resultat-s",
+    ),
+    path(
+        "api/bilan-syscohada/resultat/supprimer/",
+        DeleteResultatSView.as_view(),
+        name="delete-resultat-s",
+    ),
+    
+    
+    
+    
+    # --- URLs pour les Actifs Anglais ---
+    path(
+        "api/bilan-anglais/actif/liste/<int:acheteur_id>/",
+        ListActifAView.as_view(),
+        name="list-actif-a-by-acheteur",
+    ),
+    path(
+        "api/bilan-anglais/actif/ajouter/",
+        AddMultiYearActifAView.as_view(),
+        name="add-multi-year-actif-a",
+    ),
+    path(
+        "api/bilan-anglais/actif/detail/<int:actif_id>/",
+        GetActifAView.as_view(),
+        name="get-actif-a",
+    ),
+    path(
+        "api/bilan-anglais/actif/editer/<int:actif_id>/",
+        EditActifAView.as_view(),
+        name="edit-actif-a",
+    ),
+    path(
+        "api/bilan-anglais/actif/supprimer/",
+        DeleteActifAView.as_view(),
+        name="delete-actif-a",
+    ),
+
+    # --- URLs pour les Passifs Anglais ---
+    path(
+        "api/bilan-anglais/passif/liste/<int:acheteur_id>/",
+        ListPassifAView.as_view(),
+        name="list-passif-a-by-acheteur",
+    ),
+    path(
+        "api/bilan-anglais/passif/ajouter/",
+        AddMultiYearPassifAView.as_view(),
+        name="add-multi-year-passif-a",
+    ),
+    path(
+        "api/bilan-anglais/passif/detail/<int:passif_id>/",
+        GetPassifAView.as_view(),
+        name="get-passif-a",
+    ),
+    path(
+        "api/bilan-anglais/passif/editer/<int:passif_id>/",
+        EditPassifAView.as_view(),
+        name="edit-passif-a",
+    ),
+    path(
+        "api/bilan-anglais/passif/supprimer/",
+        DeletePassifAView.as_view(),
+        name="delete-passif-a",
+    ),
+
+    # --- URLs pour les Résultats Anglais ---
+    path(
+        "api/bilan-anglais/resultat/liste/<int:acheteur_id>/",
+        ListResultatAView.as_view(),
+        name="list-resultat-a-by-acheteur",
+    ),
+    path(
+        "api/bilan-anglais/resultat/ajouter/",
+        AddMultiYearResultatAView.as_view(),
+        name="add-multi-year-resultat-a",
+    ),
+    path(
+        "api/bilan-anglais/resultat/detail/<int:resultat_id>/",
+        GetResultatAView.as_view(),
+        name="get-resultat-a",
+    ),
+    path(
+        "api/bilan-anglais/resultat/editer/<int:resultat_id>/",
+        EditResultatAView.as_view(),
+        name="edit-resultat-a",
+    ),
+    path(
+        "api/bilan-anglais/resultat/supprimer/",
+        DeleteResultatAView.as_view(),
+        name="delete-resultat-a",
     ),
     
     

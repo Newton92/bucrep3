@@ -1,0 +1,262 @@
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access }}';
+    const refreshToken = '{{ refresh }}';
+
+    function refreshAccessToken() {
+        $.ajax({
+            url: "{% url 'token_refresh' %}",
+            type: 'POST',
+            data: { 'refresh': refreshToken },
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            success: function(response) {
+                accessToken = response.access;
+            },
+            error: function() {
+                console.error("Échec du rafraîchissement automatique du jeton.");
+            }
+        });
+    }
+    setInterval(refreshAccessToken, 240000);
+
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 });
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializeActifCCalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            
+            // Calcul de l'Actif Immobilisé
+            const totalIncorporel = p($(`input[name="frais_recherche_developpement_${suffix}"]`).val()) + p($(`input[name="brevet_licence_logiciels_${suffix}"]`).val()) + p($(`input[name="fonds_commercial_${suffix}"]`).val()) + p($(`input[name="autres_immobilisations_incorporelles_${suffix}"]`).val());
+            const totalCorporel = p($(`input[name="terrains_${suffix}"]`).val()) + p($(`input[name="constructions_${suffix}"]`).val()) + p($(`input[name="materiels_et_outils_${suffix}"]`).val()) + p($(`input[name="materiel_de_transport_${suffix}"]`).val()) + p($(`input[name="autres_immos_corp_${suffix}"]`).val()) + p($(`input[name="immos_en_cours_${suffix}"]`).val()) + p($(`input[name="avances_et_acptes_${suffix}"]`).val());
+            const totalFinancier = p($(`input[name="participations_${suffix}"]`).val()) + p($(`input[name="prets_${suffix}"]`).val()) + p($(`input[name="autres_${suffix}"]`).val());
+            const totalI = totalIncorporel + totalCorporel + totalFinancier;
+            
+            // Calcul de l'Actif Circulant
+            const totalStocks = p($(`input[name="stocks_mp_${suffix}"]`).val()) + p($(`input[name="stocks_encours_mp_${suffix}"]`).val()) + p($(`input[name="stocks_pf_${suffix}"]`).val()) + p($(`input[name="stocks_encours_pf_${suffix}"]`).val()) + p($(`input[name="stocks_encours_services_${suffix}"]`).val()) + p($(`input[name="stocks_mses_${suffix}"]`).val());
+            const totalCreances = p($(`input[name="avances_acptes_verses_${suffix}"]`).val()) + p($(`input[name="clients_et_cptes_rattaches_${suffix}"]`).val()) + p($(`input[name="autres_creances_${suffix}"]`).val());
+            const totalDispos = p($(`input[name="valeurs_a_encaisser_${suffix}"]`).val()) + p($(`input[name="banques_cheques_postaux_caisse_${suffix}"]`).val());
+            const totalII = totalStocks + totalCreances + totalDispos;
+
+            // Calcul des Comptes de Régularisation
+            const totalRegul = p($(`input[name="cca_${suffix}"]`).val()) + p($(`input[name="charges_a_repartir_et_frais_etablissement_${suffix}"]`).val()) + p($(`input[name="primes_de_rbt_${suffix}"]`).val());
+            const totalIII = totalRegul;
+
+            const generalTotal = totalI + totalII + totalIII;
+            
+            $(`#total_I_${suffix}`).val(formatCurrency(totalI));
+            $(`#total_II_${suffix}`).val(formatCurrency(totalII));
+            $(`#total_III_${suffix}`).val(formatCurrency(totalIII));
+            $(`#general_total_${suffix}`).val(formatCurrency(generalTotal));
+        }
+
+        $(`#collapseActifC${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        calculateTotalsForYear();
+    }
+    ['n', 'n1', 'n2'].forEach(suffix => initializeActifCCalculations(suffix));
+
+    // --- LOGIQUE POUR LA SOUMISSION ET LES MODALS (inchangée) ---
+    $('#form-actifs-c-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = $('#btn-submit-form-actifc'), originalText = btn.html();
+        $.ajax({
+            url: "{% url 'add-multi-year-actif-c' %}",
+            type: 'POST', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => Swal.fire({ icon: 'success', title: 'Succès !', text: 'Actifs enregistrés.' }).then(() => window.location.reload()),
+            error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Veuillez vérifier les données saisies.' }),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+    
+    // LOGIQUE DU MODAL DE VUE (inchangée)
+    $('#listing-actifs-c-pane').on('click', '.btn-view-actifc', function() {
+        const actifId = $(this).data('actif-id');
+        const loader = $('#modal-actifc-loader'), content = $('#actifc-details-content');
+        loader.show(); content.hide();
+        $.ajax({
+            url: `{% url 'get-actif-c' 0 %}`.replace('0', actifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#modal-actifc-acheteur').text(data.acheteur.nom);
+                $('#modal-actifc-annee').text(data.annee.annee);
+                
+                $('#total-actifc-I').text(formatCurrency(data.total_I));
+                $('#modal-actifc-elements_incorporels').text(formatCurrency(data.elements_incorporels));
+                $('#modal-actifc-frais_recherche_developpement').text(formatCurrency(data.frais_recherche_developpement));
+                $('#modal-actifc-brevet_licence_logiciels').text(formatCurrency(data.brevet_licence_logiciels));
+                $('#modal-actifc-fonds_commercial').text(formatCurrency(data.fonds_commercial));
+                $('#modal-actifc-autres_immobilisations_incorporelles').text(formatCurrency(data.autres_immobilisations_incorporelles));
+                
+                $('#modal-actifc-elements_corporels').text(formatCurrency(data.elements_corporels));
+                $('#modal-actifc-terrains').text(formatCurrency(data.terrains));
+                $('#modal-actifc-constructions').text(formatCurrency(data.constructions));
+                $('#modal-actifc-materiels_et_outils').text(formatCurrency(data.materiels_et_outils));
+                $('#modal-actifc-materiel_de_transport').text(formatCurrency(data.materiel_de_transport));
+                $('#modal-actifc-autres_immos_corp').text(formatCurrency(data.autres_immos_corp));
+                $('#modal-actifc-immos_en_cours').text(formatCurrency(data.immos_en_cours));
+                $('#modal-actifc-avances_et_acptes').text(formatCurrency(data.avances_et_acptes));
+                
+                $('#modal-actifc-elements_financiers').text(formatCurrency(data.elements_financiers));
+                $('#modal-actifc-participations').text(formatCurrency(data.participations));
+                $('#modal-actifc-prets').text(formatCurrency(data.prets));
+                $('#modal-actifc-autres').text(formatCurrency(data.autres));
+
+                $('#total-actifc-II').text(formatCurrency(data.total_II));
+                $('#modal-actifc-stocks').text(formatCurrency(data.stocks));
+                $('#modal-actifc-stocks_mp').text(formatCurrency(data.stocks_mp));
+                $('#modal-actifc-stocks_encours_mp').text(formatCurrency(data.stocks_encours_mp));
+                $('#modal-actifc-stocks_pf').text(formatCurrency(data.stocks_pf));
+                $('#modal-actifc-stocks_encours_pf').text(formatCurrency(data.stocks_encours_pf));
+                $('#modal-actifc-stocks_encours_services').text(formatCurrency(data.stocks_encours_services));
+                $('#modal-actifc-stocks_mses').text(formatCurrency(data.stocks_mses));
+                
+                $('#modal-actifc-creances').text(formatCurrency(data.creances));
+                $('#modal-actifc-avances_acptes_verses').text(formatCurrency(data.avances_acptes_verses));
+                $('#modal-actifc-clients_et_cptes_rattaches').text(formatCurrency(data.clients_et_cptes_rattaches));
+                $('#modal-actifc-autres_creances').text(formatCurrency(data.autres_creances));
+
+                $('#modal-actifc-disponibilites_vmp').text(formatCurrency(data.disponibilites_vmp));
+                $('#modal-actifc-valeurs_a_encaisser').text(formatCurrency(data.valeurs_a_encaisser));
+                $('#modal-actifc-banques_cheques_postaux_caisse').text(formatCurrency(data.banques_cheques_postaux_caisse));
+
+                $('#total-actifc-III').text(formatCurrency(data.total_III));
+                $('#modal-actifc-cca').text(formatCurrency(data.cca));
+                $('#modal-actifc-charges_a_repartir_et_frais_etablissement').text(formatCurrency(data.charges_a_repartir_et_frais_etablissement));
+                $('#modal-actifc-primes_de_rbt').text(formatCurrency(data.primes_de_rbt));
+
+                $('#total-general-actifc').text(formatCurrency(data.general_total));
+                loader.hide();
+                content.show();
+            },
+            error: () => {
+                loader.hide();
+                content.html('<div class="alert alert-danger">Impossible de charger les détails de l\'actif.</div>').show();
+            }
+        });
+    });
+
+    // --- LOGIQUE POUR LE MODAL DE MODIFICATION ---
+    $('#listing-actifs-c-pane').on('click', '.btn-edit-actifc', function() {
+        const actifId = $(this).data('actif-id');
+        const formContent = $('#edit-actifc-form-content');
+        formContent.html('<div class="text-center p-4"><div class="spinner-border"></div></div>');
+
+        function updateEditActifCTotals() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalIncorporel = p($('#edit_frais_recherche_developpement').val()) + p($('#edit_brevet_licence_logiciels').val()) + p($('#edit_fonds_commercial').val()) + p($('#edit_autres_immobilisations_incorporelles').val());
+            const totalCorporel = p($('#edit_terrains').val()) + p($('#edit_constructions').val()) + p($('#edit_materiels_et_outils').val()) + p($('#edit_materiel_de_transport').val()) + p($('#edit_autres_immos_corp').val()) + p($('#edit_immos_en_cours').val()) + p($('#edit_avances_et_acptes').val());
+            const totalFinancier = p($('#edit_participations').val()) + p($('#edit_prets').val()) + p($('#edit_autres').val());
+            const totalI = totalIncorporel + totalCorporel + totalFinancier;
+            
+            const totalStocks = p($('#edit_stocks_mp').val()) + p($('#edit_stocks_encours_mp').val()) + p($('#edit_stocks_pf').val()) + p($('#edit_stocks_encours_pf').val()) + p($('#edit_stocks_encours_services').val()) + p($('#edit_stocks_mses').val());
+            const totalCreances = p($('#edit_avances_acptes_verses').val()) + p($('#edit_clients_et_cptes_rattaches').val()) + p($('#edit_autres_creances').val());
+            const totalDispos = p($('#edit_valeurs_a_encaisser').val()) + p($('#edit_banques_cheques_postaux_caisse').val());
+            const totalII = totalStocks + totalCreances + totalDispos;
+
+            const totalRegul = p($('#edit_cca').val()) + p($('#edit_charges_a_repartir_et_frais_etablissement').val()) + p($('#edit_primes_de_rbt').val());
+            const totalIII = totalRegul;
+
+            const generalTotal = totalI + totalII + totalIII;
+
+            $('#edit_total_I').val(formatCurrency(totalI));
+            $('#edit_total_II').val(formatCurrency(totalII));
+            $('#edit_total_III').val(formatCurrency(totalIII));
+            $('#edit_general_total').val(formatCurrency(generalTotal));
+        }
+
+        $.ajax({
+            url: `{% url 'get-actif-c' 0 %}`.replace('0', actifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#edit-actifc-id').val(data.id);
+                
+                let formHtml = `
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="edit_annee" class="form-label">Année</label>
+                            <select name="annee" id="edit_annee" class="form-select">
+                                {% for annee in annee_list %}<option value="{{ annee.id }}" {% if data.annee.id == annee.id %}selected{% endif %}>{{ annee.annee }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <h5 class="mt-1"><i class="bi bi-person-fill"></i> ${data.acheteur.nom}</h5>
+                    <hr>
+                    <h4 class="text-primary mt-4">ACTIF IMMOBILISÉ</h4>
+                    <h6 class="text-muted mt-3 mb-2">Éléments Incorporels</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_frais_recherche_developpement" class="form-label mb-0">Frais recherche & développement</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="frais_recherche_developpement" id="edit_frais_recherche_developpement" value="${data.frais_recherche_developpement || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_brevet_licence_logiciels" class="form-label mb-0">Brevet, licence, logiciels</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="brevet_licence_logiciels" id="edit_brevet_licence_logiciels" value="${data.brevet_licence_logiciels || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_fonds_commercial" class="form-label mb-0">Fonds commercial</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="fonds_commercial" id="edit_fonds_commercial" value="${data.fonds_commercial || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_autres_immobilisations_incorporelles" class="form-label mb-0">Autres immobilisations incorporelles</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="autres_immobilisations_incorporelles" id="edit_autres_immobilisations_incorporelles" value="${data.autres_immobilisations_incorporelles || 0}"></div></div>
+                    
+                    <h6 class="text-muted mt-3 mb-2">Éléments Corporels</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_terrains" class="form-label mb-0">Terrains</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="terrains" id="edit_terrains" value="${data.terrains || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_constructions" class="form-label mb-0">Constructions</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="constructions" id="edit_constructions" value="${data.constructions || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_materiels_et_outils" class="form-label mb-0">Matériels et outils</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="materiels_et_outils" id="edit_materiels_et_outils" value="${data.materiels_et_outils || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_materiel_de_transport" class="form-label mb-0">Matériel de transport</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="materiel_de_transport" id="edit_materiel_de_transport" value="${data.materiel_de_transport || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_autres_immos_corp" class="form-label mb-0">Autres immos corporelles</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="autres_immos_corp" id="edit_autres_immos_corp" value="${data.autres_immos_corp || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_immos_en_cours" class="form-label mb-0">Immos en cours</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="immos_en_cours" id="edit_immos_en_cours" value="${data.immos_en_cours || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_avances_et_acptes" class="form-label mb-0">Avances et acomptes</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="avances_et_acptes" id="edit_avances_et_acptes" value="${data.avances_et_acptes || 0}"></div></div>
+                    
+                    <h6 class="text-muted mt-3 mb-2">Éléments Financiers</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_participations" class="form-label mb-0">Participations</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="participations" id="edit_participations" value="${data.participations || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_prets" class="form-label mb-0">Prêts</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="prets" id="edit_prets" value="${data.prets || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_autres" class="form-label mb-0">Autres</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="autres" id="edit_autres" value="${data.autres || 0}"></div></div>
+
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_I" class="form-label fw-bold mb-0">TOTAL ACTIF IMMOBILISÉ</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_I" readonly style="background-color: #e9ecef;"></div></div>
+                    
+                    <h4 class="text-primary mt-4">ACTIF CIRCULANT</h4>
+                    <h6 class="text-muted mt-3 mb-2">Stocks</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_stocks_mp" class="form-label mb-0">Stocks de matières premières</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="stocks_mp" id="edit_stocks_mp" value="${data.stocks_mp || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_stocks_encours_mp" class="form-label mb-0">Stocks encours MP</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="stocks_encours_mp" id="edit_stocks_encours_mp" value="${data.stocks_encours_mp || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_stocks_pf" class="form-label mb-0">Stocks de produits finis</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="stocks_pf" id="edit_stocks_pf" value="${data.stocks_pf || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_stocks_encours_pf" class="form-label mb-0">Stocks encours PF</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="stocks_encours_pf" id="edit_stocks_encours_pf" value="${data.stocks_encours_pf || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_stocks_encours_services" class="form-label mb-0">Stocks encours services</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="stocks_encours_services" id="edit_stocks_encours_services" value="${data.stocks_encours_services || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_stocks_mses" class="form-label mb-0">Stocks de marchandises</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="stocks_mses" id="edit_stocks_mses" value="${data.stocks_mses || 0}"></div></div>
+                    
+                    <h6 class="text-muted mt-3 mb-2">Créances</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_avances_acptes_verses" class="form-label mb-0">Avances et acomptes versés</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="avances_acptes_verses" id="edit_avances_acptes_verses" value="${data.avances_acptes_verses || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_clients_et_cptes_rattaches" class="form-label mb-0">Clients et comptes rattachés</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="clients_et_cptes_rattaches" id="edit_clients_et_cptes_rattaches" value="${data.clients_et_cptes_rattaches || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_autres_creances" class="form-label mb-0">Autres créances</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="autres_creances" id="edit_autres_creances" value="${data.autres_creances || 0}"></div></div>
+
+                    <h6 class="text-muted mt-3 mb-2">Disponibilités & VMP</h6>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_valeurs_a_encaisser" class="form-label mb-0">Valeurs à encaisser</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="valeurs_a_encaisser" id="edit_valeurs_a_encaisser" value="${data.valeurs_a_encaisser || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_banques_cheques_postaux_caisse" class="form-label mb-0">Banques, chèques postaux, caisse</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="banques_cheques_postaux_caisse" id="edit_banques_cheques_postaux_caisse" value="${data.banques_cheques_postaux_caisse || 0}"></div></div>
+
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_II" class="form-label fw-bold mb-0">TOTAL ACTIF CIRCULANT</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_II" readonly style="background-color: #e9ecef;"></div></div>
+
+                    <h4 class="text-primary mt-4">COMPTES DE RÉGULARISATION</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_cca" class="form-label mb-0">Charges constatées d'avance</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="cca" id="edit_cca" value="${data.cca || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_charges_a_repartir_et_frais_etablissement" class="form-label mb-0">Charges à répartir</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="charges_a_repartir_et_frais_etablissement" id="edit_charges_a_repartir_et_frais_etablissement" value="${data.charges_a_repartir_et_frais_etablissement || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_primes_de_rbt" class="form-label mb-0">Primes de remboursement</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="primes_de_rbt" id="edit_primes_de_rbt" value="${data.primes_de_rbt || 0}"></div></div>
+
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_III" class="form-label fw-bold mb-0">TOTAL COMPTES DE RÉGULARISATION</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_III" readonly style="background-color: #e9ecef;"></div></div>
+
+                    <hr class="my-4">
+                    <div class="row align-items-center bg-light p-3 rounded"><div class="col-md-6"><h5 class="mb-0">TOTAL GÉNÉRAL ACTIF</h5></div><div class="col-md-6"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_general_total" readonly></div></div>
+                `;
+                formContent.html(formHtml);
+                updateEditActifCTotals();
+                $('#form-edit-actifc').on('input', 'input[type="number"]', updateEditActifCTotals);
+            },
+            error: function(xhr) {
+                formContent.html('<div class="alert alert-danger">Impossible de charger le formulaire de modification de l\'actif.</div>');
+            }
+        });
+    });
+
+    $('#form-edit-actifc').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), actifId = $('#edit-actifc-id').val(), btn = $('#btn-save-actifc-changes'), originalText = btn.html();
+        $.ajax({
+            url: `{% url 'edit-actif-c' 0 %}`.replace('0', actifId), type: 'PUT', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => { $('#modal-edit-actifc').modal('hide'); Swal.fire('Modifié !', 'L\'actif a été mis à jour.', 'success').then(() => window.location.reload()); },
+            error: () => Swal.fire('Erreur', 'Veuillez vérifier les données.', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

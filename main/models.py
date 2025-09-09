@@ -172,6 +172,9 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+    
+    def get_user_country(request):
+        return request.user.pays
 
     def fullname(self):
         return f"{self.first_name} {self.last_name}"
@@ -1738,6 +1741,20 @@ class RiskRating(models.Model):
             "faible": _("Le risque de transaction est relativement faible."),
         }
         return explications.get(self.indice_du_risque, "")
+    
+    def calculate_risk_score(self):
+        score = 1  # ou 0 selon votre choix
+        fields_to_check = [
+            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+        ]
+        
+        for field in fields_to_check:
+            if getattr(self, field):
+                score += 1
+                
+        return min(score, 9)  # ou 8 si vous partez de 0
 
 
 class DonneesEnregistrement(models.Model):
@@ -2855,10 +2872,15 @@ class Banquier(models.Model):
 
 ##########################################################
 ##########################################################
-# Fin Modules Bilan Anglais
+# Debut Modules Bilan Anglais
 ##########################################################
 ##########################################################
+
+
+# Debut Modules Bilan Anglais
+
 class ActifA(models.Model):
+    # ... (champs existants)
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -2937,14 +2959,25 @@ class ActifA(models.Model):
         verbose_name = _("Actif bilan anglais")
         verbose_name_plural = _("Actifs bilans anglais")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def total_actifs_non_courants(self):
+        """Calcule le total des actifs non-courants (immobilisés)."""
+        return self.biens_installations_equipements or 0
 
-    #  total_actifs_non_courants
-    #  total_actif_circulant
-    #  total_actif_circulant
+    @property
+    def total_actifs_courants(self):
+        """Calcule le total des actifs courants."""
+        fields = [self.inventaire, self.creances_commerciales_autres_creances, self.actif_impots_courant, self.caisses_banques]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_actif(self):
+        """Calcule le total général de l'actif."""
+        return self.total_actifs_non_courants + self.total_actifs_courants
 
 
 class PassifA(models.Model):
+    # ... (champs existants)
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -3050,16 +3083,31 @@ class PassifA(models.Model):
         verbose_name = _("Passif bilan anglais")
         verbose_name_plural = _("Passifs bilans anglais")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def total_fonds_propres(self):
+        """Calcule le total des fonds propres."""
+        return (self.capital_reserves or 0) + (self.capital_declare or 0) + (self.benefices_non_distribues or 0)
 
-    #  total_fonds_propres
-    #  total_passif_long_terme
-    #  total_passif_circulant
-    #  total_passif
-    #  Total_fonds_propres_passif
+    @property
+    def total_passifs_non_courants(self):
+        """Calcule le total des passifs à long terme."""
+        fields = [self.pret_bancaire, self.compte_courant_administrateurs]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_passifs_courants(self):
+        """Calcule le total des passifs courants."""
+        fields = [self.dettes_commerciales_autres_dettes, self.decouvert_bancaire, self.impots]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_passif(self):
+        """Calcule le total général du passif."""
+        return self.total_fonds_propres + self.total_passifs_non_courants + self.total_passifs_courants
 
 
 class ResultatA(models.Model):
+    # ... (champs existants)
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -3151,38 +3199,110 @@ class ResultatA(models.Model):
         verbose_name = _("Résultat bilan anglais")
         verbose_name_plural = _("Résultat bilans anglais")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def marge_brute(self):
+        """Calcule la marge brute."""
+        return (self.ventes or 0) - (self.charges_exploitation or 0)
+    
+    @property
+    def resultat_exploitation(self):
+        """Calcule le résultat d'exploitation (Operating Profit)."""
+        return self.marge_brute - (self.frais_vente_generaux_administratifs or 0)
+        
+    @property
+    def resultat_avant_interets_impots(self):
+        """Calcule le bénéfice avant coûts financiers et impôts (EBIT)."""
+        return self.resultat_exploitation + (self.autres_revenus or 0)
+    
+    @property
+    def resultat_avant_impots(self):
+        """Calcule le résultat avant impôts (PBT)."""
+        return self.resultat_avant_interets_impots - (self.frais_financier or 0)
+    
+    @property
+    def resultat_net(self):
+        """Calcule le résultat net (Net Income)."""
+        return self.resultat_avant_impots - (self.charge_impot_sur_revenu or 0)
 
-    #  marge_brut
-    #  resultat_exploitation
-    #  benefice_avant_cout_financier_impots
-    #  resultat_avant_impots
-    #  benefice_annee
-    #  benefices_non_distribues
+    @property
+    def benefices_non_distribues(self):
+        """Calcule les bénéfices non distribués (Retained Earnings)."""
+        return (self.resultat_net or 0) + (self.autres_elements_resultat_global or 0)
 
+# Calcul des ratios
+from decimal import Decimal
 
-#  Calcul des ratios
+class RatiosAnglais:
+    def __init__(self, actif: ActifA, passif: PassifA, resultat: ResultatA):
+        self.actif = actif
+        self.passif = passif
+        self.resultat = resultat
+    
+    def _get_val(self, model, prop):
+        return getattr(model, prop, Decimal('0')) or Decimal('0')
 
-#  init(self, acheteur, annee)
+    @property
+    def solvabilite(self):
+        """ Solvabilité = Total passif / Total actif """
+        total_actif = self._get_val(self.actif, 'total_actif')
+        total_passif = self._get_val(self.passif, 'total_passif')
+        if total_actif != 0:
+            return total_passif / total_actif
+        return None
+        
+    @property
+    def autonomie_financiere(self):
+        """ Autonomie financière = Total fonds propres / Total passif """
+        fonds_propres = self._get_val(self.passif, 'total_fonds_propres')
+        total_passif = self._get_val(self.passif, 'total_passif')
+        if total_passif != 0:
+            return fonds_propres / total_passif
+        return None
 
-#  solvabilite
-#  autonomiefin
-#  rendement_capitaux_propres
-#  taux_marge_net
-#  liquidite_generale
-#  jour_recouvrement_moyen
-#  jour_paiement_moyen
-#  taux_rotation_creance
-#  taux_rotation_stock
-#  taux_rotation_actif
-#  ratio_endettement1
-#  ratio_endettement2
-#  passif_cour_terme
-#  ratios_couverture_interet
-#  ratios_liquidite_general
-#  ratios_liquidite2
-#  ratio_g_score_fin
-#  ratio_endettement_g_score
+    @property
+    def rendement_capitaux_propres(self):
+        """ Rendement des capitaux propres (ROE) = Résultat net / Total fonds propres """
+        fonds_propres = self._get_val(self.passif, 'total_fonds_propres')
+        resultat_net = self._get_val(self.resultat, 'resultat_net')
+        if fonds_propres != 0:
+            return resultat_net / fonds_propres
+        return None
+        
+    @property
+    def taux_marge_net(self):
+        """ Taux de marge net = Résultat net / Ventes """
+        ventes = self._get_val(self.resultat, 'ventes')
+        resultat_net = self._get_val(self.resultat, 'resultat_net')
+        if ventes != 0:
+            return resultat_net / ventes
+        return None
+
+    @property
+    def liquidite_generale(self):
+        """ Ratio de liquidité générale = Actifs courants / Passifs courants """
+        actifs_courants = self._get_val(self.actif, 'total_actifs_courants')
+        passifs_courants = self._get_val(self.passif, 'total_passifs_courants')
+        if passifs_courants != 0:
+            return actifs_courants / passifs_courants
+        return None
+        
+    @property
+    def jour_recouvrement_moyen(self):
+        """ Jours de recouvrement moyen = (Créances commerciales / Ventes) * 365 """
+        creances = self._get_val(self.actif, 'creances_commerciales_autres_creances')
+        ventes = self._get_val(self.resultat, 'ventes')
+        if ventes != 0:
+            return (creances / ventes) * 365
+        return None
+        
+    @property
+    def jour_paiement_moyen(self):
+        """ Jours de paiement moyen = (Dettes commerciales / Coût des ventes) * 365 """
+        dettes = self._get_val(self.passif, 'dettes_commerciales_autres_dettes')
+        charges_exploitation = self._get_val(self.resultat, 'charges_exploitation')
+        if charges_exploitation != 0:
+            return (dettes / charges_exploitation) * 365
+        return None
 
 
 ##########################################################
@@ -3199,7 +3319,11 @@ class ResultatA(models.Model):
 ##########################################################
 
 
+# Debut Modules Bilan Classique
+
+# Actif
 class ActifC(models.Model):
+    # ... (les champs existants) ...
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -3250,7 +3374,6 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Autres immobilisations incorporelles"),
     )
-
     terrains = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3300,13 +3423,8 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Avances et acptes"),
     )
-
     participations = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Participations"),
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Participations")
     )
     prets = models.DecimalField(
         max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prets")
@@ -3318,7 +3436,6 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Autres"),
     )
-
     stocks_mp = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3361,7 +3478,6 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Stocks mses"),
     )
-
     avances_acptes_verses = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3383,7 +3499,6 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Autres creances"),
     )
-
     valeurs_a_encaisser = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3398,7 +3513,6 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Banques cheques postaux caisse"),
     )
-
     cca = models.DecimalField(
         max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Cca")
     )
@@ -3419,7 +3533,6 @@ class ActifC(models.Model):
     eca = models.DecimalField(
         max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca")
     )
-
     eene = models.DecimalField(
         max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eene")
     )
@@ -3458,14 +3571,12 @@ class ActifC(models.Model):
         blank=True,
         verbose_name=_("Provisions vmp"),
     )
-
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-
     created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
         "CustomUser",
@@ -3490,22 +3601,100 @@ class ActifC(models.Model):
         verbose_name = _("Actif bilan classique")
         verbose_name_plural = _("Actifs bilans classiques")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def elements_incorporels(self):
+        """Calcule le total des éléments incorporels."""
+        fields = [
+            self.frais_recherche_developpement,
+            self.brevet_licence_logiciels,
+            self.fonds_commercial,
+            self.autres_immobilisations_incorporelles,
+        ]
+        return sum(f or 0 for f in fields)
 
-    #  elements_incorporels
-    #  elements_corporels
-    #  elements_financiers
-    #  total_I
-    #  stocks
-    #  creances
-    #  disponibilites_vmp
-    #  total_II
-    #  compte_regul
-    #  total_III
-    #  general_total
+    @property
+    def elements_corporels(self):
+        """Calcule le total des éléments corporels."""
+        fields = [
+            self.terrains,
+            self.constructions,
+            self.materiels_et_outils,
+            self.materiel_de_transport,
+            self.autres_immos_corp,
+            self.immos_en_cours,
+            self.avances_et_acptes,
+        ]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def elements_financiers(self):
+        """Calcule le total des éléments financiers."""
+        fields = [self.participations, self.prets, self.autres]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_I(self):
+        """Total Actif Immobilisé (Immobilisations nettes)"""
+        return (
+            self.elements_incorporels
+            + self.elements_corporels
+            + self.elements_financiers
+        )
+
+    @property
+    def stocks(self):
+        """Calcule le total des stocks."""
+        fields = [
+            self.stocks_mp,
+            self.stocks_encours_mp,
+            self.stocks_pf,
+            self.stocks_encours_pf,
+            self.stocks_encours_services,
+            self.stocks_mses,
+        ]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def creances(self):
+        """Calcule le total des créances."""
+        fields = [
+            self.avances_acptes_verses,
+            self.clients_et_cptes_rattaches,
+            self.autres_creances,
+        ]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def disponibilites_vmp(self):
+        """Calcule le total des disponibilités et VMP."""
+        fields = [self.valeurs_a_encaisser, self.banques_cheques_postaux_caisse]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_II(self):
+        """Total Actif Circulant (Stocks + Créances + Disponibilités)"""
+        return self.stocks + self.creances + self.disponibilites_vmp
+
+    @property
+    def compte_regul(self):
+        """Calcule le total des comptes de régularisation."""
+        fields = [self.cca]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_III(self):
+        """Total des Comptes de Régularisation."""
+        return self.compte_regul
+
+    @property
+    def general_total(self):
+        """Total général de l'actif."""
+        return self.total_I + self.total_II + self.total_III + (self.capital_souscrit_non_app or 0)
 
 
+# Passif
 class PassifC(models.Model):
+    # ... (les champs existants) ...
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -3520,7 +3709,6 @@ class PassifC(models.Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-
     capital_social = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3573,7 +3761,6 @@ class PassifC(models.Model):
         blank=True,
         verbose_name=_("Provision regle"),
     )
-
     emprunts = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3602,7 +3789,6 @@ class PassifC(models.Model):
         blank=True,
         verbose_name=_("Provision financiere risque charge"),
     )
-
     dettes_fournisseurs_divers = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3638,7 +3824,6 @@ class PassifC(models.Model):
         blank=True,
         verbose_name=_("Autres dettes"),
     )
-
     banques_credit_escompte = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3660,7 +3845,6 @@ class PassifC(models.Model):
         blank=True,
         verbose_name=_("Banques decouvert"),
     )
-
     ecart_conversion_passif = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3668,14 +3852,12 @@ class PassifC(models.Model):
         blank=True,
         verbose_name=_("Ecart conversion passif"),
     )
-
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-
     created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
         "CustomUser",
@@ -3700,16 +3882,61 @@ class PassifC(models.Model):
         verbose_name = _("Passif bilan classique")
         verbose_name_plural = _("Passifs bilans classiques")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def total_I(self):
+        """Calcule le total des capitaux propres (I)."""
+        fields = [
+            self.capital_social,
+            self.primes,
+            self.ecarts_de_reevaluation,
+            self.reserve,
+            self.report_a_nouveau,
+            self.resultat_exercice,
+            self.subv_invest,
+            self.provision_regl,
+        ]
+        return sum(f or 0 for f in fields)
 
-    #  total_I
-    #  total_II
-    #  total_III
-    #  total_IV
-    #  total_general
+    @property
+    def total_II(self):
+        """Calcule le total des dettes financières et ressources assimilées (II)."""
+        fields = [
+            self.emprunts,
+            self.dette_credit_bail_contrat_assimile,
+            self.dettes_financiere_diverses,
+            self.provision_financiere_risque_charge,
+        ]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_III(self):
+        """Calcule le total des dettes du passif circulant (III)."""
+        fields = [
+            self.dettes_fournisseurs_divers,
+            self.avance_et_acomptes_recu,
+            self.dettes,
+            self.dettes_fiscales_sociales,
+            self.autres_dettes,
+            self.banques_credit_escompte,
+            self.banque_credit_caisse,
+            self.banques_decouvert,
+        ]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def total_IV(self):
+        """Calcule le total des comptes de régularisation (IV)."""
+        return self.ecart_conversion_passif or 0
+
+    @property
+    def total_general(self):
+        """Calcule le total général du passif."""
+        return self.total_I + self.total_II + self.total_III + self.total_IV
 
 
+# Compte de Résultat
 class ResultatC(models.Model):
+    # ... (les champs existants) ...
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -3724,7 +3951,6 @@ class ResultatC(models.Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-
     vente_de_mdses = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3760,7 +3986,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Production imblise"),
     )
-
     subventions_exploitations = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3796,7 +4021,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Autres produits"),
     )
-
     achat_mdses = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3811,7 +4035,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Variation stock mdses"),
     )
-
     achat_mp_autres_appro = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3868,7 +4091,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Autres charges valeur ajoutee"),
     )
-
     charges_personnel = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3876,7 +4098,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Charges personnel"),
     )
-
     dotation_aux_amorts = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3898,7 +4119,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Autres charges excedent brute"),
     )
-
     revenus_fin_assimiles = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3941,7 +4161,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Prod nets cessions vmp"),
     )
-
     dap = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3970,7 +4189,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Ch nettes cessions vmp"),
     )
-
     sur_op_gestion_prod_except = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -3992,7 +4210,6 @@ class ResultatC(models.Model):
         blank=True,
         verbose_name=_("Reprise prov transfert"),
     )
-
     sur_op_gestion_charg_except = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -4028,14 +4245,12 @@ class ResultatC(models.Model):
         null=True,
         blank=True,
     )
-
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-
     created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
         "CustomUser",
@@ -4060,45 +4275,255 @@ class ResultatC(models.Model):
         verbose_name = _("Résultat bilan classique")
         verbose_name_plural = _("Résultats bilans classiques")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def ca(self):
+        """Calcule le chiffre d'affaires (ventes)."""
+        fields = [self.vente_de_mdses, self.ventes_de_produits_fabriques, self.travaux_services_vendus, self.produit_accessoires]
+        return sum(f or 0 for f in fields)
+    
+    @property
+    def total_I(self):
+        """Calcule le total des produits d'activités ordinaires."""
+        fields = [self.ca, self.production_imblise, self.subventions_exploitations, self.production_stockee, self.reprises_de_provision, self.transferts_charges, self.autres_produits]
+        return sum(f or 0 for f in fields)
 
-    #  ca
-    #  total_I
-    #  marge_brute
-    #  valeur_ajoutee
-    #  excedent_brut_ex
-    #  resultat_exploitation
-    #  financier_total_I
-    #  financier_total_II
-    #  resultat_financier
-    #  resultat_courant_avant_impots
-    #  excep_total_I
-    #  excep_total_II
-    #  resultat_excep
-    #  resultat_exercice
+    @property
+    def marge_brute(self):
+        """Calcule la marge commerciale brute."""
+        return (self.vente_de_mdses or 0) - (self.achat_mdses or 0) + (self.variation_stock_mdses or 0)
+
+    @property
+    def valeur_ajoutee(self):
+        """Calcule la valeur ajoutée."""
+        return self.total_I - (self.achat_mp_autres_appro or 0) - (self.var_stk_mp_app or 0) - (self.autres_achats or 0) - (self.variation_de_stocks_autres_appro or 0) - (self.transports or 0) - (self.services_ext or 0) - (self.impots_taxes or 0) - (self.autres_charges_valeur_ajoutee or 0)
+
+    @property
+    def excedent_brut_ex(self):
+        """Calcule l'excédent brut d'exploitation."""
+        return self.valeur_ajoutee - (self.charges_personnel or 0)
+
+    @property
+    def resultat_exploitation(self):
+        """Calcule le résultat d'exploitation."""
+        return self.excedent_brut_ex - (self.dotation_aux_amorts or 0) - (self.dotation_aux_provisions or 0) - (self.autres_charges_excedent_brute or 0)
+
+    @property
+    def financier_total_I(self):
+        """Calcule le total des produits financiers."""
+        fields = [self.revenus_fin_assimiles, self.prof_vmp_et_cre_actif_immo, self.interets_produit_assim, self.reprise_prov_et_transfert, self.diff_positive_de_change, self.prod_nets_cessions_vmp]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def financier_total_II(self):
+        """Calcule le total des charges financières."""
+        fields = [self.dap, self.frais_fin_charges_assi, self.diff_negatives_de_change, self.ch_nettes_cessions_vmp]
+        return sum(f or 0 for f in fields)
+    
+    @property
+    def resultat_financier(self):
+        """Calcule le résultat financier."""
+        return self.financier_total_I - self.financier_total_II
+
+    @property
+    def resultat_courant_avant_impots(self):
+        """Calcule le résultat courant avant impôts."""
+        return self.resultat_exploitation + self.resultat_financier
+
+    @property
+    def excep_total_I(self):
+        """Calcule le total des produits exceptionnels."""
+        fields = [self.sur_op_gestion_prod_except, self.sur_op_en_capital_prod_except, self.reprise_prov_transfert]
+        return sum(f or 0 for f in fields)
+    
+    @property
+    def excep_total_II(self):
+        """Calcule le total des charges exceptionnelles."""
+        fields = [self.sur_op_gestion_charg_except, self.sur_op_en_capital_charg_except, self.dap_et_transfert_charg_except]
+        return sum(f or 0 for f in fields)
+
+    @property
+    def resultat_excep(self):
+        """Calcule le résultat exceptionnel."""
+        return self.excep_total_I - self.excep_total_II
+
+    @property
+    def resultat_exercice(self):
+        """Calcule le résultat net de l'exercice."""
+        return self.resultat_courant_avant_impots + self.resultat_excep - (self.participation_salairies or 0) - (self.impot_sur_benefices or 0)
 
 
-#  Calcul des ratios
+### Calcul des Ratios Financiers
 
-#  init(self, acheteur, annee)
+# En plus des calculs internes aux modèles, voici une structure de classe pour calculer les ratios financiers 
+# à partir des données des bilans et du compte de résultat. Cette logique est généralement mieux isolée dans une classe 
+# dédiée pour la clarté et la réutilisation.
 
-#  fonds_de_roulement
-#  fdr_normati
-#  autonomie_fin
-#  liquidite_reduite
-#  liquidite_immediat
-#  caf
-#  caf_ht
-#  rentabilite_economique
-#  rentabilite_fin
-#  rentabilite_de_loutil_de_production
-#  couverture_des_frais_financiers
-#  rotation_des_stock_de_mp
-#  rotation_des_stock_de_pf
-#  rotation_des_stock_de_marchandises
-#  rotation_des_stock_de_services
-#  credit_clients
-#  credits_fournisseurs
+
+from decimal import Decimal
+
+# Dans un fichier utils.py ou similaire
+class RatiosClassique:
+    def __init__(self, actif_c: ActifC, passif_c: PassifC, resultat_c: ResultatC):
+        self.actif = actif_c
+        self.passif = passif_c
+        self.resultat = resultat_c
+
+    def _get_value(self, model, field_name):
+        """Récupère une valeur en toute sécurité et retourne 0 si elle est None."""
+        return getattr(model, field_name, Decimal('0')) or Decimal('0')
+
+    # Ratios de Structure financière
+    # -----------------------------
+    @property
+    def fonds_de_roulement(self):
+        """
+        Calcule le Fonds de Roulement Net Global (FRNG).
+        FRNG = Total des capitaux permanents - Actifs immobilisés
+        """
+        fdr = self.passif.total_I + self.passif.total_II - self.actif.total_I
+        return fdr if self.actif and self.passif else None
+
+    @property
+    def autonomie_fin(self):
+        """
+        Calcule le ratio d'autonomie financière.
+        Autonomie financière = Capitaux propres / Total du bilan
+        """
+        if self.passif.total_general and self.passif.total_general != 0:
+            return (self.passif.total_I / self.passif.total_general)
+        return None
+
+    # Ratios de Liquidité
+    # -----------------------------
+    @property
+    def liquidite_reduite(self):
+        """
+        Calcule le ratio de liquidité réduite (Quick Ratio).
+        Il mesure la capacité à payer les dettes à court terme sans compter les stocks.
+        Liquidité réduite = (Actif circulant - Stocks) / Dettes à court terme
+        """
+        total_actif_circulant = self.actif.total_II
+        stocks = self.actif.stocks
+        # Les dettes à court terme correspondent aux dettes du passif circulant
+        dettes_court_terme = self.passif.total_III
+        
+        if dettes_court_terme and dettes_court_terme != 0:
+            return (total_actif_circulant - stocks) / dettes_court_terme
+        return None
+
+    @property
+    def liquidite_immediat(self):
+        """
+        Calcule le ratio de liquidité immédiate (Cash Ratio).
+        Il mesure la capacité à payer les dettes à court terme avec la trésorerie disponible.
+        Liquidité immédiate = (Disponibilités + VMP) / Dettes à court terme
+        """
+        disponibilites = self.actif.disponibilites_vmp
+        dettes_court_terme = self.passif.total_III
+        
+        if dettes_court_terme and dettes_court_terme != 0:
+            return disponibilites / dettes_court_terme
+        return None
+    
+    # Ratios de Rentabilité
+    # -----------------------------
+    @property
+    def rentabilite_economique(self):
+        """
+        Mesure la rentabilité de l'ensemble des capitaux investis.
+        Rentabilité économique = Résultat d'exploitation / Total Actif
+        """
+        if self.actif.general_total and self.actif.general_total != 0:
+            return self.resultat.resultat_exploitation / self.actif.general_total
+        return None
+
+    @property
+    def rentabilite_fin(self):
+        """
+        Mesure la rentabilité des capitaux propres.
+        Rentabilité financière = Résultat net / Capitaux propres
+        """
+        capitaux_propres = self.passif.total_I
+        if capitaux_propres and capitaux_propres != 0:
+            return self.resultat.resultat_exercice / capitaux_propres
+        return None
+        
+    # Ratios de Gestion
+    # -----------------------------
+    @property
+    def rotation_des_stock_de_mp(self):
+        """
+        Mesure le nombre de jours de stocks de matières premières.
+        Rotation = (Stocks de MP / Achats de MP) * 360
+        """
+        if self.resultat.achat_mp_autres_appro and self.resultat.achat_mp_autres_appro != 0:
+            return (self.actif.stocks_mp / self.resultat.achat_mp_autres_appro) * 360
+        return None
+
+    @property
+    def rotation_des_stock_de_pf(self):
+        """
+        Mesure le nombre de jours de stocks de produits finis.
+        Rotation = (Stocks de PF / Coût de production) * 360
+        """
+        # Le coût de production n'est pas directement disponible, on utilise une approximation
+        # Coût de production = Production de l'exercice - Production stockée
+        cout_prod_approx = (self.resultat.ventes_de_produits_fabriques or 0) - (self.resultat.production_stockee or 0)
+        if cout_prod_approx and cout_prod_approx != 0:
+            return (self.actif.stocks_pf / cout_prod_approx) * 360
+        return None
+
+    @property
+    def credit_clients(self):
+        """
+        Mesure le délai de paiement accordé aux clients en jours.
+        Crédit clients = (Créances clients / Chiffre d'affaires) * 360
+        """
+        if self.resultat.ca and self.resultat.ca != 0:
+            return (self.actif.clients_et_cptes_rattaches / self.resultat.ca) * 360
+        return None
+        
+    @property
+    def credits_fournisseurs(self):
+        """
+        Mesure le délai de paiement obtenu des fournisseurs en jours.
+        Crédits fournisseurs = (Dettes fournisseurs / Achats) * 360
+        """
+        # On utilise le total des achats
+        achats = (self.resultat.achat_mdses or 0) + (self.resultat.achat_mp_autres_appro or 0) + (self.resultat.autres_achats or 0)
+        if achats and achats != 0:
+            return (self.passif.dettes_fournisseurs_divers / achats) * 360
+        return None
+    
+    
+    @property
+    def solvabilite(self):
+        """
+        Calcule le ratio de solvabilité.
+        Solvabilité = Capitaux Propres / Total Actif
+        """
+        total_actif = self._get_value(self.actif, 'general_total')
+        capitaux_propres = self._get_value(self.passif, 'total_I')
+        
+        if total_actif and total_actif != Decimal('0'):
+            # Convertir en float pour éviter les erreurs de division de Decimal si nécessaire
+            return float(capitaux_propres) / float(total_actif)
+        return None
+    
+    
+    
+    @property
+    def rendement_capitaux_propres(self):
+        """
+        Calcule le rendement des capitaux propres (ROE).
+        ROE = Résultat net / Capitaux propres
+        """
+        resultat_net = self._get_value(self.resultat, 'resultat_exercice')
+        capitaux_propres = self._get_value(self.passif, 'total_I')
+
+        if capitaux_propres and capitaux_propres != Decimal('0'):
+            return float(resultat_net) / float(capitaux_propres)
+        return None
 
 
 ##########################################################
@@ -5354,217 +5779,6 @@ class Products(models.Model):
 
 
 # Hors bilan
-class OffBalanceSheetOld(models.Model):
-    # --- Champs d'identification (inchangés) ---
-    type_bilan = models.CharField(
-        max_length=20,
-        choices=TYPE_BILAN_CHOICES,
-        default="annuel",
-        verbose_name=_("Type de bilan"),
-        help_text=_("Précise s’il s’agit d’un bilan annuel ou semestriel."),
-    )
-    annee = models.ForeignKey(
-        "Annee",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Année Civile"),
-    )
-    semestre = models.PositiveSmallIntegerField(
-        choices=SEMESTRE_CHOICES,
-        null=True,
-        blank=True,
-        verbose_name=_("Semestre"),
-        help_text=_("Laisser vide si le bilan est annuel."),
-    )
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Acheteur"),
-    )
-
-    # --- ENGAGEMENTS DONNÉS ---
-    # Catégorie : Engagements de financement donnés
-    engagement_financement_donne_ets_credit = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_(
-            "Engagements de financement donnés en faveur des établissements de crédit"
-        ),
-    )
-    engagement_financement_donne_clientele = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements de financement donnés en faveur de la clientèle"),
-    )
-
-    # Catégorie : Engagements de garantie donnés
-    engagement_garantie_donne_ets_credit = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_(
-            "Engagements de garantie donnés pour le compte des établissements de crédit"
-        ),
-    )
-    engagement_garantie_donne_clientele = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements de garantie donnés pour le compte de la clientèle"),
-    )
-
-    # Catégorie : Engagements sur titres donnés
-    engagement_sur_titres_donnes = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements sur titres donnés"),
-    )
-
-    # --- ENGAGEMENTS REÇUS ---
-    # Catégorie : Engagements de financement reçus
-    engagement_financement_recu_ets_credit = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements de financement reçus d'établissements de crédit"),
-    )
-    engagement_financement_recu_clientele = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements de financement reçus de la clientèle"),
-    )
-
-    # Catégorie : Engagements de garantie reçus
-    engagement_garantie_recu_ets_credit = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements de garantie reçus d'établissements de crédit"),
-    )
-
-    # Catégorie : Engagements sur titres reçus
-    engagement_sur_titres_recus = models.DecimalField(
-        max_digits=100,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name=_("Engagements sur titres reçus"),
-    )
-
-    # --- Champs de suivi (inchangés) ---
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey(
-        "CustomUser",
-        related_name="offbalance_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    # --- MÉTHODE __str__ AMÉLIORÉE ---
-    def __str__(self):
-        """
-        Fournit une représentation textuelle claire et sécurisée de l'instance,
-        inspirée du modèle Products.
-        """
-        libelle = f"{_('Hors bilan bancaire')} : {self.id}. {self.acheteur or 'N/A'}"
-        if self.annee:
-            libelle += f" ({self.annee.annee})"
-        if self.semestre:
-            libelle += f" - {self.get_semestre_display()}"
-        return libelle
-
-    class Meta:
-        verbose_name = _("Hors Bilan bancaire")
-        verbose_name_plural = _("Hors Bilans bancaires")
-
-    # ----------------------------------------
-    #  Liste des méthodes utiles pour ce modèle
-    # ----------------------------------------
-
-    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS DONNÉS ---
-
-    @property
-    def total_engagement_financement_donne(self):
-        """Calcule le total des engagements de financement DONNÉS."""
-        fields_to_sum = [
-            self.engagement_financement_donne_ets_credit,
-            self.engagement_financement_donne_clientele,
-        ]
-        return sum(field or 0 for field in fields_to_sum)
-
-    @property
-    def total_engagement_garantie_donne(self):
-        """Calcule le total des engagements de garantie DONNÉS."""
-        fields_to_sum = [
-            self.engagement_garantie_donne_ets_credit,
-            self.engagement_garantie_donne_clientele,
-        ]
-        return sum(field or 0 for field in fields_to_sum)
-
-    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS DONNÉS ---
-
-    @property
-    def total_engagements_donnes(self):
-        """Calcule le total de TOUS les engagements DONNÉS."""
-        return (
-            self.total_engagement_financement_donne
-            + self.total_engagement_garantie_donne
-            + (self.engagement_sur_titres_donnes or 0)
-        )
-
-    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS REÇUS ---
-
-    @property
-    def total_engagement_financement_recu(self):
-        """Calcule le total des engagements de financement REÇUS."""
-        fields_to_sum = [
-            self.engagement_financement_recu_ets_credit,
-            self.engagement_financement_recu_clientele,
-        ]
-        return sum(field or 0 for field in fields_to_sum)
-
-    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS REÇUS ---
-
-    @property
-    def total_engagements_recus(self):
-        """Calcule le total de TOUS les engagements REÇUS."""
-        # Note : Il n'y a qu'un seul champ de garantie reçu dans le modèle, donc on l'ajoute directement.
-        return (
-            self.total_engagement_financement_recu
-            + (self.engagement_garantie_recu_ets_credit or 0)
-            + (self.engagement_sur_titres_recus or 0)
-        )
-
-
-
-
-
-
-
-
-# Hors bilan
 class OffBalanceSheet(models.Model):
     # --- Champs d'identification (inchangés) ---
     type_bilan = models.CharField(
@@ -5864,6 +6078,9 @@ class OffBalanceSheet(models.Model):
 ##########################################################
 
 
+
+# Debut Modules Bilan SysCohada
+
 class ActifS(models.Model):
     annee = models.ForeignKey(
         "Annee",
@@ -5932,8 +6149,6 @@ class ActifS(models.Model):
         blank=True,
         verbose_name=_("Bâtiments"),
     )
-
-    # dons_investissements_net2 = models.DecimalField(max_digits=100, decimal_places=2, null=True, blank=True)
     agencements_amenagements_installations = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6083,17 +6298,52 @@ class ActifS(models.Model):
     class Meta:
         verbose_name = _("Actif bilan SYSCOHADA")
         verbose_name_plural = _("Actifs bilans SYSCOHADA")
-
-    #  Liste des methodes utiles pour ce model
-
-    #  immobilisation_incorporelles
-    #  immobilisations_corporelles
-    #  immobilisations_financieres
-    #  total_actif_immobilise
-    #  creances_emplois_similaires
-    #  total_actif_circulant
-    #  total_tresorerie_equivalents
-    #  total_actif
+    
+    @property
+    def immobilisations_incorporelles(self):
+        """Calcule le total des immobilisations incorporelles."""
+        fields = [self.frais_developpement_prospection, self.brevets_licences_logiciels, self.droits_propriete_commerciale_baux, self.autres_immo_incorporelles]
+        return sum(f or 0 for f in fields)
+    
+    @property
+    def immobilisations_corporelles(self):
+        """Calcule le total des immobilisations corporelles."""
+        fields = [self.terrains, self.dons_investissements_net, self.batiments, self.agencements_amenagements_installations, self.materiel_mobilier_actif_biologiques, self.materiel_transport]
+        return sum(f or 0 for f in fields)
+    
+    @property
+    def immobilisations_financieres(self):
+        """Calcule le total des immobilisations financières."""
+        fields = [self.titres_participation, self.autres_immobilisations_financieres]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_actif_immobilise(self):
+        """Total des immobilisations nettes (incorporelles + corporelles + financières)."""
+        return self.immobilisations_incorporelles + self.immobilisations_corporelles + self.immobilisations_financieres
+    
+    @property
+    def creances_emplois_similaires(self):
+        """Calcule le total des créances et emplois assimilés."""
+        fields = [self.fournisseurs_avances_versee, self.clients, self.autres_creances]
+        return sum(f or 0 for f in fields)
+    
+    @property
+    def total_tresorerie_equivalents(self):
+        """Total de la trésorerie et des équivalents de trésorerie."""
+        fields = [self.valeurs_mobilieres_placement, self.disponibilites, self.banque_cheque_postal_caisse_assimiles]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_actif_circulant(self):
+        """Total de l'actif circulant (hors trésorerie)."""
+        fields = [self.stock_encours, self.creances_emplois_similaires, self.actif_circulant_hao]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_actif(self):
+        """Calcule le total général de l'actif."""
+        return self.total_actif_immobilise + self.total_actif_circulant + self.total_tresorerie_equivalents + (self.ecart_conversion_actif or 0)
 
 
 class PassifS(models.Model):
@@ -6183,7 +6433,6 @@ class PassifS(models.Model):
         verbose_name=_("Provisions réglées"),
     )
 
-    # Total des capitaux propres et ressources similaires
     emprunts_dettes_financieres_diverse = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6206,8 +6455,6 @@ class PassifS(models.Model):
         verbose_name=_("Provisions pour risques et charges"),
     )
 
-    # Total des dettes financières et ressources assimilées
-    # Total des ressources stables
     passif_circulant_hao = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6251,7 +6498,6 @@ class PassifS(models.Model):
         verbose_name=_("Provisions pour risques à court terme"),
     )
 
-    # Total des passifs courants
     banques_credit_escompte = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6267,7 +6513,6 @@ class PassifS(models.Model):
         verbose_name=_("Banques, établissements financiers et crédits de caisse"),
     )
 
-    # Total de la trésorerie et des équivalents de trésorerie
     ecart_conversion_passif = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6306,15 +6551,40 @@ class PassifS(models.Model):
     class Meta:
         verbose_name = _("Passif bilan SYSCOHADA")
         verbose_name_plural = _("Passifs bilans SYSCOHADA")
+        
+    @property
+    def total_capitaux_propres_ressources_similaires(self):
+        """Calcule le total des capitaux propres et ressources assimilées."""
+        fields = [self.capital, self.primes_liees_capital_social, self.ecart_reevaluation, self.reserves_indisponibles, self.reserves_libres, self.report_nouveau, self.resultat_net_exercice, self.subventions_investissements, self.provisions_reglees]
+        return sum(f or 0 for f in fields) - (self.capital_non_appele_apporteurs or 0)
+    
+    @property
+    def total_dettes_financieres_ressources_similaires(self):
+        """Calcule le total des dettes financières et ressources assimilées."""
+        fields = [self.emprunts_dettes_financieres_diverse, self.dettes_location_vente, self.provisions_risques_charges]
+        return sum(f or 0 for f in fields)
 
-    #  Liste des methodes utiles pour ce model
-
-    #  total_capitaux_propres_ressources_similaires
-    #  total_dettes_financieres_ressources_similaires
-    #  total_ressources_stables
-    #  total_passifs_courants
-    #  total_tresorerie_equivalents
-    #  total_passifs
+    @property
+    def total_ressources_stables(self):
+        """Calcule le total des ressources stables."""
+        return self.total_capitaux_propres_ressources_similaires + self.total_dettes_financieres_ressources_similaires
+    
+    @property
+    def total_passifs_courants(self):
+        """Calcule le total des passifs courants."""
+        fields = [self.passif_circulant_hao, self.clients_avances_recues, self.fournisseurs_exploitation, self.dettes_fiscales_sociales, self.autres_dettes, self.provisions_risques_court_terme]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_tresorerie_equivalents(self):
+        """Calcule le total de la trésorerie et des équivalents de trésorerie."""
+        fields = [self.banques_credit_escompte, self.banques_etablissements_financiers_credit_caisse]
+        return sum(f or 0 for f in fields)
+        
+    @property
+    def total_passifs(self):
+        """Calcule le total général du passif."""
+        return self.total_ressources_stables + self.total_passifs_courants + self.total_tresorerie_equivalents + (self.ecart_conversion_passif or 0)
 
 
 class ResultatS(models.Model):
@@ -6355,7 +6625,6 @@ class ResultatS(models.Model):
         verbose_name="Variation des stocks de marchandises (-/+)",
     )
 
-    # Marge commerciale
     ventes_produits_manufactures = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6378,7 +6647,6 @@ class ResultatS(models.Model):
         verbose_name="Produits accessoires D (+)",
     )
 
-    # Chiffre d'affaires
     production_stockee = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6470,8 +6738,6 @@ class ResultatS(models.Model):
         blank=True,
         verbose_name="Autres dépenses (-)",
     )
-
-    # Valeur ajoutee
     frais_personnel = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6479,8 +6745,6 @@ class ResultatS(models.Model):
         blank=True,
         verbose_name="Frais de personnel (-)",
     )
-
-    # Excedent brut d'exploitation
     reprise_depreciations_amortissements_provision_pertes_valeurs_p = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6495,8 +6759,6 @@ class ResultatS(models.Model):
         blank=True,
         verbose_name="Reprises de dépréciations, amortissements, provisions et pertes de valeur (-)",
     )
-
-    # Resultat d'exploitation
     produits_financiers_assimiles = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6532,9 +6794,6 @@ class ResultatS(models.Model):
         blank=True,
         verbose_name="Dotations aux provisions et dépréciations financières (-)",
     )
-
-    # Resultat Financier
-    # Resultat des activites ordinaires (XE + XF)
     produits_cession_immobilisations = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6563,8 +6822,6 @@ class ResultatS(models.Model):
         blank=True,
         verbose_name="Autres charges HAO (-)",
     )
-
-    # Resultats des activites ordinaires (Somme TN à RP)
     participation_travailleurs = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -6579,7 +6836,6 @@ class ResultatS(models.Model):
         blank=True,
         verbose_name="Charge d'impôt sur le revenu (-)",
     )
-    # Resultat net (XG + XH + RQ +RS)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6599,12 +6855,12 @@ class ResultatS(models.Model):
 
     def __str__(self):
         return (
-            "Résultat bilan SYSCOHADA : "
-            + self.id
+            _("Résultat bilan SYSCOHADA : ")
+            + str(self.id)
             + ". "
-            + self.acheteur
+            + str(self.acheteur)
             + " ("
-            + self.annee
+            + str(self.annee)
             + ")"
         )
 
@@ -6612,60 +6868,135 @@ class ResultatS(models.Model):
         verbose_name = _("Résultat bilan SYSCOHADA")
         verbose_name_plural = _("Résultats bilans SYSCOHADA")
 
-    #  Liste des methodes utiles pour ce model
+    @property
+    def marge_commerciale(self):
+        """Calcule la marge commerciale."""
+        return (self.ventes_marchandises_a or 0) - (self.achats_marchandises or 0) + (self.variation_stock_marchandises or 0)
+    
+    @property
+    def chiffre_affaires(self):
+        """Calcule le chiffre d'affaires."""
+        return (self.ventes_marchandises_a or 0) + (self.ventes_produits_manufactures or 0) + (self.travaux_services_vendus_c or 0) + (self.produits_accessoires_d or 0)
 
-    #  marge_commerciale
-    #  chiffre_affaires
-    #  valeur_ajoutee
-    #  excedent_brute_exploitation
-    #  resultat_exploitation
-    #  resultat_financier
-    #  resultat_activites_ordinaires_xe
-    #  resultat_activites_ordinaires_tn
-    #  resultat_net
+    @property
+    def valeur_ajoutee(self):
+        """Calcule la valeur ajoutée."""
+        production = (self.chiffre_affaires or 0) + (self.production_stockee or 0) + (self.production_immobilisee or 0)
+        consommation_intermediaire = (self.achats_marchandises or 0) + (self.variation_stock_marchandises or 0) + (self.achats_matieres_premieres_fournitures_connexes or 0) + (self.variation_stock_matieres_premieres_fournitures_connexes or 0) + (self.autres_achats or 0) + (self.variation_stock_autres_fournitures or 0) + (self.transport or 0) + (self.services_exterieurs or 0)
+        return production - consommation_intermediaire
+    
+    @property
+    def excedent_brute_exploitation(self):
+        """Calcule l'excédent brut d'exploitation (EBE)."""
+        return (self.valeur_ajoutee or 0) + (self.subvention_exploitation or 0) + (self.autres_produits or 0) + (self.transfert_charges_exploitation or 0) - (self.frais_personnel or 0) - (self.impots_taxes or 0) - (self.autres_depenses or 0)
+        
+    @property
+    def resultat_exploitation(self):
+        """Calcule le résultat d'exploitation."""
+        return (self.excedent_brute_exploitation or 0) + (self.reprise_depreciations_amortissements_provision_pertes_valeurs_p or 0) - (self.reprise_depreciations_amortissements_provision_pertes_valeurs_m or 0)
+    
+    @property
+    def resultat_financier(self):
+        """Calcule le résultat financier."""
+        produits_fin = (self.produits_financiers_assimiles or 0) + (self.reprise_provision_perte_valeur or 0) + (self.transfert_charges_financieres or 0)
+        charges_fin = (self.charges_financieres_assimilees or 0) + (self.dotations_provisions_depreciations_financieres or 0)
+        return produits_fin - charges_fin
+        
+    @property
+    def resultat_activites_ordinaires_xe(self):
+        """Calcule le résultat des activités ordinaires (hors HAO)."""
+        return (self.resultat_exploitation or 0) + (self.resultat_financier or 0)
+        
+    @property
+    def resultat_activites_ordinaires_tn(self):
+        """Calcule le résultat des activités ordinaires (avec HAO)."""
+        produits_hao = (self.produits_cession_immobilisations or 0) + (self.autres_produits_hao or 0)
+        charges_hao = (self.valeur_comptable_cessions_actifs_immobilises or 0) + (self.autres_charges_hao or 0)
+        return (self.resultat_activites_ordinaires_xe or 0) + produits_hao - charges_hao
 
-    #  Liste des methodes utiles pour ce model
-
-    #  marge_commerciale
-    #  chiffre_affaires
-    #  valeur_ajoutee
-    #  excedent_brute_exploitation
-    #  resultat_exploitation
-    #  resultat_financier
-    #  resultat_activites_ordinaires_xe
-    #  resultat_activites_ordinaires_tn
-    #  resultat_net
+    @property
+    def resultat_net(self):
+        """Calcule le résultat net de l'exercice."""
+        return (self.resultat_activites_ordinaires_tn or 0) - (self.participation_travailleurs or 0) - (self.charge_impot_revenu or 0)
 
 
 # Ratios Bilan SYSCOHADA
 
-#  fonds_de_roulement
-#  besoin_fonds_de_roulement
-#  position_net_de_tresorerie
-#  cafsys
-#  solvabilite
-#  autonomie_financiere
-#  benefice_net
-#  turnover
-#  benefice_net_chiffre_affaire
-#  ebitda_chiffre_affaire
-#  liquidite_general
-#  liquidite_reduite
-#  liquidite_immediate
-#  jour_collecte_moyens
-#  moyen_paiement
-#  compte_debiteur
-#  rotation_stock
-#  rotation_actif
-#  rotation_dendettement
-#  rotation_dette_capitaux_propres
-#  passif_court_terme_par_rapport_valeur_net
-#  ratio_des_couverture_des_interets
-#  ratio_courant
-#  ratio_de_liquidite
-#  ratio_financier
-#  ratio_de_la_dette
-#  ratio_de_liquidite2
+# Création d'une classe dédiée pour les ratios
+from decimal import Decimal
+
+class RatiosSyscohada:
+    def __init__(self, actif: ActifS, passif: PassifS, resultat: ResultatS):
+        self.actif = actif
+        self.passif = passif
+        self.resultat = resultat
+        
+    def _get_val(self, model, prop):
+        return getattr(model, prop, Decimal('0')) or Decimal('0')
+
+    @property
+    def fonds_de_roulement(self):
+        """ Fonds de Roulement Net Global (FRNG) = Ressources stables - Emplois stables """
+        ressources_stables = self._get_val(self.passif, 'total_ressources_stables')
+        emplois_stables = self._get_val(self.actif, 'total_actif_immobilise')
+        return ressources_stables - emplois_stables if self.passif and self.actif else None
+        
+    @property
+    def besoin_fonds_de_roulement(self):
+        """ Besoin en Fonds de Roulement (BFR) = Actif circulant - Passif circulant """
+        actif_circulant = self._get_val(self.actif, 'total_actif_circulant')
+        passif_courant = self._get_val(self.passif, 'total_passifs_courants')
+        return actif_circulant - passif_courant if self.actif and self.passif else None
+        
+    @property
+    def position_net_de_tresorerie(self):
+        """ Position de Trésorerie Nette = Trésorerie nette - Dettes bancaires courantes """
+        tresorerie_nette = self._get_val(self.actif, 'total_tresorerie_equivalents')
+        dettes_bancaires = self._get_val(self.passif, 'total_tresorerie_equivalents')
+        return tresorerie_nette - dettes_bancaires if self.actif and self.passif else None
+
+    @property
+    def cafsys(self):
+        """ Capacité d'Autofinancement (CAF) = Résultat net + DAP - Reprises et transferts """
+        # Approximation en utilisant les champs disponibles
+        dap = self._get_val(self.resultat, 'reprise_depreciations_amortissements_provision_pertes_valeurs_m')
+        reprises = self._get_val(self.resultat, 'reprise_depreciations_amortissements_provision_pertes_valeurs_p')
+        transferts = self._get_val(self.resultat, 'transfert_charges_exploitation')
+        return (self.resultat.resultat_net or 0) + dap - (reprises + transferts) if self.resultat else None
+
+    @property
+    def autonomie_financiere(self):
+        """ Autonomie financière = Capitaux propres / Dettes totales """
+        dettes_totales = self._get_val(self.passif, 'total_dettes_financieres_ressources_similaires') + self._get_val(self.passif, 'total_passifs_courants')
+        capitaux_propres = self._get_val(self.passif, 'total_capitaux_propres_ressources_similaires')
+        if dettes_totales != 0:
+            return capitaux_propres / dettes_totales
+        return None
+
+    @property
+    def liquidite_general(self):
+        """ Liquidité générale = Actif circulant / Passif circulant """
+        actif_circulant = self._get_val(self.actif, 'total_actif_circulant') + self._get_val(self.actif, 'total_tresorerie_equivalents')
+        passif_circulant = self._get_val(self.passif, 'total_passifs_courants') + self._get_val(self.passif, 'total_tresorerie_equivalents')
+        if passif_circulant != 0:
+            return actif_circulant / passif_circulant
+        return None
+        
+    @property
+    def rotation_stock(self):
+        """ Rotation des stocks (en jours) = (Stocks / Coût des ventes) * 360 """
+        if self.resultat.chiffre_affaires and self.resultat.chiffre_affaires != 0:
+            stocks = self._get_val(self.actif, 'stock_encours')
+            # Le coût des ventes peut être une approximation
+            cout_des_ventes = (self._get_val(self.resultat, 'achats_marchandises') + self._get_val(self.resultat, 'achats_matieres_premieres_fournitures_connexes') + self._get_val(self.resultat, 'autres_achats'))
+            if cout_des_ventes != 0:
+                 return (stocks / cout_des_ventes) * 360
+        return None
+
+
+
+
+
 
 ##########################################################
 ##########################################################
@@ -7457,6 +7788,7 @@ class AdresseAcheteur(models.Model):
         return f"Adresse de {self.acheteur.nom}"
 
 
+
 class PortableAcheteur(models.Model):
     portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"))
     acheteur = models.ForeignKey(
@@ -7494,6 +7826,7 @@ class PortableAcheteur(models.Model):
 
     def __str__(self):
         return f"Numéro de portable de {self.acheteur.nom}"
+
 
 
 class EmailAcheteur(models.Model):
@@ -7869,6 +8202,7 @@ class CodeNaceAcheteur(models.Model):
 
     def __str__(self):
         return f"Code NACE de {self.acheteur.nom}"
+
 
 
 class CodeNafAcheteur(models.Model):
@@ -8614,6 +8948,15 @@ class Commande(models.Model):
         blank=True,
     )
 
+    pays = models.ForeignKey(
+        "Pays",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Pays"),
+        help_text=_("Pays où se trouve l'entreprise ou le client."),
+    )
+
     ville = models.ForeignKey(
         "Ville",
         null=True,
@@ -8644,6 +8987,32 @@ class Commande(models.Model):
         choices=STATUS_CHOICES,
         default="nouvelle",
         verbose_name=_("Statut de la commande"),
+    )
+    
+    # Champ pour tracer le validateur responsable
+    validateur = models.ForeignKey(
+        "CustomUser",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Validateur responsable"),
+        help_text=_("Utilisateur responsable de la validation de cette commande."),
+        related_name="commandes_validees",
+    )
+
+    # Champ pour tracer la date d'envoi au client
+    date_envoi_client = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date d'envoi au client"),
+        help_text=_("Date et heure à laquelle le rapport a été envoyé au client."),
+    )
+
+    # Champ pour éviter les envois multiples
+    email_envoye = models.BooleanField(
+        default=False,
+        verbose_name=_("Email envoyé au client"),
+        help_text=_("Indique si le rapport a déjà été envoyé au client."),
     )
 
     created_at = models.DateTimeField(

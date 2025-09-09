@@ -1,0 +1,128 @@
+<script>
+$(document).ready(function() {
+    let accessToken = '{{ access }}';
+    const refreshToken = '{{ refresh }}';
+    function refreshAccessToken() {
+        $.ajax({
+            url: "{% url 'token_refresh' %}", type: 'POST', data: { 'refresh': refreshToken }, headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            success: function(response) { accessToken = response.access; },
+            error: function() { console.error("Échec du rafraîchissement automatique du jeton."); }
+        });
+    }
+    setInterval(refreshAccessToken, 240000);
+    const formatCurrency = (num) => (parseFloat(num || 0)).toLocaleString('fr-FR', { style: 'currency', currency: 'XAF', minimumFractionDigits: 0 });
+
+    // --- LOGIQUE POUR LES FORMULAIRES MULTI-ANNÉES (SAISIE) ---
+    function initializeActifACalculations(suffix) {
+        function calculateTotalsForYear() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalActifsNonCourants = p($(`input[name="biens_installations_equipements_${suffix}"]`).val());
+            const totalActifsCourants = p($(`input[name="inventaire_${suffix}"]`).val()) + p($(`input[name="creances_commerciales_autres_creances_${suffix}"]`).val()) + p($(`input[name="actif_impots_courant_${suffix}"]`).val()) + p($(`input[name="caisses_banques_${suffix}"]`).val());
+            const totalActif = totalActifsNonCourants + totalActifsCourants;
+            
+            $(`#total_actifs_non_courants_${suffix}`).val(formatCurrency(totalActifsNonCourants));
+            $(`#total_actifs_courants_${suffix}`).val(formatCurrency(totalActifsCourants));
+            $(`#total_actif_${suffix}`).val(formatCurrency(totalActif));
+        }
+        $(`#collapseActifA${suffix.toUpperCase()}`).on('input', 'input[type="number"]', calculateTotalsForYear);
+        calculateTotalsForYear();
+    }
+    ['n', 'n1', 'n2'].forEach(suffix => initializeActifACalculations(suffix));
+
+    $('#form-actifs-a-multi-annee').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), btn = $('#btn-submit-form-actifs'), originalText = btn.html();
+        $.ajax({
+            url: "{% url 'add-multi-year-actif-a' %}", type: 'POST', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => Swal.fire({ icon: 'success', title: 'Succès !', text: 'Actifs enregistrés.' }).then(() => window.location.reload()),
+            error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Veuillez vérifier les données saisies.' }),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+
+    // --- LOGIQUE POUR LE MODAL DE VUE ---
+    $('#listing-actifs-a-pane').on('click', '.btn-view-actifs', function() {
+        const actifId = $(this).data('actif-id');
+        const loader = $('#modal-actifs-loader'), content = $('#actifs-details-content');
+        loader.show(); content.hide();
+        $.ajax({
+            url: `{% url 'get-actif-a' 0 %}`.replace('0', actifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#modal-actifs-acheteur').text(data.acheteur.nom);
+                $('#modal-actifs-annee').text(data.annee.annee);
+                $('#total-actifs-non-courants').text(formatCurrency(data.total_actifs_non_courants));
+                $('#modal-actifs-biens_installations_equipements').text(formatCurrency(data.biens_installations_equipements));
+                $('#total-actifs-courants').text(formatCurrency(data.total_actifs_courants));
+                $('#modal-actifs-inventaire').text(formatCurrency(data.inventaire));
+                $('#modal-actifs-creances_commerciales_autres_creances').text(formatCurrency(data.creances_commerciales_autres_creances));
+                $('#modal-actifs-actif_impots_courant').text(formatCurrency(data.actif_impots_courant));
+                $('#modal-actifs-caisses_banques').text(formatCurrency(data.caisses_banques));
+                $('#total-general-actifs').text(formatCurrency(data.total_actif));
+                loader.hide(); content.show();
+            },
+            error: () => { loader.hide(); content.html('<div class="alert alert-danger">Impossible de charger les détails de l\'actif.</div>').show(); }
+        });
+    });
+
+    // --- LOGIQUE POUR LE MODAL DE MODIFICATION ---
+    $('#listing-actifs-a-pane').on('click', '.btn-edit-actifs', function() {
+        const actifId = $(this).data('actif-id');
+        const formContent = $('#edit-actifs-form-content');
+        formContent.html('<div class="text-center p-4"><div class="spinner-border"></div></div>');
+
+        function updateEditActifATotals() {
+            const p = (val) => parseFloat(val) || 0;
+            const totalActifsNonCourants = p($('#edit_biens_installations_equipements').val());
+            const totalActifsCourants = p($('#edit_inventaire').val()) + p($('#edit_creances_commerciales_autres_creances').val()) + p($('#edit_actif_impots_courant').val()) + p($('#edit_caisses_banques').val());
+            const totalActif = totalActifsNonCourants + totalActifsCourants;
+            
+            $('#edit_total_actifs_non_courants').val(formatCurrency(totalActifsNonCourants));
+            $('#edit_total_actifs_courants').val(formatCurrency(totalActifsCourants));
+            $('#edit_total_actif').val(formatCurrency(totalActif));
+        }
+
+        $.ajax({
+            url: `{% url 'get-actif-a' 0 %}`.replace('0', actifId),
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            success: function(data) {
+                $('#edit-actifs-id').val(data.id);
+                let formHtml = `
+                    <div class="row g-3 mb-4"><div class="col-md-6"><label for="edit_annee" class="form-label">Année</label><select name="annee" id="edit_annee" class="form-select">{% for annee in annee_list %}<option value="{{ annee.id }}" {% if data.annee.id == annee.id %}selected{% endif %}>{{ annee.annee }}</option>{% endfor %}</select></div></div>
+                    <h5 class="mt-1"><i class="bi bi-person-fill"></i> ${data.acheteur.nom}</h5><hr>
+                    <h4 class="text-primary mt-4">ACTIFS NON-COURANTS (IMMOBILISÉS)</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_biens_installations_equipements" class="form-label mb-0">Biens, installations et équipements</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="biens_installations_equipements" id="edit_biens_installations_equipements" value="${data.biens_installations_equipements || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_actifs_non_courants" class="form-label fw-bold mb-0">TOTAL ACTIFS NON-COURANTS</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_actifs_non_courants" readonly style="background-color: #e9ecef;"></div></div>
+                    <h4 class="text-primary mt-4">ACTIFS COURANTS</h4>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_inventaire" class="form-label mb-0">Inventaire</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="inventaire" id="edit_inventaire" value="${data.inventaire || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_creances_commerciales_autres_creances" class="form-label mb-0">Créances commerciales et autres</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="creances_commerciales_autres_creances" id="edit_creances_commerciales_autres_creances" value="${data.creances_commerciales_autres_creances || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_actif_impots_courant" class="form-label mb-0">Actif d'impôts courant</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="actif_impots_courant" id="edit_actif_impots_courant" value="${data.actif_impots_courant || 0}"></div></div>
+                    <div class="row align-items-center mb-2"><div class="col-md-6"><label for="edit_caisses_banques" class="form-label mb-0">Caisse et banques</label></div><div class="col-md-6"><input type="number" step="0.01" class="form-control" name="caisses_banques" id="edit_caisses_banques" value="${data.caisses_banques || 0}"></div></div>
+                    <div class="row align-items-center mt-3"><div class="col-md-6"><label for="edit_total_actifs_courants" class="form-label fw-bold mb-0">TOTAL ACTIFS COURANTS</label></div><div class="col-md-6"><input type="text" class="form-control fw-bold" id="edit_total_actifs_courants" readonly style="background-color: #e9ecef;"></div></div>
+                    <hr class="my-4">
+                    <div class="row align-items-center bg-success text-white p-3 rounded"><div class="col-md-6"><h5 class="mb-0">TOTAL ACTIF</h5></div><div class="col-md-6"><input type="text" class="form-control form-control-lg fw-bold text-success" id="edit_total_actif" readonly></div></div>
+                `;
+                formContent.html(formHtml);
+                $('#form-edit-actifs').on('input', 'input[type="number"]', updateEditActifATotals);
+                updateEditActifATotals();
+            },
+            error: function(xhr) { formContent.html('<div class="alert alert-danger">Impossible de charger le formulaire de modification de l\'actif.</div>'); }
+        });
+    });
+
+    $('#form-edit-actifs').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this), actifId = $('#edit-actifs-id').val(), btn = $('#btn-save-actifs-changes'), originalText = btn.html();
+        $.ajax({
+            url: `{% url 'edit-actif-a' 0 %}`.replace('0', actifId), type: 'PUT', data: form.serialize(),
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Authorization': `Bearer ${accessToken}` },
+            beforeSend: () => btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>...'),
+            success: () => { $('#modal-edit-actifs').modal('hide'); Swal.fire('Modifié !', 'L\'actif a été mis à jour.', 'success').then(() => window.location.reload()); },
+            error: () => Swal.fire('Erreur', 'Veuillez vérifier les données.', 'error'),
+            complete: () => btn.prop('disabled', false).html(originalText)
+        });
+    });
+});
+</script>

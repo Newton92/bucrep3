@@ -79,6 +79,7 @@
                                 <th scope="col" class="border-0">Référence</th>
                                 <th scope="col" class="border-0">Client</th>
                                 <th scope="col" class="border-0">Raison Sociale</th>
+                                <th scope="col" class="border-0">Pays</th>
                                 <th scope="col" class="border-0">Statut</th>
                                 <th scope="col" class="border-0">Date de Création</th>
                                 <th scope="col" class="border-0 rounded-end">Action</th>
@@ -457,22 +458,28 @@
 
                     // Update commandes table body
                     $('#commandesTableBody').html('');
-                    response.results.forEach(function(commande, index) {
-                        console.log(response);
-                        $('#commandesTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + (commande.notre_ref || 'N/A') + '</td>' +
-                            '<td>' + commande.client.username + '</td>' +
-                            '<td>' + commande.raison_sociale + '</td>' +
-                            '<td>' + commande.status + '</td>' +
-                            '<td>' + new Date(commande.created_at).toLocaleDateString() + '</td>' +
-                            '<td>' +
-                                '<button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + commande.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                                '&nbsp; <button class="btn btn-info btn-round mb-0 manage-btn" data-id="' + commande.id + '" data-ref="' + commande.notre_ref + '"  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Manager"><i class="bi bi-gear"></i></button>' +
-                                '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + commande.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
-                            '</td>' +
-                        '</tr>');
-                    });
+                    if (response.results.length === 0) {
+                        $('#commandesTableBody').append('<tr><td colspan="7" class="text-center">Aucune commande trouvée pour le pays sélectionné.</td></tr>');
+                    } else {
+                        response.results.forEach(function(commande, index) {
+                            $('#commandesTableBody').append(
+                                `<tr>
+                                    <td>${(index + 1 + (page - 1) * response.count)}</td>
+                                    <td>${commande.notre_ref || 'N/A'}</td>
+                                    <td>${commande.client_username || 'N/A'} ${commande.client.last_name || ''}</td>
+                                    <td>${commande.raison_sociale}</td>
+                                    <td>${commande.pays_nom || 'N/A'}</td> 
+                                    <td>${commande.status}</td>
+                                    <td>${new Date(commande.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <button class="btn btn-success btn-round mb-0 edit-btn" data-id="${commande.id}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>
+                                        &nbsp; <button class="btn btn-info btn-round mb-0 manage-btn" data-id="${commande.id}" data-ref="${commande.notre_ref}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Manager"><i class="bi bi-gear"></i></button>
+                                        &nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="${commande.id}" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>`
+                            );
+                        });
+                    }
                 },
                 error: function(response) {
                     Swal.fire({

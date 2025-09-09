@@ -1,0 +1,939 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    /* Styles généraux */
+    .nace-card {
+        border-left: 4px solid #fd7e14;
+        border-radius: 0 5px 5px 0;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    .nace-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .nace-code {
+        font-weight: 600;
+        color: #fd7e14;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+    .nace-libelle {
+        color: #495057;
+        margin-bottom: 10px;
+        font-weight: 500;
+    }
+    .nace-category {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    .nace-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
+    .nace-actions {
+        display: flex;
+        gap: 8px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    #noNaceCodesMessage {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+
+    /* Styles pour le sélecteur de codes NACE */
+    .nace-selector {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        background-color: #fff;
+    }
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    .category-filter {
+        margin-bottom: 15px;
+    }
+    .subcategory-item {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .subcategory-item:hover {
+        background-color: #e9ecef;
+    }
+    .subcategory-item.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f1f3f5;
+    }
+    .subcategory-item .form-check {
+        margin-bottom: 0;
+    }
+    .subcategory-info {
+        margin-left: 25px;
+    }
+    .subcategory-code {
+        font-weight: 600;
+        color: #fd7e14;
+    }
+    .subcategory-libelle {
+        color: #495057;
+    }
+    .subcategory-category {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .selected-codes-container {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        min-height: 100px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .selected-code-item {
+        padding: 5px 10px;
+        margin-bottom: 5px;
+        background-color: #fff;
+        border-radius: 4px;
+        border-left: 3px solid #fd7e14;
+    }
+    .badge-already-associated {
+        background-color: #6c757d;
+        color: white;
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 10px;
+    }
+    .form-check-input:disabled ~ .form-check-label {
+        opacity: 0.7;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-tag-fill fa-fw me-1"></i> Codes NACE de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countNace">Module de Gestion des Codes NACE</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter, modifier ou supprimer les codes NACE associés à l'acheteur. Un acheteur peut avoir plusieurs codes NACE correspondant à ses différents secteurs d'activité.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Code : </strong><span style="color: #fd7e14;">CN</span><br>
+                                <strong>Libellé : </strong><span style="color: #495057;">LB</span><br>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Catégorie : </strong><span style="color: #6c757d;">CT</span><br>
+                                <strong>Date : </strong><span style="color: #ffc107;">DT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion. Les codes NACE sont organisés en catégories et sous-catégories. Vous pouvez sélectionner plusieurs codes NACE pour un acheteur.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Codes NACE START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Codes NACE</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search and Add START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Rechercher un code NACE..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary w-100" style="background-color: #fd7e14; border-color: #fd7e14;" data-bs-toggle="modal" data-bs-target="#addNaceCodeModal">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter des codes NACE
+                        </button>
+                    </div>
+                </div>
+                <!-- Search and Add END -->
+                <!-- Codes NACE List START -->
+                <div id="naceCodeList">
+                    <div id="naceCodeContainer"></div>
+                    <div class="text-center my-4" id="noNaceCodesMessage" style="display: none;">
+                        <i class="bi bi-tag-x-fill fs-3 text-muted mb-2"></i>
+                        <p class="mb-0">Aucun code NACE enregistré pour cet acheteur.</p>
+                    </div>
+                </div>
+                <!-- Codes NACE List END -->
+            </div>
+            <div class="card-footer pt-0">
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Codes NACE END -->
+
+<!-- Add NACE Code Modal START (version optimisée pour sélection multiple) -->
+<div class="modal fade" id="addNaceCodeModal" tabindex="-1" aria-labelledby="addNaceCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNaceCodeModalLabel">Ajouter des Codes NACE</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addNaceCodeForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+
+                    <!-- Filtre par catégorie -->
+                    <div class="category-filter">
+                        <label class="form-label">Filtrer par catégorie</label>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">Toutes les catégories</option>
+                            <!-- Les catégories seront chargées dynamiquement ici -->
+                        </select>
+                    </div>
+
+                    <!-- Liste des sous-catégories (codes NACE) avec cases à cocher -->
+                    <div class="mb-3">
+                        <label class="form-label">Sélectionnez les codes NACE à ajouter</label>
+                        <div class="loading-spinner" id="subCategoriesLoading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                        <div id="subCategoriesContainer" class="nace-selector">
+                            <!-- Les sous-catégories seront affichées ici -->
+                        </div>
+                    </div>
+
+                    <!-- Résumé des codes sélectionnés -->
+                    <div class="mb-3">
+                        <label class="form-label">Codes NACE sélectionnés</label>
+                        <div class="selected-codes-container" id="selectedCodesContainer">
+                            Aucun code sélectionné
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #fd7e14; border-color: #fd7e14;">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter les codes sélectionnés
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add NACE Code Modal END -->
+
+<!-- Edit NACE Code Modal START -->
+<div class="modal fade" id="editNaceCodeModal" tabindex="-1" aria-labelledby="editNaceCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editNaceCodeModalLabel">Modifier un Code NACE</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editNaceCodeForm">
+                    <input type="hidden" id="editNaceCodeId" name="id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Code NACE actuel</label>
+                        <div class="card">
+                            <div class="card-body" id="currentCodeContainer" style="min-height: 80px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Sélectionnez un nouveau code NACE</label>
+                        <div class="loading-spinner" id="editSubCategoriesLoading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                        </div>
+                        <div id="editSubCategoriesContainer" class="nace-selector" style="max-height: 300px;"></div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #fd7e14; border-color: #fd7e14;">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Mettre à jour
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit NACE Code Modal END -->
+
+<!-- Delete Confirmation Modal START -->
+<div class="modal fade" id="deleteNaceCodeModal" tabindex="-1" aria-labelledby="deleteNaceCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteNaceCodeModalLabel">Supprimer un Code NACE</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce code NACE ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                <div id="deleteNaceCodeInfo" class="fw-bold mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteNaceCode">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal END -->
+{% endblock %}
+{% block scripts %}
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Non spécifié";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    // Variables globales
+    var naceCodeToDelete = null;
+    var categories = [];
+    var allSubCategories = [];
+    var associatedCodes = [];
+
+    $(document).ready(function() {
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger les catégories pour le filtre
+        function loadCategoriesForFilter() {
+            $.ajax({
+                url: '/api/codes-nace/categories/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    categories = response;
+                    response.forEach(function(category) {
+                        $('#categoryFilter').append(`
+                            <option value="${category.id}">${category.code} - ${category.libelle}</option>
+                        `);
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du chargement des catégories NACE.',
+                    });
+                }
+            });
+        }
+
+        // Charger toutes les sous-catégories (codes NACE)
+        function loadAllSubCategories(categoryId = null) {
+            $('#subCategoriesLoading').show();
+            $('#subCategoriesContainer').empty();
+
+            let url = '/api/codes-nace/subcategories/';
+            if (categoryId) {
+                url = `/api/codes-nace/categories/${categoryId}/subcategories/`;
+            }
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    allSubCategories = response;
+                    displaySubCategories(response);
+                    $('#subCategoriesLoading').hide();
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du chargement des sous-catégories NACE.',
+                    });
+                    $('#subCategoriesLoading').hide();
+                }
+            });
+        }
+
+        // Afficher les sous-catégories dans le conteneur
+        function displaySubCategories(subCategories) {
+            if (subCategories.length === 0) {
+                $('#subCategoriesContainer').html(`
+                    <div class="alert alert-info">Aucune sous-catégorie trouvée.</div>
+                `);
+                return;
+            }
+
+            subCategories.forEach(function(subCategory) {
+                const isAlreadyAssociated = associatedCodes.includes(subCategory.id);
+                const category = categories.find(c => c.id === subCategory.category);
+
+                $('#subCategoriesContainer').append(`
+                    <div class="subcategory-item ${isAlreadyAssociated ? 'disabled' : ''}">
+                        <div class="form-check">
+                            <input class="form-check-input subcategory-checkbox"
+                                   type="checkbox"
+                                   id="subcategory-${subCategory.id}"
+                                   value="${subCategory.id}"
+                                   ${isAlreadyAssociated ? 'disabled' : ''}>
+                            <label class="form-check-label" for="subcategory-${subCategory.id}">
+                                <span class="subcategory-code">${subCategory.code}</span> -
+                                <span class="subcategory-libelle">${subCategory.libelle}</span>
+                            </label>
+                            ${isAlreadyAssociated ? '<span class="badge-already-associated">Déjà associé</span>' : ''}
+                        </div>
+                        <div class="subcategory-info">
+                            <span class="subcategory-category">
+                                Catégorie: ${category ? `${category.code} - ${category.libelle}` : 'Inconnu'}
+                            </span>
+                        </div>
+                    </div>
+                `);
+            });
+
+            // Ajouter les événements de clic
+            $('.subcategory-checkbox').on('change', function() {
+                updateSelectedCodesDisplay();
+            });
+        }
+
+        // Mettre à jour l'affichage des codes sélectionnés
+        function updateSelectedCodesDisplay() {
+            const selectedCodes = [];
+            $('.subcategory-checkbox:checked').each(function() {
+                const subCategoryId = $(this).val();
+                const subCategory = allSubCategories.find(sc => sc.id == subCategoryId);
+                if (subCategory) {
+                    const category = categories.find(c => c.id === subCategory.category);
+                    selectedCodes.push({
+                        ...subCategory,
+                        category: category
+                    });
+                }
+            });
+
+            if (selectedCodes.length === 0) {
+                $('#selectedCodesContainer').html('Aucun code sélectionné');
+            } else {
+                let html = '<div class="mb-2"><strong>Codes sélectionnés:</strong></div>';
+                selectedCodes.forEach(function(subCategory) {
+                    html += `
+                        <div class="selected-code-item">
+                            <div><strong>${subCategory.code}</strong> - ${subCategory.libelle}</div>
+                            <div class="text-muted small">
+                                Catégorie: ${subCategory.category.code} - ${subCategory.category.libelle}
+                            </div>
+                        </div>
+                    `;
+                });
+                $('#selectedCodesContainer').html(html);
+            }
+        }
+
+        // Charger les codes NACE de l'acheteur
+        function loadNaceCodes(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-codes-nace/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    // Mettre à jour les infos de pagination
+                    $('#paginationInfo').text(
+                        'Affichage ' + ((page - 1) * 10 + 1) +
+                        ' à ' + (page * 10 > response.count ? response.count : page * 10) +
+                        ' de ' + response.count + ' codes NACE'
+                    );
+
+                    // Mettre à jour les contrôles de pagination
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append(
+                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Précédent</a></li>'
+                        );
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append(
+                                '<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
+                            );
+                        } else {
+                            $('#paginationControls').append(
+                                '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
+                            );
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append(
+                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Suivant</a></li>'
+                        );
+                    }
+
+                    // Mettre à jour la liste des codes NACE
+                    if (response.results.length === 0) {
+                        $('#naceCodeContainer').html('');
+                        $('#noNaceCodesMessage').show();
+                    } else {
+                        $('#noNaceCodesMessage').hide();
+                        $('#naceCodeContainer').html('');
+                        response.results.forEach(function(codeNace) {
+                            $('#naceCodeContainer').append(`
+                                <div class="nace-card" data-id="${codeNace.id}">
+                                    <div class="nace-actions">
+                                        <button class="btn btn-sm btn-outline-primary edit-nace-btn" data-id="${codeNace.id}" data-bs-toggle="tooltip" title="Éditer">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-nace-btn" data-id="${codeNace.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="nace-code">${codeNace.code.code}</div>
+                                    <div class="nace-libelle">${codeNace.code.libelle}</div>
+                                    <div class="nace-category">
+                                        <strong>Catégorie:</strong> ${codeNace.code.category.code} - ${codeNace.code.category.libelle}
+                                    </div>
+                                    <div class="nace-meta">
+                                        <div>
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${formatDateTime(codeNace.created_at)}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Mis à jour: ${formatDateTime(codeNace.updated_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des codes NACE.',
+                    });
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout de code NACE (version multiple)
+        $('#addNaceCodeForm').on('submit', function(event) {
+            event.preventDefault();
+
+            const selectedCodes = [];
+            $('.subcategory-checkbox:checked').each(function() {
+                selectedCodes.push($(this).val());
+            });
+
+            if (selectedCodes.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Veuillez sélectionner au moins un code NACE.',
+                });
+                return;
+            }
+
+            const acheteurId = '{{ id_acheteur }}';
+            let successCount = 0;
+            let errorCount = 0;
+            const totalCodes = selectedCodes.length;
+
+            // Désactiver le bouton pendant l'envoi
+            const submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).html(`
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Envoi en cours...
+            `);
+
+            // Envoyer les codes un par un
+            selectedCodes.forEach(function(codeId) {
+                $.ajax({
+                    url: '/api/acheteur/' + acheteurId + '/ajouter-code-nace/',
+                    type: 'POST',
+                    data: {
+                        acheteur: acheteurId,
+                        code: codeId
+                    },
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        successCount++;
+                        checkCompletion();
+                    },
+                    error: function(response) {
+                        errorCount++;
+                        checkCompletion();
+                    }
+                });
+            });
+
+            function checkCompletion() {
+                if (successCount + errorCount === totalCodes) {
+                    let message = `${successCount} code(s) NACE ajouté(s) avec succès.`;
+                    if (errorCount > 0) {
+                        message += ` ${errorCount} code(s) n'ont pas pu être ajoutés (déjà associés ou erreur).`;
+                    }
+
+                    Swal.fire({
+                        icon: errorCount > 0 ? 'warning' : 'success',
+                        title: 'Résultat',
+                        text: message,
+                    }).then(() => {
+                        $('#addNaceCodeModal').modal('hide');
+                        loadNaceCodes(); // Recharger la liste
+                    });
+
+                    submitBtn.prop('disabled', false).html(`
+                        <i class="bi bi-plus-lg me-1"></i> Ajouter les codes sélectionnés
+                    `);
+                }
+            }
+        });
+
+        // Charger les codes déjà associés à l'acheteur
+        function loadAssociatedCodes() {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-codes-nace/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    associatedCodes = response.results.map(function(item) {
+                        return item.code.id;
+                    });
+                },
+                error: function(response) {
+                    console.error("Erreur lors du chargement des codes associés");
+                }
+            });
+        }
+
+        // Ouvrir la modale d'édition de code NACE
+        $(document).on('click', '.edit-nace-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-code-nace/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNaceCodeId').val(response.id);
+
+                    // Afficher le code actuel
+                    $('#currentCodeContainer').html(`
+                        <div><strong>Code actuel:</strong> ${response.code.code}</div>
+                        <div><strong>Libellé:</strong> ${response.code.libelle}</div>
+                        <div><strong>Catégorie:</strong> ${response.code.category.code} - ${response.code.category.libelle}</div>
+                    `);
+
+                    // Charger les sous-catégories pour la sélection du nouveau code
+                    loadAllSubCategories(response.code.category);
+                    $('#editNaceCodeModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des détails du code NACE.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition de code NACE
+        $('#editNaceCodeForm').on('submit', function(event) {
+            event.preventDefault();
+
+            const codeId = $('#editSelectedCodeId').val();
+            if (!codeId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Veuillez sélectionner un nouveau code NACE.',
+                });
+                return;
+            }
+
+            var id = $('#editNaceCodeId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-code-nace/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Code NACE mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editNaceCodeModal').modal('hide');
+                        loadNaceCodes();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de la mise à jour du code NACE.';
+                    if (response.responseJSON && response.responseJSON.detail) {
+                        errorMessage = response.responseJSON.detail;
+                    } else if (response.responseJSON) {
+                        errorMessage = Object.values(response.responseJSON).join(' ');
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale de confirmation de suppression
+        $(document).on('click', '.delete-nace-btn', function() {
+            var id = $(this).data('id');
+            var codeInfo = $(this).closest('.nace-card').find('.nace-code').text() +
+                          " - " +
+                          $(this).closest('.nace-card').find('.nace-libelle').text();
+
+            naceCodeToDelete = id;
+            $('#deleteNaceCodeInfo').text(codeInfo);
+            $('#deleteNaceCodeModal').modal('show');
+        });
+
+        // Confirmer la suppression du code NACE
+        $('#confirmDeleteNaceCode').on('click', function() {
+            if (naceCodeToDelete) {
+                $.ajax({
+                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-codes-nace/',
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [naceCodeToDelete] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: 'Code NACE supprimé avec succès.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#deleteNaceCodeModal').modal('hide');
+                            loadNaceCodes();
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la suppression du code NACE.',
+                        });
+                    }
+                });
+            }
+        });
+
+        // Recherche de codes NACE
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadNaceCodes(1, search);
+        });
+
+        // Pagination
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadNaceCodes(page, search);
+        });
+
+        // Filtrer par catégorie dans la modale d'ajout
+        $('#categoryFilter').on('change', function() {
+            const categoryId = $(this).val();
+            loadAllSubCategories(categoryId || null);
+        });
+
+        // Charger les données au démarrage de la modale d'ajout
+        $('#addNaceCodeModal').on('shown.bs.modal', function() {
+            loadCategoriesForFilter();
+            loadAllSubCategories(); // Charger toutes les sous-catégories
+            loadAssociatedCodes(); // Charger les codes déjà associés
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadNaceCodes();
+    });
+</script>
+{% endblock %}

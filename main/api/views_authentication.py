@@ -12,8 +12,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticated
 
-from main.models import CustomUser
+from main.models import CustomUser, Pays
+from main.serializers import PaysSerializer
 
 # Create your views here.
 
@@ -66,6 +68,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 
+
+
 class CustomRefreshTokenView(APIView):
     def post(self, request, *args, **kwargs):
         user_id = request.data.get("user_id")
@@ -102,7 +106,9 @@ class CustomRefreshTokenView(APIView):
         )
 
 
-class CustomLoginView(APIView):
+
+
+class CustomLoginViewFirst(APIView):
     def post(self, request, *args, **kwargs):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -151,28 +157,83 @@ class CustomLoginView(APIView):
         )
 
 
-class CustomDoubleFactorAuthView(APIView):
+
+
+class CustomLoginViewCopy(APIView):
     def post(self, request, *args, **kwargs):
-        code_connexion = request.data.get("code_connexion")
-        token = request.data.get("token")
+        username = request.data.get("username")
+        password = request.data.get("password")
+        user = authenticate(username=username, password=password)
 
-        if not code_connexion or not token:
+        if user:
+            # Mise à jour de la dernière connexion
+            user.last_login = timezone.now()
+            user.save(update_fields=["last_login"])
+
+            # Génération des tokens d'accès
+            refresh = RefreshToken.for_user(user)
+
+            # Génération et enregistrement du code de connexion
+            code_connexion = generate_token(6)
+            reset_token = generate_token()
+
+            user.code_connexion = code_connexion
+            user.reset_token = reset_token
+            user.save()
+
+            reset_url = reverse("check_auth") + f"?token={reset_token}"
+            # reset_url = reverse('dash_root')
+
+            # Envoi du code de connexion par email
+            send_email(
+                _("Votre code de connexion"),
+                [user.email],
+                "main/emails/email_with_connexion_code.html",
+                {"code_connexion": code_connexion},
+            )
+
+            # Génération du cookie
             return Response(
-                {"detail": _("Informations manquantes.")},
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "message": _("Un code secret a été envoyé à votre adresse email !"),
+                    "reset_url": reset_url,
+                }
             )
 
-        try:
-            # Recherche de l'utilisateur correspondant au code_connexion et au token
-            user = CustomUser.objects.get(
-                code_connexion=code_connexion, reset_token=token
-            )
+        return Response(
+            {"detail": _("Vos identifiants sont invalides.")},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
 
-            # Authentification de l'utilisateur
+
+
+
+class CustomLoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        user = authenticate(username=username, password=password)
+
+        if user:
+            # Authentification et création de la session Django
             login(request, user)
 
             # Générer les tokens JWT
             refresh = RefreshToken.for_user(user)
+
+            # Génération et enregistrement du code de connexion
+            code_connexion = generate_token(6)
+            reset_token = generate_token()
+
+            user.code_connexion = code_connexion
+            user.reset_token = reset_token
+            user.save()
+            
+            # Récupérer le pays sélectionné depuis la session (ou utiliser celui de l'utilisateur par défaut)
+            selected_pays_id = request.session.get('selected_pays_id', user.pays.id)
+            selected_pays = Pays.objects.get(id=selected_pays_id)
 
             # Réponse avec cookies sécurisés
             response = Response({"message": "Authentification réussie."})
@@ -200,6 +261,145 @@ class CustomDoubleFactorAuthView(APIView):
             }
 
             redirect_url = role_redirects.get(user.role)
+
+            if not redirect_url:
+                return Response(
+                    {"detail": _("Rôle utilisateur inconnu.")},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            return Response(
+                {
+                    "message": _("Authentification réussie. Redirection en cours..."),
+                    "reset_url": redirect_url,
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "selected_pays_id": selected_pays_id,
+                    # "selected_pays_nom": selected_pays.nom,  # Optionnel : ajouter le nom si nécessaire
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {"detail": _("Vos identifiants sont invalides.")},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+
+
+
+
+class CustomLoginViewDirect(APIView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        user = authenticate(username=username, password=password)
+
+        if user:
+            # Authentification et création de la session Django
+            login(request, user)
+
+            # Générer les tokens JWT
+            # refresh = RefreshToken.for_user(user)
+
+            # Génération et enregistrement du code de connexion
+            code_connexion = generate_token(6)
+            reset_token = generate_token()
+
+            user.code_connexion = code_connexion
+            user.reset_token = reset_token
+            user.save()
+
+            # Redirection en fonction du rôle de l'utilisateur
+            role_redirects = {
+                "Root": reverse("dash_root"),
+                "Validateur": reverse("dash_validateur"),
+                "Analyste": reverse("dash_analyste"),
+                "Client": reverse("dash_client"),
+            }
+
+            redirect_url = role_redirects.get(user.role)
+
+            if not redirect_url:
+                return Response(
+                    {"detail": _("Rôle utilisateur inconnu.")},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            return Response(
+                {
+                    "message": _("Authentification réussie. Redirection en cours..."),
+                    "redirect_url": redirect_url,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {"detail": _("Vos identifiants sont invalides.")},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+
+
+
+
+
+class CustomDoubleFactorAuthViewOld(APIView):
+    def post(self, request, *args, **kwargs):
+        code_connexion = request.data.get("code_connexion")
+        token = request.data.get("token")
+
+        if not code_connexion or not token:
+            return Response(
+                {"detail": _("Informations manquantes.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Recherche de l'utilisateur correspondant au code_connexion et au token
+            user = CustomUser.objects.get(
+                code_connexion=code_connexion, reset_token=token
+            )
+
+            # Authentification de l'utilisateur
+            login(request, user)
+
+            # Générer les tokens JWT
+            refresh = RefreshToken.for_user(user)
+
+            # Génération et enregistrement du code de connexion
+            code_connexion = generate_token(6)
+            reset_token = generate_token()
+
+            user.code_connexion = code_connexion
+            user.reset_token = reset_token
+            user.save()
+
+            # Réponse avec cookies sécurisés
+            response = Response({"message": "Authentification réussie."})
+            response.set_cookie(
+                "access_token",
+                str(refresh.access_token),
+                httponly=True,
+                secure=True,
+                samesite="Strict",
+            )
+            response.set_cookie(
+                "refresh_token",
+                str(refresh),
+                httponly=True,
+                secure=True,
+                samesite="Strict",
+            )
+
+            # Redirection en fonction du rôle de l'utilisateur
+            role_redirects = {
+                "Root": reverse("dash_root") + f"?token={reset_token}",
+                "Validateur": reverse("dash_validateur") + f"?token={reset_token}",
+                "Analyste": reverse("dash_analyste") + f"?token={reset_token}",
+                "Client": reverse("dash_client") + f"?token={reset_token}",
+            }
+
+            redirect_url = role_redirects.get(user.role)
             if not redirect_url:
                 return Response(
                     {"detail": _("Rôle utilisateur inconnu.")},
@@ -217,6 +417,65 @@ class CustomDoubleFactorAuthView(APIView):
                 {"detail": _("Code de connexion ou token invalide.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+            
+
+
+
+
+class CustomDoubleFactorAuthView(APIView):
+    def post(self, request, *args, **kwargs):
+        code_connexion = request.data.get("code_connexion")
+        token = request.data.get("token")
+
+        if not code_connexion or not token:
+            return Response(
+                {"detail": _("Informations manquantes.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = CustomUser.objects.get(
+                code_connexion=code_connexion, reset_token=token
+            )
+            
+            # Ne générez pas de nouveaux tokens ici et ne faites pas de login()
+            # On renvoie simplement l'ID de l'utilisateur pour l'initialisation de la session
+            return Response(
+                {
+                    "message": "Authentification 2FA réussie.",
+                    "user_id": user.pk,
+                    "user_role": user.role,  # Ajoutez cette ligne
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"detail": _("Code de connexion ou token invalide.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )            
+      
+      
+            
+# La vue que vous devez ajouter
+class SessionInitView(APIView):
+    authentication_classes = [] # N'utilise pas l'authentification DRF classique
+    permission_classes = [] # Ne nécessite pas d'être authentifié au préalable
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({"detail": "User ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(pk=user_id)
+            # L'appel à login() crée la session Django et le cookie
+            login(request, user)
+            return Response({"message": "Session initialized successfully."})
+        except CustomUser.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
 
 
 class CustomForgotPasswordView(APIView):
@@ -259,6 +518,8 @@ class CustomForgotPasswordView(APIView):
                 {"detail": _("Aucun utilisateur trouvé avec cet email.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
 
 
 class CustomResetPasswordView(APIView):
@@ -305,9 +566,79 @@ class CustomResetPasswordView(APIView):
             )
 
 
-class CustomLogoutView(APIView):
+
+
+class CustomLogoutViewOld(APIView):
     def post(self, request, *args, **kwargs):
         logout(request)
         return Response(
             {"detail": _("Déconnecté avec succès.")}, status=status.HTTP_200_OK
+        )
+
+
+
+
+
+class CustomLogoutView(APIView):
+    authentication_classes = []  # No authentication required for logout
+    permission_classes = []      # No permissions required
+
+    def post(self, request, *args, **kwargs):
+        # We don't need to call Django's logout() since we're not using sessions
+        # but it doesn't hurt to keep it.
+        logout(request)
+        response = Response(
+            {"detail": _("Déconnecté avec succès.")},
+            status=status.HTTP_200_OK
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+        return response
+    
+    
+    
+    
+    
+class PaysListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        pays_list = Pays.objects.all()
+        serializer = PaysSerializer(pays_list, many=True)
+        return Response(serializer.data)
+    
+    
+    
+class UpdateSelectedPaysView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        pays_id = request.data.get('pays_id')
+        if not pays_id:
+            return Response(
+                {"error": _("L'ID du pays est requis.")},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            pays = Pays.objects.get(id=pays_id)
+            request.session['selected_pays_id'] = pays.id
+            return Response(
+                {
+                    "message": _("Pays sélectionné mis à jour."),
+                    "selected_pays_id": pays.id
+                },
+                status=status.HTTP_200_OK
+            )
+        except Pays.DoesNotExist:
+            return Response(
+                {"error": _("Pays non trouvé.")},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+    def get(self, request, *args, **kwargs):
+        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
+        return Response(
+            {"selected_pays_id": selected_pays_id},
+            status=status.HTTP_200_OK
         )

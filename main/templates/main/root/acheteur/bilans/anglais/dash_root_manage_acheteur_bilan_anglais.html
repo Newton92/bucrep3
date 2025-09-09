@@ -1,0 +1,430 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan Anglais - {{ acheteur.nom|default:"de l'Acheteur" }}</h3>
+    </div>
+</div>
+<div class="row g-4 mb-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countActifs">Module de Gestion du Bilan Anglais</h4>
+                    <span>Dans ce module, naviguez entre l'actif, le passif et le compte de résultat pour manager facilement les données comptables selon le plan comptable anglais.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-pills nav-justified" id="bilanTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="actifs-a-tab" data-bs-toggle="tab" data-bs-target="#actifs-a-tab-pane" type="button" role="tab" aria-controls="actifs-a-tab-pane" aria-selected="true">
+                    <i class="bi bi-wallet2 me-2"></i>Actifs
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="passifs-a-tab" data-bs-toggle="tab" data-bs-target="#passifs-a-tab-pane" type="button" role="tab" aria-controls="passifs-a-tab-pane" aria-selected="false">
+                    <i class="bi bi-cash-stack me-2"></i>Passifs
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="resultats-a-tab" data-bs-toggle="tab" data-bs-target="#resultats-a-tab-pane" type="button" role="tab" aria-controls="resultats-a-tab-pane" aria-selected="false">
+                    <i class="bi bi-credit-card me-2"></i>Compte de Résultat
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="bilanTabsContent">
+
+            <div class="tab-pane fade show active" id="actifs-a-tab-pane" role="tabpanel" aria-labelledby="actifs-a-tab" tabindex="0">
+                <div class="card border rounded-3 mt-4">
+                    <div class="card-header border-bottom">
+                        <h5 class="card-header-title">Gestion des Actifs anglais</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-pills nav-justified" id="actifsASubTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="listing-actifs-a-tab" data-bs-toggle="tab" data-bs-target="#listing-actifs-a-pane" type="button" role="tab" aria-controls="listing-actifs-a-pane" aria-selected="true">
+                                    <i class="bi bi-list-ul me-2"></i>Listing des actifs
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="form-actifs-a-tab" data-bs-toggle="tab" data-bs-target="#form-actifs-a-pane" type="button" role="tab" aria-controls="form-actifs-a-pane" aria-selected="false">
+                                    <i class="bi bi-plus-circle me-2"></i>Saisie multi-années
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content mt-4" id="actifsASubTabsContent">
+                            <div class="tab-pane fade show active" id="listing-actifs-a-pane" role="tabpanel" aria-labelledby="listing-actifs-a-tab" tabindex="0">
+                                <div class="border rounded-3 p-4">
+                                    <h6 class="mb-3">Liste des bilans d'actifs enregistrés</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Année</th>
+                                                    <th class="text-center">Total Actif</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for actif in actifs_a_page %}
+                                                <tr>
+                                                    <td>{{ actif.id }}</td>
+                                                    <td>{{ actif.annee.annee }}</td>
+                                                    <td class="text-center fw-bold">{{ actif.total_actif|floatformat:0 }} FCFA</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-light me-1 btn-view-actifs"
+                                                                title="Consulter"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#modal-view-actifs"
+                                                                data-actif-id="{{ actif.id }}">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-light btn-edit-actifs"
+                                                                title="Modifier"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#modal-edit-actifs"
+                                                                data-actif-id="{{ actif.id }}">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center py-4">Aucun actif n'a été trouvé pour cet acheteur.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% if actifs_a_page.has_other_pages %}
+                                    <nav aria-label="Pagination des actifs" class="mt-4 d-flex justify-content-end">
+                                        <ul class="pagination">
+                                            {% if actifs_a_page.has_previous %}
+                                            <li class="page-item"><a class="page-link" href="?page_actifs={{ actifs_a_page.previous_page_number }}">Précédent</a></li>
+                                            {% else %}
+                                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Précédent</a></li>
+                                            {% endif %}
+                                            {% for i in actifs_a_page.paginator.page_range %}
+                                            <li class="page-item {% if actifs_a_page.number == i %}active{% endif %}" aria-current="page">
+                                                <a class="page-link" href="?page_actifs={{ i }}">{{ i }}</a>
+                                            </li>
+                                            {% endfor %}
+                                            {% if actifs_a_page.has_next %}
+                                            <li class="page-item"><a class="page-link" href="?page_actifs={{ actifs_a_page.next_page_number }}">Suivant</a></li>
+                                            {% else %}
+                                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Suivant</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="form-actifs-a-pane" role="tabpanel" aria-labelledby="form-actifs-a-tab" tabindex="0">
+                                <form id="form-actifs-a-multi-annee">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acheteur_n" value="{{ id_acheteur }}">
+                                    <input type="hidden" name="acheteur_n1" value="{{ id_acheteur }}">
+                                    <input type="hidden" name="acheteur_n2" value="{{ id_acheteur }}">
+                                    <div class="accordion" id="accordionActifsA">
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_actifs_content.html' with suffix='n' %}
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_actifs_content.html' with suffix='n1' %}
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_actifs_content.html' with suffix='n2' %}
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-4">
+                                        <button type="button" class="btn btn-secondary me-2" id="btn-reset-form-actifs">
+                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                                        </button>
+                                        <button type="submit" class="btn btn-success" id="btn-submit-form-actifs">
+                                            <i class="bi bi-check-circle me-2"></i>Enregistrer les actifs
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="passifs-a-tab-pane" role="tabpanel" aria-labelledby="passifs-a-tab" tabindex="0">
+                <div class="card border rounded-3 mt-4">
+                    <div class="card-header border-bottom">
+                        <h5 class="card-header-title">Gestion des Passifs anglais</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-pills nav-justified" id="passifsASubTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="listing-passifs-a-tab" data-bs-toggle="tab" data-bs-target="#listing-passifs-a-pane" type="button" role="tab" aria-controls="listing-passifs-a-pane" aria-selected="true">
+                                    <i class="bi bi-list-ul me-2"></i>Listing des passifs
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="form-passifs-a-tab" data-bs-toggle="tab" data-bs-target="#form-passifs-a-pane" type="button" role="tab" aria-controls="form-passifs-a-pane" aria-selected="false">
+                                    <i class="bi bi-plus-circle me-2"></i>Saisie multi-années
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-4" id="passifsASubTabsContent">
+                            <div class="tab-pane fade show active" id="listing-passifs-a-pane" role="tabpanel" aria-labelledby="listing-passifs-a-tab" tabindex="0">
+                                <div class="border rounded-3 p-4">
+                                    <h6 class="mb-3">Liste des bilans de passifs enregistrés</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Année</th>
+                                                    <th class="text-center">Total Passif</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for passif in passifs_a_page %}
+                                                <tr>
+                                                    <td>{{ passif.id }}</td>
+                                                    <td>{{ passif.annee.annee }}</td>
+                                                    <td class="text-center fw-bold">{{ passif.total_passif|floatformat:0 }} FCFA</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-light me-1 btn-view-passifs"
+                                                                title="Consulter"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#modal-view-passifs"
+                                                                data-passif-id="{{ passif.id }}">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-light btn-edit-passifs"
+                                                                title="Modifier"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#modal-edit-passifs"
+                                                                data-passif-id="{{ passif.id }}">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center py-4">Aucun passif n'a été trouvé pour cet acheteur.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% if passifs_a_page.has_other_pages %}
+                                    <nav aria-label="Pagination des passifs" class="mt-4 d-flex justify-content-end">
+                                        <ul class="pagination">
+                                            {% if passifs_a_page.has_previous %}
+                                            <li class="page-item"><a class="page-link" href="?page_passifs={{ passifs_a_page.previous_page_number }}">Précédent</a></li>
+                                            {% else %}
+                                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Précédent</a></li>
+                                            {% endif %}
+                                            {% for i in passifs_a_page.paginator.page_range %}
+                                            <li class="page-item {% if passifs_a_page.number == i %}active{% endif %}" aria-current="page">
+                                                <a class="page-link" href="?page_passifs={{ i }}">{{ i }}</a>
+                                            </li>
+                                            {% endfor %}
+                                            {% if passifs_a_page.has_next %}
+                                            <li class="page-item"><a class="page-link" href="?page_passifs={{ passifs_a_page.next_page_number }}">Suivant</a></li>
+                                            {% else %}
+                                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Suivant</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="form-passifs-a-pane" role="tabpanel" aria-labelledby="form-passifs-a-tab" tabindex="0">
+                                <form id="form-passifs-a-multi-annee">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acheteur_n" value="{{ id_acheteur }}">
+                                    <input type="hidden" name="acheteur_n1" value="{{ id_acheteur }}">
+                                    <input type="hidden" name="acheteur_n2" value="{{ id_acheteur }}">
+                                    <div class="accordion" id="accordionPassifsA">
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_passifs_content.html' with suffix='n' %}
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_passifs_content.html' with suffix='n1' %}
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_passifs_content.html' with suffix='n2' %}
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-4">
+                                        <button type="button" class="btn btn-secondary me-2" id="btn-reset-form-passifs">
+                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                                        </button>
+                                        <button type="submit" class="btn btn-success" id="btn-submit-form-passifs">
+                                            <i class="bi bi-check-circle me-2"></i>Enregistrer les passifs
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="resultats-a-tab-pane" role="tabpanel" aria-labelledby="resultats-a-tab" tabindex="0">
+                <div class="card border rounded-3 mt-4">
+                    <div class="card-header border-bottom">
+                        <h5 class="card-header-title">Gestion du Compte de Résultat anglais</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-pills nav-justified" id="resultatsASubTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="listing-resultats-a-tab" data-bs-toggle="tab" data-bs-target="#listing-resultats-a-pane" type="button" role="tab" aria-controls="listing-resultats-a-pane" aria-selected="true">
+                                    <i class="bi bi-list-ul me-2"></i>Listing des comptes
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="form-resultats-a-tab" data-bs-toggle="tab" data-bs-target="#form-resultats-a-pane" type="button" role="tab" aria-controls="form-resultats-a-pane" aria-selected="false">
+                                    <i class="bi bi-plus-circle me-2"></i>Saisie multi-années
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-4" id="resultatsASubTabsContent">
+                            <div class="tab-pane fade show active" id="listing-resultats-a-pane" role="tabpanel" aria-labelledby="listing-resultats-a-tab" tabindex="0">
+                                <div class="border rounded-3 p-4">
+                                    <h6 class="mb-3">Liste des comptes de résultat enregistrés</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Année</th>
+                                                    <th class="text-center">Résultat net</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for resultat in resultats_a_page %}
+                                                <tr>
+                                                    <td>{{ resultat.id }}</td>
+                                                    <td>{{ resultat.annee.annee }}</td>
+                                                    <td class="text-center fw-bold">{{ resultat.resultat_net|floatformat:0 }} FCFA</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-light me-1 btn-view-resultats"
+                                                                title="Consulter"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#modal-view-resultats"
+                                                                data-resultat-id="{{ resultat.id }}">
+                                                            <i class="bi bi-eye"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-light btn-edit-resultats"
+                                                                title="Modifier"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#modal-edit-resultats"
+                                                                data-resultat-id="{{ resultat.id }}">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center py-4">Aucun compte de résultat n'a été trouvé pour cet acheteur.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% if resultats_a_page.has_other_pages %}
+                                    <nav aria-label="Pagination des comptes de résultat" class="mt-4 d-flex justify-content-end">
+                                        <ul class="pagination">
+                                            {% if resultats_a_page.has_previous %}
+                                            <li class="page-item"><a class="page-link" href="?page_resultats={{ resultats_a_page.previous_page_number }}">Précédent</a></li>
+                                            {% else %}
+                                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Précédent</a></li>
+                                            {% endif %}
+                                            {% for i in resultats_a_page.paginator.page_range %}
+                                            <li class="page-item {% if resultats_a_page.number == i %}active{% endif %}" aria-current="page">
+                                                <a class="page-link" href="?page_resultats={{ i }}">{{ i }}</a>
+                                            </li>
+                                            {% endfor %}
+                                            {% if resultats_a_page.has_next %}
+                                            <li class="page-item"><a class="page-link" href="?page_resultats={{ resultats_a_page.next_page_number }}">Suivant</a></li>
+                                            {% else %}
+                                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1" aria-disabled="true">Suivant</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="tab-pane fade" id="form-resultats-a-pane" role="tabpanel" aria-labelledby="form-resultats-a-tab" tabindex="0">
+                                <form id="form-resultats-a-multi-annee">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="acheteur_n" value="{{ id_acheteur }}">
+                                    <input type="hidden" name="acheteur_n1" value="{{ id_acheteur }}">
+                                    <input type="hidden" name="acheteur_n2" value="{{ id_acheteur }}">
+                                    <div class="accordion" id="accordionResultatsA">
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_resultats_content.html' with suffix='n' %}
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_resultats_content.html' with suffix='n1' %}
+                                        {% include 'main/root/acheteur/bilans/anglais/partials/form_resultats_content.html' with suffix='n2' %}
+                                    </div>
+                                    <div class="d-flex justify-content-end mt-4">
+                                        <button type="button" class="btn btn-secondary me-2" id="btn-reset-form-resultats">
+                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser
+                                        </button>
+                                        <button type="submit" class="btn btn-success" id="btn-submit-form-resultats">
+                                            <i class="bi bi-check-circle me-2"></i>Enregistrer les résultats
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+    </div>
+</div>
+
+{% include 'main/root/acheteur/bilans/anglais/partials/modals_actifs.html' %}
+
+{% include 'main/root/acheteur/bilans/anglais/partials/modals_passifs.html' %}
+
+{% include 'main/root/acheteur/bilans/anglais/partials/modals_resultats.html' %}
+
+{% endblock %}
+
+---
+
+{% block scripts %}
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    $(document).ready(function() {
+        tinymce.init({
+            selector: '#description, #editDescription',
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 250
+        });
+
+        // Gestion de la persistance des onglets
+        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+            localStorage.setItem('lastActiveTabAnglais', $(e.target).attr('id'));
+        });
+        var lastTab = localStorage.getItem('lastActiveTabAnglais');
+        if (lastTab) {
+            $('#' + lastTab).tab('show');
+        } else {
+            $('#actifs-a-tab').tab('show');
+        }
+    });
+</script>
+
+{% include 'main/root/acheteur/bilans/anglais/partials/scripts_actifs.html' %}
+
+{% include 'main/root/acheteur/bilans/anglais/partials/scripts_passifs.html' %}
+
+{% include 'main/root/acheteur/bilans/anglais/partials/scripts_resultats.html' %}
+
+{% endblock %}

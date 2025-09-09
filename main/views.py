@@ -24,6 +24,12 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import login
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
+from main.utils import populate_database, create_fake_commands, create_fake_buyers
+from django.utils import timezone
+from faker import Faker
+import random
+from django.db.models import Q
+
 
 CustomUser = get_user_model()
 
@@ -224,189 +230,6 @@ def dash_root_profile_page(request):
         context,
     )
     
-    
-    
-def get_base_context(request, acheteur_id):
-    """
-    Génère le contexte commun pour les vues de gestion d'acheteur.
-    """
-    token = request.GET.get("token")
-    if not token:
-        return None, render(request, "main/index.html", {"error": _("Token manquant.")})
-
-    user = request.user
-    refresh = RefreshToken.for_user(user)
-
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": acheteur_id,
-    }
-    return context, None
-
-
-def dash_root_manage_acheteur_portable(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/root/acheteur/portable/dash_root_manage_acheteur_portable.html",
-        context,
-    )
-
-def dash_analyste_manage_acheteur_portable(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/analyste/acheteur/portable/dash_analyste_manage_acheteur_portable.html",
-        context,
-    )
-
-def dash_validateur_manage_acheteur_portable(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/validateur/acheteur/portable/dash_validateur_manage_acheteur_portable.html",
-        context,
-    )
-    
-    
-    
-    
-def dash_root_manage_acheteur_adresse(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/root/acheteur/adresse/dash_root_manage_acheteur_adresse.html",
-        context,
-    )
-
-def dash_analyste_manage_acheteur_adresse(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/analyste/acheteur/adresse/dash_analyste_manage_acheteur_adresse.html",
-        context,
-    )
-
-def dash_validateur_manage_acheteur_adresse(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/validateur/acheteur/adresse/dash_validateur_manage_acheteur_adresse.html",
-        context,
-    )
-    
-    
-    
-    
-def dash_root_manage_acheteur_email(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/root/acheteur/email/dash_root_manage_acheteur_email.html",
-        context,
-    )
-
-def dash_analyste_manage_acheteur_email(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/analyste/acheteur/email/dash_analyste_manage_acheteur_email.html",
-        context,
-    )
-
-def dash_validateur_manage_acheteur_email(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/validateur/acheteur/email/dash_validateur_manage_acheteur_email.html",
-        context,
-    )
-    
-    
-    
-def dash_root_manage_acheteur_swot(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/root/acheteur/swot/dash_root_manage_acheteur_swot.html",
-        context,
-    )
-
-def dash_analyste_manage_acheteur_swot(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/analyste/acheteur/swot/dash_analyste_manage_acheteur_swot.html",
-        context,
-    )
-
-def dash_validateur_manage_acheteur_swot(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/validateur/acheteur/swot/dash_validateur_manage_acheteur_swot.html",
-        context,
-    )
-    
-    
-def dash_root_manage_acheteur_document(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/root/acheteur/document/dash_root_manage_acheteur_document.html",
-        context,
-    )
-
-def dash_analyste_manage_acheteur_document(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/analyste/acheteur/document/dash_analyste_manage_acheteur_document.html",
-        context,
-    )
-
-def dash_validateur_manage_acheteur_document(request, acheteur_id):
-    context, error_response = get_base_context(request, acheteur_id)
-    if error_response:
-        return error_response
-    return render(
-        request,
-        "main/validateur/acheteur/document/dash_validateur_manage_acheteur_document.html",
-        context,
-    )
-    
-    
 
 
 
@@ -564,86 +387,38 @@ logger = logging.getLogger(__name__)
 # Ensure CustomUser is correctly imported or defined
 CustomUser = get_user_model()
 
-@login_required
-def dash_root_2(request):
-    token = request.GET.get("token")
-    logger.debug(f"Token received: {token}")
-
-    if not token:
-        logger.error("Token is missing.")
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
-
-    try:
-        # Attempt to create an AccessToken from the provided token
-        access_token = AccessToken(token)
-        user_id = access_token['user_id']
-        logger.debug(f"User ID extracted from token: {user_id}")
-
-        user = CustomUser.objects.get(pk=user_id)
-        login(request, user)  # Manually authenticate the user
-        logger.debug(f"User {user.username} logged in successfully.")
-    except TokenError as e:
-        logger.error(f"Token error: {e}")
-        # Handle the case where the token is invalid
-        return render(request, "main/index.html", {"error": _("Token invalide.")})
-    except CustomUser.DoesNotExist as e:
-        logger.error(f"User not found: {e}")
-        # Handle the case where the user does not exist
-        return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
-
-    refresh = RefreshToken.for_user(user)
-    context = {
-        "dash_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-    }
-    return render(request, "main/root/dash_root.html", context)
-
 
 @login_required
 def dash_root(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
-
+    
+    # create_fake_buyers(15)
+    
     # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
+    
+    # Appeler la fonction
+    # populate_database()
 
     context = {
         "users_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "refresh": refresh,
+        "access": str(RefreshToken.for_user(user).access_token),
     }
     return render(request, "main/root/dash_root.html", context)
 
-
-@login_required
-def dash_root_3(request):
-    print(f"DEBUG: dash_root - Utilisateur authentifié ? {request.user.is_authenticated}")
-    if request.user.is_authenticated:
-        print(f"DEBUG: dash_root - Nom d'utilisateur : {request.user.username}")
-        print(f"DEBUG: dash_root - Clé de session : {request.session.session_key}")
-    else:
-        print("DEBUG: dash_root - Utilisateur non authentifié malgré #@login_required (devrait rediriger).")
-
-    user = request.user
-    context = {
-        "users_active": "active",
-        "user": user,
-        # Supprimez la génération de tokens refresh/access ici comme suggéré précédemment
-    }
-    return render(request, "main/root/dash_root.html", context)
 
 
 @login_required
 def dash_root_user(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -667,7 +442,7 @@ def dash_root_user(request):
 def dash_root_pays(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -687,7 +462,7 @@ def dash_root_pays(request):
 def dash_root_province(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -711,7 +486,7 @@ def dash_root_province(request):
 def dash_root_ville(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -739,7 +514,7 @@ def dash_root_ville(request):
 def dash_root_devise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -768,7 +543,7 @@ def dash_root_devise(request):
 def dash_root_annee(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -795,7 +570,7 @@ def dash_root_annee(request):
 def dash_root_coloration(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -816,7 +591,7 @@ def dash_root_coloration(request):
 def dash_root_category_nace(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -837,7 +612,7 @@ def dash_root_category_nace(request):
 def dash_root_category_naf(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -858,7 +633,7 @@ def dash_root_category_naf(request):
 def dash_root_code_nace(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -883,7 +658,7 @@ def dash_root_code_nace(request):
 def dash_root_code_naf(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -908,7 +683,7 @@ def dash_root_code_naf(request):
 def dash_root_forme_juridique(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -931,7 +706,7 @@ def dash_root_forme_juridique(request):
 def dash_root_domaine(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -952,7 +727,7 @@ def dash_root_domaine(request):
 def dash_root_modele_bail(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -973,7 +748,7 @@ def dash_root_modele_bail(request):
 def dash_root_modele_bilan(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -994,7 +769,7 @@ def dash_root_modele_bilan(request):
 def dash_root_modele_alarme(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1015,7 +790,7 @@ def dash_root_modele_alarme(request):
 def dash_root_modele_rapport(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1036,7 +811,7 @@ def dash_root_modele_rapport(request):
 def dash_root_modele_avis_commercial(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1059,7 +834,7 @@ def dash_root_modele_avis_commercial(request):
 def dash_root_modele_relation_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1082,7 +857,7 @@ def dash_root_modele_relation_entreprise(request):
 def dash_root_modele_notation(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1103,7 +878,7 @@ def dash_root_modele_notation(request):
 def dash_root_modele_comportement_paiement(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1126,7 +901,7 @@ def dash_root_modele_comportement_paiement(request):
 def dash_root_modele_comportement_jugement(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1149,7 +924,7 @@ def dash_root_modele_comportement_jugement(request):
 def dash_root_modele_information_notation_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1174,7 +949,7 @@ def dash_root_modele_information_notation_entreprise(request):
 def dash_root_poste(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1199,7 +974,7 @@ def dash_root_poste(request):
 def dash_root_category_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1222,7 +997,7 @@ def dash_root_category_entreprise(request):
 def dash_root_structure_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1245,7 +1020,7 @@ def dash_root_structure_entreprise(request):
 def dash_root_statut_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1266,7 +1041,7 @@ def dash_root_statut_entreprise(request):
 def dash_root_acheteur(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1286,7 +1061,7 @@ def dash_root_acheteur(request):
 def dash_root_add_acheteur(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1334,7 +1109,7 @@ def dash_root_add_acheteur(request):
 def dash_root_edit_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1386,7 +1161,7 @@ def dash_root_edit_acheteur(request, acheteur_id):
 def dash_root_manage_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1438,7 +1213,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
 def dash_root_manage_acheteur_resume(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1478,7 +1253,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
 def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1506,7 +1281,7 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
 def dash_root_manage_acheteur_data_save(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1542,7 +1317,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
 def dash_root_manage_acheteur_tendance(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1574,7 +1349,7 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
 def dash_root_manage_acheteur_responsable(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1610,7 +1385,7 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
 def dash_root_manage_acheteur_antecedent(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1642,7 +1417,7 @@ def dash_root_manage_acheteur_antecedent(request, acheteur_id):
 def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1674,7 +1449,7 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
 def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1710,7 +1485,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
 def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1746,7 +1521,7 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
 def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1778,7 +1553,7 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
 def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1810,7 +1585,7 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
 def dash_root_manage_acheteur_filiale(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1846,7 +1621,7 @@ def dash_root_manage_acheteur_filiale(request, acheteur_id):
 def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1882,7 +1657,7 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
 def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1918,7 +1693,7 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
 def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1950,7 +1725,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
 def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -1982,7 +1757,7 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
 def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2010,7 +1785,7 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
 def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2046,7 +1821,7 @@ def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
 def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2078,7 +1853,7 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
 def dash_root_manage_acheteur_advice(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2106,7 +1881,7 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
 def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2134,7 +1909,7 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
 def dash_root_manage_acheteur_banking(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2170,7 +1945,7 @@ def dash_root_manage_acheteur_banking(request, acheteur_id):
 def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2202,7 +1977,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
 def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2234,7 +2009,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
 def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2266,7 +2041,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
 def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2298,7 +2073,7 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
 def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2330,7 +2105,7 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
 def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2362,7 +2137,7 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
 def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2394,7 +2169,7 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
 def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2426,7 +2201,7 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
 def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2458,7 +2233,7 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
 def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2490,7 +2265,7 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
 def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2522,7 +2297,7 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
 def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2554,7 +2329,7 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
 def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2586,7 +2361,7 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
 def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2618,7 +2393,7 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
 def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2646,7 +2421,7 @@ def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2674,7 +2449,7 @@ def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2716,7 +2491,7 @@ def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2758,7 +2533,7 @@ def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2800,7 +2575,7 @@ def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2848,7 +2623,7 @@ def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2896,7 +2671,7 @@ def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
 def dash_root_manage_acheteur_report_web(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2922,13 +2697,23 @@ def dash_root_manage_acheteur_report_web(request, acheteur_id):
     )
 
 
+
+
+from django.db import connection
 @login_required
 def dash_root_commande(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
+    # create_fake_commands(15)
+    # 1. Delete all objects using the ORM (this is the "delete" part)
+    # Commande.objects.all().delete()
+
+    # 2. Manually reset the sequence (this is the "truncate" part)
+    # with connection.cursor() as cursor:
+        # cursor.execute("ALTER SEQUENCE main_commande_id_seq RESTART WITH 1;")
 
     # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
@@ -2947,10 +2732,68 @@ def dash_root_commande(request):
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 
+    # Récupérer tous les pays
+    pays_list = Pays.objects.all()
+
     # Récupérer tous les villes
     ville_list = Ville.objects.all()
 
     # Récupérer tous les modeles de rapport
+    modele_rapport_list = ModeleRapport.objects.all()
+
+    context = {
+        "requests_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "devise_list_one": devise_list_one,
+        "devise_list_two": devise_list_two,
+        "client_list": client_list,
+        "pays_list": pays_list,
+        "ville_list": ville_list,
+        "acheteur_list": acheteur_list,
+        "modele_rapport_list": modele_rapport_list,
+    }
+    return render(request, "main/root/orders/dash_root_commande.html", context)
+
+
+
+
+
+
+@login_required
+def dash_root_commande_old(request):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    
+    # Créer 15 commandes factices uniquement si aucune commande n'existe
+    # if not Commande.objects.exists():
+    # create_fake_commands(15)
+    commandes_list = Commande.objects.all()
+    print(commandes_list)
+
+    # Récupérer tous les devises
+    devise_list_one = Devise.objects.all()
+    devise_list_two = Devise.objects.all()
+
+    # Récupérer tous les acheteurs
+    acheteur_list = Acheteur.objects.all()
+
+    # Récupérer tous les clients
+    client_list = CustomUser.objects.filter(
+        Q(role__icontains="Client") | Q(role__icontains="client")
+    ).order_by("id")
+
+    # Récupérer tous les villes
+    ville_list = Ville.objects.all()
+
+    # Récupérer tous les modèles de rapport
     modele_rapport_list = ModeleRapport.objects.all()
 
     context = {
@@ -2968,11 +2811,15 @@ def dash_root_commande(request):
     return render(request, "main/root/orders/dash_root_commande.html", context)
 
 
+
+
+
+
 @login_required
 def dash_root_manage_commande(request, commande_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -2998,7 +2845,7 @@ def dash_root_manage_commande(request, commande_id):
 def dash_root_alerte(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3025,7 +2872,7 @@ def dash_root_alerte(request):
 def dash_root_add_alerte(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3058,7 +2905,7 @@ def dash_root_edit_new_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3090,7 +2937,7 @@ def dash_root_document_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3124,7 +2971,7 @@ def dash_root_client_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3159,7 +3006,7 @@ def dash_root_client_alerte(request, reference):
 def dash_root_edit_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3191,7 +3038,7 @@ def dash_root_edit_alerte(request, alerte_id):
 def dash_root_manage_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3229,7 +3076,7 @@ def dash_root_manage_alerte(request, alerte_id):
 def dash_root_client(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3249,7 +3096,7 @@ def dash_root_client(request):
 def dash_root_carnet(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3269,7 +3116,7 @@ def dash_root_carnet(request):
 def dash_root_portefeuille(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3297,7 +3144,7 @@ def dash_root_portefeuille(request):
 def dash_root_add_portefeuille(request, portefeuille_id=None):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3354,7 +3201,7 @@ def dash_root_add_portefeuille(request, portefeuille_id=None):
 def dash_root_edit_portefeuille(request, portefeuille_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3427,7 +3274,7 @@ def dash_root_edit_portefeuille(request, portefeuille_id):
 def dash_root_simulateur_scoring_sb(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3457,7 +3304,7 @@ def dash_root_simulateur_scoring_sb(request):
 def dash_root_element_surveillance(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3499,7 +3346,7 @@ def dash_root_element_surveillance(request):
 def dash_root_alerte_log(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3535,7 +3382,7 @@ def dash_root_alerte_log(request):
 def dash_root_certification_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3567,7 +3414,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
 def dash_root_innovation_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3599,7 +3446,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
 def dash_root_strategie_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3631,7 +3478,7 @@ def dash_root_strategie_acheteur(request, acheteur_id):
 def dash_root_conformite_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3663,7 +3510,7 @@ def dash_root_conformite_acheteur(request, acheteur_id):
 def dash_root_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3729,7 +3576,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
     """
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
     refresh = RefreshToken.for_user(user)
@@ -3898,13 +3745,241 @@ def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
         "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_bilan_irfs_cobac.html",
         context,
     )
+    
+    
+    
+# Dans votre fichier views.py
+
+import json
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur
+from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
+
+@login_required
+def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
+    """
+    Vue pour gérer les bilans (Actifs, Passifs, Résultats) d'un acheteur,
+    avec pagination pour chaque section.
+    """
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    id_acheteur = acheteur_id
+
+    try:
+        acheteur_actuel = Acheteur.objects.get(id=id_acheteur)
+    except Acheteur.DoesNotExist:
+        return render(
+            request, "main/error_page.html", {"error": "Acheteur non trouvé."}
+        )
+    
+    tous_les_acheteurs = Acheteur.objects.all()
+    annee_list = Annee.objects.all()
+
+    # --- PAGINATION DES ACTIFS CLASSIQUES ---
+    actifs_c_list = ActifC.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    actifs_c_paginator = Paginator(actifs_c_list, 10)
+    page_actifs_c = request.GET.get("page_actifs")
+    actifs_c_page_obj = actifs_c_paginator.get_page(page_actifs_c)
+
+    # --- PAGINATION DES PASSIFS CLASSIQUES ---
+    passifs_c_list = PassifC.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    passifs_c_paginator = Paginator(passifs_c_list, 10)
+    page_passifs_c = request.GET.get("page_passifs")
+    passifs_c_page_obj = passifs_c_paginator.get_page(page_passifs_c)
+
+    # --- PAGINATION DES COMPTES DE RÉSULTATS CLASSIQUES ---
+    resultats_c_list = ResultatC.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    resultats_c_paginator = Paginator(resultats_c_list, 10)
+    page_resultats_c = request.GET.get("page_resultats")
+    resultats_c_page_obj = resultats_c_paginator.get_page(page_resultats_c)
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+        "acheteur": acheteur_actuel,
+        "acheteurs": tous_les_acheteurs,
+        "annee_list": annee_list,
+        "annee_list_data": json.dumps(list(Annee.objects.values("id", "annee"))),
+        "type_bilan_choices_json": json.dumps(list(TYPE_BILAN_CHOICES)),
+        "semestre_choices_json": json.dumps(list(SEMESTRE_CHOICES)),
+        # Objets de page paginés pour le template
+        "actifs_c_page": actifs_c_page_obj,
+        "passifs_c_page": passifs_c_page_obj,
+        "resultats_c_page": resultats_c_page_obj,
+    }
+
+    return render(
+        request,
+        "main/root/acheteur/bilans/classique/dash_root_manage_acheteur_bilan_classique.html",
+        context,
+    )
+    
+    
+    
+# Dans votre fichier views.py
+
+import json
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from main.models import ActifS, PassifS, ResultatS, Annee, Acheteur
+from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
+
+@login_required
+def dash_root_manage_acheteur_bilan_syscohada(request, acheteur_id):
+    """
+    Vue pour gérer les bilans (Actifs, Passifs, Résultats) d'un acheteur,
+    avec pagination pour chaque section, selon le plan SYSCOHADA.
+    """
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    id_acheteur = acheteur_id
+
+    try:
+        acheteur_actuel = Acheteur.objects.get(id=id_acheteur)
+    except Acheteur.DoesNotExist:
+        return render(
+            request, "main/error_page.html", {"error": "Acheteur non trouvé."}
+        )
+    
+    tous_les_acheteurs = Acheteur.objects.all()
+    annee_list = Annee.objects.all()
+
+    # --- PAGINATION DES ACTIFS SYSCOHADA ---
+    actifs_s_list = ActifS.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    actifs_s_paginator = Paginator(actifs_s_list, 10)
+    page_actifs_s = request.GET.get("page_actifs")
+    actifs_s_page_obj = actifs_s_paginator.get_page(page_actifs_s)
+
+    # --- PAGINATION DES PASSIFS SYSCOHADA ---
+    passifs_s_list = PassifS.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    passifs_s_paginator = Paginator(passifs_s_list, 10)
+    page_passifs_s = request.GET.get("page_passifs")
+    passifs_s_page_obj = passifs_s_paginator.get_page(page_passifs_s)
+
+    # --- PAGINATION DES COMPTES DE RÉSULTATS SYSCOHADA ---
+    resultats_s_list = ResultatS.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    resultats_s_paginator = Paginator(resultats_s_list, 10)
+    page_resultats_s = request.GET.get("page_resultats")
+    resultats_s_page_obj = resultats_s_paginator.get_page(page_resultats_s)
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+        "acheteur": acheteur_actuel,
+        "acheteurs": tous_les_acheteurs,
+        "annee_list": annee_list,
+        "annee_list_data": json.dumps(list(Annee.objects.values("id", "annee"))),
+        "type_bilan_choices_json": json.dumps(list(TYPE_BILAN_CHOICES)),
+        "semestre_choices_json": json.dumps(list(SEMESTRE_CHOICES)),
+        # Objets de page paginés pour le template
+        "actifs_s_page": actifs_s_page_obj,
+        "passifs_s_page": passifs_s_page_obj,
+        "resultats_s_page": resultats_s_page_obj,
+    }
+
+    return render(
+        request,
+        "main/root/acheteur/bilans/syscohada/dash_root_manage_acheteur_bilan_syscohada.html",
+        context,
+    )    
+    
+    
+    
+    
+# Dans votre fichier views.py
+
+import json
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from main.models import ActifA, PassifA, ResultatA, Annee, Acheteur
+from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
+
+@login_required
+def dash_root_manage_acheteur_bilan_anglais(request, acheteur_id):
+    """
+    Vue pour gérer les bilans (Actifs, Passifs, Résultats) d'un acheteur,
+    avec pagination pour chaque section, selon le plan comptable anglais.
+    """
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    id_acheteur = acheteur_id
+
+    try:
+        acheteur_actuel = Acheteur.objects.get(id=id_acheteur)
+    except Acheteur.DoesNotExist:
+        return render(
+            request, "main/error_page.html", {"error": "Acheteur non trouvé."}
+        )
+    
+    tous_les_acheteurs = Acheteur.objects.all()
+    annee_list = Annee.objects.all()
+
+    # --- PAGINATION DES ACTIFS ANGLAIS ---
+    actifs_a_list = ActifA.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    actifs_a_paginator = Paginator(actifs_a_list, 10)
+    page_actifs_a = request.GET.get("page_actifs")
+    actifs_a_page_obj = actifs_a_paginator.get_page(page_actifs_a)
+
+    # --- PAGINATION DES PASSIFS ANGLAIS ---
+    passifs_a_list = PassifA.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    passifs_a_paginator = Paginator(passifs_a_list, 10)
+    page_passifs_a = request.GET.get("page_passifs")
+    passifs_a_page_obj = passifs_a_paginator.get_page(page_passifs_a)
+
+    # --- PAGINATION DES COMPTES DE RÉSULTATS ANGLAIS ---
+    resultats_a_list = ResultatA.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
+    resultats_a_paginator = Paginator(resultats_a_list, 10)
+    page_resultats_a = request.GET.get("page_resultats")
+    resultats_a_page_obj = resultats_a_paginator.get_page(page_resultats_a)
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+        "acheteur": acheteur_actuel,
+        "acheteurs": tous_les_acheteurs,
+        "annee_list": annee_list,
+        "annee_list_data": json.dumps(list(Annee.objects.values("id", "annee"))),
+        "type_bilan_choices_json": json.dumps(list(TYPE_BILAN_CHOICES)),
+        "semestre_choices_json": json.dumps(list(SEMESTRE_CHOICES)),
+        # Objets de page paginés pour le template
+        "actifs_a_page": actifs_a_page_obj,
+        "passifs_a_page": passifs_a_page_obj,
+        "resultats_a_page": resultats_a_page_obj,
+    }
+
+    return render(
+        request,
+        "main/root/acheteur/bilans/anglais/dash_root_manage_acheteur_bilan_anglais.html",
+        context,
+    )
+
+    
 
 
 @login_required
 def dash_root_manage_acheteur_portable(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3940,7 +4015,7 @@ def dash_root_manage_acheteur_portable(request, acheteur_id):
 def dash_root_manage_acheteur_telephone(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -3976,7 +4051,7 @@ def dash_root_manage_acheteur_telephone(request, acheteur_id):
 def dash_root_manage_acheteur_swot(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4016,7 +4091,7 @@ def dash_root_manage_acheteur_swot(request, acheteur_id):
 def dash_root_manage_marque_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
     user = request.user
     refresh = RefreshToken.for_user(user)
     marque_list = Marque.objects.filter(acheteur_id=acheteur_id)
@@ -4042,7 +4117,7 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
 def dash_root_manage_produit_service_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
     user = request.user
     refresh = RefreshToken.for_user(user)
     produit_service_list = ProduitService.objects.filter(acheteur_id=acheteur_id)
@@ -4068,7 +4143,7 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
 def dash_root_manage_cotisation_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
     user = request.user
     refresh = RefreshToken.for_user(user)
     cotisation_list = Cotisation.objects.filter(acheteur_id=acheteur_id)
@@ -4096,7 +4171,7 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
 def dash_root_manage_swot_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
     user = request.user
     refresh = RefreshToken.for_user(user)
     context = {
@@ -4122,7 +4197,7 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
 def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
     user = request.user
     refresh = RefreshToken.for_user(user)
     context = {
@@ -4148,7 +4223,7 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
 def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
     user = request.user
     refresh = RefreshToken.for_user(user)
     context = {
@@ -4163,6 +4238,196 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
         "main/root/acheteur/procedure_collective/dash_root_procedure_collective_acheteur.html",
         context,
     )
+    
+    
+    
+    
+
+
+@login_required
+def dash_root_manage_document_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/document/dash_root_document_acheteur.html",
+        context,
+    )
+
+
+
+
+
+
+
+@login_required
+def dash_root_manage_adresse_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/adresse/dash_root_adresse_acheteur.html",
+        context,
+    )
+    
+    
+    
+    
+    
+    
+  
+
+@login_required
+def dash_root_manage_portable_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/portable/dash_root_portable_acheteur.html",
+        context,
+    )
+    
+    
+    
+    
+    
+    
+
+
+@login_required
+def dash_root_manage_telephone_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/telephone/dash_root_telephone_acheteur.html",
+        context,
+    )
+    
+    
+    
+    
+    
+    
+    
+
+@login_required
+def dash_root_manage_email_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/email/dash_root_email_acheteur.html",
+        context,
+    )
+
+
+
+
+
+
+
+
+
+
+@login_required
+def dash_root_manage_code_nace_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/code_nace/dash_root_code_nace_acheteur.html",
+        context,
+    )
+    
+    
+    
+    
+    
+    
+
+@login_required
+def dash_root_manage_code_naf_acheteur(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/code_naf/dash_root_code_naf_acheteur.html",
+        context,
+    )
+
+
+
 
 
 
@@ -4223,7 +4488,7 @@ def dash_validateur_2(request):
 
     if not token:
         logger.error("Token is missing.")
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     try:
         # Attempt to create an AccessToken from the provided token
@@ -4257,7 +4522,7 @@ def dash_validateur_2(request):
 def dash_validateur_3(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4295,7 +4560,7 @@ def dash_validateur(request):
 def dash_validateur_user(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4319,7 +4584,7 @@ def dash_validateur_user(request):
 def dash_validateur_pays(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4339,7 +4604,7 @@ def dash_validateur_pays(request):
 def dash_validateur_province(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4363,7 +4628,7 @@ def dash_validateur_province(request):
 def dash_validateur_ville(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4391,7 +4656,7 @@ def dash_validateur_ville(request):
 def dash_validateur_devise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4420,7 +4685,7 @@ def dash_validateur_devise(request):
 def dash_validateur_annee(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4447,7 +4712,7 @@ def dash_validateur_annee(request):
 def dash_validateur_coloration(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4468,7 +4733,7 @@ def dash_validateur_coloration(request):
 def dash_validateur_category_nace(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4489,7 +4754,7 @@ def dash_validateur_category_nace(request):
 def dash_validateur_category_naf(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4510,7 +4775,7 @@ def dash_validateur_category_naf(request):
 def dash_validateur_code_nace(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4535,7 +4800,7 @@ def dash_validateur_code_nace(request):
 def dash_validateur_code_naf(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4560,7 +4825,7 @@ def dash_validateur_code_naf(request):
 def dash_validateur_forme_juridique(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4583,7 +4848,7 @@ def dash_validateur_forme_juridique(request):
 def dash_validateur_domaine(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4604,7 +4869,7 @@ def dash_validateur_domaine(request):
 def dash_validateur_modele_bail(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4625,7 +4890,7 @@ def dash_validateur_modele_bail(request):
 def dash_validateur_modele_bilan(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4646,7 +4911,7 @@ def dash_validateur_modele_bilan(request):
 def dash_validateur_modele_alarme(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4667,7 +4932,7 @@ def dash_validateur_modele_alarme(request):
 def dash_validateur_modele_rapport(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4688,7 +4953,7 @@ def dash_validateur_modele_rapport(request):
 def dash_validateur_modele_avis_commercial(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4711,7 +4976,7 @@ def dash_validateur_modele_avis_commercial(request):
 def dash_validateur_modele_relation_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4734,7 +4999,7 @@ def dash_validateur_modele_relation_entreprise(request):
 def dash_validateur_modele_notation(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4755,7 +5020,7 @@ def dash_validateur_modele_notation(request):
 def dash_validateur_modele_comportement_paiement(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4778,7 +5043,7 @@ def dash_validateur_modele_comportement_paiement(request):
 def dash_validateur_modele_comportement_jugement(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4801,7 +5066,7 @@ def dash_validateur_modele_comportement_jugement(request):
 def dash_validateur_modele_information_notation_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4826,7 +5091,7 @@ def dash_validateur_modele_information_notation_entreprise(request):
 def dash_validateur_poste(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4851,7 +5116,7 @@ def dash_validateur_poste(request):
 def dash_validateur_category_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4874,7 +5139,7 @@ def dash_validateur_category_entreprise(request):
 def dash_validateur_structure_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4897,7 +5162,7 @@ def dash_validateur_structure_entreprise(request):
 def dash_validateur_statut_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4918,7 +5183,7 @@ def dash_validateur_statut_entreprise(request):
 def dash_validateur_acheteur(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4938,7 +5203,7 @@ def dash_validateur_acheteur(request):
 def dash_validateur_add_acheteur(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -4986,7 +5251,7 @@ def dash_validateur_add_acheteur(request):
 def dash_validateur_edit_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5038,7 +5303,7 @@ def dash_validateur_edit_acheteur(request, acheteur_id):
 def dash_validateur_manage_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5090,7 +5355,7 @@ def dash_validateur_manage_acheteur(request, acheteur_id):
 def dash_validateur_manage_acheteur_resume(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5130,7 +5395,7 @@ def dash_validateur_manage_acheteur_resume(request, acheteur_id):
 def dash_validateur_manage_acheteur_risk_rating(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5158,7 +5423,7 @@ def dash_validateur_manage_acheteur_risk_rating(request, acheteur_id):
 def dash_validateur_manage_acheteur_data_save(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5194,7 +5459,7 @@ def dash_validateur_manage_acheteur_data_save(request, acheteur_id):
 def dash_validateur_manage_acheteur_tendance(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5226,7 +5491,7 @@ def dash_validateur_manage_acheteur_tendance(request, acheteur_id):
 def dash_validateur_manage_acheteur_responsable(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5262,7 +5527,7 @@ def dash_validateur_manage_acheteur_responsable(request, acheteur_id):
 def dash_validateur_manage_acheteur_antecedent(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5294,7 +5559,7 @@ def dash_validateur_manage_acheteur_antecedent(request, acheteur_id):
 def dash_validateur_manage_acheteur_gestion_risque(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5326,7 +5591,7 @@ def dash_validateur_manage_acheteur_gestion_risque(request, acheteur_id):
 def dash_validateur_manage_acheteur_membre_conseil(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5362,7 +5627,7 @@ def dash_validateur_manage_acheteur_membre_conseil(request, acheteur_id):
 def dash_validateur_manage_acheteur_composition_capital(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5398,7 +5663,7 @@ def dash_validateur_manage_acheteur_composition_capital(request, acheteur_id):
 def dash_validateur_manage_acheteur_actionnaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5430,7 +5695,7 @@ def dash_validateur_manage_acheteur_actionnaire(request, acheteur_id):
 def dash_validateur_manage_acheteur_opinion_acremac(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5462,7 +5727,7 @@ def dash_validateur_manage_acheteur_opinion_acremac(request, acheteur_id):
 def dash_validateur_manage_acheteur_filiale(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5498,7 +5763,7 @@ def dash_validateur_manage_acheteur_filiale(request, acheteur_id):
 def dash_validateur_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5534,7 +5799,7 @@ def dash_validateur_manage_acheteur_analyse_sectorielle(request, acheteur_id):
 def dash_validateur_manage_acheteur_compte_financier(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5570,7 +5835,7 @@ def dash_validateur_manage_acheteur_compte_financier(request, acheteur_id):
 def dash_validateur_manage_acheteur_operation_historique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5602,7 +5867,7 @@ def dash_validateur_manage_acheteur_operation_historique(request, acheteur_id):
 def dash_validateur_manage_acheteur_propriete_actif(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5634,7 +5899,7 @@ def dash_validateur_manage_acheteur_propriete_actif(request, acheteur_id):
 def dash_validateur_manage_acheteur_condition_achat(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5662,7 +5927,7 @@ def dash_validateur_manage_acheteur_condition_achat(request, acheteur_id):
 def dash_validateur_manage_acheteur_condition_vente(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5698,7 +5963,7 @@ def dash_validateur_manage_acheteur_condition_vente(request, acheteur_id):
 def dash_validateur_manage_acheteur_sommaire_avis(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5730,7 +5995,7 @@ def dash_validateur_manage_acheteur_sommaire_avis(request, acheteur_id):
 def dash_validateur_manage_acheteur_advice(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5758,7 +6023,7 @@ def dash_validateur_manage_acheteur_advice(request, acheteur_id):
 def dash_validateur_manage_acheteur_geopolitic(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5786,7 +6051,7 @@ def dash_validateur_manage_acheteur_geopolitic(request, acheteur_id):
 def dash_validateur_manage_acheteur_banking(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5822,7 +6087,7 @@ def dash_validateur_manage_acheteur_banking(request, acheteur_id):
 def dash_validateur_manage_acheteur_actif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5854,7 +6119,7 @@ def dash_validateur_manage_acheteur_actif_anglais(request, acheteur_id):
 def dash_validateur_manage_acheteur_passif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5886,7 +6151,7 @@ def dash_validateur_manage_acheteur_passif_anglais(request, acheteur_id):
 def dash_validateur_manage_acheteur_resultat_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5918,7 +6183,7 @@ def dash_validateur_manage_acheteur_resultat_anglais(request, acheteur_id):
 def dash_validateur_manage_acheteur_actif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5950,7 +6215,7 @@ def dash_validateur_manage_acheteur_actif_classique(request, acheteur_id):
 def dash_validateur_manage_acheteur_passif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -5982,7 +6247,7 @@ def dash_validateur_manage_acheteur_passif_classique(request, acheteur_id):
 def dash_validateur_manage_acheteur_resultat_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6014,7 +6279,7 @@ def dash_validateur_manage_acheteur_resultat_classique(request, acheteur_id):
 def dash_validateur_manage_acheteur_actif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6046,7 +6311,7 @@ def dash_validateur_manage_acheteur_actif_syscohada(request, acheteur_id):
 def dash_validateur_manage_acheteur_passif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6078,7 +6343,7 @@ def dash_validateur_manage_acheteur_passif_syscohada(request, acheteur_id):
 def dash_validateur_manage_acheteur_resultat_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6110,7 +6375,7 @@ def dash_validateur_manage_acheteur_resultat_syscohada(request, acheteur_id):
 def dash_validateur_manage_acheteur_asset_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6142,7 +6407,7 @@ def dash_validateur_manage_acheteur_asset_bancaire(request, acheteur_id):
 def dash_validateur_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6174,7 +6439,7 @@ def dash_validateur_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
 def dash_validateur_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6206,7 +6471,7 @@ def dash_validateur_manage_acheteur_offbalancesheet_bancaire(request, acheteur_i
 def dash_validateur_manage_acheteur_expense_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6238,7 +6503,7 @@ def dash_validateur_manage_acheteur_expense_bancaire(request, acheteur_id):
 def dash_validateur_manage_acheteur_product_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6270,7 +6535,7 @@ def dash_validateur_manage_acheteur_product_bancaire(request, acheteur_id):
 def dash_validateur_manage_acheteur_compte_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6298,7 +6563,7 @@ def dash_validateur_manage_acheteur_compte_financier_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6326,7 +6591,7 @@ def dash_validateur_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6368,7 +6633,7 @@ def dash_validateur_manage_acheteur_actif_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6410,7 +6675,7 @@ def dash_validateur_manage_acheteur_passif_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_resultat_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6452,7 +6717,7 @@ def dash_validateur_manage_acheteur_resultat_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_add_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6500,7 +6765,7 @@ def dash_validateur_manage_acheteur_add_actif_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_add_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6548,7 +6813,7 @@ def dash_validateur_manage_acheteur_add_passif_irfs(request, acheteur_id):
 def dash_validateur_manage_acheteur_report_web(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6578,7 +6843,7 @@ def dash_validateur_manage_acheteur_report_web(request, acheteur_id):
 def dash_validateur_commande(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6624,7 +6889,7 @@ def dash_validateur_commande(request):
 def dash_validateur_manage_commande(request, commande_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6650,7 +6915,7 @@ def dash_validateur_manage_commande(request, commande_id):
 def dash_validateur_alerte(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6677,7 +6942,7 @@ def dash_validateur_alerte(request):
 def dash_validateur_add_alerte(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6710,7 +6975,7 @@ def dash_validateur_edit_new_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6742,7 +7007,7 @@ def dash_validateur_document_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6776,7 +7041,7 @@ def dash_validateur_client_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6811,7 +7076,7 @@ def dash_validateur_client_alerte(request, reference):
 def dash_validateur_edit_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6843,7 +7108,7 @@ def dash_validateur_edit_alerte(request, alerte_id):
 def dash_validateur_manage_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6881,7 +7146,7 @@ def dash_validateur_manage_alerte(request, alerte_id):
 def dash_validateur_client(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6901,7 +7166,7 @@ def dash_validateur_client(request):
 def dash_validateur_carnet(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6921,7 +7186,7 @@ def dash_validateur_carnet(request):
 def dash_validateur_portefeuille(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -6949,7 +7214,7 @@ def dash_validateur_portefeuille(request):
 def dash_validateur_add_portefeuille(request, portefeuille_id=None):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7006,7 +7271,7 @@ def dash_validateur_add_portefeuille(request, portefeuille_id=None):
 def dash_validateur_edit_portefeuille(request, portefeuille_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7079,7 +7344,7 @@ def dash_validateur_edit_portefeuille(request, portefeuille_id):
 def dash_validateur_simulateur_scoring_sb(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7109,7 +7374,7 @@ def dash_validateur_simulateur_scoring_sb(request):
 def dash_validateur_element_surveillance(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7151,7 +7416,7 @@ def dash_validateur_element_surveillance(request):
 def dash_validateur_alerte_log(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7187,7 +7452,7 @@ def dash_validateur_alerte_log(request):
 def dash_validateur_certification_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7219,7 +7484,7 @@ def dash_validateur_certification_acheteur(request, acheteur_id):
 def dash_validateur_innovation_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7251,7 +7516,7 @@ def dash_validateur_innovation_acheteur(request, acheteur_id):
 def dash_validateur_strategie_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7283,7 +7548,7 @@ def dash_validateur_strategie_acheteur(request, acheteur_id):
 def dash_validateur_conformite_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7315,7 +7580,7 @@ def dash_validateur_conformite_acheteur(request, acheteur_id):
 def dash_validateur_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7381,7 +7646,7 @@ def dash_validateur_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
     """
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
     refresh = RefreshToken.for_user(user)
@@ -7582,7 +7847,7 @@ def dash_analyste_2(request):
 
     if not token:
         logger.error("Token is missing.")
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     try:
         # Attempt to create an AccessToken from the provided token
@@ -7616,7 +7881,7 @@ def dash_analyste_2(request):
 def dash_analyste_3(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7654,7 +7919,7 @@ def dash_analyste(request):
 def dash_analyste_user(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7678,7 +7943,7 @@ def dash_analyste_user(request):
 def dash_analyste_pays(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7698,7 +7963,7 @@ def dash_analyste_pays(request):
 def dash_analyste_province(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7722,7 +7987,7 @@ def dash_analyste_province(request):
 def dash_analyste_ville(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7750,7 +8015,7 @@ def dash_analyste_ville(request):
 def dash_analyste_devise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7779,7 +8044,7 @@ def dash_analyste_devise(request):
 def dash_analyste_annee(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7806,7 +8071,7 @@ def dash_analyste_annee(request):
 def dash_analyste_coloration(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7827,7 +8092,7 @@ def dash_analyste_coloration(request):
 def dash_analyste_category_nace(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7848,7 +8113,7 @@ def dash_analyste_category_nace(request):
 def dash_analyste_category_naf(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7869,7 +8134,7 @@ def dash_analyste_category_naf(request):
 def dash_analyste_code_nace(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7894,7 +8159,7 @@ def dash_analyste_code_nace(request):
 def dash_analyste_code_naf(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7919,7 +8184,7 @@ def dash_analyste_code_naf(request):
 def dash_analyste_forme_juridique(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7942,7 +8207,7 @@ def dash_analyste_forme_juridique(request):
 def dash_analyste_domaine(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7963,7 +8228,7 @@ def dash_analyste_domaine(request):
 def dash_analyste_modele_bail(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -7984,7 +8249,7 @@ def dash_analyste_modele_bail(request):
 def dash_analyste_modele_bilan(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8005,7 +8270,7 @@ def dash_analyste_modele_bilan(request):
 def dash_analyste_modele_alarme(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8026,7 +8291,7 @@ def dash_analyste_modele_alarme(request):
 def dash_analyste_modele_rapport(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8047,7 +8312,7 @@ def dash_analyste_modele_rapport(request):
 def dash_analyste_modele_avis_commercial(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8070,7 +8335,7 @@ def dash_analyste_modele_avis_commercial(request):
 def dash_analyste_modele_relation_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8093,7 +8358,7 @@ def dash_analyste_modele_relation_entreprise(request):
 def dash_analyste_modele_notation(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8114,7 +8379,7 @@ def dash_analyste_modele_notation(request):
 def dash_analyste_modele_comportement_paiement(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8137,7 +8402,7 @@ def dash_analyste_modele_comportement_paiement(request):
 def dash_analyste_modele_comportement_jugement(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8160,7 +8425,7 @@ def dash_analyste_modele_comportement_jugement(request):
 def dash_analyste_modele_information_notation_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8185,7 +8450,7 @@ def dash_analyste_modele_information_notation_entreprise(request):
 def dash_analyste_poste(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8210,7 +8475,7 @@ def dash_analyste_poste(request):
 def dash_analyste_category_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8233,7 +8498,7 @@ def dash_analyste_category_entreprise(request):
 def dash_analyste_structure_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8256,7 +8521,7 @@ def dash_analyste_structure_entreprise(request):
 def dash_analyste_statut_entreprise(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8277,7 +8542,7 @@ def dash_analyste_statut_entreprise(request):
 def dash_analyste_acheteur(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8297,7 +8562,7 @@ def dash_analyste_acheteur(request):
 def dash_analyste_add_acheteur(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8345,7 +8610,7 @@ def dash_analyste_add_acheteur(request):
 def dash_analyste_edit_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8397,7 +8662,7 @@ def dash_analyste_edit_acheteur(request, acheteur_id):
 def dash_analyste_manage_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8449,7 +8714,7 @@ def dash_analyste_manage_acheteur(request, acheteur_id):
 def dash_analyste_manage_acheteur_resume(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8489,7 +8754,7 @@ def dash_analyste_manage_acheteur_resume(request, acheteur_id):
 def dash_analyste_manage_acheteur_risk_rating(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8517,7 +8782,7 @@ def dash_analyste_manage_acheteur_risk_rating(request, acheteur_id):
 def dash_analyste_manage_acheteur_data_save(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8553,7 +8818,7 @@ def dash_analyste_manage_acheteur_data_save(request, acheteur_id):
 def dash_analyste_manage_acheteur_tendance(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8585,7 +8850,7 @@ def dash_analyste_manage_acheteur_tendance(request, acheteur_id):
 def dash_analyste_manage_acheteur_responsable(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8621,7 +8886,7 @@ def dash_analyste_manage_acheteur_responsable(request, acheteur_id):
 def dash_analyste_manage_acheteur_antecedent(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8653,7 +8918,7 @@ def dash_analyste_manage_acheteur_antecedent(request, acheteur_id):
 def dash_analyste_manage_acheteur_gestion_risque(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8685,7 +8950,7 @@ def dash_analyste_manage_acheteur_gestion_risque(request, acheteur_id):
 def dash_analyste_manage_acheteur_membre_conseil(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8721,7 +8986,7 @@ def dash_analyste_manage_acheteur_membre_conseil(request, acheteur_id):
 def dash_analyste_manage_acheteur_composition_capital(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8757,7 +9022,7 @@ def dash_analyste_manage_acheteur_composition_capital(request, acheteur_id):
 def dash_analyste_manage_acheteur_actionnaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8789,7 +9054,7 @@ def dash_analyste_manage_acheteur_actionnaire(request, acheteur_id):
 def dash_analyste_manage_acheteur_opinion_acremac(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8821,7 +9086,7 @@ def dash_analyste_manage_acheteur_opinion_acremac(request, acheteur_id):
 def dash_analyste_manage_acheteur_filiale(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8857,7 +9122,7 @@ def dash_analyste_manage_acheteur_filiale(request, acheteur_id):
 def dash_analyste_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8893,7 +9158,7 @@ def dash_analyste_manage_acheteur_analyse_sectorielle(request, acheteur_id):
 def dash_analyste_manage_acheteur_compte_financier(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8929,7 +9194,7 @@ def dash_analyste_manage_acheteur_compte_financier(request, acheteur_id):
 def dash_analyste_manage_acheteur_operation_historique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8961,7 +9226,7 @@ def dash_analyste_manage_acheteur_operation_historique(request, acheteur_id):
 def dash_analyste_manage_acheteur_propriete_actif(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -8993,7 +9258,7 @@ def dash_analyste_manage_acheteur_propriete_actif(request, acheteur_id):
 def dash_analyste_manage_acheteur_condition_achat(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9021,7 +9286,7 @@ def dash_analyste_manage_acheteur_condition_achat(request, acheteur_id):
 def dash_analyste_manage_acheteur_condition_vente(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9057,7 +9322,7 @@ def dash_analyste_manage_acheteur_condition_vente(request, acheteur_id):
 def dash_analyste_manage_acheteur_sommaire_avis(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9089,7 +9354,7 @@ def dash_analyste_manage_acheteur_sommaire_avis(request, acheteur_id):
 def dash_analyste_manage_acheteur_advice(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9117,7 +9382,7 @@ def dash_analyste_manage_acheteur_advice(request, acheteur_id):
 def dash_analyste_manage_acheteur_geopolitic(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9145,7 +9410,7 @@ def dash_analyste_manage_acheteur_geopolitic(request, acheteur_id):
 def dash_analyste_manage_acheteur_banking(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9181,7 +9446,7 @@ def dash_analyste_manage_acheteur_banking(request, acheteur_id):
 def dash_analyste_manage_acheteur_actif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9213,7 +9478,7 @@ def dash_analyste_manage_acheteur_actif_anglais(request, acheteur_id):
 def dash_analyste_manage_acheteur_passif_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9245,7 +9510,7 @@ def dash_analyste_manage_acheteur_passif_anglais(request, acheteur_id):
 def dash_analyste_manage_acheteur_resultat_anglais(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9277,7 +9542,7 @@ def dash_analyste_manage_acheteur_resultat_anglais(request, acheteur_id):
 def dash_analyste_manage_acheteur_actif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9309,7 +9574,7 @@ def dash_analyste_manage_acheteur_actif_classique(request, acheteur_id):
 def dash_analyste_manage_acheteur_passif_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9341,7 +9606,7 @@ def dash_analyste_manage_acheteur_passif_classique(request, acheteur_id):
 def dash_analyste_manage_acheteur_resultat_classique(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9373,7 +9638,7 @@ def dash_analyste_manage_acheteur_resultat_classique(request, acheteur_id):
 def dash_analyste_manage_acheteur_actif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9405,7 +9670,7 @@ def dash_analyste_manage_acheteur_actif_syscohada(request, acheteur_id):
 def dash_analyste_manage_acheteur_passif_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9437,7 +9702,7 @@ def dash_analyste_manage_acheteur_passif_syscohada(request, acheteur_id):
 def dash_analyste_manage_acheteur_resultat_syscohada(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9469,7 +9734,7 @@ def dash_analyste_manage_acheteur_resultat_syscohada(request, acheteur_id):
 def dash_analyste_manage_acheteur_asset_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9501,7 +9766,7 @@ def dash_analyste_manage_acheteur_asset_bancaire(request, acheteur_id):
 def dash_analyste_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9533,7 +9798,7 @@ def dash_analyste_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
 def dash_analyste_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9565,7 +9830,7 @@ def dash_analyste_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id)
 def dash_analyste_manage_acheteur_expense_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9597,7 +9862,7 @@ def dash_analyste_manage_acheteur_expense_bancaire(request, acheteur_id):
 def dash_analyste_manage_acheteur_product_bancaire(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9629,7 +9894,7 @@ def dash_analyste_manage_acheteur_product_bancaire(request, acheteur_id):
 def dash_analyste_manage_acheteur_compte_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9657,7 +9922,7 @@ def dash_analyste_manage_acheteur_compte_financier_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9685,7 +9950,7 @@ def dash_analyste_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9727,7 +9992,7 @@ def dash_analyste_manage_acheteur_actif_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9769,7 +10034,7 @@ def dash_analyste_manage_acheteur_passif_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_resultat_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9811,7 +10076,7 @@ def dash_analyste_manage_acheteur_resultat_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_add_actif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9859,7 +10124,7 @@ def dash_analyste_manage_acheteur_add_actif_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_add_passif_irfs(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9907,7 +10172,7 @@ def dash_analyste_manage_acheteur_add_passif_irfs(request, acheteur_id):
 def dash_analyste_manage_acheteur_report_web(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9937,7 +10202,7 @@ def dash_analyste_manage_acheteur_report_web(request, acheteur_id):
 def dash_analyste_commande(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -9983,7 +10248,7 @@ def dash_analyste_commande(request):
 def dash_analyste_manage_commande(request, commande_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10009,7 +10274,7 @@ def dash_analyste_manage_commande(request, commande_id):
 def dash_analyste_alerte(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10036,7 +10301,7 @@ def dash_analyste_alerte(request):
 def dash_analyste_add_alerte(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10069,7 +10334,7 @@ def dash_analyste_edit_new_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10101,7 +10366,7 @@ def dash_analyste_document_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10135,7 +10400,7 @@ def dash_analyste_client_alerte(request, reference):
 
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10170,7 +10435,7 @@ def dash_analyste_client_alerte(request, reference):
 def dash_analyste_edit_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10202,7 +10467,7 @@ def dash_analyste_edit_alerte(request, alerte_id):
 def dash_analyste_manage_alerte(request, alerte_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10240,7 +10505,7 @@ def dash_analyste_manage_alerte(request, alerte_id):
 def dash_analyste_client(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10260,7 +10525,7 @@ def dash_analyste_client(request):
 def dash_analyste_carnet(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10280,7 +10545,7 @@ def dash_analyste_carnet(request):
 def dash_analyste_portefeuille(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10308,7 +10573,7 @@ def dash_analyste_portefeuille(request):
 def dash_analyste_add_portefeuille(request, portefeuille_id=None):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10365,7 +10630,7 @@ def dash_analyste_add_portefeuille(request, portefeuille_id=None):
 def dash_analyste_edit_portefeuille(request, portefeuille_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10438,7 +10703,7 @@ def dash_analyste_edit_portefeuille(request, portefeuille_id):
 def dash_analyste_simulateur_scoring_sb(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10468,7 +10733,7 @@ def dash_analyste_simulateur_scoring_sb(request):
 def dash_analyste_element_surveillance(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10510,7 +10775,7 @@ def dash_analyste_element_surveillance(request):
 def dash_analyste_alerte_log(request):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10546,7 +10811,7 @@ def dash_analyste_alerte_log(request):
 def dash_analyste_certification_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10578,7 +10843,7 @@ def dash_analyste_certification_acheteur(request, acheteur_id):
 def dash_analyste_innovation_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10610,7 +10875,7 @@ def dash_analyste_innovation_acheteur(request, acheteur_id):
 def dash_analyste_strategie_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10642,7 +10907,7 @@ def dash_analyste_strategie_acheteur(request, acheteur_id):
 def dash_analyste_conformite_acheteur(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10674,7 +10939,7 @@ def dash_analyste_conformite_acheteur(request, acheteur_id):
 def dash_analyste_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
 
@@ -10740,7 +11005,7 @@ def dash_analyste_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
     """
     token = request.GET.get("token")
     if not token:
-        return render(request, "main/index.html", {"error": _("Token manquant.")})
+        pass
 
     user = request.user
     refresh = RefreshToken.for_user(user)
@@ -10921,3 +11186,10 @@ def dash_analyste_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
 @login_required
 def dash_client(request):
     return render(request, "main/client/dash_client.html")
+
+
+
+
+
+
+

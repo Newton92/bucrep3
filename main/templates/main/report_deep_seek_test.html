@@ -1,0 +1,1787 @@
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Solvabilité</title>
+    <style>
+        /* Styles pour WeasyPrint */
+        @page {
+            size: A4;
+            margin: 15mm 10mm 20mm 10mm;
+            
+            @bottom-left {
+                content: "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.";
+                font-size: 8pt;
+                color: #666;
+            }
+            
+            @bottom-right {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 8pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        /* En-tête avec fond bleu nuit */
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white; /* Bleu nuit */
+            color: #003366;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-size: 20pt;
+            margin: 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .header-subtitle {
+            font-size: 12pt;
+            margin-top: 5px;
+        }
+        
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 9pt;
+        }
+
+        .header-logo {
+            max-height: 60px;
+            margin-bottom: 10px;
+        }
+        
+        /* Titres de section avec fond bleu nuit */
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            padding: 8px 12px;
+            background-color: #003366; /* Bleu nuit */
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .subsection-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 12px 0 6px 0;
+            padding: 5px 8px;
+            background-color: #e6f2ff; /* Bleu très clair */
+            border-left: 4px solid #F5C400;
+            border-radius: 3px;
+        }
+        
+        /* Tables avec bordures bleu ciel arrondies */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+            border: 1px solid #66ccff; /* Bleu ciel */
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        table th, table td {
+            padding: 6px 8px;
+            vertical-align: top;
+            border: 1px solid #66ccff; /* Bleu ciel */
+        }
+        
+        table th {
+            background-color: #e6f7ff; /* Bleu très clair */
+            font-weight: bold;
+            text-align: left;
+        }
+        
+        .financial-table {
+            font-size: 9pt;
+        }
+        
+        .financial-table td {
+            padding: 4px 6px;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        /* Commentaires en rouge */
+        .warning {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        
+        .footer {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+        
+        /* Éviter les coupures indésirables */
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+        
+        /* Styles pour les graphiques (placeholder) */
+        .chart-placeholder {
+            height: 150px;
+            background-color: #f9f9f9;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            font-style: italic;
+            color: #666;
+            border-radius: 5px;
+        }
+        
+        .two-columns {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+
+        .column {
+            width: 48%;
+        }
+
+        /* Style pour l'image de placeholder si le logo n'est pas trouvé */
+        .logo-placeholder {
+            width: 150px;
+            height: 60px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #ccc;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Échelle d'opinion de crédit ACREMAC avec les couleurs spécifiques */
+        .acremaac-rating-scale {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #66ccff;
+        }
+        
+        .acremaac-rating-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 10%;
+            text-align: center;
+        }
+        
+        .acremaac-rating-point {
+            width: 40px;
+            height: 40px;
+            border-radius: 5%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .acremaac-rating-label {
+            font-size: 8px;
+            text-align: center;
+            line-height: 1.2;
+            font-weight: bold;
+        }
+        
+        /* Couleurs spécifiques pour l'échelle ACREMAC */
+        .rating-1 { background-color: #178B16; } /* RFAI - Risque Faible */
+        .rating-2 { background-color: #66CC33; } /* RLQT - Risque de Liquidité */
+        .rating-3 { background-color: #F4A600; } /* RMOY - Risque Moyen */
+        .rating-4 { background-color: #F5C400; } /* RTIR - Risque de Taux d'Intérêt */
+        .rating-5 { background-color: #2F85AB; } /* RPAY - Risque Pays */
+        .rating-6 { background-color: #F57C00; } /* RRÉP - Risque de Réputation */
+        .rating-7 { background-color: #2F4A6D; } /* RCCR - Risque de Concentration de Crédit */
+        .rating-8 { background-color: #D32F2F; } /* RÉLV - Risque Élevé */
+        .rating-9 { background-color: #E0201E; } /* RDEF - Risque de Défaut */
+        
+        /* Échelle d'opinion de crédit avec couleurs comme sur l'image */
+        .rating-scale {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+            background-color: #f0f8ff;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #66ccff;
+        }
+        
+        .rating-point {
+            width: 10%;
+            text-align: center;
+            font-weight: bold;
+            padding: 8px 0;
+            border-radius: 4px;
+            background-color: #e6f2ff;
+            border: 1px solid #99d6ff;
+        }
+
+        /* Styles pour les graphiques (placeholder) */
+        .chart-placeholder {
+            height: 150px;
+            background-color: #f9f9f9;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            font-style: italic;
+            color: #666;
+            border-radius: 5px;
+        }
+        
+        .highlighted {
+            background-color: #ffffcc;
+            border: 2px solid #ffcc00;
+        }
+        
+        .negative-var {
+            color: #ff0000;
+        }
+        
+        .positive-var {
+            color: #009900;
+        }
+        
+        /* Barre de risque avec dégradé de couleur */
+        .risk-bar {
+            display: flex;
+            height: 20px;
+            margin: 10px 0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .risk-segment {
+            flex: 1;
+            text-align: center;
+            color: white;
+            font-size: 8pt;
+            padding: 2px 0;
+        }
+
+        .ligne-up {
+            background-color: #ffffcc;
+            color: #003366;
+        }
+        
+        .risk-1 { background-color: #00cc00; } /* Vert - faible */
+        .risk-2 { background-color: #66ff33; }
+        .risk-3 { background-color: #ccff33; }
+        .risk-4 { background-color: #ffff00; } /* Jaune */
+        .risk-5 { background-color: #ffcc00; }
+        .risk-6 { background-color: #ff9900; } /* Orange */
+        .risk-7 { background-color: #ff6600; }
+        .risk-8 { background-color: #ff3300; } /* Rouge */
+        .risk-9 { background-color: #cc0000; } /* Rouge foncé */
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- En-tête du rapport -->
+        <div class="header">
+            <div class="two-columns">
+                <div>
+                    <!-- Utilisation de static Django pour l'image -->
+                    {% if logo_data %}
+                    <img class="header-logo" src="{{ logo_data }}" alt="Logo ACREMAC" />
+                    {% else %}
+                    <img class="header-logo" src="{{ logo_path }}" alt="Logo ACREMAC" />
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    {{ header_report.acremac_services }}<br>
+                    {{ header_report.acremac_mail }}<br>
+                    {{ header_report.date_today }} (GMT)<br>
+                </div>
+            </div>
+        </div>
+
+        <div class="section"><hr class="ligne-up" /></div>
+
+        <!-- En-tête du rapport avec design bleu nuit -->
+        <div class="section">
+            <div class="section-title"><br>RAPPORT DE SOLVABILITÉ<br><br></div>
+        </div>
+        
+        {% if commande.client != "Non spécifié" %}
+        <!-- Détails de la demande -->
+        <div class="section">
+            <div class="subsection-title">{{ commande.title_1|default:"DÉTAILS COMMANDE" }}</div>
+            <table>
+                <tr>
+                    <th>Client : {{ commande.client }}</th>
+                    <th>Date de réception : {{ commande.date_recept_commande }}</th>
+                </tr>
+                <tr>
+                    <td>Référence client : {{ commande.ref_client }}</td>
+                    <td>Date du rapport : {{ commande.date_rapport }}</td>
+                </tr>
+                <tr>
+                    <td>Notre référence : {{ commande.notre_ref }}</td>
+                    <td>Délai en jours : {{ commande.delais }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">Type de rapport : {{ commande.type_rapport }}</td>
+                </tr>
+                
+                <!-- Informations supplémentaires conditionnelles -->
+                {% if commande.priorite and commande.priorite != "Non spécifié" and commande.priorite != "Non spécifié" %}
+                <tr>
+                    <td>Priorité : {{ commande.priorite }}</td>
+                    <td>
+                        {% if commande.credit_demande %}
+                        Crédit demandé : {{ commande.credit_demande }} 
+                        {% if commande.devise_credit_demande %}{{ commande.devise_credit_demande }}{% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                
+                {% if commande.credit_recommande %}
+                <tr>
+                    <td colspan="2">
+                        Crédit recommandé : {{ commande.credit_recommande }} 
+                        {% if commande.devise_credit_recommande %}{{ commande.devise_credit_recommande }}{% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        {% else %}
+        <!-- Détails de la demande -->
+        <div class="section">
+            <div class="subsection-title">AUCUNE COMMANDE RATTACHÉE</div>
+        </div>
+        {% endif %}
+        
+        <!-- Identification -->
+        <div class="section">
+            <div class="section-title">IDENTIFICATION</div>
+            
+            <div class="subsection-title">INFORMATIONS CLIENT</div>
+            <table>
+                <tr>
+                    <th>Nom de l'acheteur</th>
+                    <td>{{ identification.client_info.nom }}</td>
+                </tr>
+                <tr>
+                    <th>Adresse</th>
+                    <td>{{ identification.client_info.numero_adresse }} {{ identification.client_info.rue_adresse }} {{ identification.client_info.code_postale_adresse }}</td>
+                </tr>
+                <tr>
+                    <th>Ville</th>
+                    <td>{{ identification.client_info.ville }}</td>
+                </tr>
+                <tr>
+                    <th>Pays</th>
+                    <td>{{ identification.client_info.pays }}</td>
+                </tr>
+                <tr>
+                    <th>Téléphone / Email</th>
+                    <td>{{ identification.client_info.telephone }} / {{ identification.client_info.email }}</td>
+                </tr>
+            </table>
+            
+            <div class="subsection-title">INFORMATIONS ACREMAC</div>
+            <table>
+                <tr>
+                    <th>Nom de l'acheteur</th>
+                    <td>{{ identification.acremac_info.nom }}</td>
+                </tr>
+                <tr>
+                    <th>Sigle</th>
+                    <td>{{ identification.acremac_info.sigle }}</td>
+                </tr>
+                <tr>
+                    <th>Numéro adresse</th>
+                    <td>{{ identification.acremac_info.numero_adresse }}</td>
+                </tr>
+                <tr>
+                    <th>Ville</th>
+                    <td>{{ identification.acremac_info.ville }}</td>
+                </tr>
+                <tr>
+                    <th>Province</th>
+                    <td>{{ identification.acremac_info.province }}</td>
+                </tr>
+                <tr>
+                    <th>Pays</th>
+                    <td>{{ identification.acremac_info.pays }}</td>
+                </tr>
+                <tr>
+                    <th>Fax / Email</th>
+                    <td>{{ identification.acremac_info.fax }} / {{ identification.acremac_info.email }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Informations supplémentaires ACREMAC -->
+        <div class="section">
+            <div class="subsection-title">INFORMATIONS SUPPLÉMENTAIRES ACREMAC</div>
+            <table>
+                <tr>
+                    <th>Boîte postale</th>
+                    <td>{{ additional_information.boite_postale }}</td>
+                </tr>
+                <tr>
+                    <th>Site web</th>
+                    <td>{{ additional_information.site_internet }}</td>
+                </tr>
+                <tr>
+                    <th>Statut</th>
+                    <td>{{ additional_information.statut_entreprise }}</td>
+                </tr>
+                <tr>
+                    <th>Catégorie</th>
+                    <td>{{ additional_information.categorie_entreprise }}</td>
+                </tr>
+                <tr>
+                    <th>Forme juridique</th>
+                    <td>{{ additional_information.forme_juridique }}</td>
+                </tr>
+                <tr>
+                    <th>Activités principales</th>
+                    <td>
+                        {{ additional_information.activite_principale }}<br><br>
+                        {{ additional_information.description|striptags|safe }}<br>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Code(s) NACE</th>
+                    <td>{{ additional_information.nace_codes }}</td>
+                </tr>
+                <tr>
+                    <th>Code(s) NAF</th>
+                    <td>{{ additional_information.naf_codes }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">
+                        {{ additional_information.commentaire|striptags|safe }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Résumé exécutif -->
+        <div class="section">
+            <div class="section-title">RÉSUMÉ EXÉCUTIF</div>
+            <table>
+                <tr>
+                    <th>Date de création</th>
+                    <td>{{ executive_summary.date_creation }}</td>
+
+                    <th>Chiffre d'affaires</th>
+                    <td>{{ executive_summary.chiffre_affaire }} {{ executive_summary.devise }}</td>
+                </tr>
+                <tr>
+                    <th>Capitaux propres</th>
+                    <td>{{ executive_summary.capitaux_propre }} {{ executive_summary.devise }}</td>
+
+                    <th>Résultat net</th>
+                    <td>{{ executive_summary.resultat_net }} {{ executive_summary.devise }}</td>
+                </tr>
+                <tr>
+                    <th>Capital social</th>
+                    <td>{{ executive_summary.capital_social }} {{ executive_summary.devise }}</td>
+
+                    <th>Nombre d'employés</th>
+                    <td>{{ executive_summary.nombre_employe }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td colspan="3" class="warning">
+                        {{ executive_summary.commentaire|striptags|safe }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Analyse et interprétation -->
+        <div class="section">
+            <div class="section-title">ANALYSE</div>
+
+            <!-- EVALUATION DU RISQUE -->
+            <div class="subsection-title">EVALUATION DU RISQUE</div>
+
+            <!-- Barre d'évaluation des risques -->
+            <div class="section">
+                <div class="risk-bar">
+                    <div class="risk-segment risk-1">Low Risk</div>
+                    <div class="risk-segment risk-2"></div>
+                    <div class="risk-segment risk-3">Medium Risk</div>
+                    <div class="risk-segment risk-4"></div>
+                    <div class="risk-segment risk-5"></div>
+                    <div class="risk-segment risk-6">High Risk</div>
+                    <div class="risk-segment risk-7"></div>
+                    <div class="risk-segment risk-8"></div>
+                    <div class="risk-segment risk-9">Very High Risk</div>
+                </div>
+
+                <div class="rating-scale">
+                    {% for i in "123456789" %}
+                        <div class="rating-point{% if summary_and_opinion.risk_rating_value|stringformat:"s" == i %} highlighted{% endif %}">{{ i }}</div>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            
+            <table>
+                <tr>
+                    <th>Remboursabilité</th>
+                    <td>{{ summary_and_opinion.remboursabilite }}</td>
+
+                    <th>Situation de liquidité</th>
+                    <td>{{ summary_and_opinion.situation_liquidite }}</td>
+                </tr>
+                <tr>
+                    <th>Performance et rentabilité</th>
+                    <td>{{ summary_and_opinion.performance_rentabilite }}</td>
+
+                    <th>Perspective du secteur</th>
+                    <td>{{ summary_and_opinion.perspective_secteur }}</td>
+                </tr>
+                <tr>
+                    <th>Qualité de l'information analysée</th>
+                    <td>{{ summary_and_opinion.qualite_information_analyse }}</td>
+
+                    <th>Existence de garantie</th>
+                    <td>{{ summary_and_opinion.existence_garantie }}</td>
+                </tr>
+                <tr>
+                    <th>Terme financier et durée du prêt</th>
+                    <td>{{ summary_and_opinion.terme_financier_duree_pret }}</td>
+
+                    <th>Mesure propre à soutenir le crédit</th>
+                    <td>{{ summary_and_opinion.mesure_propre_soutenir_credit }}</td>
+                </tr>
+
+                <tr>
+                    <th>Cotation du risque</th>
+                    <td colspan="3" class="warning">
+                        {{ summary_and_opinion.cotation_du_risque|striptags|safe }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Indice du risque</th>
+                    <td colspan="3" class="warning">
+                        {{ summary_and_opinion.indice_du_risque|striptags|safe }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td colspan="3" class="warning">
+                        {{ summary_and_opinion.analyse_detailee|striptags|safe }}
+                    </td>
+                </tr>
+            </table>
+            
+            <!-- INTERPRÉTATION -->
+            <div class="subsection-title">INTERPRÉTATION</div>
+            <table>
+                <tr>
+                    <th>Commentaire </th>
+                    <td colspan="3" class="warning">
+                        {{ summary_and_opinion.interpretation|striptags|safe }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Opinion crédit ACREMAC -->
+        <div class="subsection-title">OPINION CRÉDIT ACREMAC</div>
+        <div class="section">
+            
+            <div class="rating-scale">
+                <div class="rating-point" style="background-color: #E0201E;">1</div>
+                <div class="rating-point" style="background-color: #2F4A6D;">2</div>
+                <div class="rating-point" style="background-color: #F57C00;">3</div>
+                <div class="rating-point" style="background-color: #2F85AB;">4</div>
+                <div class="rating-point" style="background-color: #F5C400;">5</div>
+                <div class="rating-point" style="background-color: #66CC33;">6</div>
+                <div class="rating-point" style="background-color: #D32F2F;">7</div>
+                <div class="rating-point" style="background-color: #F4A600;">8</div>
+                <div class="rating-point" style="background-color: #178B16;">9</div>
+            </div>
+
+            <div class="rating-scale" style="align-items: space-between; padding: 10px;">
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_defaut %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque de défaut</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_concentration_credit %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque de concentration crédit</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_reputation %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque de réputation</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_pays %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque pays</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_taux_dinteret %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque taux d'intérêt</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_de_liquidite %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque de liquidité</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_eleve %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque élevé</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_moyen %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque moyen</div>
+                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_faible %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque faible</div>
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Note:</th>
+                    <td>{{ acremac_opinion.notes }}</td>
+                </tr>
+                <tr>
+                    <th>Montant crédit maximum conseillée:</th>
+                    <td>{{ acremac_opinion.montant_credit_maximum }} {{ executive_summary.devise }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td colspan="1" class="warning">
+                        {{ acremac_opinion.commentaire|striptags|safe }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        
+        
+        <!-- Données d'enregistrement -->
+        <div class="section">
+            <div class="section-title">DONNÉES D'ENREGISTREMENT</div>
+            <table>
+                <tr>
+                    <th>Date de création</th>
+                    <td>{{ registered_data.date_creation }}</td>
+                </tr>
+                <tr>
+                    <th>Date d'enregistrement</th>
+                    <td>{{ registered_data.date_creation }}</td>
+                </tr>
+                <tr>
+                    <th>Nom précédent</th>
+                    <td>{{ registered_data.acheteur }}</td>
+                </tr>
+                <tr>
+                    <th>Numéro de registre de commerce</th>
+                    <td>RCCM : {{ registered_data.numero_registre_commerce }}</td>
+                </tr>
+                <tr>
+                    <th>Numéro fiscal</th>
+                    <td>{{ registered_data.numero_fiscale }}</td>
+                </tr>
+                <tr>
+                    <th>Statut du registre</th>
+                    <td>{{ registered_data.statut_registre }}</td>
+                </tr>
+                <tr>
+                    <th>Forme juridique</th>
+                    <td>{{ registered_data.forme_juridique }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ registered_data.commentaire|striptags|safe }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Dossiers juridiques -->
+        <div class="section-title">ANTECEDENTS JURIDIQUES</div>
+        {% if legal_background.antecedents_juridiques %}
+            {% for antecedant in legal_background.antecedents_juridiques %}
+                <div class="antecedent-entry">
+                    <table>
+                        <tr>
+                            <th>Cas de faillite</th>
+                            <td>{{ antecedant.dossier_faillite }}</td>
+                        </tr>
+                        <tr>
+                            <th>Jugement du tribunal</th>
+                            <td>{{ antecedant.jugement_cour }}</td>
+                        </tr>
+                        <tr>
+                            <th>Historique de recouvrement</th>
+                            <td>{{ antecedant.antecedant_redressement }}</td>
+                        </tr>
+                        <tr>
+                            <th>Autre</th>
+                            <td>{{ antecedant.autre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td class="warning">{{ antecedant.commentaire|striptags|safe }}</td>
+                        </tr>
+                    </table>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="subsection-title">Aucun antécédent juridique disponible pour cet acheteur.</div>
+        {% endif %}
+        
+        <!-- Gestion et personnel -->
+        <div class="section">
+            <div class="section-title">MANAGEMENT ET STAFF</div>
+            <div class="subsection-title">CONSEIL D'ADMINISTRATION</div>
+            {% if management.conseil_administration %}
+                {% for membre in management.conseil_administration %}
+                    <div class="ca-membre-entry">
+                        <table>
+                            <tr>
+                                <th>Nom</th>
+                                <td>{{ membre.nom }}</td>
+                            </tr>
+                            <tr>
+                                <th>Fonction dans le Conseil</th>
+                                <td>{{ membre.fonction_dans_le_conseil }}</td>
+                            </tr>
+                            <tr>
+                                <th>Adresse</th>
+                                <td>
+                                    {{ membre.numero_adresse }} {{ membre.rue_adresse }}, 
+                                    {{ membre.code_postale_adresse }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Commentaire</th>
+                                <td class="warning">{{ membre.commentaire|striptags|safe }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="subsection-title">Aucun membre du conseil d'administration n'est spécifié.</div>
+            {% endif %}
+            <div class="subsection-title">DIRIGEANTS</div>
+            {% if management.responsables %}
+                {% for responsable in management.responsables %}
+                    <div class="responsable-entry">
+                        <table>
+                            <tr>
+                                <th>Nom et Prénom</th>
+                                <td>{{ responsable.nom }} {{ responsable.prenom }}</td>
+                            </tr>
+                            <tr>
+                                <th>Sexe</th>
+                                <td>{{ responsable.sexe }}</td>
+                            </tr>
+                            <tr>
+                                <th>Poste</th>
+                                <td>{{ responsable.poste }}</td>
+                            </tr>
+                            <tr>
+                                <th>Nationalité</th>
+                                <td>{{ responsable.nationalite }}</td>
+                            </tr>
+                            <tr>
+                                <th>Commentaire</th>
+                                <td class="warning">{{ responsable.commentaire|striptags|safe }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="subsection-title">Aucun dirigeant n'est spécifié.</div>
+            {% endif %}
+            <div class="subsection-title">GESTION DU RISQUE</div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Professionnalisme</th>
+                        <td>{{ management.risk_management.professionalisme }}</td>
+                    
+                        <th>Organisation</th>
+                        <td>{{ management.risk_management.organisation }}</td>
+                    </tr>
+                    <tr>
+                        <th>Non départ des employés</th>
+                        <td>{{ management.risk_management.turn_over }}</td>
+                    
+                        <th>Non grève</th>
+                        <td>{{ management.risk_management.greve }}</td>
+                    </tr>
+                    <tr>
+                        <th>Non dégradation de la qualité du travail</th>
+                        <td>{{ management.risk_management.degradation_qualite }}</td>
+                    
+                        <th>Respect des Employés</th>
+                        <td>{{ management.risk_management.non_respect_condition }}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">{{ management.risk_management.commentaire|striptags|safe }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Capital social -->
+        <div class="section">
+            <div class="section-title">CAPITAL SOCIAL</div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Capital social émis</th>
+                        <td>{{ capital_composition.emis }} {{ capital_composition.devise|default:"" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Capital social publié</th>
+                        <td>{{ capital_composition.publie }} {{ capital_composition.devise|default:"" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Capital social libéré</th>
+                        <td>{{ capital_composition.libere }} {{ capital_composition.devise|default:"" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="1" class="warning">{{ capital_composition.commentaire|striptags|safe }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Actionnariat/Propriétaires -->
+        <div class="section">
+            <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
+
+            {% if shareholders.actionnaires %}
+                {% for shareholder in shareholders.actionnaires %}
+                    <div class="shareholder-entry">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>Nom</th>
+                                    <td>{{ shareholder.nom }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Prénom</th>
+                                    <td>{{ shareholder.prenom }}</td>
+                                </tr>
+                                <tr>
+                                    <th>% part sociale/actions</th>
+                                    <td>
+                                        {% if shareholder.pourcentage != "Non spécifié" %}
+                                            {{ shareholder.pourcentage|floatformat:2 }}%
+                                        {% else %}
+                                            Non spécifié
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Commentaire</th>
+                                    <td colspan="1" class="warning">{{ shareholder.commentaire|striptags|safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="subsection-title">Aucun actionnaire n'est spécifié pour cet acheteur.</div>
+            {% endif %}
+        </div>
+        
+        <!-- Affiliations d'entreprise -->
+        <div class="section">
+            <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
+
+            {% if affiliations.affiliations %}
+                {% for affiliation in affiliations.affiliations %}
+                    <div class="affiliation-entry">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>Nom</th>
+                                    <td class="text">{{ affiliation.nom }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type d'affiliation</th>
+                                    <td>{{ affiliation.type_affiliation }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Adresse</th>
+                                    <td>
+                                        {% if affiliation.numero_adresse or affiliation.rue_adresse or affiliation.code_postale_adresse %}
+                                            {{ affiliation.numero_adresse }} {{ affiliation.rue_adresse }}, 
+                                            {{ affiliation.code_postale_adresse }}
+                                        {% else %}
+                                            Non spécifié
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Commentaire</th>
+                                    <td colspan="1" class="warning">{{ affiliation.commentaire|striptags|safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="height: 10px;"></div>
+                {% endfor %}
+            {% else %}
+                <div class="subsection-title">Aucune affiliation d'entreprise n'est disponible pour cet acheteur.</div>
+            {% endif %}
+        </div>
+        
+        <!-- Analyse sectorielle -->
+        <div class="section">
+            <div class="section-title">ANALYSE SECTORIELLE</div>
+
+            <!-- SECTORIELLE -->
+            <div class="subsection-title">ANALYSE ECONOMIQUE</div>
+            <div class="section">
+                
+                <table>
+                    <tr>
+                        <th>Impact COVID</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.sectorielle.impact_covid_19|striptags|safe }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.sectorielle.commentaire|striptags|safe }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- TENDANCE -->
+            <div class="subsection-title">TENDANCE</div>
+            <div class="section">
+                
+                <table>
+                    <tr>
+                        <th>Avis commercial</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.tendance.avis_commercial|striptags|safe }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Presse et Médias</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.tendance.presse_media|striptags|safe }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Principaux concurrents</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.tendance.principaux_concurrent|striptags|safe }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.tendance.commentaire|striptags|safe }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- GEOPOLITIQUES -->
+            <div class="subsection-title">GEOPOLITIQUES</div>
+            <div class="section">
+                
+                <table>
+                    <tr>
+                        <th>Données politiques</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.geopolitics.donnees_politiques|striptags|safe }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Données économiques</th>
+                        <td colspan="1" class="warning">
+                            {{ sector_analysis.geopolitics.donnees_economiques|striptags|safe }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            
+            
+            <div class="subsection-title">DONNÉES BANCAIRES</div>
+
+            {% if banking_data.data_banks %}
+                {% for bank in banking_data.data_banks %}
+                    <div class="bank-entry">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>Nom de la banque</th>
+                                    <td>{{ bank.nom_banque }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Numéro de compte</th>
+                                    <td>{{ bank.numero_compte }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type de relation</th>
+                                    <td>{{ bank.type_relation }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Adresse</th>
+                                    <td>
+                                        {% if bank.numero != "Non spécifié" or bank.rue != "Non spécifié" or bank.ville != "Non spécifié" or bank.code_postal != "Non spécifié" %}
+                                            {{ bank.numero }} {{ bank.rue }},
+                                            {{ bank.code_postal }} {{ bank.ville }}
+                                        {% else %}
+                                            Non spécifié
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Commentaire</th>
+                                    <td class="warning">{{ bank.commentaire|striptags|safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="subsection-title">Aucune donnée bancaire n'est disponible pour cet acheteur.</div>
+            {% endif %}
+        </div>
+        
+
+        <!-- Comptes financiers -->
+        <div class="section">
+        <div class="section-title">COMPTES FINANCIERS</div>
+            {% if financial_accounts and not financial_accounts.error %}
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Cabinet</th>
+                            <td>{{ financial_accounts.cabinet }}</td>
+                        </tr>
+                        <tr>
+                            <th>Requis pour déposer</th>
+                            <td>{{ financial_accounts.requis_pour_deposer }}</td>
+                        </tr>
+                        <tr>
+                            <th>Crédibilité pour ACREMAC</th>
+                            <td>{{ financial_accounts.credibilite_cabinet }}</td>
+                        </tr>
+                        <tr>
+                            <th>Source</th>
+                            <td>{{ financial_accounts.source }}</td>
+                        </tr>
+                        <tr>
+                            <th>Présentation</th>
+                            <td>{{ financial_accounts.presentation }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type de compte</th>
+                            <td>{{ financial_accounts.type_compte }}</td>
+                        </tr>
+                        <tr>
+                            <th>Devise</th>
+                            <td>{{ financial_accounts.devise }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type de bilan</th>
+                            <td>{{ financial_accounts.type_bilan }}</td>
+                        </tr>
+                        <tr>
+                            <th>Période de compte</th>
+                            <td>
+                                N-0: {{ financial_accounts.date_compte }} - {{ financial_accounts.date_fin }} <br>
+                                N-1: {{ financial_accounts.date_compte_n_moins_un }} - {{ financial_accounts.date_fin_n_moins_un }} <br>
+                                N-2: {{ financial_accounts.date_compte_n_moins_deux }} - {{ financial_accounts.date_fin_n_moins_deux }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td colspan="1" class="warning">{{ financial_accounts.commentaire|striptags|safe }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="subsection-title">Aucun compte financier n'est disponible.</div>
+            {% endif %}
+        </div>
+
+
+        
+        <!-- Passif -->
+        <div class="section">
+            <div class="section-title">PASSIF</div>
+            
+            <!-- Capitaux Propres -->
+            <div class="subsection-title">CAPITAUX PROPRES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Capital social</td>
+                    <td class="text-right">1,000,000.00</td>
+                    <td class="text-right">1,000,000.00</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Private</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Eco</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Resource</td>
+                    <td class="text-right">250,000.00</td>
+                    <td class="text-right">250,000.00</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Request warrants</td>
+                    <td class="text-right">657,684,448.00</td>
+                    <td class="text-right">251,568,092.00</td>
+                    <td class="text-right positive-var">+161.44%</td>
+                </tr>
+                <tr>
+                    <td>Routine service</td>
+                    <td class="text-right">830,329,404.00</td>
+                    <td class="text-right">890,825,082.00</td>
+                    <td class="text-right negative-var">-6.79%</td>
+                </tr>
+                <tr>
+                    <td>Sub-hrives</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Providermayl</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <th>TOTAL 1</th>
+                    <th class="text-right">1,112,954,613.00</th>
+                    <th class="text-right">616,836,165.00</th>
+                    <th class="text-right positive-var">+80.43%</th>
+                </tr>
+            </table>
+            
+            <!-- Dettes Financières et Ressources -->
+            <div class="subsection-title">DETTES FINANCIÈRES ET RESSOURCES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Improvisa</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Credit base debts and related contracts</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Debts financing deposits</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Provisions Transplant charge charges</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <th>TOTAL 12</th>
+                    <th class="text-right">0.00</th>
+                    <th class="text-right">0.00</th>
+                    <th class="text-right">0.00%</th>
+                </tr>
+            </table>
+            
+            <!-- Passif Circulant -->
+            <div class="subsection-title">PASSIF CIRCULANT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Debts Remissions shares</td>
+                    <td class="text-right">231,631,525.00</td>
+                    <td class="text-right">262,774,102.00</td>
+                    <td class="text-right negative-var">-11.85%</td>
+                </tr>
+                <tr>
+                    <td>Autres et acomptes nets</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Dettes</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Tentes faciles sociales</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Autres dettes</td>
+                    <td class="text-right">-314,634,579.00</td>
+                    <td class="text-right">-114,904,375.00</td>
+                    <td class="text-right negative-var">+173.82%</td>
+                </tr>
+                <tr>
+                    <td>TENSORIERE FASCILE</td>
+                    <td class="text-right">-577,544,531.00</td>
+                    <td class="text-right">-47,628,432.00</td>
+                    <td class="text-right negative-var">+1112.68%</td>
+                </tr>
+                <tr>
+                    <td>Banques exacts voscentes</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Banque exacts caisse</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Banques discourses</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <th>TOTAL GÉNÉRAL</th>
+                    <th class="text-right">-577,578,542.00</th>
+                    <th class="text-right">-1,165,513,642.00</th>
+                    <th class="text-right positive-var">+50.45%</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Compte de résultat -->
+        <div class="section">
+            <div class="section-title">COMPTE DE RÉSULTAT</div>
+            
+            <!-- Exploitation -->
+            <div class="subsection-title">EXPLOITATION</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Produits d'exploitations</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                </tr>
+                <tr>
+                    <td>Vertis de mises</td>
+                    <td class="text-right">-5,284,456,86.00</td>
+                    <td class="text-right">-5,313,979,662.00</td>
+                    <td class="text-right positive-var">+0.56%</td>
+                </tr>
+                <tr>
+                    <td>Vertis de produits fabriqués</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Product mixtes vendus</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Produit accessibles</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Productions telles</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>C.A.</td>
+                    <td class="text-right">-6,915,045,000.00</td>
+                    <td class="text-right">-5,313,979,662.00</td>
+                    <td class="text-right negative-var">-30.13%</td>
+                </tr>
+                <tr>
+                    <td>Subvention explications</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Productions secures</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Repétites de produits</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Repétites d'engins</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Actions proches</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Achat mises</td>
+                    <td class="text-right">-5,274,456,86.00</td>
+                    <td class="text-right">-5,613,998,002.00</td>
+                    <td class="text-right positive-var">+6.05%</td>
+                </tr>
+                <tr>
+                    <td>Variation stock mises</td>
+                    <td class="text-right">-552,645,539.00</td>
+                    <td class="text-right">-197,834,441.00</td>
+                    <td class="text-right negative-var">-179.33%</td>
+                </tr>
+                <tr>
+                    <td>MASSE SENTE</td>
+                    <td class="text-right">12,855,127,422.00</td>
+                    <td class="text-right">-892,658,221.00</td>
+                    <td class="text-right positive-var">+1540.18%</td>
+                </tr>
+            </table>
+            
+            <!-- Résultat -->
+            <div class="subsection-title">RÉSULTAT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Depot Benefit in drug usage</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Impta sur les bulletins</td>
+                    <td class="text-right">249,375,215.80</td>
+                    <td class="text-right">155,936,091.00</td>
+                    <td class="text-right positive-var">+59.92%</td>
+                </tr>
+                <tr>
+                    <th>RÉSULTAT NET</th>
+                    <th class="text-right">253,575,484.00</th>
+                    <th class="text-right">293,825,034.00</th>
+                    <th class="text-right negative-var">-13.70%</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Ratios -->
+        <div class="section">
+            <div class="section-title">RATIOS</div>
+            
+            <!-- Structure financière -->
+            <div class="subsection-title">STRUCTURE FINANCIÈRE</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>French de mallement</td>
+                    <td class="text-right">59.63</td>
+                    <td class="text-right">16.11</td>
+                    <td class="text-right positive-var">+270.27%</td>
+                </tr>
+                <tr>
+                    <td>Far sommeil</td>
+                    <td class="text-right">0.33</td>
+                    <td class="text-right">0.42</td>
+                    <td class="text-right negative-var">-21.43%</td>
+                </tr>
+                <tr>
+                    <td>Autonomie financière</td>
+                    <td class="text-right">100.00%</td>
+                    <td class="text-right">100.00%</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Liquidité réduite</td>
+                    <td class="text-right">126.21%</td>
+                    <td class="text-right">82.29%</td>
+                    <td class="text-right positive-var">+53.37%</td>
+                </tr>
+                <tr>
+                    <td>Liquidité immédiate</td>
+                    <td class="text-right">133.76%</td>
+                    <td class="text-right">110.94%</td>
+                    <td class="text-right positive-var">+20.57%</td>
+                </tr>
+            </table>
+            
+            <!-- Rentabilité -->
+            <div class="subsection-title">RENTABILITÉ</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>C.A.F</td>
+                    <td class="text-right">706,965,221.00</td>
+                    <td class="text-right">579,565,099.00</td>
+                    <td class="text-right positive-var">+21.98%</td>
+                </tr>
+                <tr>
+                    <td>C.A.F/Total unit</td>
+                    <td class="text-right">0.00</td>
+                    <td class="text-right">0.00</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Rentabilité économique</td>
+                    <td class="text-right">48.01%</td>
+                    <td class="text-right">68.07%</td>
+                    <td class="text-right negative-var">-29.44%</td>
+                </tr>
+                <tr>
+                    <td>Rentabilité financière</td>
+                    <td class="text-right">2,684.28%</td>
+                    <td class="text-right">10.81%</td>
+                    <td class="text-right positive-var">+247.30%</td>
+                </tr>
+                <tr>
+                    <td>Rentabilité de l'entitre de production</td>
+                    <td class="text-right">2.02%</td>
+                    <td class="text-right">8.08%</td>
+                    <td class="text-right negative-var">-75.00%</td>
+                </tr>
+                <tr>
+                    <td>Consumier des faits financiers</td>
+                    <td class="text-right">0.00%</td>
+                    <td class="text-right">0.00%</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+            </table>
+            
+            <!-- Délais (Jours) -->
+            <div class="subsection-title">DÉLAIS (JOURS)</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de mg</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de #F</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de marchandises</td>
+                    <td class="text-right">18</td>
+                    <td class="text-right">16</td>
+                    <td class="text-right positive-var">+12.50%</td>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de services</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Créat clients</td>
+                    <td class="text-right">41</td>
+                    <td class="text-right">25</td>
+                    <td class="text-right positive-var">+64.00%</td>
+                </tr>
+                <tr>
+                    <td>Créats fournisseurs</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Graphiques -->
+        <div class="section">
+            <div class="section-title">STRUCTURE FINANCIÈRE</div>
+            <div class="chart-placeholder">
+                Graphique de structure financière (2023 vs 2022)
+            </div>
+            
+            <div class="section-title">RENTABILITÉ FINANCIÈRE</div>
+            <div class="chart-placeholder">
+                Graphique de rentabilité financière (2023 vs 2022)
+            </div>
+        </div>
+        
+        <!-- Score ACREMAC -->
+        <div class="section">
+            <div class="section-title">SCORE ACREMAC</div>
+            <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+            
+            <div class="rating-scale">
+                <div class="rating-point">1</div>
+                <div class="rating-point">2</div>
+                <div class="rating-point">3</div>
+                <div class="rating-point">4</div>
+                <div class="rating-point">5</div>
+                <div class="rating-point">6</div>
+                <div class="rating-point highlighted">7</div>
+                <div class="rating-point">8</div>
+                <div class="rating-point">9</div>
+                <div class="rating-point">10</div>
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Interprétation</th>
+                    <td class="warning">Risque significatif</td>
+                </tr>
+            </table>
+        </div>
+        
+
+
+        
+
+        <!-- Opérations & Historique -->
+        <div class="section">
+            <div class="section-title">OPÉRATIONS & HISTORIQUE</div>
+            
+            <div class="subsection-title">HISTORIQUE DES OPERATIONS</div>
+            <table>
+                <tbody>
+                    <tr>
+                        <th>Description complète de l'activité</th>
+                        <td>{{ operation_history.description_complete_activite|striptags|safe }}</td>
+                    </tr>
+                    <tr>
+                        <th>Importation</th>
+                        <td>{{ operation_history.importation|striptags|safe }}</td>
+                    </tr>
+                    <tr>
+                        <th>Historique</th>
+                        <td>{{ operation_history.historique|striptags|safe }}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire sur les ratios</th>
+                        <td class="warning">{{ operation_history.commentaire_ratios|striptags|safe }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+
+            <div class="subsection-title">PROPRIÉTÉ & ACTIFS</div>
+            {% if properties_and_assets.assets_list %}
+                {% for asset in properties_and_assets.assets_list %}
+                    <div class="asset-entry">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>Locaux</th>
+                                    <td>{{ asset.locaux }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Branche</th>
+                                    <td>{{ asset.branche }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="subsection-title">Aucune propriété ou actif n'est spécifié pour cet acheteur.</div>
+            {% endif %}
+
+        </div>
+        
+        <!-- Paiements -->
+        <div class="section">
+            <div class="section-title">PAIEMENTS</div>
+            
+            <div class="subsection-title">CONDITIONS D'ACHAT</div>
+            {% if terms_of_purchase_and_sale.conditions_achat.local != "Non spécifié" or terms_of_purchase_and_sale.conditions_achat.importation != "Non spécifié" or terms_of_purchase_and_sale.conditions_achat.les_clients != "Non spécifié" or terms_of_purchase_and_sale.conditions_achat.fournisseur != "Non spécifié" %}
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Local</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_achat.local }}</td>
+                        </tr>
+                        <tr>
+                            <th>Importation</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_achat.importation|striptags|safe }}</td>
+                        </tr>
+                        <tr>
+                            <th>Clients</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_achat.les_clients|striptags|safe }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fournisseur</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_achat.fournisseur|striptags|safe }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="subsection-title">Aucune condition d'achat n'est disponible.</div>
+            {% endif %}
+
+            <div class="subsection-title">CONDITIONS DE VENTE</div>
+            {% if terms_of_purchase_and_sale.conditions_vente.local != "Non spécifié" or terms_of_purchase_and_sale.conditions_vente.recouvrement_dette_jugement != "Non spécifié" or terms_of_purchase_and_sale.conditions_vente.comportement_de_paiement != "Non spécifié" %}
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>Local</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_vente.local }}</td>
+                        </tr>
+                        <tr>
+                            <th>Recouvrement de dette jugement</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_vente.recouvrement_dette_jugement }}</td>
+                        </tr>
+                        <tr>
+                            <th>Comportement de paiement</th>
+                            <td>{{ terms_of_purchase_and_sale.conditions_vente.comportement_de_paiement }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="subsection-title">Aucune condition de vente n'est disponible.</div>
+            {% endif %}
+        </div>
+        
+        <!-- SOURCES -->
+        <div class="section">
+            <div class="section-title">SOURCES D'INVESTIGATION</div>
+
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Services judiciaires</td>
+                    </tr>
+                    <tr>
+                        <td>Chambres de commerce et d'industrie</td>
+                    </tr>
+                    <tr>
+                        <td>Banques</td>
+                    </tr>
+                    <tr>
+                        <td>Groupe de sociétés</td>
+                    </tr>
+                    <tr>
+                        <td>La société faisant l'objet de l'enquête</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Conclusion et Avis -->
+        <div class="section">
+            <div class="section-title">CONCLUSION ET AVIS</div>
+            <p class="warning">{{ conclusion_generale.commentaire|striptags|safe }}</p>
+        </div>
+        
+        <!-- Pied de page -->
+        <div class="footer">
+            <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.</p>
+            <p>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.</p>
+            <p>Rapport généré le {{ header_report.date_today }} (GMT) - {{ header_report.acremac_services }}</p>
+        </div>
+    </div>
+
+    
+</body>
+</html>

@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Solvabilité</title>
+    <style>
+        /* Styles pour WeasyPrint */
+        @page {
+            size: A4;
+            margin: 15mm 10mm 20mm 10mm;
+            
+            @bottom-left {
+                content: "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.";
+                font-size: 8pt;
+                color: #666;
+            }
+            
+            @bottom-right {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-size: 8pt;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 16pt;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        
+        .section {
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3px;
+        }
+        
+        .subsection-title {
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 10px 0 5px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            page-break-inside: avoid;
+        }
+        
+        table th, table td {
+            border: 1px solid #000;
+            padding: 5px;
+            vertical-align: top;
+        }
+        
+        table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: left;
+        }
+        
+        .financial-table {
+            font-size: 9pt;
+        }
+        
+        .financial-table td {
+            padding: 3px 5px;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .warning {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        
+        .footer {
+            font-size: 8pt;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+        
+        /* Éviter les coupures indésirables */
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+        
+        /* Styles pour les graphiques (placeholder) */
+        .chart-placeholder {
+            height: 150px;
+            background-color: #f9f9f9;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .two-columns {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .column {
+            width: 48%;
+        }
+        
+        .rating-scale {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+        
+        .rating-point {
+            width: 10%;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .highlighted {
+            background-color: #ffffcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête du rapport -->
+        <div class="header">
+            <h1>RAPPORT DE SOLVABILITÉ</h1>
+            <div class="two-columns">
+                <div>
+                    <strong>ACREMAC Services</strong><br>
+                    {{ acremac_services }}<br>
+                    {{ acremac_mail }}
+                </div>
+                <div class="text-right">
+                    Date: {{ date_report }}<br>
+                    Référence: {{ reference }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Détails de la demande -->
+        <div class="section">
+            <div class="section-title">DÉTAILS DE LA DEMANDE</div>
+            <table>
+                <tr>
+                    <th>Client : {{ client }}</th>
+                    <th>Date de réception : {{ date_received }}</th>
+                </tr>
+                <tr>
+                    <td>Référence client : {{ client_reference }}</td>
+                    <td>Date du rapport : {{ date_report }}</td>
+                </tr>
+                <tr>
+                    <td>Notre référence : {{ our_reference }}</td>
+                    <td>Délai en jours : {{ deadline_days }} jours</td>
+                </tr>
+                <tr>
+                    <td colspan="2">Type de rapport : {{ report_type }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Identification -->
+        <div class="section">
+            <div class="section-title">IDENTIFICATION</div>
+            
+            <div class="subsection-title">INFORMATIONS CLIENT</div>
+            <table>
+                <tr>
+                    <th>Nom de l'acheteur</th>
+                    <td>{{ client_nom_acheteur }}</td>
+                </tr>
+                <tr>
+                    <th>Adresse</th>
+                    <td>{{ client_address }}</td>
+                </tr>
+                <tr>
+                    <th>Ville</th>
+                    <td>{{ client_city }}</td>
+                </tr>
+                <tr>
+                    <th>Pays</th>
+                    <td>{{ client_country }}</td>
+                </tr>
+                <tr>
+                    <th>Téléphone / Email</th>
+                    <td>{{ client_phone }} / {{ client_email }}</td>
+                </tr>
+            </table>
+            
+            <div class="subsection-title">INFORMATIONS ACREMAC</div>
+            <table>
+                <tr>
+                    <th>Nom de l'acheteur</th>
+                    <td>{{ acremac_nom_acheteur }}</td>
+                </tr>
+                <tr>
+                    <th>Adresse</th>
+                    <td>{{ acremac_address }}</td>
+                </tr>
+                <tr>
+                    <th>Ville</th>
+                    <td>{{ acremac_city }}</td>
+                </tr>
+                <tr>
+                    <th>Pays</th>
+                    <td>{{ acremac_country }}</td>
+                </tr>
+                <tr>
+                    <th>Téléphone / Email</th>
+                    <td>{{ acremac_phone }} / {{ acremac_email }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Informations supplémentaires ACREMAC -->
+        <div class="section">
+            <div class="section-title">INFORMATIONS SUPPLÉMENTAIRES ACREMAC</div>
+            <table>
+                <tr>
+                    <th>Boîte postale</th>
+                    <td>{{ po_box }}</td>
+                </tr>
+                <tr>
+                    <th>Site web</th>
+                    <td>{{ website }}</td>
+                </tr>
+                <tr>
+                    <th>Statut</th>
+                    <td>{{ status }}</td>
+                </tr>
+                <tr>
+                    <th>Activités principales</th>
+                    <td>{{ main_activities }}</td>
+                </tr>
+                <tr>
+                    <th>Code(s) MACE</th>
+                    <td>{{ mace_codes }}</td>
+                </tr>
+                <tr>
+                    <th>Code(s) NAF</th>
+                    <td>{{ naf_codes }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Résumé exécutif -->
+        <div class="section">
+            <div class="section-title">RÉSUMÉ EXÉCUTIF</div>
+            <table>
+                <tr>
+                    <th>Date de création</th>
+                    <td>{{ created_date }}</td>
+                    <th>Chiffre d'affaires</th>
+                    <td class="text-right">{{ turnover }} XAF</td>
+                </tr>
+                <tr>
+                    <th>Capitaux propres</th>
+                    <td class="text-right">{{ equity }} XAF</td>
+                    <th>Bénéfice net</th>
+                    <td class="text-right">{{ net_profit }} XAF</td>
+                </tr>
+                <tr>
+                    <th>Capital social</th>
+                    <td class="text-right">{{ share_capital }} XAF</td>
+                    <th>Forme juridique</th>
+                    <td>{{ legal_form }}</td>
+                </tr>
+                <tr>
+                    <th>Nombre d'employés</th>
+                    <td>{{ employees_count }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Analyse et interprétation -->
+        <div class="section">
+            <div class="section-title">ANALYSE</div>
+            <p>{{ analysis }}</p>
+            
+            <div class="section-title">INTERPRÉTATION</div>
+            <p>{{ interpretation }}</p>
+        </div>
+        
+        <!-- Opinion crédit ACREMAC -->
+        <div class="section">
+            <div class="section-title">OPINION CRÉDIT ACREMAC</div>
+            
+            <div class="rating-scale">
+                {% for i in range(1, 10) %}
+                <div class="rating-point {% if i in highlighted_ratings %}highlighted{% endif %}">{{ i }}</div>
+                {% endfor %}
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Note:</th>
+                    <td>{{ credit_rating }}</td>
+                </tr>
+                <tr>
+                    <th>Conseil commercial:</th>
+                    <td>{{ commercial_advice }} €</td>
+                </tr>
+                <tr>
+                    <th>Limite recommandée:</th>
+                    <td>{{ recommended_limit }} €</td>
+                </tr>
+                <tr>
+                    <th>Tendance:</th>
+                    <td>{{ trend }}</td>
+                </tr>
+                <tr>
+                    <th>Principaux concurrents:</th>
+                    <td>{{ main_competitors }}</td>
+                </tr>
+                <tr>
+                    <th>Presse/Médias:</th>
+                    <td>{{ press_media }}</td>
+                </tr>
+                <tr>
+                    <th>Alertes:</th>
+                    <td class="warning">{{ alarms }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Données d'enregistrement -->
+        <div class="section">
+            <div class="section-title">DONNÉES D'ENREGISTREMENT</div>
+            <table>
+                <tr>
+                    <th>Date de création</th>
+                    <td>{{ registration_created_date }}</td>
+                </tr>
+                <tr>
+                    <th>Date d'enregistrement</th>
+                    <td>{{ registration_date }}</td>
+                </tr>
+                <tr>
+                    <th>Nom précédent</th>
+                    <td>{{ previous_name }}</td>
+                </tr>
+                <tr>
+                    <th>Numéro de registre de commerce</th>
+                    <td>{{ trade_register_number }}</td>
+                </tr>
+                <tr>
+                    <th>Numéro fiscal</th>
+                    <td>{{ tax_number }}</td>
+                </tr>
+                <tr>
+                    <th>Statut du registre</th>
+                    <td>{{ registry_status }}</td>
+                </tr>
+                <tr>
+                    <th>Forme juridique</th>
+                    <td>{{ business_legal_form }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ registration_comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Dossiers juridiques -->
+        <div class="section">
+            <div class="section-title">DOSSIERS JURIDIQUES</div>
+            <table>
+                <tr>
+                    <th>Cas de faillite</th>
+                    <td>{{ bankruptcy_cases }}</td>
+                </tr>
+                <tr>
+                    <th>Jugement du tribunal</th>
+                    <td>{{ court_judgement }}</td>
+                </tr>
+                <tr>
+                    <th>Historique de recouvrement</th>
+                    <td>{{ recovery_history }}</td>
+                </tr>
+                <tr>
+                    <th>Autre</th>
+                    <td>{{ other_legal }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ legal_comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Gestion et personnel -->
+        <div class="section">
+            <div class="section-title">GESTION & PERSONNEL</div>
+            <table>
+                <tr>
+                    <th>Nom et prénom</th>
+                    <td>{{ manager_name }}</td>
+                </tr>
+                <tr>
+                    <th>Poste</th>
+                    <td>{{ job_title }}</td>
+                </tr>
+                <tr>
+                    <th>Nationalité</th>
+                    <td>{{ nationality }}</td>
+                </tr>
+                <tr>
+                    <th>Conseil d'administration</th>
+                    <td>{{ board_of_directors }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ management_comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Capital social -->
+        <div class="section">
+            <div class="section-title">CAPITAL SOCIAL</div>
+            <table>
+                <tr>
+                    <th>Capital social émis</th>
+                    <td class="text-right">{{ issued_share_capital }} XAF</td>
+                </tr>
+                <tr>
+                    <th>Capital de l'éditeur</th>
+                    <td class="text-right">{{ publisher_capital }} XAF</td>
+                </tr>
+                <tr>
+                    <th>Capital libéré</th>
+                    <td class="text-right">{{ paid_up_capital }} XAF</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Actionnariat/Propriétaires -->
+        <div class="section">
+            <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
+            <table>
+                <tr>
+                    <th>Nom</th>
+                    <td>{{ owner_name }}</td>
+                </tr>
+                <tr>
+                    <th>Prénom</th>
+                    <td>{{ owner_first_name }}</td>
+                </tr>
+                <tr>
+                    <th>% part sociale/actions</th>
+                    <td class="text-right">{{ ownership_percentage }}%</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ ownership_comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Affiliations d'entreprise -->
+        <div class="section">
+            <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
+            <table>
+                <tr>
+                    <th>Nom</th>
+                    <td>{{ affiliate_name }}</td>
+                </tr>
+                <tr>
+                    <th>Type d'affiliation</th>
+                    <td>{{ affiliation_type }}</td>
+                </tr>
+                <tr>
+                    <th>Adresse</th>
+                    <td>{{ affiliate_address }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td>{{ affiliation_comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Analyse sectorielle -->
+        <div class="section">
+            <div class="section-title">ANALYSE SECTORIELLE</div>
+            
+            <div class="subsection-title">RISQUE PAYS</div>
+            <p>{{ country_risk }}</p>
+            
+            <div class="subsection-title">BANQUES & FINANCEMENT</div>
+            <p>{{ banks_financing }}</p>
+            
+            <div class="subsection-title">BANQUIERS</div>
+            <table>
+                <tr>
+                    <th>Description</th>
+                    <td>{{ bank_description }}</td>
+                </tr>
+                <tr>
+                    <th>Fichiers requis</th>
+                    <td>{{ required_files }}</td>
+                </tr>
+                <tr>
+                    <th>Cabinet comptable</th>
+                    <td>{{ accounting_firm }}</td>
+                </tr>
+                <tr>
+                    <th>Crédible pour ACREMAC</th>
+                    <td>{{ credible_for_acremac }}</td>
+                </tr>
+                <tr>
+                    <th>Présentation</th>
+                    <td>{{ presentation }}</td>
+                </tr>
+                <tr>
+                    <th>Commentaire</th>
+                    <td class="warning">{{ sectorial_comment }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Comptes financiers -->
+        <div class="section">
+            <div class="section-title">COMPTES FINANCIERS</div>
+            
+            <!-- Actif Immobilisé -->
+            <div class="subsection-title">ACTIF IMMOBILISÉ</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in fixed_assets %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>TOTAL 1</th>
+                    <th class="text-right">{{ fixed_assets_total.pt2023 }}</th>
+                    <th class="text-right">{{ fixed_assets_total.pt2022 }}</th>
+                    <th class="text-right">{{ fixed_assets_total.var }}</th>
+                </tr>
+            </table>
+            
+            <!-- Actif Circulant -->
+            <div class="subsection-title">ACTIF CIRCULANT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in current_assets %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>TOTAL 2</th>
+                    <th class="text-right">{{ current_assets_total.pt2023 }}</th>
+                    <th class="text-right">{{ current_assets_total.pt2022 }}</th>
+                    <th class="text-right">{{ current_assets_total.var }}</th>
+                </tr>
+            </table>
+            
+            <!-- Comptes de Régularisation -->
+            <div class="subsection-title">COMPTES DE RÉGULARISATION</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in regularization_accounts %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>TOTAL GÉNÉRAL</th>
+                    <th class="text-right">{{ total_general.pt2023 }}</th>
+                    <th class="text-right">{{ total_general.pt2022 }}</th>
+                    <th class="text-right">{{ total_general.var }}</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Passif -->
+        <div class="section">
+            <div class="section-title">PASSIF</div>
+            
+            <!-- Capitaux Propres -->
+            <div class="subsection-title">CAPITAUX PROPRES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in equity %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>TOTAL 1</th>
+                    <th class="text-right">{{ equity_total.pt2023 }}</th>
+                    <th class="text-right">{{ equity_total.pt2022 }}</th>
+                    <th class="text-right">{{ equity_total.var }}</th>
+                </tr>
+            </table>
+            
+            <!-- Dettes Financières et Ressources -->
+            <div class="subsection-title">DETTES FINANCIÈRES ET RESSOURCES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in financial_debts %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>TOTAL 12</th>
+                    <th class="text-right">{{ financial_debts_total.pt2023 }}</th>
+                    <th class="text-right">{{ financial_debts_total.pt2022 }}</th>
+                    <th class="text-right">{{ financial_debts_total.var }}</th>
+                </tr>
+            </table>
+            
+            <!-- Passif Circulant -->
+            <div class="subsection-title">PASSIF CIRCULANT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in current_liabilities %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>TOTAL GÉNÉRAL</th>
+                    <th class="text-right">{{ liabilities_total.pt2023 }}</th>
+                    <th class="text-right">{{ liabilities_total.pt2022 }}</th>
+                    <th class="text-right">{{ liabilities_total.var }}</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Compte de résultat -->
+        <div class="section">
+            <div class="section-title">COMPTE DE RÉSULTAT</div>
+            
+            <!-- Exploitation -->
+            <div class="subsection-title">EXPLOITATION</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in operations %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            
+            <!-- Résultat -->
+            <div class="subsection-title">RÉSULTAT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in results %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <th>RÉSULTAT NET</th>
+                    <th class="text-right">{{ net_result.pt2023 }}</th>
+                    <th class="text-right">{{ net_result.pt2022 }}</th>
+                    <th class="text-right">{{ net_result.var }}</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Ratios -->
+        <div class="section">
+            <div class="section-title">RATIOS</div>
+            
+            <!-- Structure financière -->
+            <div class="subsection-title">STRUCTURE FINANCIÈRE</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in financial_structure_ratios %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            
+            <!-- Rentabilité -->
+            <div class="subsection-title">RENTABILITÉ</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in profitability_ratios %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            
+            <!-- Délais (Jours) -->
+            <div class="subsection-title">DÉLAIS (JOURS)</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for item in delay_ratios %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.pt2023 }}</td>
+                    <td class="text-right">{{ item.pt2022 }}</td>
+                    <td class="text-right">{{ item.var }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        
+        <!-- Graphiques -->
+        <div class="section">
+            <div class="section-title">STRUCTURE FINANCIÈRE</div>
+            <div class="chart-placeholder">
+                Graphique de structure financière (2023 vs 2022)
+            </div>
+            
+            <div class="section-title">RENTABILITÉ FINANCIÈRE</div>
+            <div class="chart-placeholder">
+                Graphique de rentabilité financière (2023 vs 2022)
+            </div>
+        </div>
+        
+        <!-- Score ACREMAC -->
+        <div class="section">
+            <div class="section-title">SCORE ACREMAC</div>
+            <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+            
+            <div class="rating-scale">
+                {% for i in range(1, 11) %}
+                <div class="rating-point {% if i == score %}highlighted{% endif %}">{{ i }}</div>
+                {% endfor %}
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Interprétation</th>
+                    <td>{{ score_interpretation }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Opérations & Historique -->
+        <div class="section">
+            <div class="section-title">OPÉRATIONS & HISTORIQUE</div>
+            
+            <div class="subsection-title">PROPRIÉTÉ & ACTIFS</div>
+            <p>{{ property_assets }}</p>
+            
+            <div class="subsection-title">PAIEMENTS</div>
+            <p>{{ payments }}</p>
+            
+            <div class="subsection-title">Conditions de source</div>
+            <p>{{ source_conditions }}</p>
+        </div>
+        
+        <!-- Conclusion et Avis -->
+        <div class="section">
+            <div class="section-title">CONCLUSION ET AVIS</div>
+            <p>{{ conclusion }}</p>
+        </div>
+        
+        <!-- Pied de page -->
+        <div class="footer">
+            <p>{{ footer_text_1 }}</p>
+            <p>{{ footer_text_2 }}</p>
+            <p>{{ footer_text_3 }}</p>
+        </div>
+    </div>
+</body>
+</html>

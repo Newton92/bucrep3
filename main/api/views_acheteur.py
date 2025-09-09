@@ -43,7 +43,7 @@ class AcheteursParMois(APIView):
         return Response(data)
 
 
-class ListAcheteurView(APIView):
+class ListAcheteurViewOld(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -84,7 +84,9 @@ class ListAcheteurView(APIView):
         )
 
 
-class SearchAcheteurView(APIView):
+
+
+class SearchAcheteurViewOld(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
@@ -138,6 +140,126 @@ class SearchAcheteurView(APIView):
                 "previous": acheteur_page.has_previous(),
             }
         )
+
+
+
+
+
+class ListAcheteurView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Récupérer le pays sélectionné (session ou utilisateur)
+        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
+
+        # Filtrer par pays
+        acheteur_list = Acheteur.objects.filter(pays_id=selected_pays_id)
+
+        # Appliquer la recherche si un terme est fourni
+        search_query = request.query_params.get("search", "")
+        if search_query:
+            acheteur_list = acheteur_list.filter(
+                Q(code__icontains=search_query)
+                | Q(nom__icontains=search_query)
+                | Q(sigle__icontains=search_query)
+                | Q(email__icontains=search_query)
+                | Q(numero_adresse__icontains=search_query)
+                | Q(site_internet__icontains=search_query)
+                | Q(rue_adresse__icontains=search_query)
+                | Q(activite_principale__icontains=search_query)
+                | Q(categorie_entreprise__libelle__icontains=search_query)
+                | Q(forme_juridique__libelle__icontains=search_query)
+                | Q(statut_entreprise__libelle__icontains=search_query)
+                | Q(pays__nom__icontains=search_query)
+                | Q(province__nom__icontains=search_query)
+                | Q(ville__nom__icontains=search_query)
+            )
+
+        # Tri et pagination
+        acheteur_list = acheteur_list.order_by("nom")
+        paginator = Paginator(acheteur_list, 10)
+        page_number = request.query_params.get("page", 1)
+        acheteur_page = paginator.get_page(page_number)
+
+        # Sérialisation et réponse
+        serializer = AcheteurSerializer(acheteur_page, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": acheteur_page.has_next(),
+                "previous": acheteur_page.has_previous(),
+            }
+        )
+
+
+
+
+
+class SearchAcheteurView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Récupérer le pays sélectionné
+        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
+
+        # Filtrer par pays et appliquer la recherche
+        acheteur_list = Acheteur.objects.filter(pays_id=selected_pays_id).filter(
+            Q(code__icontains=search_term)
+            | Q(nom__icontains=search_term)
+            | Q(sigle__icontains=search_term)
+            | Q(email__icontains=search_term)
+            | Q(numero_adresse__icontains=search_term)
+            | Q(site_internet__icontains=search_term)
+            | Q(rue_adresse__icontains=search_term)
+            | Q(activite_principale__icontains=search_term)
+            | Q(ville__icontains=search_term)
+            | Q(province__icontains=search_term)
+            | Q(pays__icontains=search_term)
+            | Q(couleur_commentaire__icontains=search_term)
+            | Q(commentaire__icontains=search_term)
+            | Q(categorie_entreprise__code__icontains=search_term)
+            | Q(categorie_entreprise__libelle__icontains=search_term)
+            | Q(forme_juridique__code__icontains=search_term)
+            | Q(forme_juridique__libelle__icontains=search_term)
+            | Q(statut_entreprise__code__icontains=search_term)
+            | Q(statut_entreprise__libelle__icontains=search_term)
+            | Q(pays__code__icontains=search_term)
+            | Q(pays__nom__icontains=search_term)
+            | Q(province__code__icontains=search_term)
+            | Q(province__nom__icontains=search_term)
+            | Q(ville__code__icontains=search_term)
+            | Q(ville__nom__icontains=search_term)
+        ).order_by("nom")
+
+        # Pagination
+        paginator = Paginator(acheteur_list, 10)
+        page_number = request.query_params.get("page", 1)
+        acheteur_page = paginator.get_page(page_number)
+
+        # Sérialisation et réponse
+        serializer = AcheteurSerializer(acheteur_page, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": acheteur_page.has_next(),
+                "previous": acheteur_page.has_previous(),
+            }
+        )
+
+
+
+
 
 
 class AddAcheteurView(APIView):

@@ -78,6 +78,14 @@
                 <!-- Profile and Notification START -->
                 <ul class="nav flex-row align-items-center list-unstyled ms-xl-auto">
 
+                    <!-- Country dropdown START -->
+                    <li class="nav-item ms-0 ms-md-3 dropdown">
+                        <select id="country-select" class="form-select form-select-sm" data-user-pays-id="{{ request.user.pays.id }}">
+                            <option value="">Chargement des pays...</option>
+                        </select>
+                    </li>
+                    <!-- Country dropdown END -->
+
                     <!-- Notification dropdown START -->
                     <li class="nav-item ms-0 ms-md-3 dropdown">
                         <!-- Notification button -->
@@ -153,7 +161,7 @@
 
                             <!-- Links -->
                             <li> <hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'dash_validateur' %}?token={{ user.reset_token }}"><i class="bi bi-bookmark-check fa-fw me-2"></i>Dashboard</a></li>
+                            <li><a class="dropdown-item" href="{% url 'dash_validateur' %}"><i class="bi bi-bookmark-check fa-fw me-2"></i>Dashboard</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bi bi-heart fa-fw me-2"></i>Notifications</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bi bi-gear fa-fw me-2"></i>Parametres</a></li>
                             <li><a class="dropdown-item" href="#"><i class="bi bi-info-circle fa-fw me-2"></i>Taches</a></li>
@@ -250,7 +258,7 @@
                                         <!-- Sidebar menu item START -->
                                         <ul class="nav nav-pills-primary-soft flex-column" id="navbar-sidebar">
                                             <li class="nav-item">
-                                                <a class="nav-link {{ dash_active }}" href="{% url 'dash_validateur' %}?token={{ user.reset_token }}"><i class="bi bi-person fa-fw me-2"></i>Dashboard</a>
+                                                <a class="nav-link {{ dash_active }}" href="{% url 'dash_validateur' %}"><i class="bi bi-person fa-fw me-2"></i>Dashboard</a>
                                             </li>
 
 
@@ -258,12 +266,12 @@
                                                 <a class="nav-link {{ notifications_active }}" href=""><i class="bi bi-bell fa-fw me-2"></i>Notifications</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-link {{ acheteur_active }}" href="{% url 'dash_validateur_acheteur' %}?token={{ user.reset_token }}">
+                                                <a class="nav-link {{ acheteur_active }}" href="{% url 'dash_validateur_acheteur' %}">
                                                     <i class="bi bi-ticket-perforated fa-fw me-2"></i>Acheteurs
                                                 </a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-link {{ requests_active }}" href="{% url 'dash_validateur_commande' %}?token={{ user.reset_token }}"><i class="bi bi-people fa-fw me-2"></i>Commandes</a>
+                                                <a class="nav-link {{ requests_active }}" href="{% url 'dash_validateur_commande' %}"><i class="bi bi-people fa-fw me-2"></i>Commandes</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-link {{ reports_active }}" href=""><i class="bi bi-wallet fa-fw me-2"></i>Rapports</a>
@@ -416,6 +424,7 @@
     });
 </script>
 
+
 <script>
     $(document).ready(function() {
         $('#logoutButtonMenu').on('click', function(event) {
@@ -503,7 +512,108 @@
 
 </script>
 
+<script>
+$(document).ready(function() {
+    // 1. Charger la liste des pays
+    $.ajax({
+        url: "/api/pays-list/",
+        method: "GET",
+        headers: {
+            'Authorization': 'Bearer ' + '{{ access }}'
+        },
+        success: function(response) {
+            const paysSelect = $("#country-select");
+            const userPaysId = paysSelect.data('user-pays-id');
+            const selectedPaysId = localStorage.getItem('selected_pays_id') || userPaysId;
 
+            paysSelect.empty();
+            paysSelect.append('<option value="">Sélectionnez un pays</option>');
+
+            $.each(response, function(index, pays) {
+                const isSelected = (selectedPaysId == pays.id) ? "selected" : "";
+                paysSelect.append(
+                    `<option value="${pays.id}" ${isSelected}><strong>${pays.nom}</strong></option>`
+                );
+            });
+        },
+        error: function(xhr, status, error) {
+            console.error("Erreur lors du chargement des pays :", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Impossible de charger la liste des pays. Veuillez réessayer.',
+                footer: '<a href="">Pourquoi cette erreur ?</a>'
+            });
+        }
+    });
+
+    // 2. Écouter le changement de pays
+    $("#country-select").change(function() {
+        const countryId = $(this).val();
+        if (countryId) {
+            // Afficher un SweetAlert de chargement pendant la requête
+            Swal.fire({
+                title: 'Mise à jour en cours...',
+                text: 'Veuillez patienter.',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Mettre à jour la session via l'API
+            $.ajax({
+                url: "/api/update-selected-pays/",
+                method: "POST",
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}',
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                },
+                data: {
+                    pays_id: countryId
+                },
+                success: function(response) {
+                    // Fermer le SweetAlert de chargement
+                    Swal.close();
+
+                    // Sauvegarder dans localStorage
+                    localStorage.setItem('selected_pays_id', countryId);
+
+                    // Afficher un message de succès
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Pays mis à jour !',
+                        text: 'Le pays a été sélectionné avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+
+                    // Recharger la page pour appliquer les changements
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1500);  // Attendre la fermeture du SweetAlert avant de recharger
+                },
+                error: function(xhr, status, error) {
+                    // Fermer le SweetAlert de chargement
+                    Swal.close();
+
+                    // Afficher un message d'erreur
+                    let errorMessage = "Une erreur est survenue. Veuillez réessayer.";
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: errorMessage,
+                    });
+                }
+            });
+        }
+    });
+
+});
+</script>
 
 {% block scripts %}{% endblock %}
 

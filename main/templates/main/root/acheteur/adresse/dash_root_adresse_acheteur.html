@@ -1,0 +1,555 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .adresse-card {
+        border-left: 4px solid #0A95CA;
+        border-radius: 0 5px 5px 0;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    .adresse-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .adresse-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1rem;
+    }
+    .adresse-content {
+        white-space: pre-line;
+        color: #495057;
+        margin-bottom: 10px;
+        line-height: 1.5;
+    }
+    .adresse-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
+    .adresse-actions {
+        display: flex;
+        gap: 8px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    .created-by {
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    #noAdressesMessage {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    .adresse-preview {
+        max-width: 100%;
+        margin-top: 10px;
+        border-radius: 4px;
+    }
+    .map-container {
+        height: 200px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        margin-top: 10px;
+        display: none;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-geo-alt-fill fa-fw me-1"></i> Adresses de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countAdresse">Module de Gestion des Adresses</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter, modifier ou supprimer les adresses associées à l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Adresse : </strong><span style="color: #0A95CA;">AD</span><br>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Créé par : </strong><span style="color: #6c757d;">CB</span><br>
+                                <strong>Mis à jour : </strong><span style="color: #ffc107;">MA</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Adresses START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Adresses</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search and Add START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Rechercher une adresse..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary w-100" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addAdresseModal">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter une adresse
+                        </button>
+                    </div>
+                </div>
+                <!-- Search and Add END -->
+                <!-- Adresses List START -->
+                <div id="adresseList">
+                    <div id="adresseContainer"></div>
+                    <div class="text-center my-4" id="noAdressesMessage" style="display: none;">
+                        <i class="bi bi-geo-alt-fill fs-3 text-muted mb-2"></i>
+                        <p class="mb-0">Aucune adresse enregistrée pour cet acheteur.</p>
+                    </div>
+                </div>
+                <!-- Adresses List END -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Adresses END -->
+<!-- Add Adresse Modal START -->
+<div class="modal fade" id="addAdresseModal" tabindex="-1" aria-labelledby="addAdresseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAdresseModalLabel">Ajouter une Adresse</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAdresseForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="adresse" class="form-label">Adresse <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="adresse" name="adresse" rows="4" required></textarea>
+                        <div class="form-text">Saisissez l'adresse complète (rue, ville, code postal, pays, etc.)</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Adresse Modal END -->
+<!-- Edit Adresse Modal START -->
+<div class="modal fade" id="editAdresseModal" tabindex="-1" aria-labelledby="editAdresseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAdresseModalLabel">Éditer une Adresse</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAdresseForm">
+                    <input type="hidden" id="editAdresseId" name="id" />
+                    <div class="mb-3">
+                        <label for="editAdresse" class="form-label">Adresse <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editAdresse" name="adresse" rows="4" required></textarea>
+                    </div>
+                    <div class="adresse-meta mb-3">
+                        <div class="created-by">
+                            <i class="bi bi-person-fill me-1"></i>
+                            Créé par: <span id="createdByInfo"></span> |
+                            Le: <span id="createdAtInfo"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Adresse Modal END -->
+<!-- Delete Confirmation Modal START -->
+<div class="modal fade" id="deleteAdresseModal" tabindex="-1" aria-labelledby="deleteAdresseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAdresseModalLabel">Supprimer une Adresse</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette adresse ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                <div id="deleteAdresseContent" class="bg-light p-3 rounded mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAdresse">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal END -->
+{% endblock %}
+{% block scripts %}
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Non spécifié";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    // Variable pour stocker l'ID de l'adresse à supprimer
+    var adresseToDelete = null;
+
+    $(document).ready(function() {
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger les adresses
+        function loadAdresses() {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-adresses/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    if (response.results.length === 0) {
+                        $('#adresseContainer').html('');
+                        $('#noAdressesMessage').show();
+                    } else {
+                        $('#noAdressesMessage').hide();
+                        $('#adresseContainer').html('');
+                        response.results.forEach(function(adresse) {
+                            $('#adresseContainer').append(`
+                                <div class="adresse-card" data-id="${adresse.id}">
+                                    <div class="adresse-actions">
+                                        <button class="btn btn-sm btn-outline-primary edit-adresse-btn" data-id="${adresse.id}" data-bs-toggle="tooltip" title="Éditer">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-adresse-btn" data-id="${adresse.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="adresse-content">${adresse.adresse}</div>
+                                    <div class="adresse-meta">
+                                        <div>
+                                            <i class="bi bi-person-fill me-1"></i>
+                                            Créé par: ${adresse.created_by ? adresse.created_by : 'Inconnu'} |
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${formatDateTime(adresse.created_at)}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Mis à jour: ${formatDateTime(adresse.updated_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des adresses.',
+                    });
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout d'adresse
+        $('#addAdresseForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-adresse/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Adresse ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addAdresseModal').modal('hide');
+                        $('#addAdresseForm')[0].reset();
+                        loadAdresses();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de l\'ajout de l\'adresse.';
+                    if (response.responseJSON && response.responseJSON.adresse) {
+                        errorMessage = response.responseJSON.adresse[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale d'édition d'adresse
+        $(document).on('click', '.edit-adresse-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-adresse/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editAdresseId').val(response.id);
+                    $('#editAdresse').val(response.adresse);
+                    $('#createdByInfo').text(response.created_by ? response.created_by : 'Inconnu');
+                    $('#createdAtInfo').text(formatDateTime(response.created_at));
+                    $('#editAdresseModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des détails de l\'adresse.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition d'adresse
+        $('#editAdresseForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editAdresseId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-adresse/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Adresse mise à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editAdresseModal').modal('hide');
+                        loadAdresses();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de la mise à jour de l\'adresse.';
+                    if (response.responseJSON && response.responseJSON.adresse) {
+                        errorMessage = response.responseJSON.adresse[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale de confirmation de suppression
+        $(document).on('click', '.delete-adresse-btn', function() {
+            var id = $(this).data('id');
+            var adresseContent = $(this).closest('.adresse-card').find('.adresse-content').text().trim();
+
+            adresseToDelete = id;
+            $('#deleteAdresseContent').text(adresseContent.substring(0, 100) + (adresseContent.length > 100 ? '...' : ''));
+            $('#deleteAdresseModal').modal('show');
+        });
+
+        // Confirmer la suppression de l'adresse
+        $('#confirmDeleteAdresse').on('click', function() {
+            if (adresseToDelete) {
+                $.ajax({
+                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-adresses/',
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [adresseToDelete] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: 'Adresse supprimée avec succès.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#deleteAdresseModal').modal('hide');
+                            loadAdresses();
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la suppression de l\'adresse.',
+                        });
+                    }
+                });
+            }
+        });
+
+        // Recherche d'adresses
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            // Note: Pour une recherche, il faudrait adapter l'API ListAcheteurAdresseView
+            // Pour l'instant, on recharge simplement la liste
+            loadAdresses();
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadAdresses();
+    });
+</script>
+{% endblock %}

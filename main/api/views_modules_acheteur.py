@@ -8901,3 +8901,761 @@ class DeleteAcheteurProcedureCollectiveView(APIView):
             {"message": f"{count} procédures supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurDocumentView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get("page", 1)
+        documents = Document.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        paginator = Paginator(documents, 10)
+        document_page = paginator.get_page(page_number)
+        serializer = ListDocumentSerializer(document_page, many=True, context={'request': request})
+        return Response({
+            "results": serializer.data,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "next": document_page.has_next(),
+            "previous": document_page.has_previous(),
+        })
+
+class SearchAcheteurDocumentView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        documents = Document.objects.filter(
+            Q(acheteur_id=acheteur_id) &
+            (Q(titre__icontains=search_term) | Q(description__icontains=search_term))
+        ).order_by("-updated_at")
+        paginator = Paginator(documents, 10)
+        page_number = request.query_params.get("page", 1)
+        document_page = paginator.get_page(page_number)
+        serializer = ListDocumentSerializer(document_page, many=True, context={'request': request})
+        return Response({
+            "results": serializer.data,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "next": document_page.has_next(),
+            "previous": document_page.has_previous(),
+        })
+
+class AddAcheteurDocumentView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddDocumentSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurDocumentView(APIView):
+    def get(self, request, acheteur_id, document_id, *args, **kwargs):
+        document = Document.objects.filter(id=document_id, acheteur_id=acheteur_id).first()
+        if not document:
+            return Response(
+                {"detail": "Document non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailDocumentSerializer(document, context={'request': request})
+        return Response(serializer.data)
+
+class EditAcheteurDocumentView(APIView):
+    def put(self, request, acheteur_id, document_id, *args, **kwargs):
+        document = Document.objects.filter(id=document_id, acheteur_id=acheteur_id).first()
+        if not document:
+            return Response(
+                {"detail": "Document non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = EditDocumentSerializer(document, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurDocumentView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        documents = Document.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not documents.exists():
+            return Response(
+                {"error": "Aucun document trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = documents.delete()
+        return Response(
+            {"message": f"{count} documents supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurAdresseView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        adresses = AdresseAcheteur.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        if not adresses.exists():
+            return Response({"results": []}, status=status.HTTP_200_OK)
+        serializer = ListAdresseAcheteurSerializer(adresses, many=True)
+        return Response({"results": serializer.data})
+
+class AddAcheteurAdresseView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        data["created_by"] = request.user.id
+        data["updated_by"] = request.user.id
+        serializer = AddAdresseAcheteurSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurAdresseView(APIView):
+    def get(self, request, acheteur_id, adresse_id, *args, **kwargs):
+        adresse = AdresseAcheteur.objects.filter(id=adresse_id, acheteur_id=acheteur_id).first()
+        if not adresse:
+            return Response(
+                {"detail": "Adresse non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailAdresseAcheteurSerializer(adresse)
+        return Response(serializer.data)
+
+class EditAcheteurAdresseView(APIView):
+    def put(self, request, acheteur_id, adresse_id, *args, **kwargs):
+        adresse = AdresseAcheteur.objects.filter(id=adresse_id, acheteur_id=acheteur_id).first()
+        if not adresse:
+            return Response(
+                {"detail": "Adresse non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        serializer = EditAdresseAcheteurSerializer(adresse, data=data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurAdresseView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        adresses = AdresseAcheteur.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not adresses.exists():
+            return Response(
+                {"error": "Aucune adresse trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = adresses.delete()
+        return Response(
+            {"message": f"{count} adresses supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurPortableView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        portables = PortableAcheteur.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        serializer = ListPortableAcheteurSerializer(portables, many=True)
+        return Response({"results": serializer.data})
+
+class SearchAcheteurPortableView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        portables = PortableAcheteur.objects.filter(
+            Q(acheteur_id=acheteur_id) & Q(portable__icontains=search_term)
+        ).order_by("-updated_at")
+        serializer = ListPortableAcheteurSerializer(portables, many=True)
+        return Response({"results": serializer.data})
+
+class AddAcheteurPortableView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        data["created_by"] = request.user.id
+        data["updated_by"] = request.user.id
+        serializer = AddPortableAcheteurSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurPortableView(APIView):
+    def get(self, request, acheteur_id, portable_id, *args, **kwargs):
+        portable = PortableAcheteur.objects.filter(id=portable_id, acheteur_id=acheteur_id).first()
+        if not portable:
+            return Response(
+                {"detail": "Numéro de portable non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailPortableAcheteurSerializer(portable)
+        return Response(serializer.data)
+
+class EditAcheteurPortableView(APIView):
+    def put(self, request, acheteur_id, portable_id, *args, **kwargs):
+        portable = PortableAcheteur.objects.filter(id=portable_id, acheteur_id=acheteur_id).first()
+        if not portable:
+            return Response(
+                {"detail": "Numéro de portable non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        serializer = EditPortableAcheteurSerializer(portable, data=data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurPortableView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        portables = PortableAcheteur.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not portables.exists():
+            return Response(
+                {"error": "Aucun numéro de portable trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = portables.delete()
+        return Response(
+            {"message": f"{count} numéros de portable supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurTelephoneView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        telephones = TelephoneAcheteur.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        serializer = ListTelephoneAcheteurSerializer(telephones, many=True)
+        return Response({"results": serializer.data})
+
+class SearchAcheteurTelephoneView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        telephones = TelephoneAcheteur.objects.filter(
+            Q(acheteur_id=acheteur_id) & Q(telephone__icontains=search_term)
+        ).order_by("-updated_at")
+        serializer = ListTelephoneAcheteurSerializer(telephones, many=True)
+        return Response({"results": serializer.data})
+
+class AddAcheteurTelephoneView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        data["created_by"] = request.user.id
+        data["updated_by"] = request.user.id
+        serializer = AddTelephoneAcheteurSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurTelephoneView(APIView):
+    def get(self, request, acheteur_id, telephone_id, *args, **kwargs):
+        telephone = TelephoneAcheteur.objects.filter(id=telephone_id, acheteur_id=acheteur_id).first()
+        if not telephone:
+            return Response(
+                {"detail": "Numéro de téléphone non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailTelephoneAcheteurSerializer(telephone)
+        return Response(serializer.data)
+
+class EditAcheteurTelephoneView(APIView):
+    def put(self, request, acheteur_id, telephone_id, *args, **kwargs):
+        telephone = TelephoneAcheteur.objects.filter(id=telephone_id, acheteur_id=acheteur_id).first()
+        if not telephone:
+            return Response(
+                {"detail": "Numéro de téléphone non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        serializer = EditTelephoneAcheteurSerializer(telephone, data=data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurTelephoneView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        telephones = TelephoneAcheteur.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not telephones.exists():
+            return Response(
+                {"error": "Aucun numéro de téléphone trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = telephones.delete()
+        return Response(
+            {"message": f"{count} numéros de téléphone supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+
+
+
+
+
+class ListAcheteurEmailView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        emails = EmailAcheteur.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        serializer = ListEmailAcheteurSerializer(emails, many=True)
+        return Response({"results": serializer.data})
+
+class SearchAcheteurEmailView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        emails = EmailAcheteur.objects.filter(
+            Q(acheteur_id=acheteur_id) & Q(email__icontains=search_term)
+        ).order_by("-updated_at")
+        serializer = ListEmailAcheteurSerializer(emails, many=True)
+        return Response({"results": serializer.data})
+
+class AddAcheteurEmailView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        data["created_by"] = request.user.id
+        data["updated_by"] = request.user.id
+        serializer = AddEmailAcheteurSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurEmailView(APIView):
+    def get(self, request, acheteur_id, email_id, *args, **kwargs):
+        email = EmailAcheteur.objects.filter(id=email_id, acheteur_id=acheteur_id).first()
+        if not email:
+            return Response(
+                {"detail": "Adresse email non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailEmailAcheteurSerializer(email)
+        return Response(serializer.data)
+
+class EditAcheteurEmailView(APIView):
+    def put(self, request, acheteur_id, email_id, *args, **kwargs):
+        email = EmailAcheteur.objects.filter(id=email_id, acheteur_id=acheteur_id).first()
+        if not email:
+            return Response(
+                {"detail": "Adresse email non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        serializer = EditEmailAcheteurSerializer(email, data=data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurEmailView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        emails = EmailAcheteur.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not emails.exists():
+            return Response(
+                {"error": "Aucune adresse email trouvée pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = emails.delete()
+        return Response(
+            {"message": f"{count} adresses email supprimées avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.core.paginator import Paginator
+from django.db.models import Q
+from main.models import CodeNaceAcheteur, CategoryNaceCode, SubCategoryNaceCode
+from main.serializers import (
+    ListCodeNaceAcheteurSerializer,
+    AddCodeNaceAcheteurSerializer,
+    DetailCodeNaceAcheteurSerializer,
+    EditCodeNaceAcheteurSerializer,
+    CategoryNaceCodeSerializer,
+    SubCategoryNaceCodeSerializer,
+)
+
+
+# views.py
+class ListAllSubCategoriesView(APIView):
+    def get(self, request, *args, **kwargs):
+        subcategories = SubCategoryNaceCode.objects.filter(active=True).order_by("code")
+        serializer = SubCategoryNaceCodeSerializer(subcategories, many=True)
+        return Response(serializer.data)
+
+class ListSubCategoryNaceCodeView(APIView):
+    def get(self, request, category_id, *args, **kwargs):
+        subcategories = SubCategoryNaceCode.objects.filter(category_id=category_id, active=True).order_by("code")
+        serializer = SubCategoryNaceCodeSerializer(subcategories, many=True)
+        return Response(serializer.data)
+
+class ListCategoryNaceCodeView(APIView):
+    def get(self, request, *args, **kwargs):
+        categories = CategoryNaceCode.objects.filter(active=True).order_by("code")
+        serializer = CategoryNaceCodeSerializer(categories, many=True)
+        return Response(serializer.data)
+
+class ListSubCategoryNaceCodeView(APIView):
+    def get(self, request, category_id, *args, **kwargs):
+        subcategories = SubCategoryNaceCode.objects.filter(category_id=category_id, active=True).order_by("code")
+        serializer = SubCategoryNaceCodeSerializer(subcategories, many=True)
+        return Response(serializer.data)
+
+class ListAcheteurCodeNaceView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get("page", 1)
+        codes_nace = CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        paginator = Paginator(codes_nace, 10)
+        code_nace_page = paginator.get_page(page_number)
+        serializer = ListCodeNaceAcheteurSerializer(code_nace_page, many=True)
+        return Response({
+            "results": serializer.data,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "next": code_nace_page.has_next(),
+            "previous": code_nace_page.has_previous(),
+        })
+
+class SearchAcheteurCodeNaceView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        codes_nace = CodeNaceAcheteur.objects.filter(
+            Q(acheteur_id=acheteur_id) &
+            (Q(code__code__icontains=search_term) | Q(code__libelle__icontains=search_term))
+        ).order_by("-updated_at")
+        paginator = Paginator(codes_nace, 10)
+        page_number = request.query_params.get("page", 1)
+        code_nace_page = paginator.get_page(page_number)
+        serializer = ListCodeNaceAcheteurSerializer(code_nace_page, many=True)
+        return Response({
+            "results": serializer.data,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "next": code_nace_page.has_next(),
+            "previous": code_nace_page.has_previous(),
+        })
+
+class AddAcheteurCodeNaceView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddCodeNaceAcheteurSerializer(data=data)
+        if serializer.is_valid():
+            # Vérifier si ce code NACE est déjà associé à cet acheteur
+            if CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id, code_id=data["code"]).exists():
+                return Response(
+                    {"detail": "Ce code NACE est déjà associé à cet acheteur."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurCodeNaceView(APIView):
+    def get(self, request, acheteur_id, code_nace_id, *args, **kwargs):
+        code_nace = CodeNaceAcheteur.objects.filter(id=code_nace_id, acheteur_id=acheteur_id).first()
+        if not code_nace:
+            return Response(
+                {"detail": "Code NACE non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailCodeNaceAcheteurSerializer(code_nace)
+        return Response(serializer.data)
+
+class EditAcheteurCodeNaceView(APIView):
+    def put(self, request, acheteur_id, code_nace_id, *args, **kwargs):
+        code_nace = CodeNaceAcheteur.objects.filter(id=code_nace_id, acheteur_id=acheteur_id).first()
+        if not code_nace:
+            return Response(
+                {"detail": "Code NACE non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = EditCodeNaceAcheteurSerializer(code_nace, data=request.data, partial=True)
+        if serializer.is_valid():
+            # Vérifier si le nouveau code est déjà associé à cet acheteur
+            new_code_id = request.data.get("code")
+            if new_code_id and CodeNaceAcheteur.objects.filter(acheteur_id=acheteur_id, code_id=new_code_id).exclude(id=code_nace_id).exists():
+                return Response(
+                    {"detail": "Ce code NACE est déjà associé à cet acheteur."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurCodeNaceView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        codes_nace = CodeNaceAcheteur.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not codes_nace.exists():
+            return Response(
+                {"error": "Aucun code NACE trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = codes_nace.delete()
+        return Response(
+            {"message": f"{count} codes NACE supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+
+
+
+
+# views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.core.paginator import Paginator
+from django.db.models import Q
+from main.models import CodeNafAcheteur, CategoryNafCode, SubCategoryNafCode
+from main.serializers import (
+    ListCodeNafAcheteurSerializer,
+    AddCodeNafAcheteurSerializer,
+    DetailCodeNafAcheteurSerializer,
+    EditCodeNafAcheteurSerializer,
+    CategoryNafCodeSerializer,
+    SubCategoryNafCodeSerializer,
+)
+
+class ListCategoryNafCodeView(APIView):
+    def get(self, request, *args, **kwargs):
+        categories = CategoryNafCode.objects.filter(active=True).order_by("code")
+        serializer = CategoryNafCodeSerializer(categories, many=True)
+        return Response(serializer.data)
+
+class ListAllSubCategoryNafCodeView(APIView):
+    def get(self, request, *args, **kwargs):
+        subcategories = SubCategoryNafCode.objects.filter(active=True).order_by("code")
+        serializer = SubCategoryNafCodeSerializer(subcategories, many=True)
+        return Response(serializer.data)
+
+class ListSubCategoryNafCodeView(APIView):
+    def get(self, request, category_id, *args, **kwargs):
+        subcategories = SubCategoryNafCode.objects.filter(category_id=category_id, active=True).order_by("code")
+        serializer = SubCategoryNafCodeSerializer(subcategories, many=True)
+        return Response(serializer.data)
+
+class ListAcheteurCodeNafView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        page_number = request.query_params.get("page", 1)
+        codes_naf = CodeNafAcheteur.objects.filter(acheteur_id=acheteur_id).order_by("-updated_at")
+        paginator = Paginator(codes_naf, 10)
+        code_naf_page = paginator.get_page(page_number)
+        serializer = ListCodeNafAcheteurSerializer(code_naf_page, many=True)
+        return Response({
+            "results": serializer.data,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "next": code_naf_page.has_next(),
+            "previous": code_naf_page.has_previous(),
+        })
+
+class SearchAcheteurCodeNafView(APIView):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        codes_naf = CodeNafAcheteur.objects.filter(
+            Q(acheteur_id=acheteur_id) &
+            (Q(code__code__icontains=search_term) | Q(code__libelle__icontains=search_term))
+        ).order_by("-updated_at")
+        paginator = Paginator(codes_naf, 10)
+        page_number = request.query_params.get("page", 1)
+        code_naf_page = paginator.get_page(page_number)
+        serializer = ListCodeNafAcheteurSerializer(code_naf_page, many=True)
+        return Response({
+            "results": serializer.data,
+            "count": paginator.count,
+            "total_pages": paginator.num_pages,
+            "next": code_naf_page.has_next(),
+            "previous": code_naf_page.has_previous(),
+        })
+
+class AddAcheteurCodeNafView(APIView):
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddCodeNafAcheteurSerializer(data=data)
+        if serializer.is_valid():
+            # Vérifier si ce code NAF est déjà associé à cet acheteur
+            if CodeNafAcheteur.objects.filter(acheteur_id=acheteur_id, code_id=data["code"]).exists():
+                return Response(
+                    {"detail": "Ce code NAF est déjà associé à cet acheteur."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DetailAcheteurCodeNafView(APIView):
+    def get(self, request, acheteur_id, code_naf_id, *args, **kwargs):
+        code_naf = CodeNafAcheteur.objects.filter(id=code_naf_id, acheteur_id=acheteur_id).first()
+        if not code_naf:
+            return Response(
+                {"detail": "Code NAF non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = DetailCodeNafAcheteurSerializer(code_naf)
+        return Response(serializer.data)
+
+class EditAcheteurCodeNafView(APIView):
+    def put(self, request, acheteur_id, code_naf_id, *args, **kwargs):
+        code_naf = CodeNafAcheteur.objects.filter(id=code_naf_id, acheteur_id=acheteur_id).first()
+        if not code_naf:
+            return Response(
+                {"detail": "Code NAF non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = EditCodeNafAcheteurSerializer(code_naf, data=request.data, partial=True)
+        if serializer.is_valid():
+            # Vérifier si le nouveau code est déjà associé à cet acheteur
+            new_code_id = request.data.get("code")
+            if new_code_id and CodeNafAcheteur.objects.filter(acheteur_id=acheteur_id, code_id=new_code_id).exclude(id=code_naf_id).exists():
+                return Response(
+                    {"detail": "Ce code NAF est déjà associé à cet acheteur."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteAcheteurCodeNafView(APIView):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        codes_naf = CodeNafAcheteur.objects.filter(id__in=ids, acheteur_id=acheteur_id)
+        if not codes_naf.exists():
+            return Response(
+                {"error": "Aucun code NAF trouvé pour les IDs fournis."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = codes_naf.delete()
+        return Response(
+            {"message": f"{count} codes NAF supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )

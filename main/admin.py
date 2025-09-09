@@ -21,6 +21,7 @@ class CustomUserAdmin(UserAdmin):
         "telephone",
         "profession",
         "email_cc",
+        "pays",
     )
     list_filter = (
         "is_staff",
@@ -29,6 +30,7 @@ class CustomUserAdmin(UserAdmin):
         "auth_a2f",
         "is_active",
         "role",
+        "pays",
     )
     fieldsets = (
         (None, {"fields": ("username", "password")}),
@@ -44,6 +46,7 @@ class CustomUserAdmin(UserAdmin):
                     "telephone",
                     "profession",
                     "email_cc",
+                    "pays",
                 )
             },
         ),
@@ -90,6 +93,7 @@ class CustomUserAdmin(UserAdmin):
                     "auth_a2f",
                     "code_connexion",
                     "code_secret",
+                    "pays",
                 ),
             },
         ),
@@ -103,6 +107,7 @@ class CustomUserAdmin(UserAdmin):
         "telephone",
         "profession",
         "email_cc",
+        "pays",
     )
     ordering = ("username",)
 

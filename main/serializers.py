@@ -4,6 +4,9 @@ import decimal
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 from .models import *
 
 # Vos serializers ici !
@@ -42,6 +45,15 @@ class PaysSerializer(serializers.ModelSerializer):
             "date_modification",
         ]
         read_only_fields = ["id", "date_creation", "date_modification"]
+
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pays
+        fields = [
+            "id",
+            "nom",
+        ]
 
 
 class ProvinceSerializer(serializers.ModelSerializer):
@@ -3576,9 +3588,10 @@ class EditProductsSerializer(serializers.ModelSerializer):
         ]
 
 
-class CommandeSerializer(serializers.ModelSerializer):
+class CommandesSerializer(serializers.ModelSerializer):
     client = CustomUserSerializer()
     acheteur = AcheteurSerializer()
+    pays = PaysSerializer()
     ville = VilleSerializer()
     ref_type_rapport = ModeleRapportSerializer()
     devise_credit_demande = DeviseSerializer()
@@ -5644,3 +5657,879 @@ class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
         model = ProcedureCollective
         fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+
+
+
+
+
+
+
+
+
+# serializers.py
+from rest_framework import serializers
+from .models import Document
+
+class ListDocumentSerializer(serializers.ModelSerializer):
+    fichier_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ["id", "acheteur", "titre", "fichier", "fichier_url", "description", "created_at", "updated_at"]
+
+    def get_fichier_url(self, obj):
+        if obj.fichier:
+            return obj.fichier.url
+        return None
+
+class AddDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ["acheteur", "titre", "fichier", "description"]
+
+class DetailDocumentSerializer(serializers.ModelSerializer):
+    fichier_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+        fields = ["id", "acheteur", "titre", "fichier", "fichier_url", "description", "created_at", "updated_at"]
+
+    def get_fichier_url(self, obj):
+        if obj.fichier:
+            return obj.fichier.url
+        return None
+
+class EditDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ["id", "acheteur", "titre", "fichier", "description", "created_at", "updated_at"]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+
+
+
+
+
+
+
+
+class ListAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = ["id", "adresse", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class AddAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = ["adresse", "acheteur"]
+
+class DetailAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = ["id", "adresse", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class EditAdresseAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = ["id", "adresse", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "created_at": {"read_only": True},
+            "created_by": {"read_only": True},
+            "acheteur": {"read_only": True}
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+class ListPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = ["id", "portable", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class AddPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = ["portable", "acheteur"]
+
+class DetailPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = ["id", "portable", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class EditPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = ["id", "portable", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "created_at": {"read_only": True},
+            "created_by": {"read_only": True},
+            "acheteur": {"read_only": True}
+        }
+
+
+
+
+
+
+
+
+
+
+class ListTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = ["id", "telephone", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = ["telephone", "acheteur"]
+
+class DetailTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = ["id", "telephone", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class EditTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelephoneAcheteur
+        fields = ["id", "telephone", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "created_at": {"read_only": True},
+            "created_by": {"read_only": True},
+            "acheteur": {"read_only": True}
+        }
+
+
+
+
+
+
+
+
+
+
+class ListEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = ["id", "email", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class AddEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = ["email", "acheteur"]
+
+    def validate_email(self, value):
+        try:
+            validate_email(value)
+        except ValidationError:
+            raise serializers.ValidationError("Veuillez entrer une adresse email valide.")
+        return value
+
+class DetailEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = ["id", "email", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+
+class EditEmailAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailAcheteur
+        fields = ["id", "email", "acheteur", "created_at", "updated_at", "created_by", "updated_by"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "created_at": {"read_only": True},
+            "created_by": {"read_only": True},
+            "acheteur": {"read_only": True}
+        }
+
+    def validate_email(self, value):
+        try:
+            validate_email(value)
+        except ValidationError:
+            raise serializers.ValidationError("Veuillez entrer une adresse email valide.")
+        return value
+
+
+
+
+
+
+
+
+
+class CategoryNaceCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNaceCode
+        fields = ["id", "code", "libelle", "active"]
+
+class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNaceCodeSerializer(read_only=True)
+
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = ["id", "code", "libelle", "active", "category"]
+
+
+
+class ListCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    code = SubCategoryNaceCodeSerializer(read_only=True)
+
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ["id", "acheteur", "code", "created_at", "updated_at"]
+
+class AddCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ["acheteur", "code"]
+
+class DetailCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    code = SubCategoryNaceCodeSerializer(read_only=True)
+
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ["id", "acheteur", "code", "created_at", "updated_at"]
+
+class EditCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ["id", "acheteur", "code", "created_at", "updated_at"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "created_at": {"read_only": True},
+            "acheteur": {"read_only": True}
+        }
+
+
+
+
+
+
+class CategoryNafCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNafCode
+        fields = ["id", "code", "libelle", "active"]
+
+class SubCategoryNafCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNafCodeSerializer(read_only=True)
+
+    class Meta:
+        model = SubCategoryNafCode
+        fields = ["id", "code", "libelle", "active", "category"]
+
+class ListCodeNafAcheteurSerializer(serializers.ModelSerializer):
+    code = SubCategoryNafCodeSerializer(read_only=True)
+
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ["id", "acheteur", "code", "created_at", "updated_at"]
+
+class AddCodeNafAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ["acheteur", "code"]
+
+class DetailCodeNafAcheteurSerializer(serializers.ModelSerializer):
+    code = SubCategoryNafCodeSerializer(read_only=True)
+
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ["id", "acheteur", "code", "created_at", "updated_at"]
+
+class EditCodeNafAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ["id", "acheteur", "code", "created_at", "updated_at"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "created_at": {"read_only": True},
+            "acheteur": {"read_only": True}
+        }
+
+
+
+
+
+
+class CommandeSerializer(serializers.ModelSerializer):
+    client_username = serializers.CharField(source='client.username', read_only=True)
+    pays_nom = serializers.CharField(source='pays.nom', read_only=True)
+    validateur_username = serializers.CharField(source='validateur.username', read_only=True)
+    
+    class Meta:
+        model = Commande
+        # Add the new fields here
+        fields = [
+            'id', 'notre_ref', 'reference_client', 'type_rapport', 'raison_sociale', 
+            'date_recept_commande', 'date_rapport', 'priorite', 'status',
+            'client', 'client_username', 'pays', 'pays_nom', 'validateur',
+            'validateur_username', 'date_envoi_client', 'email_envoye',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['validateur', 'date_envoi_client', 'email_envoye']
+
+class AffectationAnalysteSerializer(serializers.ModelSerializer):
+    analyste = CustomUserSerializer(read_only=True)
+    
+    class Meta:
+        model = AffectationAnalyste
+        fields = ['id', 'commande', 'analyste', 'date_affectation']
+
+class ValidationRapportSerializer(serializers.ModelSerializer):
+    validateur = CustomUserSerializer(read_only=True)
+
+    class Meta:
+        model = ValidationRapport
+        fields = ['id', 'rapport', 'validateur', 'status', 'commentaire', 'date_validation']
+
+class RapportSerializer(serializers.ModelSerializer):
+    analyste = CustomUserSerializer(read_only=True)
+    validation = ValidationRapportSerializer(source='validationrapport', read_only=True)
+    
+    class Meta:
+        model = Rapport
+        fields = ['id', 'commande', 'analyste', 'fichier', 'date_soumission', 'validation']
+
+class SuiviCommandeSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+    
+    class Meta:
+        model = SuiviCommande
+        fields = ['id', 'commande', 'user', 'action', 'type', 'commentaire', 'date_action']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+    
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'type', 'message', 'is_read', 'created_at']
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+# --- Sérialiseurs pour le modèle ActifC ---
+class ActifClassiqueSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul en lecture seule
+    elements_incorporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    elements_corporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    elements_financiers = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    stocks = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    creances = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    disponibilites_vmp = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_II = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    compte_regul = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_III = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    general_total = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ActifC
+        fields = '__all__'
+
+
+class AddActifClassiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifC
+        fields = [
+            'annee', 'acheteur', 'capital_souscrit_non_app', 'frais_recherche_developpement',
+            'brevet_licence_logiciels', 'fonds_commercial', 'autres_immobilisations_incorporelles',
+            'terrains', 'constructions', 'materiels_et_outils', 'materiel_de_transport',
+            'autres_immos_corp', 'immos_en_cours', 'avances_et_acptes',
+            'participations', 'prets', 'autres', 'stocks_mp', 'stocks_encours_mp',
+            'stocks_pf', 'stocks_encours_pf', 'stocks_encours_services', 'stocks_mses',
+            'avances_acptes_verses', 'clients_et_cptes_rattaches', 'autres_creances',
+            'valeurs_a_encaisser', 'banques_cheques_postaux_caisse', 'cca',
+            'charges_a_repartir_et_frais_etablissement', 'primes_de_rbt', 'eca', 'eene',
+            'amortissements', 'provisions_stocks', 'provisions_creances', 'provisions_vmp',
+            'effectif' # J'ajoute l'effectif car il semble être une donnée d'entrée
+        ]
+
+class EditActifClassiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifC
+        fields = [
+            'annee', 'acheteur', 'capital_souscrit_non_app', 'frais_recherche_developpement',
+            'brevet_licence_logiciels', 'fonds_commercial', 'autres_immobilisations_incorporelles',
+            'terrains', 'constructions', 'materiels_et_outils', 'materiel_de_transport',
+            'autres_immos_corp', 'immos_en_cours', 'avances_et_acptes',
+            'participations', 'prets', 'autres', 'stocks_mp', 'stocks_encours_mp',
+            'stocks_pf', 'stocks_encours_pf', 'stocks_encours_services', 'stocks_mses',
+            'avances_acptes_verses', 'clients_et_cptes_rattaches', 'autres_creances',
+            'valeurs_a_encaisser', 'banques_cheques_postaux_caisse', 'cca',
+            'charges_a_repartir_et_frais_etablissement', 'primes_de_rbt', 'eca', 'eene',
+            'amortissements', 'provisions_stocks', 'provisions_creances', 'provisions_vmp',
+            'effectif'
+        ]
+
+# --- Sérialiseurs pour le modèle PassifC ---
+class PassifClassiqueSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul
+    total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_II = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_III = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_IV = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_general = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PassifC
+        fields = '__all__'
+
+
+class AddPassifClassiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifC
+        fields = [
+            'annee', 'acheteur', 'capital_social', 'primes', 'ecarts_de_reevaluation',
+            'reserve', 'report_a_nouveau', 'resultat_exercice', 'subv_invest',
+            'provision_regl', 'emprunts', 'dette_credit_bail_contrat_assimile',
+            'dettes_financiere_diverses', 'provision_financiere_risque_charge',
+            'dettes_fournisseurs_divers', 'avance_et_acomptes_recu', 'dettes',
+            'dettes_fiscales_sociales', 'autres_dettes', 'banques_credit_escompte',
+            'banque_credit_caisse', 'banques_decouvert', 'ecart_conversion_passif',
+        ]
+
+
+class EditPassifClassiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifC
+        fields = [
+            'annee', 'acheteur', 'capital_social', 'primes', 'ecarts_de_reevaluation',
+            'reserve', 'report_a_nouveau', 'resultat_exercice', 'subv_invest',
+            'provision_regl', 'emprunts', 'dette_credit_bail_contrat_assimile',
+            'dettes_financiere_diverses', 'provision_financiere_risque_charge',
+            'dettes_fournisseurs_divers', 'avance_et_acomptes_recu', 'dettes',
+            'dettes_fiscales_sociales', 'autres_dettes', 'banques_credit_escompte',
+            'banque_credit_caisse', 'banques_decouvert', 'ecart_conversion_passif',
+        ]
+
+# --- Sérialiseurs pour le modèle ResultatC ---
+class ResultatClassiqueSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul
+    ca = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    marge_brute = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    valeur_ajoutee = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    excedent_brut_ex = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    financier_total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    financier_total_II = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_financier = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_courant_avant_impots = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    excep_total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    excep_total_II = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_excep = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_exercice = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ResultatC
+        fields = '__all__'
+
+
+class AddResultatClassiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatC
+        fields = [
+            'annee', 'acheteur', 'vente_de_mdses', 'ventes_de_produits_fabriques',
+            'travaux_services_vendus', 'produit_accessoires', 'production_imblise',
+            'subventions_exploitations', 'production_stockee', 'reprises_de_provision',
+            'transferts_charges', 'autres_produits', 'achat_mdses', 'variation_stock_mdses',
+            'achat_mp_autres_appro', 'var_stk_mp_app', 'autres_achats',
+            'variation_de_stocks_autres_appro', 'transports', 'services_ext',
+            'impots_taxes', 'autres_charges_valeur_ajoutee', 'charges_personnel',
+            'dotation_aux_amorts', 'dotation_aux_provisions',
+            'autres_charges_excedent_brute', 'revenus_fin_assimiles',
+            'prof_vmp_et_cre_actif_immo', 'interets_produit_assim',
+            'reprise_prov_et_transfert', 'diff_positive_de_change',
+            'prod_nets_cessions_vmp', 'dap', 'frais_fin_charges_assi',
+            'diff_negatives_de_change', 'ch_nettes_cessions_vmp',
+            'sur_op_gestion_prod_except', 'sur_op_en_capital_prod_except',
+            'reprise_prov_transfert', 'sur_op_gestion_charg_except',
+            'sur_op_en_capital_charg_except', 'dap_et_transfert_charg_except',
+            'participation_salairies', 'impot_sur_benefices',
+        ]
+
+
+class EditResultatClassiqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatC
+        fields = [
+            'annee', 'acheteur', 'vente_de_mdses', 'ventes_de_produits_fabriques',
+            'travaux_services_vendus', 'produit_accessoires', 'production_imblise',
+            'subventions_exploitations', 'production_stockee', 'reprises_de_provision',
+            'transferts_charges', 'autres_produits', 'achat_mdses', 'variation_stock_mdses',
+            'achat_mp_autres_appro', 'var_stk_mp_app', 'autres_achats',
+            'variation_de_stocks_autres_appro', 'transports', 'services_ext',
+            'impots_taxes', 'autres_charges_valeur_ajoutee', 'charges_personnel',
+            'dotation_aux_amorts', 'dotation_aux_provisions',
+            'autres_charges_excedent_brute', 'revenus_fin_assimiles',
+            'prof_vmp_et_cre_actif_immo', 'interets_produit_assim',
+            'reprise_prov_et_transfert', 'diff_positive_de_change',
+            'prod_nets_cessions_vmp', 'dap', 'frais_fin_charges_assi',
+            'diff_negatives_de_change', 'ch_nettes_cessions_vmp',
+            'sur_op_gestion_prod_except', 'sur_op_en_capital_prod_except',
+            'reprise_prov_transfert', 'sur_op_gestion_charg_except',
+            'sur_op_en_capital_charg_except', 'dap_et_transfert_charg_except',
+            'participation_salairies', 'impot_sur_benefices',
+        ]
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+# --- Sérialiseurs pour le modèle ActifS ---
+class ActifSysOhadaSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul en lecture seule
+    immobilisations_incorporelles = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    immobilisations_corporelles = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    immobilisations_financieres = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif_immobilise = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    creances_emplois_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_tresorerie_equivalents = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif_circulant = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ActifS
+        fields = '__all__'
+
+
+class AddActifSysOhadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifS
+        fields = [
+            'annee', 'acheteur', 'frais_developpement_prospection', 'brevets_licences_logiciels',
+            'droits_propriete_commerciale_baux', 'autres_immo_incorporelles', 'terrains',
+            'dons_investissements_net', 'batiments', 'agencements_amenagements_installations',
+            'materiel_mobilier_actif_biologiques', 'materiel_transport',
+            'avances_acompte_immobilisations', 'titres_participation',
+            'autres_immobilisations_financieres', 'actif_circulant_hao', 'stock_encours',
+            'fournisseurs_avances_versee', 'clients', 'autres_creances',
+            'valeurs_mobilieres_placement', 'disponibilites',
+            'banque_cheque_postal_caisse_assimiles', 'ecart_conversion_actif'
+        ]
+
+
+class EditActifSysOhadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifS
+        fields = [
+            'annee', 'acheteur', 'frais_developpement_prospection', 'brevets_licences_logiciels',
+            'droits_propriete_commerciale_baux', 'autres_immo_incorporelles', 'terrains',
+            'dons_investissements_net', 'batiments', 'agencements_amenagements_installations',
+            'materiel_mobilier_actif_biologiques', 'materiel_transport',
+            'avances_acompte_immobilisations', 'titres_participation',
+            'autres_immobilisations_financieres', 'actif_circulant_hao', 'stock_encours',
+            'fournisseurs_avances_versee', 'clients', 'autres_creances',
+            'valeurs_mobilieres_placement', 'disponibilites',
+            'banque_cheque_postal_caisse_assimiles', 'ecart_conversion_actif'
+        ]
+
+
+
+# --- Sérialiseurs pour le modèle PassifS ---
+class PassifSysOhadaSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul
+    total_capitaux_propres_ressources_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_dettes_financieres_ressources_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_ressources_stables = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passifs_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_tresorerie_equivalents = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passifs = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PassifS
+        fields = '__all__'
+
+
+class AddPassifSysOhadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifS
+        fields = [
+            'annee', 'acheteur', 'capital', 'capital_non_appele_apporteurs',
+            'primes_liees_capital_social', 'ecart_reevaluation', 'reserves_indisponibles',
+            'reserves_libres', 'report_nouveau', 'resultat_net_exercice',
+            'subventions_investissements', 'provisions_reglees',
+            'emprunts_dettes_financieres_diverse', 'dettes_location_vente',
+            'provisions_risques_charges', 'passif_circulant_hao',
+            'clients_avances_recues', 'fournisseurs_exploitation',
+            'dettes_fiscales_sociales', 'autres_dettes',
+            'provisions_risques_court_terme', 'banques_credit_escompte',
+            'banques_etablissements_financiers_credit_caisse',
+            'ecart_conversion_passif'
+        ]
+
+
+class EditPassifSysOhadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifS
+        fields = [
+            'annee', 'acheteur', 'capital', 'capital_non_appele_apporteurs',
+            'primes_liees_capital_social', 'ecart_reevaluation', 'reserves_indisponibles',
+            'reserves_libres', 'report_nouveau', 'resultat_net_exercice',
+            'subventions_investissements', 'provisions_reglees',
+            'emprunts_dettes_financieres_diverse', 'dettes_location_vente',
+            'provisions_risques_charges', 'passif_circulant_hao',
+            'clients_avances_recues', 'fournisseurs_exploitation',
+            'dettes_fiscales_sociales', 'autres_dettes',
+            'provisions_risques_court_terme', 'banques_credit_escompte',
+            'banques_etablissements_financiers_credit_caisse',
+            'ecart_conversion_passif'
+        ]
+
+
+
+# --- Sérialiseurs pour le modèle ResultatS ---
+class ResultatSysOhadaSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul
+    marge_commerciale = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    chiffre_affaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    valeur_ajoutee = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    excedent_brute_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_financier = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_activites_ordinaires_xe = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_activites_ordinaires_tn = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_net = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ResultatS
+        fields = '__all__'
+
+
+class AddResultatSysOhadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatS
+        fields = [
+            'annee', 'acheteur', 'ventes_marchandises_a', 'achats_marchandises',
+            'variation_stock_marchandises', 'ventes_produits_manufactures',
+            'travaux_services_vendus_c', 'produits_accessoires_d',
+            'production_stockee', 'production_immobilisee', 'subvention_exploitation',
+            'autres_produits', 'transfert_charges_exploitation',
+            'achats_matieres_premieres_fournitures_connexes',
+            'variation_stock_matieres_premieres_fournitures_connexes',
+            'autres_achats', 'variation_stock_autres_fournitures',
+            'transport', 'services_exterieurs', 'impots_taxes', 'autres_depenses',
+            'frais_personnel',
+            'reprise_depreciations_amortissements_provision_pertes_valeurs_p',
+            'reprise_depreciations_amortissements_provision_pertes_valeurs_m',
+            'produits_financiers_assimiles', 'reprise_provision_perte_valeur',
+            'transfert_charges_financieres', 'charges_financieres_assimilees',
+            'dotations_provisions_depreciations_financieres',
+            'produits_cession_immobilisations', 'autres_produits_hao',
+            'valeur_comptable_cessions_actifs_immobilises', 'autres_charges_hao',
+            'participation_travailleurs', 'charge_impot_revenu',
+        ]
+
+
+class EditResultatSysOhadaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatS
+        fields = [
+            'annee', 'acheteur', 'ventes_marchandises_a', 'achats_marchandises',
+            'variation_stock_marchandises', 'ventes_produits_manufactures',
+            'travaux_services_vendus_c', 'produits_accessoires_d',
+            'production_stockee', 'production_immobilisee', 'subvention_exploitation',
+            'autres_produits', 'transfert_charges_exploitation',
+            'achats_matieres_premieres_fournitures_connexes',
+            'variation_stock_matieres_premieres_fournitures_connexes',
+            'autres_achats', 'variation_stock_autres_fournitures',
+            'transport', 'services_exterieurs', 'impots_taxes', 'autres_depenses',
+            'frais_personnel',
+            'reprise_depreciations_amortissements_provision_pertes_valeurs_p',
+            'reprise_depreciations_amortissements_provision_pertes_valeurs_m',
+            'produits_financiers_assimiles', 'reprise_provision_perte_valeur',
+            'transfert_charges_financieres', 'charges_financieres_assimilees',
+            'dotations_provisions_depreciations_financieres',
+            'produits_cession_immobilisations', 'autres_produits_hao',
+            'valeur_comptable_cessions_actifs_immobilises', 'autres_charges_hao',
+            'participation_travailleurs', 'charge_impot_revenu',
+        ]
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+
+# --- Sérialiseurs pour le modèle ActifA ---
+class ActifAnglaisSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul en lecture seule
+    total_actifs_non_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actifs_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ActifA
+        fields = '__all__'
+
+
+class AddActifAnglaisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifA
+        fields = [
+            'annee', 'acheteur', 'biens_installations_equipements', 'inventaire',
+            'creances_commerciales_autres_creances', 'actif_impots_courant', 'caisses_banques'
+        ]
+
+
+class EditActifAnglaisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifA
+        fields = [
+            'annee', 'acheteur', 'biens_installations_equipements', 'inventaire',
+            'creances_commerciales_autres_creances', 'actif_impots_courant', 'caisses_banques'
+        ]
+
+
+# --- Sérialiseurs pour le modèle PassifA ---
+class PassifAnglaisSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul
+    total_fonds_propres = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passifs_non_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passifs_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passif = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PassifA
+        fields = '__all__'
+
+
+class AddPassifAnglaisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifA
+        fields = [
+            'annee', 'acheteur', 'capital_reserves', 'capital_declare',
+            'benefices_non_distribues', 'pret_bancaire',
+            'compte_courant_administrateurs', 'dettes_commerciales_autres_dettes',
+            'decouvert_bancaire', 'impots'
+        ]
+
+
+class EditPassifAnglaisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifA
+        fields = [
+            'annee', 'acheteur', 'capital_reserves', 'capital_declare',
+            'benefices_non_distribues', 'pret_bancaire',
+            'compte_courant_administrateurs', 'dettes_commerciales_autres_dettes',
+            'decouvert_bancaire', 'impots'
+        ]
+
+
+# --- Sérialiseurs pour le modèle ResultatA ---
+class ResultatAnglaisSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+
+    # Inclusion des propriétés de calcul
+    marge_brute = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_avant_interets_impots = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_avant_impots = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_net = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    benefices_non_distribues = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ResultatA
+        fields = '__all__'
+
+
+class AddResultatAnglaisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatA
+        fields = [
+            'annee', 'acheteur', 'produits_activites_ordinaires', 'ventes',
+            'charges_exploitation', 'frais_vente_generaux_administratifs',
+            'autres_revenus', 'frais_financier', 'charge_impot_sur_revenu',
+            'autres_elements_resultat_global'
+        ]
+
+
+class EditResultatAnglaisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatA
+        fields = [
+            'annee', 'acheteur', 'produits_activites_ordinaires', 'ventes',
+            'charges_exploitation', 'frais_vente_generaux_administratifs',
+            'autres_revenus', 'frais_financier', 'charge_impot_sur_revenu',
+            'autres_elements_resultat_global'
+        ]
