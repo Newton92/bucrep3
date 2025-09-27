@@ -260,14 +260,6 @@
             border: 1px solid #99d6ff;
         }
 
-        /* In your CSS file or a <style> block */
-        .responsive-chart {
-            max-width: 100%;
-            height: auto;
-            display: block; /* Helps with alignment and spacing */
-            margin: 0 auto; /* Centers the image */
-        }
-
         /* Styles pour les graphiques (placeholder) */
         .chart-placeholder {
             height: 150px;
@@ -1090,7 +1082,7 @@
 
         <!-- Comptes financiers -->
         <div class="section">
-            <div class="section-title">COMPTES FINANCIERS</div>
+        <div class="section-title">COMPTES FINANCIERS</div>
             {% if financial_accounts and not financial_accounts.error %}
                 <table>
                     <tbody>
@@ -1146,260 +1138,532 @@
         </div>
 
 
-
-
-        {% if header_report.bilan_report == 'CLASSIQUE' %}
-        <!-- Etats financiers -->
         <div class="section">
-            <div class="section-title"><br>ETATS FINANCIERS<br><br></div>
-            <div class="section-title">BILAN {{ header_report.bilan_report }}</div>
-
-            {% if financial_statements.bilan_type == 'Classique' and financial_statements.etats_financiers_classiques.passif_data %}
-                <div class="section-title">ACTIFS</div>
-                {% for section, rows in financial_statements.etats_financiers_classiques.actif_data.items %}
-                    <div class="subsection-title">{{ section }}</div>
-                        <table class="financial-table">
-                            <thead>
-                                <tr>
-                                    <th>Libellé</th>
-                                    <th class="text-right">PT {{ financial_statements.years.0 }}</th>
-                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                    <th class="text-right">VAR (%)</th>
-                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                    <th class="text-right">PT {{ financial_statements.years.2 }}</th>
-                                    <th class="text-right">VAR (%)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in rows %}
-                                    <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
-                                        <td>{{ row.label }}</td>
-                                        <td class="text-right">{{ row.values.n|default:"-" }}</td>
-                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
-                                        <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
-                                            {{ row.variations.n_vs_n_moins_1 }}
-                                        </td>
-                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
-                                        <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
-                                        <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
-                                            {{ row.variations.n_moins_1_vs_n_moins_2 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="section-title">PASSIF</div>
+            <div class="subsection-title">CAPITAUX PROPRES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    {% for year in financial_statements.years %}
+                        <th class="text-right">{{ year }}</th>
+                    {% endfor %}
+                    <th class="text-right">VAR</th>
+                </tr>
+                {% for row in financial_statements.tables.passif_table %}
+                    <tr>
+                        <td>{{ row.label }}</td>
+                        {% for year_data in row.values %}
+                            <td class="text-right">{{ year_data.value|default:"-"|floatformat:2 }}</td>
+                        {% endfor %}
+                        <td class="text-right {% if row.var and row.var > 0 %}positive-var{% elif row.var and row.var < 0 %}negative-var{% endif %}">
+                            {% if row.var != None %}{{ row.var|floatformat:2 }}%{% else %}-{% endif %}
+                        </td>
+                    </tr>
                 {% endfor %}
-            {% else %}
-                <div class="subsection-title">Aucune donnée d'actif disponible pour ce type de bilan.</div>
-            {% endif %}
-            <br>
+            </table>
+        </div>
 
-            {% if financial_statements.bilan_type == 'Classique' and financial_statements.etats_financiers_classiques.passif_data %}
-                <div class="section-title">PASSIFS</div>
-                {% for section, rows in financial_statements.etats_financiers_classiques.passif_data.items %}
-                    {% if rows %}
-                        <div class="section">
-                            <div class="subsection-title">{{ section }}</div>
-                            <table class="financial-table">
-                                <thead>
-                                    <tr>
-                                        <th>Libellé</th>
-                                        <th class="text-right">PT {{ financial_statements.years.0 }}</th>
-                                        <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                        <th class="text-right">VAR (%)</th>
-                                        <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                        <th class="text-right">PT {{ financial_statements.years.2 }}</th>
-                                        <th class="text-right">VAR (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in rows %}
-                                        <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
-                                            <td>{{ row.label }}</td>
-                                            <td class="text-right">{{ row.values.n|default:"-" }}</td>
-                                            <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
-                                            <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
-                                                {{ row.variations.n_vs_n_moins_1 }}
-                                            </td>
-                                            <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
-                                            <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
-                                            <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
-                                                {{ row.variations.n_moins_1_vs_n_moins_2 }}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <div class="subsection-title">Aucune donnée de passif disponible pour ce type de bilan.</div>
-            {% endif %}
-            <br>
-
-            {% if financial_statements.bilan_type == 'Classique' and financial_statements.etats_financiers_classiques.resultat_data %}
-                <div class="section-title">COMPTES DE RESULTAT</div>
-                {% for section, rows in financial_statements.etats_financiers_classiques.resultat_data.items %}
-                    {% if rows %}
-                        <div class="section">
-                            <div class="subsection-title">{{ section }}</div>
-                            <table class="financial-table">
-                                <thead>
-                                    <tr>
-                                        <th>Libellé</th>
-                                        <th class="text-right">PT {{ financial_statements.years.0 }}</th>
-                                        <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                        <th class="text-right">VAR (%)</th>
-                                        <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                        <th class="text-right">PT {{ financial_statements.years.2 }}</th>
-                                        <th class="text-right">VAR (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for row in rows %}
-                                        <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
-                                            <td>{{ row.label }}</td>
-                                            <td class="text-right">{{ row.values.n|default:"-" }}</td>
-                                            <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
-                                            <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
-                                                {{ row.variations.n_vs_n_moins_1 }}
-                                            </td>
-                                            <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
-                                            <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
-                                            <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
-                                                {{ row.variations.n_moins_1_vs_n_moins_2 }}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <div class="subsection-title">Aucune donnée de résultat disponible pour ce type de bilan.</div>
-            {% endif %}
-            <br>
-
-            {% if financial_statements.bilan_type == 'Classique' and financial_statements.etats_financiers_classiques.ratios_data %}
-                <div class="section-title">RATIOS</div>
-                {% for section, rows in financial_statements.etats_financiers_classiques.ratios_data.items %}
-                    {% if rows %}
-                        <div class="subsection-title">{{ section }}</div>
-                        <table class="financial-table">
-                            <thead>
-                                <tr>
-                                    <th>Ratio</th>
-                                    <th class="text-right">PT {{ financial_statements.years.0 }}</th>
-                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                    <th class="text-right">VAR (%)</th>
-                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
-                                    <th class="text-right">PT {{ financial_statements.years.2 }}</th>
-                                    <th class="text-right">VAR (%)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for row in rows %}
-                                    <tr>
-                                        <td>{{ row.label }}</td>
-                                        <td class="text-right">{{ row.values.n|floatformat:3|default:"-" }}</td>
-                                        <td class="text-right">{{ row.values.n_moins_1|floatformat:3|default:"-" }}</td>
-                                        <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
-                                            {{ row.variations.n_vs_n_moins_1 }}
-                                        </td>
-                                        <td class="text-right">{{ row.values.n_moins_1|floatformat:3|default:"-" }}</td>
-                                        <td class="text-right">{{ row.values.n_moins_2|floatformat:3|default:"-" }}</td>
-                                        <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
-                                            {{ row.variations.n_moins_1_vs_n_moins_2 }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <div class="subsection-title">Aucune donnée de ratio disponible pour ce type de bilan.</div>
-            {% endif %}
-            <br><br>
         
-            <!-- Graphiques -->
-            <div class="section">
-                <div class="section-title">STRUCTURE FINANCIÈRE</div>
-                <img src="data:image/png;base64,{{ financial_statements.etats_financiers_classiques.charts_data.structure_financiere }}"
-                    alt="Graphique de structure financière"
-                    class="responsive-chart">
 
-                <div class="section-title">RENTABILITÉ FINANCIÈRE</div>
-                <img src="data:image/png;base64,{{ financial_statements.etats_financiers_classiques.charts_data.rentabilite_financiere }}"
-                    alt="Graphique de rentabilité financière"
-                    class="responsive-chart">
+
+        
+        <!-- Passif -->
+        <div class="section">
+            <div class="section-title">PASSIF</div>
+            
+            <!-- Capitaux Propres -->
+            <div class="subsection-title">CAPITAUX PROPRES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Capital social</td>
+                    <td class="text-right">1,000,000.00</td>
+                    <td class="text-right">1,000,000.00</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Private</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Eco</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Resource</td>
+                    <td class="text-right">250,000.00</td>
+                    <td class="text-right">250,000.00</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Request warrants</td>
+                    <td class="text-right">657,684,448.00</td>
+                    <td class="text-right">251,568,092.00</td>
+                    <td class="text-right positive-var">+161.44%</td>
+                </tr>
+                <tr>
+                    <td>Routine service</td>
+                    <td class="text-right">830,329,404.00</td>
+                    <td class="text-right">890,825,082.00</td>
+                    <td class="text-right negative-var">-6.79%</td>
+                </tr>
+                <tr>
+                    <td>Sub-hrives</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Providermayl</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <th>TOTAL 1</th>
+                    <th class="text-right">1,112,954,613.00</th>
+                    <th class="text-right">616,836,165.00</th>
+                    <th class="text-right positive-var">+80.43%</th>
+                </tr>
+            </table>
+            
+            <!-- Dettes Financières et Ressources -->
+            <div class="subsection-title">DETTES FINANCIÈRES ET RESSOURCES</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Improvisa</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Credit base debts and related contracts</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Debts financing deposits</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Provisions Transplant charge charges</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <th>TOTAL 12</th>
+                    <th class="text-right">0.00</th>
+                    <th class="text-right">0.00</th>
+                    <th class="text-right">0.00%</th>
+                </tr>
+            </table>
+            
+            <!-- Passif Circulant -->
+            <div class="subsection-title">PASSIF CIRCULANT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Debts Remissions shares</td>
+                    <td class="text-right">231,631,525.00</td>
+                    <td class="text-right">262,774,102.00</td>
+                    <td class="text-right negative-var">-11.85%</td>
+                </tr>
+                <tr>
+                    <td>Autres et acomptes nets</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Dettes</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Tentes faciles sociales</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Autres dettes</td>
+                    <td class="text-right">-314,634,579.00</td>
+                    <td class="text-right">-114,904,375.00</td>
+                    <td class="text-right negative-var">+173.82%</td>
+                </tr>
+                <tr>
+                    <td>TENSORIERE FASCILE</td>
+                    <td class="text-right">-577,544,531.00</td>
+                    <td class="text-right">-47,628,432.00</td>
+                    <td class="text-right negative-var">+1112.68%</td>
+                </tr>
+                <tr>
+                    <td>Banques exacts voscentes</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Banque exacts caisse</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Banques discourses</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <th>TOTAL GÉNÉRAL</th>
+                    <th class="text-right">-577,578,542.00</th>
+                    <th class="text-right">-1,165,513,642.00</th>
+                    <th class="text-right positive-var">+50.45%</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Compte de résultat -->
+        <div class="section">
+            <div class="section-title">COMPTE DE RÉSULTAT</div>
+            
+            <!-- Exploitation -->
+            <div class="subsection-title">EXPLOITATION</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Produits d'exploitations</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                </tr>
+                <tr>
+                    <td>Vertis de mises</td>
+                    <td class="text-right">-5,284,456,86.00</td>
+                    <td class="text-right">-5,313,979,662.00</td>
+                    <td class="text-right positive-var">+0.56%</td>
+                </tr>
+                <tr>
+                    <td>Vertis de produits fabriqués</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Product mixtes vendus</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Produit accessibles</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Productions telles</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>C.A.</td>
+                    <td class="text-right">-6,915,045,000.00</td>
+                    <td class="text-right">-5,313,979,662.00</td>
+                    <td class="text-right negative-var">-30.13%</td>
+                </tr>
+                <tr>
+                    <td>Subvention explications</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Productions secures</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Repétites de produits</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Repétites d'engins</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Actions proches</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Achat mises</td>
+                    <td class="text-right">-5,274,456,86.00</td>
+                    <td class="text-right">-5,613,998,002.00</td>
+                    <td class="text-right positive-var">+6.05%</td>
+                </tr>
+                <tr>
+                    <td>Variation stock mises</td>
+                    <td class="text-right">-552,645,539.00</td>
+                    <td class="text-right">-197,834,441.00</td>
+                    <td class="text-right negative-var">-179.33%</td>
+                </tr>
+                <tr>
+                    <td>MASSE SENTE</td>
+                    <td class="text-right">12,855,127,422.00</td>
+                    <td class="text-right">-892,658,221.00</td>
+                    <td class="text-right positive-var">+1540.18%</td>
+                </tr>
+            </table>
+            
+            <!-- Résultat -->
+            <div class="subsection-title">RÉSULTAT</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Éléments</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Depot Benefit in drug usage</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Impta sur les bulletins</td>
+                    <td class="text-right">249,375,215.80</td>
+                    <td class="text-right">155,936,091.00</td>
+                    <td class="text-right positive-var">+59.92%</td>
+                </tr>
+                <tr>
+                    <th>RÉSULTAT NET</th>
+                    <th class="text-right">253,575,484.00</th>
+                    <th class="text-right">293,825,034.00</th>
+                    <th class="text-right negative-var">-13.70%</th>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Ratios -->
+        <div class="section">
+            <div class="section-title">RATIOS</div>
+            
+            <!-- Structure financière -->
+            <div class="subsection-title">STRUCTURE FINANCIÈRE</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>French de mallement</td>
+                    <td class="text-right">59.63</td>
+                    <td class="text-right">16.11</td>
+                    <td class="text-right positive-var">+270.27%</td>
+                </tr>
+                <tr>
+                    <td>Far sommeil</td>
+                    <td class="text-right">0.33</td>
+                    <td class="text-right">0.42</td>
+                    <td class="text-right negative-var">-21.43%</td>
+                </tr>
+                <tr>
+                    <td>Autonomie financière</td>
+                    <td class="text-right">100.00%</td>
+                    <td class="text-right">100.00%</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Liquidité réduite</td>
+                    <td class="text-right">126.21%</td>
+                    <td class="text-right">82.29%</td>
+                    <td class="text-right positive-var">+53.37%</td>
+                </tr>
+                <tr>
+                    <td>Liquidité immédiate</td>
+                    <td class="text-right">133.76%</td>
+                    <td class="text-right">110.94%</td>
+                    <td class="text-right positive-var">+20.57%</td>
+                </tr>
+            </table>
+            
+            <!-- Rentabilité -->
+            <div class="subsection-title">RENTABILITÉ</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>C.A.F</td>
+                    <td class="text-right">706,965,221.00</td>
+                    <td class="text-right">579,565,099.00</td>
+                    <td class="text-right positive-var">+21.98%</td>
+                </tr>
+                <tr>
+                    <td>C.A.F/Total unit</td>
+                    <td class="text-right">0.00</td>
+                    <td class="text-right">0.00</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Rentabilité économique</td>
+                    <td class="text-right">48.01%</td>
+                    <td class="text-right">68.07%</td>
+                    <td class="text-right negative-var">-29.44%</td>
+                </tr>
+                <tr>
+                    <td>Rentabilité financière</td>
+                    <td class="text-right">2,684.28%</td>
+                    <td class="text-right">10.81%</td>
+                    <td class="text-right positive-var">+247.30%</td>
+                </tr>
+                <tr>
+                    <td>Rentabilité de l'entitre de production</td>
+                    <td class="text-right">2.02%</td>
+                    <td class="text-right">8.08%</td>
+                    <td class="text-right negative-var">-75.00%</td>
+                </tr>
+                <tr>
+                    <td>Consumier des faits financiers</td>
+                    <td class="text-right">0.00%</td>
+                    <td class="text-right">0.00%</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+            </table>
+            
+            <!-- Délais (Jours) -->
+            <div class="subsection-title">DÉLAIS (JOURS)</div>
+            <table class="financial-table">
+                <tr>
+                    <th>Ratio</th>
+                    <th class="text-right">PT 2023</th>
+                    <th class="text-right">PT 2022</th>
+                    <th class="text-right">VAR</th>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de mg</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de #F</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de marchandises</td>
+                    <td class="text-right">18</td>
+                    <td class="text-right">16</td>
+                    <td class="text-right positive-var">+12.50%</td>
+                </tr>
+                <tr>
+                    <td>Boutaire des stocks de services</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+                <tr>
+                    <td>Créat clients</td>
+                    <td class="text-right">41</td>
+                    <td class="text-right">25</td>
+                    <td class="text-right positive-var">+64.00%</td>
+                </tr>
+                <tr>
+                    <td>Créats fournisseurs</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0</td>
+                    <td class="text-right">0.00%</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Graphiques -->
+        <div class="section">
+            <div class="section-title">STRUCTURE FINANCIÈRE</div>
+            <div class="chart-placeholder">
+                Graphique de structure financière (2023 vs 2022)
             </div>
-
-
-
-            <div class="section-title">SCORING ACREMAC</div>
-
-
+            
+            <div class="section-title">RENTABILITÉ FINANCIÈRE</div>
+            <div class="chart-placeholder">
+                Graphique de rentabilité financière (2023 vs 2022)
+            </div>
         </div>
-        {% elif header_report.bilan_report == 'ANGLAIS' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
-        {% elif header_report.bilan_report == 'BANCAIRE' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">DEPENSES</div>
-            <div class="subsection-title">HORS BILAN</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
-        {% elif header_report.bilan_report == 'SYSCOHADA' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
-        {% elif header_report.bilan_report == 'IRFS COBAC' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
-        {% else %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS</div>
-        </div>
-        <div class="subsection-title">Aucun élément financier disponible !</div>
-        {% endif %}
-
-
         
+        <!-- Score ACREMAC -->
+        <div class="section">
+            <div class="section-title">SCORE ACREMAC</div>
+            <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+            
+            <div class="rating-scale">
+                <div class="rating-point">1</div>
+                <div class="rating-point">2</div>
+                <div class="rating-point">3</div>
+                <div class="rating-point">4</div>
+                <div class="rating-point">5</div>
+                <div class="rating-point">6</div>
+                <div class="rating-point highlighted">7</div>
+                <div class="rating-point">8</div>
+                <div class="rating-point">9</div>
+                <div class="rating-point">10</div>
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Interprétation</th>
+                    <td class="warning">Risque significatif</td>
+                </tr>
+            </table>
+        </div>
+        
+
 
         
 

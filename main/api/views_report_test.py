@@ -46,207 +46,11 @@ import html
 
 # ... (votre code d'importation existant) ..
 # Import des classes de services
-from main.utils import FinancialReportGenerator, get_simple_actifs_data
-from main.utils import AcremacScoring, get_structured_actif_data, get_structured_passif_data
-from main.utils import get_structured_resultat_data, get_structured_ratios_data
-# ... (votre code existant) ...
-import matplotlib.pyplot as plt
-import pandas as pd
-from decimal import Decimal
-import io
-import base64
-
-# Import des classes de services
 from main.utils import FinancialReportGenerator
 from main.utils import AcremacScoring
-import matplotlib
-matplotlib.use('Agg') # Utiliser un backend sans interface graphique
-
-import matplotlib.pyplot as plt
-import pandas as pd
-from decimal import Decimal
-import io
-import base64
-import json
-from main.models import ActifC, PassifC, ResultatC
-from main.utils import RatiosClassique
-from datetime import datetime
-from django.conf import settings
-import datetime
 
 
-# Une fonction pour s'assurer que les données sont numériques.
-def to_float(value):
-    """Convertit une valeur en float, gère les None et les Decimals."""
-    try:
-        if value is None or value == '':
-            return 0.0
-        return float(value)
-    except (ValueError, TypeError):
-        return 0.0
-
-
-# Fichier : views_report.py
-
-# Fichier : views_report.py
-
-def get_base64_chart2(data, title, y_label, chart_type='bar', is_percentage=False):
-    """
-    Crée un graphique à barres ou en ligne, le sauvegarde dans un buffer et renvoie sa représentation Base64.
-    """
-    plt.style.use('seaborn-v0_8-whitegrid')
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    labels = data['labels']
-    datasets = data['datasets']
-    
-    # Nouvelle méthode pour créer le DataFrame
-    if chart_type == 'bar':
-        # On extrait les données et les labels pour les années
-        years = [d['label'] for d in datasets]
-        datas = [d['data'] for d in datasets]
-        
-        # Création du DataFrame avec les labels comme index des colonnes et les années comme index des lignes
-        df = pd.DataFrame(datas, columns=labels, index=years)
-        
-        # Affichage du graphique directement depuis le DataFrame
-        df.plot(kind='bar', ax=ax, width=0.8, rot=0)
-        
-    elif chart_type == 'line':
-        for dataset in datasets:
-            ax.plot(labels, dataset['data'], label=dataset['label'], marker='o')
-        ax.set_xticks(labels)
-
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
-    ax.legend(title="Année")
-
-    if is_percentage:
-        from matplotlib.ticker import PercentFormatter
-        ax.yaxis.set_major_formatter(PercentFormatter())
-
-    plt.tight_layout()
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    plt.close(fig)
-
-    return base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-
-def get_charts_data(actifs_by_year, passifs_by_year, ratios_by_year_dict, years_to_retrieve):
-    charts_data = {}
-    
-    # Données pour le graphique de Structure Financière (barres)
-    labels_sf = [str(year) for year in years_to_retrieve]
-    datasets_sf = [
-        {
-            'label': 'Actif Immobilisé', 
-            'data': [float(actifs_by_year.get(y, {}).get('total_I', Decimal('0'))) for y in years_to_retrieve]
-        },
-        {
-            'label': 'Actif Circulant', 
-            'data': [float(actifs_by_year.get(y, {}).get('total_II', Decimal('0'))) for y in years_to_retrieve]
-        },
-    ]
-    charts_data['structure_financiere'] = get_base64_chart2(
-        {'labels': labels_sf, 'datasets': datasets_sf},
-        "Structure Financière",
-        "Valeur en FCFA",
-        chart_type='bar'
-    )
-
-    # Données pour le graphique de Rentabilité Financière (ligne)
-    labels_rf = [str(year) for year in years_to_retrieve]
-    datasets_rf = [
-        {
-            'label': 'Rendement des Capitaux Propres', 
-            'data': [float(ratios_by_year_dict.get(y, {}).get('rendement_capitaux_propres', Decimal('0'))) for y in years_to_retrieve]
-        }
-    ]
-    charts_data['rentabilite_financiere'] = get_base64_chart2(
-        {'labels': labels_rf, 'datasets': datasets_rf},
-        "Rendement des Capitaux Propres",
-        "Valeur en %",
-        chart_type='line',
-        is_percentage=True
-    )
-    return charts_data
-
-
-def get_base64_chart(data, title, y_label):
-    """
-    Crée un graphique à barres, le sauvegarde dans un buffer et renvoie sa représentation Base64.
-    """
-    plt.style.use('seaborn-v0_8-whitegrid')
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    labels = data['labels']
-    years = data['years']
-    values = data['values']
-
-    x = range(len(labels))
-    width = 0.35
-
-    for i, year in enumerate(years):
-        rects = ax.bar([pos + i * width for pos in x], values[i], width, label=str(year))
-        ax.bar_label(rects, padding=3)
-
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
-    ax.set_xticks([pos + width / (2 if len(years) > 1 else 1) for pos in x])
-    ax.set_xticklabels(labels, rotation=45, ha='right')
-    ax.legend(title="Année")
-
-    plt.tight_layout()
-    
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    plt.close(fig)
-
-    return base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-
-def create_and_encode_charts(ratios_data, years):
-    """
-    Extrait les données de ratio, génère les graphiques et les encode en Base64.
-    """
-    charts = {}
-
-    # Données pour le graphique de Structure Financière (Année N vs N-1)
-    structure_ratios_data = {
-        'labels': [row['label'] for row in ratios_data['STRUCTURE FINANCIÈRE']],
-        'years': [years[0], years[1]],
-        'values': [
-            [row['values']['n'] for row in ratios_data['STRUCTURE FINANCIÈRE']],
-            [row['values']['n_moins_1'] for row in ratios_data['STRUCTURE FINANCIÈRE']],
-        ]
-    }
-    charts['structure_financiere'] = get_base64_chart(
-        structure_ratios_data,
-        "Graphique de structure financière (Année N vs Année N-1)",
-        "Valeur du ratio"
-    )
-
-    # Données pour le graphique de Rentabilité Financière (Année N-1 vs N-2)
-    rentabilite_ratios_data = {
-        'labels': [row['label'] for row in ratios_data['RENTABILITÉ']],
-        'years': [years[1], years[2]],
-        'values': [
-            [row['values']['n_moins_1'] for row in ratios_data['RENTABILITÉ']],
-            [row['values']['n_moins_2'] for row in ratios_data['RENTABILITÉ']],
-        ]
-    }
-    charts['rentabilite_financiere'] = get_base64_chart(
-        rentabilite_ratios_data,
-        "Graphique de rentabilité financière (Année N-1 vs Année N-2)",
-        "Valeur du ratio"
-    )
-
-    return charts
-
-
+# Fonctions d'assistance pour les parties du rapport
 def _get_list_data(model, acheteur, fields_map):
     """
     Récupère les données d'un modèle et les formate en liste de dictionnaires.
@@ -270,6 +74,10 @@ def _get_list_data(model, acheteur, fields_map):
             item_data[key] = val if val not in [None, ''] else "Non spécifié"
         data_list.append(item_data)
     return data_list
+
+
+
+
 
 
 def get_logo_data():
@@ -518,6 +326,8 @@ def get_nested_value(data, keys):
     return value
 
 
+
+# --- Fonction améliorée pour la génération des données du rapport ---
 def get_financial_data_for_template(data_by_year, years, fields):
     table_data = []
     
@@ -580,100 +390,6 @@ def get_financial_data_for_template(data_by_year, years, fields):
         table_data.append(row)
     return table_data
 
-
-
-def get_charts_data(actifs_by_year, passifs_by_year, ratios_by_year_dict, years_to_retrieve):
-    charts_data = {}
-    
-    # Données pour le graphique de Structure Financière
-    labels = ['Actif Immobilisé', 'Actif Circulant']
-    data_points = []
-    
-    for year in years_to_retrieve[:2]: # N et N-1
-        actifs_immo = float(actifs_by_year.get(year, {}).get('total_I', Decimal('0')))
-        actifs_circ = float(actifs_by_year.get(year, {}).get('total_II', Decimal('0')))
-        data_points.append([actifs_immo, actifs_circ])
-        
-    charts_data['structure_financiere'] = get_base64_chart(
-        labels,
-        data_points,
-        "Structure Financière (Année N vs N-1)",
-        "Valeur en FCFA"
-    )
-
-    # Données pour le graphique de Rentabilité Financière
-    labels = ['Rendement des Capitaux Propres']
-    data_points_rentab = []
-    for year in years_to_retrieve[:2]: # N et N-1
-        roc = float(ratios_by_year_dict.get(year, {}).get('rendement_capitaux_propres', Decimal('0')) or Decimal('0'))
-        data_points_rentab.append(roc)
-    
-    charts_data['rentabilite_financiere'] = get_base64_chart(
-        labels,
-        [[data_points_rentab[0]], [data_points_rentab[1]]],
-        "Rendement des Capitaux Propres (Année N vs N-1)",
-        "Valeur en %"
-    )
-
-    return charts_data
-
-
-
-
-def get_charts_data_test(actifs_by_year, passifs_by_year, ratios_by_year_dict, years_to_retrieve):
-    charts_data = {}
-
-    # Données pour le graphique de Structure Financière (N vs N-1)
-    labels_sf = ['Actif Immobilisé', 'Actif Circulant', 'Capitaux Propres', 'Dettes']
-    data_sf = {
-        'N': [
-            float(actifs_by_year.get(years_to_retrieve[0], {}).get('total_I', Decimal('0'))),
-            float(actifs_by_year.get(years_to_retrieve[0], {}).get('total_II', Decimal('0'))),
-            float(passifs_by_year.get(years_to_retrieve[0], {}).get('total_I', Decimal('0'))),
-            float(passifs_by_year.get(years_to_retrieve[0], {}).get('total_II', Decimal('0')) +
-                  passifs_by_year.get(years_to_retrieve[0], {}).get('total_III', Decimal('0'))),
-        ],
-        'N-1': [
-            float(actifs_by_year.get(years_to_retrieve[1], {}).get('total_I', Decimal('0'))),
-            float(actifs_by_year.get(years_to_retrieve[1], {}).get('total_II', Decimal('0'))),
-            float(passifs_by_year.get(years_to_retrieve[1], {}).get('total_I', Decimal('0'))),
-            float(passifs_by_year.get(years_to_retrieve[1], {}).get('total_II', Decimal('0')) +
-                  passifs_by_year.get(years_to_retrieve[1], {}).get('total_III', Decimal('0'))),
-        ],
-    }
-
-    charts_data['structure_financiere'] = get_base64_chart(
-        {'labels': labels_sf, 'years': ['N', 'N-1'], 'values': [data_sf['N'], data_sf['N-1']]},
-        "Structure Financière (Année N vs Année N-1)",
-        "Valeur en FCFA"
-    )
-
-    # Données pour le graphique de Rentabilité Financière (N-1 vs N-2)
-    labels_rf = ['Rendement des Capitaux Propres', 'Rentabilité Économique', 'Rentabilité Financière']
-    data_rf = {
-        'N-1': [
-            float(ratios_by_year_dict.get(years_to_retrieve[1], {}).get('rendement_capitaux_propres', Decimal('0'))),
-            float(ratios_by_year_dict.get(years_to_retrieve[1], {}).get('rentabilite_economique', Decimal('0'))),
-            float(ratios_by_year_dict.get(years_to_retrieve[1], {}).get('rentabilite_fin', Decimal('0'))),
-        ],
-        'N-2': [
-            float(ratios_by_year_dict.get(years_to_retrieve[2], {}).get('rendement_capitaux_propres', Decimal('0'))),
-            float(ratios_by_year_dict.get(years_to_retrieve[2], {}).get('rentabilite_economique', Decimal('0'))),
-            float(ratios_by_year_dict.get(years_to_retrieve[2], {}).get('rentabilite_fin', Decimal('0'))),
-        ],
-    }
-
-    charts_data['rentabilite_financiere'] = get_base64_chart(
-        {'labels': labels_rf, 'years': ['N-1', 'N-2'], 'values': [data_rf['N-1'], data_rf['N-2']]},
-        "Rentabilité Financière (Année N-1 vs Année N-2)",
-        "Valeur en %"
-    )
-
-    return charts_data
-
-
-
-
 # === Vues Report === #
 
 
@@ -700,6 +416,8 @@ class GenerateReport(APIView):
         current_year = datetime.datetime.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
         print(years_to_retrieve)
+        
+        
         
         # 3. Définir les textes en fonction de la langue
         if language_report.lower() == "en":
@@ -978,6 +696,9 @@ class GenerateReport(APIView):
         except OperationEtHistorique.DoesNotExist:
             operation_history = None
             
+            
+        
+        
         
         # 1. Récupération des propriétés et actifs de l'acheteur
         # Utilisez .filter() pour récupérer toutes les instances
@@ -1066,123 +787,17 @@ class GenerateReport(APIView):
                 return "Non spécifié"
             return f"{value:,.2f}".replace(",", " ").replace(".", ",") # Exemple de formatage français
         
-        # 4. Appel à la fonction pour obtenir les données structurées des actifs
-        actifs_table_data = get_simple_actifs_data(acheteur, years_to_retrieve)
-        actifs_structured_data = get_structured_actif_data(acheteur, years_to_retrieve)
-        passif_structured_data = get_structured_passif_data(acheteur, years_to_retrieve)
-        resultat_structured_data = get_structured_resultat_data(acheteur, years_to_retrieve)
-        ratios_structured_data = get_structured_ratios_data(acheteur, years_to_retrieve) 
         
-        # NOUVEAU : Gérer la génération des graphiques
-        # Dans la vue GenerateReport, après avoir récupéré les données financières :
-        # ...
-        # Récupérer les données pour les graphiques
-        # actifs_by_year = {year: get_structured_actif_data(acheteur, [year])[0] for year in years_to_retrieve}
-        # passifs_by_year = {year: get_structured_passif_data(acheteur, [year])[0] for year in years_to_retrieve}
-        # ratios_by_year_dict = {year: get_structured_ratios_data(acheteur, [year])[0] for year in years_to_retrieve}
-
-        # Générer les graphiques
-        # charts_data = get_charts_data(actifs_by_year, passifs_by_year, ratios_by_year_dict, years_to_retrieve)
-
-        # charts_data = {}
         
-        # print(charts_data)
+        # 4. Exécution des algorithmes de calcul
+        financial_report_generator = FinancialReportGenerator(acheteur, bilan_report)
+        financial_tables = financial_report_generator.get_structured_data()
         
-        # 2. Récupérer les données financières pour les années spécifiées
-        actifs_by_year = {}
-        resultats_by_year = {}
-        ratios_by_year = {}
 
-        for annee in years_to_retrieve:
-            try:
-                actif_instance = ActifC.objects.get(acheteur_id=acheteur_id, annee__annee=annee)
-                resultat_instance = ResultatC.objects.get(acheteur_id=acheteur_id, annee__annee=annee)
-                
-                # Créez une instance de RatiosClassique pour chaque année
-                # Remarque : Votre code initial n'avait pas de PassifC, mais le modèle RatiosClassique en a besoin
-                # Supposons que vous ayez une instance de PassifC pour cette année aussi.
-                try:
-                    passif_instance = PassifC.objects.get(acheteur_id=acheteur_id, annee__annee=annee)
-                except PassifC.DoesNotExist:
-                    passif_instance = None # Ou créez une instance vide
-
-                ratios_instance = RatiosClassique(actif_instance, passif_instance, resultat_instance)
-                
-                # Stocker les instances et leurs calculs
-                actifs_by_year[annee] = actif_instance
-                resultats_by_year[annee] = resultat_instance
-                
-                # Stocker les ratios calculés dans un dictionnaire
-                ratios_by_year[annee] = {
-                    'rentabilite_fin': ratios_instance.rentabilite_fin,
-                    'solvabilite': ratios_instance.solvabilite,
-                    'rendement_capitaux_propres': ratios_instance.rendement_capitaux_propres
-                }
-            except (ActifC.DoesNotExist, ResultatC.DoesNotExist):
-                # Gérer le cas où les données pour une année sont manquantes
-                continue
         
-        # 3. Préparer les données pour les graphiques
-        # Graphique de Structure Financière (Année N vs N-1)
-        data_structure = {
-            'labels': ['Actif Immobilisé', 'Actif Circulant', 'Total Actif'],
-            'datasets': [
-                {
-                    'label': f'Année {years_to_retrieve[0]}',
-                    'data': [
-                        to_float(actifs_by_year.get(years_to_retrieve[0], ActifC()).total_I),
-                        to_float(actifs_by_year.get(years_to_retrieve[0], ActifC()).total_II),
-                        to_float(actifs_by_year.get(years_to_retrieve[0], ActifC()).general_total),
-                    ]
-                },
-                {
-                    'label': f'Année {years_to_retrieve[1]}',
-                    'data': [
-                        to_float(actifs_by_year.get(years_to_retrieve[1], ActifC()).total_I),
-                        to_float(actifs_by_year.get(years_to_retrieve[1], ActifC()).total_II),
-                        to_float(actifs_by_year.get(years_to_retrieve[1], ActifC()).general_total),
-                    ]
-                }
-            ]
-        }
+        
 
-        # Graphique de Rentabilité Financière (Année N-1 vs N-2)
-        data_rentabilite = {
-            'labels': ['Résultat Net', 'Chiffre d\'Affaires'],
-            'datasets': [
-                {
-                    'label': f'Année {years_to_retrieve[1]}',
-                    'data': [
-                        to_float(resultats_by_year.get(years_to_retrieve[1], ResultatC()).resultat_exercice),
-                        to_float(resultats_by_year.get(years_to_retrieve[1], ResultatC()).ca),
-                    ]
-                },
-                {
-                    'label': f'Année {years_to_retrieve[2]}',
-                    'data': [
-                        to_float(resultats_by_year.get(years_to_retrieve[2], ResultatC()).resultat_exercice),
-                        to_float(resultats_by_year.get(years_to_retrieve[2], ResultatC()).ca),
-                    ]
-                }
-            ]
-        }
-
-        # 4. Générer les graphiques en Base64
-        charts_data = {
-            'structure_financiere': get_base64_chart2(
-                data_structure,
-                "Structure Financière (Année N vs N-1)",
-                "Montant en FCFA",
-                chart_type='bar'
-            ),
-            'rentabilite_financiere': get_base64_chart2(
-                data_rentabilite,
-                "Rentabilité Financière (Année N-1 vs N-2)",
-                "Montant en FCFA",
-                chart_type='bar'
-            )
-        }
-
+        # 3. Initialize the report data structure
         # 3. Initialize the report data structure
         report_data = {
             "logo_data": get_logo_data(),
@@ -1193,7 +808,6 @@ class GenerateReport(APIView):
                 "acremac_mail": "credit.report@acremac.com",
                 "language_report": "français" if language_report.lower() == "fr" else "english",
                 # "devise_report": devise.code if devise else "Non spécifiée",
-                "bilan_report": bilan_report.upper() if bilan_report else "",
                 "format_report": format_report,
                 "date_today": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             },
@@ -1211,7 +825,7 @@ class GenerateReport(APIView):
                 "date_rapport": commande.date_rapport.strftime("%d/%m/%Y") if hasattr(commande, 'date_rapport') and commande.date_rapport else "Non spécifié",
                 "delais": commande.delais if hasattr(commande, 'delais') else "Non spécifié",
                 "priorite": commande.priorite if hasattr(commande, 'priorite') else "Non spécifié",
-                "type_rapport": commande.type_rapport if hasattr(commande, 'type_rapport') else "Non spécifié"
+                "type_rapport": commande.type_rapport if hasattr(commande, 'type_rapport') else "Non spécifié",
             },
             "identification": {
                 "title_2": "IDENTIFICATION",
@@ -1399,14 +1013,7 @@ class GenerateReport(APIView):
                 "title_20": "ETATS FINANCIERS",
                 "years": years_to_retrieve,
                 "bilan_type": bilan_report,
-                "etats_financiers_classiques": {
-                    "actif_table": actifs_table_data,
-                    "actif_data": actifs_structured_data,
-                    "passif_data": passif_structured_data,
-                    "resultat_data": resultat_structured_data,
-                    "ratios_data": ratios_structured_data,
-                    "charts_data": charts_data,
-                },
+                "tables": financial_tables,
             },
             "translations": {},
             "scoring": {
@@ -1468,9 +1075,6 @@ class GenerateReport(APIView):
                 ).write_pdf(response)
                 
                 return response
-            elif format_report.upper() == 'JSON':
-                # Renvoyer le dictionnaire directement comme une réponse JSON pour inspection
-                return Response(report_data, status=status.HTTP_200_OK)
             elif format_report.upper() == 'XML':
                 print("Génération du XML...")  # Debug
                 root = dict_to_xml('report', report_data)

@@ -15,6 +15,19 @@ def get_item(dictionary, key):
         return dictionary.get(key)
     return None
 
+
+
+@register.filter
+def startswith(value, arg):
+    """
+    Vérifie si une chaîne commence par le préfixe donné.
+    """
+    if isinstance(value, str):
+        return value.startswith(arg)
+    return False
+
+
+
 @register.filter
 def floatformat(value, arg='-2'):
     """

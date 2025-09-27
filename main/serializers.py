@@ -201,7 +201,7 @@ class AddCategoryNaceCodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CategoryNaceCode
-        fields = ["id", "code", "libelle", "active", "created_at", "updated_at"]
+        fields = ["id", "code", "libelle", "poids", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
 
 
@@ -220,10 +220,17 @@ class AddSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
 
+
 class CategoryNaceCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryNaceCode
-        fields = ["id", "code", "libelle"]
+        fields = ["id", "code", "libelle", "poids", "created_at", "updated_at"]
+        
+        
+class EditCategoryNaceCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNaceCode
+        fields = ["id", "code", "libelle", "poids"]
 
 
 class EditSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
@@ -253,6 +260,7 @@ class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
             "category",
             "code",
             "libelle",
+            "poids",
             "active",
             "created_at",
             "updated_at",
@@ -261,7 +269,7 @@ class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
 
 
 class CategoryNaceCodeSerializer(serializers.ModelSerializer):
-    subcategories = SubCategoryNaceCodeSerializer(many=True, read_only=True)
+    #subcategories = SubCategoryNaceCodeSerializer(many=True, read_only=True)
 
     class Meta:
         model = CategoryNaceCode
@@ -269,10 +277,11 @@ class CategoryNaceCodeSerializer(serializers.ModelSerializer):
             "id",
             "code",
             "libelle",
+            "poids",
             "active",
             "created_at",
             "updated_at",
-            "subcategories",
+            #"subcategories",
         ]
         read_only_fields = ["created_at", "updated_at"]
 
@@ -285,6 +294,7 @@ class AddSubCategoryNafCodeSerializer(serializers.ModelSerializer):
             "category",
             "code",
             "libelle",
+            "poids",
             "active",
             "created_at",
             "updated_at",
@@ -375,11 +385,17 @@ class FormeJuridiqueSerializer(serializers.ModelSerializer):
             "code",
             "libelle",
             "description",
+            "poids",
             "active",
             "created_at",
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+
+
+
+
+
 
 
 class DomaineEntrepriseSerializer(serializers.ModelSerializer):
@@ -474,6 +490,35 @@ class ModeleBilanSerializer(BaseModeleSerializer):
 class ModeleBailSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleBail
+        fields = "__all__"
+        
+        
+class AddModeleBailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleBail
+        fields = [
+            "code",
+            "libelle",
+            "poids",
+        ]
+
+class EditModeleBailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleBail
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "poids",
+        ]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchModeleBailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleBail
+        fields = "__all__"
+        
+        
 
 
 class ModeleNotationSerializer(BaseModeleSerializer):
@@ -484,6 +529,40 @@ class ModeleNotationSerializer(BaseModeleSerializer):
 class ModeleAvisCommercialSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleAvisCommercial
+        fields = "__all__"
+        
+        
+class AddModeleAvisCommercialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAvisCommercial
+        fields = [
+            "code",
+            "libelle",
+            "poids",
+        ]
+
+class EditModeleAvisCommercialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAvisCommercial
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "poids",
+        ]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchModeleAvisCommercialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAvisCommercial
+        fields = "__all__"
+        
+   
+
+
+
+
+
 
 
 class ModeleRelationEntrepriseSerializer(BaseModeleSerializer):
@@ -499,11 +578,81 @@ class ModeleInformationNotationEntrepriseSerializer(BaseModeleSerializer):
 class ModeleComportementPaiementSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleComportementPaiement
+        fields = "__all__"
+        
+        
+class AddModeleComportementPaiementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementPaiement
+        fields = [
+            "code",
+            "libelle",
+            "poids",
+        ]
+
+class EditModeleComportementPaiementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementPaiement
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "poids",
+        ]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchModeleComportementPaiementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementPaiement
+        fields = "__all__"
+        
+        
+        
+        
+
+
+
 
 
 class ModeleComportementJugementSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleComportementJugement
+
+
+class ModeleAgeSocieteSerializer(BaseModeleSerializer):
+    class Meta(BaseModeleSerializer.Meta):
+        model = ModeleAgeSociete
+        fields = "__all__"
+        
+        
+class AddModeleAgeSocieteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAgeSociete
+        fields = [
+            "code",
+            "libelle",
+            "poids",
+        ]
+
+class EditModeleAgeSocieteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAgeSociete
+        fields = [
+            "id",
+            "code",
+            "libelle",
+            "poids",
+        ]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchModeleAgeSocieteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAgeSociete
+        fields = "__all__"
+        
+        
+        
+        
 
 
 class CategorieEntrepriseSerializer(serializers.ModelSerializer):
@@ -5872,14 +6021,14 @@ class EditEmailAcheteurSerializer(serializers.ModelSerializer):
 class CategoryNaceCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CategoryNaceCode
-        fields = ["id", "code", "libelle", "active"]
+        fields = ["id", "code", "libelle", "poids", "active"]
 
 class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
     category = CategoryNaceCodeSerializer(read_only=True)
 
     class Meta:
         model = SubCategoryNaceCode
-        fields = ["id", "code", "libelle", "active", "category"]
+        fields = ["id", "code", "libelle", "poids", "active", "category"]
 
 
 

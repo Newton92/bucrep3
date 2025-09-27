@@ -432,6 +432,7 @@ class CategoryNaceCode(models.Model):
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -457,6 +458,7 @@ class SubCategoryNaceCode(models.Model):
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -480,6 +482,7 @@ class CategoryNafCode(models.Model):
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -509,6 +512,7 @@ class SubCategoryNafCode(models.Model):
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -532,6 +536,7 @@ class FormeJuridique(models.Model):
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     description = models.TextField(_("Description"), null=True, blank=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
     active = models.BooleanField(_("Actif"), default=True)
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
@@ -731,6 +736,8 @@ class ModeleBail(models.Model):
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
+    
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
@@ -777,6 +784,8 @@ class ModeleAvisCommercial(models.Model):
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
+    
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
@@ -846,6 +855,8 @@ class ModeleComportementPaiement(models.Model):
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
+    
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
@@ -885,6 +896,31 @@ class ModeleComportementJugement(models.Model):
     class Meta:
         verbose_name = _("Modèle de comportement de jugement")
         verbose_name_plural = _("Modèles de comportement de jugement")
+
+
+class ModeleAgeSociete(models.Model):
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
+    
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle sans informations complètes")
+        )
+
+    def is_empty(self):
+        return not self.code and not self.libelle
+
+    class Meta:
+        verbose_name = _("Modèle d'age de société")
+        verbose_name_plural = _("Modèles d'age de société")
 
 
 ##########################################################

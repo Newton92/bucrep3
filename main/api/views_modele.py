@@ -421,7 +421,7 @@ class SearchModeleBailView(APIView):
         paginator = Paginator(modele_list, 10)  # 10 éléments par page
         page_number = request.query_params.get("page", 1)
         modele_page = paginator.get_page(page_number)
-        serializer = ModeleBailSerializer(modele_page, many=True)
+        serializer = SearchModeleBailSerializer(modele_page, many=True)
 
         return Response(
             {
@@ -438,7 +438,7 @@ class AddModeleBailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = ModeleBailSerializer(data=request.data)
+        serializer = AddModeleBailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -467,7 +467,7 @@ class EditModeleBailView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ModeleBailSerializer(modele, data=request.data, partial=True)
+        serializer = EditModeleBailSerializer(modele, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -497,6 +497,10 @@ class DeleteModeleBailView(APIView):
             {"message": f"{count} modèles de bail supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
 
 
 class ListModeleNotationView(APIView):
@@ -665,7 +669,7 @@ class SearchModeleAvisCommercialView(APIView):
         paginator = Paginator(modele_list, 10)  # 10 éléments par page
         page_number = request.query_params.get("page", 1)
         modele_page = paginator.get_page(page_number)
-        serializer = ModeleAvisCommercialSerializer(modele_page, many=True)
+        serializer = SearchModeleAvisCommercialSerializer(modele_page, many=True)
 
         return Response(
             {
@@ -682,7 +686,7 @@ class AddModeleAvisCommercialView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = ModeleAvisCommercialSerializer(data=request.data)
+        serializer = AddModeleAvisCommercialSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -711,7 +715,7 @@ class EditModeleAvisCommercialView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ModeleAvisCommercialSerializer(
+        serializer = EditModeleAvisCommercialSerializer(
             modele, data=request.data, partial=True
         )
         if serializer.is_valid():
@@ -1051,7 +1055,7 @@ class SearchModeleComportementPaiementView(APIView):
         paginator = Paginator(modele_list, 10)  # 10 éléments par page
         page_number = request.query_params.get("page", 1)
         modele_page = paginator.get_page(page_number)
-        serializer = ModeleComportementPaiementSerializer(modele_page, many=True)
+        serializer = SearchModeleComportementPaiementSerializer(modele_page, many=True)
 
         return Response(
             {
@@ -1068,7 +1072,7 @@ class AddModeleComportementPaiementView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = ModeleComportementPaiementSerializer(data=request.data)
+        serializer = AddModeleComportementPaiementSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -1097,7 +1101,7 @@ class EditModeleComportementPaiementView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ModeleComportementPaiementSerializer(
+        serializer = EditModeleComportementPaiementSerializer(
             modele, data=request.data, partial=True
         )
         if serializer.is_valid():
@@ -1261,3 +1265,130 @@ class DeleteModeleComportementJugementView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+
+
+
+
+
+
+
+
+class ListModeleAgeSocieteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
+        modele_list = ModeleAgeSociete.objects.filter(
+            Q(code__icontains=search_query) | Q(libelle__icontains=search_query)
+        ).order_by("libelle")
+        paginator = Paginator(modele_list, 10)
+        modele_page = paginator.get_page(page_number)
+        serializer = ModeleAgeSocieteSerializer(modele_page, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": modele_page.has_next(),
+                "previous": modele_page.has_previous(),
+            }
+        )
+
+
+class SearchModeleAgeSocieteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        modele_list = ModeleAgeSociete.objects.filter(
+            Q(code__icontains=search_term) | Q(libelle__icontains=search_term)
+        ).order_by("libelle")
+        paginator = Paginator(modele_list, 10)
+        page_number = request.query_params.get("page", 1)
+        modele_page = paginator.get_page(page_number)
+        serializer = SearchModeleAgeSocieteSerializer(modele_page, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": modele_page.has_next(),
+                "previous": modele_page.has_previous(),
+            }
+        )
+
+
+class AddModeleAgeSocieteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddModeleAgeSocieteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditModeleAgeSocieteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        modele = ModeleAgeSociete.objects.filter(id=id).first()
+        if not modele:
+            return Response(
+                {"detail": "Modèle d'âge de société non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = ModeleAgeSocieteSerializer(modele)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        modele = ModeleAgeSociete.objects.filter(id=id).first()
+        if not modele:
+            return Response(
+                {"detail": "Modèle d'âge de société non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = EditModeleAgeSocieteSerializer(
+            modele, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteModeleAgeSocieteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        modeles = ModeleAgeSociete.objects.filter(id__in=ids)
+        if not modeles.exists():
+            return Response(
+                {
+                    "error": "Aucun modèle d'âge de société trouvé pour les IDs fournis."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = modeles.delete()
+        return Response(
+            {
+                "message": f"{count} modèles d'âge de société supprimés avec succès."
+            },
+            status=status.HTTP_200_OK,
+        )
+

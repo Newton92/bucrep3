@@ -4162,6 +4162,26 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
     )
     
     
+
+@login_required
+def dash_root_modele_age_societe(request):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "modele_age_societe_active": "active",
+        "modele_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
+    return render(
+        request, "main/root/modele/dash_root_modele_age_societe.html", context
+    )
+
+
     
     
     
@@ -5060,6 +5080,9 @@ def dash_validateur_modele_comportement_jugement(request):
     return render(
         request, "main/validateur/modele/dash_root_modele_comportement_jugement.html", context
     )
+
+    
+    
 
 
 @login_required

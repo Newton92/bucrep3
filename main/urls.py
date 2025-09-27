@@ -198,6 +198,11 @@ urlpatterns = [
         name="dash_root_modele_comportement_jugement",
     ),
     path(
+        "root-dashboard/nomenclature/liste-des-modeles-age-societe",
+        dash_root_modele_age_societe,
+        name="dash_root_modele_age_societe",
+    ),
+    path(
         "root-dashboard/nomenclature/liste-des-modeles-information-notation-entreprise",
         dash_root_modele_information_notation_entreprise,
         name="dash_root_modele_information_notation_entreprise",
@@ -793,6 +798,8 @@ urlpatterns = [
         dash_validateur_modele_comportement_jugement,
         name="dash_validateur_modele_comportement_jugement",
     ),
+    
+    
     path(
         "validateur-dashboard/nomenclature/liste-des-modeles-information-notation-entreprise",
         dash_validateur_modele_information_notation_entreprise,
@@ -4610,6 +4617,35 @@ urlpatterns = [
         GenerateReport.as_view(),
         name="generer-report",
     ),
+    
+    
+    
+    path(
+        "api/liste-des-modeles-age-societe/",
+        ListModeleAgeSocieteView.as_view(),
+        name="list-modele-age-societe",
+    ),
+    path(
+        "api/recherche-modele-age-societe/",
+        SearchModeleAgeSocieteView.as_view(),
+        name="search-modele-age-societe",
+    ),
+    path(
+        "api/ajouter-un-modele-age-societe/",
+        AddModeleAgeSocieteView.as_view(),
+        name="add-modele-age-societe",
+    ),
+    path(
+        "api/editer-un-modele-age-societe/<int:id>/",
+        EditModeleAgeSocieteView.as_view(),
+        name="edit-modele-age-societe",
+    ),
+    path(
+        "api/supprimer-des-modeles-age-societe/",
+        DeleteModeleAgeSocieteView.as_view(),
+        name="delete-modele-age-societe",
+    ),
+
     
     
     

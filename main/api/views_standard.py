@@ -474,7 +474,7 @@ class EditCategoryNaceView(APIView):
                 {"detail": "Catégorie non trouvée."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = AddCategoryNaceCodeSerializer(category)
+        serializer = EditCategoryNaceCodeSerializer(category)
         return Response(serializer.data)
 
     def put(self, request, id, *args, **kwargs):

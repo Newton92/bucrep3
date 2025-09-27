@@ -357,6 +357,16 @@ CSRF_COOKIE_HTTPONLY = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
+# Durée de vie d'une session en secondes (30 minutes ici)
+SESSION_COOKIE_AGE = 30 * 60  # 1800 secondes
+
+# Pour supprimer la session quand l’utilisateur ferme le navigateur
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# (Optionnel) Si tu veux que la session expire uniquement après inactivité
+SESSION_SAVE_EVERY_REQUEST = True
+
+
 # python manage.py shell
 # from main.models import CustomUser
 # from rest_framework.authtoken.models import Token
