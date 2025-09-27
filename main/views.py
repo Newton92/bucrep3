@@ -1254,7 +1254,8 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
         pass
-
+    
+    # Recupere l'user connecte
     user = request.user
 
     # Génération des tokens d'accès

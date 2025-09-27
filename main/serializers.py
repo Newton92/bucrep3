@@ -947,12 +947,12 @@ class ResumeSerializer(serializers.ModelSerializer):
 
     def validate_capital_social(self, value):
         if not isinstance(value, (int, float, decimal.Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
+            raise ValidationError("La valeur doit être un nombre décimale.")
         return value
 
     def validate_chiffre_affaire(self, value):
         if not isinstance(value, (int, float, decimal.Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
+            raise ValidationError("La valeur doit être un nombre décimale.")
         return value
 
     def validate_resultat_net(self, value):
@@ -962,12 +962,12 @@ class ResumeSerializer(serializers.ModelSerializer):
 
     def validate_capitaux_propres(self, value):
         if not isinstance(value, (int, float, decimal.Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
+            raise ValidationError("La valeur doit être un nombre décimale.")
         return value
 
     def validate_nombre_employe(self, value):
         if not isinstance(value, (int, float, decimal.Decimal)):
-            raise ValidationError("La valeur doit être un nombre décimal.")
+            raise ValidationError("La valeur doit être un nombre décimale.")
         return value
 
 

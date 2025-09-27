@@ -198,7 +198,7 @@ urlpatterns = [
         name="dash_root_modele_comportement_jugement",
     ),
     path(
-        "root-dashboard/nomenclature/liste-des-modeles-age-societe",
+        "root-dashboard/nomenclature/liste-des-modeles-ages-societe",
         dash_root_modele_age_societe,
         name="dash_root_modele_age_societe",
     ),

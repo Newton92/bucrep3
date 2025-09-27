@@ -1012,7 +1012,7 @@ class GenerateReport(APIView):
         # Footer advice
         footer_1 = "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages-intérêts."
         footer_2 = "Acremac s'engage à mettre en œuvre avec diligence les "
-        footer_3 = "moyens à sa disposition sans être liée par une obligation de résultat."
+        footer_3 = "moyens à sa disposition sans être liée par une obligation de résultat.."
             
             
         # Récupération des données financières pour les 3 dernières années

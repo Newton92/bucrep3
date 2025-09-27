@@ -1100,7 +1100,7 @@ def get_structured_actif_data(acheteur, years):
         "ACTIF IMMOBILISÉ": [
             {'label': "Capital souscrit non appelé", 'key': 'capital_souscrit_non_app'},
             {'label': "Frais de recherche et développement", 'key': 'frais_recherche_developpement'},
-            {'label': "Brevet, licence, logiciels", 'key': 'brevet_licence_logiciels'},
+            {'label': "Brevets, licences, logiciels", 'key': 'brevet_licence_logiciels'},
             {'label': "Fonds commercial", 'key': 'fonds_commercial'},
             {'label': "Autres immobilisations incorporelles", 'key': 'autres_immobilisations_incorporelles'},
             {'label': "Terrains", 'key': 'terrains'},

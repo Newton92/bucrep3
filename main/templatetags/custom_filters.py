@@ -50,3 +50,28 @@ def floatformat(value, arg='-2'):
         
     except (ValueError, TypeError):
         return "N/A"
+
+
+
+@register.filter
+def floatformattwo(value, arg='-1'):
+    """
+    Affiche une valeur décimale avec le nombre de décimales spécifié.
+    Gère les valeurs None et non numériques.
+    """
+    try:
+        if value is None or not isinstance(value, (int, float, Decimal)):
+            return "N/A"
+        
+        value = float(value)
+        arg = int(arg)
+        
+        # Pour les nombres négatifs, on supprime le signe de l'argument
+        if arg < 0:
+            arg = -arg
+        
+        format_string = f'{{:.{arg}f}}'
+        return format_string.format(value).replace('.', ',')
+        
+    except (ValueError, TypeError):
+        return "N/A"
