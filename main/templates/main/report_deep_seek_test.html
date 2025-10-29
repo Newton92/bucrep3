@@ -1,4 +1,4 @@
-{% load custom_filters %}
+{% load static custom_filters %}
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -580,17 +580,25 @@
 
             </div>
 
-            <div class="risk-gauge-container" style="text-align: center; margin: 20px 0;">
-                <img src="data:image/png;base64,{{ summary_and_opinion.risk_gauge_base64 }}" 
-                    alt="Jauge d'évaluation du risque"
-                    style="max-width: 80%; height: auto; display: block; margin: 0 auto;">
+            <div class="row text-center">
+                <!-- Colonne de gauche : Affichage de l'image SVG -->
+                <div class="col-md-6 text-center section">
+
+                    {% for i in "0123456789" %}
+                        {% if summary_and_opinion.risk_rating_value|stringformat:"s" == i %}
+                        <img
+                            src="{% static 'riskrating/'|add:i|add:'.svg' %}"
+                            alt="Score de risque : {{ summary_and_opinion.risk_rating_value }}/9"
+                            class="img-fluid"
+                            style="max-height: 200px;"
+                        >
+                        {% endif %}
+                    {% endfor %}
+                </div>
             </div>
 
-            <div class="risk-details">
-                <p><strong>Score Calculé :</strong> {{ summary_and_opinion.risk_rating_value }} / 9</p>
-                
-                <p><strong>Explication de la Cotation :</strong> {{ summary_and_opinion.cotation_du_risque }}</p>
-            </div>
+
+
 
             
             <table>
