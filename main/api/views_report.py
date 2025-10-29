@@ -673,6 +673,400 @@ def get_charts_data_test(actifs_by_year, passifs_by_year, ratios_by_year_dict, y
 
 
 
+# Dans vos fichiers d'outils, sous get_base64_chart2 par exemple
+import numpy as np
+
+def get_risk_gauge_chart_two(score):
+    """
+    Génère une jauge de risque (demi-cercle) basée sur un score de 1 à 9.
+    """
+    if score is None:
+        score = 1 # Valeur par défaut si le score est manquant
+
+    # Définition des couleurs et des bornes (Low, Medium, High, Very High)
+    # 9 points de risque, divisés en 5 zones
+    zones = [
+        (1, 3, 'green'),   # 1-3 : Low Risk
+        (4, 5, 'yellow'),  # 4-5 : Medium Risk
+        (6, 7, 'orange'),  # 6-7 : High Risk
+        (8, 9, 'red'),     # 8-9 : Very High Risk
+    ]
+    
+    # Cartographie de l'angle du graphique (0 à 180 degrés)
+    max_score = 9
+    angle_max = 180
+    
+    # Calculer l'angle de l'aiguille pour le score
+    angle_score = (score - 1) / (max_score - 1) * angle_max
+    
+    # Conversion de l'angle du graphique à l'angle trigonométrique (cadran inversé)
+    angle_aiguille = 90 - angle_score  # 90° au milieu, 180° à gauche, 0° à droite
+    
+    # Créer la figure Matplotlib
+    fig, ax = plt.subplots(figsize=(6, 4), subplot_kw={'projection': 'polar'})
+    
+    # --- Tracé des zones de risque ---
+    for start_score, end_score, color in zones:
+        start_angle = (start_score - 1) / (max_score - 1) * angle_max
+        end_angle = (end_score) / (max_score - 1) * angle_max
+        
+        # Inverser l'ordre pour le sens anti-horaire
+        ax.bar(
+            np.radians(angle_max - end_angle), # Position de départ
+            height=0.5, 
+            width=np.radians(end_angle - start_angle), # Largeur de la zone
+            bottom=0,
+            color=color,
+            linewidth=0,
+            align='edge'
+        )
+
+    # --- Configuration du cadran ---
+    ax.set_theta_zero_location("N")  # Le 0 est en haut (Nord)
+    ax.set_theta_direction(-1)       # Rotation horaire
+    ax.set_rticks([])                # Cacher les rayons
+    ax.set_xticks(np.radians(np.linspace(180, 0, max_score + 1))) # Étiquettes des scores
+    ax.set_xticklabels([str(i) for i in range(1, max_score + 1)] + ['']) # Afficher les chiffres 1 à 9
+    ax.set_rlim(0, 1) # Rayon
+    ax.spines['polar'].set_visible(False) # Cacher le cercle extérieur
+    
+    # --- Positionnement de l'aiguille ---
+    ax.plot(
+        np.radians([angle_max - angle_score, angle_max - angle_score]), 
+        [0, 0.5], 
+        color='black', 
+        linewidth=3, 
+        marker='^',
+        markersize=10
+    )
+    
+    ax.set_title(f"Évaluation du Risque : Score {score}/9", va='bottom')
+
+    plt.tight_layout()
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    plt.close(fig)
+
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
+
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import base64
+
+def get_risk_gauge_chart_one(score):
+    """
+    Génère une jauge de risque stylisée comme l'exemple fourni.
+    Le score est supposé être entre 1 et 9.
+    """
+    if score is None:
+        score = 1 # Valeur par défaut si le score est manquant
+
+    # Définition des zones de risque (score min, score max, couleur, libellé)
+    # Les scores sont de 1 à 9
+    zones_config = [
+        (1, 2, 'lightgreen', 'VERY LOW'),   # 1-2
+        (3, 4, 'green',      'LOW'),        # 3-4
+        (5, 6, 'gold',       'MEDIUM'),     # 5-6
+        (7, 8, 'orange',     'HIGH'),       # 7-8
+        (9, 9, 'red',        'CRITICAL'),   # 9
+    ]
+    
+    # Calcul des angles pour le demi-cercle (0 à 180 degrés)
+    max_score = 9
+    angle_total = 180
+    
+    # Créer la figure Matplotlib
+    fig, ax = plt.subplots(figsize=(8, 4), subplot_kw={'projection': 'polar'})
+    
+    # --- Tracé des zones de risque ---
+    for start_score, end_score, color, label in zones_config:
+        # Calculer les angles correspondants aux scores
+        # Les angles vont de 180 (pour le score 1) à 0 (pour le score 9)
+        start_angle_deg = angle_total - ((start_score - 1) / (max_score - 1)) * angle_total
+        end_angle_deg = angle_total - ((end_score - 1) / (max_score - 1)) * angle_total
+        
+        # Inverser start_angle_deg et end_angle_deg pour le tracé du bar si nécessaire
+        # et s'assurer que l'angle de départ est toujours plus petit pour np.radians
+        bar_start_angle = np.radians(min(start_angle_deg, end_angle_deg))
+        bar_width_angle = np.radians(abs(start_angle_deg - end_angle_deg))
+
+        ax.bar(
+            bar_start_angle,
+            height=0.5, # Épaisseur de la bande
+            width=bar_width_angle,
+            bottom=0,
+            color=color,
+            linewidth=0,
+            align='edge' # Aligner au bord de l'angle
+        )
+        
+        # Ajouter les étiquettes de texte au-dessus des zones
+        mid_angle_rad = np.radians(angle_total - (((start_score + end_score) / 2 - 1) / (max_score - 1)) * angle_total)
+        
+        # Ajustement pour éviter que "CRITICAL" ne se superpose au titre
+        text_offset_angle = 10 if label == 'CRITICAL' else 0
+
+        ax.text(
+            mid_angle_rad, 
+            0.65, # Distance radiale de l'étiquette
+            label, 
+            ha='center', 
+            va='center', 
+            fontsize=9, 
+            fontweight='bold', 
+            color='black',
+            rotation=(np.degrees(mid_angle_rad) - 90 + text_offset_angle) % 180 - 90 # Rotation pour suivre la courbure
+        )
+
+
+    # --- Configuration du cadran ---
+    ax.set_theta_zero_location("W")  # Le 0 est à gauche (Ouest)
+    ax.set_theta_direction(1)        # Rotation anti-horaire
+    ax.set_rticks([])                # Cacher les rayons
+    ax.set_xticks([])                # Cacher les étiquettes des ticks (les chiffres 1 à 9 ne sont pas dans l'exemple)
+    ax.set_rlim(0, 1)                # Rayon
+    ax.spines['polar'].set_visible(False) # Cacher le cercle extérieur
+    
+    # --- Positionnement de l'aiguille ---
+    # Convertir le score en angle : score 1 -> 180 deg, score 9 -> 0 deg
+    needle_angle_deg = angle_total - ((score - 1) / (max_score - 1)) * angle_total
+    
+    ax.plot(
+        np.radians([needle_angle_deg, needle_angle_deg]), 
+        [0, 0.5], # L'aiguille va du centre jusqu'à la moitié du rayon de la jauge
+        color='black', 
+        linewidth=4, 
+        marker='^',
+        markersize=12,
+        markeredgecolor='black',
+        markerfacecolor='black'
+    )
+    
+    # Texte "RISK METER" en haut
+    ax.text(np.radians(90), 0.9, "RISK METER", ha='center', va='center', fontsize=12, fontweight='bold')
+    
+    plt.tight_layout()
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', transparent=True) # Utiliser transparent=True pour un meilleur rendu
+    buffer.seek(0)
+    plt.close(fig)
+
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import base64
+
+def get_risk_gauge_chart(score):
+    """
+    Génère une jauge de risque stylisée exactement comme l'exemple fourni.
+    Le score est supposé être entre 1 et 9.
+    """
+    if score is None:
+        score = 1 # Valeur par défaut si le score est manquant, ou gérer comme vous le souhaitez
+
+    # Définition des zones de risque (couleur, libellé, angles de début/fin en degrés)
+    # Total de 180 degrés pour le demi-cercle (de -90 à 90 en coordonnées cartésiennes)
+    # Ou de 180 (gauche) à 0 (droite) dans notre système polaire ajusté
+    
+    # Pour un score de 1 à 9, nous avons 8 "intervalles" (9-1)
+    # Chaque intervalle fait 180 / 8 = 22.5 degrés
+    
+    # Mapping des scores aux angles (où 1 = 180 deg, 9 = 0 deg)
+    def score_to_angle(s):
+        return 180 - ((s - 1) / (9 - 1)) * 180
+
+    zones_config = [
+        {'label': 'VERY LOW', 'color': '#92D050', 'start_score': 1, 'end_score': 2}, # Vert clair
+        {'label': 'LOW', 'color': '#00B050', 'start_score': 3, 'end_score': 4},     # Vert foncé
+        {'label': 'MEDIUM', 'color': '#FFC000', 'start_score': 5, 'end_score': 6}, # Jaune/Or
+        {'label': 'HIGH', 'color': '#FF7000', 'start_score': 7, 'end_score': 8},   # Orange
+        {'label': 'CRITICAL', 'color': '#FF0000', 'start_score': 9, 'end_score': 9}, # Rouge
+    ]
+    
+    max_score = 9
+    
+    # Créer la figure Matplotlib
+    fig, ax = plt.subplots(figsize=(8, 4.5), subplot_kw={'projection': 'polar'})
+    
+    # --- Configuration du cadran ---
+    ax.set_theta_zero_location("W")  # Le 0 est à gauche (Ouest)
+    ax.set_theta_direction(1)        # Rotation anti-horaire (pour que 180 soit à gauche, 0 à droite)
+    ax.set_rticks([])                # Cacher les rayons
+    ax.set_xticks([])                # Cacher les étiquettes des ticks
+    ax.set_rlim(0, 1)                # Rayon
+    ax.spines['polar'].set_visible(False) # Cacher le cercle extérieur
+    
+    # --- Tracé des zones de risque ---
+    for zone in zones_config:
+        start_angle_rad = np.radians(score_to_angle(zone['start_score']))
+        end_angle_rad = np.radians(score_to_angle(zone['end_score']))
+        
+        # Pour dessiner les arcs, bar en mode polaire
+        # L'angle doit être le "milieu" de la barre, et la largeur sa "taille"
+        # Il faut que start < end pour np.arange
+        # Pour une barre allant de A à B, on la positionne à (A+B)/2 avec une largeur de B-A
+        
+        # Inverser pour que les angles soient croissants de gauche à droite
+        bar_center_rad = (start_angle_rad + end_angle_rad) / 2
+        bar_width_rad = abs(start_angle_rad - end_angle_rad)
+
+        ax.bar(
+            bar_center_rad,
+            height=0.4, # Épaisseur de la bande
+            width=bar_width_rad,
+            bottom=0,
+            color=zone['color'],
+            linewidth=0,
+            zorder=1 # S'assurer que les zones sont en arrière-plan
+        )
+        
+        # Ajouter les étiquettes de texte
+        label_angle_rad = (start_angle_rad + end_angle_rad) / 2
+        
+        # Ajustement pour la rotation du texte afin qu'il suive la courbure
+        # L'angle doit être par rapport à l'horizontale (90 pour vertical)
+        text_rotation_deg = np.degrees(label_angle_rad) - 90
+        
+        ax.text(
+            label_angle_rad, 
+            0.6, # Distance radiale de l'étiquette
+            zone['label'], 
+            ha='center', 
+            va='center', 
+            fontsize=10, 
+            fontweight='bold', 
+            color='black',
+            rotation=text_rotation_deg,
+            rotation_mode='anchor' # Permet une rotation plus naturelle
+        )
+
+    # --- Positionnement de l'aiguille ---
+    needle_angle_rad = np.radians(score_to_angle(score))
+    
+    ax.plot(
+        [needle_angle_rad, needle_angle_rad], 
+        [0, 0.4], # L'aiguille va du centre jusqu'à la hauteur des barres de couleur
+        color='black', 
+        linewidth=3, 
+        marker='^',
+        markersize=10,
+        markeredgecolor='black',
+        markerfacecolor='black',
+        zorder=2 # S'assurer que l'aiguille est au-dessus des zones
+    )
+    
+    # Texte "RISK METER" en haut, centré
+    ax.text(np.radians(90), 0.9, "RISK METER", ha='center', va='center', fontsize=14, fontweight='bold')
+    
+    plt.tight_layout()
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', transparent=True, dpi=300) # Augmenter DPI pour meilleure qualité
+    buffer.seek(0)
+    plt.close(fig)
+
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+
+
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import io, base64
+
+def get_risk_gauge_base64(score, max_score=9):
+    fig, ax = plt.subplots(figsize=(6, 3), subplot_kw={'projection': 'polar'})
+    ax.set_theta_offset(np.pi/2)
+    ax.set_theta_direction(-1)
+
+    # Zones colorées
+    categories = [
+        (0, 2, 'green'),
+        (2, 4, 'yellow'),
+        (4, 6, 'orange'),
+        (6, 9, 'red')
+    ]
+
+    for start, end, color in categories:
+        ax.bar(
+            np.linspace(np.radians(start*20), np.radians(end*20), 100),
+            np.ones(100), width=0.05, bottom=0,
+            color=color, edgecolor=color, alpha=0.7
+        )
+
+    # Aiguille
+    angle = np.radians(score * 20)
+    ax.plot([angle, angle], [0, 1], color='black', linewidth=3)
+    ax.set_axis_off()
+
+    # Sauvegarde en mémoire
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+
+    # Conversion en base64
+    return base64.b64encode(buf.read()).decode("utf-8")
+
+
+
+
+
+import base64
+import io
+import matplotlib.pyplot as plt
+from django.template.loader import render_to_string
+from weasyprint import HTML
+
+def generate_gauge(score=3):
+    # Création d'une petite jauge avec matplotlib
+    fig, ax = plt.subplots(figsize=(4, 2))
+    ax.barh([0], [score], color="red")
+    ax.set_xlim(0, 5)
+    ax.set_axis_off()
+
+    # Sauvegarde en mémoire (buffer)
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+
+    # Encodage en base64
+    return base64.b64encode(buf.read()).decode("utf-8")
+
+def my_view(request):
+    # génération de l’image base64
+    risk_gauge_base64 = generate_gauge(3)
+
+    context = {
+        "summary_and_opinion": {
+            "title_5": "EVALUATION DU RISQUE",
+            "risk_gauge_base64": risk_gauge_base64,
+        }
+    }
+
+    html_string = render_to_string("rapport.html", context)
+    pdf_file = HTML(string=html_string).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type="application/pdf")
+    response["Content-Disposition"] = "inline; filename=rapport.pdf"
+    return response
+
+
 
 # === Vues Report === #
 
@@ -1060,6 +1454,12 @@ class GenerateReport(APIView):
         notes_str = ", ".join(note_values)
         
         
+        # Décodez et sauvegardez l'image si vous voulez la voir localement
+        # with open(f"risk_gauge_score_{score_exemple}.png", "wb") as f:
+        #     f.write(base64.b64decode(base64_image))
+        # print(f"Image sauvegardée pour le score {score_exemple}")
+        
+        
         def format_currency(value):
             """Formate un nombre décimal en chaîne avec des séparateurs de milliers."""
             if value is None:
@@ -1167,6 +1567,14 @@ class GenerateReport(APIView):
             ]
         }
 
+
+        # Calculer le score
+        risk_score = risk_rating.calculate_risk_score() if risk_rating else 1
+
+        # Générer l'image de la jauge en Base64
+        risk_gauge_base64 = get_risk_gauge_chart(risk_score)
+
+
         # 4. Générer les graphiques en Base64
         charts_data = {
             'structure_financiere': get_base64_chart2(
@@ -1273,6 +1681,10 @@ class GenerateReport(APIView):
             },
             "summary_and_opinion": {
                 "title_5": "EVALUATION DU RISQUE",
+                # Utiliser la chaîne Base64 pour l'affichage de la jauge
+                "risk_gauge_base64": risk_gauge_base64,
+                #"get_risk_gauge_image": get_risk_gauge_image,
+                "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
                 "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
                 "situation_liquidite": "Oui" if risk_rating and risk_rating.situation_liquidite else "Non",

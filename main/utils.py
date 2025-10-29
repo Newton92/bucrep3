@@ -1481,3 +1481,62 @@ def get_structured_ratios_data(acheteur, years):
         structured_data[section] = rows_data
         
     return structured_data
+
+
+
+
+
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+from django.conf import settings
+
+def generate_risk_gauge(score, max_score=9, filename="risk_gauge.png"):
+    fig, ax = plt.subplots(figsize=(6, 3), subplot_kw={'projection': 'polar'})
+    ax.set_theta_offset(np.pi/2)
+    ax.set_theta_direction(-1)
+
+    # Définition des zones colorées
+    categories = [
+        (0, 2, 'green', 'Low Risk'),
+        (2, 4, 'yellow', 'Medium Risk'),
+        (4, 6, 'orange', 'High Risk'),
+        (6, 9, 'red', 'Very High Risk')
+    ]
+
+    for start, end, color, label in categories:
+        ax.bar(
+            x=np.linspace(np.radians(start * 20), np.radians(end * 20), 100),
+            height=np.ones(100),
+            width=0.05,
+            bottom=0,
+            color=color,
+            edgecolor=color,
+            alpha=0.7
+        )
+
+    # Aiguille
+    angle = np.radians(score * 20)  # score → angle
+    ax.plot([angle, angle], [0, 1], color='black', linewidth=3)
+
+    # Retirer les axes
+    ax.set_axis_off()
+
+    # Titre
+    plt.title("EVALUATION DU RISQUE", fontsize=14, fontweight="bold", pad=20)
+
+    # Texte en bas
+    risk_level = "Low Risk" if score <= 2 else \
+                 "Medium Risk" if score <= 4 else \
+                 "High Risk" if score <= 6 else \
+                 "Very High Risk"
+    plt.figtext(0.5, 0.01, f"Score : {score} / {max_score} → {risk_level}",
+                ha="center", fontsize=12, fontweight="bold")
+
+    # Sauvegarder dans MEDIA
+    filepath = os.path.join(settings.MEDIA_ROOT, filename)
+    plt.savefig(filepath, bbox_inches="tight")
+    plt.close()
+    return os.path.join(settings.MEDIA_URL, filename)  # chemin pour l’affichage

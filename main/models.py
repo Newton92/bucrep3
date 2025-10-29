@@ -1747,6 +1747,12 @@ class RiskRating(models.Model):
 
     def __str__(self):
         return f"RiskRating {self.pk} - {self.acheteur}"
+    
+    def get_risk_gauge_image(self):
+        score = self.calculate_risk_score()
+        filename = f"risk_gauge_{self.pk}.png"
+        return generate_risk_gauge(score, filename=filename)
+    
 
     def get_cotation_explication(self):
         """Retourne l'explication de la cotation du risque."""
