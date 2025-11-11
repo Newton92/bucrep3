@@ -8,6 +8,10 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
 from .models import *
+from django.shortcuts import get_object_or_404
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
+from main.models import ScoringSansBilanAcheteur
 
 # Vos serializers ici !
 
@@ -6682,3 +6686,197 @@ class EditResultatAnglaisSerializer(serializers.ModelSerializer):
             'autres_revenus', 'frais_financier', 'charge_impot_sur_revenu',
             'autres_elements_resultat_global'
         ]
+        
+        
+        
+        
+# main/serializers.py
+from rest_framework import serializers
+from .models import (
+    ScoringSansBilanAcheteur,
+    FormeJuridique,
+    ModeleComportementPaiement,
+    ModeleAgeSociete,
+    ModeleAvisCommercial,
+    ModeleBail,
+    CategoryNaceCode,
+)
+
+# serializers.py
+class ModeleComportementPaiementScoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementPaiement
+        fields = ["id", "code", "libelle", "poids"]
+
+class FormeJuridiqueScoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormeJuridique
+        fields = ["id", "code", "libelle", "poids"]
+
+class ModeleAgeSocieteScoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAgeSociete
+        fields = ["id", "code", "libelle", "poids"]
+
+class ModeleAvisCommercialScoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleAvisCommercial
+        fields = ["id", "code", "libelle", "poids"]
+
+class ModeleBailScoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleBail
+        fields = ["id", "code", "libelle", "poids"]
+
+class CategoryNaceCodeScoringSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNaceCode
+        fields = ["id", "code", "libelle", "poids"]
+    
+    
+    
+class ScoringSansBilanAcheteurSerializer(serializers.ModelSerializer):
+    # Champs en lecture seule pour l'affichage
+    categories_nace_ref = CategoryNaceCodeScoringSerializer(many=True, read_only=True)
+    comportement_de_paiement_ref = ModeleComportementPaiementScoringSerializer(read_only=True)
+    age_company_ref = ModeleAgeSocieteScoringSerializer(read_only=True)
+    forme_juridique = FormeJuridiqueScoringSerializer(read_only=True)
+    avis_commercial_ref = ModeleAvisCommercialScoringSerializer(read_only=True)
+    locaux_ref = ModeleBailScoringSerializer(read_only=True)
+    
+    # Champs en écriture pour la mise à jour
+    comportement_de_paiement_ref_id = serializers.PrimaryKeyRelatedField(
+        queryset=ModeleComportementPaiement.objects.all(), 
+        source='comportement_de_paiement_ref', 
+        write_only=True, 
+        required=False,
+        allow_null=True
+    )
+    age_company_ref_id = serializers.PrimaryKeyRelatedField(
+        queryset=ModeleAgeSociete.objects.all(), 
+        source='age_company_ref', 
+        write_only=True, 
+        required=False,
+        allow_null=True
+    )
+    forme_juridique_id = serializers.PrimaryKeyRelatedField(
+        queryset=FormeJuridique.objects.all(), 
+        source='forme_juridique', 
+        write_only=True, 
+        required=False,
+        allow_null=True
+    )
+    avis_commercial_ref_id = serializers.PrimaryKeyRelatedField(
+        queryset=ModeleAvisCommercial.objects.all(), 
+        source='avis_commercial_ref', 
+        write_only=True, 
+        required=False,
+        allow_null=True
+    )
+    locaux_ref_id = serializers.PrimaryKeyRelatedField(
+        queryset=ModeleBail.objects.all(), 
+        source='locaux_ref', 
+        write_only=True, 
+        required=False,
+        allow_null=True
+    )
+    categories_nace_ref_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model = ScoringSansBilanAcheteur
+        fields = [
+            "id", "code", "acheteur", 
+            "comportement_de_paiement_ref", "comportement_de_paiement_ref_id",
+            "age_company_ref", "age_company_ref_id",
+            "forme_juridique", "forme_juridique_id", 
+            "avis_commercial_ref", "avis_commercial_ref_id",
+            "locaux_ref", "locaux_ref_id",
+            "categories_nace_ref", "categories_nace_ref_ids",
+            "scoring_value", "interpretation", "commentaire", 
+            "created_at", "updated_at"
+        ]
+        read_only_fields = ["scoring_value", "interpretation", "created_at", "updated_at"]
+        
+    def get_object(self):
+        acheteur_id = self.kwargs.get("acheteur_id")
+        return get_object_or_404(ScoringSansBilanAcheteur, acheteur_id=acheteur_id)
+
+    def update(self, instance, validated_data):
+        print("🔄 Mise à jour du scoring...")
+        
+        # Extraire les données pour les relations ManyToMany
+        categories_nace_ids = validated_data.pop('categories_nace_ref_ids', None)
+        
+        # Mettre à jour les champs simples
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Sauvegarder d'abord pour avoir un ID
+        instance.save()
+        
+        # Mettre à jour les catégories NACE
+        if categories_nace_ids is not None:
+            instance.categories_nace_ref.set(categories_nace_ids)
+            print(f"📝 Catégories NACE mises à jour: {categories_nace_ids}")
+        
+        # Sauvegarder à nouveau pour recalculer le score
+        instance.save()
+        
+        print(f"🎯 Score final: {instance.scoring_value}")
+        return instance
+
+
+
+
+
+from rest_framework import serializers
+from django.db import models
+from decimal import Decimal
+
+class ScoreACREMACBilanSerializer(serializers.Serializer):
+    acheteur_id = serializers.IntegerField(required=True)
+    annee_n = serializers.IntegerField(required=True)
+    annee_n1 = serializers.IntegerField(required=True)
+    annee_n2 = serializers.IntegerField(required=True)
+    
+    # Données calculées (en lecture seule)
+    score_n = serializers.FloatField(read_only=True)
+    score_n1 = serializers.FloatField(read_only=True)
+    score_n2 = serializers.FloatField(read_only=True)
+    probabilite_defaillance = serializers.FloatField(read_only=True)
+    classe_risque = serializers.CharField(read_only=True)
+    commentaire = serializers.CharField(read_only=True)
+    
+    # Ratios pour l'année N
+    r1_ff_ebe = serializers.FloatField(read_only=True)
+    r2_creances_dettes_ct = serializers.FloatField(read_only=True)
+    r3_capitaux_permanents_passif = serializers.FloatField(read_only=True)
+    r4_va_ca = serializers.FloatField(read_only=True)
+    r5_tresorerie_ventes_j = serializers.FloatField(read_only=True)
+    r6_fdr_ca_j = serializers.FloatField(read_only=True)
+
+class CalculScoreACREMACBilanSerializer(serializers.Serializer):
+    # Données d'entrée pour le calcul
+    frais_financiers = serializers.DecimalField(max_digits=15, decimal_places=2)
+    ebe = serializers.DecimalField(max_digits=15, decimal_places=2)
+    creances_disponibilites = serializers.DecimalField(max_digits=15, decimal_places=2)
+    dettes_court_terme = serializers.DecimalField(max_digits=15, decimal_places=2)
+    capitaux_permanents = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_passif = serializers.DecimalField(max_digits=15, decimal_places=2)
+    valeur_ajoutee = serializers.DecimalField(max_digits=15, decimal_places=2)
+    chiffre_affaires = serializers.DecimalField(max_digits=15, decimal_places=2)
+    tresorerie = serializers.DecimalField(max_digits=15, decimal_places=2)
+    fonds_roulement = serializers.DecimalField(max_digits=15, decimal_places=2)
+    
+    # Coefficients fixes
+    coefficient_constante = serializers.FloatField(default=0.57)
+    coefficient_r1 = serializers.FloatField(default=0.0535)
+    coefficient_r2 = serializers.FloatField(default=0.0115)
+    coefficient_r3 = serializers.FloatField(default=0.0371)
+    coefficient_r4 = serializers.FloatField(default=0.0246)
+    coefficient_r5 = serializers.FloatField(default=0.0115)
+    coefficient_r6 = serializers.FloatField(default=0.0096)

@@ -1279,6 +1279,64 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
 
 
 @login_required
+def dash_root_manage_acheteur_scoring(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    
+    # Recupere l'user connecte
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+    }
+    return render(
+        request,
+        "main/root/acheteur/scoring/dash_root_manage_acheteur_scoring.html",
+        context,
+    )
+
+
+@login_required
+def dash_root_manage_acheteur_scoring_with_bilan(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    
+    # Recupere l'user connecte
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+    }
+    return render(
+        request,
+        "main/root/acheteur/scoring/dash_root_manage_acheteur_scoring_with_bilan.html",
+        context,
+    )
+
+
+@login_required
 def dash_root_manage_acheteur_data_save(request, acheteur_id):
     token = request.GET.get("token")
     if not token:

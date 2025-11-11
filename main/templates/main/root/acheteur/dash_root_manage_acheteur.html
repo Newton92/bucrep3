@@ -258,6 +258,12 @@
                 <a href="{% url 'dash_root_conformite_acheteur' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-0">Conformite & Reglementation &nbsp;</a>
 
                 <br><br>
+                
+                <a href="{% url 'dash_root_manage_acheteur_scoring' id_acheteur %}" target="_blank" class="btn btn-secondary btn-sm mb-0">Scoring sans bilan &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}" target="_blank" class="btn btn-secondary btn-sm mb-0">Scoring avec bilan &nbsp;</a>
+                <br><br>
+                
+                
             </div>
         </div>
         <!-- Wishlist END -->
@@ -632,6 +638,29 @@ $(document).ready(function() {
 <script>
 $(document).ready(function() {
 
+    // Fonction pour obtenir la langue active
+    function getActiveLanguage() {
+        // 1. Vérifie d'abord le champ de sélection dans le modal
+        const selectedLanguage = $('#language').val();
+        if (selectedLanguage) {
+            return selectedLanguage;
+        }
+        // 2. Sinon, vérifie l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('language');
+        if (urlLang) {
+            return urlLang;
+        }
+        // 3. Sinon, vérifie le localStorage
+        const storedLang = localStorage.getItem('site_lang');
+        if (storedLang) {
+            return storedLang;
+        }
+        // 4. Par défaut, retourne 'fr'
+        return 'fr';
+    }
+
+
     let selectedCommandeId = null;
     let searchTimeout = null;
     
@@ -727,6 +756,7 @@ $(document).ready(function() {
         }*/
         
         // Récupération des valeurs
+        const languageSite = getActiveLanguage(); // Récupère la langue active
         const commandeId = $('#commandeId').val() || selectedCommandeId;
         const language = $('#language').val();
         const currency = $('#currency').val();

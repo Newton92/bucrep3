@@ -109,12 +109,56 @@
     }
     </style>
 
-
-
-
-
     <!-- Theme CSS -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/css/style.css' %}">
+
+
+    <script>
+        // Fonction pour masquer la barre Google Translate (Bandeau bleu)
+        function hideGoogleToolbar() {
+            const toolbar = document.querySelector('.goog-te-banner-frame.skiptranslate');
+            if (toolbar) {
+                toolbar.style.display = 'none';
+            }
+            document.body.style.top = '0px';
+        }
+
+        // Fonction pour obtenir la langue depuis l'URL ou le localStorage
+        function getCurrentLanguage() {
+            // 1. Vérifie d'abord l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('language');
+            if (urlLang) {
+                return urlLang;
+            }
+            // 2. Sinon, vérifie le localStorage
+            const storedLang = localStorage.getItem('site_lang');
+            if (storedLang) {
+                return storedLang;
+            }
+            // 3. Par défaut, retourne 'fr'
+            return 'fr';
+        }
+
+        // Fonction pour mettre à jour l'URL avec la langue
+        function updateUrlLanguage(lang) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('language', lang);
+            window.history.replaceState({}, '', url.toString());
+        }
+
+        // Fonction pour appliquer la langue au chargement de la page
+        function applyLanguageOnLoad() {
+            const currentLang = getCurrentLanguage();
+            updateUrlLanguage(currentLang);
+        }
+
+        // Exécuter au chargement de la page
+        document.addEventListener("DOMContentLoaded", function() {
+            applyLanguageOnLoad();
+        });
+    </script>
+
 
 
 
@@ -978,6 +1022,38 @@
             document.body.style.top = '0px';
         }
 
+        function getCurrentGoogleTranslateLanguage() {
+            // Google Translate ajoute un attribut 'data-goog-translate-language' sur la balise <html>
+            const htmlElement = document.documentElement;
+            const currentLang = htmlElement.getAttribute('data-goog-translate-language');
+            return currentLang || localStorage.getItem('site_lang') || 'fr';
+        }
+
+        function updateUrlLanguage(lang) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('language', lang);
+            window.history.replaceState({}, '', url.toString());
+        }
+
+        function getCurrentLanguage() {
+            // 1. Vérifie d'abord l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlLang = urlParams.get('language');
+            if (urlLang) {
+                return urlLang;
+            }
+
+            // 2. Sinon, vérifie le localStorage
+            const storedLang = localStorage.getItem('site_lang');
+            if (storedLang) {
+                return storedLang;
+            }
+
+            // 3. Par défaut, retourne 'fr'
+            return 'fr';
+        }
+
+
         document.addEventListener("DOMContentLoaded", function () {
             const flags = {
                 fr: document.getElementById("flag-fr"),
@@ -1030,6 +1106,7 @@
                     currentLang = lang;
                     localStorage.setItem('site_lang', lang);
                     updateActiveFlag(lang);
+                    updateUrlLanguage(lang); // Ajoutez cette ligne
 
                 } catch (err) {
                     Swal.fire({
@@ -1059,6 +1136,8 @@
             setInterval(hideGoogleToolbar, 500);
         });
     </script>
+
+
 
 
 

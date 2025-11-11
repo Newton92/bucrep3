@@ -1867,7 +1867,11 @@ class GenerateReport(APIView):
             if format_report.upper() == 'PDF':
                 print("Génération du PDF...")  # Debug
                 # Rendre le template HTML
-                html_string = render_to_string('main/report_deep_seek_test.html', report_data)
+                if(language_report == 'fr'):
+                    html_string = render_to_string('main/report_deep_seek_test_english.html', report_data)
+                else:
+                    
+                    html_string = render_to_string('main/report_deep_seek_test_english.html', report_data)
                 
                 # Conversion en PDF avec WeasyPrint
                 response = HttpResponse(content_type='application/pdf')

@@ -22,6 +22,18 @@ from main.api.views_warning import *
 from main.api.views_account import *
 from main.api.views_report import *
 from main.views import *
+from main.api.views_scoring import (
+    ScoringSansBilanAcheteurDetailView,
+    FormeJuridiqueScoringListView,
+    ModeleComportementPaiementScoringListView,
+    ModeleAgeSocieteScoringListView,
+    ModeleAvisCommercialScoringListView,
+    ModeleBailScoringListView,
+    CategoryNaceCodeScoringListView,
+    calculer_score_acrema_bilan,
+    calculer_score_direct,
+    historique_scores_acheteur
+)
 
 # from .views import PaysViewSet
 
@@ -642,6 +654,16 @@ urlpatterns = [
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-anglais/",
         dash_root_manage_acheteur_bilan_anglais,
         name="dash_root_manage_acheteur_bilan_anglais",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/scoring-sans-bilan/",
+        dash_root_manage_acheteur_scoring,
+        name="dash_root_manage_acheteur_scoring",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/scoring-avec-bilan/",
+        dash_root_manage_acheteur_scoring_with_bilan,
+        name="dash_root_manage_acheteur_scoring_with_bilan",
     ),
     ########################################################################################################################
     #                                                                                                                      #
@@ -4891,6 +4913,21 @@ urlpatterns = [
         DeleteResultatAView.as_view(),
         name="delete-resultat-a",
     ),
+    
+    
+    
+    path("api/acheteur/<int:acheteur_id>/scoring/", ScoringSansBilanAcheteurDetailView.as_view(), name="api_acheteur_scoring"),
+    path("api/comportement-paiement/", ModeleComportementPaiementScoringListView.as_view(), name="api_comportement_paiement_list"),
+    path("api/forme-juridique/", FormeJuridiqueScoringListView.as_view(), name="api_forme_juridique_list"),
+    path("api/age-societe/", ModeleAgeSocieteScoringListView.as_view(), name="api_age_societe_list"),
+    path("api/avis-commercial/", ModeleAvisCommercialScoringListView.as_view(), name="api_avis_commercial_list"),
+    path("api/bail/", ModeleBailScoringListView.as_view(), name="api_bail_list"),
+    path("api/categorie-nace/", CategoryNaceCodeScoringListView.as_view(), name="api_categorie_nace_list"),
+    
+    path('api/calculer-score/', calculer_score_acrema_bilan, name='calculer_score'),
+    path('api/calculer-score-direct/', calculer_score_direct, name='calculer_score_direct'),
+    path('api/historique/<int:acheteur_id>/', historique_scores_acheteur, name='historique_scores'),
+
     
     
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),

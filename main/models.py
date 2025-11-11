@@ -921,6 +921,34 @@ class ModeleAgeSociete(models.Model):
     class Meta:
         verbose_name = _("Modèle d'age de société")
         verbose_name_plural = _("Modèles d'age de société")
+        
+        
+        
+        
+class ModeleInterpretationScoringSansBilan(models.Model):
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+    poids = models.FloatField(_("Poids"), default=0.0)
+    
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle interpretation scoring sans bilan")
+        )
+
+    def is_empty(self):
+        return not self.code and not self.libelle
+
+    class Meta:
+        verbose_name = _("Modèle interpretation scoring sans bilan")
+        verbose_name_plural = _("Modèles interpretations scoring sans bilan")
+
 
 
 ##########################################################
@@ -9449,5 +9477,200 @@ class CredendoCommande(models.Model):
 ##########################################################
 ##########################################################
 # Fin Modules Automatisation Commande CREDENDO
+##########################################################
+##########################################################
+
+
+##########################################################
+##########################################################
+# Debut Scoring de defaillance
+##########################################################
+##########################################################
+ 
+
+
+class ScoringSansBilanAcheteur(models.Model):
+    code = models.CharField(
+        _("Code"), max_length=50, unique=True, null=True, blank=True
+    )
+
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur spécifié"),
+    )
+    
+    libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
+
+    comportement_de_paiement_ref = models.ForeignKey(
+        "ModeleComportementPaiement",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence sur les locaux"),
+    )
+    age_company_ref = models.ForeignKey(
+        "ModeleAgeSociete",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence sur l'age de l'acheteur"),
+    )
+
+    forme_juridique = models.ForeignKey(
+        "FormeJuridique",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Forme Juridique"),
+        help_text=_("Forme juridique de l'entreprise"),
+    )
+    avis_commercial_ref = models.ForeignKey(
+        "ModeleAvisCommercial",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Référence Avis Commercial"),
+    )
+    locaux_ref = models.ForeignKey(
+        "ModeleBail",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Référence sur les locaux"),
+    )
+
+    # Remplacez la ForeignKey par une ManyToMany
+    categories_nace_ref = models.ManyToManyField(
+        "CategoryNaceCode",
+        blank=True,
+        verbose_name=_("Catégories Code NACE"),
+        help_text=_("Catégories Code NACE auxquelles appartient l'acheteur"),
+    )
+
+    scoring_value = models.FloatField(_("Valeur du score de défaillance"), default=0.0)
+    interpretation = models.TextField(_("Interprétation"), blank=True, max_length=10000000)
+
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+
+    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    def __str__(self):
+        return (
+            f"{self.code} - {self.libelle}"
+            if self.code and self.libelle
+            else _("Modèle interpretation scoring sans bilan")
+        )
+
+    def is_empty(self):
+        return not self.code and not self.libelle
+    
+    def has_changed(self):
+        """Vérifie si les champs ont changé depuis la dernière sauvegarde"""
+        if self.pk is None:
+            return True
+            
+        old = ScoringSansBilanAcheteur.objects.get(pk=self.pk)
+        fields = ['comportement_de_paiement_ref_id', 'age_company_ref_id', 
+                 'forme_juridique_id', 'avis_commercial_ref_id', 'locaux_ref_id']
+        
+        for field in fields:
+            if getattr(self, field) != getattr(old, field):
+                return True
+                
+        # Vérifier les catégories NACE
+        old_categories = set(old.categories_nace_ref.values_list('id', flat=True))
+        new_categories = set(self.categories_nace_ref.values_list('id', flat=True))
+        if old_categories != new_categories:
+            return True
+            
+        return False
+
+    def generate_interpretation(self):
+        """Génère une interprétation textuelle en fonction du scoring_value."""
+        score = self.scoring_value
+        if score >= 9.5:
+            return _("Risque excellent : Probabilité de défaillance très faible.")
+        elif 8.5 <= score < 9.5:
+            return _("Risque très faible : Probabilité de défaillance faible.")
+        elif 7.5 <= score < 8.5:
+            return _("Risque faible : Probabilité de défaillance modérée.")
+        elif 6.5 <= score < 7.5:
+            return _("Risque modéré : Probabilité de défaillance acceptable.")
+        elif 5.5 <= score < 6.5:
+            return _("Risque acceptable : Probabilité de défaillance moyennement élevée.")
+        elif 4.5 <= score < 5.5:
+            return _("Risque moyennement élevé : Probabilité de défaillance importante.")
+        elif 3.5 <= score < 4.5:
+            return _("Risque important : Probabilité de défaillance élevée.")
+        elif 2.5 <= score < 3.5:
+            return _("Risque élevé : Probabilité de défaillance très élevée.")
+        elif 1.5 <= score < 2.5:
+            return _("Risque très élevé : Probabilité de défaillance extrêmement élevée.")
+        elif 0.5 <= score < 1.5:
+            return _("Risque extrêmement élevé : Procédure d'insolvabilité probable.")
+        else:
+            return _("Procédure d'insolvabilité/procédure préliminaire/de règlement de la dette.")
+
+    def calculate_scoring_value(self):
+        poids = 0.0
+        
+        print(f"🔍 Calcul du score pour l'acheteur {self.acheteur_id}")
+        
+        # Champs simples
+        if self.comportement_de_paiement_ref:
+            poids += self.comportement_de_paiement_ref.poids
+            print(f"📊 Comportement paiement: +{self.comportement_de_paiement_ref.poids}")
+
+        if self.age_company_ref:
+            poids += self.age_company_ref.poids
+            print(f"📊 Age société: +{self.age_company_ref.poids}")
+
+        if self.forme_juridique:
+            poids += self.forme_juridique.poids
+            print(f"📊 Forme juridique: +{self.forme_juridique.poids}")
+
+        if self.avis_commercial_ref:
+            poids += self.avis_commercial_ref.poids
+            print(f"📊 Avis commercial: +{self.avis_commercial_ref.poids}")
+
+        if self.locaux_ref:
+            poids += self.locaux_ref.poids
+            print(f"📊 Locaux: +{self.locaux_ref.poids}")
+
+        # Catégories NACE (ManyToMany)
+        if self.pk and self.categories_nace_ref.exists():
+            poids_nace = sum(categorie.poids for categorie in self.categories_nace_ref.all())
+            moyenne_nace = poids_nace / self.categories_nace_ref.count()
+            poids += moyenne_nace
+            print(f"📊 Catégories NACE ({self.categories_nace_ref.count()} catégories): +{moyenne_nace}")
+
+        print(f"🎯 Score total calculé: {poids}")
+        return poids
+
+    def save(self, *args, **kwargs):
+        # Calculer le score AVANT la sauvegarde
+        self.scoring_value = self.calculate_scoring_value()
+        self.interpretation = self.generate_interpretation()
+        
+        print(f"💾 Sauvegarde avec score: {self.scoring_value}")
+        
+        # Sauvegarder une seule fois
+        super().save(*args, **kwargs)
+
+
+    class Meta:
+        verbose_name = _("Modèle interpretation scoring sans bilan")
+        verbose_name_plural = _("Modèles interpretations scoring sans bilan")
+
+
+
+##########################################################
+##########################################################
+# Debut Scoring de defaillance
 ##########################################################
 ##########################################################

@@ -1,0 +1,592 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+
+{% block title %}Scoring ACREMAC avec Bilan - {{ acheteur.nom }}{% endblock %}
+
+{% block styles %}
+<style>
+    .score-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .score-card:hover {
+        transform: translateY(-2px);
+    }
+    .score-excellent { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+    .score-good { background: linear-gradient(135deg, #17a2b8, #6f42c1); color: white; }
+    .score-moderate { background: linear-gradient(135deg, #ffc107, #fd7e14); color: white; }
+    .score-poor { background: linear-gradient(135deg, #dc3545, #e83e8c); color: white; }
+    .ratio-value {
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+    .progress-score {
+        height: 20px;
+        border-radius: 10px;
+    }
+    .risk-badge {
+        font-size: 0.9em;
+        padding: 5px 10px;
+        border-radius: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="card-title mb-1">
+                                <i class="fas fa-calculator text-primary"></i>
+                                Scoring ACREMAC avec Bilan
+                            </h2>
+                            <p class="text-muted mb-0">
+                                Calcul du score de défaillance basé sur les données financières
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-outline-primary" onclick="window.history.back()">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Paramètres de calcul -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sliders-h"></i> Paramètres de Calcul
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="scoreForm">
+                        {% csrf_token %}
+                        <input type="hidden" id="acheteurId" value="{{ id_acheteur }}">
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="anneeN" class="form-label">Année N (Courante)</label>
+                                <select class="form-select" id="anneeN" required>
+                                    <option value="">Sélectionner...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="anneeN1" class="form-label">Année N-1</label>
+                                <select class="form-select" id="anneeN1" required>
+                                    <option value="">Sélectionner...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="anneeN2" class="form-label">Année N-2</label>
+                                <select class="form-select" id="anneeN2" required>
+                                    <option value="">Sélectionner...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary me-2" id="btnCalculate">
+                                    <i class="fas fa-calculator"></i> Calculer le Score
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="btnAutoFill">
+                                    <i class="fas fa-magic"></i> Remplir Automatiquement
+                                </button>
+                                <button type="button" class="btn btn-outline-info" id="btnLoadHistory">
+                                    <i class="fas fa-history"></i> Charger l'Historique
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Résultats du calcul -->
+            <div id="resultsSection" style="display: none;">
+                <!-- Score Principal -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line"></i> Résultat du Score ACREMAC
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center" id="mainScoreResult">
+                            <!-- Contenu dynamique -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Détails des Ratios -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list-alt"></i> Détail des Ratios
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="ratiosTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Ratio</th>
+                                        <th>Formule</th>
+                                        <th>Valeur</th>
+                                        <th>Valeur Bornée</th>
+                                        <th>Coefficient</th>
+                                        <th>Contribution</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ratiosBody">
+                                    <!-- Contenu dynamique -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Évolution sur 3 ans -->
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar"></i> Évolution sur 3 Ans
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="evolutionSection">
+                            <!-- Contenu dynamique -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="col-lg-4">
+            <!-- Informations ACREMAC -->
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Informations ACREMAC
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Les 6 Ratios Calculés:</h6>
+                    <div class="small">
+                        <p><strong>R1:</strong> Frais financiers / EBE<br>
+                        <small class="text-muted">Part des frais financiers dans l'excédent brut</small></p>
+                        
+                        <p><strong>R2:</strong> (Créances + disponibilités) / Dettes CT<br>
+                        <small class="text-muted">Couverture des dettes court terme</small></p>
+                        
+                        <p><strong>R3:</strong> Capitaux permanents / Passif<br>
+                        <small class="text-muted">Structure financière</small></p>
+                        
+                        <p><strong>R4:</strong> Valeur ajoutée / Chiffre d'affaires<br>
+                        <small class="text-muted">Performance économique</small></p>
+                        
+                        <p><strong>R5:</strong> Trésorerie / Ventes (jours)<br>
+                        <small class="text-muted">Autonomie financière à court terme</small></p>
+                        
+                        <p><strong>R6:</strong> Fonds de roulement / CA (jours)<br>
+                        <small class="text-muted">Couverture du besoin en fonds de roulement</small></p>
+                    </div>
+
+                    <hr>
+                    
+                    <h6>Échelle des Scores:</h6>
+                    <div class="small">
+                        <span class="badge bg-danger risk-badge">S < -4.01</span> Risque très élevé<br>
+                        <span class="badge bg-warning risk-badge">-4.01 ≤ S < -2.57</span> Risque élevé<br>
+                        <span class="badge bg-warning risk-badge">-2.57 ≤ S < -1.00</span> Risque important<br>
+                        <span class="badge bg-info risk-badge">-1.00 ≤ S < 0.28</span> Risque modéré<br>
+                        <span class="badge bg-success risk-badge">0.28 ≤ S < 1.26</span> Risque normal<br>
+                        <span class="badge bg-success risk-badge">1.26 ≤ S < 2.10</span> Risque acceptable<br>
+                        <span class="badge bg-success risk-badge">S ≥ 2.10</span> Risque faible à excellent
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique des Scores -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history"></i> Historique des Scores
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="historyContent">
+                        <p class="text-muted text-center">Aucun historique chargé</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+const API_BASE = '/api'; // Adaptez selon vos URLs
+let accessToken = '{{ access }}';
+
+$(document).ready(function() {
+    console.log('🚀 Initialisation du module Scoring ACREMAC avec Bilan');
+    
+    // Charger les années disponibles
+    loadAvailableYears();
+    
+    // Événements
+    $('#scoreForm').on('submit', calculateScore);
+    $('#btnAutoFill').on('click', autoFillYears);
+    $('#btnLoadHistory').on('click', loadScoreHistory);
+});
+
+// Charger les années de bilan disponibles
+async function loadAvailableYears() {
+    try {
+        console.log('📅 Chargement des années disponibles...');
+        
+        const acheteurId = $('#acheteurId').val();
+        const response = await fetch(`/api/acheteurs/${acheteurId}/bilan-annees/`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            populateYearSelects(data.years);
+        } else {
+            // Fallback: générer les 5 dernières années
+            const currentYear = new Date().getFullYear();
+            const years = Array.from({length: 5}, (_, i) => currentYear - i);
+            populateYearSelects(years);
+        }
+    } catch (error) {
+        console.error('Erreur chargement années:', error);
+        // Fallback manuel
+        const currentYear = new Date().getFullYear();
+        const years = Array.from({length: 5}, (_, i) => currentYear - i);
+        populateYearSelects(years);
+    }
+}
+
+// Remplir les selects d'années
+function populateYearSelects(years) {
+    const selects = ['#anneeN', '#anneeN1', '#anneeN2'];
+    
+    selects.forEach(select => {
+        $(select).empty().append('<option value="">Sélectionner...</option>');
+        years.forEach(year => {
+            $(select).append(`<option value="${year}">${year}</option>`);
+        });
+    });
+    
+    // Remplissage automatique si assez d'années
+    if (years.length >= 3) {
+        $('#anneeN').val(years[0]);
+        $('#anneeN1').val(years[1]);
+        $('#anneeN2').val(years[2]);
+    }
+}
+
+// Remplissage automatique des années
+function autoFillYears() {
+    const years = Array.from($('#anneeN option')).map(opt => opt.value).filter(val => val);
+    if (years.length >= 3) {
+        $('#anneeN').val(years[0]);
+        $('#anneeN1').val(years[1]);
+        $('#anneeN2').val(years[2]);
+        showToast('Années remplies automatiquement', 'success');
+    }
+}
+
+// Calculer le score
+async function calculateScore(event) {
+    event.preventDefault();
+    
+    const formData = {
+        acheteur_id: parseInt($('#acheteurId').val()),
+        annee_n: parseInt($('#anneeN').val()),
+        annee_n1: parseInt($('#anneeN1').val()),
+        annee_n2: parseInt($('#anneeN2').val())
+    };
+    
+    // Validation
+    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
+        showToast('Veuillez sélectionner les 3 années', 'error');
+        return;
+    }
+    
+    const btnCalculate = $('#btnCalculate');
+    const originalText = btnCalculate.html();
+    
+    try {
+        btnCalculate.prop('disabled', true)
+                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
+        
+        console.log('🧮 Calcul du score avec:', formData);
+        
+        const response = await fetch('/api/calculer-score-acrema-bilan/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('✅ Résultat du calcul:', result);
+        
+        displayResults(result);
+        $('#resultsSection').show();
+        showToast('Score calculé avec succès', 'success');
+        
+    } catch (error) {
+        console.error('❌ Erreur calcul score:', error);
+        showToast('Erreur lors du calcul du score: ' + error.message, 'error');
+    } finally {
+        btnCalculate.prop('disabled', false).html(originalText);
+    }
+}
+
+// Afficher les résultats
+function displayResults(data) {
+    // Score principal
+    displayMainScore(data.scores.n);
+    
+    // Détails des ratios
+    displayRatiosDetails(data.scores.n);
+    
+    // Évolution sur 3 ans
+    displayEvolution(data.scores);
+}
+
+// Afficher le score principal
+function displayMainScore(scoreData) {
+    const scoreClass = getScoreClass(scoreData.score);
+    const progressWidth = Math.min(Math.max((scoreData.score + 5) * 10, 0), 100);
+    
+    const html = `
+        <div class="col-md-6">
+            <div class="card score-card ${scoreClass}">
+                <div class="card-body text-center py-4">
+                    <h3 class="display-4 fw-bold">${scoreData.score.toFixed(2)}</h3>
+                    <h5 class="mb-3">${scoreData.classe_risque}</h5>
+                    <div class="progress progress-score bg-white bg-opacity-25 mb-3">
+                        <div class="progress-bar bg-white" style="width: ${progressWidth}%"></div>
+                    </div>
+                    <p class="mb-2"><strong>Probabilité de défaillance:</strong> ${scoreData.probabilite_defaillance}%</p>
+                    <p class="mb-0 small">${scoreData.commentaire}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Analyse du Risque</h6>
+                    <div class="mb-3">
+                        <span class="badge ${getRiskBadgeClass(scoreData.classe_risque)} risk-badge">
+                            ${scoreData.classe_risque}
+                        </span>
+                    </div>
+                    <p class="small text-muted">
+                        Le score ACREMAC évalue la probabilité de défaillance de l'entreprise 
+                        dans les 12 prochains mois. Un score plus élevé indique un risque moindre.
+                    </p>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-primary" onclick="generateReport()">
+                            <i class="fas fa-download"></i> Rapport Détaillé
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#mainScoreResult').html(html);
+}
+
+// Afficher les détails des ratios
+function displayRatiosDetails(scoreData) {
+    let html = '';
+    const coefficients = scoreData.coefficients;
+    const ratios = scoreData.ratios;
+    const ratios_bornees = scoreData.ratios_bornees;
+    
+    const ratioConfig = {
+        'r1': { formule: 'Frais financiers / EBE', unite: '%' },
+        'r2': { formule: '(Créances + Disponibilités) / Dettes CT', unite: '%' },
+        'r3': { formule: 'Capitaux permanents / Passif', unite: '%' },
+        'r4': { formule: 'Valeur ajoutée / CA', unite: '%' },
+        'r5': { formule: 'Trésorerie / Ventes (j)', unite: 'j' },
+        'r6': { formule: 'Fonds de roulement / CA (j)', unite: 'j' }
+    };
+    
+    Object.keys(ratioConfig).forEach(ratioKey => {
+        const config = ratioConfig[ratioKey];
+        const ratioValue = ratios[ratioKey] || 0;
+        const ratioBornee = ratios_bornees[ratioKey] || 0;
+        const coefficient = coefficients[ratioKey] || 0;
+        const contribution = coefficient * ratioBornee;
+        
+        html += `
+            <tr>
+                <td><strong>${ratioKey.toUpperCase()}</strong></td>
+                <td>${config.formule}</td>
+                <td class="ratio-value">${ratioValue.toFixed(2)} ${config.unite}</td>
+                <td class="ratio-value">${ratioBornee.toFixed(2)} ${config.unite}</td>
+                <td>${coefficient}</td>
+                <td class="ratio-value ${contribution >= 0 ? 'text-success' : 'text-danger'}">
+                    ${contribution.toFixed(4)}
+                </td>
+            </tr>
+        `;
+    });
+    
+    $('#ratiosBody').html(html);
+}
+
+// Afficher l'évolution sur 3 ans
+function displayEvolution(scores) {
+    let html = '';
+    
+    Object.keys(scores).forEach(yearKey => {
+        const yearData = scores[yearKey];
+        if (yearData.score !== undefined) {
+            const yearLabel = yearKey.toUpperCase();
+            const scoreClass = getScoreClass(yearData.score);
+            
+            html += `
+                <div class="col-md-4">
+                    <div class="card score-card ${scoreClass}">
+                        <div class="card-body text-center">
+                            <h5>Année ${yearLabel}</h5>
+                            <h3 class="fw-bold">${yearData.score.toFixed(2)}</h3>
+                            <span class="badge bg-white text-dark risk-badge">
+                                ${yearData.classe_risque}
+                            </span>
+                            <p class="small mt-2 mb-0">
+                                Probabilité: ${yearData.probabilite_defaillance}%
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    $('#evolutionSection').html(html);
+}
+
+// Charger l'historique des scores
+async function loadScoreHistory() {
+    try {
+        const acheteurId = $('#acheteurId').val();
+        
+        const response = await fetch(`/api/historique-scores-acheteur/${acheteurId}/`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayHistory(data.historique);
+            showToast('Historique chargé avec succès', 'success');
+        } else {
+            throw new Error('Erreur chargement historique');
+        }
+    } catch (error) {
+        console.error('Erreur chargement historique:', error);
+        showToast('Erreur lors du chargement de l\'historique', 'error');
+    }
+}
+
+// Afficher l'historique
+function displayHistory(history) {
+    if (!history || history.length === 0) {
+        $('#historyContent').html('<p class="text-muted text-center">Aucun historique disponible</p>');
+        return;
+    }
+    
+    let html = '';
+    history.forEach(item => {
+        const scoreClass = getScoreClass(item.score);
+        
+        html += `
+            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                <div>
+                    <strong>${item.annee}</strong>
+                    <br>
+                    <small class="text-muted">${item.classe_risque}</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge ${scoreClass} risk-badge">${item.score.toFixed(2)}</span>
+                    <br>
+                    <small class="text-muted">${item.probabilite_defaillance}%</small>
+                </div>
+            </div>
+        `;
+    });
+    
+    $('#historyContent').html(html);
+}
+
+// Utilitaires
+function getScoreClass(score) {
+    if (score < -4.01) return 'score-poor';
+    if (score < -2.57) return 'score-poor';
+    if (score < -1.00) return 'score-moderate';
+    if (score < 0.28) return 'score-moderate';
+    if (score < 1.26) return 'score-good';
+    if (score < 2.10) return 'score-good';
+    return 'score-excellent';
+}
+
+function getRiskBadgeClass(riskClass) {
+    if (riskClass.includes('très élevé') || riskClass.includes('élevé')) return 'bg-danger';
+    if (riskClass.includes('important') || riskClass.includes('modéré')) return 'bg-warning';
+    if (riskClass.includes('normal') || riskClass.includes('acceptable')) return 'bg-info';
+    return 'bg-success';
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function showToast(message, type = 'info') {
+    // Implémentez votre système de toast ou utilisez une librairie
+    console.log(`📢 ${type.toUpperCase()}: ${message}`);
+    alert(message); // Fallback simple
+}
+
+function generateReport() {
+    showToast('Génération du rapport en cours...', 'info');
+    // Implémentez la génération de rapport PDF/Excel
+}
+</script>
+{% endblock %}
