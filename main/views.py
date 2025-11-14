@@ -3728,11 +3728,7 @@ def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
     token = request.GET.get("token")
     if not token:
         # Idéalement, rediriger vers une page de connexion ou afficher une erreur claire.
-        return render(
-            request,
-            "main/index.html",
-            {"error": _("Token d'authentification manquant.")},
-        )
+        pass
 
     user = request.user
     refresh = RefreshToken.for_user(user)

@@ -2,7 +2,67 @@
 
 {% load static %}
 
-{% block css %}{% endblock %}
+{% block styles %}
+<style>
+/* Style pour l'image de gestion des risques */
+.risk-management-image-container {
+    width: 250px;
+    height: 125px;
+    margin: 20px auto;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.risk-management-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Style pour le modal de visualisation */
+.risk-management-image-modal .modal-dialog {
+    max-width: 500px;
+}
+
+.risk-management-image-modal .modal-body {
+    text-align: center;
+    padding: 20px;
+}
+
+.risk-management-image-full {
+    max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+}
+
+/* Style pour les statuts dans le tableau */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.status-oui {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-non {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-aucun {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+</style>
+{% endblock %}
 
 {% block body %}
 
@@ -142,6 +202,7 @@
                                 <th scope="col" class="border-0">GRV</th>
                                 <th scope="col" class="border-0">DEGR</th>
                                 <th scope="col" class="border-0">RES</th>
+                                <th scope="col" class="border-0">Image</th>
                                 <th scope="col" class="border-0 rounded-end">Action</th>
                             </tr>
                         </thead>
@@ -182,6 +243,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Image de gestion des risques -->
+                <div class="risk-management-image-container mb-4">
+                    <img id="addRiskManagementImage" src="{% static 'management/mauvais.png' %}" alt="Statut de gestion des risques" class="risk-management-image">
+                </div>
+                
                 <form id="addRiskManagementForm">
                     <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
                     <div class="mb-3">
@@ -261,6 +327,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Image de gestion des risques -->
+                <div class="risk-management-image-container mb-4">
+                    <img id="editRiskManagementImage" src="{% static 'management/mauvais.png' %}" alt="Statut de gestion des risques" class="risk-management-image">
+                </div>
+                
                 <form id="editRiskManagementForm">
                     <input type="hidden" id="editRiskManagementId" name="id">
                     <div class="mb-3">
@@ -330,6 +401,24 @@
     </div>
 </div>
 <!-- Edit Gestion de Risque Modal END -->
+
+<!-- Modal pour visualiser l'image en grand -->
+<div class="modal fade risk-management-image-modal" id="viewRiskManagementImageModal" tabindex="-1" aria-labelledby="viewRiskManagementImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewRiskManagementImageModalLabel">Statut de Gestion des Risques</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="fullRiskManagementImage" src="" alt="Statut de gestion des risques complet" class="risk-management-image-full">
+                <div class="mt-3">
+                    <p id="riskManagementImageDescription" class="text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
 
@@ -410,20 +499,139 @@
 </script>
 
 <script>
+    // Fonction pour déterminer l'image basée sur les statuts
+    function getManagementImagePath(professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition) {
+        const fields = [professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition];
+        
+        let ouiCount = 0;
+        let nonCount = 0;
+        
+        fields.forEach(field => {
+            if (field === 'Oui') ouiCount++;
+            if (field === 'Non') nonCount++;
+        });
+        
+        // Logique de décision pour l'image
+        if (ouiCount >= 4) {
+            return `{% static 'management/bien.png' %}`;
+        } else if (nonCount >= 4) {
+            return `{% static 'management/mauvais.png' %}`;
+        } else {
+            return `{% static 'management/passable.png' %}`;
+        }
+    }
+
+    // Fonction pour calculer le score global
+    function calculateManagementScore(professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition) {
+        const fields = [professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition];
+        
+        let ouiCount = 0;
+        let nonCount = 0;
+        
+        fields.forEach(field => {
+            if (field === 'Oui') ouiCount++;
+            if (field === 'Non') nonCount++;
+        });
+        
+        return { ouiCount, nonCount, total: fields.length };
+    }
+
+    // Fonction pour mettre à jour l'image dans les modaux
+    function updateManagementImage(formId, imageId) {
+        const fields = ['professionalisme', 'organisation', 'turn_over', 'greve', 'degradation_qualite', 'non_respect_condition'];
+        const values = {};
+        
+        fields.forEach(field => {
+            const $select = $(`${formId} [name="${field}"]`);
+            if ($select.length) {
+                values[field] = $select.val();
+            }
+        });
+        
+        const imagePath = getManagementImagePath(
+            values.professionalisme,
+            values.organisation,
+            values.turn_over,
+            values.greve,
+            values.degradation_qualite,
+            values.non_respect_condition
+        );
+        
+        $(imageId).attr('src', imagePath);
+        
+        return calculateManagementScore(
+            values.professionalisme,
+            values.organisation,
+            values.turn_over,
+            values.greve,
+            values.degradation_qualite,
+            values.non_respect_condition
+        );
+    }
+
+    // Fonction pour afficher l'image en grand
+    function showManagementImage(professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition, riskManagementId = null) {
+        const imagePath = getManagementImagePath(professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition);
+        const score = calculateManagementScore(professionalisme, organisation, turn_over, greve, degradation_qualite, non_respect_condition);
+        
+        $('#fullRiskManagementImage').attr('src', imagePath);
+        
+        let description = `Statut: ${score.ouiCount} Oui, ${score.nonCount} Non sur ${score.total} critères`;
+        if (riskManagementId) {
+            description += ` (Gestion #${riskManagementId})`;
+        }
+        $('#riskManagementImageDescription').text(description);
+        
+        $('#viewRiskManagementImageModal').modal('show');
+    }
+
     $(document).ready(function() {
+        const managementFields = ['professionalisme', 'organisation', 'turn_over', 'greve', 'degradation_qualite', 'non_respect_condition'];
+
+        // Initialisation pour le formulaire d'ajout
+        $('#addRiskManagementModal').on('show.bs.modal', function () {
+            updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+        });
+
+        // Écouteurs pour les changements dans le formulaire d'ajout
+        managementFields.forEach(field => {
+            $(`#${field}`).on('change', function() {
+                updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+            });
+        });
+
+        // Initialisation pour le formulaire d'édition
+        $('#editRiskManagementModal').on('show.bs.modal', function () {
+            // La mise à jour est gérée dans l'appel AJAX
+        });
+
+        // Écouteurs pour les changements dans le formulaire d'édition
+        managementFields.forEach(field => {
+            $(`#edit${field.charAt(0).toUpperCase() + field.slice(1)}`).on('change', function() {
+                updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
+            });
+        });
+
+        // Fonction pour obtenir la classe CSS du statut
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Oui': return 'status-oui';
+                case 'Non': return 'status-non';
+                default: return 'status-aucun';
+            }
+        }
+
         // Function to load risk managements data
         function loadRiskManagements(page = 1, search = '') {
             $.ajax({
                 url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-gestions-de-risque/?page=' + page + '&search=' + search,
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
-                    // Update pagination info
                     $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
 
-                    // Update pagination controls
                     $('#paginationControls').html('');
                     if (response.previous) {
                         $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
@@ -442,16 +650,36 @@
                     // Update risk managements table body
                     $('#riskManagementTableBody').html('');
                     response.results.forEach(function(riskManagement, index) {
+                        const imagePath = getManagementImagePath(
+                            riskManagement.professionalisme,
+                            riskManagement.organisation,
+                            riskManagement.turn_over,
+                            riskManagement.greve,
+                            riskManagement.degradation_qualite,
+                            riskManagement.non_respect_condition
+                        );
+
                         $('#riskManagementTableBody').append('<tr>' +
                             '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + riskManagement.professionalisme + '</td>' +
-                            '<td>' + riskManagement.organisation + '</td>' +
-                            '<td>' + riskManagement.turn_over + '</td>' +
-                            '<td>' + riskManagement.greve + '</td>' +
-                            '<td>' + riskManagement.degradation_qualite + '</td>' +
-                            '<td>' + riskManagement.non_respect_condition + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskManagement.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskManagement.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '<td><span class="status-badge ' + getStatusClass(riskManagement.professionalisme) + '">' + riskManagement.professionalisme + '</span></td>' +
+                            '<td><span class="status-badge ' + getStatusClass(riskManagement.organisation) + '">' + riskManagement.organisation + '</span></td>' +
+                            '<td><span class="status-badge ' + getStatusClass(riskManagement.turn_over) + '">' + riskManagement.turn_over + '</span></td>' +
+                            '<td><span class="status-badge ' + getStatusClass(riskManagement.greve) + '">' + riskManagement.greve + '</span></td>' +
+                            '<td><span class="status-badge ' + getStatusClass(riskManagement.degradation_qualite) + '">' + riskManagement.degradation_qualite + '</span></td>' +
+                            '<td><span class="status-badge ' + getStatusClass(riskManagement.non_respect_condition) + '">' + riskManagement.non_respect_condition + '</span></td>' +
+                            '<td><img src="' + imagePath + '" alt="Statut" style="width: 30px; height: 30px; object-fit: contain;"></td>' +
+                            '<td>' +
+                            '<button class="btn btn-info btn-round mb-0 view-image-btn" data-id="' + riskManagement.id + '" ' +
+                            'data-professionalisme="' + riskManagement.professionalisme + '" ' +
+                            'data-organisation="' + riskManagement.organisation + '" ' +
+                            'data-turn_over="' + riskManagement.turn_over + '" ' +
+                            'data-greve="' + riskManagement.greve + '" ' +
+                            'data-degradation_qualite="' + riskManagement.degradation_qualite + '" ' +
+                            'data-non_respect_condition="' + riskManagement.non_respect_condition + '" ' +
+                            'data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Visualiser l\'image"><i class="bi bi-eye"></i></button>' +
+                            '&nbsp; <button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskManagement.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskManagement.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
+                            '</td>' +
                             '</tr>');
                     });
                 },
@@ -464,6 +692,27 @@
                 }
             });
         }
+
+        // Gestion du clic sur le bouton de visualisation d'image
+        $(document).on('click', '.view-image-btn', function() {
+            const riskManagementId = $(this).data('id');
+            const professionalisme = $(this).data('professionalisme');
+            const organisation = $(this).data('organisation');
+            const turn_over = $(this).data('turn_over');
+            const greve = $(this).data('greve');
+            const degradation_qualite = $(this).data('degradation_qualite');
+            const non_respect_condition = $(this).data('non_respect_condition');
+            
+            showManagementImage(
+                professionalisme,
+                organisation,
+                turn_over,
+                greve,
+                degradation_qualite,
+                non_respect_condition,
+                riskManagementId
+            );
+        });
 
         // Initial load
         loadRiskManagements();
@@ -492,7 +741,7 @@
                 type: 'POST',
                 data: formData,
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     Swal.fire({
@@ -523,7 +772,7 @@
                 url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-gestion-de-risque/' + id + '/',
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     $('#editRiskManagementId').val(response.id);
@@ -535,6 +784,18 @@
                     $('#editNonRespectCondition').val(response.non_respect_condition);
                     $('#editCouleurCommentaire').val(response.couleur_commentaire);
                     $('#editCommentaire').val(response.commentaire);
+                    
+                    // Mettre à jour l'image
+                    const imagePath = getManagementImagePath(
+                        response.professionalisme,
+                        response.organisation,
+                        response.turn_over,
+                        response.greve,
+                        response.degradation_qualite,
+                        response.non_respect_condition
+                    );
+                    $('#editRiskManagementImage').attr('src', imagePath);
+                    
                     $('#editRiskManagementModal').modal('show');
 
                     tinymce.get('editCommentaire').setContent(response.commentaire);
@@ -559,7 +820,7 @@
                 type: 'PUT',
                 data: formData,
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     Swal.fire({
@@ -602,7 +863,7 @@
                         data: JSON.stringify({ ids: [id] }),
                         contentType: 'application/json',
                         headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                            'Authorization': 'Bearer ' + '{{ access }}'
                         },
                         success: function(response) {
                             Swal.fire(
@@ -629,7 +890,6 @@
         $.ajaxSetup({
             statusCode: {
                 401: function() {
-                    // Token has expired, refresh the token
                     refreshToken();
                 }
             }
@@ -643,9 +903,7 @@
                 data: JSON.stringify({ refresh: '{{ refresh }}' }),
                 contentType: 'application/json',
                 success: function(response) {
-                    // Update the access token
                     localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
                     $.ajax(this);
                 },
                 error: function(response) {

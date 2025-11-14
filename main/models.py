@@ -1814,6 +1814,26 @@ class RiskRating(models.Model):
         return explications.get(self.indice_du_risque, "")
     
     def calculate_risk_score(self):
+        """Calcule le score de risque (0-8) basé sur les champs booléens"""
+        score = 0
+        fields_to_check = [
+            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+        ]
+        
+        for field in fields_to_check:
+            if getattr(self, field):
+                score += 1
+                
+        return score
+    
+    def get_risk_image_path(self):
+        """Retourne le chemin vers l'image SVG correspondant au score"""
+        score = self.calculate_risk_score()
+        return f"main/static/riskrating/{score}.svg"
+    
+    def calculate_risk_score_two(self):
         score = 1  # ou 0 selon votre choix
         fields_to_check = [
             'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
@@ -2214,6 +2234,48 @@ class RiskManagment(models.Model):
 
     def __str__(self):
         return f"Gestion des Risques - {self.acheteur}"
+    
+    def get_management_image_path(self):
+        """Retourne le chemin de l'image basé sur les statuts"""
+        fields = [
+            self.professionalisme,
+            self.organisation,
+            self.turn_over,
+            self.greve,
+            self.degradation_qualite,
+            self.non_respect_condition
+        ]
+        
+        oui_count = sum(1 for field in fields if field == self.STATUS_OUI)
+        non_count = sum(1 for field in fields if field == self.STATUS_NON)
+        
+        # Logique de décision pour l'image
+        if oui_count >= 4:
+            return "main/static/management/bien.png"
+        elif non_count >= 4:
+            return "main/static/management/mauvais.png"
+        else:
+            return "main/static/management/passable.png"
+    
+    def get_management_score(self):
+        """Retourne le score de gestion des risques"""
+        fields = [
+            self.professionalisme,
+            self.organisation,
+            self.turn_over,
+            self.greve,
+            self.degradation_qualite,
+            self.non_respect_condition
+        ]
+        
+        oui_count = sum(1 for field in fields if field == self.STATUS_OUI)
+        non_count = sum(1 for field in fields if field == self.STATUS_NON)
+        
+        return {
+            'oui_count': oui_count,
+            'non_count': non_count,
+            'total': len(fields)
+        }
 
 
 class ConseilAdministration(models.Model):
@@ -9666,6 +9728,8 @@ class ScoringSansBilanAcheteur(models.Model):
     class Meta:
         verbose_name = _("Modèle interpretation scoring sans bilan")
         verbose_name_plural = _("Modèles interpretations scoring sans bilan")
+
+
 
 
 

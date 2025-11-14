@@ -738,25 +738,14 @@ $(document).ready(function() {
     }
 
     // Gestion du click sur le bouton Générer - VERSION DEBUG
+    // Gestion du click sur le bouton Générer - VERSION CORRIGÉE
+    // Gestion du click sur le bouton Générer - URL CORRIGÉE
     $('#confirmGenerate').on('click', function(e) {
         e.preventDefault();
         console.log("Bouton Générer cliqué !");
-        console.log("Selected commande ID:", selectedCommandeId);
-        
-        // Vérification basique
-        /*if (!selectedCommandeId) {
-            console.log("Aucune commande sélectionnée");
-            Swal.fire({
-                icon: 'warning',
-                title: 'Attention',
-                text: 'Veuillez sélectionner une commande valide',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }*/
         
         // Récupération des valeurs
-        const languageSite = getActiveLanguage(); // Récupère la langue active
+        const languageSite = getActiveLanguage();
         const commandeId = $('#commandeId').val() || selectedCommandeId;
         const language = $('#language').val();
         const currency = $('#currency').val();
@@ -764,7 +753,20 @@ $(document).ready(function() {
         const format = $('#format').val();
         const acheteurId = $(this).data('acheteur-id') || 1;
         
-        console.log("Paramètres:", {language, currency, balanceType, format, acheteurId, commandeId, selectedCommandeId});
+        console.log("Paramètres:", {language, currency, balanceType, format, acheteurId, commandeId});
+
+        // Récupérer le token d'authentification
+        const token = getAuthToken();
+        
+        if (!token) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur d\'authentification',
+                text: 'Token d\'authentification manquant. Veuillez vous reconnecter.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
 
         // Afficher un SweetAlert pendant le chargement
         Swal.fire({
@@ -776,22 +778,32 @@ $(document).ready(function() {
             }
         });
 
-        // Requête AJAX
+        // Construire l'URL CORRECTE (sans -final)
+        const params = new URLSearchParams({
+            id_commande: commandeId || '',
+            language: language,
+            devise: currency,
+            bilan_report: balanceType,
+            format_report: format,
+        });
+
+        // URL CORRIGÉE : /api/acheteur/1/generer-report/ (pas generer-report-final)
+        const url = `/api/acheteur/${acheteurId}/generer-report-final/?${params.toString()}`;
+        console.log("URL de requête:", url);
+
+        // Requête AJAX avec authentification
         $.ajax({
-            url: `/api/acheteur/${acheteurId}/generer-report/`,
+            url: url,
             type: 'GET',
-            data: {
-                id_commande: selectedCommandeId,
-                language: language,
-                devise: currency,
-                bilan_report: balanceType,
-                format_report: format,
+            headers: {
+                'Authorization': `Bearer ${token}`
             },
             xhrFields: {
-                responseType: format === 'pdf' || format === 'xml' || format === 'html' ? 'blob' : 'json'
+                responseType: format === 'pdf' ? 'blob' : (format === 'xml' ? 'blob' : 'text')
             },
             success: function(response, status, xhr) {
-                console.log(response); 
+                console.log("Réponse reçue avec succès, type:", typeof response);
+                
                 // Fermer le SweetAlert de chargement
                 Swal.close();
 
@@ -802,20 +814,17 @@ $(document).ready(function() {
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `rapport_acheteur_${acheteurId}.pdf`;
+                    a.download = `rapport_solvabilite_${acheteur.nom || acheteurId}.pdf`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
 
-                    // Afficher un SweetAlert de succès
                     Swal.fire({
                         icon: 'success',
                         title: 'Succès !',
                         text: 'Le rapport PDF a été généré et téléchargé avec succès.',
                         confirmButtonText: 'OK'
-                    }).then(() => {
-                        window.location.reload(true);
                     });
                 }
                 else if (format === 'html') {
@@ -824,14 +833,11 @@ $(document).ready(function() {
                     const url = window.URL.createObjectURL(blob);
                     window.open(url, '_blank');
 
-                    // Afficher un SweetAlert de succès
                     Swal.fire({
                         icon: 'success',
                         title: 'Succès !',
                         text: 'Le rapport HTML a été généré et ouvert dans un nouvel onglet.',
                         confirmButtonText: 'OK'
-                    }).then(() => {
-                        window.location.reload(true);
                     });
                 }
                 else if (format === 'xml') {
@@ -840,33 +846,43 @@ $(document).ready(function() {
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `rapport_acheteur_${acheteurId}.xml`;
+                    a.download = `rapport_solvabilite_${acheteurId}.xml`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
 
-                    // Afficher un SweetAlert de succès
                     Swal.fire({
                         icon: 'success',
                         title: 'Succès !',
                         text: 'Le rapport XML a été généré et téléchargé avec succès.',
                         confirmButtonText: 'OK'
-                    }).then(() => {
-                        window.location.reload(true);
                     });
                 }
-                else {
-                    // Pour JSON, afficher un SweetAlert avec les données
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès !',
-                        text: 'Le rapport JSON a été généré avec succès.',
-                        html: `<pre>${JSON.stringify(response, null, 2)}</pre>`,
-                        confirmButtonText: 'OK'
-                    }).then(() => {
-                        window.location.reload(true);
-                    });
+                else if (format === 'json') {
+                    // Pour JSON, parser la réponse
+                    let jsonData;
+                    try {
+                        jsonData = typeof response === 'string' ? JSON.parse(response) : response;
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            text: 'Le rapport JSON a été généré avec succès.',
+                            html: `<div style="text-align: left; max-height: 400px; overflow: auto;">
+                                <pre>${JSON.stringify(jsonData, null, 2)}</pre>
+                                </div>`,
+                            width: '80%',
+                            confirmButtonText: 'OK'
+                        });
+                    } catch (e) {
+                        console.error("Erreur parsing JSON:", e);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur !',
+                            text: 'Erreur lors du parsing du JSON.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                 }
 
                 // Fermer le modal
@@ -876,18 +892,92 @@ $(document).ready(function() {
                 // Fermer le SweetAlert de chargement
                 Swal.close();
 
-                // Afficher un SweetAlert d'erreur
+                let errorMessage = 'Erreur lors de la génération du rapport';
+                let details = '';
+                
+                if (xhr.status === 400) {
+                    errorMessage = 'Requête incorrecte. Vérifiez les paramètres.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        details = xhr.responseJSON.error;
+                    }
+                } else if (xhr.status === 403) {
+                    errorMessage = 'Accès refusé. Vérifiez vos permissions.';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Endpoint non trouvé. URL incorrecte.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur interne du serveur.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        details = xhr.responseJSON.error;
+                    }
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+
                 Swal.fire({
                     icon: 'error',
-                    title: 'Erreur !',
-                    text: `Une erreur est survenue : ${error}`,
+                    title: 'Erreur ' + xhr.status,
+                    text: errorMessage,
+                    html: details ? `<div>${errorMessage}<br><small>${details}</small></div>` : errorMessage,
                     confirmButtonText: 'OK'
                 });
 
-                console.error("Erreur lors de la génération du rapport :", error);
+                console.error("Erreur détaillée:", {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
             }
         });
     });
+
+
+    // Fonction pour récupérer le token d'authentification
+    function getAuthToken() {
+        // Essayer plusieurs méthodes pour récupérer le token
+        const token = localStorage.getItem('access_token') || 
+                    sessionStorage.getItem('access_token') ||
+                    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                    '{{ access }}'; // Pour les templates Django
+        
+        if (!token) {
+            console.warn("Aucun token d'authentification trouvé");
+        }
+        
+        return token;
+    }
+
+    // Fonction pour rafraîchir le token si expiré
+    function refreshToken() {
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        if (!refreshToken) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ refresh: refreshToken }),
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                // Réessayer la requête originale
+                // Vous devrez stocker la requête originale pour la rejouer
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'Se reconnecter'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
 });
 </script>
 

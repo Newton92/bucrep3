@@ -34,6 +34,12 @@ from main.api.views_scoring import (
     calculer_score_direct,
     historique_scores_acheteur
 )
+from main.api.views_scoring_classique import *
+from main.api.views_scoring_anglais import *
+from main.api.views_scoring_bancaire import *
+from main.api.views_scoring_syscohada import *
+from main.api.views_scoring_ifrs import *
+from main.api.views_solvency_reporting_system import *
 
 # from .views import PaysViewSet
 
@@ -4639,6 +4645,7 @@ urlpatterns = [
         GenerateReport.as_view(),
         name="generer-report",
     ),
+    path('api/acheteur/<int:acheteur_id>/generer-report-final/', generer_rapport_solvabilite,  name='generer_rapport_solvabilite'),
     
     
     
@@ -4927,8 +4934,28 @@ urlpatterns = [
     path('api/calculer-score/', calculer_score_acrema_bilan, name='calculer_score'),
     path('api/calculer-score-direct/', calculer_score_direct, name='calculer_score_direct'),
     path('api/historique/<int:acheteur_id>/', historique_scores_acheteur, name='historique_scores'),
-
     
+    # URLs pour le scoring avec bilan classique
+    path('api/scoring/bilan-classique/calculer-score/', calculer_score_bilan_classique, name='calculer_score_bilan_classique'),
+    path('api/scoring/bilan-classique/acheteurs/<int:acheteur_id>/annees/', get_annees_bilan_classique, name='annees_bilan_classique'),
+    path('api/scoring/bilan-classique/acheteurs/<int:acheteur_id>/annees/<int:annee>/details/', get_details_bilan_classique, name='details_bilan_classique'),
+    
+    # URLs pour le scoring avec bilan anglais
+    path('api/scoring/bilan-anglais/calculer-score/', calculer_score_bilan_anglais, name='calculer_score_bilan_anglais'),
+    path('api/scoring/bilan-anglais/acheteurs/<int:acheteur_id>/annees/', get_annees_bilan_anglais, name='annees_bilan_anglais'),
+    path('api/scoring/bilan-anglais/acheteurs/<int:acheteur_id>/annees/<int:annee>/details/', get_details_bilan_anglais, name='details_bilan_anglais'),
+    
+    path('api/scoring/bilan-bancaire/calculer-score/', calculer_score_bilan_bancaire, name='calculer_score_bilan_bancaire'),
+    path('api/scoring/bilan-bancaire/acheteurs/<int:acheteur_id>/annees/', get_annees_bilan_bancaire, name='get_annees_bilan_bancaire'),
+    
+    
+    path('api/scoring/bilan-syscohada/calculer-score/', calculer_score_bilan_syscohada, name='calculer_score_bilan_syscohada'),
+    path('api/scoring/bilan-syscohada/acheteurs/<int:acheteur_id>/annees/', get_annees_bilan_syscohada, name='get_annees_bilan_syscohada'),
+    
+    path('api/scoring/bilan-ifrs/calculer-score/', calculer_score_bilan_ifrs, name='calculer_score_bilan_ifrs'),
+    path('api/scoring/bilan-ifrs/acheteurs/<int:acheteur_id>/annees/', get_annees_bilan_ifrs, name='get_annees_bilan_ifrs'),
+
+        
     
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
     path("api/profile/avatar/", UserAvatarView.as_view(), name="user-avatar-update"),

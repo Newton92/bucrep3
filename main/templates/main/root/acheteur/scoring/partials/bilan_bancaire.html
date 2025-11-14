@@ -1,0 +1,285 @@
+<!-- bilan_bancaire.html -->
+<div class="row">
+    <div class="col-12">
+        <h5 class="text-primary mb-3">
+            <i class="fas fa-university me-2"></i>Bilan Bancaire
+        </h5>
+        
+        <form id="bancaireForm">
+            {% csrf_token %}
+            <input type="hidden" id="acheteurId" value="{{ id_acheteur }}">
+            
+            <!-- Sélection du type de bilan et semestre -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="select-type-bilan-bancaire" class="form-label">Type de Bilan</label>
+                    <select class="form-select" id="select-type-bilan-bancaire">
+                        <option value="annuel">Bilan Annuel</option>
+                        <option value="semestriel">Bilan Semestriel</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="select-semestre-bancaire" class="form-label">Semestre</label>
+                    <select class="form-select" id="select-semestre-bancaire" style="display: none;">
+                        <option value="">Sélectionner...</option>
+                        <option value="1">1er semestre (Janvier - Juin)</option>
+                        <option value="2">2e semestre (Juillet - Décembre)</option>
+                    </select>
+                    <div class="form-text" id="semestre-help">Sélectionnez le semestre pour les bilans semestriels</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Plage d'années disponible : 1990 à 2025
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sélection des années avec plage fixe -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="select-annee-bancaire-n" class="form-label">
+                        Année N (Courante) <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="select-annee-bancaire-n" required>
+                        <option value="">Sélectionner...</option>
+                        <!-- Les années seront générées par JavaScript -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="select-annee-bancaire-n1" class="form-label">
+                        Année N-1 <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="select-annee-bancaire-n1" required>
+                        <option value="">Sélectionner...</option>
+                        <!-- Les années seront générées par JavaScript -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="select-annee-bancaire-n2" class="form-label">
+                        Année N-2 <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" id="select-annee-bancaire-n2" required>
+                        <option value="">Sélectionner...</option>
+                        <!-- Les années seront générées par JavaScript -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <button type="button" class="btn btn-primary" id="btn-calcul-score-bancaire">
+                        <i class="fas fa-calculator me-1"></i>Calculer le Score ACREMAC
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="autoFillYears('bancaire')">
+                        <i class="fas fa-magic me-1"></i>Remplissage Auto
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="resetBancaireForm()">
+                        <i class="fas fa-eraser me-1"></i>Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Indicateur de chargement -->
+        <div id="loading-bancaire" class="text-center" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2 text-muted">Calcul du score en cours...</p>
+        </div>
+        
+        <!-- Résultats du scoring -->
+        <div id="resultats-score-bancaire" class="mt-4" style="display: none;">
+            <!-- Les résultats seront injectés ici par JavaScript -->
+        </div>
+
+        <!-- Informations sur les ratios bancaires -->
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line me-1"></i>Ratios Bancaires Calculés
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong class="text-primary">R1 - Ratio de Solvabilité</strong>
+                                    <br><small>Capitaux propres / Total actif - Mesure la stabilité financière</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R2 - Ratio de Liquidité</strong>
+                                    <br><small>Actifs liquides / Dettes à court terme - Mesure la capacité à honorer les engagements</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R3 - Ratio de Rentabilité</strong>
+                                    <br><small>Résultat net / Total actif - Mesure la performance opérationnelle</small>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <strong class="text-primary">R4 - Ratio de Qualité des Actifs</strong>
+                                    <br><small>Créances clientèle / Total actif - Mesure la qualité du portefeuille</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R5 - Ratio d'Efficience</strong>
+                                    <br><small>Charges / Produits - Mesure l'efficacité opérationnelle</small>
+                                </li>
+                                <li class="mb-2">
+                                    <strong class="text-primary">R6 - Ratio de Diversification</strong>
+                                    <br><small>Produits hors intérêts / Total produits - Mesure la diversification des revenus</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertes et messages -->
+        <div id="alert-container-bancaire" class="mt-3">
+            <!-- Les alertes seront injectées ici -->
+        </div>
+    </div>
+</div>
+
+<!-- Styles spécifiques -->
+<style>
+.score-main-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.score-value {
+    font-size: 3rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.score-value.score-excellent { color: #28a745; }
+.score-value.score-good { color: #20c997; }
+.score-value.score-moderate { color: #ffc107; }
+.score-value.score-poor { color: #fd7e14; }
+.score-value.score-critical { color: #dc3545; }
+
+.risk-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.risk-badge.risk-low { 
+    background-color: #d4edda; 
+    color: #155724; 
+    border: 2px solid #28a745;
+}
+.risk-badge.risk-moderate { 
+    background-color: #fff3cd; 
+    color: #856404; 
+    border: 2px solid #ffc107;
+}
+.risk-badge.risk-high { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+    border: 2px solid #dc3545;
+}
+.risk-badge.risk-very-high { 
+    background-color: #dc3545; 
+    color: white; 
+    border: 2px solid #721c24;
+}
+.risk-badge.risk-critical { 
+    background-color: #721c24; 
+    color: white; 
+    border: 2px solid #490c14;
+}
+
+.score-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    text-align: center;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.score-card.current {
+    border: 3px solid #007bff;
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 8px rgba(0,123,255,0.2);
+}
+
+.score-card.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.score-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+}
+
+.score-card .score-value {
+    font-size: 2rem;
+    margin: 1rem 0;
+}
+
+.ratios-details table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.ratios-details .table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.scores-comparatifs .row {
+    margin-top: 1rem;
+}
+
+/* Animation pour le bouton de calcul */
+#btn-calcul-score-bancaire {
+    transition: all 0.3s ease;
+}
+
+#btn-calcul-score-bancaire:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .score-main-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    
+    .score-value {
+        font-size: 2.5rem;
+    }
+}
+</style>
+

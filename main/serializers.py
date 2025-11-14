@@ -6880,3 +6880,443 @@ class CalculScoreACREMACBilanSerializer(serializers.Serializer):
     coefficient_r4 = serializers.FloatField(default=0.0246)
     coefficient_r5 = serializers.FloatField(default=0.0115)
     coefficient_r6 = serializers.FloatField(default=0.0096)
+    
+    
+    
+    
+    
+    
+    
+# Serializers pour le scoring avec bilan classique
+class BilanClassiqueScoreSerializer(serializers.Serializer):
+    acheteur_id = serializers.IntegerField(required=True)
+    annee_n = serializers.IntegerField(required=True)
+    annee_n1 = serializers.IntegerField(required=True)
+    annee_n2 = serializers.IntegerField(required=True)
+    bilan_type = serializers.CharField(default='classique')
+
+class BilanClassiqueDataSerializer(serializers.Serializer):
+    # Données extraites pour le calcul
+    frais_financiers = serializers.DecimalField(max_digits=15, decimal_places=2)
+    ebe = serializers.DecimalField(max_digits=15, decimal_places=2)
+    creances_disponibilites = serializers.DecimalField(max_digits=15, decimal_places=2)
+    dettes_court_terme = serializers.DecimalField(max_digits=15, decimal_places=2)
+    capitaux_permanents = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_passif = serializers.DecimalField(max_digits=15, decimal_places=2)
+    valeur_ajoutee = serializers.DecimalField(max_digits=15, decimal_places=2)
+    chiffre_affaires = serializers.DecimalField(max_digits=15, decimal_places=2)
+    tresorerie = serializers.DecimalField(max_digits=15, decimal_places=2)
+    fonds_roulement = serializers.DecimalField(max_digits=15, decimal_places=2)
+
+class ScoreACREMACResultSerializer(serializers.Serializer):
+    score = serializers.FloatField()
+    ratios = serializers.DictField()
+    ratios_bornees = serializers.DictField()
+    classe_risque = serializers.CharField()
+    probabilite_defaillance = serializers.FloatField()
+    commentaire = serializers.CharField()
+    coefficients = serializers.DictField()
+
+class BilanClassiqueScoreResponseSerializer(serializers.Serializer):
+    acheteur = serializers.CharField()
+    annees = serializers.DictField()
+    scores = serializers.DictField()
+    score_principal = serializers.FloatField()
+    bilan_type = serializers.CharField()
+    
+    
+    
+
+
+
+
+
+
+
+from rest_framework import serializers
+
+class BilanAnglaisScoreSerializer(serializers.Serializer):
+    acheteur_id = serializers.IntegerField(required=True)
+    annee_n = serializers.IntegerField(required=True)
+    annee_n1 = serializers.IntegerField(required=True)
+    annee_n2 = serializers.IntegerField(required=True)
+    bilan_type = serializers.CharField(default='anglais')
+
+class BilanAnglaisDataSerializer(serializers.Serializer):
+    # Données extraites pour le calcul ACREMAC
+    frais_financiers = serializers.DecimalField(max_digits=15, decimal_places=2)
+    ebe = serializers.DecimalField(max_digits=15, decimal_places=2)
+    creances_disponibilites = serializers.DecimalField(max_digits=15, decimal_places=2)
+    dettes_court_terme = serializers.DecimalField(max_digits=15, decimal_places=2)
+    capitaux_permanents = serializers.DecimalField(max_digits=15, decimal_places=2)
+    total_passif = serializers.DecimalField(max_digits=15, decimal_places=2)
+    valeur_ajoutee = serializers.DecimalField(max_digits=15, decimal_places=2)
+    chiffre_affaires = serializers.DecimalField(max_digits=15, decimal_places=2)
+    tresorerie = serializers.DecimalField(max_digits=15, decimal_places=2)
+    fonds_roulement = serializers.DecimalField(max_digits=15, decimal_places=2)
+
+class BilanAnglaisScoreResponseSerializer(serializers.Serializer):
+    acheteur = serializers.CharField()
+    annees = serializers.DictField()
+    scores = serializers.DictField()
+    score_principal = serializers.FloatField()
+    bilan_type = serializers.CharField()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+# serializers.py - Ajoutez ces sérialiseurs
+
+class AssetsBancaireSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    a_vue = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    pret_interbancaire = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    porteuille_papier_commercial = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    autres_concours_clients = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    creance_sur_la_clientele = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_assets = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Assets
+        fields = '__all__'
+
+class AddAssetsBancaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Assets
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            'caisse', 'banques_centrales', 'tresorerie_cpp', 'autres_ets_credit',
+            'a_terme', 'credits_campagne', 'credits_ordinaire', 
+            'credits_campagne_acc', 'credits_ordinaire_acc', 'creances_ordinaires',
+            'affacturage', 'titres_placement', 'immobilisation_fin',
+            'operation_credit_bail', 'immobilisation_incorporelle',
+            'immobilisation_corporelle', 'actionnaire_ou_associe',
+            'autres_actifs', 'comptes_commande_divers'
+        ]
+
+class LiabilitiesBancaireSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    a_vue = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    dette_interbancaire = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    dette_envers_clientelle = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_liabilities = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Liabilities
+        fields = '__all__'
+
+class AddLiabilitiesBancaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Liabilities
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            'tresorerie_ccp', 'autres_etablissement_credit', 'a_terme',
+            'comptes_epargne_court_terme', 'comptes_epargne_terme', 'bons_caisse',
+            'autres_dette_a_vue', 'autres_dette_a_terme', 'titres_creance_autres_dettes',
+            'compte_dordre_divers', 'provision_pour_risque_charge', 'provision_reglementee',
+            'emprunt_subordonne_tire_emis', 'subventions_investissement', 'fonds_affecte',
+            'fonds_pour_risque_bancaire_generaux', 'capital_ou_dotation',
+            'primes_liees_reserve_capital', 'ecarts_reevaluation', 'benefices_non_distribue',
+            'resultat_net_exercie'
+        ]
+
+class ExpensesBancaireSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    interet_charges_assimilee = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    charge_sur_operation_financiere = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    prestation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    frais_generaux_dexploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_des_charges = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Expenses
+        fields = '__all__'
+
+class AddExpensesBancaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expenses
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            'interet_charges_assimilee_dette_interbancaire',
+            'interet_charge_assimilee_dette_clientele',
+            'interet_charge_assimilee_titre_creance',
+            'chargesc_compte_bloque_dactionnaire_emprunt_sub',
+            'autres_interets_charges_assimilee',
+            'charges_sur_op_credit_bail_assimile', 'commissions',
+            'charges_sur_titre_placement', 'charges_sur_operation_change',
+            'charges_sur_operation_hors_bilan', 'frais_divers_exploitation_bancaire',
+            'achat_marchandises', 'stocks_vendus', 'variations_stocks_marchanides',
+            'frais_personnel', 'autres_frais_generaux',
+            'dotations_amortissement_provision_immobilisation',
+            'solde_perte_creance_hors_bilan',
+            'excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux',
+            'charges_exceptionnelle', 'pertes_exercice_anterieurs', 'impot_sur_revenu'
+        ]
+
+class ProductsBancaireSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    interet_produit_assimile = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    revenu_d_operation_financiere = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    autres_produits_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_produit = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Products
+        fields = '__all__'
+
+class AddProductsBancaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Products
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            'interets_produit_assimile_sur_pret_avance_interbancaire',
+            'ineterets_produit_assimile_pret_avance_clientele',
+            'interet_produit_sur_titre_dinvestissement',
+            'revenu_gains_titre_pret_titre_subordonne',
+            'autres_interets_produits_assimiles',
+            'produits_leansing_operation_connexes', 'commissions',
+            'revenus_titre_negociable', 'dividendes_produits_assimiles',
+            'revenus_operation_de_change', 'produits_opeations_hors_bilan',
+            'produits_bancaire_divers', 'marges_vente', 'ventes_marchandises',
+            'variation_stocks_marchandises', 'produit_dexploitation_generale',
+            'reprise_damortissement_provisions_sur_immobilisation',
+            'solde_resultat_correction_valeur_sur_creance_hors_bilan',
+            'excedent_reprise_fonds_pour_risque_bancaire_generaux',
+            'produits_exceptionnels', 'benefice_sur_exercice_anterieur', 'perte'
+        ]
+
+class OffBalanceSheetBancaireSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    total_engagement_financement_donne = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_engagement_garantie_donne = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_engagements_donnes = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_engagement_financement_recu = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_engagements_recus = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = OffBalanceSheet
+        fields = '__all__'
+
+class AddOffBalanceSheetBancaireSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OffBalanceSheet
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            'engagement_financement_donne_ets_credit',
+            'engagement_financement_donne_clientele',
+            'engagement_garantie_donne_ets_credit',
+            'engagement_garantie_donne_clientele',
+            'engagement_sur_titres_donnes',
+            'engagement_financement_recu_ets_credit',
+            'engagement_financement_recu_clientele',
+            'engagement_garantie_recu_ets_credit',
+            'engagement_sur_titres_recus'
+        ]
+
+# Serializer pour le calcul de score
+class BilanBancaireScoreSerializer(serializers.Serializer):
+    acheteur_id = serializers.IntegerField()
+    annee_n = serializers.IntegerField()
+    annee_n1 = serializers.IntegerField()
+    annee_n2 = serializers.IntegerField()
+    bilan_type = serializers.ChoiceField(choices=TYPE_BILAN_CHOICES)
+    semestre = serializers.ChoiceField(choices=SEMESTRE_CHOICES, required=False, allow_null=True)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+# serializers.py - Ajoutez ces sérialiseurs
+
+class BilanSyscohadaScoreSerializer(serializers.Serializer):
+    acheteur_id = serializers.IntegerField()
+    annee_n = serializers.IntegerField()
+    annee_n1 = serializers.IntegerField()
+    annee_n2 = serializers.IntegerField()
+
+class ActifSSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    immobilisations_incorporelles = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    immobilisations_corporelles = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    immobilisations_financieres = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif_immobilise = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    creances_emplois_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_tresorerie_equivalents = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif_circulant = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_actif = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ActifS
+        fields = '__all__'
+
+class PassifSSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    total_capitaux_propres_ressources_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_dettes_financieres_ressources_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_ressources_stables = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passifs_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_tresorerie_equivalents = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    total_passifs = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PassifS
+        fields = '__all__'
+
+class ResultatSSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    marge_commerciale = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    chiffre_affaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    valeur_ajoutee = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    excedent_brute_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_exploitation = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_financier = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_activites_ordinaires_xe = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_activites_ordinaires_tn = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    resultat_net = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ResultatS
+        fields = '__all__'
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+# serializers.py - Ajoutez ces sérialiseurs
+
+class BilanIFRSScoreSerializer(serializers.Serializer):
+    acheteur_id = serializers.IntegerField()
+    annee_n = serializers.IntegerField()
+    annee_n1 = serializers.IntegerField()
+    annee_n2 = serializers.IntegerField()
+
+class ActifIFRSSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    total_actif_non_courant = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    total_actif_courant = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    total_actif = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ActifIFRS
+        fields = '__all__'
+
+class PassifIFRSSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    total_capitaux_propres = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    total_passif_non_courant = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    total_passif_courant = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    total_passif = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = PassifIFRS
+        fields = '__all__'
+
+class ResultatIFRSSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = CustomUserSerializer(read_only=True)
+    updated_by = CustomUserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    chiffre_affaires = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    cout_des_ventes = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    charges_operationnelles = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    amortissements_et_provisions = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    total_charges = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    resultat_operationnel = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    resultat_financier = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    resultat_avant_impot = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+    resultat_net = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = ResultatIFRS
+        fields = '__all__'

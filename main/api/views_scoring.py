@@ -2,37 +2,23 @@
 
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
+from django.utils import timezone
+from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from rest_framework.decorators import api_view, permission_classes
 from main.serializers import *
-
-# === Fonctions utiles === #
-# main/api/views_scoring.py
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
-from main.models import ScoringSansBilanAcheteur, Acheteur
-from main.serializers import ScoringSansBilanAcheteurSerializer
+from main.models import ScoringSansBilanAcheteur, Acheteur, ActifC, PassifC, ResultatC
+from main.serializers import ScoringSansBilanAcheteurSerializer, BilanClassiqueScoreSerializer
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
-from main.models import ScoringSansBilanAcheteur
-from main.serializers import ScoringSansBilanAcheteurSerializer
-
-from rest_framework.generics import ListAPIView
-from main.models import FormeJuridique, ModeleComportementPaiement, ModeleAgeSociete, ModeleAvisCommercial, ModeleBail, CategoryNaceCode
-from main.serializers import (
-    FormeJuridiqueScoringSerializer,
-    ModeleComportementPaiementScoringSerializer,
-    ModeleAgeSocieteScoringSerializer,
-    ModeleAvisCommercialScoringSerializer,
-    ModeleBailScoringSerializer,
-    CategoryNaceCodeScoringSerializer,
-)
+from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
 from rest_framework.pagination import PageNumberPagination
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class NoPagination(PageNumberPagination):
     page_size = None

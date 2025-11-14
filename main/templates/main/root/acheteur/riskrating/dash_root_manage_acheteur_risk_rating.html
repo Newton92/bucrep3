@@ -4,68 +4,39 @@
 
 {% block styles %}
 <style>
-/* Style du conteneur principal */
-.risk-rating-gauge-container {
-    width: 250px; /* Taille du cadran */
-    height: 125px; /* Moitié de la hauteur (semi-cercle) */
-    overflow: hidden; /* Cache la partie inférieure */
+/* Supprimer les styles de la jauge existante et ajouter le style pour l'image */
+.risk-rating-image-container {
+    width: 250px;
+    height: 125px;
     margin: 20px auto;
     position: relative;
     margin-left: auto;
     margin-right: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Sections colorées (le demi-cercle) */
-.risk-rating-gauge-container .gauge-sections {
-    /* Utilise conic-gradient pour simuler les zones colorées comme sur l'image 1 */
-    background: conic-gradient(
-        from 180deg at 50% 100%, 
-        #dc3545 0deg 30deg,      /* Very Bad (Rouge) */
-        #ff7f00 30deg 55deg,     /* Bad (Orange) */
-        #ffc107 55deg 80deg,     /* Fair (Jaune) */
-        #8bc34a 80deg 105deg,    /* Good (Vert Clair) */
-        #4caf50 105deg 135deg,   /* Very Good (Vert Moyen) */
-        #00bcd4 135deg 180deg    /* Excellent (Cyan/Bleu clair) */
-    );
-    border-radius: 50%;
-    width: 250px;
-    height: 250px;
-    position: absolute;
-    bottom: 0; /* Positionne le centre en bas */
-    left: 0;
-    /* Ne montrer que le haut du cercle */
-    clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%); 
+.risk-rating-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
 }
 
-/* L'aiguille (Needle) */
-.gauge-needle {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 4px;
-    height: 125px; /* Longueur égale au rayon du demi-cercle */
-    background-color: black;
-    transform-origin: bottom center;
-    /* Position de départ : -90deg pour le rouge (0 points) */
-    transform: translateX(-50%) rotate(-90deg); 
-    transition: transform 0.5s ease-in-out; /* Animation douce */
-    border-bottom: 5px solid black;
-    border-radius: 2px 2px 0 0;
-    z-index: 10;
+/* Style pour le modal de visualisation */
+.risk-image-modal .modal-dialog {
+    max-width: 500px;
 }
 
-/* Point central */
-.gauge-center {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    background-color: black;
-    border-radius: 50%;
-    /* Centrage du point sur l'origine de rotation de l'aiguille */
-    transform: translate(-50%, 50%); 
-    z-index: 11;
+.risk-image-modal .modal-body {
+    text-align: center;
+    padding: 20px;
+}
+
+.risk-image-full {
+    max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
 }
 </style>
 {% endblock %}
@@ -223,6 +194,7 @@
                                 <th scope="col" class="border-0">MESDS</th>
                                 <th scope="col" class="border-0">CODRI</th>
                                 <th scope="col" class="border-0">INDDRI</th>
+                                <th scope="col" class="border-0">Score</th>
                                 <th scope="col" class="border-0 rounded-end">Action</th>
                             </tr>
                         </thead>
@@ -263,17 +235,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="risk-rating-gauge-container mb-4">
-                    <div class="gauge-sections">
-                        <div class="gauge-section very-bad" style="--angle: 0deg; --size: 45deg;"></div>
-                        <div class="gauge-section bad" style="--angle: 45deg; --size: 20deg;"></div>
-                        <div class="gauge-section fair" style="--angle: 65deg; --size: 20deg;"></div>
-                        <div class="gauge-section good" style="--angle: 85deg; --size: 25deg;"></div>
-                        <div class="gauge-section very-good" style="--angle: 110deg; --size: 25deg;"></div>
-                        <div class="gauge-section excellent" style="--angle: 135deg; --size: 45deg;"></div>
-                    </div>
-                    <div class="gauge-needle" id="addRiskGaugeNeedle"></div>
-                    <div class="gauge-center"></div>
+                <!-- Remplacer la jauge par l'image -->
+                <div class="risk-rating-image-container mb-4">
+                    <img id="addRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-rating-image">
                 </div>
                 <form id="addRiskRatingForm">
                     <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
@@ -387,17 +351,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="risk-rating-gauge-container mb-4">
-                    <div class="gauge-sections">
-                        <div class="gauge-section very-bad" style="--angle: 0deg; --size: 45deg;"></div>
-                        <div class="gauge-section bad" style="--angle: 45deg; --size: 20deg;"></div>
-                        <div class="gauge-section fair" style="--angle: 65deg; --size: 20deg;"></div>
-                        <div class="gauge-section good" style="--angle: 85deg; --size: 25deg;"></div>
-                        <div class="gauge-section very-good" style="--angle: 110deg; --size: 25deg;"></div>
-                        <div class="gauge-section excellent" style="--angle: 135deg; --size: 45deg;"></div>
-                    </div>
-                    <div class="gauge-needle" id="editRiskGaugeNeedle"></div>
-                    <div class="gauge-center"></div>
+                <div class="risk-rating-image-container mb-4">
+                    <img id="editRiskRatingImage" src="{% static 'riskrating/0.svg' %}" alt="Score de risque" class="risk-rating-image">
                 </div>
                 <form id="editRiskRatingForm">
                     <input type="hidden" id="editRiskRatingId" name="id">
@@ -502,6 +457,24 @@
 </div>
 <!-- Edit Risk Rating Modal END -->
 
+<!-- Modal pour visualiser l'image en grand -->
+<div class="modal fade risk-image-modal" id="viewRiskImageModal" tabindex="-1" aria-labelledby="viewRiskImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewRiskImageModalLabel">Visualisation du Score de Risque</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="fullRiskImage" src="" alt="Score de risque complet" class="risk-image-full">
+                <div class="mt-3">
+                    <p id="riskImageDescription" class="text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -581,102 +554,104 @@
 
 </script>
 
+
+
 <script>
-    /**
-    * Calcule le score de risque (0 à 8) et met à jour la rotation de l'aiguille.
-    * @param {string} formId L'ID du formulaire ou du conteneur des selects (ex: '#addRiskRatingForm').
-    * @param {string} needleId L'ID de l'aiguille (ex: '#addRiskGaugeNeedle').
-    */
-    function updateRiskGauge(formId, needleId) {
+    // Fonction pour calculer le score et mettre à jour l'image
+    function updateRiskImage(formId, imageId) {
         let score = 0;
-        const totalCriteria = 8;
-        // Liste des noms de champs booléens
         const fields = [
             'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
             'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
             'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
         ];
 
-        // Calcul du score : +1 pour chaque 'Oui' (value="true")
+        // Calcul du score
         fields.forEach(field => {
-            // S'assurer que le sélecteur fonctionne pour le modal actuel
             const $select = $(`${formId} [name="${field}"]`);
             if ($select.length && $select.val() === 'true') {
                 score++;
             }
         });
 
-        // Le score varie de 0 (le plus à gauche, -90deg) à 8 (le plus à droite, +90deg).
-        // L'angle total est de 180 degrés.
-        // Angle = (Score / TotalCritères) * 180 - 90
-        // Pour que 0 soit à -90 deg et 8 à +90 deg.
-        const rotationAngle = (score / totalCriteria) * 180 - 90;
-
-        // Mise à jour de l'aiguille
-        $(needleId).css('transform', `translateX(-50%) rotate(${rotationAngle}deg)`);
+        // Mettre à jour l'image (score de 0 à 8)
+        const imagePath = `{% static 'riskrating/' %}${score}.svg`;
+        $(imageId).attr('src', imagePath);
+        
+        return score;
     }
 
-    // Fonction de validation pour les Booléens (à adapter selon si vous utilisez le 'Oui'/'Non' de l'API ou le true/false)
-    function getBooleanValue(value) {
-        return value === 'true'; // Assurez-vous que c'est cohérent avec ce que Django s'attend
+    // Fonction pour obtenir le chemin de l'image basé sur le score
+    function getRiskImagePath(score) {
+        return `{% static 'riskrating/' %}${score}.svg`;
     }
 
-    // Fonction de mise à jour du formulaire d'édition lors du chargement des données
-    function setEditFormValues(response) {
-        // ... votre code existant pour remplir les selects
-        $('#editRemboursabilite').val(response.remboursabilite ? "true" : "false");
-        $('#editSituationLiquidite').val(response.situation_liquidite ? "true" : "false");
-        // ... les autres champs ...
+    // Fonction pour afficher l'image en grand dans un modal
+    function showRiskImage(score, riskRatingId = null) {
+        const imagePath = getRiskImagePath(score);
+        $('#fullRiskImage').attr('src', imagePath);
+        
+        let description = `Score de risque: ${score}/8`;
+        if (riskRatingId) {
+            description += ` (Évaluation #${riskRatingId})`;
+        }
+        $('#riskImageDescription').text(description);
+        
+        $('#viewRiskImageModal').modal('show');
+    }
 
-        // Appeler la fonction de mise à jour du cadran APRES avoir rempli les champs
-        updateRiskGauge('#editRiskRatingForm', '#editRiskGaugeNeedle');
+    // Fonction pour calculer le score à partir de la réponse API
+    function calculateScoreFromResponse(response) {
+        let score = 0;
+        const fields = [
+            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+        ];
+
+        fields.forEach(field => {
+            if (response[field]) {
+                score++;
+            }
+        });
+
+        return score;
     }
 
     $(document).ready(function() {
-
-        // Liste des IDs des champs select booléens
         const booleanFields = [
             'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
             'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
             'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
         ];
-        
-        // Initialisation et mise à jour pour le formulaire d'ajout
+
+        // Initialisation pour le formulaire d'ajout
         $('#addRiskRatingModal').on('show.bs.modal', function () {
-            // Initialiser le cadran au score 0 (ou au score initial si vous en avez un) à l'ouverture du modal
-            updateRiskGauge('#addRiskRatingForm', '#addRiskGaugeNeedle');
+            updateRiskImage('#addRiskRatingForm', '#addRiskRatingImage');
         });
 
-        // Ajouter des écouteurs de changement pour chaque champ dans le formulaire d'ajout
+        // Écouteurs pour les changements dans le formulaire d'ajout
         booleanFields.forEach(field => {
             $(`#${field}`).on('change', function() {
-                updateRiskGauge('#addRiskRatingForm', '#addRiskGaugeNeedle');
+                updateRiskImage('#addRiskRatingForm', '#addRiskRatingImage');
             });
         });
 
-        // -------------------------------------------------------------
-        
-        // 2. Pour le Modal d'Édition (`#editRiskRatingModal`) :
-        
+        // Initialisation pour le formulaire d'édition
         $('#editRiskRatingModal').on('show.bs.modal', function () {
-            // La mise à jour est déjà gérée dans l'appel AJAX de l'édition.
-            // Si vous voulez être sûr que le cadran est mis à jour *après* la réception des données :
-            // Assurez-vous que setEditFormValues est bien appelée.
+            // La mise à jour est gérée dans l'appel AJAX
         });
 
-        // Ajouter des écouteurs de changement pour chaque champ dans le formulaire d'édition
+        // Écouteurs pour les changements dans le formulaire d'édition
         booleanFields.forEach(field => {
             $(`#edit${field.charAt(0).toUpperCase() + field.slice(1)}`).on('change', function() {
-                // Utilisation d'un sélecteur plus précis pour les champs d'édition
-                updateRiskGauge('#editRiskRatingForm', '#editRiskGaugeNeedle');
+                updateRiskImage('#editRiskRatingForm', '#editRiskRatingImage');
             });
         });
-
-        // -------------------------------------------------------------
 
         // Définition des explications pour les popovers
         const riskRatingExplanations = {
-            'non_douteux': "Prêt entièrement garanti par l’encaisse ; Solide capitalisation ; Direction remarquable",
+            'non_douteux': "Prêt entièrement garanti par l'encaisse ; Solide capitalisation ; Direction remarquable",
             'risque_faible': "Excellents antécédents financiers/tendances ; Direction solide ; Industrie stable/robuste",
             'risque_modere': "Direction solide ; Tendances financières stables ; Niveau de capitalisation modéré",
             'mise_en_garde': "Insuffisance possible de la garantie ; Insuffisance possible du service de la dette ; Tournure très défavorable des événements",
@@ -738,13 +713,14 @@
 
             return { displayValue, explanation };
         }
+
         // Function to load risk ratings data
         function loadRiskRatings(page = 1, search = '') {
             $.ajax({
                 url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-evaluations-de-risque/?page=' + page + '&search=' + search,
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     // Update pagination info
@@ -769,11 +745,11 @@
                     // Update risk ratings table body
                     $('#riskRatingTableBody').html('');
                     response.results.forEach(function(riskRating, index) {
-                        console.log(response);
-
                         const cotationData = getDisplayValueAndExplanation(riskRating.cotation_du_risque, 'rating');
                         const indiceData = getDisplayValueAndExplanation(riskRating.indice_du_risque, 'index');
-
+                        
+                        // Calculer le score pour cette évaluation
+                        const score = calculateScoreFromResponse(riskRating);
 
                         $('#riskRatingTableBody').append('<tr>' +
                             '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
@@ -785,22 +761,22 @@
                             '<td>' + (riskRating.existence_garantie ? 'Oui' : 'Non') + '</td>' +
                             '<td>' + (riskRating.terme_financier_duree_pret ? 'Oui' : 'Non') + '</td>' +
                             '<td>' + (riskRating.mesure_propre_soutenir_credit ? 'Oui' : 'Non') + '</td>' +
-
-                            // Champs avec popover pour la cotation et l'indice du risque
                             '<td><span data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" data-bs-content="' + cotationData.explanation + '">' + cotationData.displayValue + '</span></td>' +
                             '<td><span data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" data-bs-content="' + indiceData.explanation + '">' + indiceData.displayValue + '</span></td>' +
-
-
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '<td><strong>' + score + '/8</strong></td>' +
+                            '<td>' +
+                            '<button class="btn btn-info btn-round mb-0 view-image-btn" data-id="' + riskRating.id + '" data-score="' + score + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Visualiser l\'image"><i class="bi bi-eye"></i></button>' +
+                            '&nbsp; <button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + riskRating.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
+                            '</td>' +
                             '</tr>');
                     });
 
-                    // Initialiser les popovers après avoir ajouté les éléments au DOM
+                    // Initialiser les popovers
                     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
                     var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
                         return new bootstrap.Popover(popoverTriggerEl, {
-                            container: 'body' // Important pour éviter les problèmes de positionnement dans un tableau
+                            container: 'body'
                         })
                     })
                 },
@@ -813,6 +789,13 @@
                 }
             });
         }
+
+        // Gestion du clic sur le bouton de visualisation d'image
+        $(document).on('click', '.view-image-btn', function() {
+            const riskRatingId = $(this).data('id');
+            const score = $(this).data('score');
+            showRiskImage(score, riskRatingId);
+        });
 
         // Initial load
         loadRiskRatings();
@@ -841,7 +824,7 @@
                 type: 'POST',
                 data: formData,
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     Swal.fire({
@@ -872,11 +855,9 @@
                 url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-evaluation-risque/' + id + '/',
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
-                    console.log(response);
-
                     $('#editRiskRatingId').val(response.id);
 
                     // Mettre à jour les champs de sélection en fonction des valeurs booléennes
@@ -894,6 +875,11 @@
 
                     $('#editInterpretation').val(response.interpretation);
                     $('#editAnalyse').val(response.analyse);
+                    
+                    // Mettre à jour l'image
+                    const score = calculateScoreFromResponse(response);
+                    $('#editRiskRatingImage').attr('src', getRiskImagePath(score));
+                    
                     $('#editRiskRatingModal').modal('show');
 
                     tinymce.get('editInterpretation').setContent(response.interpretation);
@@ -909,7 +895,6 @@
             });
         });
 
-
         // Edit Risk Rating form submission
         $('#editRiskRatingForm').on('submit', function(event) {
             event.preventDefault();
@@ -920,7 +905,7 @@
                 type: 'PUT',
                 data: formData,
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + '{{ access }}'
                 },
                 success: function(response) {
                     Swal.fire({
@@ -963,7 +948,7 @@
                         data: JSON.stringify({ ids: [id] }),
                         contentType: 'application/json',
                         headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                            'Authorization': 'Bearer ' + '{{ access }}'
                         },
                         success: function(response) {
                             Swal.fire(
