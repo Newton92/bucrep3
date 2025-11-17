@@ -1505,6 +1505,38 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
 
 
 @login_required
+def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+        "coloration_list": coloration_list,
+    }
+    return render(
+        request,
+        "main/root/acheteur/reporting/dash_root_manage_acheteur_report_solvency.html",
+        context,
+    )
+
+
+@login_required
 def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     token = request.GET.get("token")
     if not token:

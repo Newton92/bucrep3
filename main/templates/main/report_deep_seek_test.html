@@ -326,6 +326,13 @@
         .risk-7 { background-color: #ff6600; }
         .risk-8 { background-color: #ff3300; } /* Rouge */
         .risk-9 { background-color: #cc0000; } /* Rouge foncé */
+
+        .score-image img {
+            max-width: 100%;   /* ne dépassera jamais la largeur du conteneur */
+            height: auto;      /* conserve les proportions */
+            display: block;    /* évite les petits espaces sous l'image */
+            margin: 0 auto;    /* centre l'image si le conteneur est plus large */
+        }
     </style>
 </head>
 <body>
@@ -558,39 +565,16 @@
             <!-- EVALUATION DU RISQUE -->
             <div class="subsection-title">EVALUATION DU RISQUE</div>
 
-            <!-- Barre d'évaluation des risques -->
-            <div class="section">
-                <div class="risk-bar">
-                    <div class="risk-segment risk-1">Low Risk</div>
-                    <div class="risk-segment risk-2"></div>
-                    <div class="risk-segment risk-3">Medium Risk</div>
-                    <div class="risk-segment risk-4"></div>
-                    <div class="risk-segment risk-5"></div>
-                    <div class="risk-segment risk-6">High Risk</div>
-                    <div class="risk-segment risk-7"></div>
-                    <div class="risk-segment risk-8"></div>
-                    <div class="risk-segment risk-9">Very High Risk</div>
-                </div>
+            
 
-                <div class="rating-scale">
-                    {% for i in "123456789" %}
-                        <div class="rating-point{% if summary_and_opinion.risk_rating_value|stringformat:"s" == i %} highlighted{% endif %}">{{ i }}</div>
-                    {% endfor %}
-                </div>
-
-            </div>
-
-            <div class="row text-center">
-                <!-- Colonne de gauche : Affichage de l'image SVG -->
-                <div class="col-md-6 text-center section">
-
+            <div class="row" style="text-align: center;">
+                <div class="section" style="display: inline-block;">
                     {% for i in "0123456789" %}
                         {% if summary_and_opinion.risk_rating_value|stringformat:"s" == i %}
                         <img
                             src="{% static 'riskrating/'|add:i|add:'.svg' %}"
                             alt="Score de risque : {{ summary_and_opinion.risk_rating_value }}/9"
-                            class="img-fluid"
-                            style="max-height: 200px;"
+                            style="max-height: 200px; display: block; margin: 0 auto;"
                         >
                         {% endif %}
                     {% endfor %}
@@ -600,37 +584,10 @@
 
 
 
+
+
             
             <table>
-                <tr>
-                    <th>Remboursabilité</th>
-                    <td>{{ summary_and_opinion.remboursabilite }}</td>
-
-                    <th>Situation de liquidité</th>
-                    <td>{{ summary_and_opinion.situation_liquidite }}</td>
-                </tr>
-                <tr>
-                    <th>Performance et rentabilité</th>
-                    <td>{{ summary_and_opinion.performance_rentabilite }}</td>
-
-                    <th>Perspective du secteur</th>
-                    <td>{{ summary_and_opinion.perspective_secteur }}</td>
-                </tr>
-                <tr>
-                    <th>Qualité de l'information analysée</th>
-                    <td>{{ summary_and_opinion.qualite_information_analyse }}</td>
-
-                    <th>Existence de garantie</th>
-                    <td>{{ summary_and_opinion.existence_garantie }}</td>
-                </tr>
-                <tr>
-                    <th>Terme financier et durée du prêt</th>
-                    <td>{{ summary_and_opinion.terme_financier_duree_pret }}</td>
-
-                    <th>Mesure propre à soutenir le crédit</th>
-                    <td>{{ summary_and_opinion.mesure_propre_soutenir_credit }}</td>
-                </tr>
-
                 <tr>
                     <th>Cotation du risque</th>
                     <td colspan="3" class="warning">
@@ -847,7 +804,23 @@
             {% else %}
                 <div class="subsection-title">Aucun dirigeant n'est spécifié.</div>
             {% endif %}
-            <div class="subsection-title">GESTION DU RISQUE</div>
+            <div class="subsection-title">MANAGEMENT DU RISQUE</div>
+
+            <!-- Image et score -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <!-- Affichage de l'image de gestion des risques -->
+                {% if management.risk_management %}
+                    <img 
+                        src="{% static management.risk_management.image %}" 
+                        alt="Image Gestion du Risque" 
+                        style="max-height: 200px; display: block; margin: 0 auto;"
+                    >
+                    <div style="margin-top: 10px; font-weight: bold;">
+                        Score : {{ management.risk_management.score }}
+                    </div>
+                {% endif %}
+            </div>
+
             <table>
                 <tbody>
                     <tr>
@@ -1360,7 +1333,42 @@
 
 
 
-            <div class="section-title">SCORING ACREMAC</div>
+            <!-- Score ACREMAC -->
+            <div class="section">
+                <div class="section-title">SCORE ACREMAC</div>
+                <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+                
+                {% if scoring %}
+                    <div class="score-image">
+                        <img src="{% static scoring.score_image %}" alt="Score ACREMAC">
+                    </div>
+                    <br>
+
+                    <div class="shareholder-entry">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>Score</th>
+                                    <td style="color: #00cc00;">{{ scoring.score_value }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Interprétation</th>
+                                    <td>{{ scoring.interpretation }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Commentaire</th>
+                                    <td colspan="1" class="warning">{{ scoring.commentaire|striptags|safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                
+                {% else %}
+                    <div class="subsection-title">Aucun scoring disponible pour cet acheteur.</div>
+                {% endif %}
+                
+                
+            </div>
 
 
         </div>

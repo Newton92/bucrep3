@@ -2256,6 +2256,27 @@ class RiskManagment(models.Model):
             return "main/static/management/mauvais.png"
         else:
             return "main/static/management/passable.png"
+        
+    def get_management_image_path_report(self):
+        fields = [
+            self.professionalisme,
+            self.organisation,
+            self.turn_over,
+            self.greve,
+            self.degradation_qualite,
+            self.non_respect_condition
+        ]
+        
+        oui_count = sum(1 for field in fields if field == self.STATUS_OUI)
+        non_count = sum(1 for field in fields if field == self.STATUS_NON)
+        
+        if oui_count >= 4:
+            return "management/bien.png"
+        elif non_count >= 4:
+            return "management/mauvais.png"
+        else:
+            return "management/passable.png"
+
     
     def get_management_score(self):
         """Retourne le score de gestion des risques"""

@@ -2,7 +2,7 @@
 
 {% load static %}
 
-{% block css %}
+{% block styles %}
 <!-- Leaflet CSS -->
 <!-- MapLibre GL JS -->
 <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
@@ -430,6 +430,7 @@
                 <span>A partir de ces boutons d'action, vous avez la possibilité de prévisualiser le rapport d'un acheteur sous divers formats !</span>
                 <br><br>
 
+                <a href="{% url 'dash_root_manage_acheteur_report_solvency' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Rapports de solvabilité &nbsp;</a>
                 <a href="" target="_blank" class="btn btn-info btn-sm mb-0">WEB &nbsp;</a>
                 <a href="" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">XML &nbsp;</a>
                 <a href="" target="_blank" class="btn btn-warning btn-sm mb-2 mb-sm-0">PDF &nbsp;</a>
@@ -788,7 +789,7 @@ $(document).ready(function() {
         });
 
         // URL CORRIGÉE : /api/acheteur/1/generer-report/ (pas generer-report-final)
-        const url = `/api/acheteur/${acheteurId}/generer-report-final/?${params.toString()}`;
+        const url = `/api/acheteur/${acheteurId}/generer-report/?${params.toString()}`;
         console.log("URL de requête:", url);
 
         // Requête AJAX avec authentification
@@ -799,33 +800,53 @@ $(document).ready(function() {
                 'Authorization': `Bearer ${token}`
             },
             xhrFields: {
-                responseType: format === 'pdf' ? 'blob' : (format === 'xml' ? 'blob' : 'text')
+                responseType: (format || '').toLowerCase() === 'pdf' ? 'blob' : 
+                            (format || '').toLowerCase() === 'xml' ? 'blob' : 'text'
             },
             success: function(response, status, xhr) {
                 console.log("Réponse reçue avec succès, type:", typeof response);
-                
+
                 // Fermer le SweetAlert de chargement
                 Swal.close();
 
-                // Traitement différent selon le format
-                if (format === 'pdf') {
-                    // Créer un lien pour télécharger le PDF
-                    const blob = new Blob([response], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `rapport_solvabilite_${acheteur.nom || acheteurId}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
+                if (format.toLowerCase() === 'pdf') {
+                    try {
+                        // Créer un Blob à partir de la réponse
+                        const blob = new Blob([response], { type: 'application/pdf' });
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès !',
-                        text: 'Le rapport PDF a été généré et téléchargé avec succès.',
-                        confirmButtonText: 'OK'
-                    });
+                        // Créer un URL pour le Blob
+                        const url = window.URL.createObjectURL(blob);
+
+                        // Créer dynamiquement un lien <a> pour le téléchargement
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        // Nom du fichier (tu peux personnaliser avec l'ID de la commande)
+                        a.download = `rapport_solvabilite_${acheteurId || 'rapport'}.pdf`;
+
+                        // Ajouter le lien au DOM, cliquer dessus, puis le retirer
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        // Libérer l'URL pour éviter les fuites mémoire
+                        window.URL.revokeObjectURL(url);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            text: 'Le rapport PDF a été généré et téléchargé avec succès.',
+                            confirmButtonText: 'OK'
+                        });
+                    } catch (e) {
+                        console.error("Erreur lors du téléchargement du PDF :", e);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur !',
+                            text: 'Impossible de télécharger le PDF.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                 }
                 else if (format === 'html') {
                     // Ouvrir le HTML dans un nouvel onglet
@@ -888,6 +909,7 @@ $(document).ready(function() {
                 // Fermer le modal
                 $('#generateReportModal').modal('hide');
             },
+            
             error: function(xhr, status, error) {
                 // Fermer le SweetAlert de chargement
                 Swal.close();

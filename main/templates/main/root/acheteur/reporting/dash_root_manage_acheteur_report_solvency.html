@@ -1,0 +1,1786 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<style>
+/* Styles pour WeasyPrint */
+
+/* En-tête avec fond bleu nuit */
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: white; /* Bleu nuit */
+    color: #003366;
+    border-radius: 8px;
+}
+
+.header h1 {
+    font-size: 20pt;
+    margin: 0;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.header-subtitle {
+    font-size: 12pt;
+    margin-top: 5px;
+}
+
+.header-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 9pt;
+}
+
+.header-logo {
+    max-height: 60px;
+    margin-bottom: 10px;
+}
+
+/* Titres de section avec fond bleu nuit */
+.section-title {
+    font-size: 12pt;
+    font-weight: bold;
+    margin: 15px 0 8px 0;
+    padding: 8px 12px;
+    background-color: #003366; /* Bleu nuit */
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.subsection-title {
+    font-size: 11pt;
+    font-weight: bold;
+    margin: 12px 0 6px 0;
+    padding: 5px 8px;
+    background-color: #e6f2ff; /* Bleu très clair */
+    border-left: 4px solid #F5C400;
+    border-radius: 3px;
+}
+
+/* Tables avec bordures bleu ciel arrondies */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+    border: 1px solid #66ccff; /* Bleu ciel */
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+table th, table td {
+    padding: 6px 8px;
+    vertical-align: top;
+    border: 1px solid #66ccff; /* Bleu ciel */
+}
+
+table th {
+    background-color: #e6f7ff; /* Bleu très clair */
+    font-weight: bold;
+    text-align: left;
+}
+
+.financial-table {
+    font-size: 9pt;
+}
+
+.financial-table td {
+    padding: 4px 6px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Commentaires en rouge */
+.warning {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+.footer {
+    font-size: 8pt;
+    color: #666;
+    margin-top: 20px;
+    border-top: 1px solid #ccc;
+    padding-top: 5px;
+}
+
+/* Éviter les coupures indésirables */
+.avoid-break {
+    page-break-inside: avoid;
+}
+
+/* Styles pour les graphiques (placeholder) */
+.chart-placeholder {
+    height: 150px;
+    background-color: #f9f9f9;
+    border: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    font-style: italic;
+    color: #666;
+    border-radius: 5px;
+}
+
+.two-columns {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.column {
+    width: 48%;
+}
+
+/* Style pour l'image de placeholder si le logo n'est pas trouvé */
+.logo-placeholder {
+    width: 150px;
+    height: 60px;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #ccc;
+    color: #666;
+    font-style: italic;
+}
+
+/* Échelle d'opinion de crédit ACREMAC avec les couleurs spécifiques */
+.acremaac-rating-scale {
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    background-color: #f0f8ff;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #66ccff;
+}
+
+.acremaac-rating-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 10%;
+    text-align: center;
+}
+
+.acremaac-rating-point {
+    width: 40px;
+    height: 40px;
+    border-radius: 5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: white;
+    font-size: 14px;
+}
+
+.acremaac-rating-label {
+    font-size: 8px;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: bold;
+}
+
+/* Couleurs spécifiques pour l'échelle ACREMAC */
+.rating-1 { background-color: #178B16; } /* RFAI - Risque Faible */
+.rating-2 { background-color: #66CC33; } /* RLQT - Risque de Liquidité */
+.rating-3 { background-color: #F4A600; } /* RMOY - Risque Moyen */
+.rating-4 { background-color: #F5C400; } /* RTIR - Risque de Taux d'Intérêt */
+.rating-5 { background-color: #2F85AB; } /* RPAY - Risque Pays */
+.rating-6 { background-color: #F57C00; } /* RRÉP - Risque de Réputation */
+.rating-7 { background-color: #2F4A6D; } /* RCCR - Risque de Concentration de Crédit */
+.rating-8 { background-color: #D32F2F; } /* RÉLV - Risque Élevé */
+.rating-9 { background-color: #E0201E; } /* RDEF - Risque de Défaut */
+
+/* Échelle d'opinion de crédit avec couleurs comme sur l'image */
+.rating-scale {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px 0;
+    background-color: #f0f8ff;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #66ccff;
+}
+
+.rating-point {
+    width: 10%;
+    text-align: center;
+    font-weight: bold;
+    padding: 8px 0;
+    border-radius: 4px;
+    background-color: #e6f2ff;
+    border: 1px solid #99d6ff;
+}
+
+/* Styles pour les graphiques (placeholder) */
+.chart-placeholder {
+    height: 150px;
+    background-color: #f9f9f9;
+    border: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    font-style: italic;
+    color: #666;
+    border-radius: 5px;
+}
+
+.highlighted {
+    background-color: #ffffcc;
+    border: 2px solid #ffcc00;
+}
+
+.negative-var {
+    color: #ff0000;
+}
+
+.positive-var {
+    color: #009900;
+}
+
+/* Barre de risque avec dégradé de couleur */
+.risk-bar {
+    display: flex;
+    height: 20px;
+    margin: 10px 0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.risk-segment {
+    flex: 1;
+    text-align: center;
+    color: white;
+    font-size: 8pt;
+    padding: 2px 0;
+}
+
+.ligne-up {
+    background-color: #ffffcc;
+    color: #003366;
+}
+
+.risk-1 { background-color: #00cc00; } /* Vert - faible */
+.risk-2 { background-color: #66ff33; }
+.risk-3 { background-color: #ccff33; }
+.risk-4 { background-color: #ffff00; } /* Jaune */
+.risk-5 { background-color: #ffcc00; }
+.risk-6 { background-color: #ff9900; } /* Orange */
+.risk-7 { background-color: #ff6600; }
+.risk-8 { background-color: #ff3300; } /* Rouge */
+.risk-9 { background-color: #cc0000; } /* Rouge foncé */
+
+/* Styles supplémentaires pour l'affichage du rapport */
+.positive-var {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.negative-var {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.two-columns {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Acheteurs</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAcheteurs">Module de Gestion des Rapports de solvabilité</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres aux rapports d'un acheteur d'entreprise notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                    <!-- Title -->
+                    <div class="ms-2">
+                        <h6 class="card-title mb-0" id="editNom"></h6>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" target="_blank" class="btn btn-dark-soft mb-0">Numero Interne ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Formulaire de génération de rapport -->
+                <form id="rapportSolvabiliteForm">
+                    {% csrf_token %}
+
+                    <input type="hidden" name="id_acheteur" value="{{ id_acheteur}}" />
+                    <p style="">ID Acheteur: {{ id_acheteur }}</p>
+                    
+                    <!-- Années N, N-1, N-2 -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="annee_n" class="form-label">Année N *</label>
+                            <select class="form-select" id="annee_n" name="annee_n" required>
+                                <option value="">Sélectionner l'année N</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="annee_n1" class="form-label">Année N-1 *</label>
+                            <select class="form-select" id="annee_n1" name="annee_n1" required>
+                                <option value="">Sélectionner l'année N-1</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="annee_n2" class="form-label">Année N-2 *</label>
+                            <select class="form-select" id="annee_n2" name="annee_n2" required>
+                                <option value="">Sélectionner l'année N-2</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Inclure une commande -->
+                    <!-- Dans votre formulaire, remplacez la section "Inclure une commande" par : -->
+                    <!-- Inclure une commande -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="inclure_commande" class="form-label">Inclure une commande dans le rapport ? *</label>
+                            <select class="form-select" id="inclure_commande" name="inclure_commande" required>
+                                <option value="">Choisir une option</option>
+                                <option value="oui">Oui</option>
+                                <option value="non">Non</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="periode_container" style="display: none;">
+                            <label for="periode_recherche" class="form-label">Période de recherche *</label>
+                            <select class="form-select" id="periode_recherche" name="periode_recherche">
+                                <option value="">Choisir une période</option>
+                                <option value="7j">7 derniers jours</option>
+                                <option value="1m">1 dernier mois</option>
+                                <option value="3m">3 derniers mois</option>
+                                <option value="6m">6 derniers mois</option>
+                                <option value="1a">1 dernière année</option>
+                                <option value="personnalise">Période personnalisée</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Conteneur pour la sélection de commande -->
+                    <div class="row mb-3" id="commande_container" style="display: none;">
+                        <div class="col-md-6" id="select_commande_container">
+                            <label for="commande_id" class="form-label">Sélectionner une commande *</label>
+                            <select class="form-select" id="commande_id" name="commande_id">
+                                <option value="">Sélectionner une commande</option>
+                            </select>
+                            <div class="form-text">Les commandes sont filtrées selon la période choisie</div>
+                        </div>
+                        
+                        <!-- Période personnalisée (cachée par défaut) -->
+                        <div class="col-md-6" id="periode_personnalisee_container" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="date_debut" class="form-label">Date de début</label>
+                                    <input type="date" class="form-control" id="date_debut" name="date_debut">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="date_fin" class="form-label">Date de fin</label>
+                                    <input type="date" class="form-control" id="date_fin" name="date_fin">
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" id="appliquer_periode" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-filter me-1"></i>Appliquer la période
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Langue et Devise -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="langue" class="form-label">Langue du rapport *</label>
+                            <select class="form-select" id="langue" name="langue" required>
+                                <option value="">Choisir la langue</option>
+                                <option value="fr">Français</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="devise" class="form-label">Devise *</label>
+                            <select class="form-select" id="devise" name="devise" required>
+                                <option value="">Choisir la devise</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Type de bilan et Format -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="type_bilan" class="form-label">Type de bilan *</label>
+                            <select class="form-select" id="type_bilan" name="type_bilan" required>
+                                <option value="">Choisir le type de bilan</option>
+                                <option value="classique">Classique</option>
+                                <option value="bancaire">Bancaire</option>
+                                <option value="anglais">Anglais</option>
+                                <option value="syscohada">Syscohada</option>
+                                <option value="irfs_cobac">Irfs Cobac</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="format_rapport" class="form-label">Format du rapport *</label>
+                            <select class="form-select" id="format_rapport" name="format_rapport" required>
+                                <option value="">Choisir le format</option>
+                                <option value="pdf">PDF</option>
+                                <option value="html">HTML</option>
+                                <option value="xml">XML</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bouton de soumission -->
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-gear me-2"></i>Générer le rapport
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Card item END -->
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- Acheteurs Report Solvency -->
+<div class="row" id="reportSolvency" style="display: none;">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center"></div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- En-tête du rapport avec design bleu nuit -->
+                
+
+                <!-- Détails de la demande rattachee -->
+                <div class="section">
+                    <div class="section-title">COMMANDE RATTACHEE</div>
+                    <div class="subsection-title">DETAILS COMMANDE</div>
+                </div>
+                <!-- Identification -->
+                <div class="section">
+                    <div class="section-title">IDENTIFICATION</div>
+                </div>
+                <!-- Informations supplémentaires ACREMAC -->
+                <div class="section">
+                    <div class="section-title">INFORMATIONS SUPPLÉMENTAIRES</div>
+                </div>
+                <!-- Résumé exécutif -->
+                <div class="section">
+                    <div class="section-title">RESUME EXECUTIF</div>
+                </div>
+                <!-- Analyse et interprétation -->
+                <div class="section">
+                    <div class="section-title">ANALYSE ET INTERPRÉTATION</div>
+                </div>
+                <!-- Opinion crédit ACREMAC -->
+                <div class="section">
+                    <div class="section-title">OPINION ACREMAC</div>
+                </div>
+                <!-- Données d'enregistrement -->
+                <div class="section">
+                    <div class="section-title">DONNEES ENREGISTREMENT</div>
+                </div>
+                <!-- Dossiers juridiques -->
+                <div class="section">
+                    <div class="section-title">ANTECEDENTS JURIDIQUES</div>
+                </div>
+                <!-- Gestion et personnel -->
+                <div class="section">
+                    <div class="section-title">CONCLUSION ET AVIS</div>
+                </div>
+                <!-- Capital social -->
+                <div class="section">
+                    <div class="section-title">CAPITAL SOCIAL</div>
+                </div>
+                <!-- Actionnariat/Propriétaires -->
+                <div class="section">
+                    <div class="section-title">ACTIONNARIAT</div>
+                </div>
+                <!-- Affiliations d'entreprise -->
+                <div class="section">
+                    <div class="section-title">AFFILIATIONS</div>
+                </div>
+                <!-- Analyse sectorielle -->
+                <div class="section">
+                    <div class="section-title">ANALYSE SECTORIELLE</div>
+                </div>
+                <!-- Comptes financiers -->
+                <div class="section">
+                    <div class="section-title">ETATS FINANCIERS</div>
+                </div>
+                <!-- Actifs -->
+                <div class="section">
+                    <div class="section-title">ACTIFS</div>
+                </div>
+                <!-- Passifs -->
+                <div class="section">
+                    <div class="section-title">PASSIFS</div>
+                </div>
+                <!-- Resultats -->
+                <div class="section">
+                    <div class="section-title">RESULTATS</div>
+                </div>
+                <!-- Ratios -->
+                <div class="section">
+                    <div class="section-title">RATIOS</div>
+                </div>
+                <!-- Graphiques - Evolution des ratios -->
+                <div class="section">
+                    <div class="section-title">STRUCTURE FINANCIÈRE</div>
+                </div>
+                <!-- Score ACREMAC [avec bilan et sans bilan] -->
+                <div class="section">
+                    <div class="section-title">SCORE ACREMAC</div>
+                </div>
+                <!-- Opérations & Historique -->
+                <div class="section">
+                    <div class="section-title">OPERATIONS ET HISTORIQUE</div>
+                </div>
+                <!-- Paiements -->
+                <div class="section">
+                    <div class="section-title">CONDITIONS DE PAIEMENT</div>
+                </div>
+                <!-- SOURCES -->
+                <div class="section">
+                    <div class="section-title">SOURCES D'INVESTIGATION</div>
+
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>Services judiciaires</td>
+                            </tr>
+                            <tr>
+                                <td>Chambres de commerce et d'industrie</td>
+                            </tr>
+                            <tr>
+                                <td>Banques</td>
+                            </tr>
+                            <tr>
+                                <td>Groupe de sociétés</td>
+                            </tr>
+                            <tr>
+                                <td>La société faisant l'objet de l'enquête</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Conclusion et Avis -->
+                <div class="section">
+                    <div class="section-title">CONCLUSION ET AVIS</div>
+                </div>
+                <!-- Pied de page -->
+                <div class="footer">
+                    <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.
+                    <br>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.
+                    <br>Rapport généré le <strong>{% now "l d F Y" %}</strong> (GMT) - <strong>Services ACREMAC</strong></br>
+                </div>
+
+
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-footer">
+                <!-- Boutons d'exportation [pdf, html, xml, json] -->
+            </div>
+
+
+
+        </div>
+        <!-- Card item END -->
+
+
+
+
+    </div>
+</div>
+<!-- Acheteurs Report Solvency -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Ajoute SweetAlert2 via CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log(response);
+                $('#editAcheteurId').val(response.id);
+                $('#editCode').val(response.code).text(response.code);
+                $('#editNom').val(response.nom).text(response.nom);
+                $('#editSigle').val(response.sigle).text(response.sigle);
+                if (response.date_creation) {
+                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                }
+
+                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+                $('#editDescription').html(response.description);
+                $('#editEmail').val(response.email).text(response.email);
+                $('#editFax').val(response.fax).text(response.fax);
+                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editPays').val(response.pays.nom).text(response.pays.nom);
+                $('#editProvince').val(response.province.nom).text(response.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+});
+
+</script>
+
+
+<script>
+$(document).ready(function() {
+    let anneesData = [];
+    let devisesData = [];
+    let commandesData = [];
+
+    // URLs API - ajustez selon vos URLs réelles
+    const API_URLS = {
+        annees: '/api/reporting/annees/',
+        devises: '/api/reporting/devises/', 
+        commandes: '/api/reporting/commandes/acheteur/',
+        generer_rapport: '/api/reporting/generer-rapport-solvabilite/',
+        acheteur: '/api/consulter-un-acheteur/'
+    };
+
+    // Variables pour la période
+    let periodeActuelle = '';
+    let dateDebut = '';
+    let dateFin = '';
+
+    // Initialisation
+    function initForm() {
+        console.log('🚀 Initialisation du formulaire...');
+        loadAcheteurData();
+        loadAnnees();
+        loadDevises();
+        setupEventListeners();
+        
+        // Ne pas charger les commandes tout de suite - attendre que l'utilisateur choisisse "Oui"
+        console.log('⏳ Commandes: chargement différé jusqu\'au choix "Inclure commande"');
+    }
+
+    // Charger les données de l'acheteur
+    function loadAcheteurData() {
+        const id = '{{ id_acheteur }}';
+        if (!id) {
+            console.error("❌ L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `${API_URLS.acheteur}${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log('✅ Données acheteur chargées:', response);
+                $('#editCode').text(response.code);
+                $('#editNom').text(response.nom);
+                $('#editSigle').text(response.sigle);
+            },
+            error: function(xhr) {
+                console.error("❌ Erreur lors du chargement de l'acheteur:", xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données de l\'acheteur.'
+                });
+            }
+        });
+    }
+
+    // Charger les années
+    function loadAnnees() {
+        console.log('📅 Chargement des années...');
+        $.ajax({
+            url: API_URLS.annees,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log('✅ Années chargées:', response);
+                anneesData = response;
+                populateSelect('#annee_n', anneesData);
+                populateSelect('#annee_n1', anneesData);
+                populateSelect('#annee_n2', anneesData);
+            },
+            error: function(xhr, status, error) {
+                console.error("❌ Erreur lors du chargement des années:", xhr.status, error);
+                genererAnneesManuellement();
+            }
+        });
+    }
+
+    // Solution de secours pour les années
+    function genererAnneesManuellement() {
+        console.log('🔧 Génération manuelle des années...');
+        anneesData = [];
+        
+        for (let annee = 1990; annee <= 2025; annee++) {
+            anneesData.push({
+                value: annee,
+                label: annee.toString()
+            });
+        }
+        
+        populateSelect('#annee_n', anneesData);
+        populateSelect('#annee_n1', anneesData);
+        populateSelect('#annee_n2', anneesData);
+    }
+
+    // Charger les devises
+    function loadDevises() {
+        console.log('💰 Chargement des devises...');
+        $.ajax({
+            url: API_URLS.devises,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log('✅ Devises chargées:', response);
+                devisesData = response;
+                populateSelect('#devise', devisesData);
+            },
+            error: function(xhr, status, error) {
+                console.error("❌ Erreur lors du chargement des devises:", xhr.status, error);
+                genererDevisesManuellement();
+            }
+        });
+    }
+
+    // Solution de secours pour les devises
+    function genererDevisesManuellement() {
+        console.log('🔧 Génération manuelle des devises...');
+        devisesData = [
+            { value: 'XAF', label: 'Franc CFA (XAF)' },
+            { value: 'XOF', label: 'Franc CFA (XOF)' },
+            { value: 'USD', label: 'Dollar US (USD)' },
+            { value: 'EUR', label: 'Euro (EUR)' },
+            { value: 'GBP', label: 'Livre Sterling (GBP)' }
+        ];
+        
+        populateSelect('#devise', devisesData);
+    }
+
+    // NOUVELLE fonction pour charger les commandes avec période
+    function chargerCommandesAvecPeriode(periode) {
+        const acheteurId = '{{ id_acheteur }}';
+        console.log(`📋 Chargement des commandes pour période: ${periode}`);
+        
+        let url = `${API_URLS.commandes}${acheteurId}/`;
+        
+        // Ajouter les paramètres de période
+        const params = new URLSearchParams();
+        
+        switch(periode) {
+            case '7j':
+                params.append('jours', '7');
+                break;
+            case '1m':
+                params.append('mois', '1');
+                break;
+            case '3m':
+                params.append('mois', '3');
+                break;
+            case '6m':
+                params.append('mois', '6');
+                break;
+            case '1a':
+                params.append('annees', '1');
+                break;
+            case 'personnalise':
+                if (dateDebut && dateFin) {
+                    params.append('date_debut', dateDebut);
+                    params.append('date_fin', dateFin);
+                }
+                break;
+        }
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+        
+        console.log(`🔗 URL appelée: ${url}`);
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            beforeSend: function() {
+                $('#commande_id').html('<option value="">Chargement...</option>');
+            },
+            success: function(response) {
+                console.log(`✅ Commandes chargées (${periode}):`, response);
+                commandesData = response;
+                
+                if (commandesData.length > 0) {
+                    populateSelect('#commande_id', commandesData);
+                    $('#commande_id').prop('disabled', false);
+                    
+                    // Afficher le nombre de commandes trouvées
+                    const countText = commandesData.length === 1 ? 
+                        '1 commande trouvée' : 
+                        `${commandesData.length} commandes trouvées`;
+                    $('#select_commande_container .form-text').text(countText);
+                } else {
+                    $('#commande_id').html('<option value="">Aucune commande trouvée</option>');
+                    $('#commande_id').prop('disabled', true);
+                    $('#select_commande_container .form-text').text('Aucune commande dans cette période');
+                    
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Aucune commande',
+                        text: `Aucune commande trouvée pour la période sélectionnée (${getPeriodeLabel(periode)}).`,
+                        confirmButtonText: 'OK'
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("❌ Erreur lors du chargement des commandes:", xhr.status, error);
+                $('#commande_id').html('<option value="">Erreur de chargement</option>');
+                $('#commande_id').prop('disabled', true);
+                $('#select_commande_container .form-text').text('Erreur lors du chargement');
+                
+                // Message d'erreur plus spécifique
+                let errorMessage = 'Impossible de charger les commandes.';
+                if (xhr.status === 404) {
+                    errorMessage = 'Service des commandes temporairement indisponible.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur serveur lors du chargement des commandes.';
+                }
+                
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Information',
+                    text: errorMessage + ' Vous pouvez continuer sans inclure de commande.',
+                    confirmButtonText: 'Compris'
+                });
+            }
+        });
+    }
+
+    // Fonction utilitaire pour obtenir le libellé de la période
+    function getPeriodeLabel(periode) {
+        const periodesMap = {
+            '7j': '7 derniers jours',
+            '1m': '1 dernier mois', 
+            '3m': '3 derniers mois',
+            '6m': '6 derniers mois',
+            '1a': '1 dernière année',
+            'personnalise': `Personnalisée (${dateDebut} à ${dateFin})`
+        };
+        return periodesMap[periode] || periode;
+    }
+
+    // Fonction utilitaire pour formater la date pour l'input date
+    function formatDatePourInput(date) {
+        return date.toISOString().split('T')[0];
+    }
+
+    // Remplir un select avec des données
+    function populateSelect(selector, data) {
+        const $select = $(selector);
+        $select.empty().append('<option value="">Sélectionner...</option>');
+        
+        if (data && data.length > 0) {
+            data.forEach(item => {
+                $select.append(`<option value="${item.value}">${item.label}</option>`);
+            });
+        }
+    }
+
+    // Configurer les écouteurs d'événements
+    function setupEventListeners() {
+        console.log('🎛️ Configuration des écouteurs d\'événements...');
+        
+        // Gérer l'affichage du champ commande
+        $('#inclure_commande').change(function() {
+            const showCommande = $(this).val() === 'oui';
+            $('#periode_container').toggle(showCommande);
+            $('#commande_container').toggle(showCommande);
+            
+            if (showCommande) {
+                $('#commande_id').prop('required', true);
+                $('#periode_recherche').prop('required', true);
+                // Charger les commandes avec période par défaut
+                $('#periode_recherche').val('7j');
+                chargerCommandesAvecPeriode('7j');
+            } else {
+                $('#commande_id').prop('required', false);
+                $('#periode_recherche').prop('required', false);
+                $('#commande_id').val('');
+                $('#periode_recherche').val('');
+                $('#select_commande_container').show();
+                $('#periode_personnalisee_container').hide();
+            }
+        });
+
+        // Gérer le changement de période
+        $('#periode_recherche').change(function() {
+            const periode = $(this).val();
+            periodeActuelle = periode;
+            
+            if (periode === 'personnalise') {
+                $('#select_commande_container').hide();
+                $('#periode_personnalisee_container').show();
+                // Définir des dates par défaut
+                const aujourdhui = new Date();
+                const ilYaUnMois = new Date();
+                ilYaUnMois.setMonth(aujourdhui.getMonth() - 1);
+                
+                $('#date_fin').val(formatDatePourInput(aujourdhui));
+                $('#date_debut').val(formatDatePourInput(ilYaUnMois));
+            } else {
+                $('#select_commande_container').show();
+                $('#periode_personnalisee_container').hide();
+                chargerCommandesAvecPeriode(periode);
+            }
+        });
+
+        // Appliquer la période personnalisée
+        $('#appliquer_periode').click(function() {
+            dateDebut = $('#date_debut').val();
+            dateFin = $('#date_fin').val();
+            
+            if (!dateDebut || !dateFin) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Dates manquantes',
+                    text: 'Veuillez sélectionner une date de début et une date de fin.'
+                });
+                return;
+            }
+            
+            if (new Date(dateDebut) > new Date(dateFin)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Dates invalides',
+                    text: 'La date de début doit être antérieure à la date de fin.'
+                });
+                return;
+            }
+            
+            $('#select_commande_container').show();
+            chargerCommandesAvecPeriode('personnalise');
+        });
+
+        // Validation du formulaire
+        $('#rapportSolvabiliteForm').submit(function(e) {
+            e.preventDefault();
+            generateRapport();
+        });
+    }
+
+    // Générer le rapport
+    function generateRapport() {
+        const formData = {
+            annee_n: $('#annee_n').val() ? parseInt($('#annee_n').val()) : null,
+            annee_n1: $('#annee_n1').val() ? parseInt($('#annee_n1').val()) : null,
+            annee_n2: $('#annee_n2').val() ? parseInt($('#annee_n2').val()) : null,
+            inclure_commande: $('#inclure_commande').val(),
+            commande_id: $('#commande_id').val() ? parseInt($('#commande_id').val()) : null,
+            periode_recherche: $('#periode_recherche').val(),
+            date_debut: $('#date_debut').val(),
+            date_fin: $('#date_fin').val(),
+            langue: $('#langue').val(),
+            devise: $('#devise').val(),
+            type_bilan: $('#type_bilan').val(),
+            format_rapport: $('#format_rapport').val()
+        };
+
+        console.log('📊 Données du formulaire:', formData);
+
+        // Validation côté client
+        if (!validateFormData(formData)) {
+            return;
+        }
+
+        // Afficher les données dans SweetAlert
+        showFormDataPreview(formData);
+    }
+
+    // Validation des données du formulaire
+    function validateFormData(data) {
+        // Vérifier que les champs requis sont remplis
+        const champsRequis = ['annee_n', 'annee_n1', 'annee_n2', 'inclure_commande', 'langue', 'devise', 'type_bilan', 'format_rapport'];
+        const champsManquants = champsRequis.filter(champ => !data[champ]);
+        
+        if (champsManquants.length > 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champs manquants',
+                text: 'Veuillez remplir tous les champs obligatoires.'
+            });
+            return false;
+        }
+
+        // Vérifier que les années sont distinctes
+        const annees = [data.annee_n, data.annee_n1, data.annee_n2];
+        const anneesUniques = [...new Set(annees)];
+        
+        if (anneesUniques.length !== 3) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur de validation',
+                text: 'Les années N, N-1 et N-2 doivent être distinctes.'
+            });
+            return false;
+        }
+
+        // Vérifier la période si commande incluse
+        if (data.inclure_commande === 'oui') {
+            if (!data.periode_recherche) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Période manquante',
+                    text: 'Veuillez sélectionner une période de recherche.'
+                });
+                return false;
+            }
+            
+            if (data.periode_recherche === 'personnalise' && (!data.date_debut || !data.date_fin)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Dates manquantes',
+                    text: 'Veuillez sélectionner une date de début et une date de fin.'
+                });
+                return false;
+            }
+            
+            if (!data.commande_id) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Commande manquante',
+                    text: 'Veuillez sélectionner une commande.'
+                });
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Afficher l'aperçu des données du formulaire
+    function showFormDataPreview(data) {
+        // Formater les données pour l'affichage
+        const anneesText = `N: ${data.annee_n}, N-1: ${data.annee_n1}, N-2: ${data.annee_n2}`;
+        
+        let commandeText = 'Aucune';
+        if (data.inclure_commande === 'oui' && data.commande_id) {
+            const commande = commandesData.find(c => c.value === data.commande_id);
+            commandeText = commande ? commande.label : `Commande #${data.commande_id}`;
+        }
+
+        let periodeText = 'Aucune';
+        if (data.inclure_commande === 'oui' && data.periode_recherche) {
+            periodeText = getPeriodeLabel(data.periode_recherche);
+        }
+
+        const langueText = data.langue === 'fr' ? 'Français' : 'English';
+        
+        const devise = devisesData.find(d => d.value === data.devise);
+        const deviseText = devise ? devise.label : data.devise;
+
+        const typeBilanMap = {
+            'classique': 'Classique',
+            'bancaire': 'Bancaire',
+            'anglais': 'Anglais',
+            'syscohada': 'Syscohada',
+            'irfs_cobac': 'Irfs Cobac'
+        };
+
+        const formatMap = {
+            'pdf': 'PDF',
+            'html': 'HTML',
+            'xml': 'XML',
+            'json': 'JSON'
+        };
+
+        Swal.fire({
+            title: 'Aperçu du rapport de solvabilité',
+            html: `
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white">
+                        <strong>Informations du rapport</strong>
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Période d'analyse :</strong>
+                            <span>${anneesText}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Inclure commande :</strong>
+                            <span>${data.inclure_commande === 'oui' ? 'Oui' : 'Non'}</span>
+                        </div>
+
+                        ${data.inclure_commande === 'oui' ? `
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Période recherche :</strong>
+                                <span>${periodeText}</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Commande :</strong>
+                                <span>${commandeText}</span>
+                            </div>
+                        ` : ''}
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Langue :</strong>
+                            <span>${langueText}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Devise :</strong>
+                            <span>${deviseText}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Type de bilan :</strong>
+                            <span>${typeBilanMap[data.type_bilan]}</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Format :</strong>
+                            <span>${formatMap[data.format_rapport]}</span>
+                        </div>
+
+                    </div>
+                </div>
+            `,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Générer le rapport',
+            cancelButtonText: 'Modifier',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            width: '600px'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                submitRapport(data);
+            }
+        });
+    }
+
+    // Soumettre le rapport
+    // Dans la fonction submitRapport, remplacez cette partie :
+    function submitRapport(data) {
+        console.log('📤 Soumission du rapport...', data);
+        
+        // CORRECTION : Récupérer l'ID de l'acheteur correctement
+        const acheteurId = '{{ id_acheteur }}';
+        console.log('🔍 ID Acheteur récupéré depuis template:', acheteurId);
+
+        // Vérifiez que acheteurId est un entier valide
+        if (!acheteurId || acheteurId === 'None' || acheteurId === '') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'ID de l\'acheteur non trouvé dans le template.'
+            });
+            return;
+        }
+        
+        // Ajouter l'ID de l'acheteur
+        data.acheteur_id = parseInt(acheteurId); // Convertir en integer
+        
+
+        console.log('📤 Données envoyées:', data);
+
+        // Afficher le chargement
+        Swal.fire({
+            title: 'Génération en cours',
+            text: 'Le rapport est en cours de génération...',
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Appel API réel
+        $.ajax({
+            url: API_URLS.generer_rapport,
+            type: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}',
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function(response) {
+                Swal.close();
+                
+                if (response.status === 'success') {
+                    // Afficher le rapport dans la section dédiée
+                    afficherRapportHTML(response.report_data, response.form_data);
+                    
+                    Swal.fire({
+                        title: 'Succès!',
+                        text: 'Le rapport a été généré avec succès.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    throw new Error(response.message || 'Erreur lors de la génération');
+                }
+            },
+            error: function(xhr) {
+                Swal.close();
+                console.error("Erreur lors de la génération du rapport:", xhr);
+                
+                let errorMessage = 'Une erreur est survenue lors de la génération du rapport.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Service de génération de rapport non trouvé. Vérifiez la configuration.';
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    }
+
+    // Fonction pour afficher le rapport dans la section HTML
+    function afficherRapportHTML(reportData, formData) {
+        console.log('📄 Affichage du rapport...', reportData);
+        
+        // Afficher la section du rapport
+        $('#reportSolvency').show();
+        
+        // Remplir les données du rapport
+        remplirDonneesRapport(reportData, formData);
+        
+        // Faire défiler jusqu'au rapport
+        $('html, body').animate({
+            scrollTop: $('#reportSolvency').offset().top
+        }, 1000);
+    }
+
+    // Fonction pour remplir les données du rapport
+    function remplirDonneesRapport(reportData, formData) {
+        // Header du rapport
+        const header = reportData.header_report;
+        $('#reportSolvency .card-header .text-md-end').html(`
+            <p class="text-primary text-md-end mb-0">${header.acremac_services}</p>
+            <p class="text-primary text-md-end mb-0">${header.acremac_mail}</p>
+            <p class="text-primary text-md-end mb-0">${header.date_today} (GMT)</p>
+        `);
+        
+        // Récupérer le corps du rapport
+        const cardBody = $('#reportSolvency .card-body');
+        cardBody.empty();
+        
+        // Construire le HTML du rapport
+        let rapportHTML = construireHTMLRapport(reportData, formData);
+        cardBody.html(rapportHTML);
+        
+        // Mettre à jour le footer avec les boutons d'export
+        mettreAJourFooterExport(formData);
+    }
+
+    // Fonction pour construire le HTML du rapport
+    function construireHTMLRapport(reportData, formData) {
+        return `
+            <!-- En-tête du rapport -->
+            <div class="header">
+                <div class="two-columns">
+                    <div>
+                        <img src="{% static 'images/acremac_option.png' %}" class="header-logo" alt="Logo ACREMAC" />
+                    </div>
+                    <div class="text-right">
+                        ${reportData.header_report.acremac_services}<br>
+                        ${reportData.header_report.acremac_mail}<br>
+                        ${reportData.header_report.date_today} (GMT)<br>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section"><hr class="ligne-up" /></div>
+
+            <!-- Titre principal -->
+            <div class="section">
+                <div class="section-title"><br>RAPPORT DE SOLVABILITÉ<br><br></div>
+            </div>
+            
+            ${genererSectionCommande(reportData)}
+            ${genererSectionIdentification(reportData)}
+            ${genererSectionInformationsSupplementaires(reportData)}
+            ${genererSectionParametres(formData)}
+            ${genererSectionEtatsFinanciers(reportData)}
+            ${genererSectionConclusion(reportData)}
+            ${genererPiedDePage()}
+        `;
+    }
+
+    // Fonctions pour générer chaque section
+    function genererSectionCommande(reportData) {
+        const commande = reportData.commande;
+        if (commande.client !== "Non spécifié") {
+            return `
+                <!-- Détails de la demande rattachée -->
+                <div class="section">
+                    <div class="section-title">COMMANDE RATTACHEE</div>
+                    <div class="subsection-title">DETAILS COMMANDE</div>
+                    <table>
+                        <tr>
+                            <th>Client</th>
+                            <td>${commande.client}</td>
+                            <th>Date réception</th>
+                            <td>${commande.date_recept_commande}</td>
+                        </tr>
+                        <tr>
+                            <th>Référence client</th>
+                            <td>${commande.ref_client}</td>
+                            <th>Date rapport</th>
+                            <td>${commande.date_rapport}</td>
+                        </tr>
+                        <tr>
+                            <th>Notre référence</th>
+                            <td>${commande.notre_ref}</td>
+                            <th>Délais</th>
+                            <td>${commande.delais}</td>
+                        </tr>
+                        <tr>
+                            <th>Type rapport</th>
+                            <td colspan="3">${commande.type_rapport}</td>
+                        </tr>
+                        ${commande.priorite !== "Non spécifié" ? `
+                        <tr>
+                            <th>Priorité</th>
+                            <td colspan="3">${commande.priorite}</td>
+                        </tr>
+                        ` : ''}
+                    </table>
+                </div>
+            `;
+        }
+        return `
+            <div class="section">
+                <div class="section-title">COMMANDE RATTACHEE</div>
+                <div class="subsection-title">AUCUNE COMMANDE RATTACHEE</div>
+            </div>
+        `;
+    }
+
+    function genererSectionIdentification(reportData) {
+        const ident = reportData.identification.acremac_info;
+        return `
+            <!-- Identification -->
+            <div class="section">
+                <div class="section-title">IDENTIFICATION</div>
+                <table>
+                    <tr>
+                        <th>Nom de l'acheteur</th>
+                        <td>${ident.nom}</td>
+                        <th>Sigle</th>
+                        <td>${ident.sigle}</td>
+                    </tr>
+                    <tr>
+                        <th>Email</th>
+                        <td>${ident.email}</td>
+                        <th>Ville</th>
+                        <td>${ident.ville}</td>
+                    </tr>
+                    <tr>
+                        <th>Province</th>
+                        <td>${ident.province}</td>
+                        <th>Pays</th>
+                        <td>${ident.pays}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionInformationsSupplementaires(reportData) {
+        const info = reportData.additional_information;
+        return `
+            <!-- Informations supplémentaires ACREMAC -->
+            <div class="section">
+                <div class="section-title">INFORMATIONS SUPPLÉMENTAIRES</div>
+                <table>
+                    <tr>
+                        <th>Forme juridique</th>
+                        <td>${info.forme_juridique}</td>
+                        <th>Statut entreprise</th>
+                        <td>${info.statut_entreprise}</td>
+                    </tr>
+                    <tr>
+                        <th>Date création</th>
+                        <td>${info.date_creation}</td>
+                        <th>Activité principale</th>
+                        <td>${info.activite_principale}</td>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <td colspan="3">${info.description}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionParametres(formData) {
+        const periodeMap = {
+            '7j': '7 derniers jours',
+            '1m': '1 dernier mois',
+            '3m': '3 derniers mois', 
+            '6m': '6 derniers mois',
+            '1a': '1 dernière année',
+            'personnalise': 'Période personnalisée'
+        };
+        
+        const langueMap = {
+            'fr': 'Français',
+            'en': 'English'
+        };
+        
+        const deviseMap = {
+            'XAF': 'Franc CFA (XAF)',
+            'XOF': 'Franc CFA (XOF)',
+            'USD': 'Dollar US (USD)',
+            'EUR': 'Euro (EUR)'
+        };
+        
+        const bilanMap = {
+            'classique': 'Classique',
+            'bancaire': 'Bancaire',
+            'anglais': 'Anglais',
+            'syscohada': 'Syscohada',
+            'irfs_cobac': 'Irfs Cobac'
+        };
+        
+        const formatMap = {
+            'pdf': 'PDF',
+            'html': 'HTML',
+            'xml': 'XML',
+            'json': 'JSON'
+        };
+
+        return `
+            <!-- Paramètres du rapport -->
+            <div class="section">
+                <div class="section-title">PARAMÈTRES DU RAPPORT</div>
+                <table>
+                    <tr>
+                        <th>Période d'analyse</th>
+                        <td>N: ${formData.annee_n}, N-1: ${formData.annee_n1}, N-2: ${formData.annee_n2}</td>
+                    </tr>
+                    <tr>
+                        <th>Inclure commande</th>
+                        <td>${formData.inclure_commande === 'oui' ? 'Oui' : 'Non'}</td>
+                    </tr>
+                    ${formData.inclure_commande === 'oui' ? `
+                    <tr>
+                        <th>Période recherche</th>
+                        <td>${periodeMap[formData.periode_recherche] || formData.periode_recherche}</td>
+                    </tr>
+                    ` : ''}
+                    <tr>
+                        <th>Langue</th>
+                        <td>${langueMap[formData.langue] || formData.langue}</td>
+                    </tr>
+                    <tr>
+                        <th>Devise</th>
+                        <td>${deviseMap[formData.devise] || formData.devise}</td>
+                    </tr>
+                    <tr>
+                        <th>Type de bilan</th>
+                        <td>${bilanMap[formData.type_bilan] || formData.type_bilan}</td>
+                    </tr>
+                    <tr>
+                        <th>Format</th>
+                        <td>${formatMap[formData.format_rapport] || formData.format_rapport}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionEtatsFinanciers(reportData) {
+        const financial = reportData.financial_statements;
+        return `
+            <!-- Comptes financiers -->
+            <div class="section">
+                <div class="section-title">ETATS FINANCIERS</div>
+                <div class="subsection-title">PÉRIODE D'ANALYSE</div>
+                <table>
+                    <tr>
+                        <th>Années analysées</th>
+                        <td>${financial.years.join(', ')}</td>
+                    </tr>
+                    <tr>
+                        <th>Type de bilan</th>
+                        <td>${financial.bilan_type}</td>
+                    </tr>
+                </table>
+                
+                <div class="subsection-title">INFORMATIONS FINANCIÈRES</div>
+                <div class="chart-placeholder">
+                    <i class="bi bi-bar-chart me-2"></i>
+                    Les graphiques et tableaux financiers seront affichés ici dans la version complète
+                </div>
+                
+                <table>
+                    <tr>
+                        <th>Statut</th>
+                        <td class="positive-var">Données financières prêtes pour l'analyse</td>
+                    </tr>
+                    <tr>
+                        <th>Prochaines étapes</th>
+                        <td>Intégration des ratios financiers, graphiques et analyse détaillée</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionConclusion(reportData) {
+        const conclusion = reportData.conclusion_generale;
+        return `
+            <!-- Conclusion et Avis -->
+            <div class="section">
+                <div class="section-title">CONCLUSION ET AVIS</div>
+                <table>
+                    <tr>
+                        <th>Synthèse</th>
+                        <td class="warning">${conclusion.commentaire}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererPiedDePage() {
+        return `
+            <!-- Pied de page -->
+            <div class="footer">
+                <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.</p>
+                <p>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.</p>
+            </div>
+        `;
+    }
+
+    // Fonction pour mettre à jour le footer avec les boutons d'export
+    function mettreAJourFooterExport(formData) {
+        const cardFooter = $('#reportSolvency .card-footer');
+        cardFooter.html(`
+            <div class="d-flex justify-content-between">
+                <div>
+                    <span class="text-muted">Rapport généré le ${new Date().toLocaleString('fr-FR')}</span>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="exporterRapport('pdf')">
+                        <i class="bi bi-file-pdf me-1"></i>PDF
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm me-2" onclick="exporterRapport('html')">
+                        <i class="bi bi-file-earmark-code me-1"></i>HTML
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm me-2" onclick="exporterRapport('xml')">
+                        <i class="bi bi-file-code me-1"></i>XML
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="exporterRapport('json')">
+                        <i class="bi bi-file-text me-1"></i>JSON
+                    </button>
+                </div>
+            </div>
+        `);
+    }
+
+    // Fonction pour exporter le rapport (à implémenter)
+    function exporterRapport(format) {
+        Swal.fire({
+            title: 'Export en cours',
+            text: `Génération du format ${format.toUpperCase()}...`,
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false
+        });
+        
+        // Simulation d'export
+        setTimeout(() => {
+            Swal.fire({
+                title: 'Export réussi!',
+                text: `Le rapport a été exporté en format ${format.toUpperCase()}`,
+                icon: 'success',
+                confirmButtonText: 'Télécharger'
+            });
+        }, 1500);
+    }
+
+        // Initialiser le formulaire
+        initForm();
+
+    });
+</script>
+
+
+{% endblock %}

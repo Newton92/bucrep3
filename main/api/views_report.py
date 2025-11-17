@@ -55,6 +55,8 @@ import pandas as pd
 from decimal import Decimal
 import io
 import base64
+from django.conf import settings
+import os
 
 # Import des classes de services
 from main.utils import FinancialReportGenerator
@@ -1573,6 +1575,13 @@ class GenerateReport(APIView):
 
         # Générer l'image de la jauge en Base64
         risk_gauge_base64 = get_risk_gauge_chart(risk_score)
+        
+        # Recuperer le scoring sans bilan ici 
+        scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
+        
+        # Limiter le score entre 0 et 10 pour correspondre aux images
+        score_index = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
+        score_index = max(0, min(score_index, 10))
 
 
         # 4. Générer les graphiques en Base64
@@ -1740,6 +1749,8 @@ class GenerateReport(APIView):
                     "degradation_qualite": risk_management.degradation_qualite if risk_management and risk_management.degradation_qualite else "Non spécifié",
                     "non_respect_condition": risk_management.non_respect_condition if risk_management and risk_management.non_respect_condition else "Non spécifié",
                     "commentaire": risk_management.commentaire if risk_management and risk_management.commentaire else "Aucun commentaire disponible",
+                    "score": risk_management.get_management_score()['oui_count'] if risk_management else 0,
+                    "image": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
                 },
                 "responsables": list_responsables_data if list_responsables_data else "Aucun responsable disponible",
                 "conseil_administration": list_ca_membres_data if list_ca_membres_data else "Aucun membre du conseil d'administration disponible",
@@ -1823,9 +1834,11 @@ class GenerateReport(APIView):
             "translations": {},
             "scoring": {
                 "title_16": "SCORING ACREMAC",
-                # "score": scoring_result['value'],
-                # "interpretation": scoring_result['interpretation'],
-                # "score_type": scoring_result['type'],
+                "score_image": f"scoring/{score_index}.png",
+                "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
+                "interpretation": scoring_sans_bilan.interpretation,
+                "commentaire": scoring_sans_bilan.commentaire,
+                "score_type": "Scoring sans bilan",
             },
             "operation_history": {
                 "title_17": "HISTORIQUE DES OPERATIONS",
@@ -1867,23 +1880,18 @@ class GenerateReport(APIView):
             if format_report.upper() == 'PDF':
                 print("Génération du PDF...")  # Debug
                 # Rendre le template HTML
-                if(language_report == 'fr'):
-                    html_string = render_to_string('main/report_deep_seek_test_english.html', report_data)
-                else:
-                    
-                    html_string = render_to_string('main/report_deep_seek_test_english.html', report_data)
+                html_string = render_to_string('main/report_deep_seek_test.html', report_data)
                 
-                # Conversion en PDF avec WeasyPrint
-                response = HttpResponse(content_type='application/pdf')
+                # Générer le PDF en mémoire
+                pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()
+                
+                # Préparer la réponse HTTP
+                response = HttpResponse(pdf_file, content_type='application/pdf')
                 response['Content-Disposition'] = 'attachment; filename="rapport_solvabilite.pdf"'
-                
-                # Générer le PDF avec le base_url pointant vers le répertoire static
-                HTML(
-                    string=html_string, 
-                    base_url=request.build_absolute_uri('/static/')
-                ).write_pdf(response)
+                response['Content-Length'] = len(pdf_file)
                 
                 return response
+
             elif format_report.upper() == 'JSON':
                 # Renvoyer le dictionnaire directement comme une réponse JSON pour inspection
                 return Response(report_data, status=status.HTTP_200_OK)
