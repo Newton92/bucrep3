@@ -1,4 +1,4 @@
-# views_scoring.py
+# views_scoring_classique.py
 
 from django.core.paginator import Paginator
 from django.db.models import Q

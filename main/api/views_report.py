@@ -1590,6 +1590,41 @@ class GenerateReport(APIView):
         # Limiter le score entre 0 et 10 pour correspondre aux images
         score_index = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
         score_index = max(0, min(score_index, 10))
+        
+        
+        # Récupérer le scoring avec bilan en fonction du type de bilan
+        scoring_avec_bilan = None
+        try:
+            # Initialiser le scoring avec bilan
+            scoring_generator = AcremacScoring(acheteur, bilan_report, current_year-1)
+            scoring_result = scoring_generator.calculate_score_with_bilan()
+            
+            if scoring_result[0]:  # Si le calcul a réussi
+                scoring_avec_bilan_data = scoring_result[0]
+                score_avec_bilan = scoring_avec_bilan_data['score']
+                
+                # Limiter le score entre 0 et 10 pour correspondre aux images
+                score_index_avec_bilan = int(round(score_avec_bilan))
+                score_index_avec_bilan = max(0, min(score_index_avec_bilan, 10))
+                
+                scoring_avec_bilan = {
+                    'score_image': f"scoring/{score_index_avec_bilan}.png",
+                    'score_value': f"{score_avec_bilan:.2f}",
+                    'interpretation': scoring_generator.get_score_interpretation(score_avec_bilan),
+                    'commentaire': f"Score calculé avec les données du bilan {bilan_report}",
+                    'details': scoring_avec_bilan_data.get('details', [])
+                }
+            else:
+                scoring_avec_bilan = {
+                    'score_image': "scoring/1.png",
+                    'score_value': "N/A",
+                    'interpretation': "Calcul impossible - données manquantes",
+                    'commentaire': f"Impossible de calculer le score avec le bilan {bilan_report}",
+                    'details': []
+                }
+        except Exception as e:
+            print(f"Erreur lors du calcul du scoring avec bilan: {e}")
+            scoring_avec_bilan = None
 
 
         # 4. Générer les graphiques en Base64
@@ -1859,12 +1894,18 @@ class GenerateReport(APIView):
             },
             "translations": {},
             "scoring": {
-                "title_16": "SCORING ACREMAC",
+                "title_16": "SCORING ACREMAC - SANS BILAN",
                 "score_image": f"scoring/{score_index}.png",
                 "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
                 "interpretation": scoring_sans_bilan.interpretation,
                 "commentaire": scoring_sans_bilan.commentaire,
                 "score_type": "Scoring sans bilan",
+                # Ajout des scores avec bilan par type
+                "scoring_classique": scoring_avec_bilan if bilan_report == 'CLASSIQUE' else None,
+                "scoring_anglais": scoring_avec_bilan if bilan_report == 'ANGLAIS' else None,
+                "scoring_bancaire": scoring_avec_bilan if bilan_report == 'BANCAIRE' else None,
+                "scoring_syscohada": scoring_avec_bilan if bilan_report == 'SYSCOHADA' else None,
+                "scoring_ifrs": scoring_avec_bilan if bilan_report == 'IFRS' else None,
             },
             "operation_history": {
                 "title_17": "HISTORIQUE DES OPERATIONS",
