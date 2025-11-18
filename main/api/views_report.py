@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
-from datetime import datetime
+#from datetime import datetime
 
 from main.serializers import *
 import xml.etree.ElementTree as ET
@@ -72,7 +72,7 @@ import base64
 import json
 from main.models import ActifC, PassifC, ResultatC
 from main.utils import RatiosClassique
-from datetime import datetime
+#from datetime import datetime
 from django.conf import settings
 import datetime
 from main.utils import *
@@ -84,6 +84,11 @@ from main.models import (
     ActifIFRS, PassifIFRS, ResultatIFRS  # IFRS COBAC
 )
 from datetime import datetime as dt 
+from main.api.views_scoring_classique import *
+from main.api.views_scoring_anglais import *
+from main.api.views_scoring_bancaire import *
+from main.api.views_scoring_syscohada import *
+from main.api.views_scoring_ifrs import *
 
 # Une fonction pour s'assurer que les données sont numériques.
 def to_float(value):
@@ -1101,7 +1106,7 @@ class GenerateReport(APIView):
         print(bilan_report)
         
         # 2. Définir les années et récupérer la devise
-        current_year = datetime.now().year
+        current_year = dt.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
         print(years_to_retrieve)
         
@@ -1588,8 +1593,10 @@ class GenerateReport(APIView):
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
         
         # Limiter le score entre 0 et 10 pour correspondre aux images
-        score_index = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
-        score_index = max(0, min(score_index, 10))
+        score_indexe = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
+        score_indexe = max(0, min(score_indexe, 10))
+        print(int(round(scoring_sans_bilan.scoring_value)))
+        print(score_indexe)
         
         
         # Récupérer le scoring avec bilan en fonction du type de bilan
@@ -1643,6 +1650,29 @@ class GenerateReport(APIView):
             )
         }
 
+        # Calculer le scoring pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan = ScoreACREMACBilanClassiqueService.extraire_donnees_bilan_classique(acheteur, year)
+
+            if donnees_bilan:
+                resultat_calcul = ScoreACREMACBilanClassiqueService.calculer_score_complet(donnees_bilan)
+                score = resultat_calcul['score']
+                score_index = round(score)
+                classe_risque = resultat_calcul['classe_risque']
+
+                # Mettre à jour les variables de score
+                if i == 0:
+                    score_value_annee_N = str(score)
+                    interpretation_annee_N = classe_risque
+                elif i == 1:
+                    score_value_annee_N1 = str(score)
+                    interpretation_annee_N1 = classe_risque
+                elif i == 2:
+                    score_value_annee_N2 = str(score)
+                    interpretation_annee_N2 = classe_risque
+
+
         # 3. Initialize the report data structure
         report_data = {
             "logo_data": get_logo_data(),
@@ -1655,7 +1685,7 @@ class GenerateReport(APIView):
                 # "devise_report": devise.code if devise else "Non spécifiée",
                 "bilan_report": bilan_report.upper() if bilan_report else "",
                 "format_report": format_report,
-                "date_today": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "date_today": dt.now().strftime("%d/%m/%Y %H:%M:%S"),
             },
             "footer_report": {
                 "footer_text_1": footer_1,
@@ -1895,17 +1925,24 @@ class GenerateReport(APIView):
             "translations": {},
             "scoring": {
                 "title_16": "SCORING ACREMAC - SANS BILAN",
-                "score_image": f"scoring/{score_index}.png",
+                "score_image": f"scoring/{score_indexe}.png",
+                "score_png": f"scoring/{int(round(scoring_sans_bilan.scoring_value))}.png",
                 "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
                 "interpretation": scoring_sans_bilan.interpretation,
                 "commentaire": scoring_sans_bilan.commentaire,
                 "score_type": "Scoring sans bilan",
-                # Ajout des scores avec bilan par type
-                "scoring_classique": scoring_avec_bilan if bilan_report == 'CLASSIQUE' else None,
-                "scoring_anglais": scoring_avec_bilan if bilan_report == 'ANGLAIS' else None,
-                "scoring_bancaire": scoring_avec_bilan if bilan_report == 'BANCAIRE' else None,
-                "scoring_syscohada": scoring_avec_bilan if bilan_report == 'SYSCOHADA' else None,
-                "scoring_ifrs": scoring_avec_bilan if bilan_report == 'IFRS' else None,
+            },
+            "scoring_classique": {
+                "title_16": "SCORING CLASSIQUE - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
+                "score_value_annee_N": score_value_annee_N,
+                "interpretation_annee_N": interpretation_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_annee_N1)) if score_value_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_annee_N1,
+                "interpretation_annee_N1": interpretation_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_annee_N2,
+                "interpretation_annee_N2": interpretation_annee_N2,
             },
             "operation_history": {
                 "title_17": "HISTORIQUE DES OPERATIONS",
