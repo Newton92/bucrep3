@@ -1540,3 +1540,532 @@ def generate_risk_gauge(score, max_score=9, filename="risk_gauge.png"):
     plt.savefig(filepath, bbox_inches="tight")
     plt.close()
     return os.path.join(settings.MEDIA_URL, filename)  # chemin pour l’affichage
+
+
+
+
+
+
+
+
+
+
+#############################################################
+#
+# Fonctions pour le bilan SYSCOHADA
+#
+############################################################# 
+def get_structured_actif_syscohada_data(acheteur, years):
+    """
+    Récupère et structure les données d'actif pour le bilan SYSCOHADA.
+    """
+    actif_model = ActifS
+    data_by_year = {}
+    for year in years:
+        instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "IMMOBILISATIONS": [
+            {'label': "Intangible assets", 'key': 'immobilisations_incorporelles'},
+            {'label': "Tangible assets", 'key': 'immobilisations_corporelles'},
+            {'label': "Financial assets", 'key': 'immobilisations_financieres'},
+            {'label': "Advances on fixed assets", 'key': 'avances_acompte_immobilisations'},
+            {'label': "TOTAL FIXED ASSETS", 'key': 'total_actif_immobilise', 'is_total': True},
+        ],
+        "CURRENT ASSETS": [
+            {'label': "HAO current assets", 'key': 'actif_circulant_hao'},
+            {'label': "Stocks and work in progress", 'key': 'stock_encours'},
+            {'label': "Trade and other receivables", 'key': 'creances_emplois_similaires'},
+            {'label': "TOTAL CURRENT ASSETS", 'key': 'total_actif_circulant', 'is_total': True},
+        ],
+        "CASH AND EQUIVALENTS": [
+            {'label': "Marketable securities", 'key': 'valeurs_mobilieres_placement'},
+            {'label': "Cash", 'key': 'disponibilites'},
+            {'label': "Bank and postal accounts", 'key': 'banque_cheque_postal_caisse_assimiles'},
+            {'label': "TOTAL CASH", 'key': 'total_tresorerie_equivalents', 'is_total': True},
+        ],
+        "TOTAL ASSETS": [
+            {'label': "TOTAL ASSETS", 'key': 'total_actif', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+def get_structured_passif_syscohada_data(acheteur, years):
+    """
+    Récupère et structure les données de passif pour le bilan SYSCOHADA.
+    """
+    passif_model = PassifS
+    data_by_year = {}
+    for year in years:
+        instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "SHAREHOLDERS' EQUITY": [
+            {'label': "Share capital", 'key': 'capital'},
+            {'label': "Share premium", 'key': 'primes_liees_capital_social'},
+            {'label': "Revaluation reserves", 'key': 'ecart_reevaluation'},
+            {'label': "Reserves", 'key': 'reserves_indisponibles'},
+            {'label': "Retained earnings", 'key': 'report_nouveau'},
+            {'label': "Net profit", 'key': 'resultat_net_exercice'},
+            {'label': "Investment grants", 'key': 'subventions_investissements'},
+            {'label': "Regulated provisions", 'key': 'provisions_reglees'},
+            {'label': "TOTAL EQUITY", 'key': 'total_capitaux_propres_ressources_similaires', 'is_total': True},
+        ],
+        "LONG-TERM LIABILITIES": [
+            {'label': "Loans and financial debts", 'key': 'emprunts_dettes_financieres_diverse'},
+            {'label': "Finance lease debts", 'key': 'dettes_location_vente'},
+            {'label': "Provisions for risks", 'key': 'provisions_risques_charges'},
+            {'label': "TOTAL LONG-TERM LIABILITIES", 'key': 'total_dettes_financieres_ressources_similaires', 'is_total': True},
+        ],
+        "CURRENT LIABILITIES": [
+            {'label': "HAO current liabilities", 'key': 'passif_circulant_hao'},
+            {'label': "Trade payables", 'key': 'fournisseurs_exploitation'},
+            {'label': "Tax and social debts", 'key': 'dettes_fiscales_sociales'},
+            {'label': "Other debts", 'key': 'autres_dettes'},
+            {'label': "Short-term provisions", 'key': 'provisions_risques_court_terme'},
+            {'label': "TOTAL CURRENT LIABILITIES", 'key': 'total_passifs_courants', 'is_total': True},
+        ],
+        "BANK DEBT": [
+            {'label': "Bank loans", 'key': 'banques_credit_escompte'},
+            {'label': "Bank overdraft", 'key': 'banques_etablissements_financiers_credit_caisse'},
+            {'label': "TOTAL BANK DEBT", 'key': 'total_tresorerie_equivalents', 'is_total': True},
+        ],
+        "TOTAL LIABILITIES": [
+            {'label': "TOTAL LIABILITIES AND EQUITY", 'key': 'total_passifs', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+
+#############################################################
+#
+# Fonctions pour le bilan IFRS COBAC
+#
+############################################################# 
+def get_structured_actif_ifrs_data(acheteur, years):
+    """
+    Récupère et structure les données d'actif pour le bilan IFRS.
+    """
+    actif_model = ActifIFRS
+    data_by_year = {}
+    for year in years:
+        instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "NON-CURRENT ASSETS": [
+            {'label': "Goodwill", 'key': 'goodwill'},
+            {'label': "Intangible assets", 'key': 'marques_et_droits_auteur'},
+            {'label': "Property, plant and equipment", 'key': 'terrains'},
+            {'label': "Financial assets", 'key': 'participations_dans_des_societes'},
+            {'label': "Long-term loans", 'key': 'prets_a_long_terme'},
+            {'label': "TOTAL NON-CURRENT ASSETS", 'key': 'total_actif_non_courant', 'is_total': True},
+        ],
+        "CURRENT ASSETS": [
+            {'label': "Inventories", 'key': 'matieres_premieres'},
+            {'label': "Trade receivables", 'key': 'creances_a_court_terme'},
+            {'label': "Other receivables", 'key': 'creances_diverses'},
+            {'label': "Cash and cash equivalents", 'key': 'disponibilites_bancaires'},
+            {'label': "TOTAL CURRENT ASSETS", 'key': 'total_actif_courant', 'is_total': True},
+        ],
+        "TOTAL ASSETS": [
+            {'label': "TOTAL ASSETS", 'key': 'total_actif', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+def get_structured_passif_ifrs_data(acheteur, years):
+    """
+    Récupère et structure les données de passif pour le bilan IFRS.
+    """
+    passif_model = PassifIFRS
+    data_by_year = {}
+    for year in years:
+        instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "SHAREHOLDERS' EQUITY": [
+            {'label': "Share capital", 'key': 'capital_social'},
+            {'label': "Reserves", 'key': 'reserves_legales'},
+            {'label': "Retained earnings", 'key': 'resultat_net_reporte'},
+            {'label': "TOTAL EQUITY", 'key': 'total_capitaux_propres', 'is_total': True},
+        ],
+        "NON-CURRENT LIABILITIES": [
+            {'label': "Long-term borrowings", 'key': 'emprunts_bancaires_long_terme'},
+            {'label': "Provisions", 'key': 'provisions_pour_retraites_et_pensions'},
+            {'label': "TOTAL NON-CURRENT LIABILITIES", 'key': 'total_passif_non_courant', 'is_total': True},
+        ],
+        "CURRENT LIABILITIES": [
+            {'label': "Trade payables", 'key': 'dettes_fournisseurs_a_court_terme'},
+            {'label': "Tax liabilities", 'key': 'impots_sur_le_revenu'},
+            {'label': "Short-term borrowings", 'key': 'emprunts_bancaires_court_terme'},
+            {'label': "TOTAL CURRENT LIABILITIES", 'key': 'total_passif_courant', 'is_total': True},
+        ],
+        "TOTAL LIABILITIES AND EQUITY": [
+            {'label': "TOTAL LIABILITIES AND EQUITY", 'key': 'total_passif', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+
+
+
+#############################################################
+#
+# Fonctions utilitaires génériques
+#
+############################################################# 
+
+def _build_structured_data(structure_map, data_by_year, years):
+    """
+    Fonction utilitaire générique pour construire les données structurées.
+    """
+    structured_data = {}
+    field_values_by_year = {}
+
+    # Pré-calculer toutes les valeurs
+    for year in years:
+        instance = data_by_year.get(year)
+        if not instance:
+            continue
+        year_values = {}
+        for section, fields_list in structure_map.items():
+            for field_info in fields_list:
+                key = field_info['key']
+                if key:
+                    # Vérifier si c'est une propriété calculée
+                    if hasattr(instance, key):
+                        value = getattr(instance, key, Decimal('0'))
+                        year_values[key] = value if value is not None else Decimal('0')
+        field_values_by_year[year] = year_values
+
+    # Construire la structure finale
+    for section, fields_list in structure_map.items():
+        structured_data[section] = []
+        for field_info in fields_list:
+            row = {
+                'label': field_info['label'], 
+                'is_total': field_info.get('is_total', False), 
+                'is_final_total': field_info.get('is_final_total', False)
+            }
+            
+            if field_info['key'] is None:
+                row['is_section_title'] = True
+                structured_data[section].append(row)
+                continue
+
+            values = {}
+            for year in years:
+                values[year] = field_values_by_year.get(year, {}).get(field_info['key'])
+
+            val_n = values.get(years[0])
+            val_n_moins_1 = values.get(years[1])
+            val_n_moins_2 = values.get(years[2])
+
+            row['values'] = {
+                'n': val_n,
+                'n_moins_1': val_n_moins_1,
+                'n_moins_2': val_n_moins_2,
+            }
+            row['variations'] = {
+                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
+                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
+            }
+            structured_data[section].append(row)
+
+    return structured_data
+
+def _build_ratios_data(structure_map, ratios_by_year, years):
+    """
+    Fonction utilitaire générique pour construire les données de ratios.
+    """
+    structured_data = {}
+    for section, ratios_list in structure_map.items():
+        rows_data = []
+        for ratio_info in ratios_list:
+            row = {'label': ratio_info['label']}
+            values = {}
+            for year in years:
+                instance = ratios_by_year.get(year)
+                value = getattr(instance, ratio_info['key'], None) if instance else None
+                values[year] = value
+            
+            val_n = values.get(years[0])
+            val_n_moins_1 = values.get(years[1])
+            val_n_moins_2 = values.get(years[2])
+
+            row['values'] = {
+                'n': val_n,
+                'n_moins_1': val_n_moins_1,
+                'n_moins_2': val_n_moins_2,
+            }
+            row['variations'] = {
+                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
+                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
+            }
+            rows_data.append(row)
+        structured_data[section] = rows_data
+        
+    return structured_data
+
+
+
+
+
+
+
+
+
+
+
+#############################################################
+#
+# Fonctions pour le bilan Anglais
+#
+############################################################# 
+def get_structured_actif_anglais_data(acheteur, years):
+    """
+    Récupère et structure les données d'actif pour le bilan anglais.
+    """
+    actif_model = ActifA
+    data_by_year = {}
+    for year in years:
+        instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "NON-CURRENT ASSETS": [
+            {'label': "Property, plant and equipment", 'key': 'biens_installations_equipements', 'is_total': True},
+        ],
+        "CURRENT ASSETS": [
+            {'label': "Inventory", 'key': 'inventaire'},
+            {'label': "Trade and other receivables", 'key': 'creances_commerciales_autres_creances'},
+            {'label': "Current tax assets", 'key': 'actif_impots_courant'},
+            {'label': "Cash and bank", 'key': 'caisses_banques'},
+            {'label': "TOTAL CURRENT ASSETS", 'key': 'total_actifs_courants', 'is_total': True},
+        ],
+        "TOTAL ASSETS": [
+            {'label': "TOTAL ASSETS", 'key': 'total_actif', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+def get_structured_passif_anglais_data(acheteur, years):
+    """
+    Récupère et structure les données de passif pour le bilan anglais.
+    """
+    passif_model = PassifA
+    data_by_year = {}
+    for year in years:
+        instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "SHAREHOLDERS' EQUITY": [
+            {'label': "Share capital and reserves", 'key': 'capital_reserves'},
+            {'label': "Issued capital", 'key': 'capital_declare'},
+            {'label': "Retained earnings", 'key': 'benefices_non_distribues'},
+            {'label': "TOTAL EQUITY", 'key': 'total_fonds_propres', 'is_total': True},
+        ],
+        "NON-CURRENT LIABILITIES": [
+            {'label': "Bank loans", 'key': 'pret_bancaire'},
+            {'label': "Directors' current accounts", 'key': 'compte_courant_administrateurs'},
+            {'label': "TOTAL NON-CURRENT LIABILITIES", 'key': 'total_passifs_non_courants', 'is_total': True},
+        ],
+        "CURRENT LIABILITIES": [
+            {'label': "Trade and other payables", 'key': 'dettes_commerciales_autres_dettes'},
+            {'label': "Bank overdraft", 'key': 'decouvert_bancaire'},
+            {'label': "Taxation", 'key': 'impots'},
+            {'label': "TOTAL CURRENT LIABILITIES", 'key': 'total_passifs_courants', 'is_total': True},
+        ],
+        "TOTAL LIABILITIES AND EQUITY": [
+            {'label': "TOTAL LIABILITIES AND EQUITY", 'key': 'total_passif', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+def get_structured_resultat_anglais_data(acheteur, years):
+    """
+    Récupère et structure les données du compte de résultat anglais.
+    """
+    resultat_model = ResultatA
+    data_by_year = {}
+    for year in years:
+        instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "REVENUE": [
+            {'label': "Revenue from ordinary activities", 'key': 'produits_activites_ordinaires'},
+            {'label': "Sales", 'key': 'ventes'},
+            {'label': "GROSS PROFIT", 'key': 'marge_brute', 'is_total': True},
+        ],
+        "OPERATING EXPENSES": [
+            {'label': "Cost of sales", 'key': 'charges_exploitation'},
+            {'label': "Selling, general and administrative expenses", 'key': 'frais_vente_generaux_administratifs'},
+            {'label': "OPERATING PROFIT", 'key': 'resultat_exploitation', 'is_total': True},
+        ],
+        "OTHER ITEMS": [
+            {'label': "Other income", 'key': 'autres_revenus'},
+            {'label': "Finance costs", 'key': 'frais_financier'},
+            {'label': "PROFIT BEFORE TAX", 'key': 'resultat_avant_impots', 'is_total': True},
+        ],
+        "TAXATION AND NET PROFIT": [
+            {'label': "Income tax expense", 'key': 'charge_impot_sur_revenu'},
+            {'label': "NET PROFIT FOR THE YEAR", 'key': 'resultat_net', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+def get_structured_ratios_anglais_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan anglais.
+    """
+    actif_model = ActifA
+    passif_model = PassifA
+    resultat_model = ResultatA
+
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        
+        if actif_instance and passif_instance and resultat_instance:
+            ratios_by_year[year] = RatiosAnglais(actif_instance, passif_instance, resultat_instance)
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "FINANCIAL STRUCTURE": [
+            {'label': "Solvency", 'key': 'solvabilite'},
+            {'label': "Financial autonomy", 'key': 'autonomie_financiere'},
+        ],
+        "LIQUIDITY": [
+            {'label': "Current ratio", 'key': 'liquidite_generale'},
+        ],
+        "PROFITABILITY": [
+            {'label': "Return on equity", 'key': 'rendement_capitaux_propres'},
+            {'label': "Net profit margin", 'key': 'taux_marge_net'},
+        ],
+        "MANAGEMENT": [
+            {'label': "Days sales outstanding", 'key': 'jour_recouvrement_moyen'},
+            {'label': "Days payable outstanding", 'key': 'jour_paiement_moyen'},
+        ],
+    }
+
+    return _build_ratios_data(structure_map, ratios_by_year, years)
+
+
+
+
+
+
+#############################################################
+#
+# Fonctions pour le bilan Bancaire
+#
+############################################################# 
+def get_structured_actif_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les données d'actif pour le bilan bancaire.
+    """
+    actif_model = Assets
+    data_by_year = {}
+    for year in years:
+        instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "INTERBANK ASSETS": [
+            {'label': "Cash", 'key': 'caisse'},
+            {'label': "At sight", 'key': 'a_vue'},
+            {'label': "At term", 'key': 'a_terme'},
+            {'label': "TOTAL INTERBANK ASSETS", 'key': 'pret_interbancaire', 'is_total': True},
+        ],
+        "CUSTOMER LOANS AND ADVANCES": [
+            {'label': "Commercial paper portfolio", 'key': 'porteuille_papier_commercial'},
+            {'label': "Other customer contests", 'key': 'autres_concours_clients'},
+            {'label': "Ordinary receivables", 'key': 'creances_ordinaires'},
+            {'label': "Factoring", 'key': 'affacturage'},
+            {'label': "TOTAL CUSTOMER LOANS", 'key': 'creance_sur_la_clientele', 'is_total': True},
+        ],
+        "INVESTMENTS": [
+            {'label': "Investment securities", 'key': 'titres_placement'},
+            {'label': "Financial fixed assets", 'key': 'immobilisation_fin'},
+        ],
+        "OTHER ASSETS": [
+            {'label': "Leasing operations", 'key': 'operation_credit_bail'},
+            {'label': "Intangible fixed assets", 'key': 'immobilisation_incorporelle'},
+            {'label': "Tangible fixed assets", 'key': 'immobilisation_corporelle'},
+            {'label': "Shareholders accounts", 'key': 'actionnaire_ou_associe'},
+            {'label': "Other assets", 'key': 'autres_actifs'},
+            {'label': "Sundry accounts", 'key': 'comptes_commande_divers'},
+        ],
+        "TOTAL ASSETS": [
+            {'label': "TOTAL ASSETS", 'key': 'total_assets', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+def get_structured_passif_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les données de passif pour le bilan bancaire.
+    """
+    passif_model = Liabilities
+    data_by_year = {}
+    for year in years:
+        instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+
+    structure_map = {
+        "INTERBANK DEBT": [
+            {'label': "At sight", 'key': 'a_vue'},
+            {'label': "At term", 'key': 'a_terme'},
+            {'label': "TOTAL INTERBANK DEBT", 'key': 'dette_interbancaire', 'is_total': True},
+        ],
+        "CUSTOMER DEPOSITS": [
+            {'label': "Short-term savings accounts", 'key': 'comptes_epargne_court_terme'},
+            {'label': "Term savings accounts", 'key': 'comptes_epargne_terme'},
+            {'label': "Cash certificates", 'key': 'bons_caisse'},
+            {'label': "Other sight debts", 'key': 'autres_dette_a_vue'},
+            {'label': "Other term debts", 'key': 'autres_dette_a_terme'},
+            {'label': "TOTAL CUSTOMER DEPOSITS", 'key': 'dette_envers_clientelle', 'is_total': True},
+        ],
+        "OTHER LIABILITIES": [
+            {'label': "Debt securities", 'key': 'titres_creance_autres_dettes'},
+            {'label': "Sundry accounts", 'key': 'compte_dordre_divers'},
+            {'label': "Provisions for risks and charges", 'key': 'provision_pour_risque_charge'},
+            {'label': "Regulated provisions", 'key': 'provision_reglementee'},
+            {'label': "Subordinated loans", 'key': 'emprunt_subordonne_tire_emis'},
+            {'label': "Investment grants", 'key': 'subventions_investissement'},
+            {'label': "Appropriated funds", 'key': 'fonds_affecte'},
+            {'label': "General banking risk funds", 'key': 'fonds_pour_risque_bancaire_generaux'},
+        ],
+        "SHAREHOLDERS' EQUITY": [
+            {'label': "Capital", 'key': 'capital_ou_dotation'},
+            {'label': "Share premium", 'key': 'primes_liees_reserve_capital'},
+            {'label': "Revaluation reserves", 'key': 'ecarts_reevaluation'},
+            {'label': "Retained earnings", 'key': 'benefices_non_distribue'},
+            {'label': "Net profit", 'key': 'resultat_net_exercie'},
+            {'label': "TOTAL EQUITY", 'key': 'total_liabilities', 'is_final_total': True},
+        ]
+    }
+
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+

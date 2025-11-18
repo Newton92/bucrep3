@@ -75,7 +75,15 @@ from main.utils import RatiosClassique
 from datetime import datetime
 from django.conf import settings
 import datetime
-
+from main.utils import *
+from main.models import (
+    ActifC, PassifC, ResultatC,  # Classique
+    ActifA, PassifA, ResultatA,  # Anglais
+    Assets, Liabilities,          # Bancaire
+    ActifS, PassifS, ResultatS,  # SYSCOHADA
+    ActifIFRS, PassifIFRS, ResultatIFRS  # IFRS COBAC
+)
+from datetime import datetime as dt 
 
 # Une fonction pour s'assurer que les données sont numériques.
 def to_float(value):
@@ -1093,7 +1101,7 @@ class GenerateReport(APIView):
         print(bilan_report)
         
         # 2. Définir les années et récupérer la devise
-        current_year = datetime.datetime.now().year
+        current_year = datetime.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
         print(years_to_retrieve)
         
@@ -1612,7 +1620,7 @@ class GenerateReport(APIView):
                 # "devise_report": devise.code if devise else "Non spécifiée",
                 "bilan_report": bilan_report.upper() if bilan_report else "",
                 "format_report": format_report,
-                "date_today": datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "date_today": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             },
             "footer_report": {
                 "footer_text_1": footer_1,
@@ -1829,6 +1837,24 @@ class GenerateReport(APIView):
                     "resultat_data": resultat_structured_data,
                     "ratios_data": ratios_structured_data,
                     "charts_data": charts_data,
+                },
+                "etats_financiers_anglais": {
+                    "actif_data": get_structured_actif_anglais_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_anglais_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_anglais_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_anglais_data(acheteur, years_to_retrieve),
+                },
+                "etats_financiers_bancaires": {
+                    "actif_data": get_structured_actif_bancaire_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_bancaire_data(acheteur, years_to_retrieve),
+                },
+                "etats_financiers_syscohada": {
+                    "actif_data": get_structured_actif_syscohada_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_syscohada_data(acheteur, years_to_retrieve),
+                },
+                "etats_financiers_irfs_cobac": {
+                    "actif_data": get_structured_actif_ifrs_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_ifrs_data(acheteur, years_to_retrieve),
                 },
             },
             "translations": {},

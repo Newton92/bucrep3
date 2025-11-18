@@ -1373,57 +1373,598 @@
 
         </div>
         {% elif header_report.bilan_report == 'ANGLAIS' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
+            <!-- Etats financiers Anglais -->
+            <div class="section">
+                <div class="section-title"><br>ETATS FINANCIERS<br><br></div>
+                <div class="section-title">BILAN {{ header_report.bilan_report }}</div>
+
+                {% if financial_statements.etats_financiers_anglais.actif_data %}
+                    <div class="section-title">ASSETS</div>
+                    {% for section, rows in financial_statements.etats_financiers_anglais.actif_data.items %}
+                        <div class="subsection-title">{{ section }}</div>
+                        <table class="financial-table">
+                            <thead>
+                                <tr>
+                                    <th>Label</th>
+                                    <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                    <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                        <td>{{ row.label }}</td>
+                                        <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_vs_n_moins_1 }}
+                                        </td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">No asset data available for this balance sheet type.</div>
+                {% endif %}
+                <br>
+
+                {% if financial_statements.etats_financiers_anglais.passif_data %}
+                    <div class="section-title">LIABILITIES AND EQUITY</div>
+                    {% for section, rows in financial_statements.etats_financiers_anglais.passif_data.items %}
+                        {% if rows %}
+                            <div class="section">
+                                <div class="subsection-title">{{ section }}</div>
+                                <table class="financial-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Label</th>
+                                            <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in rows %}
+                                            <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                                <td>{{ row.label }}</td>
+                                                <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_vs_n_moins_1 }}
+                                                </td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">No liability data available for this balance sheet type.</div>
+                {% endif %}
+                <br>
+
+                {% if financial_statements.etats_financiers_anglais.resultat_data %}
+                    <div class="section-title">INCOME STATEMENT</div>
+                    {% for section, rows in financial_statements.etats_financiers_anglais.resultat_data.items %}
+                        {% if rows %}
+                            <div class="section">
+                                <div class="subsection-title">{{ section }}</div>
+                                <table class="financial-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Label</th>
+                                            <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in rows %}
+                                            <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                                <td>{{ row.label }}</td>
+                                                <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_vs_n_moins_1 }}
+                                                </td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">No income statement data available for this balance sheet type.</div>
+                {% endif %}
+                <br>
+
+                {% if financial_statements.etats_financiers_anglais.ratios_data %}
+                    <div class="section-title">RATIOS</div>
+                    {% for section, rows in financial_statements.etats_financiers_anglais.ratios_data.items %}
+                        {% if rows %}
+                            <div class="subsection-title">{{ section }}</div>
+                            <table class="financial-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ratio</th>
+                                        <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                        <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                        <th class="text-right">VAR (%)</th>
+                                        <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                        <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                        <th class="text-right">VAR (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in rows %}
+                                        <tr>
+                                            <td>{{ row.label }}</td>
+                                            <td class="text-right">{{ row.values.n|floatformat:3|default:"-" }}</td>
+                                            <td class="text-right">{{ row.values.n_moins_1|floatformat:3|default:"-" }}</td>
+                                            <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                                {{ row.variations.n_vs_n_moins_1 }}
+                                            </td>
+                                            <td class="text-right">{{ row.values.n_moins_1|floatformat:3|default:"-" }}</td>
+                                            <td class="text-right">{{ row.values.n_moins_2|floatformat:3|default:"-" }}</td>
+                                            <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                                {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">No ratio data available for this balance sheet type.</div>
+                {% endif %}
+                <br>
+
+                <!-- Score ACREMAC -->
+                <div class="section">
+                    <div class="section-title">ACREMAC SCORE</div>
+                    <p>This score is automatically generated by ACREMAC. It takes into consideration the following information: financial health, company age, payment behavior, commercial opinion, MACE code. The score grid elements have been weighted according to their degree of importance in credit risk calculation.</p>
+                    
+                    {% if scoring %}
+                        <div class="score-image">
+                            <img src="{% static scoring.score_image %}" alt="ACREMAC Score">
+                        </div>
+                        <br>
+
+                        <div class="shareholder-entry">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Score</th>
+                                        <td style="color: #00cc00;">{{ scoring.score_value }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Interpretation</th>
+                                        <td>{{ scoring.interpretation }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Comment</th>
+                                        <td colspan="1" class="warning">{{ scoring.commentaire|striptags|safe }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                    {% else %}
+                        <div class="subsection-title">No scoring available for this buyer.</div>
+                    {% endif %}
+                </div>
+            </div>
         {% elif header_report.bilan_report == 'BANCAIRE' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">DEPENSES</div>
-            <div class="subsection-title">HORS BILAN</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
+            <!-- Etats financiers Bancaires -->
+            <div class="section">
+                <div class="section-title"><br>ETATS FINANCIERS<br><br></div>
+                <div class="section-title">BILAN {{ header_report.bilan_report }}</div>
+
+                {% if financial_statements.etats_financiers_bancaires.actif_data %}
+                    <div class="section-title">ACTIFS</div>
+                    {% for section, rows in financial_statements.etats_financiers_bancaires.actif_data.items %}
+                        <div class="subsection-title">{{ section }}</div>
+                        <table class="financial-table">
+                            <thead>
+                                <tr>
+                                    <th>Libellé</th>
+                                    <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                    <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                        <td>{{ row.label }}</td>
+                                        <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_vs_n_moins_1 }}
+                                        </td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">Aucune donnée d'actif disponible pour ce type de bilan.</div>
+                {% endif %}
+                <br>
+
+                {% if financial_statements.etats_financiers_bancaires.passif_data %}
+                    <div class="section-title">PASSIFS</div>
+                    {% for section, rows in financial_statements.etats_financiers_bancaires.passif_data.items %}
+                        {% if rows %}
+                            <div class="section">
+                                <div class="subsection-title">{{ section }}</div>
+                                <table class="financial-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Libellé</th>
+                                            <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in rows %}
+                                            <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                                <td>{{ row.label }}</td>
+                                                <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_vs_n_moins_1 }}
+                                                </td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">Aucune donnée de passif disponible pour ce type de bilan.</div>
+                {% endif %}
+                <br>
+
+                <!-- Score ACREMAC -->
+                <div class="section">
+                    <div class="section-title">SCORE ACREMAC</div>
+                    <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+                    
+                    {% if scoring %}
+                        <div class="score-image">
+                            <img src="{% static scoring.score_image %}" alt="Score ACREMAC">
+                        </div>
+                        <br>
+
+                        <div class="shareholder-entry">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Score</th>
+                                        <td style="color: #00cc00;">{{ scoring.score_value }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Interprétation</th>
+                                        <td>{{ scoring.interpretation }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Commentaire</th>
+                                        <td colspan="1" class="warning">{{ scoring.commentaire|striptags|safe }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                    {% else %}
+                        <div class="subsection-title">Aucun scoring disponible pour cet acheteur.</div>
+                    {% endif %}
+                </div>
+            </div>
         {% elif header_report.bilan_report == 'SYSCOHADA' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
-        {% elif header_report.bilan_report == 'IRFS COBAC' %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS </div>
-            <div class="subsection-title">BILAN {{ header_report.bilan_report }}</div>
-            <div class="subsection-title">ACTIFS</div>
-            <div class="subsection-title">PASSIFS</div>
-            <div class="subsection-title">COMPTES DE RESULTAT</div>
-            <div class="subsection-title">RATIOS</div>
-            <div class="subsection-title">SCORING ACREMAC</div>
-        </div>
+            <!-- Etats financiers SYSCOHADA -->
+            <div class="section">
+                <div class="section-title"><br>ETATS FINANCIERS<br><br></div>
+                <div class="section-title">BILAN {{ header_report.bilan_report }}</div>
+
+                {% if financial_statements.etats_financiers_syscohada.actif_data %}
+                    <div class="section-title">ACTIFS</div>
+                    {% for section, rows in financial_statements.etats_financiers_syscohada.actif_data.items %}
+                        <div class="subsection-title">{{ section }}</div>
+                        <table class="financial-table">
+                            <thead>
+                                <tr>
+                                    <th>Libellé</th>
+                                    <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                    <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                        <td>{{ row.label }}</td>
+                                        <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_vs_n_moins_1 }}
+                                        </td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">Aucune donnée d'actif disponible pour ce type de bilan.</div>
+                {% endif %}
+                <br>
+
+                {% if financial_statements.etats_financiers_syscohada.passif_data %}
+                    <div class="section-title">PASSIFS</div>
+                    {% for section, rows in financial_statements.etats_financiers_syscohada.passif_data.items %}
+                        {% if rows %}
+                            <div class="section">
+                                <div class="subsection-title">{{ section }}</div>
+                                <table class="financial-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Libellé</th>
+                                            <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in rows %}
+                                            <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                                <td>{{ row.label }}</td>
+                                                <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_vs_n_moins_1 }}
+                                                </td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">Aucune donnée de passif disponible pour ce type de bilan.</div>
+                {% endif %}
+                <br>
+
+                <!-- Score ACREMAC -->
+                <div class="section">
+                    <div class="section-title">SCORE ACREMAC</div>
+                    <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+                    
+                    {% if scoring %}
+                        <div class="score-image">
+                            <img src="{% static scoring.score_image %}" alt="Score ACREMAC">
+                        </div>
+                        <br>
+
+                        <div class="shareholder-entry">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Score</th>
+                                        <td style="color: #00cc00;">{{ scoring.score_value }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Interprétation</th>
+                                        <td>{{ scoring.interpretation }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Commentaire</th>
+                                        <td colspan="1" class="warning">{{ scoring.commentaire|striptags|safe }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                    {% else %}
+                        <div class="subsection-title">Aucun scoring disponible pour cet acheteur.</div>
+                    {% endif %}
+                </div>
+            </div>
+        {% elif header_report.bilan_report == 'IFRS' %}
+            <!-- Etats financiers IFRS COBAC -->
+            <div class="section">
+                <div class="section-title"><br>ETATS FINANCIERS<br><br></div>
+                <div class="section-title">BILAN {{ header_report.bilan_report }}</div>
+
+                {% if financial_statements.etats_financiers_irfs_cobac.actif_data %}
+                    <div class="section-title">ACTIFS</div>
+                    {% for section, rows in financial_statements.etats_financiers_irfs_cobac.actif_data.items %}
+                        <div class="subsection-title">{{ section }}</div>
+                        <table class="financial-table">
+                            <thead>
+                                <tr>
+                                    <th>Libellé</th>
+                                    <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                    <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                    <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                    <th class="text-right">VAR (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in rows %}
+                                    <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                        <td>{{ row.label }}</td>
+                                        <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_vs_n_moins_1 }}
+                                        </td>
+                                        <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                        <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                        <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                            {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">Aucune donnée d'actif disponible pour ce type de bilan.</div>
+                {% endif %}
+                <br>
+
+                {% if financial_statements.etats_financiers_irfs_cobac.passif_data %}
+                    <div class="section-title">PASSIFS</div>
+                    {% for section, rows in financial_statements.etats_financiers_irfs_cobac.passif_data.items %}
+                        {% if rows %}
+                            <div class="section">
+                                <div class="subsection-title">{{ section }}</div>
+                                <table class="financial-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Libellé</th>
+                                            <th class="text-right">PT {{ financial_statements.years.0 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                            <th class="text-right">PT {{ financial_statements.years.1 }}</th>
+                                            <th class="text-right">PT {{ financial_statements.years.2 }}</th>
+                                            <th class="text-right">VAR (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for row in rows %}
+                                            <tr {% if row.is_total or row.is_final_total %}style="font-weight: bold;"{% endif %}>
+                                                <td>{{ row.label }}</td>
+                                                <td class="text-right">{{ row.values.n|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_vs_n_moins_1|startswith:'+' %}positive-var{% elif row.variations.n_vs_n_moins_1|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_vs_n_moins_1 }}
+                                                </td>
+                                                <td class="text-right">{{ row.values.n_moins_1|default:"-" }}</td>
+                                                <td class="text-right">{{ row.values.n_moins_2|default:"-" }}</td>
+                                                <td class="text-right {% if row.variations.n_moins_1_vs_n_moins_2|startswith:'+' %}positive-var{% elif row.variations.n_moins_1_vs_n_moins_2|startswith:'-' %}negative-var{% endif %}">
+                                                    {{ row.variations.n_moins_1_vs_n_moins_2 }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="subsection-title">Aucune donnée de passif disponible pour ce type de bilan.</div>
+                {% endif %}
+                <br>
+
+                <!-- Score ACREMAC -->
+                <div class="section">
+                    <div class="section-title">SCORE ACREMAC</div>
+                    <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code MACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
+                    
+                    {% if scoring %}
+                        <div class="score-image">
+                            <img src="{% static scoring.score_image %}" alt="Score ACREMAC">
+                        </div>
+                        <br>
+
+                        <div class="shareholder-entry">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <th>Score</th>
+                                        <td style="color: #00cc00;">{{ scoring.score_value }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Interprétation</th>
+                                        <td>{{ scoring.interpretation }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Commentaire</th>
+                                        <td colspan="1" class="warning">{{ scoring.commentaire|striptags|safe }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    
+                    {% else %}
+                        <div class="subsection-title">Aucun scoring disponible pour cet acheteur.</div>
+                    {% endif %}
+                </div>
+            </div>
+
         {% else %}
-        <!-- Etats financiers -->
-        <div class="section">
-            <div class="section-title">ETATS FINANCIERS</div>
-        </div>
-        <div class="subsection-title">Aucun élément financier disponible !</div>
+            <!-- Etats financiers par défaut -->
+            <div class="section">
+                <div class="section-title">ETATS FINANCIERS</div>
+                <div class="subsection-title">Aucun élément financier disponible !</div>
+            </div>
         {% endif %}
 
 
