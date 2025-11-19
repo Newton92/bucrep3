@@ -1082,7 +1082,85 @@ def my_view(request):
     return response
 
 
-
+def calculer_scoring_bilan_anglais(acheteur, years_to_retrieve):
+    """
+    Calcule le scoring ACREMAC avec bilan anglais pour les 3 années
+    suivant le même pattern que le scoring classique
+    """
+    try:
+        from main.views_scoring_anglais import ScoreACREMACBilanAnglaisService
+        
+        scores_anglais = {}
+        
+        for i, year in enumerate(years_to_retrieve):
+            try:
+                # Extraire les données du bilan anglais
+                donnees_bilan = ScoreACREMACBilanAnglaisService.extraire_donnees_bilan_anglais(acheteur, year)
+                
+                if donnees_bilan:
+                    # Calculer le score complet
+                    resultat_calcul = ScoreACREMACBilanAnglaisService.calculer_score_complet(donnees_bilan)
+                    
+                    score_value = resultat_calcul.get('score', 0.0)
+                    interpretation = resultat_calcul.get('classe_risque', 'Non calculé')
+                    
+                    # Stocker les résultats avec les clés appropriées
+                    if i == 0:  # Année N (la plus récente)
+                        scores_anglais['score_value_annee_N'] = f"{score_value:.2f}"
+                        scores_anglais['interpretation_annee_N'] = interpretation
+                    elif i == 1:  # Année N-1
+                        scores_anglais['score_value_annee_N1'] = f"{score_value:.2f}"
+                        scores_anglais['interpretation_annee_N1'] = interpretation
+                    elif i == 2:  # Année N-2
+                        scores_anglais['score_value_annee_N2'] = f"{score_value:.2f}"
+                        scores_anglais['interpretation_annee_N2'] = interpretation
+                        
+                else:
+                    # Données manquantes pour cette année
+                    default_value = "N/A"
+                    default_interpretation = "Données manquantes"
+                    
+                    if i == 0:
+                        scores_anglais['score_value_annee_N'] = default_value
+                        scores_anglais['interpretation_annee_N'] = default_interpretation
+                    elif i == 1:
+                        scores_anglais['score_value_annee_N1'] = default_value
+                        scores_anglais['interpretation_annee_N1'] = default_interpretation
+                    elif i == 2:
+                        scores_anglais['score_value_annee_N2'] = default_value
+                        scores_anglais['interpretation_annee_N2'] = default_interpretation
+                        
+            except Exception as e:
+                print(f"Erreur calcul scoring anglais année {year}: {e}")
+                # Valeurs par défaut en cas d'erreur
+                default_value = "Erreur"
+                default_interpretation = "Erreur de calcul"
+                
+                if i == 0:
+                    scores_anglais['score_value_annee_N'] = default_value
+                    scores_anglais['interpretation_annee_N'] = default_interpretation
+                elif i == 1:
+                    scores_anglais['score_value_annee_N1'] = default_value
+                    scores_anglais['interpretation_annee_N1'] = default_interpretation
+                elif i == 2:
+                    scores_anglais['score_value_annee_N2'] = default_value
+                    scores_anglais['interpretation_annee_N2'] = default_interpretation
+        
+        return scores_anglais
+        
+    except Exception as e:
+        print(f"Erreur initialisation scoring anglais: {e}")
+        # Retourner un dictionnaire vide en cas d'erreur générale
+        return {
+            'score_value_annee_N': "N/A",
+            'interpretation_annee_N': "Service indisponible",
+            'score_value_annee_N1': "N/A", 
+            'interpretation_annee_N1': "Service indisponible",
+            'score_value_annee_N2': "N/A",
+            'interpretation_annee_N2': "Service indisponible"
+        }
+        
+        
 # === Vues Report === #
 
 
@@ -1589,6 +1667,8 @@ class GenerateReport(APIView):
         # Générer l'image de la jauge en Base64
         risk_gauge_base64 = get_risk_gauge_chart(risk_score)
         
+        
+        # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
         
@@ -1599,6 +1679,8 @@ class GenerateReport(APIView):
         print(score_indexe)
         
         
+        # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
+        # Scoring avec bilan classique
         # Récupérer le scoring avec bilan en fonction du type de bilan
         scoring_avec_bilan = None
         try:
@@ -1633,7 +1715,9 @@ class GenerateReport(APIView):
             print(f"Erreur lors du calcul du scoring avec bilan: {e}")
             scoring_avec_bilan = None
 
-
+        
+        
+        
         # 4. Générer les graphiques en Base64
         charts_data = {
             'structure_financiere': get_base64_chart2(
@@ -1650,6 +1734,9 @@ class GenerateReport(APIView):
             )
         }
 
+        # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
+        # Scoring avec bilan classique
+        # Récupérer le scoring avec bilan en fonction du type de bilan
         # Calculer le scoring pour chaque année
         for i, year in enumerate(years_to_retrieve):
             annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
@@ -1671,6 +1758,142 @@ class GenerateReport(APIView):
                 elif i == 2:
                     score_value_annee_N2 = str(score)
                     interpretation_annee_N2 = classe_risque
+
+
+        # NOUVEAU: SCORING AVEC BILAN ANGLAIS
+        # Scoring avec bilan anglais
+        # Initialisation des scores par année pour le bilan anglais
+        score_value_anglais_annee_N = None
+        score_value_anglais_annee_N1 = None
+        score_value_anglais_annee_N2 = None
+        interpretation_anglais_annee_N = "N/A"
+        interpretation_anglais_annee_N1 = "N/A"
+        interpretation_anglais_annee_N2 = "N/A"
+        # Calculer le scoring anglais pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_anglais = ScoreACREMACBilanAnglaisService.extraire_donnees_bilan_anglais(acheteur, year)
+
+            if donnees_bilan_anglais:
+                resultat_calcul_anglais = ScoreACREMACBilanAnglaisService.calculer_score_complet(donnees_bilan_anglais)
+                score_anglais = resultat_calcul_anglais['score']
+                score_index_anglais = round(score_anglais)
+                classe_risque_anglais = resultat_calcul_anglais['classe_risque']
+
+                # Mettre à jour les variables de score anglais
+                if i == 0:
+                    score_value_anglais_annee_N = str(score_anglais)
+                    interpretation_anglais_annee_N = classe_risque_anglais
+                elif i == 1:
+                    score_value_anglais_annee_N1 = str(score_anglais)
+                    interpretation_anglais_annee_N1 = classe_risque_anglais
+                elif i == 2:
+                    score_value_anglais_annee_N2 = str(score_anglais)
+                    interpretation_anglais_anglais_annee_N2 = classe_risque_anglais
+
+
+
+        # NOUVEAU: SCORING AVEC BILAN BANCAIRE
+        # Scoring avec bilan bancaire
+        # Initialisation des scores par année pour le bilan bancaire
+        score_value_bancaire_annee_N = None
+        score_value_bancaire_annee_N1 = None
+        score_value_bancaire_annee_N2 = None
+        interpretation_bancaire_annee_N = "N/A"
+        interpretation_bancaire_annee_N1 = "N/A"
+        interpretation_bancaire_annee_N2 = "N/A"
+        # Calculer le scoring bancaire pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_bancaire = ScoreACREMACBilanBancaireService.extraire_donnees_bilan_bancaire(acheteur, year, bilan_type="annuel")
+
+            if donnees_bilan_bancaire:
+                resultat_calcul_bancaire = ScoreACREMACBilanBancaireService.calculer_score_complet_bancaire(donnees_bilan_bancaire)
+                score_bancaire = resultat_calcul_bancaire['score']
+                score_index_bancaire = round(score_bancaire)
+                classe_risque_bancaire = resultat_calcul_bancaire['classe_risque']
+
+                # Mettre à jour les variables de score bancaire
+                if i == 0:
+                    score_value_bancaire_annee_N = str(score_bancaire)
+                    interpretation_bancaire_annee_N = classe_risque_bancaire
+                elif i == 1:
+                    score_value_bancaire_annee_N1 = str(score_bancaire)
+                    interpretation_bancaire_annee_N1 = classe_risque_bancaire
+                elif i == 2:
+                    score_value_bancaire_annee_N2 = str(score_bancaire)
+                    interpretation_bancaire_annee_N2 = classe_risque_bancaire
+            
+
+
+        # NOUVEAU: SCORING AVEC BILAN SYSCOHADA
+        # Scoring avec bilan syscohada
+        # Initialisation des scores par année pour le bilan syscohada
+        # Initialisation des scores par année pour le bilan SYSCOHADA
+        score_value_syscohada_annee_N = None
+        score_value_syscohada_annee_N1 = None
+        score_value_syscohada_annee_N2 = None
+        interpretation_syscohada_annee_N = "N/A"
+        interpretation_syscohada_annee_N1 = "N/A"
+        interpretation_syscohada_annee_N2 = "N/A"
+        # Calculer le scoring SYSCOHADA pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_syscohada = ScoreACREMACBilanSyscohadaService.extraire_donnees_bilan_syscohada(acheteur, year)
+
+            if donnees_bilan_syscohada:
+                resultat_calcul_syscohada = ScoreACREMACBilanSyscohadaService.calculer_score_complet_syscohada(donnees_bilan_syscohada)
+                score_syscohada = resultat_calcul_syscohada['score']
+                score_index_syscohada = round(score_syscohada)
+                classe_risque_syscohada = resultat_calcul_syscohada['classe_risque']
+
+                # Mettre à jour les variables de score SYSCOHADA
+                if i == 0:
+                    score_value_syscohada_annee_N = str(score_syscohada)
+                    interpretation_syscohada_annee_N = classe_risque_syscohada
+                elif i == 1:
+                    score_value_syscohada_annee_N1 = str(score_syscohada)
+                    interpretation_syscohada_annee_N1 = classe_risque_syscohada
+                elif i == 2:
+                    score_value_syscohada_annee_N2 = str(score_syscohada)
+                    interpretation_syscohada_annee_N2 = classe_risque_syscohada
+
+
+
+
+        # NOUVEAU: SCORING AVEC BILAN IFRS COBAC
+        # Scoring avec bilan Ifrs Cobac
+        # Initialisation des scores par année pour le bilan IFRS COBAC
+        score_value_ifrs_annee_N = None
+        score_value_ifrs_annee_N1 = None
+        score_value_ifrs_annee_N2 = None
+        interpretation_ifrs_annee_N = "N/A"
+        interpretation_ifrs_annee_N1 = "N/A"
+        interpretation_ifrs_annee_N2 = "N/A"
+        # Calculer le scoring IFRS COBAC pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_ifrs = ScoreACREMACBilanIFRSService.extraire_donnees_bilan_ifrs(acheteur, year)
+
+            if donnees_bilan_ifrs:
+                resultat_calcul_ifrs = ScoreACREMACBilanIFRSService.calculer_score_complet_ifrs(donnees_bilan_ifrs)
+                score_ifrs = resultat_calcul_ifrs['score']
+                score_index_ifrs = round(score_ifrs)
+                classe_risque_ifrs = resultat_calcul_ifrs['classe_risque']
+
+                # Mettre à jour les variables de score IFRS COBAC
+                if i == 0:
+                    score_value_ifrs_annee_N = str(score_ifrs)
+                    interpretation_ifrs_annee_N = classe_risque_ifrs
+                elif i == 1:
+                    score_value_ifrs_annee_N1 = str(score_ifrs)
+                    interpretation_ifrs_annee_N1 = classe_risque_ifrs
+                elif i == 2:
+                    score_value_ifrs_annee_N2 = str(score_ifrs)
+                    interpretation_ifrs_annee_N2 = classe_risque_ifrs
+
+
+        
 
 
         # 3. Initialize the report data structure
@@ -1943,6 +2166,54 @@ class GenerateReport(APIView):
                 "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_annee_N2,
                 "interpretation_annee_N2": interpretation_annee_N2,
+            },
+            "scoring_anglais": {
+                "title_16": "SCORING ANGLAIS - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
+                "score_value_annee_N": score_value_anglais_annee_N,
+                "interpretation_annee_N": interpretation_anglais_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_anglais_annee_N1,
+                "interpretation_annee_N1": interpretation_anglais_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_anglais_annee_N2,
+                "interpretation_annee_N2": interpretation_anglais_anglais_annee_N2,
+            },
+            "scoring_bancaire": {
+                "title_16": "SCORING BANCAIRE - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
+                "score_value_annee_N": score_value_bancaire_annee_N,
+                "interpretation_annee_N": interpretation_bancaire_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_bancaire_annee_N1,
+                "interpretation_annee_N1": interpretation_bancaire_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_bancaire_annee_N2,
+                "interpretation_annee_N2": interpretation_bancaire_annee_N2,
+            },
+            "scoring_syscohada": {
+                "title_16": "SCORING SYSCOHADA - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
+                "score_value_annee_N": score_value_syscohada_annee_N,
+                "interpretation_annee_N": interpretation_syscohada_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_syscohada_annee_N1,
+                "interpretation_annee_N1": interpretation_syscohada_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_syscohada_annee_N2,
+                "interpretation_annee_N2": interpretation_syscohada_annee_N2,
+            },
+            "scoring_ifrs": {
+                "title_16": "SCORING IFRS COBAC - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
+                "score_value_annee_N": score_value_ifrs_annee_N,
+                "interpretation_annee_N": interpretation_ifrs_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_ifrs_annee_N1,
+                "interpretation_annee_N1": interpretation_ifrs_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_ifrs_annee_N2,
+                "interpretation_annee_N2": interpretation_ifrs_annee_N2,
             },
             "operation_history": {
                 "title_17": "HISTORIQUE DES OPERATIONS",
