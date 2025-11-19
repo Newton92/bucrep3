@@ -397,15 +397,17 @@ from main.models import (
 # Fonction utilitaire pour calculer les variations
 def calculate_variation(n, n_minus_1):
     """Calcule la variation en pourcentage entre deux valeurs."""
-    if not isinstance(n, (Decimal, float)) or not isinstance(n_minus_1, (Decimal, float)):
+    if n is None or n_minus_1 is None:
         return "N/A"
-    
-    # Éviter la division par zéro
+
     if n_minus_1 == 0:
         return "+Inf" if n > 0 else "0.00%" if n == 0 else "-Inf"
-    
+
     variation = ((n - n_minus_1) / abs(n_minus_1)) * 100
     return f"{variation:.2f}%"
+
+
+
 
 
 class FinancialReportGenerator:
@@ -1544,6 +1546,199 @@ def generate_risk_gauge(score, max_score=9, filename="risk_gauge.png"):
 
 
 
+#############################################################
+#
+# Fonctions utilitaires génériques
+#
+############################################################# 
+
+def _build_structured_data(structure_map, data_by_year, years):
+    """
+    Fonction utilitaire générique pour construire les données structurées.
+    """
+    structured_data = {}
+    field_values_by_year = {}
+    # Pré-calculer toutes les valeurs
+    for year in years:
+        instance = data_by_year.get(year)
+        if not instance:
+            continue
+        year_values = {}
+        for section, fields_list in structure_map.items():
+            for field_info in fields_list:
+                key = field_info['key']
+                if key:
+                    # Vérifier si c'est une méthode, l'appeler
+                    attr = getattr(instance, key, None)
+                    if callable(attr):
+                        value = attr()
+                    else:
+                        value = attr
+                    year_values[key] = float(value) if value is not None else 0.0
+        field_values_by_year[year] = year_values
+    # Construire la structure finale
+    for section, fields_list in structure_map.items():
+        structured_data[section] = []
+        for field_info in fields_list:
+            row = {
+                'label': field_info['label'],
+                'is_total': field_info.get('is_total', False),
+                'is_final_total': field_info.get('is_final_total', False)
+            }
+
+            if field_info['key'] is None:
+                row['is_section_title'] = True
+                structured_data[section].append(row)
+                continue
+            values = {}
+            for year in years:
+                values[year] = field_values_by_year.get(year, {}).get(field_info['key'], 0.0)
+            val_n = values.get(years[0], 0.0)
+            val_n_moins_1 = values.get(years[1], 0.0)
+            val_n_moins_2 = values.get(years[2], 0.0)
+            row['values'] = {
+                'n': val_n,
+                'n_moins_1': val_n_moins_1,
+                'n_moins_2': val_n_moins_2,
+            }
+            row['variations'] = {
+                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
+                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
+            }
+            structured_data[section].append(row)
+    return structured_data
+
+
+
+def _build_ratios_data(structure_map, ratios_by_year, years):
+    """
+    Fonction utilitaire générique pour construire les données de ratios.
+    """
+    structured_data = {}
+    for section, ratios_list in structure_map.items():
+        rows_data = []
+        for ratio_info in ratios_list:
+            row = {'label': ratio_info['label']}
+            values = {}
+            for year in years:
+                instance = ratios_by_year.get(year)
+                if instance:
+                    value = getattr(instance, ratio_info['key'], None)
+                    values[year] = float(value) if value is not None else 0.0
+                else:
+                    values[year] = 0.0
+
+            val_n = values.get(years[0], 0.0)
+            val_n_moins_1 = values.get(years[1], 0.0)
+            val_n_moins_2 = values.get(years[2], 0.0)
+            row['values'] = {
+                'n': val_n,
+                'n_moins_1': val_n_moins_1,
+                'n_moins_2': val_n_moins_2,
+            }
+            row['variations'] = {
+                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
+                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
+            }
+            rows_data.append(row)
+        structured_data[section] = rows_data
+
+    return structured_data
+
+
+
+def _build_ratios_data_v2(structure_map, ratios_by_year, years):
+    """
+    Construit une structure de données pour les ratios.
+    """
+    structured_data = {}
+    for section, rows in structure_map.items():
+        structured_rows = []
+        for row in rows:
+            key = row['key']
+            label = row['label']
+            is_total = row.get('is_total', False)
+            is_final_total = row.get('is_final_total', False)
+
+            values = {}
+            variations = {}
+            for i, year in enumerate(years):
+                year_key = f"n_moins_{i}" if i > 0 else "n"
+                values[year_key] = ratios_by_year.get(year, {}).get(key, 0) if ratios_by_year.get(year) else 0
+
+            # Calcul des variations
+            if len(years) >= 2:
+                n = values.get('n', 0)
+                n_moins_1 = values.get('n_moins_1', 0)
+                variations['n_vs_n_moins_1'] = f"{((n - n_moins_1) / abs(n_moins_1) * 100 if n_moins_1 else 0):+.2f}%" if n_moins_1 else "N/A"
+
+                if len(years) >= 3:
+                    n_moins_2 = values.get('n_moins_2', 0)
+                    variations['n_moins_1_vs_n_moins_2'] = f"{((n_moins_1 - n_moins_2) / abs(n_moins_2) * 100 if n_moins_2 else 0):+.2f}%" if n_moins_2 else "N/A"
+                else:
+                    variations['n_moins_1_vs_n_moins_2'] = "N/A"
+            else:
+                variations['n_vs_n_moins_1'] = "N/A"
+                variations['n_moins_1_vs_n_moins_2'] = "N/A"
+
+            structured_rows.append({
+                'label': label,
+                'key': key,
+                'values': values,
+                'variations': variations,
+                'is_total': is_total,
+                'is_final_total': is_final_total
+            })
+
+        structured_data[section] = structured_rows
+
+    return structured_data
+
+
+
+def _build_ratios_data_bancaire(structure_map, ratios_by_year, years):
+    """
+    Construit une structure de données pour les ratios bancaires.
+    """
+    structured_data = {}
+    for section, ratios_list in structure_map.items():
+        rows_data = []
+        for ratio_info in ratios_list:
+            row = {'label': ratio_info['label']}
+            values = {}
+            variations = {}
+            for year in years:
+                instance = ratios_by_year.get(year)
+                if instance:
+                    values[year] = {
+                        'calculated': instance['ratios'].get(ratio_info['key'], 0.0),
+                        'bounded': instance['ratios_bornees'].get(ratio_info['key'], 0.0),
+                    }
+                else:
+                    values[year] = {'calculated': 0.0, 'bounded': 0.0}
+
+            val_n = values.get(years[0])
+            val_n_moins_1 = values.get(years[1])
+            val_n_moins_2 = values.get(years[2])
+
+            row['values'] = {
+                'n': val_n,
+                'n_moins_1': val_n_moins_1,
+                'n_moins_2': val_n_moins_2,
+            }
+
+            # Calcul des variations pour les valeurs calculées
+            row['variations'] = {
+                'n_vs_n_moins_1': calculate_variation(val_n['calculated'], val_n_moins_1['calculated']),
+                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1['calculated'], val_n_moins_2['calculated']),
+            }
+
+            rows_data.append(row)
+        structured_data[section] = rows_data
+
+    return structured_data
+
+
 
 
 
@@ -1591,6 +1786,7 @@ def get_structured_actif_syscohada_data(acheteur, years):
     }
 
     return _build_structured_data(structure_map, data_by_year, years)
+
 
 def get_structured_passif_syscohada_data(acheteur, years):
     """
@@ -1641,6 +1837,102 @@ def get_structured_passif_syscohada_data(acheteur, years):
     return _build_structured_data(structure_map, data_by_year, years)
 
 
+def get_structured_resultat_syscohada_data(acheteur, years):
+    """
+    Récupère et structure les données du compte de résultat SYSCOHADA.
+    """
+    resultat_model = ResultatS
+    data_by_year = {}
+    for year in years:
+        instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+    structure_map = {
+        "PRODUITS D'EXPLOITATION": [
+            {'label': "Ventes de marchandises", 'key': 'ventes_marchandises_a'},
+            {'label': "Ventes de produits manufacturés", 'key': 'ventes_produits_manufactures'},
+            {'label': "Travaux, services vendus", 'key': 'travaux_services_vendus_c'},
+            {'label': "Produits accessoires", 'key': 'produits_accessoires_d'},
+            {'label': "Production stockée", 'key': 'production_stockee'},
+            {'label': "Production immobilisée", 'key': 'production_immobilisee'},
+            {'label': "Subventions d'exploitation", 'key': 'subvention_exploitation'},
+            {'label': "Autres produits", 'key': 'autres_produits'},
+            {'label': "Transfert de charges", 'key': 'transfert_charges_exploitation'},
+            {'label': "TOTAL PRODUITS", 'key': 'chiffre_affaires', 'is_total': True},
+        ],
+        "CHARGES D'EXPLOITATION": [
+            {'label': "Achats de marchandises", 'key': 'achats_marchandises'},
+            {'label': "Variation des stocks de marchandises", 'key': 'variation_stock_marchandises'},
+            {'label': "Achats de matières premières", 'key': 'achats_matieres_premieres_fournitures_connexes'},
+            {'label': "Variation des stocks de matières premières", 'key': 'variation_stock_matieres_premieres_fournitures_connexes'},
+            {'label': "Autres achats", 'key': 'autres_achats'},
+            {'label': "Variation des stocks d'autres fournitures", 'key': 'variation_stock_autres_fournitures'},
+            {'label': "Transports", 'key': 'transport'},
+            {'label': "Services extérieurs", 'key': 'services_exterieurs'},
+            {'label': "Impôts et taxes", 'key': 'impots_taxes'},
+            {'label': "Autres charges", 'key': 'autres_depenses'},
+            {'label': "Frais de personnel", 'key': 'frais_personnel'},
+            {'label': "Reprises de dépréciations", 'key': 'reprise_depreciations_amortissements_provision_pertes_valeurs_p'},
+            {'label': "Dotations aux amortissements", 'key': 'reprise_depreciations_amortissements_provision_pertes_valeurs_m'},
+        ],
+        "RÉSULTAT FINANCIER": [
+            {'label': "Produits financiers", 'key': 'produits_financiers_assimiles'},
+            {'label': "Reprises sur provisions", 'key': 'reprise_provision_perte_valeur'},
+            {'label': "Transfert de charges financières", 'key': 'transfert_charges_financieres'},
+            {'label': "Charges financières", 'key': 'charges_financieres_assimilees'},
+            {'label': "Dotations aux provisions financières", 'key': 'dotations_provisions_depreciations_financieres'},
+            {'label': "RÉSULTAT FINANCIER", 'key': 'resultat_financier', 'is_total': True},
+        ],
+        "RÉSULTAT EXCEPTIONNEL": [
+            {'label': "Produits exceptionnels", 'key': 'produits_cession_immobilisations'},
+            {'label': "Autres produits HAO", 'key': 'autres_produits_hao'},
+            {'label': "Valeur comptable des cessions", 'key': 'valeur_comptable_cessions_actifs_immobilises'},
+            {'label': "Autres charges HAO", 'key': 'autres_charges_hao'},
+            {'label': "Participation des travailleurs", 'key': 'participation_travailleurs'},
+            {'label': "Charge d'impôt sur le revenu", 'key': 'charge_impot_revenu'},
+            {'label': "RÉSULTAT NET", 'key': 'resultat_net', 'is_final_total': True},
+        ]
+    }
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+def get_structured_ratios_syscohada_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan SYSCOHADA.
+    """
+    actif_model = ActifS
+    passif_model = PassifS
+    resultat_model = ResultatS
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+
+        if actif_instance and passif_instance and resultat_instance:
+            ratios_by_year[year] = RatiosSyscohada(actif_instance, passif_instance, resultat_instance)
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "STRUCTURE FINANCIÈRE": [
+            {'label': "Fonds de roulement", 'key': 'fonds_de_roulement'},
+            {'label': "Autonomie financière", 'key': 'autonomie_financiere'},
+        ],
+        "LIQUIDITÉ": [
+            {'label': "Liquidité générale", 'key': 'liquidite_general'},
+        ],
+        "RENTABILITÉ": [
+            {'label': "Capacité d'autofinancement", 'key': 'cafsys'},
+            {'label': "Rentabilité économique", 'key': 'excedent_brute_exploitation'},
+        ],
+        "GESTION": [
+            {'label': "Rotation des stocks", 'key': 'rotation_stock'},
+        ],
+    }
+    return _build_ratios_data(structure_map, ratios_by_year, years)
+
+
+
 
 #############################################################
 #
@@ -1680,6 +1972,7 @@ def get_structured_actif_ifrs_data(acheteur, years):
 
     return _build_structured_data(structure_map, data_by_year, years)
 
+
 def get_structured_passif_ifrs_data(acheteur, years):
     """
     Récupère et structure les données de passif pour le bilan IFRS.
@@ -1716,109 +2009,93 @@ def get_structured_passif_ifrs_data(acheteur, years):
     return _build_structured_data(structure_map, data_by_year, years)
 
 
-
-
-
-#############################################################
-#
-# Fonctions utilitaires génériques
-#
-############################################################# 
-
-def _build_structured_data(structure_map, data_by_year, years):
+def get_structured_resultat_ifrs_data(acheteur, years):
     """
-    Fonction utilitaire générique pour construire les données structurées.
+    Récupère et structure les données du compte de résultat IFRS COBAC.
     """
-    structured_data = {}
-    field_values_by_year = {}
-
-    # Pré-calculer toutes les valeurs
+    resultat_model = ResultatIFRS
+    data_by_year = {}
     for year in years:
-        instance = data_by_year.get(year)
-        if not instance:
-            continue
-        year_values = {}
-        for section, fields_list in structure_map.items():
-            for field_info in fields_list:
-                key = field_info['key']
-                if key:
-                    # Vérifier si c'est une propriété calculée
-                    if hasattr(instance, key):
-                        value = getattr(instance, key, Decimal('0'))
-                        year_values[key] = value if value is not None else Decimal('0')
-        field_values_by_year[year] = year_values
-
-    # Construire la structure finale
-    for section, fields_list in structure_map.items():
-        structured_data[section] = []
-        for field_info in fields_list:
-            row = {
-                'label': field_info['label'], 
-                'is_total': field_info.get('is_total', False), 
-                'is_final_total': field_info.get('is_final_total', False)
-            }
-            
-            if field_info['key'] is None:
-                row['is_section_title'] = True
-                structured_data[section].append(row)
-                continue
-
-            values = {}
-            for year in years:
-                values[year] = field_values_by_year.get(year, {}).get(field_info['key'])
-
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
-
-            row['values'] = {
-                'n': val_n,
-                'n_moins_1': val_n_moins_1,
-                'n_moins_2': val_n_moins_2,
-            }
-            row['variations'] = {
-                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
-                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
-            }
-            structured_data[section].append(row)
-
-    return structured_data
-
-def _build_ratios_data(structure_map, ratios_by_year, years):
-    """
-    Fonction utilitaire générique pour construire les données de ratios.
-    """
-    structured_data = {}
-    for section, ratios_list in structure_map.items():
-        rows_data = []
-        for ratio_info in ratios_list:
-            row = {'label': ratio_info['label']}
-            values = {}
-            for year in years:
-                instance = ratios_by_year.get(year)
-                value = getattr(instance, ratio_info['key'], None) if instance else None
-                values[year] = value
-            
-            val_n = values.get(years[0])
-            val_n_moins_1 = values.get(years[1])
-            val_n_moins_2 = values.get(years[2])
-
-            row['values'] = {
-                'n': val_n,
-                'n_moins_1': val_n_moins_1,
-                'n_moins_2': val_n_moins_2,
-            }
-            row['variations'] = {
-                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
-                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
-            }
-            rows_data.append(row)
-        structured_data[section] = rows_data
+        instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+        print(f"Résultat IFRS pour l'année {year}: {instance}")
         
-    return structured_data
+    # Vérifiez que les données sont bien présentes
+    print(f"Données par année: {data_by_year}")
+    
+    structure_map = {
+        "PRODUITS": [
+            {'label': "Ventes de biens", 'key': 'ventes_biens'},
+            {'label': "Ventes de services", 'key': 'ventes_services'},
+            {'label': "Subventions d'exploitation", 'key': 'subventions_exploitation'},
+            {'label': "Revenus exceptionnels", 'key': 'revenus_exceptionnels'},
+            {'label': "Revenus financiers", 'key': 'revenus_financiers'},
+            {'label': "TOTAL PRODUITS", 'key': 'total_produits', 'is_total': True},
+        ],
+        "CHARGES": [
+            {'label': "Achats de matières premières", 'key': 'achats_matieres_premieres'},
+            {'label': "Autres coûts directs", 'key': 'autres_couts_directs'},
+            {'label': "Salaires et charges sociales", 'key': 'salaires_et_charges_sociales'},
+            {'label': "Loyer et charges locatives", 'key': 'loyer_et_charges_locatives'},
+            {'label': "Autres charges d'exploitation", 'key': 'autres_charges_exploitation'},
+            {'label': "Amortissement des immobilisations", 'key': 'amortissement_des_immobilisations'},
+            {'label': "Provisions pour risques et charges", 'key': 'provisions_pour_risques_et_charges'},
+            {'label': "Charges financières", 'key': 'charges_financieres'},
+            {'label': "Impôt sur les sociétés", 'key': 'impot_sur_les_societes'},
+            {'label': "TOTAL CHARGES", 'key': 'total_charges', 'is_total': True},
+        ],
+        "RÉSULTATS": [
+            {'label': "Résultat opérationnel", 'key': 'resultat_operationnel'},
+            {'label': "Résultat financier", 'key': 'resultat_financier'},
+            {'label': "Résultat avant impôt", 'key': 'resultat_avant_impot'},
+            {'label': "Résultat net", 'key': 'resultat_net', 'is_final_total': True},
+        ]
+    }
+    return _build_structured_data(structure_map, data_by_year, years)
 
 
+def get_structured_ratios_ifrs_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan IFRS COBAC.
+    """
+    actif_model = ActifIFRS
+    passif_model = PassifIFRS
+    resultat_model = ResultatIFRS
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
 
+        if actif_instance and passif_instance and resultat_instance:
+            ratios_by_year[year] = RatiosIFRS(actif=actif_instance, passif=passif_instance, resultat=resultat_instance)
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "RENTABILITÉ": [
+            {'label': "Return on Assets (ROA)", 'key': 'roa'},
+            {'label': "Return on Equity (ROE)", 'key': 'roe'},
+        ],
+        "LIQUIDITÉ": [
+            {'label': "Liquidité générale", 'key': 'liquidite_generale'},
+            {'label': "Liquidité immédiate", 'key': 'liquidite_immediate'},
+        ],
+        "SOLVABILITÉ": [
+            {'label': "Ratio d'endettement", 'key': 'ratio_endettement_total'},
+            {'label': "Ratio de couverture des intérêts", 'key': 'ratio_couverture_interets'},
+        ],
+        "RENTABILITÉ DES VENTES": [
+            {'label': "Marge brute", 'key': 'marge_brute'},
+            {'label': "Marge opérationnelle", 'key': 'marge_operationnelle'},
+            {'label': "Marge nette", 'key': 'marge_nette'},
+        ],
+        "GESTION": [
+            {'label': "Rotation des actifs", 'key': 'rotation_des_actifs'},
+            {'label': "DSO (Days Sales Outstanding)", 'key': 'dso'},
+        ],
+    }
+    return _build_ratios_data(structure_map, ratios_by_year, years)
 
 
 
@@ -2066,6 +2343,211 @@ def get_structured_passif_bancaire_data(acheteur, years):
     }
 
     return _build_structured_data(structure_map, data_by_year, years)
+
+
+def get_structured_produit_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les données de produits pour le bilan bancaire.
+    """
+    produit_model = Products
+    data_by_year = {}
+    for year in years:
+        instance = produit_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+    structure_map = {
+        "INTEREST INCOME": [
+            {'label': "Interbank loans", 'key': 'interets_produit_assimile_sur_pret_avance_interbancaire'},
+            {'label': "Customer loans", 'key': 'ineterets_produit_assimile_pret_avance_clientele'},
+            {'label': "Investment securities", 'key': 'interet_produit_sur_titre_dinvestissement'},
+            {'label': "Subordinated loans", 'key': 'revenu_gains_titre_pret_titre_subordonne'},
+            {'label': "Other interest income", 'key': 'autres_interets_produits_assimiles'},
+            {'label': "TOTAL INTEREST INCOME", 'key': 'interet_produit_assimile', 'is_total': True},
+        ],
+        "OTHER INCOME": [
+            {'label': "Leasing operations", 'key': 'produits_leansing_operation_connexes'},
+            {'label': "Commissions", 'key': 'commissions'},
+            {'label': "Negotiable securities", 'key': 'revenus_titre_negociable'},
+            {'label': "Dividends", 'key': 'dividendes_produits_assimiles'},
+            {'label': "Foreign exchange", 'key': 'revenus_operation_de_change'},
+            {'label': "Off-balance sheet", 'key': 'produits_opeations_hors_bilan'},
+            {'label': "Other banking income", 'key': 'produits_bancaire_divers'},
+        ],
+        "SALES": [
+            {'label': "Sales margins", 'key': 'marges_vente'},
+            {'label': "Merchandise sales", 'key': 'ventes_marchandises'},
+            {'label': "Inventory variation", 'key': 'variation_stocks_marchandises'},
+            {'label': "General operating income", 'key': 'produit_dexploitation_generale'},
+        ],
+        "OTHER ITEMS": [
+            {'label': "Depreciation reversals", 'key': 'reprise_damortissement_provisions_sur_immobilisation'},
+            {'label': "Value correction balance", 'key': 'solde_resultat_correction_valeur_sur_creance_hors_bilan'},
+            {'label': "Risk fund excess", 'key': 'excedent_reprise_fonds_pour_risque_bancaire_generaux'},
+            {'label': "Exceptional income", 'key': 'produits_exceptionnels'},
+            {'label': "Prior year profits", 'key': 'benefice_sur_exercice_anterieur'},
+            {'label': "Losses", 'key': 'perte'},
+            {'label': "TOTAL INCOME", 'key': 'total_produit', 'is_final_total': True},
+        ]
+    }
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+def get_structured_depense_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les données de dépenses pour le bilan bancaire.
+    """
+    depense_model = Expenses
+    data_by_year = {}
+    for year in years:
+        instance = depense_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+    structure_map = {
+        "INTEREST EXPENSES": [
+            {'label': "Interbank debt", 'key': 'interet_charges_assimilee_dette_interbancaire'},
+            {'label': "Customer debt", 'key': 'interet_charge_assimilee_dette_clientele'},
+            {'label': "Debt securities", 'key': 'interet_charge_assimilee_titre_creance'},
+            {'label': "Blocked accounts", 'key': 'chargesc_compte_bloque_dactionnaire_emprunt_sub'},
+            {'label': "Other interest expenses", 'key': 'autres_interets_charges_assimilee'},
+            {'label': "TOTAL INTEREST EXPENSES", 'key': 'interet_charges_assimile', 'is_total': True},
+        ],
+        "OPERATING EXPENSES": [
+            {'label': "Leasing operations", 'key': 'charges_sur_op_credit_bail_assimile'},
+            {'label': "Commissions", 'key': 'commissions'},
+            {'label': "Investment charges", 'key': 'charges_sur_titre_placement'},
+            {'label': "Foreign exchange charges", 'key': 'charges_sur_operation_change'},
+            {'label': "Off-balance sheet charges", 'key': 'charges_sur_operation_hors_bilan'},
+            {'label': "Other banking expenses", 'key': 'frais_divers_exploitation_bancaire'},
+        ],
+        "COST OF SALES": [
+            {'label': "Merchandise purchases", 'key': 'achat_marchandises'},
+            {'label': "Inventory sold", 'key': 'stocks_vendus'},
+            {'label': "Inventory variation", 'key': 'variations_stocks_marchandises'},
+        ],
+        "OTHER EXPENSES": [
+            {'label': "Personnel expenses", 'key': 'frais_personnel'},
+            {'label': "General expenses", 'key': 'autres_frais_generaux'},
+            {'label': "Depreciation", 'key': 'dotations_amortissement_provision_immobilisation'},
+            {'label': "Loss on receivables", 'key': 'solde_perte_creance_hors_bilan'},
+            {'label': "Risk fund excess", 'key': 'excedent_dotation_reprises_fonds_pour_risque_bancaire_generaux'},
+            {'label': "Exceptional charges", 'key': 'charges_exceptionnelle'},
+            {'label': "Prior year losses", 'key': 'pertes_exercice_anterieurs'},
+            {'label': "Income tax", 'key': 'impot_sur_revenu'},
+            {'label': "TOTAL EXPENSES", 'key': 'total_des_charges', 'is_final_total': True},
+        ]
+    }
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+def get_structured_hors_bilan_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les données hors bilan pour le bilan bancaire.
+    """
+    hors_bilan_model = OffBalanceSheet
+    data_by_year = {}
+    for year in years:
+        instance = hors_bilan_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        data_by_year[year] = instance
+    structure_map = {
+        "COMMITMENTS GIVEN": [
+            {'label': "Financing to credit institutions", 'key': 'engagement_financement_donne_ets_credit'},
+            {'label': "Financing to customers", 'key': 'engagement_financement_donne_clientele'},
+            {'label': "Guarantees to credit institutions", 'key': 'engagement_garantie_donne_ets_credit'},
+            {'label': "Guarantees to customers", 'key': 'engagement_garantie_donne_clientele'},
+            {'label': "Securities commitments", 'key': 'engagement_sur_titres_donnes'},
+            {'label': "TOTAL COMMITMENTS GIVEN", 'key': 'total_engagements_donnes', 'is_total': True},
+        ],
+        "COMMITMENTS RECEIVED": [
+            {'label': "Financing from credit institutions", 'key': 'engagement_financement_recu_ets_credit'},
+            {'label': "Financing from customers", 'key': 'engagement_financement_recu_clientele'},
+            {'label': "Guarantees from credit institutions", 'key': 'engagement_garantie_recu_ets_credit'},
+            {'label': "Securities commitments received", 'key': 'engagement_sur_titres_recus'},
+            {'label': "TOTAL COMMITMENTS RECEIVED", 'key': 'total_engagements_recus', 'is_total': True},
+        ]
+    }
+    return _build_structured_data(structure_map, data_by_year, years)
+
+
+def get_structured_ratios_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan bancaire.
+    Utilise les mêmes formules et bornes que ScoreACREMACBilanBancaireService.
+    """
+    ratios_by_year = {}
+    for year in years:
+        assets_instance = Assets.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        liabilities_instance = Liabilities.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        products_instance = Products.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        expenses_instance = Expenses.objects.filter(acheteur=acheteur, annee__annee=year).first()
+
+        if assets_instance and liabilities_instance and products_instance and expenses_instance:
+            # Récupérer les valeurs numériques et les convertir en float
+            total_actif = float(assets_instance.total_assets()) if hasattr(assets_instance, 'total_assets') else 1.0
+            total_passif = float(liabilities_instance.total_liabilities) if hasattr(liabilities_instance, 'total_liabilities') else 1.0
+            total_produit = float(products_instance.total_produit) if hasattr(products_instance, 'total_produit') else 1.0
+            total_charges = float(expenses_instance.total_des_charges) if hasattr(expenses_instance, 'total_des_charges') else 1.0
+
+            # Calcul des composantes en float
+            capitaux_propres = (
+                float(liabilities_instance.capital_ou_dotation or 0) +
+                float(liabilities_instance.primes_liees_reserve_capital or 0) +
+                float(liabilities_instance.benefices_non_distribue or 0) +
+                float(liabilities_instance.resultat_net_exercie or 0)
+            )
+            dettes_court_terme = (
+                float(liabilities_instance.dette_envers_clientelle or 0) +
+                float(liabilities_instance.autres_dette_a_vue or 0)
+            )
+            actifs_liquides = (
+                float(assets_instance.pret_interbancaire or 0) +
+                float(assets_instance.titres_placement or 0)
+            )
+            creance_clientele = float(assets_instance.creance_sur_la_clientele or 0)
+            resultat_net = total_produit - total_charges
+            interets_produits = float(products_instance.interet_produit_assimile or 0)
+
+            # Calcul des ratios en float
+            ratios = {
+                'r1': (capitaux_propres / total_actif) * 100 if total_actif else 0.0,  # Ratio de solvabilité
+                'r2': (actifs_liquides / dettes_court_terme) * 100 if dettes_court_terme else 0.0,  # Ratio de liquidité
+                'r3': (resultat_net / total_actif) * 100 if total_actif else 0.0,  # Ratio de rentabilité
+                'r4': (creance_clientele / total_actif) * 100 if total_actif else 0.0,  # Ratio de qualité des actifs
+                'r5': (total_charges / total_produit) * 100 if total_produit else 0.0,  # Ratio d'efficience
+                'r6': ((total_produit - interets_produits) / total_produit) * 100 if total_produit else 0.0,  # Ratio de diversification
+            }
+
+            # Application des bornes
+            ratios_bornees = {
+                'r1': max(4.0, min(20.0, ratios.get('r1', 0.0))),  # Solvabilité: 4% à 20%
+                'r2': max(80.0, min(120.0, ratios.get('r2', 0.0))),  # Liquidité: 80% à 120%
+                'r3': max(-5.0, min(3.0, ratios.get('r3', 0.0))),  # Rentabilité: -5% à 3%
+                'r4': max(0.0, min(60.0, ratios.get('r4', 0.0))),  # Qualité actifs: 0% à 60%
+                'r5': max(50.0, min(95.0, ratios.get('r5', 0.0))),  # Efficience: 50% à 95%
+                'r6': max(5.0, min(40.0, ratios.get('r6', 0.0))),  # Diversification: 5% à 40%
+            }
+
+            ratios_by_year[year] = {
+                'ratios': ratios,
+                'ratios_bornees': ratios_bornees,
+            }
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "FINANCIAL STRUCTURE": [
+            {'label': "Solvency Ratio (R1)", 'key': 'r1'},
+            {'label': "Liquidity Ratio (R2)", 'key': 'r2'},
+        ],
+        "PERFORMANCE": [
+            {'label': "Profitability Ratio (R3)", 'key': 'r3'},
+            {'label': "Asset Quality Ratio (R4)", 'key': 'r4'},
+        ],
+        "OPERATIONAL EFFICIENCY": [
+            {'label': "Efficiency Ratio (R5)", 'key': 'r5'},
+            {'label': "Revenue Diversification Ratio (R6)", 'key': 'r6'},
+        ]
+    }
+
+    return _build_ratios_data_bancaire(structure_map, ratios_by_year, years)
+
 
 
 

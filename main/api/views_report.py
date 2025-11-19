@@ -2135,15 +2135,24 @@ class GenerateReport(APIView):
                 "etats_financiers_bancaires": {
                     "actif_data": get_structured_actif_bancaire_data(acheteur, years_to_retrieve),
                     "passif_data": get_structured_passif_bancaire_data(acheteur, years_to_retrieve),
+                    "produit_data": get_structured_produit_bancaire_data(acheteur, years_to_retrieve),
+                    "depense_data": get_structured_depense_bancaire_data(acheteur, years_to_retrieve),
+                    "hors_bilan_data": get_structured_hors_bilan_bancaire_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_bancaire_data(acheteur, years_to_retrieve),
                 },
                 "etats_financiers_syscohada": {
                     "actif_data": get_structured_actif_syscohada_data(acheteur, years_to_retrieve),
                     "passif_data": get_structured_passif_syscohada_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_syscohada_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_syscohada_data(acheteur, years_to_retrieve),
                 },
                 "etats_financiers_irfs_cobac": {
                     "actif_data": get_structured_actif_ifrs_data(acheteur, years_to_retrieve),
                     "passif_data": get_structured_passif_ifrs_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_ifrs_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_ifrs_data(acheteur, years_to_retrieve),
                 },
+
             },
             "translations": {},
             "scoring": {
