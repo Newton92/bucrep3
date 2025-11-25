@@ -2124,7 +2124,12 @@ class GenerateReport(APIView):
                     "passif_data": passif_structured_data,
                     "resultat_data": resultat_structured_data,
                     "ratios_data": ratios_structured_data,
-                    "charts_data": charts_data,
+                    "charts_data_v1": charts_data,
+                    "charts_data": {
+                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve),
+                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve),
+                    },
                 },
                 "etats_financiers_anglais": {
                     "actif_data": get_structured_actif_anglais_data(acheteur, years_to_retrieve),

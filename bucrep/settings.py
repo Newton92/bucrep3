@@ -114,12 +114,16 @@ CELERY_BEAT_SCHEDULE = {
 INSTALLED_APPS = [
     # API
     "corsheaders",
+    
     # Librairies
     "rest_framework",
     "drf_yasg",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "django_extensions",
+    "safedelete",
+    "simple_history",
+    
     # Django librairies
     "django.contrib.admin",
     "django.contrib.auth",
@@ -130,6 +134,10 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.humanize",
     "channels",  # Ajout de Django Channels
+    
+    
+    
+    
     # Mon app
     "main.apps.MainConfig",
     "django_celery_results",
@@ -138,6 +146,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
+    
+    
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

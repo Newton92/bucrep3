@@ -367,9 +367,45 @@ def create_fake_buyers(count=15):
         )
 
     print(f"{count} fake Acheteur objects created successfully.")
+
+
+
+
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Important pour Django
+import io
+import base64
+import numpy as np
+
+def generate_chart_image(charts_data):  # charts_data au lieu de chart_data
+    """Génère une image PNG à partir des données du chart"""
+    plt.figure(figsize=(10, 6))
     
+    labels = charts_data['labels']  # charts_data au lieu de chart_data
+    x = np.arange(len(labels))
     
+    # Créer le graphique
+    for i, dataset in enumerate(charts_data['datasets']):  # charts_data au lieu de chart_data
+        plt.plot(labels, dataset['data'], label=dataset['label'], 
+                marker='o', linewidth=2, markersize=6)
     
+    plt.title(charts_data['title'], fontsize=14, fontweight='bold')  # charts_data au lieu de chart_data
+    plt.xlabel('Années')
+    plt.ylabel('Valeurs')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    # Convertir en image base64
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', dpi=100)
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+    plt.close()
+    
+    return base64.b64encode(image_png).decode('utf-8')
     
     
 # utils/financial_report_generator.py
@@ -1018,9 +1054,8 @@ def calculate_score_without_bilan_classique(self):
 
 
 
-
+# Bilan classique(Annee N, N-1 et N-2)
 # Fichier : views_report.py
-
 # ... (les importations existantes) ...
 
 def get_simple_actifs_data(acheteur, years):
@@ -1077,13 +1112,6 @@ def get_simple_actifs_data(acheteur, years):
     return table_data
 
 
-# Fichier : views_report.py
-
-# ... (les importations existantes) ...
-
-# Fichier : views_report.py
-
-# ... (les importations existantes) ...
 
 def get_structured_actif_data(acheteur, years):
     """
@@ -1410,7 +1438,7 @@ def get_structured_resultat_data(acheteur, years):
 # ... (les importations et autres fonctions existantes) ...
 from main.models import RatiosClassique
 
-def get_structured_ratios_data(acheteur, years):
+def get_structured_ratios_data_v1(acheteur, years):
     """
     Récupère les données financières, calcule les ratios pour chaque année
     et les structure par groupe pour le template.
@@ -1483,6 +1511,439 @@ def get_structured_ratios_data(acheteur, years):
         structured_data[section] = rows_data
         
     return structured_data
+
+
+# ... (les importations et autres fonctions existantes) ...
+from main.models import RatiosClassique
+
+def get_structured_ratios_data(acheteur, years):
+    """
+    Récupère les données financières, calcule les ratios pour chaque année
+    et les structure par groupe pour le template.
+    """
+    actif_model = ActifC
+    passif_model = PassifC
+    resultat_model = ResultatC
+
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        
+        if actif_instance and passif_instance and resultat_instance:
+            ratios_by_year[year] = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+        else:
+            ratios_by_year[year] = None
+
+    # Définir la structure des ratios par catégorie - MIS À JOUR AVEC LES NOUVEAUX RATIOS
+    structure_map = {
+        "STRUCTURE FINANCIÈRE": [
+            {'label': "Fonds de roulement net global", 'key': 'fonds_de_roulement'},
+            {'label': "Fonds de roulement normatif", 'key': 'fonds_de_roulement_normatif'},
+            {'label': "Autonomie financière", 'key': 'autonomie_fin'},
+            {'label': "Solvabilité", 'key': 'solvabilite'},
+            {'label': "Levier financier", 'key': 'levier_financier'},
+        ],
+        "LIQUIDITÉ ET TRÉSORERIE": [
+            {'label': "Liquidité réduite", 'key': 'liquidite_reduite'},
+            {'label': "Liquidité immédiate", 'key': 'liquidite_immediat'},
+            {'label': "Besoin en fonds de roulement (BFR)", 'key': 'besoin_en_fond_roulement'},
+            {'label': "BFR d'exploitation", 'key': 'bfr_exploitation'},
+        ],
+        "RENTABILITÉ": [
+            {'label': "Rentabilité économique", 'key': 'rentabilite_economique'},
+            {'label': "Rentabilité financière", 'key': 'rentabilite_fin'},
+            {'label': "Rendement capitaux propres (ROE)", 'key': 'rendement_capitaux_propres'},
+            {'label': "Rentabilité de l'outil de production", 'key': 'rentabilite_de_loutil_de_production'},
+            {'label': "Couverture des frais financiers", 'key': 'couverture_des_frais_financiers'},
+        ],
+        "GESTION DES STOCKS": [
+            {'label': "Rotation stocks matières premières (jours)", 'key': 'rotation_des_stock_de_mp'},
+            {'label': "Rotation stocks produits finis (jours)", 'key': 'rotation_des_stock_de_pf'},
+            {'label': "Rotation stocks marchandises (jours)", 'key': 'rotation_des_stock_de_marchandises'},
+            {'label': "Rotation stocks services (jours)", 'key': 'rotation_des_stock_de_services'},
+            {'label': "Délai moyen rotation stocks", 'key': 'delai_rotation_stocks'},
+        ],
+        "GESTION DES CRÉDITS": [
+            {'label': "Crédit clients (jours)", 'key': 'credit_clients'},
+            {'label': "Crédits fournisseurs (jours)", 'key': 'credits_fournisseurs'},
+        ],
+        "CAPACITÉ DE REMBOURSEMENT": [
+            {'label': "Capacité de remboursement", 'key': 'capacite_remboursement'},
+        ]
+    }
+
+    structured_data = {}
+    for section, ratios_list in structure_map.items():
+        rows_data = []
+        for ratio_info in ratios_list:
+            row = {'label': ratio_info['label']}
+            values = {}
+            for year in years:
+                instance = ratios_by_year.get(year)
+                value = getattr(instance, ratio_info['key'], None) if instance else None
+                values[year] = value
+            
+            # Calcul des variations et formatage
+            val_n = values.get(years[0])
+            val_n_moins_1 = values.get(years[1])
+            val_n_moins_2 = values.get(years[2])
+
+            row['values'] = {
+                'n': val_n,
+                'n_moins_1': val_n_moins_1,
+                'n_moins_2': val_n_moins_2,
+            }
+            row['variations'] = {
+                'n_vs_n_moins_1': calculate_variation(val_n, val_n_moins_1),
+                'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
+            }
+            rows_data.append(row)
+        structured_data[section] = rows_data
+        
+    return structured_data
+
+
+def get_charts_structure_financiere_data(acheteur, years):
+    """
+    Génère les données pour le chart de structure financière
+    """
+    actif_model = ActifC
+    passif_model = PassifC
+    resultat_model = ResultatC
+    
+    charts_data = {
+        'title': 'Structure Financière',
+        'labels': [str(year) for year in years],
+        'datasets': [],
+        'legende': {
+            'FDR': 'Fonds de Roulement Net Global',
+            'FDRN': 'Fonds de Roulement Normatif', 
+            'AUFIN': 'Autonomie Financière',
+            'LR': 'Liquidité Réduite (Quick Ratio)',
+            'LI': 'Liquidité Immédiate (Cash Ratio)'
+        }
+    }
+    
+    # Calcul des ratios pour chaque année
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        
+        if actif_instance and passif_instance and resultat_instance:
+            ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+            ratios_by_year[year] = ratios
+    
+    # Dataset Fonds de Roulement (FDR)
+    fdr_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        fdr_data.append(float(ratio.fonds_de_roulement) if ratio and ratio.fonds_de_roulement else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'FDR',
+        'data': fdr_data,
+        'borderColor': 'rgb(75, 192, 192)',
+        'backgroundColor': 'rgba(75, 192, 192, 0.2)'
+    })
+    
+    # Dataset Fonds de Roulement Normatif (FDRN)
+    fdrn_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        fdrn_data.append(float(ratio.fonds_de_roulement_normatif) if ratio and ratio.fonds_de_roulement_normatif else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'FDRN',
+        'data': fdrn_data,
+        'borderColor': 'rgb(255, 99, 132)',
+        'backgroundColor': 'rgba(255, 99, 132, 0.2)'
+    })
+    
+    # Dataset Autonomie Financière (AUFIN)
+    aufin_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        aufin_data.append(float(ratio.autonomie_fin) if ratio and ratio.autonomie_fin else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'AUFIN',
+        'data': aufin_data,
+        'borderColor': 'rgb(54, 162, 235)',
+        'backgroundColor': 'rgba(54, 162, 235, 0.2)'
+    })
+    
+    # Dataset Liquidité Réduite (LR)
+    lr_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        lr_data.append(float(ratio.liquidite_reduite) if ratio and ratio.liquidite_reduite else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'LR',
+        'data': lr_data,
+        'borderColor': 'rgb(255, 205, 86)',
+        'backgroundColor': 'rgba(255, 205, 86, 0.2)'
+    })
+    
+    # Dataset Liquidité Immédiate (LI)
+    li_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        li_data.append(float(ratio.liquidite_immediat) if ratio and ratio.liquidite_immediat else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'LI',
+        'data': li_data,
+        'borderColor': 'rgb(153, 102, 255)',
+        'backgroundColor': 'rgba(153, 102, 255, 0.2)'
+    })
+    
+    # return charts_data
+    # Générer l'image
+    image_base64 = generate_chart_image(charts_data)
+    return image_base64
+
+def get_charts_rentabilite_financiere_data(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité financière
+    """
+    actif_model = ActifC
+    passif_model = PassifC
+    resultat_model = ResultatC
+    
+    charts_data = {
+        'title': 'Rentabilité Financière',
+        'labels': [str(year) for year in years],
+        'datasets': [],
+        'legende': {
+            'CAF': 'Chiffre d\'Affaires',
+            'CAHT': 'Chiffre d\'Affaires Hors Taxes',
+            'RE': 'Rentabilité Économique',
+            'REF': 'Rentabilité Financière',
+            'ROP': 'Rentabilité Outil de Production',
+            'CFF': 'Couverture Frais Financiers'
+        }
+    }
+    
+    # Calcul des ratios pour chaque année
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        
+        if actif_instance and passif_instance and resultat_instance:
+            ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+            ratios_by_year[year] = ratios
+    
+    # Dataset Chiffre d'Affaires (CAF)
+    caf_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        caf_data.append(float(ratio.chiffre_d_affaires) if ratio and ratio.chiffre_d_affaires else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'CAF',
+        'data': caf_data,
+        'borderColor': 'rgb(75, 192, 192)',
+        'backgroundColor': 'rgba(75, 192, 192, 0.2)'
+    })
+    
+    # Dataset Chiffre d'Affaires Hors Taxes (CAHT)
+    caht_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        caht_data.append(float(ratio.chiffre_d_affaires_hors_taxe) if ratio and ratio.chiffre_d_affaires_hors_taxe else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'CAHT',
+        'data': caht_data,
+        'borderColor': 'rgb(255, 99, 132)',
+        'backgroundColor': 'rgba(255, 99, 132, 0.2)'
+    })
+    
+    # Dataset Rentabilité Économique (RE)
+    re_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        re_data.append(float(ratio.rentabilite_economique) if ratio and ratio.rentabilite_economique else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'RE',
+        'data': re_data,
+        'borderColor': 'rgb(54, 162, 235)',
+        'backgroundColor': 'rgba(54, 162, 235, 0.2)'
+    })
+    
+    # Dataset Rentabilité Financière (REF)
+    ref_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        ref_data.append(float(ratio.rentabilite_fin) if ratio and ratio.rentabilite_fin else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'REF',
+        'data': ref_data,
+        'borderColor': 'rgb(255, 205, 86)',
+        'backgroundColor': 'rgba(255, 205, 86, 0.2)'
+    })
+    
+    # Dataset Rentabilité Outil de Production (ROP)
+    rop_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        rop_data.append(float(ratio.rentabilite_de_loutil_de_production) if ratio and ratio.rentabilite_de_loutil_de_production else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'ROP',
+        'data': rop_data,
+        'borderColor': 'rgb(153, 102, 255)',
+        'backgroundColor': 'rgba(153, 102, 255, 0.2)'
+    })
+    
+    # Dataset Couverture Frais Financiers (CFF)
+    cff_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        cff_data.append(float(ratio.couverture_des_frais_financiers) if ratio and ratio.couverture_des_frais_financiers else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'CFF',
+        'data': cff_data,
+        'borderColor': 'rgb(255, 159, 64)',
+        'backgroundColor': 'rgba(255, 159, 64, 0.2)'
+    })
+    
+    # return charts_data
+    # Générer l'image
+    image_base64 = generate_chart_image(charts_data)
+    return image_base64
+
+
+
+def get_charts_delais_data(acheteur, years):
+    """
+    Génère les données pour le chart des délais
+    """
+    actif_model = ActifC
+    passif_model = PassifC
+    resultat_model = ResultatC
+    
+    charts_data = {
+        'title': 'Délais',
+        'labels': [str(year) for year in years],
+        'datasets': [],
+        'legende': {
+            'RSMP': 'Rotation Stocks MP (jours)',
+            'RSPF': 'Rotation Stocks PF (jours)',
+            'RSTM': 'Rotation Stocks Marchandises (jours)',
+            'RSTS': 'Rotation Stocks Services (jours)',
+            'CC': 'Crédit Clients (jours)',
+            'CF': 'Crédit Fournisseurs (jours)'
+        }
+    }
+    
+    # Calcul des ratios pour chaque année
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        
+        if actif_instance and passif_instance and resultat_instance:
+            ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+            ratios_by_year[year] = ratios
+    
+    # Dataset Rotation Stocks MP (RSMP)
+    rsmp_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        rsmp_data.append(float(ratio.rotation_des_stock_de_mp) if ratio and ratio.rotation_des_stock_de_mp else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'RSMP',
+        'data': rsmp_data,
+        'borderColor': 'rgb(75, 192, 192)',
+        'backgroundColor': 'rgba(75, 192, 192, 0.2)'
+    })
+    
+    # Dataset Rotation Stocks PF (RSPF)
+    rspf_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        rspf_data.append(float(ratio.rotation_des_stock_de_pf) if ratio and ratio.rotation_des_stock_de_pf else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'RSPF',
+        'data': rspf_data,
+        'borderColor': 'rgb(255, 99, 132)',
+        'backgroundColor': 'rgba(255, 99, 132, 0.2)'
+    })
+    
+    # Dataset Rotation Stocks Marchandises (RSTM)
+    rstmt_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        rstmt_data.append(float(ratio.rotation_des_stock_de_marchandises) if ratio and ratio.rotation_des_stock_de_marchandises else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'RSTM',
+        'data': rstmt_data,
+        'borderColor': 'rgb(54, 162, 235)',
+        'backgroundColor': 'rgba(54, 162, 235, 0.2)'
+    })
+    
+    # Dataset Rotation Stocks Services (RSTS)
+    rsts_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        rsts_data.append(float(ratio.rotation_des_stock_de_services) if ratio and ratio.rotation_des_stock_de_services else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'RSTS',
+        'data': rsts_data,
+        'borderColor': 'rgb(255, 205, 86)',
+        'backgroundColor': 'rgba(255, 205, 86, 0.2)'
+    })
+    
+    # Dataset Crédit Clients (CC)
+    cc_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        cc_data.append(float(ratio.credit_clients) if ratio and ratio.credit_clients else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'CC',
+        'data': cc_data,
+        'borderColor': 'rgb(153, 102, 255)',
+        'backgroundColor': 'rgba(153, 102, 255, 0.2)'
+    })
+    
+    # Dataset Crédit Fournisseurs (CF)
+    cf_data = []
+    for year in years:
+        ratio = ratios_by_year.get(year)
+        cf_data.append(float(ratio.credits_fournisseurs) if ratio and ratio.credits_fournisseurs else 0)
+    
+    charts_data['datasets'].append({
+        'label': 'CF',
+        'data': cf_data,
+        'borderColor': 'rgb(255, 159, 64)',
+        'backgroundColor': 'rgba(255, 159, 64, 0.2)'
+    })
+    
+    # return charts_data
+    # Générer l'image
+    image_base64 = generate_chart_image(charts_data)
+    return image_base64
+
+
+
+
 
 
 
@@ -2551,3 +3012,275 @@ def get_structured_ratios_bancaire_data(acheteur, years):
 
 
 
+
+
+
+
+
+
+# utils/fix_commandes_emails.py
+from django.utils import timezone
+from main.models import Client, Commande
+import random
+
+def fix_commandes_emails():
+    """
+    Corrige les emails des commandes pour qu'ils correspondent aux clients
+    """
+    print("🔧 Correction des emails des commandes...")
+    
+    clients = Client.objects.all()
+    commandes = Commande.objects.all()
+    
+    print(f"👥 Clients: {clients.count()}")
+    print(f"📦 Commandes: {commandes.count()}")
+    
+    corrections = 0
+    for commande in commandes:
+        # Trouver un client aléatoire pour cette commande
+        client_aleatoire = random.choice(clients)
+        
+        # Mettre à jour l'email de la commande pour correspondre au client
+        if commande.email != client_aleatoire.email:
+            ancien_email = commande.email
+            commande.email = client_aleatoire.email
+            commande.raison_sociale = client_aleatoire.nom
+            commande.telephone = client_aleatoire.telephone
+            commande.save()
+            
+            corrections += 1
+            print(f"✅ Commande {commande.notre_ref}: {ancien_email} → {client_aleatoire.email}")
+    
+    print(f"🎉 {corrections} commandes corrigées!")
+    
+    # Vérification
+    print("\n📊 VÉRIFICATION:")
+    for client in clients:
+        commandes_client = Commande.objects.filter(email=client.email)
+        print(f"   {client.nom}: {commandes_client.count()} commande(s)")
+    
+    return corrections
+
+def assign_commandes_to_clients():
+    """
+    Assigne proprement les commandes aux clients existants
+    """
+    print("🔧 Assignation des commandes aux clients...")
+    
+    clients = list(Client.objects.all())
+    commandes = list(Commande.objects.all())
+    
+    if not clients:
+        print("❌ Aucun client trouvé!")
+        return
+    
+    # Répartir les commandes entre les clients
+    for i, commande in enumerate(commandes):
+        client = clients[i % len(clients)]  # Répartition cyclique
+        
+        # Mettre à jour la commande avec les infos du client
+        commande.email = client.email
+        commande.raison_sociale = client.nom
+        commande.telephone = client.telephone or commande.telephone
+        
+        # Optionnel: mettre à jour l'adresse aussi
+        if client.adresse and not commande.rue_adresse:
+            commande.rue_adresse = client.adresse
+        
+        commande.save()
+        
+        print(f"✅ {commande.notre_ref} → {client.nom}")
+    
+    print(f"🎉 {len(commandes)} commandes assignées!")
+
+# Version plus simple pour tester rapidement
+def quick_fix_for_testing():
+    """
+    Correction rapide pour les tests
+    """
+    print("🔧 Correction rapide des emails...")
+    
+    # Prendre le premier client
+    client = Client.objects.first()
+    if not client:
+        print("❌ Aucun client trouvé!")
+        return
+    
+    # Corriger les 10 premières commandes
+    commandes = Commande.objects.all()[:10]
+    
+    for commande in commandes:
+        commande.email = client.email
+        commande.raison_sociale = client.nom
+        commande.save()
+        print(f"✅ {commande.notre_ref} → {client.email}")
+    
+    print(f"🎉 {len(commandes)} commandes corrigées pour {client.nom}!")
+
+
+
+
+from django.utils import timezone
+from django.db import transaction
+from main.models import Commande, MailInfo, MailAttachment, SuiviCommande
+
+def cleanup_test_data(keep_today=False):
+    """
+    Nettoie toutes les données de test
+    """
+    print("🧹 Nettoyage des données de test...")
+    
+    with transaction.atomic():
+        # Compter avant suppression
+        avant_commandes = Commande.objects.count()
+        avant_mails = MailInfo.objects.count()
+        
+        if keep_today:
+            # Supprimer seulement les commandes d'avant aujourd'hui
+            today = timezone.now().date()
+            commandes_supprimees = Commande.objects.filter(
+                created_at__date__lt=today
+            ).delete()
+            print(f"✅ Commandes d'avant aujourd'hui supprimées: {commandes_supprimees[0]}")
+        else:
+            # Supprimer les attachments et mails d'abord
+            MailAttachment.objects.all().delete()
+            MailInfo.objects.all().delete()
+            SuiviCommande.objects.all().delete()
+            
+            # Puis les commandes
+            commandes_supprimees = Commande.objects.all().delete()
+            print(f"✅ Toutes les commandes supprimées: {commandes_supprimees[0]}")
+        
+        apres_commandes = Commande.objects.count()
+        print(f"📊 Avant: {avant_commandes} commandes, Après: {apres_commandes} commandes")
+        
+        return commandes_supprimees
+
+def cleanup_for_mailing_test():
+    """
+    Nettoie spécifiquement pour les tests mailing
+    """
+    print("🎯 Nettoyage pour tests mailing...")
+    
+    # Supprimer seulement les commandes de test (celles avec notre_ref TEST-)
+    commandes_test = Commande.objects.filter(notre_ref__startswith='TEST-')
+    count = commandes_test.count()
+    
+    # Supprimer les données associées
+    for commande in commandes_test:
+        # Supprimer les suivis de ces commandes
+        SuiviCommande.objects.filter(commande=commande).delete()
+    
+    # Supprimer les commandes test
+    commandes_test.delete()
+    
+    print(f"✅ {count} commandes de test supprimées")
+    return count
+
+
+
+
+# utils/generate_test_data.py
+import random
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport
+
+CustomUser = get_user_model()
+
+# utils/generate_test_data.py
+def generate_test_commandes(nombre=15):
+    """
+    Génère N commandes de test pour divers clients et acheteurs
+    """
+    print(f"🎯 Génération de {nombre} commandes de test...")
+    
+    # Récupérer ou créer les données de base
+    clients = Client.objects.all()[:5]
+    acheteurs = Acheteur.objects.all()[:5] 
+    analysts = CustomUser.objects.filter(role='analyste')[:3]
+    pays = Pays.objects.first() or Pays.objects.create(nom='France')
+    ville = Ville.objects.first() or Ville.objects.create(nom='Paris', pays=pays)
+    devise = Devise.objects.first() or Devise.objects.create(code='EUR', nom='Euro', symbole='€')
+    modele_rapport = ModeleRapport.objects.first() or ModeleRapport.objects.create(nom='Standard', code='STD')
+    
+    # Si pas assez de clients, en créer
+    if len(clients) < 3:
+        clients = [
+            Client.objects.create(
+                nom=f"Client Test {i}", 
+                email=f"client{i}@test.fr",
+                telephone=f"+33 1 {random.randint(40, 89)} {random.randint(10, 99)} {random.randint(10, 99)}",
+                adresse=f"{random.randint(1, 200)} Rue de Test, Paris"
+            )
+            for i in range(3)
+        ]
+        print("✅ Clients de test créés")
+    
+    if len(acheteurs) < 3:
+        acheteurs = [
+            Acheteur.objects.create(nom=f"Acheteur Test {i}", email=f"acheteur{i}@test.fr")
+            for i in range(3)
+        ]
+        print("✅ Acheteurs de test créés")
+    
+    if not analysts:
+        analysts = [
+            CustomUser.objects.create_user(
+                username=f"analyste{i}",
+                email=f"analyste{i}@acremac.fr",
+                password="password123",
+                role="analyste",
+                first_name=f"Analyste{i}",
+                last_name="Test"
+            )
+            for i in range(3)
+        ]
+        print("✅ Analystes de test créés")
+    
+    # Générer les commandes
+    # Générer les commandes
+    commandes_crees = []
+    for i in range(nombre):
+        # Choisir un client aléatoire (CLIENT, pas ACHETEUR)
+        client_choisi = random.choice(clients)  # ← CORRECTION ICI
+        acheteur_choisi = random.choice(acheteurs)  # ← Acheteur séparé
+        
+        commande = Commande.objects.create(
+            notre_ref=f'CMD-2024-{i+1:03d}',
+            reference_client=f'REF-CLIENT-{i+1:03d}',
+            date_recept_commande=timezone.now().date() - timedelta(days=random.randint(1, 60)),
+            date_rapport=timezone.now().date() + timedelta(days=random.randint(1, 30)),
+            delais=f'{random.randint(1, 30)} jours',
+            priorite=random.choice(['Haute', 'Moyenne', 'Basse']),
+            raison_sociale=client_choisi.nom,  # Nom du CLIENT (bailleur de fonds)
+            type_rapport=random.choice(['Standard', 'Détaillé', 'Express']),
+            ref_type_rapport=modele_rapport,
+            credit_demande=random.uniform(1000, 50000),
+            devise_credit_demande=devise,
+            credit_recommande=random.uniform(800, 45000),
+            devise_credit_recommande=devise,
+            numero_adresse=str(random.randint(1, 200)),
+            rue_adresse=random.choice(['Rue de la Paix', 'Avenue des Ternes', 'Boulevard Saint-Germain']),
+            code_postale_adresse=f'750{random.randint(1, 20):02d}',
+            telephone=client_choisi.telephone,  # Téléphone du CLIENT
+            email=client_choisi.email,  # Email du CLIENT - IMPORTANT pour le filtrage!
+            pays=pays,
+            ville=ville,
+            client=random.choice(analysts),  # L'analyste responsable
+            acheteur=acheteur_choisi,  # L'acheteur (différent du client)
+            status=random.choice(["nouvelle", "en_cours", "rapport_soumis", "rapport_valide"]),
+        )
+        commandes_crees.append(commande)
+        print(f"✅ Commande {i+1}/{nombre}: {commande.notre_ref} pour {client_choisi.nom} (Acheteur: {acheteur_choisi.nom})")
+        print(f"🎉 {len(commandes_crees)} commandes générées avec succès!")
+    
+    # Afficher un résumé
+    print("\n📊 RÉSUMÉ:")
+    for client in clients:
+        count = Commande.objects.filter(email=client.email).count()
+        print(f"   {client.nom}: {count} commande(s)")
+    
+    return commandes_crees

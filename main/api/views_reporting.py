@@ -5,9 +5,22 @@ from rest_framework.response import Response
 from main.models import Annee, Devise, Commande, Resume, CodeNafAcheteur, CodeNafAcheteur
 from main.models import Resume, RiskRating, RiskManagment, OpinionCreditAcremac, DonneesEnregistrement, AntecedantsJuridique
 from main.models import ResponsableAcheteur, ConseilAdministration, CompositionCapitalSocial, CompositionAction, Structure
-from main.models import Annee
+from main.models import Annee, AnalyseSectorielle, Tendance, Geopolitics, Advice, Banquier
+from main.models import CompteFinancier, OperationEtHistorique, ScoringSansBilanAcheteur, ConditionAchat, ConditionDeVente, SommaireEtAvis
 
 from main.serializers_reporting import AnneeSerializer, DeviseSerializer, CommandeSerializer, RapportSolvabiliteSerializer
+
+from main.utils import get_simple_actifs_data, get_structured_actif_data, get_structured_passif_data, get_structured_resultat_data, get_structured_ratios_data
+from main.utils import get_structured_actif_anglais_data, get_structured_passif_anglais_data, get_structured_resultat_anglais_data, get_structured_ratios_anglais_data
+from main.utils import get_structured_actif_bancaire_data, get_structured_passif_bancaire_data, get_structured_produit_bancaire_data, get_structured_depense_bancaire_data, get_structured_hors_bilan_bancaire_data, get_structured_ratios_bancaire_data
+from main.utils import get_structured_actif_syscohada_data, get_structured_passif_syscohada_data, get_structured_resultat_syscohada_data, get_structured_ratios_syscohada_data
+from main.utils import get_structured_actif_ifrs_data, get_structured_passif_ifrs_data, get_structured_resultat_ifrs_data, get_structured_ratios_ifrs_data
+
+from main.utils import (
+    get_charts_structure_financiere_data,
+    get_charts_rentabilite_financiere_data, 
+    get_charts_delais_data
+)
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -175,6 +188,12 @@ def generer_rapport_solvabilite(request):
                 {"error": f"Acheteur avec l'ID {acheteur_id} non trouvé."},
                 status=status.HTTP_404_NOT_FOUND
             )
+            
+        
+        
+        # 2. Définir les années et récupérer la devise
+        years_to_retrieve = [data['annee_n'], data['annee_n1'], data['annee_n2']]
+        print(years_to_retrieve)
         
         # Récupération de la commande si spécifiée
         commande = None
@@ -342,10 +361,11 @@ def generer_rapport_solvabilite(request):
         
         # Récupération Capital social
         # Recuperation de la composition du capital social de l'acheteur
+        composition_capital_social = None
         try:
             composition_capital_social = CompositionCapitalSocial.objects.get(acheteur=acheteur)
         except CompositionCapitalSocial.DoesNotExist:
-            composition_capital_social = None
+            pass
             
          
         # Récupération Actionnarat/Proprietaires
@@ -373,16 +393,307 @@ def generer_rapport_solvabilite(request):
                 "code_postale_adresse": affiliation.code_postale_adresse if affiliation.code_postale_adresse else "Non spécifié",
                 "commentaire": affiliation.commentaire if affiliation.commentaire else "Non spécifié",
             })
-        # Récupération Analyse sectorielle
-        # Récupération Comptes financiers
-        # Récupération Etats financiers 
-        # Récupération Ratios
-        # Récupération Structure financiere
-        # Récupération Scoring ACREMAC
-        # Récupération Operations et Historique
-        # Récupération Comportement de paiement
-        # Récupération Conclusion et Avis
-       
+        
+            
+        # Recuperation de l'analyse sectorielle de l'acheteur
+        analyse_sectorielle = None
+        try:
+            analyse_sectorielle = AnalyseSectorielle.objects.get(acheteur=acheteur)
+        except AnalyseSectorielle.DoesNotExist:
+            pass
+
+        # Recuperation de la tendance de l'acheteur
+        tendance = None
+        try:
+            tendance = Tendance.objects.get(acheteur=acheteur)
+        except Tendance.DoesNotExist:
+            pass
+
+        # Recuperation des conseils sur l'acheteur
+        advice = None
+        try:
+            advice = Advice.objects.filter(acheteur=acheteur).first()
+        except Advice.DoesNotExist:
+            pass
+
+        # Recuperation des donnees geopolitiques sur l'acheteur
+        geopolitics = None
+        try:
+            geopolitics = Geopolitics.objects.get(acheteur=acheteur)
+        except Geopolitics.DoesNotExist:
+            pass
+            
+            
+        # Recuperation des banques associees de l'acheteur
+        bankers = Banquier.objects.filter(acheteur=acheteur)
+        list_banking_data = []
+        for banker in bankers:
+            list_banking_data.append({
+                "nom_banque": banker.nom_banque if banker.nom_banque else "Non spécifié",
+                "numero_compte": banker.numero_compte if banker.numero_compte else "Non spécifié",
+                "type_relation": banker.type_relation if banker.type_relation else "Non spécifié",
+                "numero": banker.numero if banker.numero else "Non spécifié",
+                "rue": banker.rue if banker.rue else "Non spécifié",
+                "ville": banker.ville.nom if banker.ville else None,
+                "code_postal": banker.code_postal if banker.code_postal else "Non spécifié",
+                "commentaire": banker.commentaire if banker.commentaire else "Non spécifié",
+            })
+            
+        # Recuperation le compte financier de l'acheteur
+        compte_financier = None
+        try:
+            compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
+        except CompteFinancier.DoesNotExist:
+            pass
+            
+            
+        # Recuperation de l'historique des operations de l'acheteur
+        operation_history = None
+        try:
+            operation_history = OperationEtHistorique.objects.get(acheteur=acheteur)
+        except OperationEtHistorique.DoesNotExist:
+            pass
+        
+        # Recuperation de l'opinion credit ACREMAC de l'acheteur  
+        # selon la logique que vous avez dans votre modèle
+        highlighted_risks = {
+            'risque_de_defaut': acremac_opinion.risque_de_defaut if acremac_opinion else 0,
+            'risque_de_concentration_credit': acremac_opinion.risque_de_concentration_credit if acremac_opinion else 0,
+            'risque_de_reputation': acremac_opinion.risque_de_reputation if acremac_opinion else 0,
+            'risque_pays': acremac_opinion.risque_pays if acremac_opinion else 0,
+            'risque_de_taux_dinteret': acremac_opinion.risque_de_taux_dinteret if acremac_opinion else 0,
+            'risque_de_liquidite': acremac_opinion.risque_de_liquidite if acremac_opinion else 0,
+            'risque_eleve': acremac_opinion.risque_eleve if acremac_opinion else 0,
+            'risque_moyen': acremac_opinion.risque_moyen if acremac_opinion else 0,
+            'risque_faible': acremac_opinion.risque_faible if acremac_opinion else 0,
+        }  
+        
+        note_values = []
+        if acremac_opinion:
+            # Créez une liste de tous les champs de note
+            # Utilisez une boucle pour rendre le code plus propre
+            risk_fields = [
+                'risque_de_defaut',
+                'risque_de_concentration_credit',
+                'risque_de_reputation',
+                'risque_pays',
+                'risque_de_taux_dinteret',
+                'risque_de_liquidite',
+                'risque_eleve',
+                'risque_moyen',
+                'risque_faible',
+            ]
+
+            # Isolez les valeurs qui ne sont pas 0
+            for field in risk_fields:
+                value = getattr(acremac_opinion, field)
+                if value is not None and value != 0:
+                    note_values.append(str(value)) # Convertir en chaîne de caractères
+
+        # Formatez la liste en une chaîne séparée par des virgules
+        notes_str = ", ".join(note_values)
+        
+        # NOUVEAU: SCORING SANS BILAN
+        # Recuperer le scoring sans bilan ici 
+        scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
+        
+        # Limiter le score entre 0 et 10 pour correspondre aux images
+        score_indexe = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
+        score_indexe = max(0, min(score_indexe, 10))
+        print(int(round(scoring_sans_bilan.scoring_value)))
+        print(score_indexe)
+        
+        # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
+        # Scoring avec bilan classique
+        # Récupérer le scoring avec bilan en fonction du type de bilan
+        # Calculer le scoring pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan = ScoreACREMACBilanClassiqueService.extraire_donnees_bilan_classique(acheteur, year)
+
+            if donnees_bilan:
+                resultat_calcul = ScoreACREMACBilanClassiqueService.calculer_score_complet(donnees_bilan)
+                score = resultat_calcul['score']
+                score_index = round(score)
+                classe_risque = resultat_calcul['classe_risque']
+
+                # Mettre à jour les variables de score
+                if i == 0:
+                    score_value_annee_N = str(score)
+                    interpretation_annee_N = classe_risque
+                elif i == 1:
+                    score_value_annee_N1 = str(score)
+                    interpretation_annee_N1 = classe_risque
+                elif i == 2:
+                    score_value_annee_N2 = str(score)
+                    interpretation_annee_N2 = classe_risque
+
+
+        # NOUVEAU: SCORING AVEC BILAN ANGLAIS
+        # Scoring avec bilan anglais
+        # Initialisation des scores par année pour le bilan anglais
+        score_value_anglais_annee_N = None
+        score_value_anglais_annee_N1 = None
+        score_value_anglais_annee_N2 = None
+        interpretation_anglais_annee_N = "N/A"
+        interpretation_anglais_annee_N1 = "N/A"
+        interpretation_anglais_annee_N2 = "N/A"
+        # Calculer le scoring anglais pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_anglais = ScoreACREMACBilanAnglaisService.extraire_donnees_bilan_anglais(acheteur, year)
+
+            if donnees_bilan_anglais:
+                resultat_calcul_anglais = ScoreACREMACBilanAnglaisService.calculer_score_complet(donnees_bilan_anglais)
+                score_anglais = resultat_calcul_anglais['score']
+                score_index_anglais = round(score_anglais)
+                classe_risque_anglais = resultat_calcul_anglais['classe_risque']
+
+                # Mettre à jour les variables de score anglais
+                if i == 0:
+                    score_value_anglais_annee_N = str(score_anglais)
+                    interpretation_anglais_annee_N = classe_risque_anglais
+                elif i == 1:
+                    score_value_anglais_annee_N1 = str(score_anglais)
+                    interpretation_anglais_annee_N1 = classe_risque_anglais
+                elif i == 2:
+                    score_value_anglais_annee_N2 = str(score_anglais)
+                    interpretation_anglais_anglais_annee_N2 = classe_risque_anglais
+
+
+
+        # NOUVEAU: SCORING AVEC BILAN BANCAIRE
+        # Scoring avec bilan bancaire
+        # Initialisation des scores par année pour le bilan bancaire
+        score_value_bancaire_annee_N = None
+        score_value_bancaire_annee_N1 = None
+        score_value_bancaire_annee_N2 = None
+        interpretation_bancaire_annee_N = "N/A"
+        interpretation_bancaire_annee_N1 = "N/A"
+        interpretation_bancaire_annee_N2 = "N/A"
+        # Calculer le scoring bancaire pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_bancaire = ScoreACREMACBilanBancaireService.extraire_donnees_bilan_bancaire(acheteur, year, bilan_type="annuel")
+
+            if donnees_bilan_bancaire:
+                resultat_calcul_bancaire = ScoreACREMACBilanBancaireService.calculer_score_complet_bancaire(donnees_bilan_bancaire)
+                score_bancaire = resultat_calcul_bancaire['score']
+                score_index_bancaire = round(score_bancaire)
+                classe_risque_bancaire = resultat_calcul_bancaire['classe_risque']
+
+                # Mettre à jour les variables de score bancaire
+                if i == 0:
+                    score_value_bancaire_annee_N = str(score_bancaire)
+                    interpretation_bancaire_annee_N = classe_risque_bancaire
+                elif i == 1:
+                    score_value_bancaire_annee_N1 = str(score_bancaire)
+                    interpretation_bancaire_annee_N1 = classe_risque_bancaire
+                elif i == 2:
+                    score_value_bancaire_annee_N2 = str(score_bancaire)
+                    interpretation_bancaire_annee_N2 = classe_risque_bancaire
+            
+
+
+        # NOUVEAU: SCORING AVEC BILAN SYSCOHADA
+        # Scoring avec bilan syscohada
+        # Initialisation des scores par année pour le bilan syscohada
+        # Initialisation des scores par année pour le bilan SYSCOHADA
+        score_value_syscohada_annee_N = None
+        score_value_syscohada_annee_N1 = None
+        score_value_syscohada_annee_N2 = None
+        interpretation_syscohada_annee_N = "N/A"
+        interpretation_syscohada_annee_N1 = "N/A"
+        interpretation_syscohada_annee_N2 = "N/A"
+        # Calculer le scoring SYSCOHADA pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_syscohada = ScoreACREMACBilanSyscohadaService.extraire_donnees_bilan_syscohada(acheteur, year)
+
+            if donnees_bilan_syscohada:
+                resultat_calcul_syscohada = ScoreACREMACBilanSyscohadaService.calculer_score_complet_syscohada(donnees_bilan_syscohada)
+                score_syscohada = resultat_calcul_syscohada['score']
+                score_index_syscohada = round(score_syscohada)
+                classe_risque_syscohada = resultat_calcul_syscohada['classe_risque']
+
+                # Mettre à jour les variables de score SYSCOHADA
+                if i == 0:
+                    score_value_syscohada_annee_N = str(score_syscohada)
+                    interpretation_syscohada_annee_N = classe_risque_syscohada
+                elif i == 1:
+                    score_value_syscohada_annee_N1 = str(score_syscohada)
+                    interpretation_syscohada_annee_N1 = classe_risque_syscohada
+                elif i == 2:
+                    score_value_syscohada_annee_N2 = str(score_syscohada)
+                    interpretation_syscohada_annee_N2 = classe_risque_syscohada
+
+
+        # NOUVEAU: SCORING AVEC BILAN IFRS COBAC
+        # Scoring avec bilan Ifrs Cobac
+        # Initialisation des scores par année pour le bilan IFRS COBAC
+        score_value_ifrs_annee_N = None
+        score_value_ifrs_annee_N1 = None
+        score_value_ifrs_annee_N2 = None
+        interpretation_ifrs_annee_N = "N/A"
+        interpretation_ifrs_annee_N1 = "N/A"
+        interpretation_ifrs_annee_N2 = "N/A"
+        # Calculer le scoring IFRS COBAC pour chaque année
+        for i, year in enumerate(years_to_retrieve):
+            annee_label = f"annee_N{i}" if i == 0 else f"annee_N{i+1}"[-2:]
+            donnees_bilan_ifrs = ScoreACREMACBilanIFRSService.extraire_donnees_bilan_ifrs(acheteur, year)
+
+            if donnees_bilan_ifrs:
+                resultat_calcul_ifrs = ScoreACREMACBilanIFRSService.calculer_score_complet_ifrs(donnees_bilan_ifrs)
+                score_ifrs = resultat_calcul_ifrs['score']
+                score_index_ifrs = round(score_ifrs)
+                classe_risque_ifrs = resultat_calcul_ifrs['classe_risque']
+
+                # Mettre à jour les variables de score IFRS COBAC
+                if i == 0:
+                    score_value_ifrs_annee_N = str(score_ifrs)
+                    interpretation_ifrs_annee_N = classe_risque_ifrs
+                elif i == 1:
+                    score_value_ifrs_annee_N1 = str(score_ifrs)
+                    interpretation_ifrs_annee_N1 = classe_risque_ifrs
+                elif i == 2:
+                    score_value_ifrs_annee_N2 = str(score_ifrs)
+                    interpretation_ifrs_annee_N2 = classe_risque_ifrs
+
+        
+        # Recuperation des proprietes et actifs de l'acheteur
+        # Utilisez .filter() pour récupérer toutes les instances
+        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur)
+        list_properties_and_assets_data = []
+
+        # 2. Bouclez sur les objets pour construire une liste de dictionnaires
+        for prop_asset in properties_and_assets:
+            list_properties_and_assets_data.append({
+                "locaux": prop_asset.locaux_ref.libelle if prop_asset.locaux_ref else prop_asset.locaux,
+                "branche": prop_asset.branche if prop_asset.branche else "Non spécifié",
+            })  
+        
+        
+        # Recuperation des conditions d'achat et de vente de l'acheteur
+        condition_achat = None
+        try:
+            condition_achat = ConditionAchat.objects.get(acheteur=acheteur)
+        except ConditionAchat.DoesNotExist:
+            pass
+        
+        condition_vente = None    
+        try:
+            condition_vente = ConditionDeVente.objects.get(acheteur=acheteur)
+        except ConditionDeVente.DoesNotExist:
+            pass
+            
+        
+        # Add new section to retrieve general conclusion
+        conclusion_generale = None
+        try:
+            conclusion_generale = SommaireEtAvis.objects.get(acheteur=acheteur)
+        except SommaireEtAvis.DoesNotExist:
+            pass
+           
         
         
         
@@ -451,11 +762,23 @@ def generer_rapport_solvabilite(request):
                 "capitaux_propre": resume.capitaux_propre if resume and resume.capitaux_propre else "Non spécifié",
                 "nombre_employe": resume.nombre_employe if resume and resume.nombre_employe else "Non spécifié",
                 "date_creation": resume.date_creation.strftime("%d/%m/%Y") if resume and resume.date_creation else "Non spécifié",
-                "commentaire": resume.commentaire if resume and resume.commentaire else "Aucun commentaire disponible !",
+                "commentaire": resume.commentaire if resume and resume.commentaire else "Aucun commentaire disponible",
             },
             "summary_and_opinion": {
                 "title_5": "EVALUATION DU RISQUE",
+                # Utiliser la chaîne Base64 pour l'affichage de la jauge
+                "risk_gauge_base64": risk_gauge_base64,
+                #"get_risk_gauge_image": get_risk_gauge_image,
+                "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
+                "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
+                "situation_liquidite": "Oui" if risk_rating and risk_rating.situation_liquidite else "Non",
+                "performance_rentabilite": "Oui" if risk_rating and risk_rating.performance_rentabilite else "Non",
+                "perspective_secteur": "Oui" if risk_rating and risk_rating.perspective_secteur else "Non",
+                "qualite_information_analyse": "Oui" if risk_rating and risk_rating.qualite_information_analyse else "Non",
+                "existence_garantie": "Oui" if risk_rating and risk_rating.existence_garantie else "Non",
+                "terme_financier_duree_pret": "Oui" if risk_rating and risk_rating.terme_financier_duree_pret else "Non",
+                "mesure_propre_soutenir_credit": "Oui" if risk_rating and risk_rating.mesure_propre_soutenir_credit else "Non",
                 "cotation_du_risque": risk_rating.get_cotation_explication() if risk_rating else "Non spécifié",
                 "indice_du_risque": risk_rating.get_indice_explication() if risk_rating else "Non spécifié",
                 "interpretation": risk_rating.interpretation if risk_rating and risk_rating.interpretation else "Aucune interprétation disponible",
@@ -502,6 +825,8 @@ def generer_rapport_solvabilite(request):
                     "degradation_qualite": risk_management.degradation_qualite if risk_management and risk_management.degradation_qualite else "Non spécifié",
                     "non_respect_condition": risk_management.non_respect_condition if risk_management and risk_management.non_respect_condition else "Non spécifié",
                     "commentaire": risk_management.commentaire if risk_management and risk_management.commentaire else "Aucun commentaire disponible",
+                    "score": risk_management.get_management_score()['oui_count'] if risk_management else 0,
+                    "image": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
                 },
                 "responsables": list_responsables_data if list_responsables_data else "Aucun responsable disponible",
                 "conseil_administration": list_ca_membres_data if list_ca_membres_data else "Aucun membre du conseil d'administration disponible",
@@ -514,15 +839,232 @@ def generer_rapport_solvabilite(request):
                 "devise": composition_capital_social.devise.code if composition_capital_social and composition_capital_social.devise else "Non spécifié",
                 "commentaire": composition_capital_social.commentaire if composition_capital_social and composition_capital_social.commentaire else "Aucun commentaire disponible",
             },
-            
+            "shareholders": {
+                "title_11": "ACTIONNARIAT/PROPRIETAIRES",
+                "actionnaires": list_shareholders_data if list_shareholders_data else ["Aucun actionnaire disponible"],
+            },
+            "affiliations": {
+                "title_12": "AFFILIATIONS D'ENTREPRISE",
+                "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
+            },
+            "sector_analysis": {
+                "title_13": "ANALYSE SECTORIELLE",
+                "naf_codes": naf_codes if naf_codes else ["Aucun code NAF disponible"],
+                "nace_codes": nace_codes if nace_codes else ["Aucun code NACE disponible"],
+                "sectorielle": {
+                    "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else "Aucun commentaire disponible",
+                    "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "Non spécifié",
+                },
+                "tendance": {
+                    "avis_commercial": tendance.avis_commercial_ref.libelle if tendance and tendance.avis_commercial_ref else tendance.avis_commercial if tendance else "Non spécifié",
+                    "presse_media": tendance.presse_media if tendance and tendance.presse_media else "Non spécifié",
+                    "principaux_concurrent": tendance.principaux_concurrent if tendance and tendance.principaux_concurrent else "Non spécifié",
+                    "commentaire": tendance.commentaire if tendance and tendance.commentaire else "Aucun commentaire disponible",
+                },
+                "advice": {
+                    "points_forts": advice.points_forts if advice and advice.points_forts else "Non spécifié",
+                    "points_faibles": advice.points_faibles if advice and advice.points_faibles else "Non spécifié",
+                    "dynamisme_court_terme": advice.dynamisme_court_terme if advice and advice.dynamisme_court_terme else "Non spécifié",
+                    "dynamisme_long_terme": advice.dynamisme_long_terme if advice and advice.dynamisme_long_terme else "Non spécifié",
+                },
+                "geopolitics": {
+                    "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
+                    "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "Non spécifié",
+                },
+            },
+            "banking_data": {
+                "title_14": "DONNEES BANCAIRES",
+                "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
+            },
+            "financial_accounts": {
+                "title_15": "COMPTES FINANCIERS",
+                "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
+                "requis_pour_deposer": compte_financier.requis_pour_deposer if compte_financier and compte_financier.requis_pour_deposer else "Non spécifié",
+                "credibilite_cabinet": compte_financier.credibilite_cabinet if compte_financier and compte_financier.credibilite_cabinet else "Non spécifié",
+                "source": compte_financier.source if compte_financier and compte_financier.source else "Non spécifié",
+                "presentation": compte_financier.presentation if compte_financier and compte_financier.presentation else "Non spécifié",
+                "date_compte": compte_financier.date_compte.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte else "Non spécifié",
+                "date_fin": compte_financier.date_fin.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin else "Non spécifié",
+                "date_compte_n_moins_un": compte_financier.date_compte_n_moins_un.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte_n_moins_un else "Non spécifié",
+                "date_fin_n_moins_un": compte_financier.date_fin_n_moins_un.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_un else "Non spécifié",
+                "date_compte_n_moins_deux": compte_financier.date_compte_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_compte_n_moins_deux else "Non spécifié",
+                "date_fin_n_moins_deux": compte_financier.date_fin_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_deux else "Non spécifié",
+                "type_compte": compte_financier.type_compte if compte_financier and compte_financier.type_compte else "Non spécifié",
+                "devise": compte_financier.devise if compte_financier and compte_financier.devise else "Non spécifié",
+                "type_bilan": compte_financier.type_bilan_ref.libelle if compte_financier and compte_financier.type_bilan_ref else compte_financier.type_bilan if compte_financier else "Non spécifié",
+                "commentaire": compte_financier.commentaire if compte_financier and compte_financier.commentaire else "Aucun commentaire disponible",
+            },
             
             
             "financial_statements": {
                 "years": [data['annee_n'], data['annee_n1'], data['annee_n2']],
                 "bilan_type": data['type_bilan'],
+                "etats_financiers_classiques": {
+                    "actif_table": get_simple_actifs_data(acheteur, years_to_retrieve),
+                    "actif_data":  get_structured_actif_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_data(acheteur, years_to_retrieve),
+                    "charts_data": {
+                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve),
+                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve),
+                    },
+                },
+                "etats_financiers_anglais": {
+                    "actif_data": get_structured_actif_anglais_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_anglais_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_anglais_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_anglais_data(acheteur, years_to_retrieve),
+                    "charts_data": {
+                        "charts_structure_financiere": {},
+                        "charts_rentabilite_financiere": {},
+                        "charts_delais": {},
+                    },
+                },
+                "etats_financiers_bancaires": {
+                    "actif_data": get_structured_actif_bancaire_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_bancaire_data(acheteur, years_to_retrieve),
+                    "produit_data": get_structured_produit_bancaire_data(acheteur, years_to_retrieve),
+                    "depense_data": get_structured_depense_bancaire_data(acheteur, years_to_retrieve),
+                    "hors_bilan_data": get_structured_hors_bilan_bancaire_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_bancaire_data(acheteur, years_to_retrieve),
+                    "charts_data": {
+                        "charts_structure_financiere": {},
+                        "charts_rentabilite_financiere": {},
+                        "charts_delais": {},
+                    },
+                },
+                "etats_financiers_syscohada": {
+                    "actif_data": get_structured_actif_syscohada_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_syscohada_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_syscohada_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_syscohada_data(acheteur, years_to_retrieve),
+                    "charts_data": {
+                        "charts_structure_financiere": {},
+                        "charts_rentabilite_financiere": {},
+                        "charts_delais": {},
+                    },
+                },
+                "etats_financiers_irfs_cobac": {
+                    "actif_data": get_structured_actif_ifrs_data(acheteur, years_to_retrieve),
+                    "passif_data": get_structured_passif_ifrs_data(acheteur, years_to_retrieve),
+                    "resultat_data": get_structured_resultat_ifrs_data(acheteur, years_to_retrieve),
+                    "ratios_data": get_structured_ratios_ifrs_data(acheteur, years_to_retrieve),
+                    "charts_data": {
+                        "charts_structure_financiere": {},
+                        "charts_rentabilite_financiere": {},
+                        "charts_delais": {},
+                    },
+                },
+
+            },
+            
+            "charts": {
+                "charts_structure_financiere": {},
+                "charts_rentabilite_financiere": {},
+                "charts_delais": {},
+            },
+            
+            "scoring_sans_bilan": {
+                "title_16": "SCORING ACREMAC - SANS BILAN",
+                "score_image": f"scoring/{score_indexe}.png",
+                "score_png": f"scoring/{int(round(scoring_sans_bilan.scoring_value))}.png",
+                "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
+                "interpretation": scoring_sans_bilan.interpretation,
+                "commentaire": scoring_sans_bilan.commentaire,
+                "score_type": "Scoring sans bilan",
+            },
+            "scoring_classique": {
+                "title_16": "SCORING CLASSIQUE - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
+                "score_value_annee_N": score_value_annee_N,
+                "interpretation_annee_N": interpretation_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_annee_N1)) if score_value_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_annee_N1,
+                "interpretation_annee_N1": interpretation_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_annee_N2,
+                "interpretation_annee_N2": interpretation_annee_N2,
+            },
+            "scoring_anglais": {
+                "title_16": "SCORING ANGLAIS - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
+                "score_value_annee_N": score_value_anglais_annee_N,
+                "interpretation_annee_N": interpretation_anglais_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_anglais_annee_N1,
+                "interpretation_annee_N1": interpretation_anglais_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_anglais_annee_N2,
+                "interpretation_annee_N2": interpretation_anglais_anglais_annee_N2,
+            },
+            "scoring_bancaire": {
+                "title_16": "SCORING BANCAIRE - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
+                "score_value_annee_N": score_value_bancaire_annee_N,
+                "interpretation_annee_N": interpretation_bancaire_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_bancaire_annee_N1,
+                "interpretation_annee_N1": interpretation_bancaire_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_bancaire_annee_N2,
+                "interpretation_annee_N2": interpretation_bancaire_annee_N2,
+            },
+            "scoring_syscohada": {
+                "title_16": "SCORING SYSCOHADA - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
+                "score_value_annee_N": score_value_syscohada_annee_N,
+                "interpretation_annee_N": interpretation_syscohada_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_syscohada_annee_N1,
+                "interpretation_annee_N1": interpretation_syscohada_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_syscohada_annee_N2,
+                "interpretation_annee_N2": interpretation_syscohada_annee_N2,
+            },
+            "scoring_ifrs": {
+                "title_16": "SCORING IFRS COBAC - AVEC BILAN",
+                "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
+                "score_value_annee_N": score_value_ifrs_annee_N,
+                "interpretation_annee_N": interpretation_ifrs_annee_N,
+                "score_image_annee_N1": f"scoring/{round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 else 0}.png",
+                "score_value_annee_N1": score_value_ifrs_annee_N1,
+                "interpretation_annee_N1": interpretation_ifrs_annee_N1,
+                "score_image_annee_N2": f"scoring/{round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 else 0}.png",
+                "score_value_annee_N2": score_value_ifrs_annee_N2,
+                "interpretation_annee_N2": interpretation_ifrs_annee_N2,
+            },
+            
+            "operation_history": {
+                "title_17": "HISTORIQUE DES OPERATIONS",
+                "commentaire_ratios": operation_history.commentaire_ratios if operation_history and operation_history.commentaire_ratios else "Aucun commentaire disponible",
+                "description_complete_activite": operation_history.description_complete_activite if operation_history and operation_history.description_complete_activite else "Aucune description disponible",
+                "importation": operation_history.importation if operation_history and operation_history.importation else "Non spécifié",
+                "historique": operation_history.historique if operation_history and operation_history.historique else "Aucun historique disponible",
+            },
+            "properties_and_assets": {
+                "title_18": "PROPRIÉTÉ ET ACTIFS",
+                "assets_list": list_properties_and_assets_data if list_properties_and_assets_data else None,
+            },
+            "terms_of_purchase_and_sale": {
+                "title_19": "CONDITION D'ACHAT ET DE VENTE",
+                "conditions_achat": {
+                    "local": condition_achat.local if condition_achat and condition_achat.local else "Non spécifié",
+                    "importation": condition_achat.importation if condition_achat and condition_achat.importation else "Non spécifié",
+                    "les_clients": condition_achat.les_clients if condition_achat and condition_achat.les_clients else "Non spécifié",
+                    "fournisseur": condition_achat.fournisseur if condition_achat and condition_achat.fournisseur else "Non spécifié",
+                },
+                "conditions_vente": {
+                    "local": condition_vente.local if condition_vente and condition_vente.local else "Non spécifié",
+                    "recouvrement_dette_jugement": condition_vente.recouvrement_de_dette_jugement_ref.libelle if condition_vente and condition_vente.recouvrement_de_dette_jugement_ref else condition_vente.recouvrement_de_dette_jugement if condition_vente else "Non spécifié",
+                    "comportement_de_paiement": condition_vente.comportement_de_paiement_ref.libelle if condition_vente and condition_vente.comportement_de_paiement_ref else condition_vente.comportement_de_paiement if condition_vente else "Non spécifié",
+                }
             },
             "conclusion_generale": {
-                "commentaire": "Rapport généré avec succès. Les données financières seront analysées dans les sections dédiées."
+                "title": "CONCLUSION GENERALE",
+                "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "Non spécifié",
+                "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else "Aucun commentaire disponible",
             }
         }
         

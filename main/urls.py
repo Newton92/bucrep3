@@ -41,6 +41,7 @@ from main.api.views_scoring_syscohada import *
 from main.api.views_scoring_ifrs import *
 from main.api.views_solvency_reporting_system import *
 from main.api.views_reporting import *
+from main.api.views_api_emailling import *
 
 # from .views import PaysViewSet
 
@@ -676,6 +677,11 @@ urlpatterns = [
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/gestion-des-rapports/",
         dash_root_manage_acheteur_report_solvency,
         name="dash_root_manage_acheteur_report_solvency",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/gestion-des-emails/",
+        dash_root_manage_acheteur_emailling,
+        name="dash_root_manage_acheteur_emailling",
     ),
     ########################################################################################################################
     #                                                                                                                      #
@@ -4965,6 +4971,11 @@ urlpatterns = [
     path('api/reporting/devises/', liste_devises, name='liste_devises'),
     path('api/reporting/commandes/acheteur/<int:acheteur_id>/', liste_commandes_acheteur, name='liste_commandes_acheteur'),
     path('api/reporting/generer-rapport-solvabilite/', generer_rapport_solvabilite, name='generer_rapport_solvabilite'),
+    
+    path('api/mailing/clients/autocomplete/', get_clients_autocomplete, name='api_mailing_clients_autocomplete'),
+    path('api/mailing/client/<int:client_id>/commandes/', get_commandes_by_client, name='api_mailing_client_commandes'),
+    path('api/mailing/send-email/', send_rapports_email, name='api_mailing_send_email'),
+    path('api/mailing/history/', get_email_history, name='api_mailing_history'),
 
         
     

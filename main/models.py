@@ -1,7 +1,7 @@
 import datetime
 import time
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -9,6 +9,9 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from safedelete.models import SafeDeleteModel as Model, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
 
 from main.utilitaires.constantes import *
 
@@ -51,6 +54,58 @@ ROLES_USERS = [
     ("Analyste", "Analyste"),
     ("Client", "Client"),
 ]
+
+
+from django.db import models
+from django.contrib.auth.models import Group
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
+
+
+class Referer(SafeDeleteModel):
+    safedelete_policy = SOFT_DELETE_CASCADE
+
+    source = models.ForeignKey(
+        Group,
+        on_delete=models.DO_NOTHING,
+        related_name='referer_sources'
+    )
+    target = models.ForeignKey(
+        Group,
+        on_delete=models.DO_NOTHING,
+        related_name='referer_targets'
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = "Référence de groupe"
+        verbose_name_plural = "Références de groupes"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source', 'target'],
+                name='unique_source_target'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.source} notifies {self.target}"
+
+
+class AdminMails(SafeDeleteModel):
+    safedelete_policy = SOFT_DELETE_CASCADE
+    
+    email = models.EmailField(max_length=255, unique=True)
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = "Email administrateur"
+        verbose_name_plural = "Emails administrateurs"
+
+    def __str__(self):
+        return self.email
+
 
 
 class CustomUser(AbstractUser):
@@ -166,9 +221,24 @@ class CustomUser(AbstractUser):
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
+        related_name="pays_utilisateurs",
         verbose_name=_("Pays"),
         help_text=_("Pays où l'employé est affecté"),
     )
+    
+    affectation = models.ManyToManyField(
+        "Pays",
+        blank=True,
+        related_name="affectation_utilisateurs"
+    )
+    
+    affectation_possible = models.ManyToManyField(
+        "Pays", blank=True, related_name='affectations_possibles'
+    )
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return self.username
@@ -183,7 +253,10 @@ class CustomUser(AbstractUser):
 # === Models Localisation === #
 
 
-class Pays(models.Model):
+class Pays(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     nom = models.CharField(
         max_length=50,
         unique=True,
@@ -218,6 +291,10 @@ class Pays(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si le pays est actif ou désactivé."),
     )
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Pays")
@@ -228,7 +305,10 @@ class Pays(models.Model):
         return f"{self.nom} ({self.code})"
 
 
-class Province(models.Model):
+class Province(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     nom = models.CharField(
         max_length=50,
         unique=True,
@@ -267,6 +347,9 @@ class Province(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si la province est active ou désactivée."),
     )
+    
+    
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = _("Province")
@@ -277,7 +360,10 @@ class Province(models.Model):
         return f"{self.nom} ({self.code})"
 
 
-class Ville(models.Model):
+class Ville(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     nom = models.CharField(
         max_length=50,
         unique=True,
@@ -314,6 +400,9 @@ class Ville(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si la ville est active ou désactivée."),
     )
+    
+    
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = _("Ville")
@@ -324,7 +413,10 @@ class Ville(models.Model):
         return f"{self.nom} ({self.code})"
 
 
-class Annee(models.Model):
+class Annee(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     annee = models.IntegerField(
         unique=True,
         verbose_name=_("Année"),
@@ -345,6 +437,10 @@ class Annee(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si l'année est active ou désactivée."),
     )
+    
+    
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = _("Année civile")
@@ -355,7 +451,10 @@ class Annee(models.Model):
         return str(self.annee)
 
 
-class Devise(models.Model):
+class Devise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     nom = models.CharField(
         max_length=50,
         verbose_name=_("Nom"),
@@ -392,6 +491,10 @@ class Devise(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si la devise est active ou désactivée."),
     )
+    
+    
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = _("Devise")
@@ -402,7 +505,10 @@ class Devise(models.Model):
         return f"{self.nom} ({self.code})"
 
 
-class CouleurCommentaire(models.Model):
+class CouleurCommentaire(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     couleur = models.CharField(
         max_length=255,
         blank=True,
@@ -416,6 +522,10 @@ class CouleurCommentaire(models.Model):
         validators=[couleur_validator],
         help_text=_("Code hexadécimal de la couleur, par exemple '#FF5733'."),
     )
+    
+    
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = _("Coloration")
@@ -426,7 +536,10 @@ class CouleurCommentaire(models.Model):
         return self.couleur
 
 
-class CategoryNaceCode(models.Model):
+class CategoryNaceCode(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -437,6 +550,10 @@ class CategoryNaceCode(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    
+    
+    history = HistoricalRecords()
+    
     def __str__(self):
         return f"{self.code} - {self.libelle}"
 
@@ -446,7 +563,10 @@ class CategoryNaceCode(models.Model):
         ordering = ["code"]
 
 
-class SubCategoryNaceCode(models.Model):
+class SubCategoryNaceCode(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     category = models.ForeignKey(
         CategoryNaceCode,
         on_delete=models.CASCADE,
@@ -462,6 +582,10 @@ class SubCategoryNaceCode(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -476,7 +600,10 @@ class SubCategoryNaceCode(models.Model):
         ordering = ["code"]
 
 
-class CategoryNafCode(models.Model):
+class CategoryNafCode(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -486,6 +613,10 @@ class CategoryNafCode(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -500,7 +631,10 @@ class CategoryNafCode(models.Model):
         ordering = ["code"]
 
 
-class SubCategoryNafCode(models.Model):
+class SubCategoryNafCode(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     category = models.ForeignKey(
         CategoryNafCode,
         on_delete=models.CASCADE,
@@ -516,6 +650,10 @@ class SubCategoryNafCode(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -530,7 +668,10 @@ class SubCategoryNafCode(models.Model):
         ordering = ["code"]
 
 
-class FormeJuridique(models.Model):
+class FormeJuridique(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -541,6 +682,10 @@ class FormeJuridique(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -555,7 +700,10 @@ class FormeJuridique(models.Model):
         ordering = ["code"]
 
 
-class DomaineEntreprise(models.Model):
+class DomaineEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -567,6 +715,10 @@ class DomaineEntreprise(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -581,7 +733,10 @@ class DomaineEntreprise(models.Model):
         ordering = ["libelle"]
 
 
-class PosteEntreprise(models.Model):
+class PosteEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     domaine = models.ForeignKey(
         DomaineEntreprise,
         on_delete=models.CASCADE,
@@ -597,6 +752,10 @@ class PosteEntreprise(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -611,13 +770,20 @@ class PosteEntreprise(models.Model):
         ordering = ["libelle"]
 
 
-class CategorieEntreprise(models.Model):
+class CategorieEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     description = models.TextField(_("Description"), null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return self.libelle or _("Catégorie sans libellé")
@@ -627,13 +793,20 @@ class CategorieEntreprise(models.Model):
         verbose_name_plural = _("Catégories d'Entreprises")
 
 
-class StructureEntreprise(models.Model):
+class StructureEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     description = models.TextField(_("Description"), null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return self.libelle or _("Structure sans libellé")
@@ -643,13 +816,20 @@ class StructureEntreprise(models.Model):
         verbose_name_plural = _("Structures d'Entreprises")
 
 
-class StatutEntreprise(models.Model):
+class StatutEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(_("Code"), max_length=255, null=True, blank=True)
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     description = models.TextField(_("Description"), null=True, blank=True)
     active = models.BooleanField(_("Actif"), default=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return self.libelle or _("Statut sans libellé")
@@ -662,13 +842,20 @@ class StatutEntreprise(models.Model):
 # === Models Acheteurs et compagnies === #
 
 
-class ModeleRapport(models.Model):
+class ModeleRapport(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -685,13 +872,20 @@ class ModeleRapport(models.Model):
         verbose_name_plural = _("Modèles de rapport")
 
 
-class ModeleAlarme(models.Model):
+class ModeleAlarme(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -708,13 +902,20 @@ class ModeleAlarme(models.Model):
         verbose_name_plural = _("Modèles d'alarme")
 
 
-class ModeleBilan(models.Model):
+class ModeleBilan(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -731,7 +932,10 @@ class ModeleBilan(models.Model):
         verbose_name_plural = _("Modèles de bilan")
 
 
-class ModeleBail(models.Model):
+class ModeleBail(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -740,6 +944,10 @@ class ModeleBail(models.Model):
     
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -756,13 +964,20 @@ class ModeleBail(models.Model):
         verbose_name_plural = _("Modèles de bail")
 
 
-class ModeleNotation(models.Model):
+class ModeleNotation(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -779,7 +994,10 @@ class ModeleNotation(models.Model):
         verbose_name_plural = _("Modèles de notation")
 
 
-class ModeleAvisCommercial(models.Model):
+class ModeleAvisCommercial(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -788,6 +1006,10 @@ class ModeleAvisCommercial(models.Model):
     
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -804,13 +1026,20 @@ class ModeleAvisCommercial(models.Model):
         verbose_name_plural = _("Modèles d'avis commercial")
 
 
-class ModeleRelationEntreprise(models.Model):
+class ModeleRelationEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -827,13 +1056,20 @@ class ModeleRelationEntreprise(models.Model):
         verbose_name_plural = _("Modèles de relation entreprise")
 
 
-class ModeleInformationNotationEntreprise(models.Model):
+class ModeleInformationNotationEntreprise(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -850,7 +1086,10 @@ class ModeleInformationNotationEntreprise(models.Model):
         verbose_name_plural = _("Modèles d'information sur notation entreprise")
 
 
-class ModeleComportementPaiement(models.Model):
+class ModeleComportementPaiement(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -859,6 +1098,10 @@ class ModeleComportementPaiement(models.Model):
     
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -875,13 +1118,20 @@ class ModeleComportementPaiement(models.Model):
         verbose_name_plural = _("Modèles de comportement de paiement")
 
 
-class ModeleComportementJugement(models.Model):
+class ModeleComportementJugement(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
     libelle = models.CharField(_("Libellé"), max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -898,7 +1148,10 @@ class ModeleComportementJugement(models.Model):
         verbose_name_plural = _("Modèles de comportement de jugement")
 
 
-class ModeleAgeSociete(models.Model):
+class ModeleAgeSociete(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -907,6 +1160,10 @@ class ModeleAgeSociete(models.Model):
     
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -921,11 +1178,13 @@ class ModeleAgeSociete(models.Model):
     class Meta:
         verbose_name = _("Modèle d'age de société")
         verbose_name_plural = _("Modèles d'age de société")
+             
         
         
-        
-        
-class ModeleInterpretationScoringSansBilan(models.Model):
+class ModeleInterpretationScoringSansBilan(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -934,6 +1193,10 @@ class ModeleInterpretationScoringSansBilan(models.Model):
     
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    
+    history = HistoricalRecords()
+    
 
     def __str__(self):
         return (
@@ -958,7 +1221,10 @@ class ModeleInterpretationScoringSansBilan(models.Model):
 ##########################################################
 
 
-class ElementSurveillance(models.Model):
+class ElementSurveillance(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     nom = models.CharField(
         max_length=255,
         unique=True,  # Chaque élément doit avoir un nom unique
@@ -991,6 +1257,10 @@ class ElementSurveillance(models.Model):
     )
     # Potentiellement un champ pour indiquer si l'élément est activable par défaut
     # actif_par_defaut = models.BooleanField(default=False, verbose_name=_("Activé par défaut pour les nouveaux portefeuilles"))
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Élément de Surveillance")
@@ -1001,7 +1271,10 @@ class ElementSurveillance(models.Model):
         return f"{self.categorie} - {self.nom}"
 
 
-class Client(models.Model):
+class Client(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     nom = models.CharField(
         max_length=255, verbose_name=_("Nom"), help_text=_("Nom du client.")
     )
@@ -1031,6 +1304,10 @@ class Client(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si le client est actif."),
     )
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Client")
@@ -1040,7 +1317,10 @@ class Client(models.Model):
         return self.nom
 
 
-class Contact(models.Model):
+class Contact(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
 
     client = models.ForeignKey(
         "Client",
@@ -1068,6 +1348,10 @@ class Contact(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si le contact est actif."),
     )
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Contact")
@@ -1077,7 +1361,10 @@ class Contact(models.Model):
         return self.nom
 
 
-class Portefeuille(models.Model):
+class Portefeuille(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
 
     FREQUENCE_CHOICES = [
         ("quotidienne", _("Quotidienne")),
@@ -1133,6 +1420,10 @@ class Portefeuille(models.Model):
         verbose_name=_("Date de mise à jour"),
         help_text=_("Date et heure de la dernière mise à jour du portefeuille."),
     )
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Portefeuille")
@@ -1142,7 +1433,10 @@ class Portefeuille(models.Model):
         return f"{self.nom} - {self.client.nom}"
 
 
-class PortefeuilleClient(models.Model):
+class PortefeuilleClient(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     CATEGORY_CHOICES = [
         ("grande", "Grande entreprise"),
         ("pme", "Petite et moyenne entreprise"),
@@ -1157,6 +1451,10 @@ class PortefeuilleClient(models.Model):
         verbose_name=_("Catégorie"),
         help_text=_("Catégorie de l'acheteur dans le portefeuille."),
     )
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Portefeuille client")
@@ -1167,7 +1465,10 @@ class PortefeuilleClient(models.Model):
         return f"{self.acheteur.nom} - {self.get_categorie_display()}"
 
 
-class NotificationLog(models.Model):
+class NotificationLog(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     portefeuille = models.ForeignKey(Portefeuille, on_delete=models.CASCADE)
     code_evenement = models.CharField(max_length=100)
     date_notification = models.DateTimeField(default=timezone.now)
@@ -1182,6 +1483,10 @@ class NotificationLog(models.Model):
         verbose_name=_("Actif"),
         help_text=_("Indique si la notification a été envoyée."),
     )
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Journal des Notifications")
@@ -1191,7 +1496,10 @@ class NotificationLog(models.Model):
         return f"{self.portefeuille.nom} - {self.code_evenement} - {self.date_notification}"
 
 
-class AlerteLog(models.Model):
+class AlerteLog(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     portefeuille = models.ForeignKey(
         "Portefeuille", on_delete=models.CASCADE, verbose_name=_("Portefeuille")
     )
@@ -1219,6 +1527,10 @@ class AlerteLog(models.Model):
     )
     object_id = models.PositiveIntegerField(null=True, blank=True)
     content_object = GenericForeignKey("content_type", "object_id")
+    
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Alerte Log")
@@ -1243,7 +1555,10 @@ class AlerteLog(models.Model):
 ##########################################################
 
 
-class Acheteur(models.Model):
+class Acheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"),
         max_length=255,
@@ -1389,6 +1704,9 @@ class Acheteur(models.Model):
         auto_now=True,
         help_text=_("Date de la dernière mise à jour de l'enregistrement"),
     )
+    
+    history = HistoricalRecords()
+    
 
     class Meta:
         verbose_name = _("Acheteur")
@@ -1603,7 +1921,10 @@ class Acheteur(models.Model):
 # Debut Modules Yannick
 ##########################################################
 ##########################################################
-class Resume(models.Model):
+class Resume(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -1679,6 +2000,9 @@ class Resume(models.Model):
         auto_now=True, verbose_name=_("Dernière mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Résumé Financier")
         verbose_name_plural = _("Résumés Financiers")
@@ -1709,7 +2033,10 @@ RISK_INDEX_CHOICES = [
 ]
 
 
-class RiskRating(models.Model):
+class RiskRating(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -1768,6 +2095,9 @@ class RiskRating(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Dernière mise à jour")
     )
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = _("Évaluation du Risque")
@@ -1848,7 +2178,10 @@ class RiskRating(models.Model):
         return min(score, 9)  # ou 8 si vous partez de 0
 
 
-class DonneesEnregistrement(models.Model):
+class DonneesEnregistrement(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -1913,6 +2246,9 @@ class DonneesEnregistrement(models.Model):
         auto_now=True, verbose_name=_("Dernière mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Données d'Enregistrement")
         verbose_name_plural = _("Données d'Enregistrement")
@@ -1921,7 +2257,10 @@ class DonneesEnregistrement(models.Model):
         return f"Données Enregistrement {self.pk} - {self.acheteur}"
 
 
-class Tendance(models.Model):
+class Tendance(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur", null=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
@@ -1958,6 +2297,9 @@ class Tendance(models.Model):
         auto_now=True, verbose_name=_("Dernière mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Tendance")
         verbose_name_plural = _("Tendances")
@@ -1966,7 +2308,10 @@ class Tendance(models.Model):
         return f"Tendance {self.pk} - {self.acheteur}"
 
 
-class ResponsableAcheteur(models.Model):
+class ResponsableAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     STATUS_MASCULIN = "Masculin"
     STATUS_FEMININ = "Feminin"
     STATUS_CHOICES = ((STATUS_MASCULIN, _("Masculin")), (STATUS_FEMININ, _("Féminin")))
@@ -2012,6 +2357,9 @@ class ResponsableAcheteur(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = _("Responsable Acheteur")
@@ -2132,7 +2480,10 @@ class ResponsableAcheteur(models.Model):
         return f"{self.nom} {self.prenom} ({self.acheteur})"
 
 
-class AntecedantsJuridique(models.Model):
+class AntecedantsJuridique(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         blank=True,
@@ -2163,6 +2514,9 @@ class AntecedantsJuridique(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Antécédent Juridique")
         verbose_name_plural = _("Antécédents Juridiques")
@@ -2171,7 +2525,10 @@ class AntecedantsJuridique(models.Model):
         return f"Antécédent {self.id} - {self.acheteur}"
 
 
-class RiskManagment(models.Model):
+class RiskManagment(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     STATUS_AUCUN = "Aucun"
     STATUS_OUI = "Oui"
     STATUS_NON = "Non"
@@ -2227,6 +2584,9 @@ class RiskManagment(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = _("Gestion des Risques")
@@ -2299,7 +2659,10 @@ class RiskManagment(models.Model):
         }
 
 
-class ConseilAdministration(models.Model):
+class ConseilAdministration(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2341,6 +2704,9 @@ class ConseilAdministration(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Conseil d'Administration")
         verbose_name_plural = _("Conseils d'Administration")
@@ -2349,7 +2715,10 @@ class ConseilAdministration(models.Model):
         return f"{self.nom} ({self.acheteur})"
 
 
-class CompositionCapitalSocial(models.Model):
+class CompositionCapitalSocial(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2400,6 +2769,9 @@ class CompositionCapitalSocial(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             f"Capital Social ({self.acheteur})"
@@ -2412,7 +2784,10 @@ class CompositionCapitalSocial(models.Model):
         verbose_name_plural = _("Compositions du Capital Social")
 
 
-class CompositionAction(models.Model):
+class CompositionAction(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2442,6 +2817,9 @@ class CompositionAction(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             f"{self.nom} {self.prenom} - {self.pourcentage}%"
@@ -2454,7 +2832,10 @@ class CompositionAction(models.Model):
         verbose_name_plural = _("Compositions de l'Actionnariat")
 
 
-class OpinionCreditAcremac(models.Model):
+class OpinionCreditAcremac(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
@@ -2501,6 +2882,9 @@ class OpinionCreditAcremac(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return f"Opinion Credit Acremac for {self.acheteur}"
 
@@ -2521,7 +2905,10 @@ class OpinionCreditAcremac(models.Model):
 # Debut Modules KBZ
 ##########################################################
 ##########################################################
-class Structure(models.Model):
+class Structure(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2561,6 +2948,9 @@ class Structure(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return self.nom or _("Filiale sans nom")
 
@@ -2569,7 +2959,10 @@ class Structure(models.Model):
         verbose_name_plural = _("Filiales ou Branches")
 
 
-class AnalyseSectorielle(models.Model):
+class AnalyseSectorielle(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2592,6 +2985,9 @@ class AnalyseSectorielle(models.Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return _("Analyse sectorielle")
 
@@ -2600,7 +2996,10 @@ class AnalyseSectorielle(models.Model):
         verbose_name_plural = _("Analyses Sectorielles")
 
 
-class CompteFinancier(models.Model):
+class CompteFinancier(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
 
     XAF = "XAF"
     XOF = "XOF"
@@ -2699,6 +3098,9 @@ class CompteFinancier(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             f"{self.acheteur} - {self.cabinet}"
@@ -2711,7 +3113,10 @@ class CompteFinancier(models.Model):
         verbose_name_plural = _("Comptes Financiers")
 
 
-class OperationEtHistorique(models.Model):
+class OperationEtHistorique(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2735,6 +3140,9 @@ class OperationEtHistorique(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             f"{self.acheteur} - {self.description_complete_activite[:50]}..."
@@ -2747,7 +3155,10 @@ class OperationEtHistorique(models.Model):
         verbose_name_plural = _("Opérations et Historiques")
 
 
-class ProprieteEtActif(models.Model):
+class ProprieteEtActif(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2778,6 +3189,9 @@ class ProprieteEtActif(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             f"{self.acheteur} - {self.branche}"
@@ -2790,7 +3204,10 @@ class ProprieteEtActif(models.Model):
         verbose_name_plural = _("Propriétés et Actifs")
 
 
-class ConditionAchat(models.Model):
+class ConditionAchat(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2810,6 +3227,9 @@ class ConditionAchat(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             f"{self.acheteur} - {self.local}"
@@ -2822,7 +3242,10 @@ class ConditionAchat(models.Model):
         verbose_name_plural = _("Conditions d'Achat")
 
 
-class ConditionDeVente(models.Model):
+class ConditionDeVente(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2867,6 +3290,9 @@ class ConditionDeVente(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return f"Condition de vente for {self.acheteur} - {self.local}"
 
@@ -2875,7 +3301,10 @@ class ConditionDeVente(models.Model):
         verbose_name_plural = _("Conditions de Vente")
 
 
-class SommaireEtAvis(models.Model):
+class SommaireEtAvis(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -2900,6 +3329,9 @@ class SommaireEtAvis(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return f"Sommaire et avis for {self.acheteur}"
 
@@ -2908,7 +3340,10 @@ class SommaireEtAvis(models.Model):
         verbose_name_plural = _("Sommaires et Avis")
 
 
-class Advice(models.Model):
+class Advice(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
@@ -2931,6 +3366,9 @@ class Advice(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return f"Conseils pour {self.acheteur}"
 
@@ -2939,7 +3377,10 @@ class Advice(models.Model):
         verbose_name_plural = _("Conseils")
 
 
-class Geopolitics(models.Model):
+class Geopolitics(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
@@ -2956,6 +3397,9 @@ class Geopolitics(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return f"Geopolitics for {self.acheteur}"
 
@@ -2964,7 +3408,10 @@ class Geopolitics(models.Model):
         verbose_name_plural = _("Géopolitiques")
 
 
-class Banquier(models.Model):
+class Banquier(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         null=True,
@@ -3009,6 +3456,9 @@ class Banquier(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return self.nom_banque
 
@@ -3033,7 +3483,10 @@ class Banquier(models.Model):
 
 # Debut Modules Bilan Anglais
 
-class ActifA(models.Model):
+class ActifA(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # ... (champs existants)
     annee = models.ForeignKey(
         "Annee",
@@ -3098,6 +3551,9 @@ class ActifA(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Actif bilan anglais : ")
@@ -3130,7 +3586,10 @@ class ActifA(models.Model):
         return self.total_actifs_non_courants + self.total_actifs_courants
 
 
-class PassifA(models.Model):
+class PassifA(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # ... (champs existants)
     annee = models.ForeignKey(
         "Annee",
@@ -3222,6 +3681,9 @@ class PassifA(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Passif bilan anglais : ")
@@ -3260,7 +3722,10 @@ class PassifA(models.Model):
         return self.total_fonds_propres + self.total_passifs_non_courants + self.total_passifs_courants
 
 
-class ResultatA(models.Model):
+class ResultatA(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # ... (champs existants)
     annee = models.ForeignKey(
         "Annee",
@@ -3337,6 +3802,9 @@ class ResultatA(models.Model):
         blank=True,
         on_delete=models.DO_NOTHING,
     )
+
+    history = HistoricalRecords()
+
 
     def __str__(self):
         return (
@@ -3476,7 +3944,10 @@ class RatiosAnglais:
 # Debut Modules Bilan Classique
 
 # Actif
-class ActifC(models.Model):
+class ActifC(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # ... (les champs existants) ...
     annee = models.ForeignKey(
         "Annee",
@@ -3740,6 +4211,9 @@ class ActifC(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Actif bilan classique : ")
@@ -3847,7 +4321,10 @@ class ActifC(models.Model):
 
 
 # Passif
-class PassifC(models.Model):
+class PassifC(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # ... (les champs existants) ...
     annee = models.ForeignKey(
         "Annee",
@@ -4021,6 +4498,9 @@ class PassifC(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Passif bilan classique : ")
@@ -4089,7 +4569,10 @@ class PassifC(models.Model):
 
 
 # Compte de Résultat
-class ResultatC(models.Model):
+class ResultatC(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # ... (les champs existants) ...
     annee = models.ForeignKey(
         "Annee",
@@ -4414,6 +4897,9 @@ class ResultatC(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Résultat bilan classique : ")
@@ -4536,6 +5022,21 @@ class RatiosClassique:
         """
         fdr = self.passif.total_I + self.passif.total_II - self.actif.total_I
         return fdr if self.actif and self.passif else None
+    
+    @property
+    def fonds_de_roulement_normatif(self):
+        """
+        Calcule le Fonds de Roulement Normatif (FRNO).
+        FRNO = (Dettes à court terme - Disponibilités) / Actif circulant
+        """
+        if self.actif and self.passif:
+            dettes_court_terme = self.passif.total_III
+            disponibilites = self.actif.disponibilites_vmp
+            actif_circulant = self.actif.total_II
+            
+            if actif_circulant and actif_circulant != 0:
+                return (dettes_court_terme - disponibilites) / actif_circulant
+        return None
 
     @property
     def autonomie_fin(self):
@@ -4579,6 +5080,22 @@ class RatiosClassique:
             return disponibilites / dettes_court_terme
         return None
     
+    @property
+    def chiffre_d_affaires(self):
+        """
+        Calcule le Chiffre d'affaires (CA).
+        CA = Total des ventes et produits d'activité
+        """
+        return self.resultat.ca
+    
+    @property
+    def chiffre_d_affaires_hors_taxe(self):
+        """
+        Calcule le Chiffre d'affaires hors taxe (CA HT).
+        Dans la plupart des cas, le CA est déjà HT dans les comptes.
+        """
+        return self.resultat.ca
+    
     # Ratios de Rentabilité
     # -----------------------------
     @property
@@ -4600,6 +5117,31 @@ class RatiosClassique:
         capitaux_propres = self.passif.total_I
         if capitaux_propres and capitaux_propres != 0:
             return self.resultat.resultat_exercice / capitaux_propres
+        return None
+    
+    @property
+    def rentabilite_de_loutil_de_production(self):
+        """
+        Mesure la rentabilité de l'outil de production (ROP).
+        ROP = Valeur ajoutée / (Immobilisations brutes + BFR)
+        """
+        valeur_ajoutee = self.resultat.valeur_ajoutee
+        immobilisations_brutes = self.actif.total_I
+        bfr = (self.actif.stocks + self.actif.creances) - self.passif.total_III
+        
+        if (immobilisations_brutes + bfr) and (immobilisations_brutes + bfr) != 0:
+            return valeur_ajoutee / (immobilisations_brutes + bfr)
+        return None
+    
+    @property
+    def couverture_des_frais_financiers(self):
+        """
+        Mesure la couverture des frais financiers (CFF).
+        CFF = Résultat d'exploitation / Charges financières
+        """
+        charges_financieres = self.resultat.financier_total_II
+        if charges_financieres and charges_financieres != 0:
+            return self.resultat.resultat_exploitation / charges_financieres
         return None
         
     # Ratios de Gestion
@@ -4625,6 +5167,28 @@ class RatiosClassique:
         cout_prod_approx = (self.resultat.ventes_de_produits_fabriques or 0) - (self.resultat.production_stockee or 0)
         if cout_prod_approx and cout_prod_approx != 0:
             return (self.actif.stocks_pf / cout_prod_approx) * 360
+        return None
+    
+    @property
+    def rotation_des_stock_de_marchandises(self):
+        """
+        Mesure la rotation des stocks de marchandises.
+        Rotation = (Stocks de marchandises / Coût des marchandises vendues) * 360
+        """
+        cout_marchandises_vendues = (self.resultat.achat_mdses or 0) - (self.resultat.variation_stock_mdses or 0)
+        if cout_marchandises_vendues and cout_marchandises_vendues != 0:
+            return (self.actif.stocks_mses / cout_marchandises_vendues) * 360
+        return None
+    
+    @property
+    def rotation_des_stock_de_services(self):
+        """
+        Mesure la rotation des stocks de services.
+        Rotation = (Stocks en-cours services / Coût des services) * 360
+        """
+        cout_services_approx = (self.resultat.travaux_services_vendus or 0) - (self.resultat.production_stockee or 0)
+        if cout_services_approx and cout_services_approx != 0:
+            return (self.actif.stocks_encours_services / cout_services_approx) * 360
         return None
 
     @property
@@ -4678,6 +5242,64 @@ class RatiosClassique:
         if capitaux_propres and capitaux_propres != Decimal('0'):
             return float(resultat_net) / float(capitaux_propres)
         return None
+    
+    @property
+    def levier_financier(self):
+        """
+        Calcule le levier financier.
+        Levier = Dettes financières / Capitaux propres
+        """
+        capitaux_propres = self._get_value(self.passif, 'total_I')
+        dettes_financieres = self._get_value(self.passif, 'total_II')
+        
+        if capitaux_propres and capitaux_propres != Decimal('0'):
+            return float(dettes_financieres) / float(capitaux_propres)
+        return None
+
+    @property
+    def capacite_remboursement(self):
+        """
+        Calcule la capacité de remboursement.
+        Capacité = Dettes financières / CAF
+        """
+        # CAF (Capacité d'Autofinancement) approximative
+        caf = (self.resultat.resultat_exercice or 0) + (self.resultat.dotation_aux_amorts or 0)
+        dettes_financieres = self._get_value(self.passif, 'total_II')
+        
+        if caf and caf != Decimal('0'):
+            return float(dettes_financieres) / float(caf)
+        return None
+
+    @property
+    def besoin_en_fond_roulement(self):
+        """
+        Calcule le Besoin en Fonds de Roulement (BFR).
+        BFR = (Stocks + Créances) - Dettes à court terme
+        """
+        stocks_creances = self.actif.stocks + self.actif.creances
+        dettes_court_terme = self.passif.total_III
+        return stocks_creances - dettes_court_terme
+
+    @property
+    def bfr_exploitation(self):
+        """
+        Calcule le BFR d'exploitation.
+        BFR Exploitation = (Stocks + Créances clients) - Dettes fournisseurs
+        """
+        stocks_creances_clients = self.actif.stocks + self.actif.clients_et_cptes_rattaches
+        dettes_fournisseurs = self.passif.dettes_fournisseurs_divers
+        return stocks_creances_clients - dettes_fournisseurs
+
+    @property
+    def delai_rotation_stocks(self):
+        """
+        Calcule le délai moyen de rotation des stocks.
+        Délai = (Stocks / Coût des ventes) * 360
+        """
+        cout_ventes = (self.resultat.achat_mdses or 0) + (self.resultat.achat_mp_autres_appro or 0)
+        if cout_ventes and cout_ventes != 0:
+            return (self.actif.stocks / cout_ventes) * 360
+        return None
 
 
 ##########################################################
@@ -4707,7 +5329,10 @@ SEMESTRE_CHOICES = (
 
 
 # Actifs
-class Assets(models.Model):
+class Assets(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     type_bilan = models.CharField(
         max_length=20,
         choices=TYPE_BILAN_CHOICES,
@@ -4896,6 +5521,9 @@ class Assets(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         libelle = f"{_('Actif bilan bancaire')} : {self.id}. {self.acheteur}"
         if self.annee:
@@ -5033,7 +5661,10 @@ class Assets(models.Model):
 
 
 # Passifs
-class Liabilities(models.Model):
+class Liabilities(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     type_bilan = models.CharField(
         max_length=20,
         choices=TYPE_BILAN_CHOICES,
@@ -5231,6 +5862,9 @@ class Liabilities(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         libelle = f"{_('Passif bilan bancaire')} : {self.id}. {self.acheteur}"
         if self.annee:
@@ -5305,7 +5939,10 @@ class Liabilities(models.Model):
 
 
 # Depenses
-class Expenses(models.Model):
+class Expenses(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     type_bilan = models.CharField(
         max_length=20,
         choices=TYPE_BILAN_CHOICES,
@@ -5538,6 +6175,9 @@ class Expenses(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     # --- MÉTHODE __str__ AMÉLIORÉE ---
     def __str__(self):
         """
@@ -5623,7 +6263,10 @@ class Expenses(models.Model):
 
 
 # Produits
-class Products(models.Model):
+class Products(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     type_bilan = models.CharField(
         max_length=20,
         choices=TYPE_BILAN_CHOICES,
@@ -5858,6 +6501,9 @@ class Products(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     # --- MÉTHODE __str__ AMÉLIORÉE ---
     def __str__(self):
         libelle = f"{_('Produit bilan bancaire')} : {self.id}. {self.acheteur or 'N/A'}"
@@ -5933,7 +6579,10 @@ class Products(models.Model):
 
 
 # Hors bilan
-class OffBalanceSheet(models.Model):
+class OffBalanceSheet(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     # --- Champs d'identification (inchangés) ---
     type_bilan = models.CharField(
         max_length=20,
@@ -6131,6 +6780,9 @@ class OffBalanceSheet(models.Model):
     deleted = models.DateTimeField(null=True, blank=True)
     deleted_by_cascade = models.BooleanField(default=False)
 
+    history = HistoricalRecords()
+
+
     # --- MÉTHODE __str__ AMÉLIORÉE ---
     def __str__(self):
         """
@@ -6235,7 +6887,10 @@ class OffBalanceSheet(models.Model):
 
 # Debut Modules Bilan SysCohada
 
-class ActifS(models.Model):
+class ActifS(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -6438,6 +7093,9 @@ class ActifS(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Actif bilan SYSCOHADA : ")
@@ -6500,7 +7158,10 @@ class ActifS(models.Model):
         return self.total_actif_immobilise + self.total_actif_circulant + self.total_tresorerie_equivalents + (self.ecart_conversion_actif or 0)
 
 
-class PassifS(models.Model):
+class PassifS(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -6691,6 +7352,9 @@ class PassifS(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Passif bilan SYSCOHADA : ")
@@ -6741,7 +7405,10 @@ class PassifS(models.Model):
         return self.total_ressources_stables + self.total_passifs_courants + self.total_tresorerie_equivalents + (self.ecart_conversion_passif or 0)
 
 
-class ResultatS(models.Model):
+class ResultatS(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     annee = models.ForeignKey(
         "Annee",
         null=True,
@@ -7007,6 +7674,9 @@ class ResultatS(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return (
             _("Résultat bilan SYSCOHADA : ")
@@ -7179,7 +7849,10 @@ SEMESTRE_CHOICES = (
 )
 
 
-class BilanIFRSBase(models.Model):
+class BilanIFRSBase(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     """
     Modèle abstrait de base pour les états financiers IFRS.
     Contient les champs communs d'identification et de suivi.
@@ -7233,6 +7906,7 @@ class BilanIFRSBase(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
     )
+
 
     class Meta:
         abstract = True  # Indique que ce modèle est abstrait
@@ -7350,6 +8024,9 @@ class ActifIFRS(BilanIFRSBase):
         default=0,
         verbose_name=_("Disponibilités bancaires"),
     )
+
+    history = HistoricalRecords()
+
 
     # === PROPRIÉTÉS DE CALCUL AUTOMATIQUE ===
 
@@ -7480,6 +8157,9 @@ class PassifIFRS(BilanIFRSBase):
     dividendes_a_payer = models.DecimalField(
         max_digits=18, decimal_places=2, default=0, verbose_name=_("Dividendes à payer")
     )
+
+    history = HistoricalRecords()
+
 
     # === PROPRIÉTÉS DE CALCUL AUTOMATIQUE ===
 
@@ -7631,6 +8311,9 @@ class ResultatIFRS(BilanIFRSBase):
         verbose_name=_("Impôt sur les sociétés"),
     )
 
+    history = HistoricalRecords()
+
+
     # === PROPRIÉTÉS DE CALCUL AUTOMATIQUE (SOLDES INTERMÉDIAIRES) ===
 
     @property
@@ -7696,7 +8379,10 @@ class ResultatIFRS(BilanIFRSBase):
 # Fichier: models.py
 
 
-class RatiosIFRS(models.Model):
+class RatiosIFRS(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     """
     Modèle pour calculer et afficher les ratios financiers clés.
     """
@@ -7711,6 +8397,9 @@ class RatiosIFRS(models.Model):
 
     annee = models.ForeignKey("Annee", on_delete=models.CASCADE, null=True)
     acheteur = models.ForeignKey("Acheteur", on_delete=models.CASCADE, null=True)
+
+    history = HistoricalRecords()
+
 
     def __str__(self):
         return f"Ratios pour {self.acheteur} ({self.annee})"
@@ -7828,7 +8517,10 @@ class RatiosIFRS(models.Model):
 # Debut Modules Additifs
 ##########################################################
 ##########################################################
-class Logo(models.Model):
+class Logo(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -7856,6 +8548,9 @@ class Logo(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Logo")
         verbose_name_plural = _("Logos")
@@ -7864,7 +8559,10 @@ class Logo(models.Model):
         return f"Logo de {self.acheteur.nom}"
 
 
-class TelephoneAcheteur(models.Model):
+class TelephoneAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     telephone = models.TextField(max_length=100, verbose_name=_("Téléphone"))
     acheteur = models.ForeignKey(
         "Acheteur",
@@ -7895,6 +8593,9 @@ class TelephoneAcheteur(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Téléphone")
         verbose_name_plural = _("Téléphones")
@@ -7903,7 +8604,10 @@ class TelephoneAcheteur(models.Model):
         return f"Numéro de téléphone de {self.acheteur.nom}"
 
 
-class AdresseAcheteur(models.Model):
+class AdresseAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     adresse = models.TextField(max_length=100, verbose_name=_("Adresse"))
     acheteur = models.ForeignKey(
         "Acheteur",
@@ -7934,6 +8638,9 @@ class AdresseAcheteur(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Adresse")
         verbose_name_plural = _("Adresses")
@@ -7943,7 +8650,10 @@ class AdresseAcheteur(models.Model):
 
 
 
-class PortableAcheteur(models.Model):
+class PortableAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"))
     acheteur = models.ForeignKey(
         "Acheteur",
@@ -7974,6 +8684,9 @@ class PortableAcheteur(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Portable")
         verbose_name_plural = _("Portables")
@@ -7983,7 +8696,10 @@ class PortableAcheteur(models.Model):
 
 
 
-class EmailAcheteur(models.Model):
+class EmailAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     email = models.TextField(
         max_length=254,  # Limite la taille à celle d'une adresse email standard
         verbose_name=_("Adresse email"),
@@ -8017,6 +8733,9 @@ class EmailAcheteur(models.Model):
         on_delete=models.DO_NOTHING,
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Email")
         verbose_name_plural = _("Emails")
@@ -8025,7 +8744,10 @@ class EmailAcheteur(models.Model):
         return f"Email de {self.acheteur.nom}"
 
 
-class Document(models.Model):
+class Document(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8052,6 +8774,9 @@ class Document(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Document")
         verbose_name_plural = _("Documents")
@@ -8060,7 +8785,10 @@ class Document(models.Model):
         return f"{self.titre} - {self.acheteur.nom}"
 
 
-class Swot(models.Model):
+class Swot(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8096,6 +8824,9 @@ class Swot(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("SWOT")
         verbose_name_plural = _("SWOT")
@@ -8104,7 +8835,10 @@ class Swot(models.Model):
         return f"SWOT de {self.acheteur.nom}"
 
 
-class ProduitService(models.Model):
+class ProduitService(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8128,6 +8862,9 @@ class ProduitService(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Produit & Service")
         verbose_name_plural = _("Produits & Services")
@@ -8136,7 +8873,10 @@ class ProduitService(models.Model):
         return f"Produits & Services de {self.acheteur.nom}"
 
 
-class Marque(models.Model):
+class Marque(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8157,6 +8897,9 @@ class Marque(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Marque")
         verbose_name_plural = _("Marques")
@@ -8165,7 +8908,10 @@ class Marque(models.Model):
         return f"Marque de {self.acheteur.nom}"
 
 
-class ProcedureCollective(models.Model):
+class ProcedureCollective(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8241,6 +8987,9 @@ class ProcedureCollective(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Procédure Collective")
         verbose_name_plural = _("Procédures Collectives")
@@ -8249,7 +8998,10 @@ class ProcedureCollective(models.Model):
         return f"{self.type_procedure} - {self.acheteur.nom if self.acheteur else ''}"
 
 
-class RegistreCommerce(models.Model):
+class RegistreCommerce(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8278,6 +9030,9 @@ class RegistreCommerce(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Registre de Commerce")
         verbose_name_plural = _("Registres de Commerce")
@@ -8286,7 +9041,10 @@ class RegistreCommerce(models.Model):
         return f"Registre de commerce de {self.acheteur.nom}"
 
 
-class Cotisation(models.Model):
+class Cotisation(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8315,6 +9073,9 @@ class Cotisation(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Cotisation Sociale")
         verbose_name_plural = _("Cotisations Sociales")
@@ -8323,7 +9084,10 @@ class Cotisation(models.Model):
         return f"Cotisations Sociales de {self.acheteur.nom}"
 
 
-class CodeNaceAcheteur(models.Model):
+class CodeNaceAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8350,6 +9114,9 @@ class CodeNaceAcheteur(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Code NACE Acheteur")
         verbose_name_plural = _("Codes NACE Acheteur")
@@ -8359,7 +9126,10 @@ class CodeNaceAcheteur(models.Model):
 
 
 
-class CodeNafAcheteur(models.Model):
+class CodeNafAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -8386,6 +9156,9 @@ class CodeNafAcheteur(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Code NAF Acheteur")
         verbose_name_plural = _("Codes NAF Acheteur")
@@ -8398,12 +9171,18 @@ class CodeNafAcheteur(models.Model):
 
 # Assuming you already have an Acheteur model defined elsewhere
 # For example:
-# class Acheteur(models.Model):
+# class Acheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
 #     nom = models.CharField(max_length=255)
 #     # ... other fields for the buyer
 
 
-class Certification(models.Model):
+class Certification(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     """
     Represents certifications obtained by an Acheteur.
     """
@@ -8441,6 +9220,9 @@ class Certification(models.Model):
     description = models.TextField(
         blank=True, null=True, verbose_name="Description / Commentaires"
     )
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = "Certification"
@@ -8532,7 +9314,10 @@ class Certification(models.Model):
         return f"{self.acheteur.nom} - {self.get_type_certification_display()}"
 
 
-class InnovationDeveloppement(models.Model):
+class InnovationDeveloppement(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     """
     Represents innovation and development activities of an Acheteur.
     """
@@ -8561,6 +9346,9 @@ class InnovationDeveloppement(models.Model):
     date_fin = models.DateField(
         blank=True, null=True, verbose_name="Date de Fin (si applicable)"
     )
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = "Innovation et Développement"
@@ -8646,7 +9434,10 @@ class InnovationDeveloppement(models.Model):
         return f"{self.acheteur.nom} - {self.get_type_innovation_display()}"
 
 
-class StrategiePlanification(models.Model):
+class StrategiePlanification(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     """
     Represents strategic and planning approaches of an Acheteur.
     """
@@ -8682,6 +9473,9 @@ class StrategiePlanification(models.Model):
     date_mise_en_place = models.DateField(
         blank=True, null=True, verbose_name="Date de Mise en Place"
     )
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = "Stratégie et Planification"
@@ -8773,7 +9567,10 @@ class StrategiePlanification(models.Model):
         return f"{self.acheteur.nom} - {self.get_type_strategie_display()}"
 
 
-class ConformiteReglementation(models.Model):
+class ConformiteReglementation(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     """
     Represents compliance and regulatory status of an Acheteur.
     """
@@ -8805,6 +9602,9 @@ class ConformiteReglementation(models.Model):
         max_length=255, blank=True, null=True, verbose_name="Organisme de Contrôle"
     )
     commentaires = models.TextField(blank=True, null=True, verbose_name="Commentaires")
+
+    history = HistoricalRecords()
+
 
     class Meta:
         verbose_name = "Conformité et Réglementation"
@@ -8919,7 +9719,10 @@ class ConformiteReglementation(models.Model):
 # Debut Modules Commande
 ##########################################################
 ##########################################################
-class Notification(models.Model):
+class Notification(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     TYPE_NOTIF = [
         ("AFFECTATION", "Nouvelle affectation"),
         ("RAPPORT_SOUMIS", "Rapport soumis"),
@@ -8945,6 +9748,9 @@ class Notification(models.Model):
         auto_now_add=True, verbose_name=_("Date de création")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Notification")
         verbose_name_plural = _("Notifications")
@@ -8954,7 +9760,17 @@ class Notification(models.Model):
         return f"{self.get_type_display()} - {self.user.username} ({'Lu' if self.is_read else 'Non lu'})"
 
 
-class Commande(models.Model):
+class Commande(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    AVEC = 'Oui'
+    SANS = 'Non'
+    STATUS_CHANGE = (
+        (AVEC, 'Oui'),
+        (SANS, 'Non'),
+    )
+    
 
     STATUS_CHOICES = [
         ("nouvelle", _("Nouvelle")),
@@ -9168,6 +9984,18 @@ class Commande(models.Model):
         verbose_name=_("Email envoyé au client"),
         help_text=_("Indique si le rapport a déjà été envoyé au client."),
     )
+    
+    
+    # Champs supplementaires
+    imprimer_avec_etats_fin = models.CharField(max_length=20, default=AVEC, choices=STATUS_CHANGE, blank=True, null=True,
+                              verbose_name=_("Imprimer le rapport avec les états financiers s'ils existent"))
+    company_identification_number = models.CharField(max_length=100, blank=True, null=True,  verbose_name="Company Identification Number")
+    address_additional = models.CharField(max_length=100, blank=True, null=True,  verbose_name="Address additional")
+    state = models.CharField(max_length=100, blank=True, null=True,  verbose_name="State")
+    postcode = models.CharField(max_length=100, blank=True, null=True,  verbose_name="Postcode")
+    post_office = models.CharField(max_length=100, blank=True, null=True,  verbose_name="Post office")
+    provider = models.CharField(max_length=100, blank=True, null=True,  verbose_name="Provider")
+    comments = models.TextField(max_length=100, blank=True, null=True,  verbose_name="Comments")
 
     created_at = models.DateTimeField(
         auto_now_add=True,
@@ -9180,6 +10008,9 @@ class Commande(models.Model):
         help_text=_("Date et heure de la dernière mise à jour de la commande."),
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Commande")
         verbose_name_plural = _("Commandes")
@@ -9188,7 +10019,10 @@ class Commande(models.Model):
         return f"Commande {self.notre_ref or 'N/A'} - {self.raison_sociale}"
 
 
-class SuiviCommande(models.Model):
+class SuiviCommande(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     TYPE_ACTIONS = [
         ("CREATION", "Création"),
         ("AFFECTATION", "Affectation"),
@@ -9223,6 +10057,9 @@ class SuiviCommande(models.Model):
         auto_now_add=True, verbose_name=_("Date de l'action")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Suivi de commande")
         verbose_name_plural = _("Suivis de commande")
@@ -9232,7 +10069,10 @@ class SuiviCommande(models.Model):
         return f"{self.get_type_display()} - {self.commande.notre_ref} ({self.user.username if self.user else 'Système'})"
 
 
-class AffectationAnalyste(models.Model):
+class AffectationAnalyste(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     commande = models.ForeignKey(
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
@@ -9246,6 +10086,9 @@ class AffectationAnalyste(models.Model):
         auto_now_add=True, verbose_name=_("Date d'affectation")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Affectation d'analyste")
         verbose_name_plural = _("Affectations des analystes")
@@ -9254,7 +10097,10 @@ class AffectationAnalyste(models.Model):
         return f"Commande {self.commande.notre_ref} affectée à {self.analyste.username}"
 
 
-class Rapport(models.Model):
+class Rapport(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     commande = models.ForeignKey(
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
@@ -9269,6 +10115,9 @@ class Rapport(models.Model):
         auto_now_add=True, verbose_name=_("Date de soumission")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Rapport")
         verbose_name_plural = _("Rapports")
@@ -9277,7 +10126,10 @@ class Rapport(models.Model):
         return f"Rapport de {self.analyste.username} pour {self.commande.notre_ref}"
 
 
-class ValidationRapport(models.Model):
+class ValidationRapport(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     rapport = models.OneToOneField(
         "Rapport", on_delete=models.CASCADE, verbose_name=_("Rapport")
     )
@@ -9304,12 +10156,64 @@ class ValidationRapport(models.Model):
         auto_now=True, verbose_name=_("Date de validation")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Validation de rapport")
         verbose_name_plural = _("Validations de rapports")
 
     def __str__(self):
         return f"Validation de {self.rapport.commande.notre_ref} par {self.validateur.username}"
+
+
+
+class ReportRequest(Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    history = HistoricalRecords()
+
+    country = models.CharField(max_length=255,verbose_name=_("Country"), null=False, blank=False)
+    buyer_name = models.CharField(max_length=255,verbose_name=_("Buyer Name"), null=False, blank=False)
+
+    request_id = models.CharField(max_length=100,verbose_name=_("Request ID"), null=True, blank=True)
+    requester_id = models.CharField(max_length=100,verbose_name=_("Requester ID"), null=True, blank=True)
+    vat_number = models.CharField(max_length=100,verbose_name=_("VAT Number"), null=True, blank=True)
+    registration_number = models.CharField(max_length=100,verbose_name=_("Registration Number"), null=True, blank=True)
+    source_id = models.CharField(max_length=100,verbose_name=_("Source ID"), null=True, blank=True)
+    address = models.CharField(max_length=255,verbose_name=_("Address"), null=True, blank=True)
+    postal_code = models.CharField(max_length=255,verbose_name=_("Postal Code"), null=True, blank=True)
+    city = models.CharField(max_length=255,verbose_name=_("City"), null=True, blank=True)
+    buyer_phone_number = models.CharField(max_length=255,verbose_name=_("Buyer's Phone Number"), null=True, blank=True)
+    buyer_fax_number = models.CharField(max_length=255,verbose_name=_("Buyer's Fax Number"), null=True, blank=True)
+    comment = models.CharField(max_length=255, null=True, blank=True)
+
+    created_by = models.ForeignKey("CustomUser", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Created By"))
+    created_at = models.DateTimeField(editable=False)
+    updated_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"""
+        Request ID: {self.request_id}
+        Requester ID: {self.requester_id}
+        VAT Number: {self.vat_number}
+        Registration Number: {self.registration_number}
+        Source ID: {self.source_id}
+        Buyer Name: {self.buyer_name}
+        Address: {self.address}
+        Postal Code: {self.postal_code}
+        City: {self.city}
+        Buyer Phone Number: {self.buyer_phone_number}
+        Buyer Fax Number: {self.buyer_fax_number}
+        Country: {self.country}
+        """
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created_at = timezone.now()
+        self.updated_at = timezone.now()
+        return super(ReportRequest, self).save(*args, **kwargs)
+
+
 
 
 ##########################################################
@@ -9324,7 +10228,10 @@ class ValidationRapport(models.Model):
 # Debut Module WARNING (Alerte)
 ##########################################################
 ##########################################################
-class Alerte(models.Model):
+class Alerte(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
 
     reference = models.CharField(
         max_length=255,
@@ -9349,6 +10256,9 @@ class Alerte(models.Model):
         help_text=_("Date et heure de la dernière mise à jour de l'alerte."),
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Alerte")
         verbose_name_plural = _("Alertes")
@@ -9357,7 +10267,10 @@ class Alerte(models.Model):
         return f"{self.reference} - {self.objet}"
 
 
-class DocumentAlerte(models.Model):
+class DocumentAlerte(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     alerte = models.ForeignKey(
         "Alerte",
         on_delete=models.DO_NOTHING,
@@ -9381,12 +10294,64 @@ class DocumentAlerte(models.Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
+    history = HistoricalRecords()
+
+
     class Meta:
         verbose_name = _("Document alerte")
         verbose_name_plural = _("Documents alerte")
 
     def __str__(self):
         return f"{self.titre}"
+
+
+
+class Warning(Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    titre = models.CharField(max_length=500,verbose_name=_("Titre"), null=False, blank=False)
+    description = models.TextField()
+    acheteurs = models.ManyToManyField(Acheteur)
+    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.titre
+
+
+def warning_upload_path(instance, filename):
+    return 'uploads/warnings/{}'.format(filename)
+
+
+class WarningAttachment(Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    upload = models.FileField(upload_to=warning_upload_path, verbose_name='Veuillez choisir le fichier',
+                              max_length=500, blank=False, null=False)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    warning = models.ForeignKey(Warning, on_delete=models.CASCADE, related_name='warning_attachments')
+
+    def __str__(self):
+        return self.upload.name
+
+    def delete(self, *args, **kwargs):
+        self.upload.delete()
+        return super().delete(*args, **kwargs)
+
+    def filename(self):
+        import os
+        try:
+            return os.path.basename(self.upload.file.name)
+        except Exception as e:
+            return '404 File Not Found'
+
+
+
+class NotifClient(Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    acheteurs = models.ManyToManyField(Acheteur)
+    client = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.client.username
 
 
 ##########################################################
@@ -9405,7 +10370,10 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class CompteFinancierIrfs(models.Model):
+class CompteFinancierIrfs(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     TYPE_CHOICES = [
         ("Actif", _("Actif")),
         ("Passif", _("Passif")),
@@ -9433,6 +10401,9 @@ class CompteFinancierIrfs(models.Model):
         _("Sous-Type"), max_length=255, choices=SOUS_TYPE_CHOICES, blank=True, null=True
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return self.nom
 
@@ -9443,7 +10414,10 @@ class CompteFinancierIrfs(models.Model):
         return dict(CompteFinancierIrfs.SOUS_TYPE_CHOICES).get(self.sous_type, "")
 
 
-class ValeurCompteIrfs(models.Model):
+class ValeurCompteIrfs(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -9466,11 +10440,17 @@ class ValeurCompteIrfs(models.Model):
         "Devise", verbose_name=_("Devise"), on_delete=models.CASCADE
     )
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return f"{self.compte.nom} - {self.annee.nom}"
 
 
-class RatioFinancierIrfs(models.Model):
+class RatioFinancierIrfs(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     TYPE_RATIO_CHOICES = [
         ("Ratio financier", _("Ratio financier")),
         ("Liquidité", _("Liquidité")),
@@ -9486,11 +10466,17 @@ class RatioFinancierIrfs(models.Model):
     nom = models.CharField(_("Nom"), max_length=255)
     formule = models.CharField(_("Formule"), max_length=255)
 
+    history = HistoricalRecords()
+
+
     def __str__(self):
         return self.nom
 
 
-class ValeurRatioIrfs(models.Model):
+class ValeurRatioIrfs(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -9528,7 +10514,10 @@ class ValeurRatioIrfs(models.Model):
 # === Models Commandes client === #
 
 
-class CredendoCommande(models.Model):
+class CredendoCommande(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     sender_id = models.CharField(
         max_length=255, null=True, blank=True
     )  # ID unique du mail
@@ -9572,7 +10561,10 @@ class CredendoCommande(models.Model):
  
 
 
-class ScoringSansBilanAcheteur(models.Model):
+class ScoringSansBilanAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
     code = models.CharField(
         _("Code"), max_length=50, unique=True, null=True, blank=True
     )
@@ -9641,6 +10633,9 @@ class ScoringSansBilanAcheteur(models.Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+
+    history = HistoricalRecords()
+
 
     def __str__(self):
         return (
@@ -9757,5 +10752,101 @@ class ScoringSansBilanAcheteur(models.Model):
 ##########################################################
 ##########################################################
 # Debut Scoring de defaillance
+##########################################################
+##########################################################
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut Emailling
+##########################################################
+##########################################################
+from django.db import models
+from django.conf import settings
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
+
+AUTH_USER_MODEL = settings.AUTH_USER_MODEL
+
+
+class MailInfo(SafeDeleteModel):
+    safedelete_policy = SOFT_DELETE_CASCADE
+
+    date_sent = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    # Un mail peut concerner plusieurs commandes
+    commands = models.ManyToManyField('Commande')
+
+    success = models.BooleanField(default=False)
+
+    # Historique complet
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"Mail envoyé le {self.date_sent} par {self.user}"
+
+
+class MailAttachment(SafeDeleteModel):
+    safedelete_policy = SOFT_DELETE_CASCADE
+
+    # Fichier joint
+    upload = models.FileField(
+        upload_to='uploads/mail_attachments/%Y/%m/',
+        max_length=10000
+    )
+
+    # Un fichier joint peut appartenir à un mail (ou pas)
+    mailinfo = models.ForeignKey(
+        MailInfo,
+        on_delete=models.SET_NULL,   # évite erreurs référentielles
+        blank=True,
+        null=True
+    )
+
+    # Historique des fichiers joints
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return self.upload.name
+
+
+##########################################################
+##########################################################
+# Fin Emailling
+##########################################################
+##########################################################
+
+
+
+
+
+
+##########################################################
+##########################################################
+# Debut API
+##########################################################
+##########################################################
+
+
+class DocDownload(models.Model):
+    acheteur = models.ForeignKey(Acheteur, on_delete=models.CASCADE)
+    client = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "%s requested %s" % (self.client.username, self.acheteur.nom)
+
+
+
+
+
+##########################################################
+##########################################################
+# Fin API
 ##########################################################
 ##########################################################

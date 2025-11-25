@@ -29,6 +29,7 @@ from django.utils import timezone
 from faker import Faker
 import random
 from django.db.models import Q
+from main.utils import generate_test_commandes
 
 
 CustomUser = get_user_model()
@@ -1532,6 +1533,58 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
     return render(
         request,
         "main/root/acheteur/reporting/dash_root_manage_acheteur_report_solvency.html",
+        context,
+    )
+
+
+@login_required
+def dash_root_manage_acheteur_emailling(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+    # Générer 15 commandes
+    # NETTOYAGE AVANT GÉNÉRATION (optionnel - décommenter si besoin)
+    cleanup_done = False
+    if request.GET.get('cleanup') == 'true':
+        from main.utils import cleanup_test_data
+        cleanup_test_data(keep_today=False)
+        cleanup_done = True
+        print("🧹 Nettoyage effectué à la demande")
+    
+    # Générer des commandes seulement si nécessaire
+    from main.utils import generate_test_commandes
+    if Commande.objects.count() < 10:  # Seulement si peu de commandes
+        print("🎯 Génération de commandes de test...")
+        generate_test_commandes(15)
+    
+    # Afficher des infos de debug
+    clients_count = Client.objects.count()
+    commandes_count = Commande.objects.count()
+    print(f"🔍 Debug - Clients: {clients_count}, Commandes: {commandes_count}")
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+        "coloration_list": coloration_list,
+    }
+    return render(
+        request,
+        "main/root/acheteur/mailing/dash_root_manage_acheteur_emailling.html",
         context,
     )
 
