@@ -1605,7 +1605,7 @@ def get_structured_ratios_data(acheteur, years):
     return structured_data
 
 
-def get_charts_structure_financiere_data(acheteur, years):
+def get_charts_structure_financiere_data_v1(acheteur, years):
     """
     Génère les données pour le chart de structure financière
     """
@@ -1707,7 +1707,8 @@ def get_charts_structure_financiere_data(acheteur, years):
     image_base64 = generate_chart_image(charts_data)
     return image_base64
 
-def get_charts_rentabilite_financiere_data(acheteur, years):
+
+def get_charts_rentabilite_financiere_data_v1(acheteur, years):
     """
     Génère les données pour le chart de rentabilité financière
     """
@@ -1824,8 +1825,7 @@ def get_charts_rentabilite_financiere_data(acheteur, years):
     return image_base64
 
 
-
-def get_charts_delais_data(acheteur, years):
+def get_charts_delais_data_v1(acheteur, years):
     """
     Génère les données pour le chart des délais
     """
@@ -1942,10 +1942,253 @@ def get_charts_delais_data(acheteur, years):
     return image_base64
 
 
+def get_charts_structure_financiere_data(acheteur, years):
+    """
+    Génère les données pour le chart de structure financière AVEC GESTION D'ERREURS
+    """
+    try:
+        actif_model = ActifC
+        passif_model = PassifC
+        resultat_model = ResultatC
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        fdr_data = []
+        fdrn_data = []
+        aufin_data = []
+        lr_data = []
+        li_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            fdr_data.append(float(ratio.fonds_de_roulement) if ratio and ratio.fonds_de_roulement else 0.0)
+            fdrn_data.append(float(ratio.fonds_de_roulement_normatif) if ratio and ratio.fonds_de_roulement_normatif else 0.0)
+            aufin_data.append(float(ratio.autonomie_fin) if ratio and ratio.autonomie_fin else 0.0)
+            lr_data.append(float(ratio.liquidite_reduite) if ratio and ratio.liquidite_reduite else 0.0)
+            li_data.append(float(ratio.liquidite_immediat) if ratio and ratio.liquidite_immediat else 0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, fdr_data, label='FDR - Fonds de Roulement Net Global', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, fdrn_data, label='FDRN - Fonds de Roulement Normatif', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, aufin_data, label='AUFIN - Autonomie Financière', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, lr_data, label='LR - Liquidité Réduite', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, li_data, label='LI - Liquidité Immédiate', marker='v', linewidth=2, color='#9467bd')
+        
+        # Personnaliser le graphique
+        plt.title('Structure Financière', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Années', fontsize=12)
+        plt.ylabel('Valeurs', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_structure_financiere_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
+def get_charts_rentabilite_financiere_data(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité financière AVEC GESTION D'ERREURS
+    """
+    try:
+        actif_model = ActifC
+        passif_model = PassifC
+        resultat_model = ResultatC
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        caf_data = []
+        caht_data = []
+        re_data = []
+        ref_data = []
+        rop_data = []
+        cff_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            caf_data.append(float(ratio.chiffre_d_affaires) if ratio and ratio.chiffre_d_affaires else 0.0)
+            caht_data.append(float(ratio.chiffre_d_affaires_hors_taxe) if ratio and ratio.chiffre_d_affaires_hors_taxe else 0.0)
+            re_data.append(float(ratio.rentabilite_economique) if ratio and ratio.rentabilite_economique else 0.0)
+            ref_data.append(float(ratio.rentabilite_fin) if ratio and ratio.rentabilite_fin else 0.0)
+            rop_data.append(float(ratio.rentabilite_de_loutil_de_production) if ratio and ratio.rentabilite_de_loutil_de_production else 0.0)
+            cff_data.append(float(ratio.couverture_des_frais_financiers) if ratio and ratio.couverture_des_frais_financiers else 0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, caf_data, label='CAF - Chiffre d\'Affaires', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, caht_data, label='CAHT - Chiffre d\'Affaires Hors Taxes', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, re_data, label='RE - Rentabilité Économique', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, ref_data, label='REF - Rentabilité Financière', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, rop_data, label='ROP - Rentabilité Outil de Production', marker='v', linewidth=2, color='#9467bd')
+        plt.plot(labels, cff_data, label='CFF - Couverture Frais Financiers', marker='*', linewidth=2, color='#8c564b')
+        
+        # Personnaliser le graphique
+        plt.title('Rentabilité Financière', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Années', fontsize=12)
+        plt.ylabel('Valeurs', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_rentabilite_financiere_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
+def get_charts_delais_data(acheteur, years):
+    """
+    Génère les données pour le chart des délais AVEC GESTION D'ERREURS
+    """
+    try:
+        actif_model = ActifC
+        passif_model = PassifC
+        resultat_model = ResultatC
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosClassique(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        rsmp_data = []
+        rspf_data = []
+        rstmt_data = []
+        rsts_data = []
+        cc_data = []
+        cf_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            rsmp_data.append(float(ratio.rotation_des_stock_de_mp) if ratio and ratio.rotation_des_stock_de_mp else 0.0)
+            rspf_data.append(float(ratio.rotation_des_stock_de_pf) if ratio and ratio.rotation_des_stock_de_pf else 0.0)
+            rstmt_data.append(float(ratio.rotation_des_stock_de_marchandises) if ratio and ratio.rotation_des_stock_de_marchandises else 0.0)
+            rsts_data.append(float(ratio.rotation_des_stock_de_services) if ratio and ratio.rotation_des_stock_de_services else 0.0)
+            cc_data.append(float(ratio.credit_clients) if ratio and ratio.credit_clients else 0.0)
+            cf_data.append(float(ratio.credits_fournisseurs) if ratio and ratio.credits_fournisseurs else 0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, rsmp_data, label='RSMP - Rotation Stocks MP (jours)', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, rspf_data, label='RSPF - Rotation Stocks PF (jours)', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, rstmt_data, label='RSTM - Rotation Stocks Marchandises (jours)', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, rsts_data, label='RSTS - Rotation Stocks Services (jours)', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, cc_data, label='CC - Crédit Clients (jours)', marker='v', linewidth=2, color='#9467bd')
+        plt.plot(labels, cf_data, label='CF - Crédit Fournisseurs (jours)', marker='*', linewidth=2, color='#8c564b')
+        
+        # Personnaliser le graphique
+        plt.title('Délais', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Années', fontsize=12)
+        plt.ylabel('Jours', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_delais_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 
@@ -2356,7 +2599,7 @@ def get_structured_resultat_syscohada_data(acheteur, years):
     return _build_structured_data(structure_map, data_by_year, years)
 
 
-def get_structured_ratios_syscohada_data(acheteur, years):
+def get_structured_ratios_syscohada_data_v1(acheteur, years):
     """
     Récupère et structure les ratios pour le bilan SYSCOHADA.
     """
@@ -2393,6 +2636,510 @@ def get_structured_ratios_syscohada_data(acheteur, years):
     return _build_ratios_data(structure_map, ratios_by_year, years)
 
 
+def get_structured_ratios_syscohada_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan SYSCOHADA (version étendue)
+    """
+    actif_model = ActifS
+    passif_model = PassifS
+    resultat_model = ResultatS
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+
+        if actif_instance and passif_instance and resultat_instance:
+            ratios_by_year[year] = RatiosSyscohada(actif_instance, passif_instance, resultat_instance)
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "STRUCTURE FINANCIÈRE": [
+            {'label': "Fonds de roulement", 'key': 'fonds_de_roulement'},
+            {'label': "Autonomie financière", 'key': 'autonomie_financiere'},
+            {'label': "Ratio d'endettement", 'key': 'rotation_dendettement'},
+            {'label': "Ratio dette/capitaux propres", 'key': 'rotation_dette_capitaux_propres'},
+        ],
+        "LIQUIDITÉ": [
+            {'label': "Liquidité générale", 'key': 'liquidite_general'},
+            {'label': "Liquidité réduite", 'key': 'liquidite_reduite'},
+            {'label': "Liquidité immédiate", 'key': 'liquidite_immediate'},
+            {'label': "Ratio courant", 'key': 'ratio_courant'},
+        ],
+        "RENTABILITÉ": [
+            {'label': "Capacité d'autofinancement", 'key': 'cafsys'},
+            {'label': "Marge nette", 'key': 'benefice_net_chiffre_affaire'},
+            {'label': "ROE (Return on Equity)", 'key': 'benefice_net'},
+            {'label': "Couverture des intérêts", 'key': 'ratio_des_couverture_des_interets'},
+        ],
+        "GESTION": [
+            {'label': "Rotation des stocks (jours)", 'key': 'rotation_stock'},
+            {'label': "Jours de collecte moyens", 'key': 'jour_collecte_moyens'},
+            {'label': "Jours de paiement moyens", 'key': 'moyen_paiement'},
+            {'label': "Rotation des créances", 'key': 'compte_debiteur'},
+        ],
+        "EFFICIENCE": [
+            {'label': "Rotation de l'actif", 'key': 'rotation_actif'},
+            {'label': "Turnover", 'key': 'turnover'},
+            {'label': "EBITDA/Chiffre d'affaires", 'key': 'ebitda_chiffre_affaire'},
+            {'label': "Ratio financier", 'key': 'ratio_financier'},
+        ]
+    }
+    return _build_ratios_data(structure_map, ratios_by_year, years)
+
+# Les methodes pour les graphiques
+# La structure financiere
+# La rentabilite
+# Les delais
+def get_charts_structure_financiere_syscohada_data(acheteur, years):
+    """
+    Génère les données pour le chart de structure financière SYSCOHADA
+    """
+    try:
+        actif_model = ActifS
+        passif_model = PassifS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance:
+                data_by_year[year] = {
+                    'actif': actif_instance,
+                    'passif': passif_instance
+                }
+                has_data = True
+            else:
+                data_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        total_actif_data = []
+        total_passif_data = []
+        capitaux_propres_data = []
+        dettes_long_terme_data = []
+        dettes_court_terme_data = []
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                actif = data['actif']
+                passif = data['passif']
+                
+                total_actif_data.append(float(actif.total_actif) if actif.total_actif else 0.0)
+                total_passif_data.append(float(passif.total_passifs) if passif.total_passifs else 0.0)
+                capitaux_propres_data.append(float(passif.total_capitaux_propres_ressources_similaires) if passif.total_capitaux_propres_ressources_similaires else 0.0)
+                dettes_long_terme_data.append(float(passif.total_dettes_financieres_ressources_similaires) if passif.total_dettes_financieres_ressources_similaires else 0.0)
+                dettes_court_terme_data.append(float(passif.total_passifs_courants) if passif.total_passifs_courants else 0.0)
+            else:
+                total_actif_data.append(0.0)
+                total_passif_data.append(0.0)
+                capitaux_propres_data.append(0.0)
+                dettes_long_terme_data.append(0.0)
+                dettes_court_terme_data.append(0.0)
+        
+        # Normaliser les données (division par 1M pour meilleure lisibilité)
+        total_actif_data = [x / 1000000 for x in total_actif_data]
+        total_passif_data = [x / 1000000 for x in total_passif_data]
+        capitaux_propres_data = [x / 1000000 for x in capitaux_propres_data]
+        dettes_long_terme_data = [x / 1000000 for x in dettes_long_terme_data]
+        dettes_court_terme_data = [x / 1000000 for x in dettes_court_terme_data]
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, total_actif_data, label='Total Actif (M)', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, total_passif_data, label='Total Passif (M)', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, capitaux_propres_data, label='Capitaux Propres (M)', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, dettes_long_terme_data, label='Dettes Long Terme (M)', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, dettes_court_terme_data, label='Dettes Court Terme (M)', marker='v', linewidth=2, color='#9467bd')
+        
+        # Personnaliser le graphique
+        plt.title('Structure Financière SYSCOHADA', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Années', fontsize=12)
+        plt.ylabel('Montants (M)', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_structure_financiere_syscohada_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def get_charts_rentabilite_financiere_syscohada_data_v1(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité financière SYSCOHADA
+    """
+    try:
+        resultat_model = ResultatS
+        actif_model = ActifS
+        passif_model = PassifS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if resultat_instance and actif_instance and passif_instance:
+                ratios = RatiosSyscohada(actif_instance, passif_instance, resultat_instance)
+                data_by_year[year] = {
+                    'resultat': resultat_instance,
+                    'ratios': ratios
+                }
+                has_data = True
+            else:
+                data_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        chiffre_affaires_data = []
+        resultat_net_data = []
+        marge_nette_data = []
+        roe_data = []
+        roa_data = []
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                resultat = data['resultat']
+                ratios = data['ratios']
+                
+                chiffre_affaires_data.append(float(resultat.chiffre_affaires) if resultat.chiffre_affaires else 0.0)
+                resultat_net_data.append(float(resultat.resultat_net) if resultat.resultat_net else 0.0)
+                
+                # Calcul des ratios
+                marge_nette = ratios.benefice_net_chiffre_affaire
+                roe = ratios.benefice_net
+                roa = ratios.resultat_net / float(actif_instance.total_actif) if actif_instance and actif_instance.total_actif else 0.0
+                
+                marge_nette_data.append(float(marge_nette) if marge_nette else 0.0)
+                roe_data.append(float(roe) if roe else 0.0)
+                roa_data.append(float(roa) if roa else 0.0)
+            else:
+                chiffre_affaires_data.append(0.0)
+                resultat_net_data.append(0.0)
+                marge_nette_data.append(0.0)
+                roe_data.append(0.0)
+                roa_data.append(0.0)
+        
+        # Normaliser les données financières
+        chiffre_affaires_data = [x / 1000000 for x in chiffre_affaires_data]
+        resultat_net_data = [x / 1000000 for x in resultat_net_data]
+        
+        # Créer le graphique avec deux axes y
+        fig, ax1 = plt.subplots(figsize=(12, 8))
+        
+        # Axe principal pour les montants financiers
+        ax1.plot(labels, chiffre_affaires_data, label='Chiffre d\'affaires (M)', marker='o', linewidth=2, color='#1f77b4')
+        ax1.plot(labels, resultat_net_data, label='Résultat net (M)', marker='s', linewidth=2, color='#ff7f0e')
+        
+        ax1.set_xlabel('Années', fontsize=12)
+        ax1.set_ylabel('Montants (M)', fontsize=12, color='black')
+        ax1.tick_params(axis='y', labelcolor='black')
+        ax1.grid(True, alpha=0.3)
+        
+        # Axe secondaire pour les ratios
+        ax2 = ax1.twinx()
+        ax2.plot(labels, marge_nette_data, label='Marge nette (%)', marker='^', linewidth=2, color='#2ca02c')
+        ax2.plot(labels, roe_data, label='ROE (%)', marker='d', linewidth=2, color='#d62728')
+        ax2.plot(labels, roa_data, label='ROA (%)', marker='v', linewidth=2, color='#9467bd')
+        
+        ax2.set_ylabel('Ratios (%)', fontsize=12, color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+        
+        # Titre et légende
+        plt.title('Rentabilité Financière SYSCOHADA', fontsize=16, fontweight='bold', pad=20)
+        
+        # Combiner les légendes des deux axes
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_rentabilite_financiere_syscohada_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def get_charts_rentabilite_financiere_syscohada_data(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité financière SYSCOHADA - VERSION CORRIGEE
+    """
+    try:
+        resultat_model = ResultatS
+        actif_model = ActifS
+        passif_model = PassifS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if resultat_instance and actif_instance and passif_instance:
+                ratios = RatiosSyscohada(actif_instance, passif_instance, resultat_instance)
+                data_by_year[year] = {
+                    'resultat': resultat_instance,
+                    'actif': actif_instance,
+                    'passif': passif_instance,
+                    'ratios': ratios
+                }
+                has_data = True
+        
+        if not has_data:
+            print("Aucune donnée complète trouvée pour la rentabilité")
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut et gestion d'erreurs
+        chiffre_affaires_data = []
+        resultat_net_data = []
+        marge_nette_data = []
+        roe_data = []
+        roa_data = []
+        ebitda_data = []
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                resultat = data['resultat']
+                actif = data['actif']
+                ratios = data['ratios']
+                
+                # Chiffre d'affaires avec valeur par défaut
+                ca = float(resultat.chiffre_affaires) if resultat.chiffre_affaires else 0.0
+                chiffre_affaires_data.append(ca)
+                
+                # Résultat net avec valeur par défaut
+                rn = float(resultat.resultat_net) if resultat.resultat_net else 0.0
+                resultat_net_data.append(rn)
+                
+                # Marge nette (%) - gestion de division par zéro
+                marge_nette = 0.0
+                if ca != 0 and rn is not None:
+                    marge_nette = (rn / ca) * 100
+                marge_nette_data.append(marge_nette)
+                
+                # ROE (%) - Return on Equity
+                roe = 0.0
+                capitaux_propres = float(actif.total_actif) - (float(data['passif'].total_dettes_financieres_ressources_similaires or 0) + float(data['passif'].total_passifs_courants or 0))
+                if capitaux_propres != 0 and rn is not None:
+                    roe = (rn / capitaux_propres) * 100
+                roe_data.append(roe)
+                
+                # ROA (%) - Return on Assets
+                roa = 0.0
+                total_actif_val = float(actif.total_actif) if actif.total_actif else 1.0
+                if total_actif_val != 0 and rn is not None:
+                    roa = (rn / total_actif_val) * 100
+                roa_data.append(roa)
+                
+                # EBITDA
+                ebitda_val = float(resultat.excedent_brute_exploitation) if resultat.excedent_brute_exploitation else 0.0
+                ebitda_data.append(ebitda_val)
+                
+            else:
+                # Valeurs par défaut si données manquantes
+                chiffre_affaires_data.append(0.0)
+                resultat_net_data.append(0.0)
+                marge_nette_data.append(0.0)
+                roe_data.append(0.0)
+                roa_data.append(0.0)
+                ebitda_data.append(0.0)
+        
+        # Vérifier s'il y a des données non nulles
+        has_financial_data = any(x != 0 for x in chiffre_affaires_data)
+        has_ratio_data = any(x != 0 for x in marge_nette_data + roe_data + roa_data)
+        
+        if not has_financial_data and not has_ratio_data:
+            print("Toutes les données de rentabilité sont nulles")
+            return None
+        
+        # Normaliser les données financières (division par 1000 pour meilleure lisibilité)
+        chiffre_affaires_data = [x / 1000 for x in chiffre_affaires_data]
+        resultat_net_data = [x / 1000 for x in resultat_net_data]
+        ebitda_data = [x / 1000 for x in ebitda_data]
+        
+        # Créer le graphique avec deux axes y
+        fig, ax1 = plt.subplots(figsize=(12, 8))
+        
+        # Axe principal pour les montants financiers
+        line1 = ax1.plot(labels, chiffre_affaires_data, label='Chiffre d\'affaires (K)', marker='o', linewidth=2, color='#1f77b4')
+        line2 = ax1.plot(labels, resultat_net_data, label='Résultat net (K)', marker='s', linewidth=2, color='#ff7f0e')
+        line3 = ax1.plot(labels, ebitda_data, label='EBITDA (K)', marker='^', linewidth=2, color='#8c564b')
+        
+        ax1.set_xlabel('Années', fontsize=12)
+        ax1.set_ylabel('Montants (K)', fontsize=12, color='black')
+        ax1.tick_params(axis='y', labelcolor='black')
+        ax1.grid(True, alpha=0.3)
+        
+        # Axe secondaire pour les ratios
+        ax2 = ax1.twinx()
+        line4 = ax2.plot(labels, marge_nette_data, label='Marge nette (%)', marker='d', linewidth=2, color='#2ca02c', linestyle='--')
+        line5 = ax2.plot(labels, roe_data, label='ROE (%)', marker='v', linewidth=2, color='#d62728', linestyle='--')
+        line6 = ax2.plot(labels, roa_data, label='ROA (%)', marker='*', linewidth=2, color='#9467bd', linestyle='--')
+        
+        ax2.set_ylabel('Ratios (%)', fontsize=12, color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+        
+        # Titre et légende
+        plt.title('Rentabilité Financière SYSCOHADA', fontsize=16, fontweight='bold', pad=20)
+        
+        # Combiner les légendes des deux axes
+        lines = line1 + line2 + line3 + line4 + line5 + line6
+        labels = [l.get_label() for l in lines]
+        ax1.legend(lines, labels, bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        print("Graphique de rentabilité généré avec succès")
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_rentabilite_financiere_syscohada_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def get_charts_delais_syscohada_data(acheteur, years):
+    """
+    Génère les données pour le chart des délais SYSCOHADA
+    """
+    try:
+        actif_model = ActifS
+        passif_model = PassifS
+        resultat_model = ResultatS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosSyscohada(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        dso_data = []
+        dpo_data = []
+        rotation_stock_data = []
+        rotation_creances_data = []
+        liquidite_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            dso_data.append(float(ratio.jour_collecte_moyens) if ratio and ratio.jour_collecte_moyens is not None else 0.0)
+            dpo_data.append(float(ratio.moyen_paiement) if ratio and ratio.moyen_paiement is not None else 0.0)
+            rotation_stock_data.append(float(ratio.rotation_stock) if ratio and ratio.rotation_stock is not None else 0.0)
+            rotation_creances_data.append(float(ratio.compte_debiteur) if ratio and ratio.compte_debiteur is not None else 0.0)
+            liquidite_data.append(float(ratio.liquidite_general) if ratio and ratio.liquidite_general is not None else 0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, dso_data, label='Jours de collecte moyens', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, dpo_data, label='Jours de paiement moyens', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, rotation_stock_data, label='Rotation des stocks (jours)', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, rotation_creances_data, label='Rotation des créances', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, liquidite_data, label='Liquidité générale', marker='v', linewidth=2, color='#9467bd')
+        
+        # Personnaliser le graphique
+        plt.title('Délais et Rotation SYSCOHADA', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Années', fontsize=12)
+        plt.ylabel('Valeurs', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_delais_syscohada_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 #############################################################
@@ -2559,8 +3306,378 @@ def get_structured_ratios_ifrs_data(acheteur, years):
     return _build_ratios_data(structure_map, ratios_by_year, years)
 
 
+# Les graphiques ici !
+def get_charts_structure_financiere_ifrs_data(acheteur, years):
+    """
+    Génère les données pour le chart de structure financière IFRS COBAC
+    """
+    try:
+        actif_model = ActifIFRS
+        passif_model = PassifIFRS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance:
+                data_by_year[year] = {
+                    'actif': actif_instance,
+                    'passif': passif_instance
+                }
+                has_data = True
+            else:
+                data_by_year[year] = None
+        
+        if not has_data:
+            print("Aucune donnée complète trouvée pour la structure financière IFRS")
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        total_actif_data = []
+        total_passif_data = []
+        capitaux_propres_data = []
+        actif_non_courant_data = []
+        actif_courant_data = []
+        passif_non_courant_data = []
+        passif_courant_data = []
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                actif = data['actif']
+                passif = data['passif']
+                
+                total_actif_data.append(float(actif.total_actif) if actif.total_actif else 0.0)
+                total_passif_data.append(float(passif.total_passif) if passif.total_passif else 0.0)
+                capitaux_propres_data.append(float(passif.total_capitaux_propres) if passif.total_capitaux_propres else 0.0)
+                actif_non_courant_data.append(float(actif.total_actif_non_courant) if actif.total_actif_non_courant else 0.0)
+                actif_courant_data.append(float(actif.total_actif_courant) if actif.total_actif_courant else 0.0)
+                passif_non_courant_data.append(float(passif.total_passif_non_courant) if passif.total_passif_non_courant else 0.0)
+                passif_courant_data.append(float(passif.total_passif_courant) if passif.total_passif_courant else 0.0)
+            else:
+                total_actif_data.append(0.0)
+                total_passif_data.append(0.0)
+                capitaux_propres_data.append(0.0)
+                actif_non_courant_data.append(0.0)
+                actif_courant_data.append(0.0)
+                passif_non_courant_data.append(0.0)
+                passif_courant_data.append(0.0)
+        
+        # Normaliser les données (division par 1M pour meilleure lisibilité)
+        total_actif_data = [x / 1000000 for x in total_actif_data]
+        total_passif_data = [x / 1000000 for x in total_passif_data]
+        capitaux_propres_data = [x / 1000000 for x in capitaux_propres_data]
+        actif_non_courant_data = [x / 1000000 for x in actif_non_courant_data]
+        actif_courant_data = [x / 1000000 for x in actif_courant_data]
+        passif_non_courant_data = [x / 1000000 for x in passif_non_courant_data]
+        passif_courant_data = [x / 1000000 for x in passif_courant_data]
+        
+        # Créer le graphique
+        plt.figure(figsize=(14, 8))
+        
+        # Tracer les courbes principales
+        plt.plot(labels, total_actif_data, label='Total Assets (M)', marker='o', linewidth=3, color='#1f77b4')
+        plt.plot(labels, total_passif_data, label='Total Liabilities & Equity (M)', marker='s', linewidth=3, color='#ff7f0e')
+        plt.plot(labels, capitaux_propres_data, label='Shareholders Equity (M)', marker='^', linewidth=2, color='#2ca02c')
+        
+        # Tracer les sous-composantes
+        plt.plot(labels, actif_non_courant_data, label='Non-Current Assets (M)', marker='d', linewidth=2, color='#1f77b4', linestyle='--', alpha=0.7)
+        plt.plot(labels, actif_courant_data, label='Current Assets (M)', marker='v', linewidth=2, color='#1f77b4', linestyle=':', alpha=0.7)
+        plt.plot(labels, passif_non_courant_data, label='Non-Current Liabilities (M)', marker='<', linewidth=2, color='#ff7f0e', linestyle='--', alpha=0.7)
+        plt.plot(labels, passif_courant_data, label='Current Liabilities (M)', marker='>', linewidth=2, color='#ff7f0e', linestyle=':', alpha=0.7)
+        
+        # Personnaliser le graphique
+        plt.title('IFRS Financial Structure Analysis', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Years', fontsize=12)
+        plt.ylabel('Amounts (M)', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        print("Graphique de structure financière IFRS généré avec succès")
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_structure_financiere_ifrs_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
+def get_charts_rentabilite_financiere_ifrs_data(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité financière IFRS COBAC
+    """
+    try:
+        resultat_model = ResultatIFRS
+        actif_model = ActifIFRS
+        passif_model = PassifIFRS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if resultat_instance and actif_instance and passif_instance:
+                ratios = RatiosIFRS(actif=actif_instance, passif=passif_instance, resultat=resultat_instance)
+                data_by_year[year] = {
+                    'resultat': resultat_instance,
+                    'actif': actif_instance,
+                    'passif': passif_instance,
+                    'ratios': ratios
+                }
+                has_data = True
+            else:
+                data_by_year[year] = None
+        
+        if not has_data:
+            print("Aucune donnée complète trouvée pour la rentabilité IFRS")
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut et gestion d'erreurs
+        chiffre_affaires_data = []
+        resultat_net_data = []
+        resultat_operationnel_data = []
+        roa_data = []
+        roe_data = []
+        marge_nette_data = []
+        marge_operationnelle_data = []
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                resultat = data['resultat']
+                actif = data['actif']
+                ratios = data['ratios']
+                
+                # Données financières
+                ca = float(resultat.chiffre_affaires) if resultat.chiffre_affaires else 0.0
+                rn = float(resultat.resultat_net) if resultat.resultat_net else 0.0
+                ro = float(resultat.resultat_operationnel) if resultat.resultat_operationnel else 0.0
+                
+                chiffre_affaires_data.append(ca)
+                resultat_net_data.append(rn)
+                resultat_operationnel_data.append(ro)
+                
+                # Ratios avec gestion d'erreurs
+                roa_val = float(ratios.roa) if ratios.roa is not None else 0.0
+                roe_val = float(ratios.roe) if ratios.roe is not None else 0.0
+                marge_nette_val = float(ratios.marge_nette) if ratios.marge_nette is not None else 0.0
+                marge_operationnelle_val = float(ratios.marge_operationnelle) if ratios.marge_operationnelle is not None else 0.0
+                
+                roa_data.append(roa_val)
+                roe_data.append(roe_val)
+                marge_nette_data.append(marge_nette_val)
+                marge_operationnelle_data.append(marge_operationnelle_val)
+                
+            else:
+                # Valeurs par défaut si données manquantes
+                chiffre_affaires_data.append(0.0)
+                resultat_net_data.append(0.0)
+                resultat_operationnel_data.append(0.0)
+                roa_data.append(0.0)
+                roe_data.append(0.0)
+                marge_nette_data.append(0.0)
+                marge_operationnelle_data.append(0.0)
+        
+        # Vérifier s'il y a des données non nulles
+        has_financial_data = any(x != 0 for x in chiffre_affaires_data)
+        has_ratio_data = any(x != 0 for x in roa_data + roe_data + marge_nette_data)
+        
+        if not has_financial_data and not has_ratio_data:
+            print("Toutes les données de rentabilité IFRS sont nulles")
+            return None
+        
+        # Normaliser les données financières (division par 1000 pour meilleure lisibilité)
+        chiffre_affaires_data = [x / 1000 for x in chiffre_affaires_data]
+        resultat_net_data = [x / 1000 for x in resultat_net_data]
+        resultat_operationnel_data = [x / 1000 for x in resultat_operationnel_data]
+        
+        # Créer le graphique avec deux axes y
+        fig, ax1 = plt.subplots(figsize=(14, 8))
+        
+        # Axe principal pour les montants financiers
+        line1 = ax1.plot(labels, chiffre_affaires_data, label='Revenue (K)', marker='o', linewidth=3, color='#1f77b4')
+        line2 = ax1.plot(labels, resultat_net_data, label='Net Income (K)', marker='s', linewidth=3, color='#ff7f0e')
+        line3 = ax1.plot(labels, resultat_operationnel_data, label='Operating Income (K)', marker='^', linewidth=2, color='#8c564b')
+        
+        ax1.set_xlabel('Years', fontsize=12)
+        ax1.set_ylabel('Amounts (K)', fontsize=12, color='black')
+        ax1.tick_params(axis='y', labelcolor='black')
+        ax1.grid(True, alpha=0.3)
+        
+        # Axe secondaire pour les ratios
+        ax2 = ax1.twinx()
+        line4 = ax2.plot(labels, roa_data, label='ROA (%)', marker='d', linewidth=2, color='#2ca02c', linestyle='--')
+        line5 = ax2.plot(labels, roe_data, label='ROE (%)', marker='v', linewidth=2, color='#d62728', linestyle='--')
+        line6 = ax2.plot(labels, marge_nette_data, label='Net Margin (%)', marker='*', linewidth=2, color='#9467bd', linestyle='--')
+        line7 = ax2.plot(labels, marge_operationnelle_data, label='Operating Margin (%)', marker='p', linewidth=2, color='#e377c2', linestyle='--')
+        
+        ax2.set_ylabel('Ratios (%)', fontsize=12, color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+        
+        # Titre et légende
+        plt.title('IFRS Profitability Analysis', fontsize=16, fontweight='bold', pad=20)
+        
+        # Combiner les légendes des deux axes
+        lines = line1 + line2 + line3 + line4 + line5 + line6 + line7
+        labels_legend = [l.get_label() for l in lines]
+        ax1.legend(lines, labels_legend, bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        print("Graphique de rentabilité IFRS généré avec succès")
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_rentabilite_financiere_ifrs_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def get_charts_delais_ifrs_data(acheteur, years):
+    """
+    Génère les données pour le chart des délais et gestion IFRS COBAC
+    """
+    try:
+        actif_model = ActifIFRS
+        passif_model = PassifIFRS
+        resultat_model = ResultatIFRS
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosIFRS(actif=actif_instance, passif=passif_instance, resultat=resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            print("Aucune donnée complète trouvée pour les délais IFRS")
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        dso_data = []
+        liquidite_generale_data = []
+        liquidite_immediate_data = []
+        rotation_actifs_data = []
+        ratio_endettement_data = []
+        couverture_interets_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            if ratio:
+                dso_data.append(float(ratio.dso) if ratio.dso is not None else 0.0)
+                liquidite_generale_data.append(float(ratio.liquidite_generale) if ratio.liquidite_generale is not None else 0.0)
+                liquidite_immediate_data.append(float(ratio.liquidite_immediate) if ratio.liquidite_immediate is not None else 0.0)
+                rotation_actifs_data.append(float(ratio.rotation_des_actifs) if ratio.rotation_des_actifs is not None else 0.0)
+                ratio_endettement_data.append(float(ratio.ratio_endettement_total) if ratio.ratio_endettement_total is not None else 0.0)
+                couverture_interets_data.append(float(ratio.ratio_couverture_interets) if ratio.ratio_couverture_interets is not None else 0.0)
+            else:
+                dso_data.append(0.0)
+                liquidite_generale_data.append(0.0)
+                liquidite_immediate_data.append(0.0)
+                rotation_actifs_data.append(0.0)
+                ratio_endettement_data.append(0.0)
+                couverture_interets_data.append(0.0)
+        
+        # Vérifier s'il y a des données non nulles
+        has_ratio_data = any(x != 0 for x in dso_data + liquidite_generale_data + rotation_actifs_data)
+        
+        if not has_ratio_data:
+            print("Toutes les données de délais IFRS sont nulles")
+            return None
+        
+        # Créer le graphique avec deux axes y pour différentes échelles
+        fig, ax1 = plt.subplots(figsize=(14, 8))
+        
+        # Axe principal pour les ratios de liquidité et rotation
+        line1 = ax1.plot(labels, liquidite_generale_data, label='Current Ratio', marker='o', linewidth=3, color='#1f77b4')
+        line2 = ax1.plot(labels, liquidite_immediate_data, label='Quick Ratio', marker='s', linewidth=3, color='#ff7f0e')
+        line3 = ax1.plot(labels, rotation_actifs_data, label='Asset Turnover (%)', marker='^', linewidth=2, color='#2ca02c')
+        
+        ax1.set_xlabel('Years', fontsize=12)
+        ax1.set_ylabel('Ratio Values', fontsize=12, color='black')
+        ax1.tick_params(axis='y', labelcolor='black')
+        ax1.grid(True, alpha=0.3)
+        
+        # Axe secondaire pour DSO et ratio d'endettement
+        ax2 = ax1.twinx()
+        line4 = ax2.plot(labels, dso_data, label='DSO (Days)', marker='d', linewidth=2, color='#d62728', linestyle='--')
+        line5 = ax2.plot(labels, ratio_endettement_data, label='Debt Ratio (%)', marker='v', linewidth=2, color='#9467bd', linestyle='--')
+        line6 = ax2.plot(labels, couverture_interets_data, label='Interest Coverage', marker='*', linewidth=2, color='#8c564b', linestyle='--')
+        
+        ax2.set_ylabel('Days / % / Times', fontsize=12, color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+        
+        # Titre et légende
+        plt.title('IFRS Liquidity & Efficiency Analysis', fontsize=16, fontweight='bold', pad=20)
+        
+        # Combiner les légendes des deux axes
+        lines = line1 + line2 + line3 + line4 + line5 + line6
+        labels_legend = [l.get_label() for l in lines]
+        ax1.legend(lines, labels_legend, bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        print("Graphique des délais IFRS généré avec succès")
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_delais_ifrs_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 
@@ -2667,7 +3784,7 @@ def get_structured_resultat_anglais_data(acheteur, years):
 
     return _build_structured_data(structure_map, data_by_year, years)
 
-def get_structured_ratios_anglais_data(acheteur, years):
+def get_structured_ratios_anglais_data_v1(acheteur, years):
     """
     Récupère et structure les ratios pour le bilan anglais.
     """
@@ -2706,9 +3823,308 @@ def get_structured_ratios_anglais_data(acheteur, years):
 
     return _build_ratios_data(structure_map, ratios_by_year, years)
 
+def get_structured_ratios_anglais_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan anglais.
+    """
+    actif_model = ActifA
+    passif_model = PassifA
+    resultat_model = ResultatA
+
+    ratios_by_year = {}
+    for year in years:
+        actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        
+        if actif_instance and passif_instance and resultat_instance:
+            ratios_by_year[year] = RatiosAnglais(actif_instance, passif_instance, resultat_instance)
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "FINANCIAL STRUCTURE": [
+            {'label': "Solvency", 'key': 'solvabilite'},
+            {'label': "Financial autonomy", 'key': 'autonomie_financiere'},
+            {'label': "Debt ratio 1", 'key': 'ratio_endettement1'},
+            {'label': "Debt ratio 2", 'key': 'ratio_endettement2'},
+        ],
+        "LIQUIDITY": [
+            {'label': "Current ratio", 'key': 'liquidite_generale'},
+            {'label': "Quick ratio", 'key': 'liquidite_reduite'},
+        ],
+        "PROFITABILITY": [
+            {'label': "Return on equity (ROE)", 'key': 'rendement_capitaux_propres'},
+            {'label': "Net profit margin", 'key': 'taux_marge_net'},
+            {'label': "Interest coverage", 'key': 'ratios_couverture_interet'},
+        ],
+        "EFFICIENCY": [
+            {'label': "Days sales outstanding", 'key': 'jour_recouvrement_moyen'},
+            {'label': "Days payable outstanding", 'key': 'jour_paiement_moyen'},
+            {'label': "Receivables turnover", 'key': 'taux_rotation_creance'},
+            {'label': "Inventory turnover", 'key': 'taux_rotation_stock'},
+            {'label': "Asset turnover", 'key': 'taux_rotation_actif'},
+        ],
+    }
+
+    return _build_ratios_data(structure_map, ratios_by_year, years)
+
+################################################################
+#
+# Fonctions pour les graphiques anglais
+#
+################################################################
+def get_charts_structure_financiere_anglais_data(acheteur, years):
+    """
+    Génère les données pour le chart de structure financière anglais AVEC GESTION D'ERREURS
+    """
+    try:
+        actif_model = ActifA
+        passif_model = PassifA
+        resultat_model = ResultatA
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosAnglais(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        solv_data = []
+        auton_data = []
+        debt1_data = []
+        debt2_data = []
+        cr_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            solv_data.append(float(ratio.solvabilite) if ratio and ratio.solvabilite is not None else 0.0)
+            auton_data.append(float(ratio.autonomie_financiere) if ratio and ratio.autonomie_financiere is not None else 0.0)
+            debt1_data.append(float(ratio.ratio_endettement1) if ratio and ratio.ratio_endettement1 is not None else 0.0)
+            debt2_data.append(float(ratio.ratio_endettement2) if ratio and ratio.ratio_endettement2 is not None else 0.0)
+            cr_data.append(float(ratio.liquidite_generale) if ratio and ratio.liquidite_generale is not None else 0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, solv_data, label='SOLV - Solvency (Equity/Assets)', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, auton_data, label='AUTON - Financial Autonomy', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, debt1_data, label='DEBT1 - Debt Ratio 1', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, debt2_data, label='DEBT2 - Debt Ratio 2', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, cr_data, label='CR - Current Ratio', marker='v', linewidth=2, color='#9467bd')
+        
+        # Personnaliser le graphique
+        plt.title('Financial Structure', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Years', fontsize=12)
+        plt.ylabel('Ratio Values', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_structure_financiere_anglais_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 
+def get_charts_rentabilite_financiere_anglais_data(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité financière anglais AVEC GESTION D'ERREURS
+    """
+    try:
+        actif_model = ActifA
+        passif_model = PassifA
+        resultat_model = ResultatA
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        data_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosAnglais(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                data_by_year[year] = resultat_instance
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+                data_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données des ratios
+        roe_data = []
+        npm_data = []
+        ic_data = []
+        rev_data = []
+        np_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            instance = data_by_year.get(year)
+            
+            # Ratios
+            roe_data.append(float(ratio.rendement_capitaux_propres) if ratio and ratio.rendement_capitaux_propres is not None else 0.0)
+            npm_data.append(float(ratio.taux_marge_net) if ratio and ratio.taux_marge_net is not None else 0.0)
+            ic_data.append(float(ratio.ratios_couverture_interet) if ratio and ratio.ratios_couverture_interet is not None else 0.0)
+            
+            # Données financières (normalisées)
+            rev_value = instance.ventes if instance and instance.ventes else 0
+            np_value = instance.resultat_net if instance and instance.resultat_net else 0
+            rev_data.append(float(rev_value) / 1000000 if rev_value else 0.0)  # Division par 1M
+            np_data.append(float(np_value) / 1000000 if np_value else 0.0)    # Division par 1M
+        
+        # Créer le graphique avec une seule figure (pas d'axes multiples)
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer toutes les courbes sur le même axe
+        plt.plot(labels, roe_data, label='ROE - Return on Equity', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, npm_data, label='NPM - Net Profit Margin', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, ic_data, label='IC - Interest Coverage', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, rev_data, label='REV - Revenue (M)', marker='d', linewidth=2, color='#d62728', linestyle='--')
+        plt.plot(labels, np_data, label='NP - Net Profit (M)', marker='v', linewidth=2, color='#9467bd', linestyle='--')
+        
+        # Personnaliser le graphique
+        plt.title('Profitability Analysis', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Years', fontsize=12)
+        plt.ylabel('Values', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_rentabilite_financiere_anglais_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+
+def get_charts_delais_anglais_data(acheteur, years):
+    """
+    Génère les données pour le chart des délais anglais AVEC GESTION D'ERREURS
+    """
+    try:
+        actif_model = ActifA
+        passif_model = PassifA
+        resultat_model = ResultatA
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        ratios_by_year = {}
+        
+        for year in years:
+            actif_instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            passif_instance = passif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            resultat_instance = resultat_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if actif_instance and passif_instance and resultat_instance:
+                ratios = RatiosAnglais(actif_instance, passif_instance, resultat_instance)
+                ratios_by_year[year] = ratios
+                has_data = True
+            else:
+                ratios_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        dso_data = []
+        dpo_data = []
+        rt_data = []
+        it_data = []
+        at_data = []
+        
+        for year in years:
+            ratio = ratios_by_year.get(year)
+            dso_data.append(float(ratio.jour_recouvrement_moyen) if ratio and ratio.jour_recouvrement_moyen is not None else 0.0)
+            dpo_data.append(float(ratio.jour_paiement_moyen) if ratio and ratio.jour_paiement_moyen is not None else 0.0)
+            rt_data.append(float(ratio.taux_rotation_creance) if ratio and ratio.taux_rotation_creance is not None else 0.0)
+            it_data.append(float(ratio.taux_rotation_stock) if ratio and ratio.taux_rotation_stock is not None else 0.0)
+            at_data.append(float(ratio.taux_rotation_actif) if ratio and ratio.taux_rotation_actif is not None else 0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, dso_data, label='DSO - Days Sales Outstanding', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, dpo_data, label='DPO - Days Payable Outstanding', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, rt_data, label='RT - Receivables Turnover', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, it_data, label='IT - Inventory Turnover', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, at_data, label='AT - Asset Turnover', marker='v', linewidth=2, color='#9467bd')
+        
+        # Personnaliser le graphique
+        plt.title('Days Analysis', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Years', fontsize=12)
+        plt.ylabel('Values', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_delais_anglais_data: {str(e)}")
+        return None
 
 
 #############################################################
@@ -2758,6 +4174,7 @@ def get_structured_actif_bancaire_data(acheteur, years):
     }
 
     return _build_structured_data(structure_map, data_by_year, years)
+
 
 def get_structured_passif_bancaire_data(acheteur, years):
     """
@@ -2927,7 +4344,7 @@ def get_structured_hors_bilan_bancaire_data(acheteur, years):
     return _build_structured_data(structure_map, data_by_year, years)
 
 
-def get_structured_ratios_bancaire_data(acheteur, years):
+def get_structured_ratios_bancaire_data_v1(acheteur, years):
     """
     Récupère et structure les ratios pour le bilan bancaire.
     Utilise les mêmes formules et bornes que ScoreACREMACBilanBancaireService.
@@ -3010,7 +4427,403 @@ def get_structured_ratios_bancaire_data(acheteur, years):
     return _build_ratios_data_bancaire(structure_map, ratios_by_year, years)
 
 
+def get_structured_ratios_bancaire_data(acheteur, years):
+    """
+    Récupère et structure les ratios pour le bilan bancaire.
+    Utilise les mêmes formules et bornes que ScoreACREMACBilanBancaireService.
+    """
+    ratios_by_year = {}
+    for year in years:
+        assets_instance = Assets.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        liabilities_instance = Liabilities.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        products_instance = Products.objects.filter(acheteur=acheteur, annee__annee=year).first()
+        expenses_instance = Expenses.objects.filter(acheteur=acheteur, annee__annee=year).first()
 
+        if assets_instance and liabilities_instance and products_instance and expenses_instance:
+            # CORRECTION : Utiliser les champs directement, pas comme des méthodes
+            total_actif = float(assets_instance.total_assets) if assets_instance.total_assets else 1.0
+            total_passif = float(liabilities_instance.total_liabilities) if liabilities_instance.total_liabilities else 1.0
+            total_produit = float(products_instance.total_produit) if products_instance.total_produit else 1.0
+            total_charges = float(expenses_instance.total_des_charges) if expenses_instance.total_des_charges else 1.0
+
+            # Calcul des composantes en float
+            capitaux_propres = (
+                float(liabilities_instance.capital_ou_dotation or 0) +
+                float(liabilities_instance.primes_liees_reserve_capital or 0) +
+                float(liabilities_instance.benefices_non_distribue or 0) +
+                float(liabilities_instance.resultat_net_exercie or 0)
+            )
+            dettes_court_terme = (
+                float(liabilities_instance.dette_envers_clientelle or 0) +
+                float(liabilities_instance.autres_dette_a_vue or 0)
+            )
+            actifs_liquides = (
+                float(assets_instance.pret_interbancaire or 0) +
+                float(assets_instance.titres_placement or 0)
+            )
+            creance_clientele = float(assets_instance.creance_sur_la_clientele or 0)
+            resultat_net = total_produit - total_charges
+            interets_produits = float(products_instance.interet_produit_assimile or 0)
+
+            # Calcul des ratios en float
+            ratios = {
+                'r1': (capitaux_propres / total_actif) * 100 if total_actif else 0.0,  # Ratio de solvabilité
+                'r2': (actifs_liquides / dettes_court_terme) * 100 if dettes_court_terme else 0.0,  # Ratio de liquidité
+                'r3': (resultat_net / total_actif) * 100 if total_actif else 0.0,  # Ratio de rentabilité
+                'r4': (creance_clientele / total_actif) * 100 if total_actif else 0.0,  # Ratio de qualité des actifs
+                'r5': (total_charges / total_produit) * 100 if total_produit else 0.0,  # Ratio d'efficience
+                'r6': ((total_produit - interets_produits) / total_produit) * 100 if total_produit else 0.0,  # Ratio de diversification
+            }
+
+            # Application des bornes
+            ratios_bornees = {
+                'r1': max(4.0, min(20.0, ratios.get('r1', 0.0))),  # Solvabilité: 4% à 20%
+                'r2': max(80.0, min(120.0, ratios.get('r2', 0.0))),  # Liquidité: 80% à 120%
+                'r3': max(-5.0, min(3.0, ratios.get('r3', 0.0))),  # Rentabilité: -5% à 3%
+                'r4': max(0.0, min(60.0, ratios.get('r4', 0.0))),  # Qualité actifs: 0% à 60%
+                'r5': max(50.0, min(95.0, ratios.get('r5', 0.0))),  # Efficience: 50% à 95%
+                'r6': max(5.0, min(40.0, ratios.get('r6', 0.0))),  # Diversification: 5% à 40%
+            }
+
+            ratios_by_year[year] = {
+                'ratios': ratios,
+                'ratios_bornees': ratios_bornees,
+            }
+        else:
+            ratios_by_year[year] = None
+
+    structure_map = {
+        "FINANCIAL STRUCTURE": [
+            {'label': "Solvency Ratio (R1)", 'key': 'r1'},
+            {'label': "Liquidity Ratio (R2)", 'key': 'r2'},
+        ],
+        "PERFORMANCE": [
+            {'label': "Profitability Ratio (R3)", 'key': 'r3'},
+            {'label': "Asset Quality Ratio (R4)", 'key': 'r4'},
+        ],
+        "OPERATIONAL EFFICIENCY": [
+            {'label': "Efficiency Ratio (R5)", 'key': 'r5'},
+            {'label': "Revenue Diversification Ratio (R6)", 'key': 'r6'},
+        ]
+    }
+
+    return _build_ratios_data_bancaire(structure_map, ratios_by_year, years)
+
+
+# Les graphiques
+def get_charts_structure_financiere_bancaire_data(acheteur, years):
+    """
+    Génère les données pour le chart de structure financière bancaire AVEC GESTION D'ERREURS
+    """
+    try:
+        assets_model = Assets
+        liabilities_model = Liabilities
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            assets_instance = assets_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            liabilities_instance = liabilities_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if assets_instance and liabilities_instance:
+                data_by_year[year] = {
+                    'assets': assets_instance,
+                    'liabilities': liabilities_instance
+                }
+                has_data = True
+            else:
+                data_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        total_assets_data = []
+        total_liabilities_data = []
+        equity_data = []
+        interbank_assets_data = []
+        customer_loans_data = []
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                assets = data['assets']
+                liabilities = data['liabilities']
+                
+                total_assets_data.append(float(assets.total_assets) if assets.total_assets else 0.0)
+                total_liabilities_data.append(float(liabilities.total_liabilities) if liabilities.total_liabilities else 0.0)
+                
+                # Calcul des capitaux propres
+                equity = (
+                    (liabilities.capital_ou_dotation or 0) +
+                    (liabilities.primes_liees_reserve_capital or 0) +
+                    (liabilities.benefices_non_distribue or 0) +
+                    (liabilities.resultat_net_exercie or 0)
+                )
+                equity_data.append(float(equity))
+                
+                interbank_assets_data.append(float(assets.pret_interbancaire) if assets.pret_interbancaire else 0.0)
+                customer_loans_data.append(float(assets.creance_sur_la_clientele) if assets.creance_sur_la_clientele else 0.0)
+            else:
+                total_assets_data.append(0.0)
+                total_liabilities_data.append(0.0)
+                equity_data.append(0.0)
+                interbank_assets_data.append(0.0)
+                customer_loans_data.append(0.0)
+        
+        # Normaliser les données (division par 1M pour meilleure lisibilité)
+        total_assets_data = [x / 1000000 for x in total_assets_data]
+        total_liabilities_data = [x / 1000000 for x in total_liabilities_data]
+        equity_data = [x / 1000000 for x in equity_data]
+        interbank_assets_data = [x / 1000000 for x in interbank_assets_data]
+        customer_loans_data = [x / 1000000 for x in customer_loans_data]
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes
+        plt.plot(labels, total_assets_data, label='Total Assets (M)', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, total_liabilities_data, label='Total Liabilities (M)', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, equity_data, label='Shareholders Equity (M)', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, interbank_assets_data, label='Interbank Assets (M)', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, customer_loans_data, label='Customer Loans (M)', marker='v', linewidth=2, color='#9467bd')
+        
+        # Personnaliser le graphique
+        plt.title('Bank Financial Structure', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Years', fontsize=12)
+        plt.ylabel('Amounts (M)', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_structure_financiere_bancaire_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def get_charts_rentabilite_bancaire_data(acheteur, years):
+    """
+    Génère les données pour le chart de rentabilité bancaire AVEC GESTION D'ERREURS
+    """
+    try:
+        products_model = Products
+        expenses_model = Expenses
+        assets_model = Assets
+        
+        # Vérifier s'il y a des données
+        has_data = False
+        data_by_year = {}
+        
+        for year in years:
+            products_instance = products_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            expenses_instance = expenses_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            assets_instance = assets_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
+            
+            if products_instance and expenses_instance and assets_instance:
+                data_by_year[year] = {
+                    'products': products_instance,
+                    'expenses': expenses_instance,
+                    'assets': assets_instance
+                }
+                has_data = True
+            else:
+                data_by_year[year] = None
+        
+        if not has_data:
+            return None
+        
+        # Préparer les données
+        labels = [str(year) for year in years]
+        
+        # Récupérer les données avec valeurs par défaut
+        total_income_data = []
+        total_expenses_data = []
+        net_income_data = []
+        interest_income_data = []
+        other_income_data = []
+        roa_data = []  # Return on Assets
+        
+        for year in years:
+            data = data_by_year.get(year)
+            if data:
+                products = data['products']
+                expenses = data['expenses']
+                assets = data['assets']
+                
+                total_income = float(products.total_produit) if products.total_produit else 0.0
+                total_expenses = float(expenses.total_des_charges) if expenses.total_des_charges else 0.0
+                net_income = total_income - total_expenses
+                interest_income = float(products.interet_produit_assimile) if products.interet_produit_assimile else 0.0
+                other_income = total_income - interest_income
+                total_assets = float(assets.total_assets) if assets.total_assets else 1.0
+                
+                total_income_data.append(total_income / 1000000)  # Normalisation
+                total_expenses_data.append(total_expenses / 1000000)
+                net_income_data.append(net_income / 1000000)
+                interest_income_data.append(interest_income / 1000000)
+                other_income_data.append(other_income / 1000000)
+                roa_data.append((net_income / total_assets) * 100 if total_assets else 0.0)  # ROA en %
+            else:
+                total_income_data.append(0.0)
+                total_expenses_data.append(0.0)
+                net_income_data.append(0.0)
+                interest_income_data.append(0.0)
+                other_income_data.append(0.0)
+                roa_data.append(0.0)
+        
+        # Créer le graphique avec deux axes y
+        fig, ax1 = plt.subplots(figsize=(12, 8))
+        
+        # Axe principal pour les montants financiers
+        ax1.plot(labels, total_income_data, label='Total Income (M)', marker='o', linewidth=2, color='#1f77b4')
+        ax1.plot(labels, total_expenses_data, label='Total Expenses (M)', marker='s', linewidth=2, color='#ff7f0e')
+        ax1.plot(labels, net_income_data, label='Net Income (M)', marker='^', linewidth=2, color='#2ca02c')
+        ax1.plot(labels, interest_income_data, label='Interest Income (M)', marker='d', linewidth=2, color='#d62728')
+        ax1.plot(labels, other_income_data, label='Other Income (M)', marker='v', linewidth=2, color='#9467bd')
+        
+        ax1.set_xlabel('Years', fontsize=12)
+        ax1.set_ylabel('Amounts (M)', fontsize=12, color='black')
+        ax1.tick_params(axis='y', labelcolor='black')
+        ax1.grid(True, alpha=0.3)
+        
+        # Axe secondaire pour le ROA
+        ax2 = ax1.twinx()
+        ax2.plot(labels, roa_data, label='ROA (%)', marker='*', linewidth=2, color='#8c564b', linestyle='--')
+        ax2.set_ylabel('ROA (%)', fontsize=12, color='black')
+        ax2.tick_params(axis='y', labelcolor='black')
+        
+        # Titre et légende
+        plt.title('Bank Profitability Analysis', fontsize=16, fontweight='bold', pad=20)
+        
+        # Combiner les légendes des deux axes
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, bbox_to_anchor=(1.05, 1), loc='upper left')
+        
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_rentabilite_bancaire_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def get_charts_ratios_bancaire_data(acheteur, years):
+    """
+    Génère les données pour le chart des ratios bancaires AVEC GESTION D'ERREURS
+    """
+    try:
+        # Utiliser la fonction existante pour récupérer les ratios
+        ratios_data = get_structured_ratios_bancaire_data(acheteur, years)
+        
+        if not ratios_data:
+            return None
+        
+        # Extraire les données des ratios pour chaque année
+        labels = [str(year) for year in years]
+        
+        # Initialiser les données pour chaque ratio
+        r1_data = []  # Solvency
+        r2_data = []  # Liquidity
+        r3_data = []  # Profitability
+        r4_data = []  # Asset Quality
+        r5_data = []  # Efficiency
+        r6_data = []  # Diversification
+        
+        # Récupérer les ratios pour chaque année
+        for year in years:
+            year_data = None
+            for section_data in ratios_data.values():
+                for item in section_data:
+                    if item['values'].get(year) is not None:
+                        year_data = item['values']
+                        break
+                if year_data:
+                    break
+            
+            if year_data and year_data.get(year):
+                ratios = year_data[year].get('ratios_bornees', {})
+                r1_data.append(ratios.get('r1', 0.0))
+                r2_data.append(ratios.get('r2', 0.0))
+                r3_data.append(ratios.get('r3', 0.0))
+                r4_data.append(ratios.get('r4', 0.0))
+                r5_data.append(ratios.get('r5', 0.0))
+                r6_data.append(ratios.get('r6', 0.0))
+            else:
+                r1_data.append(0.0)
+                r2_data.append(0.0)
+                r3_data.append(0.0)
+                r4_data.append(0.0)
+                r5_data.append(0.0)
+                r6_data.append(0.0)
+        
+        # Créer le graphique
+        plt.figure(figsize=(12, 8))
+        
+        # Tracer les courbes des ratios
+        plt.plot(labels, r1_data, label='R1 - Solvency Ratio (%)', marker='o', linewidth=2, color='#1f77b4')
+        plt.plot(labels, r2_data, label='R2 - Liquidity Ratio (%)', marker='s', linewidth=2, color='#ff7f0e')
+        plt.plot(labels, r3_data, label='R3 - Profitability Ratio (%)', marker='^', linewidth=2, color='#2ca02c')
+        plt.plot(labels, r4_data, label='R4 - Asset Quality Ratio (%)', marker='d', linewidth=2, color='#d62728')
+        plt.plot(labels, r5_data, label='R5 - Efficiency Ratio (%)', marker='v', linewidth=2, color='#9467bd')
+        plt.plot(labels, r6_data, label='R6 - Diversification Ratio (%)', marker='*', linewidth=2, color='#8c564b')
+        
+        # Personnaliser le graphique
+        plt.title('Bank Key Ratios Analysis', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Years', fontsize=12)
+        plt.ylabel('Ratio Values (%)', fontsize=12)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.grid(True, alpha=0.3)
+        
+        # Ajouter des lignes de référence pour les ratios
+        plt.axhline(y=8, color='red', linestyle='--', alpha=0.3, label='Min Solvency (8%)')
+        plt.axhline(y=100, color='blue', linestyle='--', alpha=0.3, label='Ideal Liquidity (100%)')
+        
+        plt.tight_layout()
+        
+        # Convertir en image base64
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
+        buffer.seek(0)
+        image_png = buffer.getvalue()
+        buffer.close()
+        plt.close()
+        
+        return base64.b64encode(image_png).decode('utf-8')
+        
+    except Exception as e:
+        print(f"Erreur dans get_charts_ratios_bancaire_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 

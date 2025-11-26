@@ -3720,6 +3720,11 @@ class PassifA(Model):
     def total_passif(self):
         """Calcule le total général du passif."""
         return self.total_fonds_propres + self.total_passifs_non_courants + self.total_passifs_courants
+        
+    @property
+    def total_fonds_propres_passif(self):
+        """Calcule le total fonds propres du passif."""
+        pass
 
 
 class ResultatA(Model):
@@ -3924,6 +3929,88 @@ class RatiosAnglais:
         charges_exploitation = self._get_val(self.resultat, 'charges_exploitation')
         if charges_exploitation != 0:
             return (dettes / charges_exploitation) * 365
+        return None
+        
+    @property
+    def taux_rotation_creance(self):
+        """Taux de rotation des créances = Ventes / Créances commerciales"""
+        ventes = self._get_val(self.resultat, 'ventes')
+        creances = self._get_val(self.actif, 'creances_commerciales_autres_creances')
+        if creances != 0:
+            return float(ventes) / float(creances)
+        return None
+        
+    @property
+    def taux_rotation_stock(self):
+        """Taux de rotation des stocks = Ventes / Inventaire"""
+        ventes = self._get_val(self.resultat, 'ventes')
+        inventaire = self._get_val(self.actif, 'inventaire')
+        if inventaire != 0:
+            return float(ventes) / float(inventaire)
+        return None
+        
+    @property
+    def taux_rotation_actif(self):
+        """Taux de rotation des actifs = Ventes / Actifs non courants"""
+        ventes = self._get_val(self.resultat, 'ventes')
+        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
+        if actifs_non_courants != 0:
+            return float(ventes) / float(actifs_non_courants)
+        return None
+        
+    @property
+    def ratio_endettement1(self):
+        """Ratio d'endettement 1 = (Prêts bancaires + Dettes commerciales) / Total fonds propres et passif"""
+        prets_bancaires = self._get_val(self.passif, 'pret_bancaire')
+        dettes_commerciales = self._get_val(self.passif, 'dettes_commerciales_autres_dettes')
+        total_passif = self._get_val(self.passif, 'total_passif')
+        if total_passif != 0:
+            return float(prets_bancaires + dettes_commerciales) / float(total_passif)
+        return None
+        
+    @property
+    def ratio_endettement2(self):
+        """Ratio d'endettement 2 = Prêts bancaires / Actifs non courants"""
+        prets_bancaires = self._get_val(self.passif, 'pret_bancaire')
+        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
+        if actifs_non_courants != 0:
+            return float(prets_bancaires) / float(actifs_non_courants)
+        return None
+        
+    @property
+    def passif_cour_terme(self):
+        """Passif court terme = Passifs courants / Actifs non courants"""
+        passifs_courants = self._get_val(self.passif, 'total_passifs_courants')
+        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
+        if actifs_non_courants != 0:
+            return float(passifs_courants) / float(actifs_non_courants)
+        return None
+        
+    @property
+    def ratios_couverture_interet(self):
+        """Ratio de couverture des intérêts = EBIT / Frais financiers"""
+        ebit = self._get_val(self.resultat, 'resultat_avant_interets_impots')
+        frais_financiers = self._get_val(self.resultat, 'frais_financier')
+        if frais_financiers != 0:
+            return float(ebit) / float(frais_financiers)
+        return None
+        
+    @property
+    def ratio_g_score_fin(self):
+        """Ratio G-Score financier = Actifs non courants / Total actif"""
+        actifs_non_courants = self._get_val(self.actif, 'total_actifs_non_courants')
+        total_actif = self._get_val(self.actif, 'total_actif')
+        if total_actif != 0:
+            return float(actifs_non_courants) / float(total_actif)
+        return None
+        
+    @property
+    def ratio_endettement_g_score(self):
+        """Ratio d'endettement G-Score = Prêts bancaires / Fonds propres"""
+        prets_bancaires = self._get_val(self.passif, 'pret_bancaire')
+        fonds_propres = self._get_val(self.passif, 'total_fonds_propres')
+        if fonds_propres != 0:
+            return float(prets_bancaires) / float(fonds_propres)
         return None
 
 
@@ -5617,38 +5704,7 @@ class Assets(Model):
 
         # La syntaxe (field or 0) convertit les None en 0 avant la somme
         total = sum(field or 0 for field in fields_to_sum)
-        return total @ property
-
-    def total_assets(self):
-        """
-        Calcule et retourne la somme de tous les champs financiers de l'actif.
-        Traite les valeurs None comme 0 pour éviter les erreurs de calcul.
-        """
-        fields_to_sum = [
-            self.caisse,
-            self.banques_centrales,
-            self.tresorerie_cpp,
-            self.autres_ets_credit,
-            self.a_terme,
-            self.credits_campagne,
-            self.credits_ordinaire,
-            self.credits_campagne_acc,
-            self.credits_ordinaire_acc,
-            self.creances_ordinaires,
-            self.affacturage,
-            self.titres_placement,
-            self.immobilisation_fin,
-            self.operation_credit_bail,
-            self.immobilisation_incorporelle,
-            self.immobilisation_corporelle,
-            self.actionnaire_ou_associe,
-            self.autres_actifs,
-            self.comptes_commande_divers,
-        ]
-
-        # La syntaxe (field or 0) convertit les None en 0 avant la somme
-        total = sum(field or 0 for field in fields_to_sum)
-        return total
+        return total 
 
     #  Liste des methodes utiles pour ce model
 
@@ -7816,6 +7872,183 @@ class RatiosSyscohada:
             if cout_des_ventes != 0:
                  return (stocks / cout_des_ventes) * 360
         return None
+        
+    # COMPLÉTION DES RATIOS MANQUANTS
+    
+    @property
+    def benefice_net(self):
+        return self.roe
+        
+    @property
+    def benefice_net_chiffre_affaire(self):
+        """ Marge nette = (Résultat net / Chiffre d'affaires) * 100 """
+        try:
+            if (self.resultat and 
+                self.resultat.chiffre_affaires and 
+                float(self.resultat.chiffre_affaires) != 0 and
+                self.resultat.resultat_net is not None):
+                return (float(self.resultat.resultat_net) / float(self.resultat.chiffre_affaires)) * 100
+        except (TypeError, ZeroDivisionError, ValueError):
+            pass
+        return 0.0
+        
+    @property
+    def turnover(self):
+        """ Turnover = Chiffre d'affaires / Actif total """
+        try:
+            if (self.actif and 
+                self.actif.total_actif and 
+                float(self.actif.total_actif) != 0 and
+                self.resultat and 
+                self.resultat.chiffre_affaires):
+                return float(self.resultat.chiffre_affaires) / float(self.actif.total_actif)
+        except (TypeError, ZeroDivisionError, ValueError):
+            pass
+        return 0.0
+
+    @property
+    def ebitda_chiffre_affaire(self):
+        """ EBITDA / Chiffre d'affaires """
+        try:
+            if (self.resultat and 
+                self.resultat.chiffre_affaires and 
+                float(self.resultat.chiffre_affaires) != 0 and
+                self.resultat.excedent_brute_exploitation is not None):
+                return float(self.resultat.excedent_brute_exploitation) / float(self.resultat.chiffre_affaires)
+        except (TypeError, ZeroDivisionError, ValueError):
+            pass
+        return 0.0
+        
+    @property
+    def liquidite_reduite(self):
+        """ Liquidité réduite = (Actif circulant - Stocks) / Passif circulant """
+        actif_circulant = self._get_val(self.actif, 'total_actif_circulant')
+        stocks = self._get_val(self.actif, 'stock_encours')
+        passif_courant = self._get_val(self.passif, 'total_passifs_courants')
+        if passif_courant != 0:
+            return (actif_circulant - stocks) / passif_courant
+        return None
+        
+    @property
+    def liquidite_immediate(self):
+        """ Liquidité immédiate = Trésorerie / Passif circulant """
+        tresorerie = self._get_val(self.actif, 'total_tresorerie_equivalents')
+        passif_courant = self._get_val(self.passif, 'total_passifs_courants')
+        if passif_courant != 0:
+            return tresorerie / passif_courant
+        return None
+        
+    @property
+    def jour_collecte_moyens(self):
+        """ Jours de collecte moyens = (Créances clients / Chiffre d'affaires) * 360 """
+        if self.resultat and self.resultat.chiffre_affaires and self.resultat.chiffre_affaires != 0:
+            creances_clients = self._get_val(self.actif, 'creances_emplois_similaires')
+            return (creances_clients / self.resultat.chiffre_affaires) * 360
+        return None
+        
+    @property
+    def moyen_paiement(self):
+        """ Jours de paiement moyens = (Dettes fournisseurs / Achats) * 360 """
+        achats_totaux = (self._get_val(self.resultat, 'achats_marchandises') + 
+                        self._get_val(self.resultat, 'achats_matieres_premieres_fournitures_connexes') + 
+                        self._get_val(self.resultat, 'autres_achats'))
+        if achats_totaux != 0:
+            dettes_fournisseurs = self._get_val(self.passif, 'fournisseurs_exploitation')
+            return (dettes_fournisseurs / achats_totaux) * 360
+        return None
+        
+    @property
+    def compte_debiteur(self):
+        """ Rotation des créances = Chiffre d'affaires / Créances clients """
+        creances_clients = self._get_val(self.actif, 'creances_emplois_similaires')
+        if creances_clients != 0:
+            return self.resultat.chiffre_affaires / creances_clients if self.resultat else None
+        return None
+        
+    @property
+    def rotation_actif(self):
+        """ Rotation de l'actif = Chiffre d'affaires / Actif total """
+        if self.actif and self.actif.total_actif and self.actif.total_actif != 0:
+            return self.resultat.chiffre_affaires / self.actif.total_actif if self.resultat else None
+        return None
+        
+    @property
+    def rotation_dendettement(self):
+        """ Ratio d'endettement = Dettes financières / Capitaux propres """
+        dettes_financieres = self._get_val(self.passif, 'emprunts_dettes_financieres_diverse')
+        capitaux_propres = self._get_val(self.passif, 'total_capitaux_propres_ressources_similaires')
+        if capitaux_propres != 0:
+            return dettes_financieres / capitaux_propres
+        return None
+        
+    @property
+    def rotation_dette_capitaux_propres(self):
+        """ Dette / Capitaux propres = Dettes totales / Capitaux propres """
+        dettes_totales = (self._get_val(self.passif, 'total_dettes_financieres_ressources_similaires') + 
+                         self._get_val(self.passif, 'total_passifs_courants'))
+        capitaux_propres = self._get_val(self.passif, 'total_capitaux_propres_ressources_similaires')
+        if capitaux_propres != 0:
+            return dettes_totales / capitaux_propres
+        return None
+        
+    @property
+    def passif_court_terme_par_rapport_valeur_net(self):
+        """ Passif court terme / Actif net = Passif courant / Capitaux propres """
+        passif_courant = self._get_val(self.passif, 'total_passifs_courants')
+        capitaux_propres = self._get_val(self.passif, 'total_capitaux_propres_ressources_similaires')
+        if capitaux_propres != 0:
+            return passif_courant / capitaux_propres
+        return None
+        
+    @property
+    def ratio_des_couverture_des_interets(self):
+        """ Couverture des intérêts = Résultat d'exploitation / Charges financières """
+        resultat_exploitation = self.resultat.resultat_exploitation if self.resultat else None
+        charges_financieres = self._get_val(self.resultat, 'charges_financieres_assimilees')
+        if charges_financieres != 0:
+            return resultat_exploitation / charges_financieres
+        return None
+        
+    @property
+    def ratio_courant(self):
+        """ Ratio courant = Actif circulant / Passif circulant """
+        actif_circulant = self._get_val(self.actif, 'total_actif_circulant')
+        passif_courant = self._get_val(self.passif, 'total_passifs_courants')
+        if passif_courant != 0:
+            return actif_circulant / passif_courant
+        return None
+        
+    @property
+    def ratio_de_liquidite(self):
+        """ Ratio de liquidité = (Actif circulant - Stocks) / Passif circulant """
+        return self.liquidite_reduite  # Même calcul que liquidite_reduite
+        
+    @property
+    def ratio_financier(self):
+        """ Ratio financier = Immobilisations financières / Actif total """
+        if self.actif and self.actif.total_actif and self.actif.total_actif != 0:
+            immobilisations_financieres = self._get_val(self.actif, 'immobilisations_financieres')
+            return immobilisations_financieres / self.actif.total_actif
+        return None
+        
+    @property
+    def ratio_de_la_dette(self):
+        """ Ratio de la dette = Dettes totales / Actif total """
+        if self.actif and self.actif.total_actif and self.actif.total_actif != 0:
+            dettes_totales = (self._get_val(self.passif, 'total_dettes_financieres_ressources_similaires') + 
+                             self._get_val(self.passif, 'total_passifs_courants'))
+            return dettes_totales / self.actif.total_actif
+        return None
+        
+    @property
+    def ratio_de_liquidite2(self):
+        """ Ratio de liquidité 2 = Immobilisations incorporelles / Capitaux propres """
+        capitaux_propres = self._get_val(self.passif, 'total_capitaux_propres_ressources_similaires')
+        if capitaux_propres != 0:
+            immobilisations_incorporelles = self._get_val(self.actif, 'immobilisations_incorporelles')
+            return immobilisations_incorporelles / capitaux_propres
+        return None
+        
 
 
 
@@ -8406,98 +8639,106 @@ class RatiosIFRS(Model):
 
     # --- Fonctions utilitaires pour éviter les erreurs de division par zéro ---
     def _safe_divide(self, numerator, denominator, percentage=False):
-        numerator = numerator or 0
-        denominator = denominator or 0
-        if denominator == 0:
+        """Version améliorée avec gestion d'erreurs complète"""
+        try:
+            numerator = float(numerator or 0)
+            denominator = float(denominator or 0)
+            if denominator == 0:
+                return 0
+            ratio = numerator / denominator
+            return ratio * 100 if percentage else ratio
+        except (TypeError, ValueError, ZeroDivisionError):
             return 0
-        ratio = numerator / denominator
-        return ratio * 100 if percentage else ratio
 
-    # === RATIOS DE RENTABILITÉ FINANCIÈRE ===
     @property
-    def roa(self):  # Return on Assets
+    def roe(self):
+        """ ROE = (Résultat net / Capitaux propres) * 100 """
         return self._safe_divide(
-            self.resultat.resultat_net, self.actif.total_actif, percentage=True
+            self.resultat.resultat_net, 
+            self.passif.total_capitaux_propres, 
+            percentage=True
         )
 
     @property
-    def roe(self):  # Return on Equity
+    def roa(self):
+        """ ROA = (Résultat net / Total actif) * 100 """
         return self._safe_divide(
             self.resultat.resultat_net,
-            self.passif.total_capitaux_propres,
-            percentage=True,
+            self.actif.total_actif,
+            percentage=True
         )
 
-    # === RATIOS DE LIQUIDITÉ ===
     @property
-    def liquidite_generale(self):  # Current Ratio
+    def marge_nette(self):
+        """ Marge nette = (Résultat net / Chiffre d'affaires) * 100 """
         return self._safe_divide(
-            self.actif.total_actif_courant, self.passif.total_passif_courant
+            self.resultat.resultat_net,
+            self.resultat.chiffre_affaires,
+            percentage=True
         )
 
     @property
-    def liquidite_immediate(self):  # Quick Ratio
-        # Actif courant - Stocks
+    def marge_operationnelle(self):
+        """ Marge opérationnelle = (Résultat opérationnel / Chiffre d'affaires) * 100 """
+        return self._safe_divide(
+            self.resultat.resultat_operationnel,
+            self.resultat.chiffre_affaires,
+            percentage=True
+        )
+
+    @property
+    def marge_brute(self):
+        """ Marge brute = (Chiffre d'affaires - Coût des ventes) / Chiffre d'affaires * 100 """
+        gross_profit = (self.resultat.chiffre_affaires or 0) - (self.resultat.cout_des_ventes or 0)
+        return self._safe_divide(gross_profit, self.resultat.chiffre_affaires, percentage=True)
+
+    @property
+    def liquidite_generale(self):
+        """ Current Ratio = Actif courant / Passif courant """
+        return self._safe_divide(
+            self.actif.total_actif_courant,
+            self.passif.total_passif_courant
+        )
+
+    @property
+    def liquidite_immediate(self):
+        """ Quick Ratio = (Actif courant - Stocks) / Passif courant """
         quick_assets = (self.actif.total_actif_courant or 0) - (
             (self.actif.matieres_premieres or 0) + (self.actif.produits_finis or 0)
         )
         return self._safe_divide(quick_assets, self.passif.total_passif_courant)
 
-    # === RATIOS DE SOLVABILITÉ ===
     @property
-    def ratio_endettement_total(self):  # Debt Ratio
+    def ratio_endettement_total(self):
+        """ Debt Ratio = Total passif / Total actif * 100 """
         return self._safe_divide(
-            self.passif.total_passif, self.actif.total_actif, percentage=True
+            self.passif.total_passif,
+            self.actif.total_actif,
+            percentage=True
         )
 
     @property
-    def ratio_couverture_interets(self):  # Interest Coverage Ratio
+    def ratio_couverture_interets(self):
+        """ Interest Coverage Ratio = Résultat avant impôt / Charges financières """
         return self._safe_divide(
-            self.resultat.resultat_avant_impot, self.resultat.charges_financieres
-        )
-
-    # === RATIOS DE RENTABILITÉ DES VENTES ===
-    @property
-    def marge_brute(self):
-        # Marge Brute = (Chiffre d'affaires - Coût des ventes) / Chiffre d'affaires
-        gross_profit = (self.resultat.chiffre_affaires or 0) - (
-            self.resultat.cout_des_ventes or 0
-        )
-        return self._safe_divide(
-            gross_profit, self.resultat.chiffre_affaires, percentage=True
+            self.resultat.resultat_avant_impot,
+            self.resultat.charges_financieres
         )
 
     @property
-    def marge_operationnelle(self):
+    def rotation_des_actifs(self):
+        """ Asset Turnover = Chiffre d'affaires / Total actif * 100 """
         return self._safe_divide(
-            self.resultat.resultat_operationnel,
             self.resultat.chiffre_affaires,
-            percentage=True,
+            self.actif.total_actif,
+            percentage=True
         )
 
     @property
-    def marge_nette(self):
-        return self._safe_divide(
-            self.resultat.resultat_net, self.resultat.chiffre_affaires, percentage=True
-        )
-
-    # === RATIOS DE GESTION ===
-    @property
-    def rotation_des_actifs(self):  # Asset Turnover
-        return self._safe_divide(
-            self.resultat.chiffre_affaires, self.actif.total_actif, percentage=True
-        )
-
-    @property
-    def dso(self):  # Days Sales Outstanding
-        # DSO = (Créances clients / Chiffre d'affaires) * 365
-        receivables = (
-            self.actif.creances_a_court_terme or 0
-        )  # Simplification, ajustez si nécessaire
-        turnover = self.resultat.chiffre_affaires
-        if turnover:
-            return (receivables / turnover) * 365
-        return 0
+    def dso(self):
+        """ Days Sales Outstanding = (Créances clients / Chiffre d'affaires) * 365 """
+        receivables = self.actif.creances_a_court_terme or 0
+        return self._safe_divide(receivables, self.resultat.chiffre_affaires) * 365
 
     class Meta:
         verbose_name = _("Ratio IFRS")

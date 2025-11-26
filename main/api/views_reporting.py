@@ -21,6 +21,33 @@ from main.utils import (
     get_charts_rentabilite_financiere_data, 
     get_charts_delais_data
 )
+from main.utils import (
+    get_charts_structure_financiere_anglais_data,
+    get_charts_rentabilite_financiere_anglais_data, 
+    get_charts_delais_anglais_data
+)
+from main.utils import (
+    get_charts_structure_financiere_bancaire_data,
+    get_charts_rentabilite_bancaire_data, 
+    get_charts_ratios_bancaire_data
+)
+from main.utils import (
+    get_structured_actif_syscohada_data,
+    get_structured_passif_syscohada_data,
+    get_structured_resultat_syscohada_data,
+    get_charts_structure_financiere_syscohada_data,
+    get_charts_rentabilite_financiere_syscohada_data, 
+    get_charts_delais_syscohada_data
+)
+from main.utils import (
+    get_structured_actif_ifrs_data,
+    get_structured_passif_ifrs_data,
+    get_structured_resultat_ifrs_data,
+    get_structured_ratios_ifrs_data,
+    get_charts_structure_financiere_ifrs_data, 
+    get_charts_rentabilite_financiere_ifrs_data,
+    get_charts_delais_ifrs_data
+)
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -917,9 +944,9 @@ def generer_rapport_solvabilite(request):
                     "resultat_data": get_structured_resultat_anglais_data(acheteur, years_to_retrieve),
                     "ratios_data": get_structured_ratios_anglais_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": {},
-                        "charts_rentabilite_financiere": {},
-                        "charts_delais": {},
+                        "charts_structure_financiere": get_charts_structure_financiere_anglais_data(acheteur, years_to_retrieve),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_anglais_data(acheteur, years_to_retrieve),
+                        "charts_delais": get_charts_delais_anglais_data(acheteur, years_to_retrieve),
                     },
                 },
                 "etats_financiers_bancaires": {
@@ -930,9 +957,9 @@ def generer_rapport_solvabilite(request):
                     "hors_bilan_data": get_structured_hors_bilan_bancaire_data(acheteur, years_to_retrieve),
                     "ratios_data": get_structured_ratios_bancaire_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": {},
-                        "charts_rentabilite_financiere": {},
-                        "charts_delais": {},
+                        "charts_structure_financiere": get_charts_structure_financiere_bancaire_data(acheteur, years_to_retrieve),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_bancaire_data(acheteur, years_to_retrieve),
+                        "charts_delais": get_charts_ratios_bancaire_data(acheteur, years_to_retrieve),
                     },
                 },
                 "etats_financiers_syscohada": {
@@ -941,9 +968,9 @@ def generer_rapport_solvabilite(request):
                     "resultat_data": get_structured_resultat_syscohada_data(acheteur, years_to_retrieve),
                     "ratios_data": get_structured_ratios_syscohada_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": {},
-                        "charts_rentabilite_financiere": {},
-                        "charts_delais": {},
+                        "charts_structure_financiere": get_charts_structure_financiere_syscohada_data(acheteur, years_to_retrieve),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_syscohada_data(acheteur, years_to_retrieve),
+                        "charts_delais": get_charts_delais_syscohada_data(acheteur, years_to_retrieve),
                     },
                 },
                 "etats_financiers_irfs_cobac": {
@@ -952,9 +979,9 @@ def generer_rapport_solvabilite(request):
                     "resultat_data": get_structured_resultat_ifrs_data(acheteur, years_to_retrieve),
                     "ratios_data": get_structured_ratios_ifrs_data(acheteur, years_to_retrieve),
                     "charts_data": {
-                        "charts_structure_financiere": {},
-                        "charts_rentabilite_financiere": {},
-                        "charts_delais": {},
+                        "charts_structure_financiere": get_charts_structure_financiere_ifrs_data(acheteur, years_to_retrieve),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_ifrs_data(acheteur, years_to_retrieve),
+                        "charts_delais": get_charts_delais_ifrs_data(acheteur, years_to_retrieve),
                     },
                 },
 
