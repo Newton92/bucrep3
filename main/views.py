@@ -1516,8 +1516,11 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
     # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+    # Récupérer l'acheteur pour avoir ses données
+    try:
+        acheteur = Acheteur.objects.get(pk=acheteur_id)
+    except Acheteur.DoesNotExist:
+        acheteur = None
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -1527,7 +1530,8 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "id_acheteur": acheteur_id,
+        "acheteur": acheteur,  # Ajoutez l'objet acheteur
         "coloration_list": coloration_list,
     }
     return render(
@@ -1535,7 +1539,6 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
         "main/root/acheteur/reporting/dash_root_manage_acheteur_report_solvency.html",
         context,
     )
-
 
 @login_required
 def dash_root_manage_acheteur_emailling(request, acheteur_id):

@@ -21,6 +21,7 @@ from main.api.views_users import *
 from main.api.views_warning import *
 from main.api.views_account import *
 from main.api.views_report import *
+from main.api.views_reporting import *
 from main.views import *
 from main.api.views_scoring import (
     ScoringSansBilanAcheteurDetailView,
@@ -4976,6 +4977,8 @@ urlpatterns = [
     path('api/mailing/client/<int:client_id>/commandes/', get_commandes_by_client, name='api_mailing_client_commandes'),
     path('api/mailing/send-email/', send_rapports_email, name='api_mailing_send_email'),
     path('api/mailing/history/', get_email_history, name='api_mailing_history'),
+    
+    path('api/reporting/exporter-rapport/', exporter_rapport, name='exporter_rapport'),
 
         
     

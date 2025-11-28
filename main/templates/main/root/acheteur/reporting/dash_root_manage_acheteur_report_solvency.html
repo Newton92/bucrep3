@@ -313,6 +313,101 @@ table th {
     justify-content: space-between;
     align-items: center;
 }
+
+.score-container {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    margin: 20px 0;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.score-image-large img {
+    max-width: 180px;
+    height: auto;
+    display: block;
+}
+
+.score-details {
+    flex: 1;
+}
+
+.score-details table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.score-details th,
+.score-details td {
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.score-details th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    width: 150px;
+}
+
+.score-annuel-individuel {
+    margin: 25px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #28a745;
+}
+
+.score-annuel-individuel .score-container {
+    background: white;
+    margin: 15px 0;
+}
+
+.warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .score-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .score-image-large img {
+        margin: 0 auto;
+    }
+}
+
+/* Style pour boutons désactivés */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Cachez initialement les boutons d'export */
+#reportSolvency .card-footer {
+    display: none;
+}
+
+/* Montrez les boutons quand le rapport est généré */
+#reportSolvency:not([style*="display: none"]) .card-footer {
+    display: block;
+}
+
+.score-image img {
+    max-width: 100%;   /* ne dépassera jamais la largeur du conteneur */
+    height: auto;      /* conserve les proportions */
+    display: block;    /* évite les petits espaces sous l'image */
+    margin: 0 auto;    /* centre l'image si le conteneur est plus large */
+}
 </style>
 {% endblock %}
 
@@ -375,8 +470,10 @@ table th {
                 <form id="rapportSolvabiliteForm">
                     {% csrf_token %}
 
-                    <input type="hidden" name="id_acheteur" value="{{ id_acheteur}}" />
-                    <p style="">ID Acheteur: {{ id_acheteur }}</p>
+                    <!-- PAR CE CODE : -->
+                    <input type="hidden" id="editAcheteurId" value="{{ id_acheteur }}" />
+                    <input type="hidden" id="access_token" value="{{ access }}" />
+                    <p style="">ID Acheteur: <span id="display_acheteur_id">{{ id_acheteur }}</span></p>
                     
                     <!-- Années N, N-1, N-2 -->
                     <div class="row mb-3">
@@ -519,161 +616,44 @@ table th {
 <!-- Acheteurs Report Solvency -->
 <div class="row" id="reportSolvency" style="display: none;">
     <div class="col-12">
-
-        <!-- Card item START -->
         <div class="card border">
             <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center"></div>
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="text-md-end">
+                    <!-- Ce contenu sera rempli par JavaScript -->
+                </div>
+            </div>
 
             <!-- Card body START -->
             <div class="card-body">
-                <!-- En-tête du rapport avec design bleu nuit -->
-                
-
-                <!-- Détails de la demande rattachee -->
-                <div class="section">
-                    <div class="section-title">COMMANDE RATTACHEE</div>
-                    <div class="subsection-title">DETAILS COMMANDE</div>
-                </div>
-                <!-- Identification -->
-                <div class="section">
-                    <div class="section-title">IDENTIFICATION</div>
-                </div>
-                <!-- Informations supplémentaires ACREMAC -->
-                <div class="section">
-                    <div class="section-title">INFORMATIONS SUPPLÉMENTAIRES</div>
-                </div>
-                <!-- Résumé exécutif -->
-                <div class="section">
-                    <div class="section-title">RESUME EXECUTIF</div>
-                </div>
-                <!-- Analyse et interprétation -->
-                <div class="section">
-                    <div class="section-title">ANALYSE ET INTERPRÉTATION</div>
-                </div>
-                <!-- Opinion crédit ACREMAC -->
-                <div class="section">
-                    <div class="section-title">OPINION ACREMAC</div>
-                </div>
-                <!-- Données d'enregistrement -->
-                <div class="section">
-                    <div class="section-title">DONNEES ENREGISTREMENT</div>
-                </div>
-                <!-- Dossiers juridiques -->
-                <div class="section">
-                    <div class="section-title">ANTECEDENTS JURIDIQUES</div>
-                </div>
-                <!-- Gestion et personnel -->
-                <div class="section">
-                    <div class="section-title">CONCLUSION ET AVIS</div>
-                </div>
-                <!-- Capital social -->
-                <div class="section">
-                    <div class="section-title">CAPITAL SOCIAL</div>
-                </div>
-                <!-- Actionnariat/Propriétaires -->
-                <div class="section">
-                    <div class="section-title">ACTIONNARIAT</div>
-                </div>
-                <!-- Affiliations d'entreprise -->
-                <div class="section">
-                    <div class="section-title">AFFILIATIONS</div>
-                </div>
-                <!-- Analyse sectorielle -->
-                <div class="section">
-                    <div class="section-title">ANALYSE SECTORIELLE</div>
-                </div>
-                <!-- Comptes financiers -->
-                <div class="section">
-                    <div class="section-title">ETATS FINANCIERS</div>
-                </div>
-                <!-- Actifs -->
-                <div class="section">
-                    <div class="section-title">ACTIFS</div>
-                </div>
-                <!-- Passifs -->
-                <div class="section">
-                    <div class="section-title">PASSIFS</div>
-                </div>
-                <!-- Resultats -->
-                <div class="section">
-                    <div class="section-title">RESULTATS</div>
-                </div>
-                <!-- Ratios -->
-                <div class="section">
-                    <div class="section-title">RATIOS</div>
-                </div>
-                <!-- Graphiques - Evolution des ratios -->
-                <div class="section">
-                    <div class="section-title">STRUCTURE FINANCIÈRE</div>
-                </div>
-                <!-- Score ACREMAC [avec bilan et sans bilan] -->
-                <div class="section">
-                    <div class="section-title">SCORE ACREMAC</div>
-                </div>
-                <!-- Opérations & Historique -->
-                <div class="section">
-                    <div class="section-title">OPERATIONS ET HISTORIQUE</div>
-                </div>
-                <!-- Paiements -->
-                <div class="section">
-                    <div class="section-title">CONDITIONS DE PAIEMENT</div>
-                </div>
-                <!-- SOURCES -->
-                <div class="section">
-                    <div class="section-title">SOURCES D'INVESTIGATION</div>
-
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>Services judiciaires</td>
-                            </tr>
-                            <tr>
-                                <td>Chambres de commerce et d'industrie</td>
-                            </tr>
-                            <tr>
-                                <td>Banques</td>
-                            </tr>
-                            <tr>
-                                <td>Groupe de sociétés</td>
-                            </tr>
-                            <tr>
-                                <td>La société faisant l'objet de l'enquête</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Conclusion et Avis -->
-                <div class="section">
-                    <div class="section-title">CONCLUSION ET AVIS</div>
-                </div>
-                <!-- Pied de page -->
-                <div class="footer">
-                    <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.
-                    <br>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.
-                    <br>Rapport généré le <strong>{% now "l d F Y" %}</strong> (GMT) - <strong>Services ACREMAC</strong></br>
-                </div>
-
-
+                <!-- Le rapport sera généré ici par JavaScript -->
             </div>
 
-            <!-- Card body START -->
+            <!-- Card footer -->
             <div class="card-footer">
-                <!-- Boutons d'exportation [pdf, html, xml, json] -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">Rapport généré le <span id="reportGenerationDate"></span></span>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="exporterRapport('pdf')" id="btnExportPDF">
+                            <i class="bi bi-file-pdf me-1"></i>PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm me-2" onclick="exporterRapport('html')" id="btnExportHTML">
+                            <i class="bi bi-file-earmark-code me-1"></i>HTML
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm me-2" onclick="exporterRapport('xml')" id="btnExportXML">
+                            <i class="bi bi-file-code me-1"></i>XML
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="exporterRapport('json')" id="btnExportJSON">
+                            <i class="bi bi-file-text me-1"></i>JSON
+                        </button>
+                    </div>
+                </div>
             </div>
-
-
-
         </div>
-        <!-- Card item END -->
-
-
-
-
     </div>
 </div>
-<!-- Acheteurs Report Solvency -->
 
 {% endblock %}
 
@@ -780,6 +760,17 @@ $(document).ready(function() {
 
 </script>
 
+<!-- Stockez les données Django dans des variables JavaScript -->
+<script>
+    // Données disponibles pour le JavaScript
+    const id = "{{ id_acheteur }}";
+    const STATIC_URL = "{% static '' %}";
+    const ACHETEUR_ID = "{{ id_acheteur }}";
+    const ACCESS_TOKEN = "{{ access }}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+
+
 
 <script>
 $(document).ready(function() {
@@ -787,7 +778,11 @@ $(document).ready(function() {
     let devisesData = [];
     let commandesData = [];
 
-    // URLs API - ajustez selon vos URLs réelles
+    // Variables globales pour stocker les données du rapport
+    let currentReportData = null;
+    let currentFormData = null;
+
+    // URLs API
     const API_URLS = {
         annees: '/api/reporting/annees/',
         devises: '/api/reporting/devises/', 
@@ -808,9 +803,6 @@ $(document).ready(function() {
         loadAnnees();
         loadDevises();
         setupEventListeners();
-        
-        // Ne pas charger les commandes tout de suite - attendre que l'utilisateur choisisse "Oui"
-        console.log('⏳ Commandes: chargement différé jusqu\'au choix "Inclure commande"');
     }
 
     // Charger les données de l'acheteur
@@ -919,14 +911,13 @@ $(document).ready(function() {
         populateSelect('#devise', devisesData);
     }
 
-    // NOUVELLE fonction pour charger les commandes avec période
+    // Charger les commandes avec période
     function chargerCommandesAvecPeriode(periode) {
-        const acheteurId = '{{ id_acheteur }}';
+        const acheteurId = $('#editAcheteurId').val();
         console.log(`📋 Chargement des commandes pour période: ${periode}`);
         
         let url = `${API_URLS.commandes}${acheteurId}/`;
         
-        // Ajouter les paramètres de période
         const params = new URLSearchParams();
         
         switch(periode) {
@@ -976,7 +967,6 @@ $(document).ready(function() {
                     populateSelect('#commande_id', commandesData);
                     $('#commande_id').prop('disabled', false);
                     
-                    // Afficher le nombre de commandes trouvées
                     const countText = commandesData.length === 1 ? 
                         '1 commande trouvée' : 
                         `${commandesData.length} commandes trouvées`;
@@ -1000,7 +990,6 @@ $(document).ready(function() {
                 $('#commande_id').prop('disabled', true);
                 $('#select_commande_container .form-text').text('Erreur lors du chargement');
                 
-                // Message d'erreur plus spécifique
                 let errorMessage = 'Impossible de charger les commandes.';
                 if (xhr.status === 404) {
                     errorMessage = 'Service des commandes temporairement indisponible.';
@@ -1061,7 +1050,6 @@ $(document).ready(function() {
             if (showCommande) {
                 $('#commande_id').prop('required', true);
                 $('#periode_recherche').prop('required', true);
-                // Charger les commandes avec période par défaut
                 $('#periode_recherche').val('7j');
                 chargerCommandesAvecPeriode('7j');
             } else {
@@ -1082,7 +1070,6 @@ $(document).ready(function() {
             if (periode === 'personnalise') {
                 $('#select_commande_container').hide();
                 $('#periode_personnalisee_container').show();
-                // Définir des dates par défaut
                 const aujourdhui = new Date();
                 const ilYaUnMois = new Date();
                 ilYaUnMois.setMonth(aujourdhui.getMonth() - 1);
@@ -1149,18 +1136,15 @@ $(document).ready(function() {
 
         console.log('📊 Données du formulaire:', formData);
 
-        // Validation côté client
         if (!validateFormData(formData)) {
             return;
         }
 
-        // Afficher les données dans SweetAlert
         showFormDataPreview(formData);
     }
 
     // Validation des données du formulaire
     function validateFormData(data) {
-        // Vérifier que les champs requis sont remplis
         const champsRequis = ['annee_n', 'annee_n1', 'annee_n2', 'inclure_commande', 'langue', 'devise', 'type_bilan', 'format_rapport'];
         const champsManquants = champsRequis.filter(champ => !data[champ]);
         
@@ -1173,7 +1157,6 @@ $(document).ready(function() {
             return false;
         }
 
-        // Vérifier que les années sont distinctes
         const annees = [data.annee_n, data.annee_n1, data.annee_n2];
         const anneesUniques = [...new Set(annees)];
         
@@ -1186,7 +1169,6 @@ $(document).ready(function() {
             return false;
         }
 
-        // Vérifier la période si commande incluse
         if (data.inclure_commande === 'oui') {
             if (!data.periode_recherche) {
                 Swal.fire({
@@ -1221,7 +1203,6 @@ $(document).ready(function() {
 
     // Afficher l'aperçu des données du formulaire
     function showFormDataPreview(data) {
-        // Formater les données pour l'affichage
         const anneesText = `N: ${data.annee_n}, N-1: ${data.annee_n1}, N-2: ${data.annee_n2}`;
         
         let commandeText = 'Aucune';
@@ -1262,51 +1243,41 @@ $(document).ready(function() {
                     <div class="card-header bg-primary text-white">
                         <strong>Informations du rapport</strong>
                     </div>
-
                     <div class="card-body">
-
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Période d'analyse :</strong>
                             <span>${anneesText}</span>
                         </div>
-
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Inclure commande :</strong>
                             <span>${data.inclure_commande === 'oui' ? 'Oui' : 'Non'}</span>
                         </div>
-
                         ${data.inclure_commande === 'oui' ? `
                             <div class="d-flex justify-content-between mb-2">
                                 <strong>Période recherche :</strong>
                                 <span>${periodeText}</span>
                             </div>
-
                             <div class="d-flex justify-content-between mb-2">
                                 <strong>Commande :</strong>
                                 <span>${commandeText}</span>
                             </div>
                         ` : ''}
-
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Langue :</strong>
                             <span>${langueText}</span>
                         </div>
-
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Devise :</strong>
                             <span>${deviseText}</span>
                         </div>
-
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Type de bilan :</strong>
                             <span>${typeBilanMap[data.type_bilan]}</span>
                         </div>
-
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Format :</strong>
                             <span>${formatMap[data.format_rapport]}</span>
                         </div>
-
                     </div>
                 </div>
             `,
@@ -1325,15 +1296,13 @@ $(document).ready(function() {
     }
 
     // Soumettre le rapport
-    // Dans la fonction submitRapport, remplacez cette partie :
     function submitRapport(data) {
         console.log('📤 Soumission du rapport...', data);
         
-        // CORRECTION : Récupérer l'ID de l'acheteur correctement
-        const acheteurId = '{{ id_acheteur }}';
-        console.log('🔍 ID Acheteur récupéré depuis template:', acheteurId);
+        // Récupération CORRECTE de l'ID acheteur
+        const acheteurId = $('#editAcheteurId').val();
+        console.log('🔍 ID Acheteur récupéré:', acheteurId);
 
-        // Vérifiez que acheteurId est un entier valide
         if (!acheteurId || acheteurId === 'None' || acheteurId === '') {
             Swal.fire({
                 icon: 'error',
@@ -1343,13 +1312,10 @@ $(document).ready(function() {
             return;
         }
         
-        // Ajouter l'ID de l'acheteur
-        data.acheteur_id = parseInt(acheteurId); // Convertir en integer
+        data.acheteur_id = parseInt(acheteurId);
         
-
         console.log('📤 Données envoyées:', data);
 
-        // Afficher le chargement
         Swal.fire({
             title: 'Génération en cours',
             text: 'Le rapport est en cours de génération...',
@@ -1361,7 +1327,6 @@ $(document).ready(function() {
             }
         });
 
-        // Appel API réel
         $.ajax({
             url: API_URLS.generer_rapport,
             type: 'POST',
@@ -1375,7 +1340,19 @@ $(document).ready(function() {
                 Swal.close();
                 
                 if (response.status === 'success') {
-                    // Afficher le rapport dans la section dédiée
+
+                    // VÉRIFIEZ QUE LES DONNÉES SONT PRÉSENTES
+                    if (!response.report_data) {
+                        console.error('❌ report_data est manquant dans la réponse');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Les données du rapport sont manquantes dans la réponse.'
+                        });
+                        return;
+                    }
+                    
+                    console.log('✅ Données du rapport disponibles:', Object.keys(response.report_data));
                     afficherRapportHTML(response.report_data, response.form_data);
                     
                     Swal.fire({
@@ -1411,14 +1388,54 @@ $(document).ready(function() {
     // Fonction pour afficher le rapport dans la section HTML
     function afficherRapportHTML(reportData, formData) {
         console.log('📄 Affichage du rapport...', reportData);
+
+        // Stocker les données globalement pour l'export
+        currentReportData = reportData;
+        currentFormData = formData;
+
+        // Loguez les sections manquantes
+        logMissingData(reportData);
+    
+        // Vérifiez que les données sont présentes
+        if (!reportData || Object.keys(reportData).length === 0) {
+            console.error('❌ Aucune donnée de rapport reçue');
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Aucune donnée de rapport reçue.'
+            });
+            return;
+        }
         
-        // Afficher la section du rapport
+        console.log('✅ Structure des données:', Object.keys(reportData));
+
+        // TEST SIMPLE POUR VÉRIFIER L'AFFICHAGE
+        const testHTML = `
+            <div class="alert alert-success">
+                <h4>TEST - Rapport reçu avec succès!</h4>
+                <p>Données disponibles: ${Object.keys(reportData).length} sections</p>
+                <p>En-tête: ${reportData.header_report?.acremac_services || 'Non disponible'}</p>
+                <button class="btn btn-primary" onclick="$('#reportSolvency .card-body').html(construireHTMLRapport(${JSON.stringify(reportData)}, ${JSON.stringify(formData)}))">
+                    Afficher le rapport complet
+                </button>
+            </div>
+        `;
+        
         $('#reportSolvency').show();
+
+        // Activer les boutons d'export
+        $('#btnExportPDF, #btnExportHTML, #btnExportXML, #btnExportJSON')
+            .prop('disabled', false)
+            .removeClass('btn-outline-secondary')
+            .addClass('btn-outline-primary');
         
-        // Remplir les données du rapport
+        console.log('✅ Boutons d\'export activés');
+
         remplirDonneesRapport(reportData, formData);
+
+        // Initialiser les écouteurs d'événements
+        initialiserBoutonsExport();
         
-        // Faire défiler jusqu'au rapport
         $('html, body').animate({
             scrollTop: $('#reportSolvency').offset().top
         }, 1000);
@@ -1426,7 +1443,6 @@ $(document).ready(function() {
 
     // Fonction pour remplir les données du rapport
     function remplirDonneesRapport(reportData, formData) {
-        // Header du rapport
         const header = reportData.header_report;
         $('#reportSolvency .card-header .text-md-end').html(`
             <p class="text-primary text-md-end mb-0">${header.acremac_services}</p>
@@ -1434,26 +1450,23 @@ $(document).ready(function() {
             <p class="text-primary text-md-end mb-0">${header.date_today} (GMT)</p>
         `);
         
-        // Récupérer le corps du rapport
         const cardBody = $('#reportSolvency .card-body');
         cardBody.empty();
         
-        // Construire le HTML du rapport
         let rapportHTML = construireHTMLRapport(reportData, formData);
         cardBody.html(rapportHTML);
         
-        // Mettre à jour le footer avec les boutons d'export
         mettreAJourFooterExport(formData);
     }
 
-    // Fonction pour construire le HTML du rapport
+    // Fonction pour construire le HTML du rapport COMPLET
     function construireHTMLRapport(reportData, formData) {
         return `
             <!-- En-tête du rapport -->
             <div class="header">
                 <div class="two-columns">
                     <div>
-                        <img src="{% static 'images/acremac_option.png' %}" class="header-logo" alt="Logo ACREMAC" />
+                        <img src="${STATIC_URL}images/acremac_option.png" class="header-logo" alt="Logo ACREMAC" />
                     </div>
                     <div class="text-right">
                         ${reportData.header_report.acremac_services}<br>
@@ -1473,14 +1486,35 @@ $(document).ready(function() {
             ${genererSectionCommande(reportData)}
             ${genererSectionIdentification(reportData)}
             ${genererSectionInformationsSupplementaires(reportData)}
-            ${genererSectionParametres(formData)}
+            ${genererSectionResumeExecutif(reportData)}
+            ${genererSectionEvaluationRisque(reportData)}
+            ${genererSectionAvisCredit(reportData)}
+            ${genererSectionDonneesEnregistrement(reportData)}
+            ${genererSectionAntecedentsJuridiques(reportData)}
+            ${genererSectionManagement(reportData)}
+            ${genererSectionCapitalSocial(reportData)}
+            ${genererSectionActionnariat(reportData)}
+            ${genererSectionAffiliations(reportData)}
+            ${genererSectionAnalyseSectorielle(reportData)}
+            ${genererSectionDonneesBancaires(reportData)}
+            ${genererSectionComptesFinanciers(reportData)}
             ${genererSectionEtatsFinanciers(reportData)}
+
+            ${genererSectionScoring(reportData, formData)}
+            
+            ${genererSectionOperationsHistorique(reportData)}
+            ${genererSectionProprietesActifs(reportData)}
+            ${genererSectionConditionsAchatVente(reportData)}
+            ${genererSectionSourcesInvestigation()}
             ${genererSectionConclusion(reportData)}
             ${genererPiedDePage()}
         `;
     }
 
-    // Fonctions pour générer chaque section
+    // =================================================================
+    // FONCTIONS POUR GÉNÉRER CHAQUE SECTION DU RAPPORT
+    // =================================================================
+
     function genererSectionCommande(reportData) {
         const commande = reportData.commande;
         if (commande.client !== "Non spécifié") {
@@ -1530,7 +1564,6 @@ $(document).ready(function() {
         `;
     }
 
-
     function genererSectionIdentification(reportData) {
         const ident = reportData.identification.acremac_info;
         return `
@@ -1556,11 +1589,14 @@ $(document).ready(function() {
                         <th>Pays</th>
                         <td>${ident.pays}</td>
                     </tr>
+                    <tr>
+                        <th>Adresse</th>
+                        <td colspan="3">${ident.numero_adresse} ${ident.rue_adresse}, ${ident.code_postal}</td>
+                    </tr>
                 </table>
             </div>
         `;
     }
-
 
     function genererSectionInformationsSupplementaires(reportData) {
         const info = reportData.additional_information;
@@ -1578,103 +1614,733 @@ $(document).ready(function() {
                     <tr>
                         <th>Date création</th>
                         <td>${info.date_creation}</td>
+                        <th>Catégorie entreprise</th>
+                        <td>${info.categorie_entreprise}</td>
+                    </tr>
+                    <tr>
                         <th>Activité principale</th>
-                        <td>${info.activite_principale}</td>
+                        <td colspan="3">${info.activite_principale}</td>
                     </tr>
                     <tr>
                         <th>Description</th>
                         <td colspan="3">${info.description}</td>
                     </tr>
+                    <tr>
+                        <th>Codes NAF</th>
+                        <td colspan="3">${Array.isArray(info.naf_codes) ? info.naf_codes.join(', ') : info.naf_codes}</td>
+                    </tr>
+                    <tr>
+                        <th>Codes NACE</th>
+                        <td colspan="3">${Array.isArray(info.nace_codes) ? info.nace_codes.join(', ') : info.nace_codes}</td>
+                    </tr>
                 </table>
             </div>
         `;
     }
 
-
-    function genererSectionParametres(formData) {
-        const periodeMap = {
-            '7j': '7 derniers jours',
-            '1m': '1 dernier mois',
-            '3m': '3 derniers mois', 
-            '6m': '6 derniers mois',
-            '1a': '1 dernière année',
-            'personnalise': 'Période personnalisée'
-        };
-        
-        const langueMap = {
-            'fr': 'Français',
-            'en': 'English'
-        };
-        
-        const deviseMap = {
-            'XAF': 'Franc CFA (XAF)',
-            'XOF': 'Franc CFA (XOF)',
-            'USD': 'Dollar US (USD)',
-            'EUR': 'Euro (EUR)'
-        };
-        
-        const bilanMap = {
-            'classique': 'Classique',
-            'bancaire': 'Bancaire',
-            'anglais': 'Anglais',
-            'syscohada': 'Syscohada',
-            'irfs_cobac': 'Irfs Cobac'
-        };
-        
-        const formatMap = {
-            'pdf': 'PDF',
-            'html': 'HTML',
-            'xml': 'XML',
-            'json': 'JSON'
-        };
-
+    function genererSectionResumeExecutif(reportData) {
+        const resume = reportData.executive_summary;
         return `
-            <!-- Paramètres du rapport -->
+            <!-- Résumé exécutif -->
             <div class="section">
-                <div class="section-title">PARAMÈTRES DU RAPPORT</div>
+                <div class="section-title">RESUME EXECUTIF</div>
                 <table>
                     <tr>
-                        <th>Période d'analyse</th>
-                        <td>N: ${formData.annee_n}, N-1: ${formData.annee_n1}, N-2: ${formData.annee_n2}</td>
+                        <th>Capital social</th>
+                        <td>${resume.capital_social} ${resume.devise}</td>
+                        <th>Chiffre d'affaires</th>
+                        <td>${resume.chiffre_affaire} ${resume.devise}</td>
                     </tr>
                     <tr>
-                        <th>Inclure commande</th>
-                        <td>${formData.inclure_commande === 'oui' ? 'Oui' : 'Non'}</td>
-                    </tr>
-                    ${formData.inclure_commande === 'oui' ? `
-                    <tr>
-                        <th>Période recherche</th>
-                        <td>${periodeMap[formData.periode_recherche] || formData.periode_recherche}</td>
-                    </tr>
-                    ` : ''}
-                    <tr>
-                        <th>Langue</th>
-                        <td>${langueMap[formData.langue] || formData.langue}</td>
+                        <th>Résultat net</th>
+                        <td>${resume.resultat_net} ${resume.devise}</td>
+                        <th>Capitaux propres</th>
+                        <td>${resume.capitaux_propre} ${resume.devise}</td>
                     </tr>
                     <tr>
-                        <th>Devise</th>
-                        <td>${deviseMap[formData.devise] || formData.devise}</td>
+                        <th>Nombre d'employés</th>
+                        <td>${resume.nombre_employe}</td>
+                        <th>Date de création</th>
+                        <td>${resume.date_creation}</td>
                     </tr>
                     <tr>
-                        <th>Type de bilan</th>
-                        <td>${bilanMap[formData.type_bilan] || formData.type_bilan}</td>
-                    </tr>
-                    <tr>
-                        <th>Format</th>
-                        <td>${formatMap[formData.format_rapport] || formData.format_rapport}</td>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${resume.commentaire}</td>
                     </tr>
                 </table>
             </div>
         `;
     }
 
+    function genererSectionEvaluationRisque(reportData) {
+        const evaluation = reportData.summary_and_opinion;
+        
+        // Récupérez la valeur du score de risque avec valeur par défaut
+        let riskScore = evaluation.risk_rating_value;
+        
+        // Assurez-vous que le score est valide (entre 0 et 9)
+        if (riskScore === undefined || riskScore === null) {
+            riskScore = 0; // Valeur par défaut
+            console.warn('⚠️ Score de risque non défini, utilisation de la valeur par défaut:', riskScore);
+        }
+        
+        // Limitez le score entre 0 et 9
+        riskScore = Math.max(0, Math.min(9, parseInt(riskScore) || 0));
+        
+        console.log('🎯 Score de risque final:', riskScore);
+        
+        return `
+            <!-- Évaluation du risque -->
+            <div class="section">
+                <div class="section-title">EVALUATION DU RISQUE</div>
+                
+                <div class="subsection-title">SCORE DE RISQUE</div>
+                <div class="row" style="text-align: center;">
+                    <div class="section" style="display: inline-block;">
+                        <img src="${STATIC_URL}riskrating/${riskScore}.svg" 
+                            alt="Score de risque : ${riskScore}/9"
+                            style="max-height: 250px; display: block; margin: 0 auto;"
+                            onerror="this.src='${STATIC_URL}riskrating/0.svg'">
+                        <p style="margin-top: 10px; font-weight: bold;">
+                            Score: ${riskScore}/9 - ${evaluation.cotation_du_risque || 'Non évalué'}
+                        </p>
+                    </div>
+                </div>
+                
+                <table>
+                    <tr>
+                        <th>Score de risque</th>
+                        <td>${riskScore}/9</td>
+                        <th>Cotation du risque</th>
+                        <td>${evaluation.cotation_du_risque || 'Non spécifié'}</td>
+                    </tr>
+                    <tr>
+                        <th>Indice du risque</th>
+                        <td colspan="3">${evaluation.indice_du_risque || 'Non spécifié'}</td>
+                    </tr>
+                    <tr>
+                        <th>Analyse détaillée</th>
+                        <td colspan="3" class="warning">${evaluation.analyse_detailee || 'Aucune analyse disponible'}</td>
+                    </tr>
+                </table>
+                
+                <div class="subsection-title">CRITÈRES D'ÉVALUATION</div>
+                <table>
+                    <tr>
+                        <th>Remboursabilité</th>
+                        <td>${evaluation.remboursabilite || 'Non'}</td>
+                        <th>Situation liquidité</th>
+                        <td>${evaluation.situation_liquidite || 'Non'}</td>
+                    </tr>
+                    <tr>
+                        <th>Performance rentabilité</th>
+                        <td>${evaluation.performance_rentabilite || 'Non'}</td>
+                        <th>Perspective secteur</th>
+                        <td>${evaluation.perspective_secteur || 'Non'}</td>
+                    </tr>
+                    <tr>
+                        <th>Qualité information</th>
+                        <td>${evaluation.qualite_information_analyse || 'Non'}</td>
+                        <th>Existence garantie</th>
+                        <td>${evaluation.existence_garantie || 'Non'}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
 
-    function genererSectionEtatsFinanciers(reportData) {
-        const financial = reportData.financial_statements;
+    function genererSectionAvisCredit(reportData) {
+        const avis = reportData.acremac_opinion;
+        return `
+            <!-- Avis crédit ACREMAC -->
+            <div class="section">
+                <div class="section-title">AVIS CREDIT ACREMAC</div>
+                <div class="acremaac-rating-scale">
+                    ${[1,2,3,4,5,6,7,8,9].map(i => `
+                        <div class="acremaac-rating-item">
+                            <div class="acremaac-rating-point rating-${i}">${i}</div>
+                            <div class="acremaac-rating-label">${getRiskLabel(i)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <table>
+                    <tr>
+                        <th>Notes</th>
+                        <td>${avis.notes}</td>
+                        <th>Montant crédit maximum</th>
+                        <td>${avis.montant_credit_maximum}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${avis.commentaire}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionDonneesEnregistrement(reportData) {
+        const donnees = reportData.registered_data;
+        return `
+            <!-- Données d'enregistrement -->
+            <div class="section">
+                <div class="section-title">DONNEES D'ENREGISTREMENT</div>
+                <table>
+                    <tr>
+                        <th>Date de création</th>
+                        <td>${donnees.date_creation}</td>
+                        <th>Date registre</th>
+                        <td>${donnees.date_registre}</td>
+                    </tr>
+                    <tr>
+                        <th>Numéro registre commerce</th>
+                        <td>${donnees.numero_registre_commerce}</td>
+                        <th>Numéro fiscal</th>
+                        <td>${donnees.numero_fiscale}</td>
+                    </tr>
+                    <tr>
+                        <th>Forme juridique</th>
+                        <td>${donnees.forme_juridique}</td>
+                        <th>Statut registre</th>
+                        <td>${donnees.statut_registre}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${donnees.commentaire}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionAntecedentsJuridiques(reportData) {
+        const antecedents = reportData.legal_background.antecedents_juridiques;
+        if (!antecedents || antecedents.length === 0) {
+            return `
+                <div class="section">
+                    <div class="section-title">ANTECEDENTS JURIDIQUES</div>
+                    <div class="subsection-title">AUCUN ANTÉCÉDENT JURIDIQUE DISPONIBLE</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="section">
+                <div class="section-title">ANTECEDENTS JURIDIQUES</div>
+                ${antecedents.map((antecedent, index) => `
+                    <div class="subsection-title">DOSSIER ${index + 1}</div>
+                    <table>
+                        <tr>
+                            <th>Dossier faillite</th>
+                            <td>${antecedent.dossier_faillite}</td>
+                        </tr>
+                        <tr>
+                            <th>Jugement cour</th>
+                            <td>${antecedent.jugement_cour}</td>
+                        </tr>
+                        <tr>
+                            <th>Antécédant redressement</th>
+                            <td>${antecedent.antecedant_redressement}</td>
+                        </tr>
+                        <tr>
+                            <th>Autre</th>
+                            <td>${antecedent.autre}</td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td class="warning">${antecedent.commentaire}</td>
+                        </tr>
+                    </table>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function genererSectionManagement(reportData) {
+        const management = reportData.management;
+        return `
+            <!-- Management et personnel -->
+            <div class="section">
+                <div class="section-title">MANAGEMENT ET PERSONNEL</div>
+                
+                <div class="subsection-title">GESTION DU RISQUE</div>
+                <div style="text-align: center; margin: 15px 0;">
+                    <img src="${STATIC_URL}${management.risk_management.image}" 
+                        alt="Image gestion risque" 
+                        style="max-width: 250px; height: auto;">
+                    <div style="margin-top: 10px; font-weight: bold;">
+                        Score: ${management.risk_management.score}
+                    </div>
+                </div>
+                <table>
+                    <tr>
+                        <th>Professionnalisme</th>
+                        <td>${management.risk_management.professionalisme}</td>
+                        <th>Organisation</th>
+                        <td>${management.risk_management.organisation}</td>
+                    </tr>
+                    <tr>
+                        <th>Turn-over</th>
+                        <td>${management.risk_management.turn_over}</td>
+                        <th>Grève</th>
+                        <td>${management.risk_management.greve}</td>
+                    </tr>
+                    <tr>
+                        <th>Dégradation qualité</th>
+                        <td>${management.risk_management.degradation_qualite}</td>
+                        <th>Non-respect conditions</th>
+                        <td>${management.risk_management.non_respect_condition}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${management.risk_management.commentaire}</td>
+                    </tr>
+                </table>
+                
+                ${genererSousSectionResponsables(management)}
+                ${genererSousSectionConseilAdministration(management)}
+            </div>
+        `;
+    }
+
+    function genererSousSectionResponsables(management) {
+        if (!management.responsables || management.responsables.length === 0) {
+            return `<div class="subsection-title">AUCUN RESPONSABLE DISPONIBLE</div>`;
+        }
+
+        return `
+            <div class="subsection-title">DIRIGEANTS</div>
+            ${management.responsables.map(responsable => `
+                <table>
+                    <tr>
+                        <th>Nom</th>
+                        <td>${responsable.nom} ${responsable.prenom}</td>
+                        <th>Poste</th>
+                        <td>${responsable.poste}</td>
+                    </tr>
+                    <tr>
+                        <th>Sexe</th>
+                        <td>${responsable.sexe}</td>
+                        <th>Nationalité</th>
+                        <td>${responsable.nationalite}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${responsable.commentaire}</td>
+                    </tr>
+                </table>
+            `).join('')}
+        `;
+    }
+
+    function genererSousSectionConseilAdministration(management) {
+        if (!management.conseil_administration || management.conseil_administration.length === 0) {
+            return `<div class="subsection-title">AUCUN MEMBRE DU CONSEIL D'ADMINISTRATION</div>`;
+        }
+
+        return `
+            <div class="subsection-title">CONSEIL D'ADMINISTRATION</div>
+            ${management.conseil_administration.map(membre => `
+                <table>
+                    <tr>
+                        <th>Nom</th>
+                        <td>${membre.nom}</td>
+                        <th>Fonction</th>
+                        <td>${membre.fonction_dans_le_conseil}</td>
+                    </tr>
+                    <tr>
+                        <th>Adresse</th>
+                        <td colspan="3">${membre.numero_adresse} ${membre.rue_adresse}, ${membre.code_postale_adresse}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${membre.commentaire}</td>
+                    </tr>
+                </table>
+            `).join('')}
+        `;
+    }
+
+    function genererSectionCapitalSocial(reportData) {
+        const capital = reportData.capital_composition;
+        return `
+            <!-- Capital social -->
+            <div class="section">
+                <div class="section-title">CAPITAL SOCIAL</div>
+                <table>
+                    <tr>
+                        <th>Capital émis</th>
+                        <td>${capital.emis} ${capital.devise}</td>
+                        <th>Capital publié</th>
+                        <td>${capital.publie} ${capital.devise}</td>
+                    </tr>
+                    <tr>
+                        <th>Capital libéré</th>
+                        <td colspan="3">${capital.libere} ${capital.devise}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${capital.commentaire}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionActionnariat(reportData) {
+        const actionnaires = reportData.shareholders.actionnaires;
+        if (!actionnaires || actionnaires.length === 0) {
+            return `
+                <div class="section">
+                    <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
+                    <div class="subsection-title">AUCUN ACTIONNAIRE DISPONIBLE</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="section">
+                <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
+                ${actionnaires.map(actionnaire => `
+                    <table>
+                        <tr>
+                            <th>Nom</th>
+                            <td>${actionnaire.nom}</td>
+                            <th>Prénom</th>
+                            <td>${actionnaire.prenom}</td>
+                        </tr>
+                        <tr>
+                            <th>Pourcentage</th>
+                            <td colspan="3">${actionnaire.pourcentage}%</td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td colspan="3" class="warning">${actionnaire.commentaire}</td>
+                        </tr>
+                    </table>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function genererSectionAffiliations(reportData) {
+        const affiliations = reportData.affiliations.affiliations;
+        if (!affiliations || affiliations.length === 0) {
+            return `
+                <div class="section">
+                    <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
+                    <div class="subsection-title">AUCUNE AFFILIATION DISPONIBLE</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="section">
+                <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
+                ${affiliations.map(affiliation => `
+                    <table>
+                        <tr>
+                            <th>Nom</th>
+                            <td>${affiliation.nom}</td>
+                            <th>Type d'affiliation</th>
+                            <td>${affiliation.type_affiliation}</td>
+                        </tr>
+                        <tr>
+                            <th>Adresse</th>
+                            <td colspan="3">${affiliation.numero_adresse} ${affiliation.rue_adresse}, ${affiliation.code_postale_adresse}</td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td colspan="3" class="warning">${affiliation.commentaire}</td>
+                        </tr>
+                    </table>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function genererSectionAnalyseSectorielle(reportData) {
+        const secteur = reportData.sector_analysis;
+        return `
+            <!-- Analyse sectorielle -->
+            <div class="section">
+                <div class="section-title">ANALYSE SECTORIELLE</div>
+                
+                <div class="subsection-title">ANALYSE ÉCONOMIQUE</div>
+                <table>
+                    <tr>
+                        <th>Impact COVID-19</th>
+                        <td class="warning">${secteur.sectorielle.impact_covid_19}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire sectoriel</th>
+                        <td class="warning">${secteur.sectorielle.commentaire}</td>
+                    </tr>
+                </table>
+                
+                <div class="subsection-title">TENDANCE</div>
+                <table>
+                    <tr>
+                        <th>Avis commercial</th>
+                        <td>${secteur.tendance.avis_commercial}</td>
+                    </tr>
+                    <tr>
+                        <th>Presse et médias</th>
+                        <td class="warning">${secteur.tendance.presse_media}</td>
+                    </tr>
+                    <tr>
+                        <th>Principaux concurrents</th>
+                        <td class="warning">${secteur.tendance.principaux_concurrent}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire tendance</th>
+                        <td class="warning">${secteur.tendance.commentaire}</td>
+                    </tr>
+                </table>
+                
+                <div class="subsection-title">CONSEILS</div>
+                <table>
+                    <tr>
+                        <th>Points forts</th>
+                        <td class="warning">${secteur.advice.points_forts}</td>
+                    </tr>
+                    <tr>
+                        <th>Points faibles</th>
+                        <td class="warning">${secteur.advice.points_faibles}</td>
+                    </tr>
+                    <tr>
+                        <th>Dynamisme court terme</th>
+                        <td>${secteur.advice.dynamisme_court_terme}</td>
+                    </tr>
+                    <tr>
+                        <th>Dynamisme long terme</th>
+                        <td>${secteur.advice.dynamisme_long_terme}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionDonneesBancaires(reportData) {
+        const banques = reportData.banking_data.data_banks;
+        if (!banques || banques.length === 0) {
+            return `
+                <div class="section">
+                    <div class="section-title">DONNÉES BANCAIRES</div>
+                    <div class="subsection-title">AUCUNE DONNÉE BANCAIRE DISPONIBLE</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="section">
+                <div class="section-title">DONNÉES BANCAIRES</div>
+                ${banques.map(banque => `
+                    <table>
+                        <tr>
+                            <th>Nom de la banque</th>
+                            <td>${banque.nom_banque}</td>
+                            <th>Numéro de compte</th>
+                            <td>${banque.numero_compte}</td>
+                        </tr>
+                        <tr>
+                            <th>Type de relation</th>
+                            <td colspan="3">${banque.type_relation}</td>
+                        </tr>
+                        <tr>
+                            <th>Adresse</th>
+                            <td colspan="3">${banque.numero} ${banque.rue}, ${banque.code_postal} ${banque.ville}</td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td colspan="3" class="warning">${banque.commentaire}</td>
+                        </tr>
+                    </table>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function genererSectionComptesFinanciers(reportData) {
+        const comptes = reportData.financial_accounts;
         return `
             <!-- Comptes financiers -->
             <div class="section">
-                <div class="section-title">ETATS FINANCIERS</div>
+                <div class="section-title">COMPTES FINANCIERS</div>
+                <table>
+                    <tr>
+                        <th>Cabinet</th>
+                        <td>${comptes.cabinet}</td>
+                        <th>Type de compte</th>
+                        <td>${comptes.type_compte}</td>
+                    </tr>
+                    <tr>
+                        <th>Devise</th>
+                        <td>${comptes.devise}</td>
+                        <th>Type de bilan</th>
+                        <td>${comptes.type_bilan}</td>
+                    </tr>
+                    <tr>
+                        <th>Période de compte</th>
+                        <td colspan="3">
+                            N-0: ${comptes.date_compte} - ${comptes.date_fin}<br>
+                            N-1: ${comptes.date_compte_n_moins_un} - ${comptes.date_fin_n_moins_un}<br>
+                            N-2: ${comptes.date_compte_n_moins_deux} - ${comptes.date_fin_n_moins_deux}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire</th>
+                        <td colspan="3" class="warning">${comptes.commentaire}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+
+
+    // Gestion des Etats financiers et des graphiques
+    function genererSectionEtatsFinanciers(reportData) {
+        const financial = reportData.financial_statements;
+        const typeBilan = financial.bilan_type;
+        
+        // Déterminer quelle structure de données utiliser selon le type de bilan
+        let etatsFinanciers = null;
+        let prefixe = '';
+        
+        switch(typeBilan) {
+            case 'classique':
+                etatsFinanciers = financial.etats_financiers_classiques;
+                prefixe = 'classiques';
+                break;
+            case 'anglais':
+                etatsFinanciers = financial.etats_financiers_anglais;
+                prefixe = 'anglais';
+                break;
+            case 'bancaire':
+                etatsFinanciers = financial.etats_financiers_bancaires;
+                prefixe = 'bancaires';
+                break;
+            case 'syscohada':
+                etatsFinanciers = financial.etats_financiers_syscohada;
+                prefixe = 'syscohada';
+                break;
+            case 'irfs_cobac':
+                etatsFinanciers = financial.etats_financiers_irfs_cobac;
+                prefixe = 'irfs_cobac';
+                break;
+            default:
+                etatsFinanciers = financial.etats_financiers_classiques;
+                prefixe = 'classiques';
+        }
+        
+        // Vérifier si les données financières sont disponibles
+        const hasData = etatsFinanciers && (
+            (etatsFinanciers.actif_data && Object.keys(etatsFinanciers.actif_data).length > 0) ||
+            (etatsFinanciers.passif_data && Object.keys(etatsFinanciers.passif_data).length > 0) ||
+            (etatsFinanciers.resultat_data && Object.keys(etatsFinanciers.resultat_data).length > 0) ||
+            (etatsFinanciers.ratios_data && Object.keys(etatsFinanciers.ratios_data).length > 0)
+        );
+        
+        if (!hasData) {
+            return `
+                <!-- États financiers - Données non disponibles -->
+                <div class="section">
+                    <div class="section-title">ETATS FINANCIERS - BILAN ${typeBilan.toUpperCase()}</div>
+                    <div class="subsection-title">PÉRIODE D'ANALYSE</div>
+                    <table>
+                        <tr>
+                            <th>Années analysées</th>
+                            <td>${financial.years.join(', ')}</td>
+                        </tr>
+                        <tr>
+                            <th>Type de bilan</th>
+                            <td>${typeBilan}</td>
+                        </tr>
+                    </table>
+                    
+                    <div class="warning" style="padding: 15px; margin: 15px 0;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Aucune donnée financière disponible pour le bilan ${typeBilan} sur les années ${financial.years.join(', ')}.
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Construire les sections des états financiers
+        let sectionsHTML = '';
+        
+        // Section ACTIFS
+        if (etatsFinanciers.actif_data && Object.keys(etatsFinanciers.actif_data).length > 0) {
+            sectionsHTML += `
+                <div class="section-title">ACTIFS</div>
+                ${genererTableauFinancier(etatsFinanciers.actif_data, financial.years, 'Actif')}
+            `;
+        }
+        
+        // Section PASSIFS
+        if (etatsFinanciers.passif_data && Object.keys(etatsFinanciers.passif_data).length > 0) {
+            sectionsHTML += `
+                <div class="section-title">PASSIFS</div>
+                ${genererTableauFinancier(etatsFinanciers.passif_data, financial.years, 'Passif')}
+            `;
+        }
+        
+        // Section RÉSULTATS (ou PRODUITS/DÉPENSES pour bancaire)
+        if (etatsFinanciers.resultat_data && Object.keys(etatsFinanciers.resultat_data).length > 0) {
+            const titreResultat = typeBilan === 'bancaire' ? 'COMPTE DE RÉSULTAT' : 'COMPTES DE RÉSULTAT';
+            sectionsHTML += `
+                <div class="section-title">${titreResultat}</div>
+                ${genererTableauFinancier(etatsFinanciers.resultat_data, financial.years, 'Résultat')}
+            `;
+        }
+        
+        // Section RATIOS
+        if (etatsFinanciers.ratios_data && Object.keys(etatsFinanciers.ratios_data).length > 0) {
+            sectionsHTML += `
+                <div class="section-title">RATIOS FINANCIERS</div>
+                ${genererTableauRatios(etatsFinanciers.ratios_data, financial.years)}
+            `;
+        }
+        
+        // Section GRAPHIQUES
+        let graphiquesHTML = '';
+        if (etatsFinanciers.charts_data) {
+            const charts = etatsFinanciers.charts_data;
+            
+            if (charts.charts_structure_financiere) {
+                graphiquesHTML += `
+                    <div class="section-title">STRUCTURE FINANCIÈRE</div>
+                    <img src="data:image/png;base64,${charts.charts_structure_financiere}" 
+                        alt="Graphique de structure financière" 
+                        style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+                `;
+            }
+            
+            if (charts.charts_rentabilite_financiere) {
+                graphiquesHTML += `
+                    <div class="section-title">RENTABILITÉ FINANCIÈRE</div>
+                    <img src="data:image/png;base64,${charts.charts_rentabilite_financiere}" 
+                        alt="Graphique de rentabilité financière" 
+                        style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+                `;
+            }
+            
+            if (charts.charts_delais) {
+                graphiquesHTML += `
+                    <div class="section-title">DÉLAIS</div>
+                    <img src="data:image/png;base64,${charts.charts_delais}" 
+                        alt="Graphique des délais" 
+                        style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px;">
+                `;
+            }
+        }
+        
+        return `
+            <!-- États financiers -->
+            <div class="section">
+                <div class="section-title">ETATS FINANCIERS - BILAN ${typeBilan.toUpperCase()}</div>
+                
                 <div class="subsection-title">PÉRIODE D'ANALYSE</div>
                 <table>
                     <tr>
@@ -1683,40 +2349,667 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Type de bilan</th>
-                        <td>${financial.bilan_type}</td>
+                        <td>${typeBilan}</td>
                     </tr>
                 </table>
                 
-                <div class="subsection-title">INFORMATIONS FINANCIÈRES</div>
-                <div class="chart-placeholder">
-                    <i class="bi bi-bar-chart me-2"></i>
-                    Les graphiques et tableaux financiers seront affichés ici dans la version complète
-                </div>
+                ${sectionsHTML}
                 
+                ${graphiquesHTML ? `
+                    <div class="subsection-title">GRAPHIQUES FINANCIERS</div>
+                    ${graphiquesHTML}
+                ` : `
+                    <div class="subsection-title">GRAPHIQUES FINANCIERS</div>
+                    <div class="chart-placeholder">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Aucun graphique disponible pour cette analyse
+                    </div>
+                `}
+            </div>
+        `;
+    }
+
+    // Fonction pour générer les tableaux financiers (Actif, Passif, Résultat)
+    function genererTableauFinancier(data, years, type) {
+        let html = '';
+        
+        for (const [section, rows] of Object.entries(data)) {
+            if (!rows || rows.length === 0) continue;
+            
+            html += `
+                <div class="subsection-title">${section}</div>
+                <table class="financial-table">
+                    <thead>
+                        <tr>
+                            <th>Libellé</th>
+                            <th class="text-right">N (${years[0]})</th>
+                            <th class="text-right">N-1 (${years[1]})</th>
+                            <th class="text-right">VAR N/N-1</th>
+                            <th class="text-right">N-2 (${years[2]})</th>
+                            <th class="text-right">VAR N-1/N-2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => {
+                            if (row.is_section_title) {
+                                return `<tr><td colspan="6" style="font-weight: bold; background-color: #f8f9fa;">${row.label}</td></tr>`;
+                            }
+                            
+                            const isTotal = row.is_total || row.is_final_total;
+                            const style = isTotal ? 'style="font-weight: bold; background-color: #e6f7ff;"' : '';
+                            
+                            return `
+                                <tr ${style}>
+                                    <td>${row.label}</td>
+                                    <td class="text-right">${formatValeurFinanciere(row.values?.n)}</td>
+                                    <td class="text-right">${formatValeurFinanciere(row.values?.n_moins_1)}</td>
+                                    <td class="text-right ${getClasseVariation(row.variations?.n_vs_n_moins_1)}">
+                                        ${row.variations?.n_vs_n_moins_1 || 'N/A'}
+                                    </td>
+                                    <td class="text-right">${formatValeurFinanciere(row.values?.n_moins_2)}</td>
+                                    <td class="text-right ${getClasseVariation(row.variations?.n_moins_1_vs_n_moins_2)}">
+                                        ${row.variations?.n_moins_1_vs_n_moins_2 || 'N/A'}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        return html;
+    }
+
+    // Fonction pour générer le tableau des ratios
+    function genererTableauRatios(ratiosData, years) {
+        let html = '';
+        
+        for (const [section, ratios] of Object.entries(ratiosData)) {
+            if (!ratios || ratios.length === 0) continue;
+            
+            html += `
+                <div class="subsection-title">${section}</div>
+                <table class="financial-table">
+                    <thead>
+                        <tr>
+                            <th>Ratio</th>
+                            <th class="text-right">N (${years[0]})</th>
+                            <th class="text-right">N-1 (${years[1]})</th>
+                            <th class="text-right">VAR N/N-1</th>
+                            <th class="text-right">N-2 (${years[2]})</th>
+                            <th class="text-right">VAR N-1/N-2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ratios.map(ratio => {
+                            // Gestion spéciale pour les ratios bancaires qui ont une structure différente
+                            const isRatioBancaire = ratio.values?.n && typeof ratio.values.n === 'object';
+                            
+                            if (isRatioBancaire) {
+                                return `
+                                    <tr>
+                                        <td>${ratio.label}</td>
+                                        <td class="text-right">
+                                            ${formatValeurFinanciere(ratio.values?.n?.calculated)}<br>
+                                            <small>(${formatValeurFinanciere(ratio.values?.n?.bounded)})</small>
+                                        </td>
+                                        <td class="text-right">
+                                            ${formatValeurFinanciere(ratio.values?.n_moins_1?.calculated)}<br>
+                                            <small>(${formatValeurFinanciere(ratio.values?.n_moins_1?.bounded)})</small>
+                                        </td>
+                                        <td class="text-right ${getClasseVariation(ratio.variations?.n_vs_n_moins_1)}">
+                                            ${ratio.variations?.n_vs_n_moins_1 || 'N/A'}
+                                        </td>
+                                        <td class="text-right">
+                                            ${formatValeurFinanciere(ratio.values?.n_moins_2?.calculated)}<br>
+                                            <small>(${formatValeurFinanciere(ratio.values?.n_moins_2?.bounded)})</small>
+                                        </td>
+                                        <td class="text-right ${getClasseVariation(ratio.variations?.n_moins_1_vs_n_moins_2)}">
+                                            ${ratio.variations?.n_moins_1_vs_n_moins_2 || 'N/A'}
+                                        </td>
+                                    </tr>
+                                `;
+                            } else {
+                                return `
+                                    <tr>
+                                        <td>${ratio.label}</td>
+                                        <td class="text-right">${formatValeurFinanciere(ratio.values?.n)}</td>
+                                        <td class="text-right">${formatValeurFinanciere(ratio.values?.n_moins_1)}</td>
+                                        <td class="text-right ${getClasseVariation(ratio.variations?.n_vs_n_moins_1)}">
+                                            ${ratio.variations?.n_vs_n_moins_1 || 'N/A'}
+                                        </td>
+                                        <td class="text-right">${formatValeurFinanciere(ratio.values?.n_moins_2)}</td>
+                                        <td class="text-right ${getClasseVariation(ratio.variations?.n_moins_1_vs_n_moins_2)}">
+                                            ${ratio.variations?.n_moins_1_vs_n_moins_2 || 'N/A'}
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        return html;
+    }
+
+    // Fonctions utilitaires
+    function formatValeurFinanciere(valeur) {
+        if (valeur === null || valeur === undefined || valeur === 'N/A') return '-';
+        if (typeof valeur === 'number') {
+            // Pour les montants financiers, formater avec séparateurs
+            if (Math.abs(valeur) >= 1000) {
+                return new Intl.NumberFormat('fr-FR', { 
+                    minimumFractionDigits: 0, 
+                    maximumFractionDigits: 0 
+                }).format(valeur);
+            } else {
+                return new Intl.NumberFormat('fr-FR', { 
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                }).format(valeur);
+            }
+        }
+        return valeur;
+    }
+
+    // Fonction de gestion des Variations de calcul 
+    function getClasseVariation(variation) {
+        if (!variation || variation === 'N/A') return '';
+        if (variation.startsWith('+')) return 'positive-var';
+        if (variation.startsWith('-')) return 'negative-var';
+        return '';
+    }
+
+
+
+    // Fonction utilitaire pour accéder aux données en toute sécurité
+    function getSafe(data, path, defaultValue = 'Non disponible') {
+        try {
+            const keys = path.split('.');
+            let result = data;
+            for (const key of keys) {
+                if (result === null || result === undefined) return defaultValue;
+                result = result[key];
+            }
+            return result === null || result === undefined ? defaultValue : result;
+        } catch (error) {
+            console.warn(`❌ Erreur d'accès à ${path}:`, error);
+            return defaultValue;
+        }
+    }
+
+    // Log les données manquantes pour le débogage
+    function logMissingData(reportData) {
+        const requiredSections = [
+            'header_report',
+            'identification', 
+            'executive_summary',
+            'summary_and_opinion',
+            'scoring_sans_bilan',
+            'financial_statements'
+        ];
+        
+        requiredSections.forEach(section => {
+            if (!reportData[section]) {
+                console.warn(`⚠️ Section manquante: ${section}`);
+            }
+        });
+    }
+
+    // Version sécurisée de genererSectionScoring sans bilan
+    // Fonction principale pour générer la section scoring en fonction du type de bilan
+    // Fonction principale pour générer TOUS les scoring
+    function genererSectionScoring(reportData, formData) {
+        const typeBilan = formData?.type_bilan || 'sans_bilan';
+        
+        let html = '';
+        
+        // 1. Toujours afficher le scoring sans bilan en premier
+        html += genererScoringSansBilan(reportData);
+        
+        // 2. Ensuite afficher le scoring avec bilan selon le type sélectionné
+        switch(typeBilan) {
+            case 'classique':
+                html += genererScoringClassique(reportData);
+                break;
+            case 'anglais':
+                html += genererScoringAnglais(reportData);
+                break;
+            case 'bancaire':
+                html += genererScoringBancaire(reportData);
+                break;
+            case 'syscohada':
+                html += genererScoringSyscohada(reportData);
+                break;
+            case 'irfs_cobac':
+                html += genererScoringIfrs(reportData);
+                break;
+            default:
+                // Pour 'sans_bilan', on n'affiche que le scoring sans bilan
+                break;
+        }
+        
+        return html;
+    }
+
+    // Version sécurisée de genererSectionScoring sans bilan
+    function genererScoringSansBilan(reportData) {
+        const scoring = reportData.scoring_sans_bilan;
+        
+        if (!scoring) {
+            console.warn('❌ Section scoring sans bilan non disponible');
+            return `
+                <div class="section">
+                    <div class="section-title">SCORE ACREMAC - SANS BILAN</div>
+                    <div class="alert alert-warning">
+                        <p>Les données de scoring sans bilan ne sont pas disponibles pour le moment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <!-- Scoring ACREMAC Sans Bilan -->
+            <div class="section">
+                <div class="section-title">${scoring.title_16 || 'SCORE ACREMAC - SANS BILAN'}</div>
+                <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : 
+                la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, 
+                le code NACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance 
+                dans le calcul du risque de crédit.</p>
+                
+                <div class="score-container">
+                    <div class="score-image">
+                        <img src="${STATIC_URL}${scoring.score_png || 'scoring/0.png'}" alt="Score ACREMAC Sans Bilan">
+                    </div>
+                    <br>
+                </div>
+                <div class="score-container">
+                    <div class="score-details">
+                        <table>
+                            <tr>
+                                <th>Score</th>
+                                <td style="color: #00cc00; font-weight: bold;">${scoring.score_value || 'N/A'}/10</td>
+                            </tr>
+                            <tr>
+                                <th>Interprétation</th>
+                                <td>${scoring.interpretation || 'Non disponible'}</td>
+                            </tr>
+                            <tr>
+                                <th>Type de scoring</th>
+                                <td>${scoring.score_type || 'Scoring sans bilan'}</td>
+                            </tr>
+                            <tr>
+                                <th>Commentaire</th>
+                                <td class="warning">${scoring.commentaire || 'Aucun commentaire disponible'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Scoring avec bilan classique - Affiche chaque année séparément
+    function genererScoringClassique(reportData) {
+        const scoring = reportData.scoring_classique;
+        
+        if (!scoring) {
+            console.warn('❌ Section scoring classique non disponible');
+            return `
+                <div class="section">
+                    <div class="section-title">SCORING CLASSIQUE - AVEC BILAN</div>
+                    <div class="alert alert-warning">
+                        <p>Les données de scoring classique ne sont pas disponibles pour le moment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <!-- Scoring Classique avec Bilan -->
+            <div class="section">
+                <div class="section-title">${scoring.title_16 || 'SCORING CLASSIQUE - AVEC BILAN'}</div>
+                <p>Ce score est calculé sur la base des états financiers selon le format classique. 
+                Il prend en compte la structure du bilan, les ratios de rentabilité, de liquidité et de solvabilité 
+                pour évaluer la santé financière de l'entreprise.</p>
+                
+                ${genererScoresAnnuelsIndividuels(scoring, 'Classique')}
+            </div>
+        `;
+    }
+
+    // Scoring avec bilan anglais
+    function genererScoringAnglais(reportData) {
+        const scoring = reportData.scoring_anglais;
+        
+        if (!scoring) {
+            console.warn('❌ Section scoring anglais non disponible');
+            return `
+                <div class="section">
+                    <div class="section-title">SCORING ANGLAIS - AVEC BILAN</div>
+                    <div class="alert alert-warning">
+                        <p>Les données de scoring anglais ne sont pas disponibles pour le moment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <!-- Scoring Anglais avec Bilan -->
+            <div class="section">
+                <div class="section-title">${scoring.title_16 || 'SCORING ANGLAIS - AVEC BILAN'}</div>
+                <p>Ce score est calculé selon les normes comptables anglaises (UK GAAP). 
+                Il analyse la performance financière à travers les états financiers formatés 
+                selon les standards britanniques.</p>
+                
+                ${genererScoresAnnuelsIndividuels(scoring, 'Anglais')}
+            </div>
+        `;
+    }
+
+    // Scoring avec bilan bancaire
+    function genererScoringBancaire(reportData) {
+        const scoring = reportData.scoring_bancaire;
+        
+        if (!scoring) {
+            console.warn('❌ Section scoring bancaire non disponible');
+            return `
+                <div class="section">
+                    <div class="section-title">SCORING BANCAIRE - AVEC BILAN</div>
+                    <div class="alert alert-warning">
+                        <p>Les données de scoring bancaire ne sont pas disponibles pour le moment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <!-- Scoring Bancaire avec Bilan -->
+            <div class="section">
+                <div class="section-title">${scoring.title_16 || 'SCORING BANCAIRE - AVEC BILAN'}</div>
+                <p>Ce score spécifique au secteur bancaire analyse les ratios de solvabilité, 
+                de liquidité et de rentabilité selon les normes prudentielles applicables 
+                aux établissements de crédit.</p>
+                
+                ${genererScoresAnnuelsIndividuels(scoring, 'Bancaire')}
+            </div>
+        `;
+    }
+
+    // Scoring avec bilan SYSCOHADA
+    function genererScoringSyscohada(reportData) {
+        const scoring = reportData.scoring_syscohada;
+        
+        if (!scoring) {
+            console.warn('❌ Section scoring SYSCOHADA non disponible');
+            return `
+                <div class="section">
+                    <div class="section-title">SCORING SYSCOHADA - AVEC BILAN</div>
+                    <div class="alert alert-warning">
+                        <p>Les données de scoring SYSCOHADA ne sont pas disponibles pour le moment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <!-- Scoring SYSCOHADA avec Bilan -->
+            <div class="section">
+                <div class="section-title">${scoring.title_16 || 'SCORING SYSCOHADA - AVEC BILAN'}</div>
+                <p>Ce score est calculé selon le référentiel comptable OHADA/SYSCOHADA. 
+                Il évalue la performance financière des entreprises dans l'espace OHADA 
+                en respectant les normes comptables harmonisées.</p>
+                
+                ${genererScoresAnnuelsIndividuels(scoring, 'SYSCOHADA')}
+            </div>
+        `;
+    }
+
+    // Scoring avec bilan IFRS COBAC
+    function genererScoringIfrs(reportData) {
+        const scoring = reportData.scoring_ifrs;
+        
+        if (!scoring) {
+            console.warn('❌ Section scoring IFRS COBAC non disponible');
+            return `
+                <div class="section">
+                    <div class="section-title">SCORING IFRS COBAC - AVEC BILAN</div>
+                    <div class="alert alert-warning">
+                        <p>Les données de scoring IFRS COBAC ne sont pas disponibles pour le moment.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <!-- Scoring IFRS COBAC avec Bilan -->
+            <div class="section">
+                <div class="section-title">${scoring.title_16 || 'SCORING IFRS COBAC - AVEC BILAN'}</div>
+                <p>Ce score est établi selon les normes IFRS (International Financial Reporting Standards) 
+                et les dispositions de la COBAC. Il permet une analyse financière conforme aux standards 
+                internationaux appliqués dans la zone CEMAC.</p>
+                
+                ${genererScoresAnnuelsIndividuels(scoring, 'IFRS COBAC')}
+            </div>
+        `;
+    }
+
+    // Nouvelle fonction pour générer chaque score annuel individuellement
+    function genererScoresAnnuelsIndividuels(scoring, typeScoring) {
+        const annees = [
+            { 
+                label: 'ANNÉE N', 
+                score: scoring.score_value_annee_N, 
+                interpretation: scoring.interpretation_annee_N, 
+                image: scoring.score_image_annee_N 
+            },
+            { 
+                label: 'ANNÉE N-1', 
+                score: scoring.score_value_annee_N1, 
+                interpretation: scoring.interpretation_annee_N1, 
+                image: scoring.score_image_annee_N1 
+            },
+            { 
+                label: 'ANNÉE N-2', 
+                score: scoring.score_value_annee_N2, 
+                interpretation: scoring.interpretation_annee_N2, 
+                image: scoring.score_image_annee_N2 
+            }
+        ];
+
+        let hasData = false;
+        let scoresHTML = '';
+
+        // Générer chaque année individuellement
+        annees.forEach((annee, index) => {
+            if (annee.score && annee.score !== 'None' && annee.score !== '0' && annee.score !== '0.00') {
+                hasData = true;
+                const scoreArrondi = Math.round(parseFloat(annee.score));
+                
+                scoresHTML += `
+                    <div class="score-annuel-individuel">
+                        <div class="subsection-title">${annee.label}</div>
+                        <div class="score-container">
+                            <div class="score-image">
+                                <img src="${STATIC_URL}${annee.image || `scoring/${scoreArrondi}.png`}" 
+                                    alt="Score ${typeScoring} ${annee.label}" 
+                                    onerror="this.src='${STATIC_URL}scoring/0.png'">
+                            </div>
+                        </div>
+                        <br>
+                        <div class="score-container">
+                            <div class="score-details">
+                                <table>
+                                    <tr>
+                                        <th>Score</th>
+                                        <td style="color: #00cc00; font-weight: bold;">${parseFloat(annee.score).toFixed(2)}/10</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Interprétation</th>
+                                        <td>${annee.interpretation || 'Non disponible'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Période</th>
+                                        <td>${annee.label}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        if (!hasData) {
+            return `
+                <div class="alert alert-info">
+                    <p>Aucune donnée de scoring disponible pour les années analysées.</p>
+                </div>
+            `;
+        }
+
+        return scoresHTML;
+    }
+
+
+    function genererSectionOperationsHistorique(reportData) {
+        const operations = reportData.operation_history;
+        return `
+            <!-- Opérations et historique -->
+            <div class="section">
+                <div class="section-title">OPÉRATIONS ET HISTORIQUE</div>
                 <table>
                     <tr>
-                        <th>Statut</th>
-                        <td class="positive-var">Données financières prêtes pour l'analyse</td>
+                        <th>Description complète de l'activité</th>
+                        <td class="warning">${operations.description_complete_activite}</td>
                     </tr>
                     <tr>
-                        <th>Prochaines étapes</th>
-                        <td>Intégration des ratios financiers, graphiques et analyse détaillée</td>
+                        <th>Importation</th>
+                        <td>${operations.importation}</td>
+                    </tr>
+                    <tr>
+                        <th>Historique</th>
+                        <td class="warning">${operations.historique}</td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire sur les ratios</th>
+                        <td class="warning">${operations.commentaire_ratios}</td>
                     </tr>
                 </table>
             </div>
         `;
     }
 
+    function genererSectionProprietesActifs(reportData) {
+        const proprietes = reportData.properties_and_assets.assets_list;
+        if (!proprietes || proprietes.length === 0) {
+            return `
+                <div class="section">
+                    <div class="section-title">PROPRIÉTÉ ET ACTIFS</div>
+                    <div class="subsection-title">AUCUNE PROPRIÉTÉ OU ACTIF DISPONIBLE</div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="section">
+                <div class="section-title">PROPRIÉTÉ ET ACTIFS</div>
+                ${proprietes.map(propriete => `
+                    <table>
+                        <tr>
+                            <th>Locaux</th>
+                            <td>${propriete.locaux}</td>
+                            <th>Branche</th>
+                            <td>${propriete.branche}</td>
+                        </tr>
+                    </table>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function genererSectionConditionsAchatVente(reportData) {
+        const conditions = reportData.terms_of_purchase_and_sale;
+        return `
+            <!-- Conditions d'achat et de vente -->
+            <div class="section">
+                <div class="section-title">CONDITIONS D'ACHAT ET DE VENTE</div>
+                
+                <div class="subsection-title">CONDITIONS D'ACHAT</div>
+                <table>
+                    <tr>
+                        <th>Local</th>
+                        <td>${conditions.conditions_achat.local}</td>
+                    </tr>
+                    <tr>
+                        <th>Importation</th>
+                        <td class="warning">${conditions.conditions_achat.importation}</td>
+                    </tr>
+                    <tr>
+                        <th>Clients</th>
+                        <td class="warning">${conditions.conditions_achat.les_clients}</td>
+                    </tr>
+                    <tr>
+                        <th>Fournisseur</th>
+                        <td class="warning">${conditions.conditions_achat.fournisseur}</td>
+                    </tr>
+                </table>
+                
+                <div class="subsection-title">CONDITIONS DE VENTE</div>
+                <table>
+                    <tr>
+                        <th>Local</th>
+                        <td>${conditions.conditions_vente.local}</td>
+                    </tr>
+                    <tr>
+                        <th>Recouvrement de dette jugement</th>
+                        <td>${conditions.conditions_vente.recouvrement_dette_jugement}</td>
+                    </tr>
+                    <tr>
+                        <th>Comportement de paiement</th>
+                        <td>${conditions.conditions_vente.comportement_de_paiement}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+    }
+
+    function genererSectionSourcesInvestigation() {
+        return `
+            <!-- Sources d'investigation -->
+            <div class="section">
+                <div class="section-title">SOURCES D'INVESTIGATION</div>
+                <table>
+                    <tbody>
+                        <tr><td>Services judiciaires</td></tr>
+                        <tr><td>Chambres de commerce et d'industrie</td></tr>
+                        <tr><td>Banques</td></tr>
+                        <tr><td>Groupe de sociétés</td></tr>
+                        <tr><td>La société faisant l'objet de l'enquête</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
 
     function genererSectionConclusion(reportData) {
         const conclusion = reportData.conclusion_generale;
         return `
-            <!-- Conclusion et Avis -->
+            <!-- Conclusion et avis -->
             <div class="section">
                 <div class="section-title">CONCLUSION ET AVIS</div>
                 <table>
                     <tr>
-                        <th>Synthèse</th>
+                        <th>Évaluation globale</th>
+                        <td style="background-color: ${getCouleurConclusion(conclusion.couleur_commentaire)}; padding: 10px; text-align: center; font-weight: bold;">
+                            ${conclusion.couleur_commentaire}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Commentaire final</th>
                         <td class="warning">${conclusion.commentaire}</td>
                     </tr>
                 </table>
@@ -1724,68 +3017,505 @@ $(document).ready(function() {
         `;
     }
 
-    
     function genererPiedDePage() {
         return `
             <!-- Pied de page -->
             <div class="footer">
                 <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.</p>
                 <p>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.</p>
+                <p>Rapport généré le ${new Date().toLocaleDateString('fr-FR')} (GMT) - Services ACREMAC</p>
             </div>
         `;
     }
 
+    // =================================================================
+    // FONCTIONS UTILITAIRES
+    // =================================================================
+
+    function getRiskLabel(score) {
+        const labels = {
+            1: 'RFAI', 2: 'RLQT', 3: 'RMOY', 4: 'RTIR', 
+            5: 'RPAY', 6: 'RRÉP', 7: 'RCCR', 8: 'RÉLV', 9: 'RDEF'
+        };
+        return labels[score] || 'N/A';
+    }
+
+    function getCouleurConclusion(couleur) {
+        const couleurs = {
+            'Vert': '#d4edda',
+            'Jaune': '#fff3cd', 
+            'Orange': '#ffeaa7',
+            'Rouge': '#f8d7da'
+        };
+        return couleurs[couleur] || '#f8f9fa';
+    }
+
+    // Fonction pour mettre à jour le footer avec les boutons d'export
     // Fonction pour mettre à jour le footer avec les boutons d'export
     function mettreAJourFooterExport(formData) {
         const cardFooter = $('#reportSolvency .card-footer');
+        const generationDate = new Date().toLocaleString('fr-FR');
+        
         cardFooter.html(`
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <span class="text-muted">Rapport généré le ${new Date().toLocaleString('fr-FR')}</span>
+                    <span class="text-muted">Rapport généré le <span id="reportGenerationDate">${generationDate}</span></span>
                 </div>
                 <div>
-                    <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="exporterRapport('pdf')">
+                    <button type="button" class="btn btn-outline-primary btn-sm me-2 export-btn" data-format="pdf" id="btnExportPDF">
                         <i class="bi bi-file-pdf me-1"></i>PDF
                     </button>
-                    <button type="button" class="btn btn-outline-success btn-sm me-2" onclick="exporterRapport('html')">
+                    <button type="button" class="btn btn-outline-success btn-sm me-2 export-btn" data-format="html" id="btnExportHTML">
                         <i class="bi bi-file-earmark-code me-1"></i>HTML
                     </button>
-                    <button type="button" class="btn btn-outline-warning btn-sm me-2" onclick="exporterRapport('xml')">
+                    <button type="button" class="btn btn-outline-warning btn-sm me-2 export-btn" data-format="xml" id="btnExportXML">
                         <i class="bi bi-file-code me-1"></i>XML
                     </button>
-                    <button type="button" class="btn btn-outline-info btn-sm" onclick="exporterRapport('json')">
+                    <button type="button" class="btn btn-outline-info btn-sm export-btn" data-format="json" id="btnExportJSON">
                         <i class="bi bi-file-text me-1"></i>JSON
                     </button>
                 </div>
             </div>
         `);
+        
+        // Ajouter les écouteurs d'événements aux nouveaux boutons
+        initialiserBoutonsExport();
     }
 
-    // Fonction pour exporter le rapport (à implémenter)
+    // Fonction pour initialiser les écouteurs d'événements des boutons d'export
+    function initialiserBoutonsExport() {
+        $('.export-btn').off('click').on('click', function() {
+            const format = $(this).data('format');
+            console.log(`🖱️ Bouton ${format} cliqué`);
+            exporterRapport(format);
+        });
+        
+        console.log('✅ Écouteurs d\'export initialisés');
+    }
+
+    // Fonction principale pour exporter le rapport
     function exporterRapport(format) {
+        if (!currentReportData || !currentFormData) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Aucun rapport disponible pour l\'exportation. Veuillez d\'abord générer un rapport.'
+            });
+            return;
+        }
+
+        console.log(`📤 Début de l'export ${format.toUpperCase()}...`);
+        
+        // Afficher un indicateur de chargement
+        const exportButtons = ['btnExportPDF', 'btnExportHTML', 'btnExportXML', 'btnExportJSON'];
+        exportButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="bi bi-arrow-repeat spinner-border spinner-border-sm me-1"></i>Génération...`;
+            }
+        });
+
         Swal.fire({
             title: 'Export en cours',
             text: `Génération du format ${format.toUpperCase()}...`,
             icon: 'info',
             showConfirmButton: false,
-            allowOutsideClick: false
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
+
+        // Préparer les données pour l'export
+        const exportData = {
+            report_data: currentReportData,
+            form_data: currentFormData,
+            export_format: format,
+            timestamp: new Date().toISOString()
+        };
+
+        // Appel API pour l'export
+        $.ajax({
+            url: '/api/reporting/exporter-rapport/',
+            type: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': CSRF_TOKEN
+            },
+            data: JSON.stringify(exportData),
+            contentType: 'application/json',
+            success: function(response) {
+                Swal.close();
+                console.log(`✅ Réponse export ${format}:`, response);
+                
+                // Réactiver les boutons
+                exportButtons.forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    if (btn) {
+                        btn.disabled = false;
+                        resetExportButton(btnId, format);
+                    }
+                });
+
+                if (response.status === 'success') {
+                    traiterReponseExport(response, format);
+                } else {
+                    throw new Error(response.message || 'Erreur lors de l\'export');
+                }
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                console.error(`❌ Erreur export ${format}:`, xhr);
+                
+                // Réactiver les boutons
+                exportButtons.forEach(btnId => {
+                    const btn = document.getElementById(btnId);
+                    if (btn) {
+                        btn.disabled = false;
+                        resetExportButton(btnId, format);
+                    }
+                });
+
+                let errorMessage = `Une erreur est survenue lors de l'export ${format.toUpperCase()}.`;
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur d\'export',
+                    text: errorMessage,
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
+
+    // Fonction pour réinitialiser les boutons d'export
+    function resetExportButton(buttonId, format) {
+        const buttonsConfig = {
+            'btnExportPDF': { icon: 'file-pdf', text: 'PDF' },
+            'btnExportHTML': { icon: 'file-earmark-code', text: 'HTML' },
+            'btnExportXML': { icon: 'file-code', text: 'XML' },
+            'btnExportJSON': { icon: 'file-text', text: 'JSON' }
+        };
         
-        // Simulation d'export
-        setTimeout(() => {
+        const btn = document.getElementById(buttonId);
+        if (btn && buttonsConfig[buttonId]) {
+            const config = buttonsConfig[buttonId];
+            btn.innerHTML = `<i class="bi bi-${config.icon} me-1"></i>${config.text}`;
+        }
+    }
+
+    // Fonction pour traiter la réponse d'export
+    function traiterReponseExport(response, format) {
+        if (response.download_url) {
+            // Téléchargement via URL
             Swal.fire({
                 title: 'Export réussi!',
                 text: `Le rapport a été exporté en format ${format.toUpperCase()}`,
                 icon: 'success',
-                confirmButtonText: 'Télécharger'
+                showCancelButton: true,
+                confirmButtonText: 'Télécharger',
+                cancelButtonText: 'Fermer'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open(response.download_url, '_blank');
+                }
             });
-        }, 1500);
+        } else if (response.file_content) {
+            // Téléchargement direct depuis le contenu
+            telechargerFichierDirect(response.file_content, response.file_name, format);
+        } else {
+            // Fallback: génération côté client
+            genererExportCoteClient(format);
+        }
     }
 
-        // Initialiser le formulaire
-        initForm();
+    // Fonction pour télécharger un fichier directement
+    function telechargerFichierDirect(content, fileName, format) {
+        try {
+            let blob;
+            
+            if (format === 'pdf') {
+                // Pour PDF en base64
+                blob = base64ToBlob(content, 'application/pdf');
+            } else if (format === 'json') {
+                // Pour JSON
+                blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
+            } else {
+                // Pour HTML et XML
+                blob = new Blob([content], { type: `text/${format}` });
+            }
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName || `rapport_solvabilite.${format}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Téléchargement réussi!',
+                text: `Le fichier ${format.toUpperCase()} a été téléchargé.`,
+                confirmButtonText: 'OK'
+            });
+            
+        } catch (error) {
+            console.error('Erreur lors du téléchargement:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Erreur lors du téléchargement du fichier.'
+            });
+        }
+    }
 
-    });
+    // Fonction utilitaire pour convertir base64 en Blob
+    function base64ToBlob(base64, contentType = '') {
+        try {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+            
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            
+            return new Blob(byteArrays, { type: contentType });
+        } catch (error) {
+            console.error('Erreur conversion base64:', error);
+            throw error;
+        }
+    }
+
+    // Fonction de fallback pour générer l'export côté client
+    function genererExportCoteClient(format) {
+        try {
+            let content, mimeType, fileName;
+            
+            switch(format) {
+                case 'json':
+                    content = JSON.stringify(currentReportData, null, 2);
+                    mimeType = 'application/json';
+                    fileName = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.json`;
+                    break;
+                    
+                case 'xml':
+                    content = convertirEnXML(currentReportData);
+                    mimeType = 'application/xml';
+                    fileName = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.xml`;
+                    break;
+                    
+                case 'html':
+                    content = genererHTMLComplet(currentReportData, currentFormData);
+                    mimeType = 'text/html';
+                    fileName = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.html`;
+                    break;
+                    
+                case 'pdf':
+                    // Pour PDF, on utilise le HTML généré et on le convertit
+                    genererPDFCoteClient();
+                    return;
+                    
+                default:
+                    throw new Error('Format non supporté');
+            }
+            
+            // Télécharger le fichier
+            telechargerFichierDirect(content, fileName, format);
+            
+        } catch (error) {
+            console.error('Erreur génération côté client:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: `Impossible de générer le fichier ${format.toUpperCase()}.`
+            });
+        }
+    }
+
+    // Fonction pour convertir les données en XML
+    function convertirEnXML(data, rootName = 'rapport_solvabilite') {
+        function convertirObjet(obj, nomElement) {
+            if (obj === null || obj === undefined) return '';
+            if (typeof obj !== 'object') {
+                return `<${nomElement}>${escapeXML(String(obj))}</${nomElement}>`;
+            }
+            
+            if (Array.isArray(obj)) {
+                return obj.map(item => 
+                    `<${nomElement}>${convertirObjet(item, 'item')}</${nomElement}>`
+                ).join('');
+            }
+            
+            let xml = '';
+            for (const [key, value] of Object.entries(obj)) {
+                const elementName = key.replace(/[^a-zA-Z0-9_]/g, '_');
+                if (typeof value === 'object' && value !== null) {
+                    xml += `<${elementName}>${convertirObjet(value, elementName)}</${elementName}>`;
+                } else {
+                    xml += `<${elementName}>${escapeXML(String(value))}</${elementName}>`;
+                }
+            }
+            return xml;
+        }
+        
+        return `<?xml version="1.0" encoding="UTF-8"?>\n<${rootName}>\n${convertirObjet(data, rootName)}\n</${rootName}>`;
+    }
+
+    // Fonction pour échapper les caractères XML
+    function escapeXML(str) {
+        return str.replace(/[<>&"']/g, function(match) {
+            const escapes = {
+                '<': '&lt;',
+                '>': '&gt;', 
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&apos;'
+            };
+            return escapes[match];
+        });
+    }
+
+    // Fonction pour générer un PDF côté client (utilisant html2pdf.js)
+    function genererPDFCoteClient() {
+        // Vérifier si html2pdf est disponible
+        if (typeof html2pdf === 'undefined') {
+            // Charger html2pdf dynamiquement
+            chargerHTML2PDF().then(() => {
+                executerGenerationPDF();
+            }).catch(error => {
+                console.error('Erreur chargement html2pdf:', error);
+                fallbackPDF();
+            });
+        } else {
+            executerGenerationPDF();
+        }
+    }
+
+    // Fonction pour charger html2pdf.js
+    function chargerHTML2PDF() {
+        return new Promise((resolve, reject) => {
+            if (typeof html2pdf !== 'undefined') {
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    // Fonction pour exécuter la génération PDF
+    function executerGenerationPDF() {
+        const element = document.getElementById('reportSolvency');
+        
+        if (!element) {
+            fallbackPDF();
+            return;
+        }
+        
+        const options = {
+            margin: [10, 10, 10, 10],
+            filename: `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                logging: false
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait' 
+            }
+        };
+        
+        Swal.fire({
+            title: 'Génération PDF',
+            text: 'Préparation du document...',
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false
+        });
+        
+        // Petit délai pour permettre à SweetAlert de s'afficher
+        setTimeout(() => {
+            html2pdf()
+                .set(options)
+                .from(element)
+                .save()
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'PDF généré!',
+                        text: 'Le fichier PDF a été téléchargé avec succès.',
+                        confirmButtonText: 'OK'
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur génération PDF:', error);
+                    fallbackPDF();
+                });
+        }, 500);
+    }
+
+    // Fallback pour PDF
+    function fallbackPDF() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'PDF non disponible',
+            text: 'La génération PDF directe n\'est pas disponible. Utilisez l\'export serveur ou imprimez la page.',
+            confirmButtonText: 'Compris'
+        });
+    }
+
+    // Fonction pour générer un HTML complet pour l'export
+    function genererHTMLComplet(reportData, formData) {
+        return `
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Rapport de Solvabilité - ${reportData.identification.acremac_info.nom}</title>
+            <style>
+                ${$('style').html()}
+                @media print {
+                    .card-footer { display: none !important; }
+                    .btn { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container-fluid">
+                ${$('#reportSolvency .card-body').html()}
+            </div>
+            <div class="text-center mt-4 text-muted">
+                <p>Rapport généré le ${new Date().toLocaleString('fr-FR')} - ACREMAC Services</p>
+            </div>
+        </body>
+        </html>`;
+    }
+
+    // Initialiser le formulaire
+    initForm();
+});
 </script>
 
 

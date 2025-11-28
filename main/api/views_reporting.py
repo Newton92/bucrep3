@@ -49,6 +49,13 @@ from main.utils import (
     get_charts_delais_ifrs_data
 )
 
+
+from main.api.views_scoring_classique import *
+from main.api.views_scoring_anglais import *
+from main.api.views_scoring_bancaire import *
+from main.api.views_scoring_syscohada import *
+from main.api.views_scoring_ifrs import *
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -56,6 +63,24 @@ from rest_framework.response import Response
 from datetime import datetime, timedelta
 from django.utils import timezone
 import html
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status  # Ajoutez cette importation
+from main.models import Annee, Devise, Commande, Acheteur, CodeNaceAcheteur  # Ajoutez Acheteur ici
+from main.serializers_reporting import AnneeSerializer, DeviseSerializer, CommandeSerializer, RapportSolvabiliteSerializer
+from datetime import datetime, timedelta
+from django.utils import timezone
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import base64
+
+
+
+# ... vos autres vues ...
 
 
 @api_view(['GET'])
@@ -129,17 +154,115 @@ def liste_commandes_acheteur(request, acheteur_id):
 
 
 
+def get_risk_gauge_chart(score):
+    """
+    Génère une jauge de risque stylisée exactement comme l'exemple fourni.
+    Le score est supposé être entre 1 et 9.
+    """
+    if score is None:
+        score = 1 # Valeur par défaut si le score est manquant, ou gérer comme vous le souhaitez
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status  # Ajoutez cette importation
-from main.models import Annee, Devise, Commande, Acheteur, CodeNaceAcheteur  # Ajoutez Acheteur ici
-from main.serializers_reporting import AnneeSerializer, DeviseSerializer, CommandeSerializer, RapportSolvabiliteSerializer
-from datetime import datetime, timedelta
-from django.utils import timezone
+    # Définition des zones de risque (couleur, libellé, angles de début/fin en degrés)
+    # Total de 180 degrés pour le demi-cercle (de -90 à 90 en coordonnées cartésiennes)
+    # Ou de 180 (gauche) à 0 (droite) dans notre système polaire ajusté
+    
+    # Pour un score de 1 à 9, nous avons 8 "intervalles" (9-1)
+    # Chaque intervalle fait 180 / 8 = 22.5 degrés
+    
+    # Mapping des scores aux angles (où 1 = 180 deg, 9 = 0 deg)
+    def score_to_angle(s):
+        return 180 - ((s - 1) / (9 - 1)) * 180
 
-# ... vos autres vues ...
+    zones_config = [
+        {'label': 'VERY LOW', 'color': '#92D050', 'start_score': 1, 'end_score': 2}, # Vert clair
+        {'label': 'LOW', 'color': '#00B050', 'start_score': 3, 'end_score': 4},     # Vert foncé
+        {'label': 'MEDIUM', 'color': '#FFC000', 'start_score': 5, 'end_score': 6}, # Jaune/Or
+        {'label': 'HIGH', 'color': '#FF7000', 'start_score': 7, 'end_score': 8},   # Orange
+        {'label': 'CRITICAL', 'color': '#FF0000', 'start_score': 9, 'end_score': 9}, # Rouge
+    ]
+    
+    max_score = 9
+    
+    # Créer la figure Matplotlib
+    fig, ax = plt.subplots(figsize=(8, 4.5), subplot_kw={'projection': 'polar'})
+    
+    # --- Configuration du cadran ---
+    ax.set_theta_zero_location("W")  # Le 0 est à gauche (Ouest)
+    ax.set_theta_direction(1)        # Rotation anti-horaire (pour que 180 soit à gauche, 0 à droite)
+    ax.set_rticks([])                # Cacher les rayons
+    ax.set_xticks([])                # Cacher les étiquettes des ticks
+    ax.set_rlim(0, 1)                # Rayon
+    ax.spines['polar'].set_visible(False) # Cacher le cercle extérieur
+    
+    # --- Tracé des zones de risque ---
+    for zone in zones_config:
+        start_angle_rad = np.radians(score_to_angle(zone['start_score']))
+        end_angle_rad = np.radians(score_to_angle(zone['end_score']))
+        
+        # Pour dessiner les arcs, bar en mode polaire
+        # L'angle doit être le "milieu" de la barre, et la largeur sa "taille"
+        # Il faut que start < end pour np.arange
+        # Pour une barre allant de A à B, on la positionne à (A+B)/2 avec une largeur de B-A
+        
+        # Inverser pour que les angles soient croissants de gauche à droite
+        bar_center_rad = (start_angle_rad + end_angle_rad) / 2
+        bar_width_rad = abs(start_angle_rad - end_angle_rad)
+
+        ax.bar(
+            bar_center_rad,
+            height=0.4, # Épaisseur de la bande
+            width=bar_width_rad,
+            bottom=0,
+            color=zone['color'],
+            linewidth=0,
+            zorder=1 # S'assurer que les zones sont en arrière-plan
+        )
+        
+        # Ajouter les étiquettes de texte
+        label_angle_rad = (start_angle_rad + end_angle_rad) / 2
+        
+        # Ajustement pour la rotation du texte afin qu'il suive la courbure
+        # L'angle doit être par rapport à l'horizontale (90 pour vertical)
+        text_rotation_deg = np.degrees(label_angle_rad) - 90
+        
+        ax.text(
+            label_angle_rad, 
+            0.6, # Distance radiale de l'étiquette
+            zone['label'], 
+            ha='center', 
+            va='center', 
+            fontsize=10, 
+            fontweight='bold', 
+            color='black',
+            rotation=text_rotation_deg,
+            rotation_mode='anchor' # Permet une rotation plus naturelle
+        )
+
+    # --- Positionnement de l'aiguille ---
+    needle_angle_rad = np.radians(score_to_angle(score))
+    
+    ax.plot(
+        [needle_angle_rad, needle_angle_rad], 
+        [0, 0.4], # L'aiguille va du centre jusqu'à la hauteur des barres de couleur
+        color='black', 
+        linewidth=3, 
+        marker='^',
+        markersize=10,
+        markeredgecolor='black',
+        markerfacecolor='black',
+        zorder=2 # S'assurer que l'aiguille est au-dessus des zones
+    )
+    
+    # Texte "RISK METER" en haut, centré
+    ax.text(np.radians(90), 0.9, "RISK METER", ha='center', va='center', fontsize=14, fontweight='bold')
+    
+    plt.tight_layout()
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', transparent=True, dpi=300) # Augmenter DPI pour meilleure qualité
+    buffer.seek(0)
+    plt.close(fig)
+
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
 
 def get_logo_data():
@@ -519,6 +642,12 @@ def generer_rapport_solvabilite(request):
 
         # Formatez la liste en une chaîne séparée par des virgules
         notes_str = ", ".join(note_values)
+        
+        # Calculer le score
+        risk_score = risk_rating.calculate_risk_score() if risk_rating else 1
+
+        # Générer l'image de la jauge en Base64
+        risk_gauge_base64 = get_risk_gauge_chart(risk_score)
         
         # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
@@ -1104,3 +1233,143 @@ def generer_rapport_solvabilite(request):
         })
     
     return Response(serializer.errors, status=400)
+
+
+
+
+
+# Ajoutez cette vue à votre fichier views_reporting.py
+import json
+import xml.etree.ElementTree as ET
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+import tempfile
+import os
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def exporter_rapport(request):
+    """
+    Vue pour exporter le rapport dans différents formats
+    """
+    try:
+        data = request.data
+        report_data = data.get('report_data', {})
+        form_data = data.get('form_data', {})
+        export_format = data.get('export_format', 'pdf')
+        
+        print(f"📤 Export demandé: {export_format}")
+        
+        # Nom du fichier
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'rapport')
+        nom_fichier = f"rapport_solvabilite_{nom_acheteur}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        if export_format == 'pdf':
+            return generer_pdf(report_data, form_data, nom_fichier)
+        elif export_format == 'html':
+            return generer_html(report_data, form_data, nom_fichier)
+        elif export_format == 'xml':
+            return generer_xml(report_data, nom_fichier)
+        elif export_format == 'json':
+            return generer_json(report_data, nom_fichier)
+        else:
+            return Response({'error': 'Format non supporté'}, status=400)
+            
+    except Exception as e:
+        print(f"❌ Erreur lors de l'export: {str(e)}")
+        return Response({'error': f'Erreur lors de l\'export: {str(e)}'}, status=500)
+
+def generer_pdf(report_data, form_data, nom_fichier):
+    """Générer un PDF avec WeasyPrint"""
+    try:
+        # Rendre le template HTML
+        html_string = render_to_string('main/report_deep_seek_test.html', {
+            'report_data': report_data,
+            'form_data': form_data,
+            'static_url': '/static/'
+        })
+        
+        # Créer un fichier HTML temporaire
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+            f.write(html_string)
+            temp_html = f.name
+        
+        # Convertir en PDF
+        pdf_file = HTML(filename=temp_html).write_pdf()
+        
+        # Nettoyer le fichier temporaire
+        os.unlink(temp_html)
+        
+        # Créer la réponse
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.pdf"'
+        response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+        
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur génération PDF: {str(e)}")
+        return Response({'error': f'Erreur génération PDF: {str(e)}'}, status=500)
+
+def generer_html(report_data, form_data, nom_fichier):
+    """Générer un fichier HTML"""
+    try:
+        html_content = render_to_string('main/report_deep_seek_test.html', {
+            'report_data': report_data,
+            'form_data': form_data
+        })
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.html"'
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur génération HTML: {str(e)}")
+        return Response({'error': f'Erreur génération HTML: {str(e)}'}, status=500)
+
+def generer_xml(report_data, nom_fichier):
+    """Générer un fichier XML"""
+    try:
+        def dict_to_xml(tag, d):
+            elem = ET.Element(tag)
+            for key, val in d.items():
+                if isinstance(val, dict):
+                    elem.append(dict_to_xml(key, val))
+                elif isinstance(val, list):
+                    for item in val:
+                        if isinstance(item, dict):
+                            elem.append(dict_to_xml(key, item))
+                        else:
+                            child = ET.Element(key)
+                            child.text = str(item)
+                            elem.append(child)
+                else:
+                    child = ET.Element(key)
+                    child.text = str(val)
+                    elem.append(child)
+            return elem
+        
+        root = dict_to_xml('rapport_solvabilite', report_data)
+        xml_string = ET.tostring(root, encoding='utf-8', method='xml')
+        
+        response = HttpResponse(xml_string, content_type='application/xml')
+        response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.xml"'
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur génération XML: {str(e)}")
+        return Response({'error': f'Erreur génération XML: {str(e)}'}, status=500)
+
+def generer_json(report_data, nom_fichier):
+    """Générer un fichier JSON"""
+    try:
+        json_content = json.dumps(report_data, ensure_ascii=False, indent=2)
+        
+        response = HttpResponse(json_content, content_type='application/json')
+        response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.json"'
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur génération JSON: {str(e)}")
+        return Response({'error': f'Erreur génération JSON: {str(e)}'}, status=500)
