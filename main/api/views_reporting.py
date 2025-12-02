@@ -63,7 +63,10 @@ from rest_framework.response import Response
 from datetime import datetime, timedelta
 from django.utils import timezone
 import html
-
+import base64
+import os
+from django.conf import settings
+from django.contrib.staticfiles import finders
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -77,6 +80,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 import base64
+
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+from decimal import Decimal
+from datetime import datetime, date
 
 
 
@@ -304,6 +312,56 @@ def format_currency(value):
     if value is None:
         return "Non spécifié"
     return f"{value:,.2f}".replace(",", " ").replace(".", ",") # Exemple de formatage français
+
+
+def get_static_image_base64(image_path):
+    """
+    Convertit une image statique en Base64
+    :param image_path: Chemin relatif de l'image (ex: 'riskrating/5.svg')
+    :return: Chaîne Base64 ou None
+    """
+    # Chercher le fichier avec finders
+    absolute_path = finders.find(image_path)
+    
+    if not absolute_path:
+        # Essayer avec STATIC_ROOT
+        absolute_path = os.path.join(settings.STATIC_ROOT, image_path)
+    
+    if absolute_path and os.path.exists(absolute_path):
+        try:
+            with open(absolute_path, 'rb') as img_file:
+                img_content = img_file.read()
+                
+                # Déterminer le type MIME
+                if image_path.endswith('.svg'):
+                    mime_type = 'image/svg+xml'
+                elif image_path.endswith('.png'):
+                    mime_type = 'image/png'
+                elif image_path.endswith('.jpg') or image_path.endswith('.jpeg'):
+                    mime_type = 'image/jpeg'
+                else:
+                    mime_type = 'application/octet-stream'
+                
+                encoded_string = base64.b64encode(img_content).decode('utf-8')
+                return f"data:{mime_type};base64,{encoded_string}"
+        except Exception as e:
+            print(f"Erreur lors de la conversion de {image_path}: {e}")
+    
+    return None
+
+
+def get_risk_rating_base64(score):
+    """Convertit le score de risque en image Base64"""
+    if score is None or score == "Non spécifié":
+        score = 0
+    try:
+        score = int(score)
+    except (ValueError, TypeError):
+        score = 0
+    
+    score = max(0, min(9, score))
+    return get_static_image_base64(f'riskrating/{score}.svg')
+
 
 
 @api_view(['POST', 'GET'])  # Autorisez GET temporairement pour tester
@@ -714,7 +772,7 @@ def generer_rapport_solvabilite(request):
                     interpretation_anglais_annee_N1 = classe_risque_anglais
                 elif i == 2:
                     score_value_anglais_annee_N2 = str(score_anglais)
-                    interpretation_anglais_anglais_annee_N2 = classe_risque_anglais
+                    interpretation_anglais_annee_N2 = classe_risque_anglais
 
 
 
@@ -855,10 +913,13 @@ def generer_rapport_solvabilite(request):
         
         # Préparation des données pour le template
         report_data = {
+            "logo_data": get_logo_data(),
+            "logo_path": get_logo_path(),
             "header_report": {
                 "acremac_services": "Services ACREMAC Gabon",
                 "acremac_mail": "credit.report@acremac.com",
                 "date_today": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "bilan_report": data['type_bilan'].upper() if 'type_bilan' in data else "",
             },
             "commande": {
                 "title_1": "DETAILS COMMANDE",
@@ -924,7 +985,9 @@ def generer_rapport_solvabilite(request):
                 "title_5": "EVALUATION DU RISQUE",
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
-                #"get_risk_gauge_image": get_risk_gauge_image,
+                "risk_rating_image_base64": risk_rating.get_risk_rating_image_base64() if risk_rating else None,
+                "risk_rating_image_url": risk_rating.get_risk_rating_image_url() if risk_rating else None,
+                "url_site": request.build_absolute_uri('/static/riskrating/'),  # ou une autre URL de base
                 "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
                 "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
@@ -983,6 +1046,8 @@ def generer_rapport_solvabilite(request):
                     "commentaire": risk_management.commentaire if risk_management and risk_management.commentaire else "Aucun commentaire disponible",
                     "score": risk_management.get_management_score()['oui_count'] if risk_management else 0,
                     "image": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
+                    "image_base64": risk_management.get_management_image_base64() if risk_management else None,
+                    "image_path": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
                 },
                 "responsables": list_responsables_data if list_responsables_data else "Aucun responsable disponible",
                 "conseil_administration": list_ca_membres_data if list_ca_membres_data else "Aucun membre du conseil d'administration disponible",
@@ -1056,6 +1121,9 @@ def generer_rapport_solvabilite(request):
                 "years": [data['annee_n'], data['annee_n1'], data['annee_n2']],
                 "bilan_type": data['type_bilan'],
                 "etats_financiers_classiques": {
+                    "annee_N": data['annee_n'],
+                    "annee_N1": data['annee_n1'],
+                    "annee_N2": data['annee_n2'],
                     "actif_table": get_simple_actifs_data(acheteur, years_to_retrieve),
                     "actif_data":  get_structured_actif_data(acheteur, years_to_retrieve),
                     "passif_data": get_structured_passif_data(acheteur, years_to_retrieve),
@@ -1130,66 +1198,122 @@ def generer_rapport_solvabilite(request):
                 "interpretation": scoring_sans_bilan.interpretation,
                 "commentaire": scoring_sans_bilan.commentaire,
                 "score_type": "Scoring sans bilan",
+                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
             "scoring_classique": {
                 "title_16": "SCORING CLASSIQUE - AVEC BILAN",
+                "annee_N": data['annee_n'],
+                "annee_N1": data['annee_n1'],
+                "annee_N2": data['annee_n2'],
+                
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
                 "score_value_annee_N": score_value_annee_N,
+                "score_value_annee_N_arrondi": round(float(score_value_annee_N)),
                 "interpretation_annee_N": interpretation_annee_N,
+                
                 "score_image_annee_N1": f"scoring/{round(float(score_value_annee_N1)) if score_value_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_annee_N1,
+                "score_value_annee_N1_arrondi": round(float(score_value_annee_N1)),
                 "interpretation_annee_N1": interpretation_annee_N1,
+                
                 "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_annee_N2,
+                "score_value_annee_N2_arrondi": round(float(score_value_annee_N2)),
                 "interpretation_annee_N2": interpretation_annee_N2,
+                
+                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
             "scoring_anglais": {
                 "title_16": "SCORING ANGLAIS - AVEC BILAN",
+                "annee_N": data['annee_n'],
+                "annee_N1": data['annee_n1'],
+                "annee_N2": data['annee_n2'],
+                
                 "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
                 "score_value_annee_N": score_value_anglais_annee_N,
+                "score_value_annee_N_arrondi": round(float(score_value_anglais_annee_N)),
                 "interpretation_annee_N": interpretation_anglais_annee_N,
+                
                 "score_image_annee_N1": f"scoring/{round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_anglais_annee_N1,
+                "score_value_annee_N1_arrondi": round(float(score_value_anglais_annee_N1)),
                 "interpretation_annee_N1": interpretation_anglais_annee_N1,
+                
                 "score_image_annee_N2": f"scoring/{round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_anglais_annee_N2,
-                "interpretation_annee_N2": interpretation_anglais_anglais_annee_N2,
+                "score_value_annee_N2_arrondi": round(float(score_value_anglais_annee_N2)),
+                "interpretation_annee_N2": interpretation_anglais_annee_N2,
+                
+                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
             "scoring_bancaire": {
                 "title_16": "SCORING BANCAIRE - AVEC BILAN",
+                "annee_N": data['annee_n'],
+                "annee_N1": data['annee_n1'],
+                "annee_N2": data['annee_n2'],
+                
                 "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
                 "score_value_annee_N": score_value_bancaire_annee_N,
+                "score_value_annee_N_arrondi": round(float(score_value_bancaire_annee_N)),
                 "interpretation_annee_N": interpretation_bancaire_annee_N,
+                
                 "score_image_annee_N1": f"scoring/{round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_bancaire_annee_N1,
+                "score_value_annee_N1_arrondi": round(float(score_value_bancaire_annee_N1)),
                 "interpretation_annee_N1": interpretation_bancaire_annee_N1,
+                
                 "score_image_annee_N2": f"scoring/{round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_bancaire_annee_N2,
+                "score_value_annee_N2_arrondi": round(float(score_value_bancaire_annee_N2)),
                 "interpretation_annee_N2": interpretation_bancaire_annee_N2,
+                
+                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
             "scoring_syscohada": {
                 "title_16": "SCORING SYSCOHADA - AVEC BILAN",
+                "annee_N": data['annee_n'],
+                "annee_N1": data['annee_n1'],
+                "annee_N2": data['annee_n2'],
+                
                 "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
                 "score_value_annee_N": score_value_syscohada_annee_N,
+                "score_value_annee_N_arrondi": round(float(score_value_syscohada_annee_N)),
                 "interpretation_annee_N": interpretation_syscohada_annee_N,
+                
                 "score_image_annee_N1": f"scoring/{round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_syscohada_annee_N1,
+                "score_value_annee_N1_arrondi": round(float(score_value_syscohada_annee_N1)),
                 "interpretation_annee_N1": interpretation_syscohada_annee_N1,
+                
                 "score_image_annee_N2": f"scoring/{round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_syscohada_annee_N2,
+                "score_value_annee_N2_arrondi": round(float(score_value_syscohada_annee_N2)),
                 "interpretation_annee_N2": interpretation_syscohada_annee_N2,
+                
+                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
             "scoring_ifrs": {
                 "title_16": "SCORING IFRS COBAC - AVEC BILAN",
+                "annee_N": data['annee_n'],
+                "annee_N1": data['annee_n1'],
+                "annee_N2": data['annee_n2'],
+                
                 "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
                 "score_value_annee_N": score_value_ifrs_annee_N,
+                "score_value_annee_N_arrondi": round(float(score_value_ifrs_annee_N)),
                 "interpretation_annee_N": interpretation_ifrs_annee_N,
+                
                 "score_image_annee_N1": f"scoring/{round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_ifrs_annee_N1,
+                "score_value_annee_N1_arrondi": round(float(score_value_ifrs_annee_N1)),
                 "interpretation_annee_N1": interpretation_ifrs_annee_N1,
+                
                 "score_image_annee_N2": f"scoring/{round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_ifrs_annee_N2,
+                "score_value_annee_N2_arrondi": round(float(score_value_ifrs_annee_N2)),
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
+                
+                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
             
             "operation_history": {
@@ -1238,14 +1362,19 @@ def generer_rapport_solvabilite(request):
 
 
 
-# Ajoutez cette vue à votre fichier views_reporting.py
-import json
-import xml.etree.ElementTree as ET
+# Dans views_reporting.py
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.conf import settings
+import json
+import xml.etree.ElementTree as ET
 from weasyprint import HTML
 import tempfile
 import os
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+import base64
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -1257,119 +1386,345 @@ def exporter_rapport(request):
         data = request.data
         report_data = data.get('report_data', {})
         form_data = data.get('form_data', {})
-        export_format = data.get('export_format', 'pdf')
+        export_format = data.get('export_format', 'pdf').lower()
         
         print(f"📤 Export demandé: {export_format}")
         
+        if not report_data:
+            return Response({'error': 'Aucune donnée de rapport fournie'}, status=400)
+        
         # Nom du fichier
         nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'rapport')
-        nom_fichier = f"rapport_solvabilite_{nom_acheteur}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # Nettoyer le nom du fichier
+        nom_acheteur = ''.join(c for c in nom_acheteur if c.isalnum() or c in (' ', '-', '_')).strip()
+        nom_acheteur = nom_acheteur.replace(' ', '_')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nom_fichier = f"rapport_solvabilite_{nom_acheteur}_{timestamp}"
         
         if export_format == 'pdf':
-            return generer_pdf(report_data, form_data, nom_fichier)
+            return generer_pdf_weasyprint(report_data, form_data, nom_fichier)
         elif export_format == 'html':
-            return generer_html(report_data, form_data, nom_fichier)
+            return generer_html_standalone(report_data, form_data, nom_fichier)
         elif export_format == 'xml':
             return generer_xml(report_data, nom_fichier)
         elif export_format == 'json':
             return generer_json(report_data, nom_fichier)
         else:
-            return Response({'error': 'Format non supporté'}, status=400)
+            return Response({'error': f'Format {export_format} non supporté'}, status=400)
             
     except Exception as e:
         print(f"❌ Erreur lors de l'export: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return Response({'error': f'Erreur lors de l\'export: {str(e)}'}, status=500)
 
-def generer_pdf(report_data, form_data, nom_fichier):
-    """Générer un PDF avec WeasyPrint"""
+# Dans views_reporting.py, modifiez la fonction generer_pdf_weasyprint
+import base64
+import os
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from weasyprint import HTML
+import tempfile
+
+def generer_pdf_weasyprint(report_data, form_data, nom_fichier):
+    """Générer un PDF avec WeasyPrint optimisé"""
     try:
-        # Rendre le template HTML
-        html_string = render_to_string('main/report_deep_seek_test.html', {
+        print("📄 Début génération PDF...")
+        
+        # VÉRIFICATION CRITIQUE: Assurez-vous que report_data n'est pas None
+        if not report_data or not isinstance(report_data, dict):
+            print("❌ Données de rapport invalides pour PDF")
+            raise ValueError("Données de rapport invalides")
+        
+        # 1. GÉRER LE LOGO - Convertir en base64
+        logo_base64 = None
+        logo_paths = [
+            os.path.join(settings.STATIC_ROOT, 'images', 'acremac_option.png'),
+            os.path.join(settings.BASE_DIR, 'main', 'static', 'images', 'acremac_option.png'),
+            os.path.join(settings.BASE_DIR, 'static', 'images', 'acremac_option.png'),
+        ]
+        
+        for logo_path in logo_paths:
+            if os.path.exists(logo_path):
+                print(f"✅ Logo trouvé: {logo_path}")
+                try:
+                    with open(logo_path, "rb") as image_file:
+                        logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+                    break
+                except Exception as e:
+                    print(f"❌ Erreur lecture logo: {e}")
+                    continue
+        
+        if not logo_base64:
+            print("⚠️ Logo non trouvé, utilisation d'un placeholder")
+            # Créer un placeholder simple
+            from PIL import Image, ImageDraw
+            img = Image.new('RGB', (200, 60), color='#003366')
+            d = ImageDraw.Draw(img)
+            d.text((10, 20), "ACREMAC", fill=(255, 255, 255))
+            
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            logo_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        
+        # 2. PRÉPARER LE CONTEXTE - Assurez-vous d'avoir toutes les données
+        context = {
             'report_data': report_data,
-            'form_data': form_data,
-            'static_url': '/static/'
-        })
+            'form_data': form_data or {},
+            'logo_base64': logo_base64,
+            'STATIC_URL': settings.STATIC_URL,
+            'debug': settings.DEBUG,
+        }
         
-        # Créer un fichier HTML temporaire
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
-            f.write(html_string)
-            temp_html = f.name
+        print(f"📋 Contexte préparé. Sections dans report_data: {list(report_data.keys())}")
         
-        # Convertir en PDF
-        pdf_file = HTML(filename=temp_html).write_pdf()
+        # 3. RENDRE LE TEMPLATE
+        html_string = render_to_string('main/report_html_standalone.html', context)
         
-        # Nettoyer le fichier temporaire
-        os.unlink(temp_html)
+        # Vérifier que le HTML n'est pas vide
+        if not html_string or len(html_string) < 100:
+            raise ValueError("Le template HTML est vide ou trop court")
         
-        # Créer la réponse
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.pdf"'
-        response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+        # 4. CRÉER UN FICHIER HTML TEMPORAIRE POUR DÉBOGAGE (optionnel)
+        if settings.DEBUG:
+            debug_dir = os.path.join(settings.BASE_DIR, 'debug_pdf')
+            os.makedirs(debug_dir, exist_ok=True)
+            debug_html_path = os.path.join(debug_dir, f'{nom_fichier}_debug.html')
+            with open(debug_html_path, 'w', encoding='utf-8') as f:
+                f.write(html_string)
+            print(f"📝 HTML de débogage sauvegardé: {debug_html_path}")
         
-        return response
+        # 5. CONVERTIR EN PDF
+        print("🔄 Conversion HTML vers PDF...")
         
+        # Créer un fichier temporaire pour le PDF
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_pdf:
+            tmp_pdf_path = tmp_pdf.name
+        
+        try:
+            # Configuration WeasyPrint
+            base_url = settings.BASE_DIR
+            
+            # Convertir HTML en PDF
+            HTML(
+                string=html_string,
+                base_url=base_url
+            ).write_pdf(tmp_pdf_path)
+            
+            # Lire le PDF généré
+            with open(tmp_pdf_path, 'rb') as f:
+                pdf_content = f.read()
+            
+            # Supprimer le fichier temporaire
+            os.unlink(tmp_pdf_path)
+            
+            print(f"✅ PDF généré avec succès! Taille: {len(pdf_content)} bytes")
+            
+            # 7. CRÉER LA RÉPONSE
+            response = HttpResponse(pdf_content, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.pdf"'
+            response['Content-Length'] = len(pdf_content)
+            
+            return response
+            
+        except Exception as pdf_error:
+            print(f"❌ Erreur lors de la conversion PDF: {pdf_error}")
+            import traceback
+            traceback.print_exc()
+            
+            # Fallback: retourner le HTML pour débogage
+            response = HttpResponse(html_string, content_type='text/html')
+            response['Content-Disposition'] = f'inline; filename="{nom_fichier}_debug.html"'
+            return response
+            
     except Exception as e:
         print(f"❌ Erreur génération PDF: {str(e)}")
-        return Response({'error': f'Erreur génération PDF: {str(e)}'}, status=500)
-
-def generer_html(report_data, form_data, nom_fichier):
-    """Générer un fichier HTML"""
-    try:
-        html_content = render_to_string('main/report_deep_seek_test.html', {
-            'report_data': report_data,
-            'form_data': form_data
-        })
+        import traceback
+        traceback.print_exc()
         
-        response = HttpResponse(html_content, content_type='text/html')
+        # Retourner une erreur simple
+        error_html = f"""
+        <html>
+        <head><title>Erreur PDF</title></head>
+        <body style="font-family: Arial; padding: 20px;">
+            <h1 style="color: #d32f2f;">Erreur lors de la génération du PDF</h1>
+            <h3>Détails de l'erreur:</h3>
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px;">{str(e)}</pre>
+            <h3>Solutions possibles:</h3>
+            <ol>
+                <li>Vérifier que WeasyPrint est installé: <code>pip install weasyprint</code></li>
+                <li>Sur Windows, installer GTK+ Runtime</li>
+                <li>Utiliser l'export HTML à la place</li>
+            </ol>
+            <p><a href="#" onclick="window.history.back()">← Retour</a></p>
+        </body>
+        </html>
+        """
+        
+        return HttpResponse(error_html, content_type='text/html')
+
+
+
+def generer_html_standalone(report_data, form_data, nom_fichier):
+    """Générer un fichier HTML autonome avec tous les styles intégrés"""
+    try:
+        # Préparer le contexte
+        context = {
+            'report_data': report_data,
+            'form_data': form_data,
+            'is_standalone': True,  # Flag pour le template
+        }
+        
+        # Utiliser un template spécifique pour HTML autonome
+        html_content = render_to_string('main/report_html_standalone.html', context)
+        
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.html"'
+        response['Content-Length'] = len(html_content.encode('utf-8'))
+        
         return response
         
     except Exception as e:
         print(f"❌ Erreur génération HTML: {str(e)}")
         return Response({'error': f'Erreur génération HTML: {str(e)}'}, status=500)
 
+
+
 def generer_xml(report_data, nom_fichier):
-    """Générer un fichier XML"""
+    """Générer un fichier XML structuré"""
     try:
-        def dict_to_xml(tag, d):
-            elem = ET.Element(tag)
+        def dict_to_xml(tag, d, parent=None):
+            """Convertir un dictionnaire en éléments XML"""
+            if parent is None:
+                elem = ET.Element(tag)
+            else:
+                elem = ET.SubElement(parent, tag)
+            
             for key, val in d.items():
+                # Nettoyer la clé pour qu'elle soit valide en XML
+                clean_key = key.replace(' ', '_').replace('(', '').replace(')', '').replace('/', '_')
+                clean_key = clean_key.replace('.', '_').replace('[', '').replace(']', '')
+                
                 if isinstance(val, dict):
-                    elem.append(dict_to_xml(key, val))
+                    dict_to_xml(clean_key, val, elem)
                 elif isinstance(val, list):
-                    for item in val:
+                    list_elem = ET.SubElement(elem, f"{clean_key}_list")
+                    for idx, item in enumerate(val):
                         if isinstance(item, dict):
-                            elem.append(dict_to_xml(key, item))
+                            dict_to_xml('item', item, list_elem)
                         else:
-                            child = ET.Element(key)
-                            child.text = str(item)
-                            elem.append(child)
+                            item_elem = ET.SubElement(list_elem, 'item')
+                            item_elem.text = str(item) if item is not None else ''
+                elif val is None:
+                    child = ET.SubElement(elem, clean_key)
+                    child.text = ''
                 else:
-                    child = ET.Element(key)
-                    child.text = str(val)
-                    elem.append(child)
+                    child = ET.SubElement(elem, clean_key)
+                    # Gérer les types spéciaux
+                    if isinstance(val, (datetime, date)):
+                        child.text = val.isoformat()
+                    elif isinstance(val, Decimal):
+                        child.text = str(float(val))
+                    else:
+                        child.text = str(val)
             return elem
         
-        root = dict_to_xml('rapport_solvabilite', report_data)
-        xml_string = ET.tostring(root, encoding='utf-8', method='xml')
+        def clean_data_for_xml(data):
+            """Nettoyer les données pour XML"""
+            if isinstance(data, dict):
+                return {key: clean_data_for_xml(value) for key, value in data.items()}
+            elif isinstance(data, list):
+                return [clean_data_for_xml(item) for item in data]
+            elif isinstance(data, (datetime, date)):
+                return data.isoformat()
+            elif isinstance(data, Decimal):
+                return float(data)
+            elif hasattr(data, '__dict__'):
+                return {
+                    key: clean_data_for_xml(value)
+                    for key, value in data.__dict__.items()
+                    if not key.startswith('_')
+                }
+            else:
+                return data
         
-        response = HttpResponse(xml_string, content_type='application/xml')
+        # Nettoyer les données
+        cleaned_data = clean_data_for_xml(report_data)
+        
+        # Créer la racine XML
+        root = dict_to_xml('rapport_solvabilite', cleaned_data)
+        
+        # Créer un arbre XML
+        tree = ET.ElementTree(root)
+        
+        # Générer la chaîne XML avec en-tête et indentation
+        ET.indent(tree, space="  ", level=0)
+        
+        # Utiliser tostring avec encoding unicode
+        xml_string = ET.tostring(root, encoding='unicode', method='xml')
+        
+        # Ajouter l'en-tête XML
+        xml_content = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_string}'
+        
+        response = HttpResponse(xml_content, content_type='application/xml; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.xml"'
+        response['Content-Length'] = len(xml_content.encode('utf-8'))
+        
         return response
         
     except Exception as e:
         print(f"❌ Erreur génération XML: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return Response({'error': f'Erreur génération XML: {str(e)}'}, status=500)
 
+
+
 def generer_json(report_data, nom_fichier):
-    """Générer un fichier JSON"""
+    """Générer un fichier JSON formaté"""
     try:
-        json_content = json.dumps(report_data, ensure_ascii=False, indent=2)
+        # Fonction pour nettoyer les données avant sérialisation
+        def clean_data_for_json(obj):
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            elif isinstance(obj, Decimal):
+                return float(obj)
+            elif hasattr(obj, '__dict__'):
+                # Pour les objets Django
+                return {
+                    key: clean_data_for_json(value)
+                    for key, value in obj.__dict__.items()
+                    if not key.startswith('_')
+                }
+            elif isinstance(obj, dict):
+                return {key: clean_data_for_json(value) for key, value in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_data_for_json(item) for item in obj]
+            elif obj is None:
+                return None
+            else:
+                return str(obj)
         
-        response = HttpResponse(json_content, content_type='application/json')
+        # Nettoyer les données
+        cleaned_data = clean_data_for_json(report_data)
+        
+        # Convertir en JSON avec une belle indentation
+        json_content = json.dumps(
+            cleaned_data, 
+            ensure_ascii=False, 
+            indent=2,
+            cls=DjangoJSONEncoder  # Utiliser l'encodeur Django
+        )
+        
+        response = HttpResponse(json_content, content_type='application/json; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.json"'
+        response['Content-Length'] = len(json_content.encode('utf-8'))
+        
         return response
         
     except Exception as e:
         print(f"❌ Erreur génération JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return Response({'error': f'Erreur génération JSON: {str(e)}'}, status=500)

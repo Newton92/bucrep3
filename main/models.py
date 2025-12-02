@@ -1,5 +1,9 @@
 import datetime
 import time
+import base64
+from django.conf import settings
+from django.contrib.staticfiles.storage import staticfiles_storage
+import os
 
 from django.contrib.auth.models import AbstractUser, Group
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -2105,13 +2109,22 @@ class RiskRating(Model):
 
     def __str__(self):
         return f"RiskRating {self.pk} - {self.acheteur}"
-    
+
+    def _get_fallback_svg(self, score):
+        """Génère un SVG de secours"""
+        fallback_svg = f'''<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="90" fill="#f0f0f0" stroke="#333" stroke-width="3"/>
+            <text x="100" y="110" text-anchor="middle" font-size="60" font-family="Arial" fill="#333">{score}</text>
+            <text x="100" y="160" text-anchor="middle" font-size="20" font-family="Arial" fill="#666">/9</text>
+        </svg>'''
+        encoded_fallback = base64.b64encode(fallback_svg.encode('utf-8')).decode('utf-8')
+        return f"data:image/svg+xml;base64,{encoded_fallback}"
+
     def get_risk_gauge_image(self):
         score = self.calculate_risk_score()
         filename = f"risk_gauge_{self.pk}.png"
         return generate_risk_gauge(score, filename=filename)
     
-
     def get_cotation_explication(self):
         """Retourne l'explication de la cotation du risque."""
         explications = {
@@ -2176,6 +2189,64 @@ class RiskRating(Model):
                 score += 1
                 
         return min(score, 9)  # ou 8 si vous partez de 0
+    
+    def get_risk_rating_image_base64(self):
+        score = self.calculate_risk_score()
+        print(f"Score calculé : {score}")  # Debug
+
+        if score is None:
+            score = 0
+
+        try:
+            score = int(score)
+        except (ValueError, TypeError):
+            score = 0
+
+        score = max(0, min(9, score))
+        svg_filename = f"{score}.svg"
+        print(f"Fichier SVG recherché : {svg_filename}")  # Debug
+
+        possible_paths = [
+            os.path.join(settings.STATIC_ROOT, 'riskrating', svg_filename),
+            os.path.join(settings.BASE_DIR, 'static', 'riskrating', svg_filename),
+            os.path.join(settings.BASE_DIR, 'main', 'static', 'riskrating', svg_filename),
+        ]
+
+        print(f"Chemins testés : {possible_paths}")  # Debug
+
+        for svg_path in possible_paths:
+            print(f"Test du chemin : {svg_path} - Existe : {os.path.exists(svg_path)}")  # Debug
+            if os.path.exists(svg_path):
+                try:
+                    with open(svg_path, 'rb') as svg_file:
+                        svg_content = svg_file.read()
+                        encoded_string = base64.b64encode(svg_content).decode('utf-8')
+                        return f"data:image/svg+xml;base64,{encoded_string}"
+                except Exception as e:
+                    print(f"Erreur lors de la lecture : {e}")  # Debug
+
+        print(f"Aucun fichier SVG trouvé pour le score {score}.")  # Debug
+        return self._get_fallback_svg(score)
+    
+    def get_risk_rating_image_url(self):
+        """Retourne l'URL du fichier SVG correspondant au score de risque"""
+        score = self.calculate_risk_score()
+        if score is None:
+            score = 0
+
+        try:
+            score = int(score)
+        except (ValueError, TypeError):
+            score = 0
+
+        score = max(0, min(9, score))
+        svg_filename = f"{score}.svg"
+
+        # Utilisez staticfiles_storage pour obtenir l'URL statique
+        svg_url = staticfiles_storage.url(f'riskrating/{svg_filename}')
+
+        return svg_url
+
 
 
 class DonneesEnregistrement(Model):
@@ -2595,6 +2666,32 @@ class RiskManagment(Model):
     def __str__(self):
         return f"Gestion des Risques - {self.acheteur}"
     
+    def get_management_image_base64(self):
+        """Retourne l'image en Base64 pour l'intégration directe dans le HTML"""
+        image_path = self.get_management_image_path()
+        
+        # Si le chemin est relatif, construire le chemin absolu
+        if not os.path.isabs(image_path):
+            image_path = os.path.join(settings.BASE_DIR, image_path)
+        
+        if os.path.exists(image_path):
+            with open(image_path, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                
+                # Déterminer le type MIME
+                if image_path.endswith('.png'):
+                    mime_type = 'image/png'
+                elif image_path.endswith('.jpg') or image_path.endswith('.jpeg'):
+                    mime_type = 'image/jpeg'
+                elif image_path.endswith('.svg'):
+                    mime_type = 'image/svg+xml'
+                else:
+                    mime_type = 'image/png'  # par défaut
+                
+                return f"data:{mime_type};base64,{encoded_string}"
+        
+        return None
+    
     def get_management_image_path(self):
         """Retourne le chemin de l'image basé sur les statuts"""
         fields = [
@@ -2637,7 +2734,6 @@ class RiskManagment(Model):
         else:
             return "management/passable.png"
 
-    
     def get_management_score(self):
         """Retourne le score de gestion des risques"""
         fields = [

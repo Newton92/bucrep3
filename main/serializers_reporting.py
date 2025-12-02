@@ -71,7 +71,8 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
             ('bancaire', 'Bancaire'),
             ('anglais', 'Anglais'),
             ('syscohada', 'Syscohada'),
-            ('irfs_cobac', 'Irfs Cobac')
+            ('ifrs', 'IFRS COBAC'),  # <-- Correction ici
+            ('irfs_cobac', 'IFRS COBAC'),  # OU gardez cette valeur
         ],
         required=True
     )

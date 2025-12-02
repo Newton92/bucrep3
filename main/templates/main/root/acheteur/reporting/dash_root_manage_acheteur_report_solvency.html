@@ -582,7 +582,7 @@ table th {
                                 <option value="bancaire">Bancaire</option>
                                 <option value="anglais">Anglais</option>
                                 <option value="syscohada">Syscohada</option>
-                                <option value="irfs_cobac">Irfs Cobac</option>
+                                <option value="ifrs">Ifrs Cobac</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -1226,7 +1226,7 @@ $(document).ready(function() {
             'bancaire': 'Bancaire',
             'anglais': 'Anglais',
             'syscohada': 'Syscohada',
-            'irfs_cobac': 'Irfs Cobac'
+            'ifrs': 'Ifrs Cobac'
         };
 
         const formatMap = {
@@ -2584,7 +2584,7 @@ $(document).ready(function() {
             case 'syscohada':
                 html += genererScoringSyscohada(reportData);
                 break;
-            case 'irfs_cobac':
+            case 'ifrs':
                 html += genererScoringIfrs(reportData);
                 break;
             default:
@@ -2792,7 +2792,7 @@ $(document).ready(function() {
                 et les dispositions de la COBAC. Il permet une analyse financière conforme aux standards 
                 internationaux appliqués dans la zone CEMAC.</p>
                 
-                ${genererScoresAnnuelsIndividuels(scoring, 'IFRS COBAC')}
+                ${genererScoresAnnuelsIndividuels(scoring, 'Ifrs Cobac')}
             </div>
         `;
     }
@@ -3094,6 +3094,7 @@ $(document).ready(function() {
     }
 
     // Fonction principale pour exporter le rapport
+    // Dans votre template principal, remplacez la fonction exporterRapport
     function exporterRapport(format) {
         if (!currentReportData || !currentFormData) {
             Swal.fire({
@@ -3107,15 +3108,6 @@ $(document).ready(function() {
         console.log(`📤 Début de l'export ${format.toUpperCase()}...`);
         
         // Afficher un indicateur de chargement
-        const exportButtons = ['btnExportPDF', 'btnExportHTML', 'btnExportXML', 'btnExportJSON'];
-        exportButtons.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="bi bi-arrow-repeat spinner-border spinner-border-sm me-1"></i>Génération...`;
-            }
-        });
-
         Swal.fire({
             title: 'Export en cours',
             text: `Génération du format ${format.toUpperCase()}...`,
@@ -3147,36 +3139,49 @@ $(document).ready(function() {
             contentType: 'application/json',
             success: function(response) {
                 Swal.close();
-                console.log(`✅ Réponse export ${format}:`, response);
+                console.log(`✅ Export ${format} réussi`);
                 
-                // Réactiver les boutons
-                exportButtons.forEach(btnId => {
-                    const btn = document.getElementById(btnId);
-                    if (btn) {
-                        btn.disabled = false;
-                        resetExportButton(btnId, format);
-                    }
-                });
-
-                if (response.status === 'success') {
-                    traiterReponseExport(response, format);
+                // Pour PDF, ouvrir dans une nouvelle fenêtre ou télécharger
+                if (format === 'pdf') {
+                    // Créer un blob et télécharger
+                    const blob = new Blob([response], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'PDF généré!',
+                        text: 'Le fichier PDF a été téléchargé avec succès.',
+                        confirmButtonText: 'OK'
+                    });
                 } else {
-                    throw new Error(response.message || 'Erreur lors de l\'export');
+                    // Pour HTML, XML, JSON - la réponse est directement le fichier
+                    // Le Content-Disposition du serveur devrait gérer le téléchargement
+                    // Mais on peut aussi gérer manuellement
+                    const blob = new Blob([response], { 
+                        type: format === 'json' ? 'application/json' : 
+                            format === 'xml' ? 'application/xml' : 'text/html'
+                    });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.${format}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
                 }
             },
             error: function(xhr, status, error) {
                 Swal.close();
                 console.error(`❌ Erreur export ${format}:`, xhr);
                 
-                // Réactiver les boutons
-                exportButtons.forEach(btnId => {
-                    const btn = document.getElementById(btnId);
-                    if (btn) {
-                        btn.disabled = false;
-                        resetExportButton(btnId, format);
-                    }
-                });
-
                 let errorMessage = `Une erreur est survenue lors de l'export ${format.toUpperCase()}.`;
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMessage = xhr.responseJSON.error;
