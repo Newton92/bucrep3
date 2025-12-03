@@ -1428,6 +1428,30 @@ from weasyprint import HTML
 import tempfile
 
 def generer_pdf_weasyprint(report_data, form_data, nom_fichier):
+    try:
+        
+        print("Génération du PDF...")  # Debug
+        # Rendre le template HTML
+        html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
+        
+        # Générer le PDF en mémoire
+        pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()
+        
+        # Préparer la réponse HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="rapport_solvabilite.pdf"'
+        response['Content-Length'] = len(pdf_file)
+        
+        return response
+    
+    except Exception as e:
+        print(f"Erreur : {str(e)}")  # Debug
+        return Response(
+            {"error": f"Erreur lors de la génération du rapport : {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier):
     """Générer un PDF avec WeasyPrint optimisé"""
     try:
         print("📄 Début génération PDF...")
