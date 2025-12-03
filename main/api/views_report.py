@@ -8,7 +8,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
-#from datetime import datetime
+# from datetime import datetime
+from datetime import datetime as dt
+import html  # Pour l'échappement XML
 
 from main.serializers import *
 import xml.etree.ElementTree as ET
@@ -72,9 +74,9 @@ import base64
 import json
 from main.models import ActifC, PassifC, ResultatC
 from main.utils import RatiosClassique
-#from datetime import datetime
+# from datetime import datetime
 from django.conf import settings
-import datetime
+# import datetime
 from main.utils import *
 from main.models import (
     ActifC, PassifC, ResultatC,  # Classique
@@ -83,7 +85,7 @@ from main.models import (
     ActifS, PassifS, ResultatS,  # SYSCOHADA
     ActifIFRS, PassifIFRS, ResultatIFRS  # IFRS COBAC
 )
-from datetime import datetime as dt 
+# from datetime import datetime as dt 
 from main.api.views_scoring_classique import *
 from main.api.views_scoring_anglais import *
 from main.api.views_scoring_bancaire import *
@@ -441,30 +443,42 @@ def generate_pdf_xhtml2pdf(report_data):
 
 
 def generate_html(report_data):
-    html = f"""
-    <html>
-        <head>
-            <title>Rapport</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; }}
-                h1 {{ color: #333; }}
-                table {{ border-collapse: collapse; width: 100%; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                th {{ background-color: #f2f2f2; }}
-            </style>
-        </head>
-        <body>
-            <h1>Rapport pour {report_data['identification']['acremac_info']['nom']}</h1>
-            <table>
-                <tr><th>Clé</th><th>Valeur</th></tr>
-                <tr><td>Nom</td><td>{report_data['identification']['acremac_info']['nom']}</td></tr>
-                <tr><td>Date</td><td>{report_data['header_report']['date_today']}</td></tr>
-                <!-- Ajoutez d'autres champs ici -->
-            </table>
-        </body>
-    </html>
-    """
-    return html
+    """Génère un rapport HTML complet et le force en téléchargement"""
+    try:
+        # Utiliser render_to_string pour générer le HTML à partir du template
+        html_content = render_to_string('main/report_deep_seek_test.html', report_data)
+        
+        # Créer une réponse HTTP avec le contenu HTML
+        response = HttpResponse(html_content, content_type='text/html')
+        
+        # Forcer le téléchargement avec Content-Disposition
+        response['Content-Disposition'] = f'attachment; filename="rapport_solvabilite_{report_data.get("identification", {}).get("acremac_info", {}).get("nom", "acheteur")}.html"'
+        
+        return response
+        
+    except Exception as e:
+        # En cas d'erreur, retourner un HTML simple
+        html_content = f"""
+        <html>
+            <head>
+                <title>Rapport d'erreur</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; padding: 20px; }}
+                    .error {{ color: red; border: 1px solid #ddd; padding: 15px; background-color: #f8d7da; }}
+                </style>
+            </head>
+            <body>
+                <h1>Erreur lors de la génération du rapport</h1>
+                <div class="error">
+                    <h3>Détails de l'erreur :</h3>
+                    <p>{str(e)}</p>
+                </div>
+            </body>
+        </html>
+        """
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.html"'
+        return response
 
 
 def generate_pdf(report_data):
@@ -495,19 +509,510 @@ def generate_pdf(report_data):
     return buffer
 
 
-def dict_to_xml(tag, data):
-    elem = ET.Element(tag)
-    if isinstance(data, dict):
-        for key, val in data.items():
-            child = dict_to_xml(str(key), val)
-            elem.append(child)
-    elif isinstance(data, (list, tuple)):
-        for item in data:
-            child = dict_to_xml('item', item)
-            elem.append(child)
+def dict_to_xml(tag, data, parent=None):
+    if parent is None:
+        root = ET.Element(tag)
     else:
-        elem.text = str(data)
-    return elem
+        root = ET.SubElement(parent, tag)
+
+    if isinstance(data, dict):
+        for key, value in data.items():
+            clean_key = ''.join(c if c.isalnum() or c in '_-' else '_' for c in str(key))
+            if not clean_key:
+                continue
+
+            if isinstance(value, dict):
+                dict_to_xml(clean_key, value, root)
+            elif isinstance(value, list):
+                list_elem = ET.SubElement(root, clean_key)
+                for item in value:
+                    if item is not None and str(item).strip() != "":
+                        if isinstance(item, dict):
+                            dict_to_xml('item', item, list_elem)
+                        else:
+                            item_elem = ET.SubElement(list_elem, 'item')
+                            item_elem.text = html.escape(str(item))
+            else:
+                if value is not None and str(value).strip() != "":
+                    elem = ET.SubElement(root, clean_key)
+                    elem.text = html.escape(str(value))
+    elif isinstance(data, list):
+        for item in data:
+            if item is not None and str(item).strip() != "":
+                dict_to_xml('item', item, root)
+    else:
+        if data is not None and str(data).strip() != "":
+            root.text = html.escape(str(data))
+
+    return root
+
+
+
+def generate_xml_v1(report_data):
+    try:
+        from datetime import datetime as dt
+        import xml.etree.ElementTree as ET
+        import html
+        import re
+
+        # Créer l'élément racine
+        root = ET.Element('rapport_solvabilite')
+        
+        # Ajouter un timestamp
+        timestamp_elem = ET.SubElement(root, 'timestamp')
+        timestamp_elem.text = dt.now().isoformat()
+        
+        # Ajouter la version
+        version_elem = ET.SubElement(root, 'version')
+        version_elem.text = '1.0'
+
+        # Fonction pour nettoyer les noms de balises XML
+        def clean_tag_name(tag):
+            # Remplacer les caractères non valides dans les noms de balises
+            tag = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(tag))
+            # S'assurer que le nom commence par une lettre
+            if tag and tag[0].isdigit():
+                tag = 'tag_' + tag
+            # Si vide, retourner une valeur par défaut
+            if not tag:
+                tag = 'item'
+            return tag
+
+        # Fonction pour nettoyer les valeurs XML
+        def clean_xml_value(value):
+            if value is None:
+                return ''
+            # Convertir en chaîne
+            str_value = str(value)
+            # Échapper les caractères XML spéciaux
+            str_value = html.escape(str_value)
+            # Nettoyer les caractères de contrôle non valides
+            str_value = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', str_value)
+            return str_value
+
+        # Fonction récursive pour convertir dict/list en XML
+        def dict_to_xml_element(parent, data, parent_tag=None):
+            if isinstance(data, dict):
+                for key, value in data.items():
+                    clean_key = clean_tag_name(key)
+                    if isinstance(value, (dict, list)) and value:
+                        sub_elem = ET.SubElement(parent, clean_key)
+                        dict_to_xml_element(sub_elem, value, clean_key)
+                    else:
+                        cleaned_value = clean_xml_value(value)
+                        if cleaned_value and cleaned_value != "Non spécifié":
+                            elem = ET.SubElement(parent, clean_key)
+                            elem.text = cleaned_value
+            elif isinstance(data, list):
+                for i, item in enumerate(data):
+                    clean_key = f"{parent_tag}_item_{i}" if parent_tag else f"item_{i}"
+                    list_elem = ET.SubElement(parent, clean_key)
+                    if isinstance(item, (dict, list)):
+                        dict_to_xml_element(list_elem, item, clean_key)
+                    else:
+                        cleaned_value = clean_xml_value(item)
+                        if cleaned_value and cleaned_value != "Non spécifié":
+                            list_elem.text = cleaned_value
+            else:
+                cleaned_value = clean_xml_value(data)
+                if cleaned_value and cleaned_value != "Non spécifié":
+                    parent.text = cleaned_value
+
+        # Ajouter les sections principales du rapport (une à la fois pour déboguer)
+        sections_to_include = [
+            'header_report', 'footer_report', 'commande', 'identification',
+            'executive_summary', 'summary_and_opinion', 'acremac_opinion',
+            'registered_data', 'legal_background', 'management'
+        ]
+        
+        for section_key in sections_to_include:
+            if section_key in report_data and report_data[section_key]:
+                try:
+                    section_elem = ET.SubElement(root, clean_tag_name(section_key))
+                    dict_to_xml_element(section_elem, report_data[section_key], section_key)
+                    print(f"Section {section_key} ajoutée au XML")
+                except Exception as section_error:
+                    print(f"Erreur avec section {section_key}: {section_error}")
+                    # Ajouter une balise d'erreur pour cette section
+                    error_elem = ET.SubElement(root, f"{clean_tag_name(section_key)}_error")
+                    error_elem.text = f"Erreur lors de la génération: {str(section_error)[:100]}"
+
+        # Convertir en chaîne XML avec indentation
+        xml_str = ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8')
+        
+        # Nettoyer les caractères non valides supplémentaires
+        # xml_str = re.sub(r'&#x[0-9A-Fa-f]+;', '', xml_str)  # Supprimer les références d'entités hex
+        xml_str = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', xml_str)  # Supprimer les caractères de contrôle
+        
+        # Ajouter la déclaration XML
+        xml_with_declaration = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'
+        
+        # Vérifier que le XML est bien formé
+        try:
+            ET.fromstring(xml_with_declaration)
+            print(f"XML validé avec succès. Taille: {len(xml_with_declaration)} caractères")
+        except ET.ParseError as e:
+            # Pour déboguer, afficher les 200 caractères autour de l'erreur
+            error_position = int(str(e).split('column ')[1].split(')')[0])
+            start_pos = max(0, error_position - 100)
+            end_pos = min(len(xml_with_declaration), error_position + 100)
+            print(f"Erreur de parsing à la position {error_position}:")
+            print(f"Contexte: {xml_with_declaration[start_pos:end_pos]}")
+            raise ValueError(f"XML mal formé: {e}")
+
+        # Retourner la réponse HTTP
+        response = HttpResponse(
+            xml_with_declaration.encode('utf-8'),   # ✔️ bytes OK
+            content_type='application/xml'
+        )
+        response['Content-Length'] = len(xml_with_declaration.encode('utf-8'))
+        response['Content-Disposition'] = f'attachment; filename="rapport_solvabilite_{report_data.get("identification", {}).get("acremac_info", {}).get("nom", "acheteur")}.xml"'
+        
+        return response
+
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"ERREUR dans generate_xml: {str(e)}")
+        print(f"Traceback: {error_details}")
+        
+        # XML d'erreur simple et sûr
+        error_xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<erreur>
+    <message>Erreur lors de la génération du rapport XML</message>
+    <details>Une erreur technique s'est produite lors de la génération du rapport.</details>
+    <timestamp>{}</timestamp>
+</erreur>'''.format(dt.now().isoformat())
+        
+        response = HttpResponse(
+            error_xml, 
+            content_type='application/xml; charset=utf-8'
+        )
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+        response.status_code = 500
+        return response
+
+
+def generate_xml_with_xsd(report_data):
+    from datetime import datetime
+    import xml.etree.ElementTree as ET
+    import html, re, io, zipfile
+    from django.http import HttpResponse
+
+    # ---------------- UTILITAIRES ----------------
+
+    def clean_tag(tag):
+        tag = re.sub(r'[^a-zA-Z0-9_\-]', '_', tag)
+        return f"tag_{tag}" if tag[0].isdigit() else tag
+
+    def clean_value(val):
+        if val is None:
+            return ""
+        return re.sub(r'[\x00-\x1F\x7F]', '', html.escape(str(val)))
+
+    def build_xml(elem, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                tag = clean_tag(k)
+                child = ET.SubElement(elem, tag)
+                build_xml(child, v)
+        elif isinstance(data, list):
+            for i, item in enumerate(data):
+                item_tag = f"item_{i}"
+                child = ET.SubElement(elem, item_tag)
+                build_xml(child, item)
+        else:
+            elem.text = clean_value(data)
+
+    # ---------------- CONSTRUCTION DU XML ----------------
+
+    root = ET.Element("rapport_solvabilite", {
+        "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+        "xsi:noNamespaceSchemaLocation": "rapport_solvabilite.xsd"
+    })
+
+    ET.SubElement(root, "timestamp").text = datetime.now().isoformat()
+    ET.SubElement(root, "version").text = "1.0"
+
+    for key, value in report_data.items():
+        tag = clean_tag(key)
+        section = ET.SubElement(root, tag)
+        build_xml(section, value)
+
+    xml_str = ET.tostring(root, encoding="utf-8").decode("utf-8")
+    xml_final = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'
+
+    # ---------------- GÉNÉRATION XSD ----------------
+    # XSD minimaliste mais valide (compatible avec tout XML dynamique)
+
+    xsd = f'''<?xml version="1.0" encoding="UTF-8"?>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+        <xs:element name="rapport_solvabilite">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+                </xs:sequence>
+                <xs:attribute name="xmlns:xsi" use="optional"/>
+                <xs:attribute name="xsi:noNamespaceSchemaLocation" use="optional"/>
+            </xs:complexType>
+        </xs:element>
+
+    </xs:schema>
+    '''
+
+    # ---------------- ZIP XML + XSD ----------------
+
+    buffer = io.BytesIO()
+
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("rapport_solvabilite.xml", xml_final)
+        z.writestr("rapport_solvabilite.xsd", xsd)
+
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.read(), content_type="application/zip")
+    filename = f"rapport_solvabilite_{datetime.now().strftime('%Y%m%d%H%M')}.zip"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+
+
+def generate_xml(report_data):
+    try:
+        from datetime import datetime as dt
+        import xml.etree.ElementTree as ET
+        import html
+        import re
+        
+        # Créer l'élément racine
+        root = ET.Element('rapport_solvabilite')
+        
+        # Ajouter les métadonnées de base
+        ET.SubElement(root, 'date_generation').text = dt.now().isoformat()
+        ET.SubElement(root, 'format').text = 'XML'
+        ET.SubElement(root, 'version').text = '1.0'
+        
+        # Fonction pour nettoyer le texte XML
+        def clean_text(text):
+            if text is None:
+                return ''
+            # Convertir en chaîne
+            str_text = str(text)
+            # Échapper les caractères XML
+            str_text = html.escape(str_text)
+            # Supprimer les caractères de contrôle
+            str_text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', str_text)
+            return str_text
+        
+        # Fonction pour ajouter des données simples (pas de structures imbriquées complexes)
+        def add_simple_section(parent, section_name, data):
+            if not data or not isinstance(data, dict):
+                return
+            
+            section_elem = ET.SubElement(parent, section_name)
+            for key, value in data.items():
+                if value is None:
+                    continue
+                    
+                if isinstance(value, dict):
+                    # Pour les sous-dictionnaires simples
+                    sub_elem = ET.SubElement(section_elem, key)
+                    for sub_key, sub_value in value.items():
+                        if sub_value is not None:
+                            cleaned = clean_text(sub_value)
+                            if cleaned and cleaned != "Non spécifié":
+                                ET.SubElement(sub_elem, sub_key).text = cleaned
+                elif isinstance(value, list):
+                    # Pour les listes simples
+                    list_elem = ET.SubElement(section_elem, key)
+                    for i, item in enumerate(value):
+                        if item is not None:
+                            cleaned = clean_text(item)
+                            if cleaned and cleaned != "Non spécifié":
+                                ET.SubElement(list_elem, f'item_{i}').text = cleaned
+                else:
+                    # Pour les valeurs simples
+                    cleaned = clean_text(value)
+                    if cleaned and cleaned != "Non spécifié":
+                        ET.SubElement(section_elem, key).text = cleaned
+        
+        # Ajouter les sections principales (limitées pour éviter les problèmes)
+        if 'header_report' in report_data:
+            add_simple_section(root, 'entete', report_data['header_report'])
+        
+        if 'identification' in report_data:
+            ident_elem = ET.SubElement(root, 'identification')
+            if 'client_info' in report_data['identification']:
+                add_simple_section(ident_elem, 'client', report_data['identification']['client_info'])
+            if 'acremac_info' in report_data['identification']:
+                add_simple_section(ident_elem, 'acremac', report_data['identification']['acremac_info'])
+        
+        if 'commande' in report_data:
+            add_simple_section(root, 'commande', report_data['commande'])
+        
+        if 'executive_summary' in report_data:
+            add_simple_section(root, 'resume_executif', report_data['executive_summary'])
+        
+        # Convertir en chaîne XML
+        xml_str = ET.tostring(root, encoding='utf-8', method='xml').decode('utf-8')
+        
+        # Assurer que le XML est valide
+        xml_with_declaration = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'
+        
+        # Valider le XML
+        try:
+            ET.fromstring(xml_with_declaration)
+        except ET.ParseError as e:
+            # Créer un XML minimal en cas d'erreur
+            simple_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<rapport_solvabilite>
+    <erreur>Erreur lors de la génération du rapport complet</erreur>
+    <date>{dt.now().isoformat()}</date>
+    <acheteur>{report_data.get("identification", {}).get("acremac_info", {}).get("nom", "Inconnu")}</acheteur>
+    <message>Rapport XML généré avec des données limitées</message>
+</rapport_solvabilite>'''
+            xml_with_declaration = simple_xml
+        
+        # Retourner la réponse HTTP
+        response = HttpResponse(
+            xml_with_declaration, 
+            content_type='application/xml; charset=utf-8'
+        )
+        response['Content-Disposition'] = f'attachment; filename="rapport_solvabilite.xml"'
+        
+        print(f"XML généré avec succès. Taille: {len(xml_with_declaration)} caractères")
+        
+        return response
+        
+    except Exception as e:
+        import traceback
+        print(f"ERREUR grave dans generate_xml: {str(e)}")
+        
+        # XML d'erreur minimal
+        error_xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<erreur>
+    <message>Erreur lors de la génération du rapport XML</message>
+    <timestamp>{}</timestamp>
+</erreur>'''.format(dt.now().isoformat())
+        
+        response = HttpResponse(
+            error_xml, 
+            content_type='application/xml; charset=utf-8',
+            status=500
+        )
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+        return response
+
+
+def generate_xml_v2(report_data):
+    from datetime import datetime
+    import xml.etree.ElementTree as ET
+    import html, re
+    from django.http import HttpResponse
+
+    try:
+        # ----------- FONCTIONS UTILES -----------
+        def clean_tag_name(tag: str) -> str:
+            """Nettoie correctement les noms de balise XML"""
+            tag = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(tag))
+            if tag and tag[0].isdigit():
+                tag = "tag_" + tag
+            return tag or "item"
+
+        def clean_value(value) -> str:
+            if value is None:
+                return ""
+            s = html.escape(str(value))
+            return re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', s)
+
+        def build_xml(parent, data, parent_tag=None):
+            """Conversion récursive dict/list → XML"""
+            if isinstance(data, dict):
+                for key, val in data.items():
+                    t = clean_tag_name(key)
+                    elem = ET.SubElement(parent, t)
+                    if isinstance(val, (dict, list)):
+                        build_xml(elem, val, t)
+                    else:
+                        v = clean_value(val)
+                        if v and v != "Non spécifié":
+                            elem.text = v
+
+            elif isinstance(data, list):
+                for i, item in enumerate(data):
+                    item_tag = f"{parent_tag}_item" if parent_tag else "item"
+                    elem = ET.SubElement(parent, f"{item_tag}_{i}")
+                    if isinstance(item, (dict, list)):
+                        build_xml(elem, item, item_tag)
+                    else:
+                        v = clean_value(item)
+                        if v and v != "Non spécifié":
+                            elem.text = v
+
+        # ----------- CONSTRUCTION DU XML -----------
+
+        root = ET.Element("rapport_solvabilite")
+
+        ET.SubElement(root, "timestamp").text = datetime.now().isoformat()
+        ET.SubElement(root, "version").text = "1.0"
+
+        SECTIONS = [
+            "header_report", "footer_report", "commande", "identification",
+            "executive_summary", "summary_and_opinion", "acremac_opinion",
+            "registered_data", "legal_background", "management"
+        ]
+
+        for section in SECTIONS:
+            section_data = report_data.get(section)
+            if section_data:
+                section_elem = ET.SubElement(root, clean_tag_name(section))
+                build_xml(section_elem, section_data, section)
+
+        # ----------- FINALISATION XML -----------
+
+        xml_str = ET.tostring(root, encoding="utf-8").decode("utf-8")
+
+        xml_str = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', xml_str)
+
+        xml_out = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml_str}'
+
+        # Vérification du XML
+        ET.fromstring(xml_out)
+
+        # ----------- REPONSE HTTP -----------
+
+        company_name = (
+            report_data.get("identification", {})
+                       .get("acremac_info", {})
+                       .get("nom", "acheteur")
+        )
+
+        response = HttpResponse(
+            xml_out,
+            content_type="application/xml; charset=utf-8"
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="rapport_solvabilite_{company_name}.xml"'
+        )
+
+        return response
+
+    except Exception:
+        # Générer un XML propre même en cas d’erreur
+        err_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<erreur>
+  <message>Erreur lors de la génération du rapport XML</message>
+  <timestamp>{datetime.now().isoformat()}</timestamp>
+</erreur>
+"""
+        response = HttpResponse(err_xml, content_type="application/xml; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="rapport_erreur.xml"'
+        response.status_code = 500
+        return response
+
+
 
 
 def calculate_variation(n, n_minus_1):
@@ -2278,6 +2783,17 @@ class GenerateReport(APIView):
                 "title": "CONCLUSION GENERALE",
                 "couleur_commentaire": conclusion_generale.couleur_commentaire.couleur if conclusion_generale and conclusion_generale.couleur_commentaire else "Non spécifié",
                 "commentaire": conclusion_generale.commentaire if conclusion_generale and conclusion_generale.commentaire else "Aucun commentaire disponible",
+            },
+            "investigations": {
+                "source1": "Tribunal de commerce (registre du commerce)",
+                "source2": "Chambres de commerces et métiers",
+                "source3": "Banques",
+                "source4": "Groupement de sociétés",
+                "source5": "La société a enquêté",
+            },
+            "copyright": {
+                "assureur": "© ACREMAC",
+                "note": "Nos renseignements sont confidentiels et ne peuvent être divulgues sous peine de dommages et intérêts. Acremac s'oblige à mettre en œuvre avec diligence les moyens dont elle dispose sans être tenue par des obligations de résultat.",
             }
         }
         
@@ -2305,18 +2821,32 @@ class GenerateReport(APIView):
                 # Renvoyer le dictionnaire directement comme une réponse JSON pour inspection
                 return Response(report_data, status=status.HTTP_200_OK)
             elif format_report.upper() == 'XML':
-                print("Génération du XML...")  # Debug
-                root = dict_to_xml('report', report_data)
-                xml_str = ET.tostring(root, encoding='utf-8')
-                print(xml_str.decode('utf-8'))  # Debug
-                response = HttpResponse(xml_str, content_type='application/xml')
-                response['Content-Disposition'] = f'attachment; filename="rapport_acheteur_{acheteur_id}.xml"'
-                return response
+                logger.info("Génération du XML + XSD...")
+
+                try:
+                    response = generate_xml_with_xsd(report_data)
+                    logger.info("XML + XSD généré avec succès")
+                    return response
+
+                except Exception as e:
+                    logger.error(f"Erreur lors de la génération XML/XSD : {str(e)}")
+
+                    error_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+                    <erreur>
+                        <message>Erreur lors de la génération du rapport XML</message>
+                        <details>{str(e)}</details>
+                    </erreur>'''
+
+                    response = HttpResponse(
+                        error_xml, 
+                        content_type='application/xml; charset=utf-8',
+                        status=500
+                    )
+                    response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+                    return response
             elif format_report.upper() == 'HTML':
                 print("Génération du HTML...")  # Debug
-                html_content = generate_html(report_data)
-                print(html_content)  # Debug
-                response = HttpResponse(html_content, content_type='text/html')
+                response = generate_html(report_data)
                 response['Content-Disposition'] = f'attachment; filename="rapport_acheteur_{acheteur_id}.html"'
                 return response
             else:

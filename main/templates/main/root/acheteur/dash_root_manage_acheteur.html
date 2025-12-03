@@ -658,6 +658,70 @@ $(document).ready(function() {
         return 'fr';
     }
 
+    // Fonctions utilitaires
+    function formatXML(xml) {
+        try {
+            // Essayer de formater le XML avec indentation
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xml, "application/xml");
+            const serializer = new XMLSerializer();
+            let formatted = serializer.serializeToString(xmlDoc);
+            
+            // Ajouter une indentation basique
+            formatted = formatted.replace(/(>)(<)(\/*)/g, '$1\n$2$3');
+            
+            // Limiter la taille pour l'affichage
+            if (formatted.length > 10000) {
+                formatted = formatted.substring(0, 10000) + '\n\n... (contenu tronqué)';
+            }
+            
+            return formatted;
+        } catch (e) {
+            // Si le formatage échoue, retourner le texte brut
+            return xml.length > 10000 ? xml.substring(0, 10000) + '\n\n... (contenu tronqué)' : xml;
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function downloadXML(xmlContent) {
+        const blob = new Blob([xmlContent], { type: 'application/xml; charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapport_${new Date().getTime()}.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).catch(err => {
+            console.error('Erreur copie:', err);
+            // Fallback pour les anciens navigateurs
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        });
+    }
+
 
     let selectedCommandeId = null;
     let searchTimeout = null;
@@ -797,8 +861,7 @@ $(document).ready(function() {
                 'Authorization': `Bearer ${token}`
             },
             xhrFields: {
-                responseType: (format || '').toLowerCase() === 'pdf' ? 'blob' : 
-                            (format || '').toLowerCase() === 'xml' ? 'blob' : 'text'
+                responseType: (format || '').toLowerCase() === 'pdf' ? 'blob' : (format || '').toLowerCase() === 'xml' ? 'blob' : 'text'
             },
             success: function(response, status, xhr) {
                 console.log("Réponse reçue avec succès, type:", typeof response);
@@ -834,6 +897,8 @@ $(document).ready(function() {
                             title: 'Succès !',
                             text: 'Le rapport PDF a été généré et téléchargé avec succès.',
                             confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
                         });
                     } catch (e) {
                         console.error("Erreur lors du téléchargement du PDF :", e);
@@ -845,26 +910,14 @@ $(document).ready(function() {
                         });
                     }
                 }
+                
                 else if (format === 'html') {
-                    // Ouvrir le HTML dans un nouvel onglet
-                    const blob = new Blob([response], { type: 'text/html' });
-                    const url = window.URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès !',
-                        text: 'Le rapport HTML a été généré et ouvert dans un nouvel onglet.',
-                        confirmButtonText: 'OK'
-                    });
-                }
-                else if (format === 'xml') {
-                    // Télécharger le XML
-                    const blob = new Blob([response], { type: 'application/xml' });
+                    // Pour HTML, forcer le téléchargement
+                    const blob = new Blob([response], { type: 'text/html; charset=utf-8' });
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `rapport_solvabilite_${acheteurId}.xml`;
+                    a.download = `rapport_solvabilite_${acheteurId}.html`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
@@ -873,31 +926,130 @@ $(document).ready(function() {
                     Swal.fire({
                         icon: 'success',
                         title: 'Succès !',
-                        text: 'Le rapport XML a été généré et téléchargé avec succès.',
+                        text: 'Le rapport HTML a été généré et téléchargé avec succès.',
                         confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
                     });
                 }
-                else if (format === 'json') {
-                    // Pour JSON, parser la réponse
-                    let jsonData;
+                
+                else if (format.toLowerCase() === 'xml') {
+
                     try {
-                        jsonData = typeof response === 'string' ? JSON.parse(response) : response;
+                        const blob = new Blob([response], { type: 'application/zip' });
+
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        let filename = "rapport_solvabilite.zip";
+                        const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+
+                        if (contentDisposition && contentDisposition.includes("filename=")) {
+                            filename = contentDisposition.split("filename=")[1].replace(/"/g, "");
+                        }
+
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+
+                        window.URL.revokeObjectURL(url);
+
                         Swal.fire({
                             icon: 'success',
                             title: 'Succès !',
-                            text: 'Le rapport JSON a été généré avec succès.',
-                            html: `<div style="text-align: left; max-height: 400px; overflow: auto;">
-                                <pre>${JSON.stringify(jsonData, null, 2)}</pre>
-                                </div>`,
-                            width: '80%',
+                            text: 'Le XML et son schéma XSD ont été téléchargés.',
                             confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
                         });
+
                     } catch (e) {
-                        console.error("Erreur parsing JSON:", e);
                         Swal.fire({
                             icon: 'error',
-                            title: 'Erreur !',
-                            text: 'Erreur lors du parsing du JSON.',
+                            title: 'Erreur XML/XSD',
+                            text: 'Impossible de télécharger le fichier ZIP.',
+                        });
+                    }
+                }
+                
+                else if (format === 'json') {
+                    try {
+                        // Vérifier que la réponse n'est pas vide
+                        if (!response) {
+                            throw new Error('Réponse vide du serveur');
+                        }
+                        
+                        let jsonData;
+                        if (typeof response === 'string') {
+                            // Essayer de parser comme JSON
+                            try {
+                                jsonData = JSON.parse(response);
+                            } catch (parseError) {
+                                // Si ce n'est pas du JSON, peut-être que c'est déjà un objet
+                                console.warn("La réponse n'est pas du JSON valide, tentative alternative...");
+                                jsonData = response;
+                            }
+                        } else {
+                            jsonData = response;
+                        }
+                        
+                        // S'assurer que nous avons des données
+                        if (!jsonData || (typeof jsonData === 'object' && Object.keys(jsonData).length === 0)) {
+                            throw new Error('Données JSON vides');
+                        }
+                        
+                        // Convertir en chaîne JSON
+                        const jsonString = JSON.stringify(jsonData, null, 2);
+                        
+                        // Télécharger
+                        const blob = new Blob([jsonString], { 
+                            type: 'application/json; charset=utf-8' 
+                        });
+                        
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `rapport_${acheteurId}_${new Date().toISOString().slice(0, 10)}.json`;
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Nettoyer
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 100);
+                        
+                        // Message de succès
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Téléchargement réussi',
+                            text: 'Le fichier JSON a été téléchargé.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                    } catch (e) {
+                        console.error("Erreur JSON détaillée:", e);
+                        
+                        // Afficher plus de détails sur l'erreur
+                        let errorDetails = e.message;
+                        if (response && typeof response === 'string' && response.length > 0) {
+                            errorDetails += `\nPremiers caractères de la réponse: "${response.substring(0, 100)}..."`;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur JSON',
+                            html: `
+                                <div style="text-align: left; font-size: 14px;">
+                                    <p>Erreur lors du traitement du JSON:</p>
+                                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px;">${errorDetails}</pre>
+                                </div>
+                            `,
+                            width: '600px',
                             confirmButtonText: 'OK'
                         });
                     }
@@ -998,6 +1150,8 @@ $(document).ready(function() {
         });
     }
 });
+
+
 </script>
 
 
