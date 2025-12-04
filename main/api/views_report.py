@@ -2601,6 +2601,7 @@ class GenerateReport(APIView):
                 "title_14": "DONNEES BANCAIRES",
                 "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
             },
+            
             "financial_accounts": {
                 "title_15": "COMPTES FINANCIERS",
                 "cabinet": compte_financier.cabinet if compte_financier and compte_financier.cabinet else "Non spécifié",
@@ -2619,6 +2620,7 @@ class GenerateReport(APIView):
                 "type_bilan": compte_financier.type_bilan_ref.libelle if compte_financier and compte_financier.type_bilan_ref else compte_financier.type_bilan if compte_financier else "Non spécifié",
                 "commentaire": compte_financier.commentaire if compte_financier and compte_financier.commentaire else "Aucun commentaire disponible",
             },
+            
             "financial_statements": {
                 "title_20": "ETATS FINANCIERS",
                 "years": years_to_retrieve,
@@ -2684,6 +2686,7 @@ class GenerateReport(APIView):
                 },
 
             },
+            
             "translations": {},
             "scoring": {
                 "title_16": "SCORING ACREMAC - SANS BILAN",
@@ -2816,7 +2819,6 @@ class GenerateReport(APIView):
                 response['Content-Length'] = len(pdf_file)
                 
                 return response
-
             elif format_report.upper() == 'JSON':
                 # Renvoyer le dictionnaire directement comme une réponse JSON pour inspection
                 return Response(report_data, status=status.HTTP_200_OK)

@@ -3100,34 +3100,305 @@ $(document).ready(function() {
             Swal.fire({
                 icon: 'error',
                 title: 'Erreur',
-                text: 'Aucun rapport disponible pour l\'exportation. Veuillez d\'abord générer un rapport.'
+                text: 'Aucun rapport disponible pour l\'exportation.'
             });
             return;
         }
 
         console.log(`📤 Début de l'export ${format.toUpperCase()}...`);
         
-        // Afficher un indicateur de chargement
         Swal.fire({
             title: 'Export en cours',
             text: `Génération du format ${format.toUpperCase()}...`,
             icon: 'info',
             showConfirmButton: false,
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => { Swal.showLoading(); }
         });
 
-        // Préparer les données pour l'export
+        // Préparer les données
+        const exportData = {
+            acheteur_id: ACHETEUR_ID,
+            report_data: currentReportData,
+            form_data: currentFormData,
+            export_format: format
+        };
+
+        console.log('📦 Données envoyées:', exportData);
+
+        // Appel API avec configuration pour recevoir des fichiers
+        $.ajax({
+            url: '/api/reporting/exporter-rapport/',
+            type: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': CSRF_TOKEN
+            },
+            data: JSON.stringify(exportData),
+            contentType: 'application/json',
+            
+            // IMPORTANT: Spécifiez le type de réponse attendue
+            xhrFields: {
+                responseType: (format || '').toLowerCase() === 'pdf' ? 'blob' : (format || '').toLowerCase() === 'xml' ? 'blob' : 'text'
+            },
+            
+            success: function(response, status, xhr) {
+                Swal.close();
+                console.log(`✅ Export ${format} réussi`);
+                console.log('📥 Réponse brute:', response);
+                console.log('📊 En-têtes:', xhr.getAllResponseHeaders());
+                
+                // Gérer la réponse selon le format
+                // handleExportResponse(response, format);
+
+                if (format.toLowerCase() === 'pdf') {
+                    try {
+                        // Créer un Blob à partir de la réponse
+                        const blob = new Blob([response], { type: 'application/pdf' });
+
+                        // Créer un URL pour le Blob
+                        const url = window.URL.createObjectURL(blob);
+
+                        // Créer dynamiquement un lien <a> pour le téléchargement
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        // Nom du fichier (tu peux personnaliser avec l'ID de la commande)
+                        a.download = `rapport_solvabilite_${new Date().toISOString().slice(0, 10)} || 'rapport'}.pdf`;
+
+                        // Ajouter le lien au DOM, cliquer dessus, puis le retirer
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        // Libérer l'URL pour éviter les fuites mémoire
+                        window.URL.revokeObjectURL(url);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            text: 'Le rapport PDF a été généré et téléchargé avec succès.',
+                            confirmButtonText: 'OK'
+                        });
+                    } catch (e) {
+                        console.error("Erreur lors du téléchargement du PDF :", e);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur !',
+                            text: 'Impossible de télécharger le PDF.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                }
+                
+                else if (format.toLowerCase() === 'html') {
+                    // Pour HTML, forcer le téléchargement
+                    const blob = new Blob([response], { type: 'text/html; charset=utf-8' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `rapport_solvabilite__${new Date().toISOString().slice(0, 10)}.html`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès !',
+                        text: 'Le rapport HTML a été généré et téléchargé avec succès.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+                
+                else if (format.toLowerCase() === 'xml') {
+
+                    try {
+                        const blob = new Blob([response], { type: 'application/zip' });
+
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        let filename = "rapport_solvabilite.zip";
+                        const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+
+                        if (contentDisposition && contentDisposition.includes("filename=")) {
+                            filename = contentDisposition.split("filename=")[1].replace(/"/g, "");
+                        }
+
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+
+                        window.URL.revokeObjectURL(url);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            text: 'Le XML et son schéma XSD ont été téléchargés.',
+                            confirmButtonText: 'OK'
+                        });
+
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur XML/XSD',
+                            text: 'Impossible de télécharger le fichier ZIP.',
+                        });
+                    }
+                }
+                
+                else if (format.toLowerCase() === 'json') {
+                    try {
+                        // Vérifier que la réponse n'est pas vide
+                        if (!response) {
+                            throw new Error('Réponse vide du serveur');
+                        }
+                        
+                        let jsonData;
+                        if (typeof response === 'string') {
+                            // Essayer de parser comme JSON
+                            try {
+                                jsonData = JSON.parse(response);
+                            } catch (parseError) {
+                                // Si ce n'est pas du JSON, peut-être que c'est déjà un objet
+                                console.warn("La réponse n'est pas du JSON valide, tentative alternative...");
+                                jsonData = response;
+                            }
+                        } else {
+                            jsonData = response;
+                        }
+                        
+                        // S'assurer que nous avons des données
+                        if (!jsonData || (typeof jsonData === 'object' && Object.keys(jsonData).length === 0)) {
+                            throw new Error('Données JSON vides');
+                        }
+                        
+                        // Convertir en chaîne JSON
+                        const jsonString = JSON.stringify(jsonData, null, 2);
+                        
+                        // Télécharger
+                        const blob = new Blob([jsonString], { 
+                            type: 'application/json; charset=utf-8' 
+                        });
+                        
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `rapport_solvabilite_${new Date().toISOString().slice(0, 10)}.json`;
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Nettoyer
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 100);
+                        
+                        // Message de succès
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Téléchargement réussi',
+                            text: 'Le fichier JSON a été téléchargé.',
+                            timer: 2000,
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK'
+                        });
+                        
+                    } catch (e) {
+                        console.error("Erreur JSON détaillée:", e);
+                        
+                        // Afficher plus de détails sur l'erreur
+                        let errorDetails = e.message;
+                        if (response && typeof response === 'string' && response.length > 0) {
+                            errorDetails += `\nPremiers caractères de la réponse: "${response.substring(0, 100)}..."`;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur JSON',
+                            html: `
+                                <div style="text-align: left; font-size: 14px;">
+                                    <p>Erreur lors du traitement du JSON:</p>
+                                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px;">${errorDetails}</pre>
+                                </div>
+                            `,
+                            width: '600px',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                }
+
+
+            },
+            
+            error: function(xhr, status, error) {
+                Swal.close();
+                console.error(`❌ Erreur export ${format}:`, xhr);
+                console.error('📜 Réponse texte:', xhr.responseText);
+                
+                let errorMessage = `Erreur lors de l'export ${format.toUpperCase()}.`;
+                
+                // Essayer de parser la réponse d'erreur
+                try {
+                    if (xhr.responseText) {
+                        const errorData = JSON.parse(xhr.responseText);
+                        if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Impossible de parser la réponse d\'erreur');
+                }
+                
+                if (xhr.status === 0) {
+                    errorMessage = 'Connexion au serveur impossible.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur interne du serveur.';
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur d\'export',
+                    text: errorMessage,
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
+
+    function exporterRapportTwo(format) {
+        if (!currentReportData || !currentFormData) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Aucun rapport disponible pour l\'exportation.'
+            });
+            return;
+        }
+
+        console.log(`📤 Début de l'export ${format.toUpperCase()}...`);
+        
+        Swal.fire({
+            title: 'Export en cours',
+            text: `Génération du format ${format.toUpperCase()}...`,
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        // Préparer les données
         const exportData = {
             report_data: currentReportData,
             form_data: currentFormData,
-            export_format: format,
-            timestamp: new Date().toISOString()
+            export_format: format
         };
 
-        // Appel API pour l'export
+        // Appel API
         $.ajax({
             url: '/api/reporting/exporter-rapport/',
             type: 'POST',
@@ -3141,48 +3412,14 @@ $(document).ready(function() {
                 Swal.close();
                 console.log(`✅ Export ${format} réussi`);
                 
-                // Pour PDF, ouvrir dans une nouvelle fenêtre ou télécharger
-                if (format === 'pdf') {
-                    // Créer un blob et télécharger
-                    const blob = new Blob([response], { type: 'application/pdf' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.pdf`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'PDF généré!',
-                        text: 'Le fichier PDF a été téléchargé avec succès.',
-                        confirmButtonText: 'OK'
-                    });
-                } else {
-                    // Pour HTML, XML, JSON - la réponse est directement le fichier
-                    // Le Content-Disposition du serveur devrait gérer le téléchargement
-                    // Mais on peut aussi gérer manuellement
-                    const blob = new Blob([response], { 
-                        type: format === 'json' ? 'application/json' : 
-                            format === 'xml' ? 'application/xml' : 'text/html'
-                    });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.${format}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }
+                // Gérer la réponse selon le format
+                handleExportResponse(response, format);
             },
-            error: function(xhr, status, error) {
+            error: function(xhr) {
                 Swal.close();
                 console.error(`❌ Erreur export ${format}:`, xhr);
                 
-                let errorMessage = `Une erreur est survenue lors de l'export ${format.toUpperCase()}.`;
+                let errorMessage = `Erreur lors de l'export ${format.toUpperCase()}.`;
                 if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMessage = xhr.responseJSON.error;
                 }
@@ -3190,12 +3427,132 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Erreur d\'export',
-                    text: errorMessage,
-                    confirmButtonText: 'OK'
+                    text: errorMessage
                 });
             }
         });
     }
+
+    function handleExportResponse(response, format) {
+        console.log(`📥 Réponse reçue pour ${format}:`, response);
+        
+        // Pour les réponses Blob (PDF, etc.)
+        if (response instanceof Blob) {
+            console.log('📦 C\'est un Blob, téléchargement direct');
+            telechargerFichierDirectTwo(response, format);
+        } 
+        // Pour les réponses ArrayBuffer (PDF depuis fetch/axios)
+        else if (response instanceof ArrayBuffer) {
+            console.log('📦 C\'est un ArrayBuffer, conversion en Blob');
+            const blob = new Blob([response], { type: getMimeType(format) });
+            telechargerFichierDirectTwo(blob, format);
+        }
+        // Pour les réponses avec type (PDF depuis Django)
+        else if (response.type && response.type.includes('application/pdf')) {
+            console.log('📦 C\'est une réponse avec type PDF');
+            telechargerFichierDirectTwo(response, format);
+        }
+        // Pour les réponses JSON (erreurs)
+        else if (typeof response === 'object' && response.error) {
+            console.log('❌ Erreur détectée:', response.error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: response.error
+            });
+        }
+        // Pour les réponses inconnues
+        else {
+            console.log('❓ Type de réponse inconnu, tentative de traitement comme fichier');
+            try {
+                const blob = new Blob([response], { type: getMimeType(format) });
+                telechargerFichierDirectTwo(blob, format);
+            } catch (error) {
+                console.error('❌ Impossible de traiter la réponse:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de traiter la réponse du serveur'
+                });
+            }
+        }
+    }
+
+    function handleExportResponseTwo(response, format) {
+        // Pour les réponses HTTP directes (PDF, etc.)
+        if (response instanceof Blob || response.type === 'application/pdf') {
+            const blob = new Blob([response], { type: getMimeType(format) });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_solvabilite_${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Export réussi!',
+                text: `Le fichier ${format.toUpperCase()} a été téléchargé.`
+            });
+        } else {
+            // Pour les réponses JSON (erreurs, etc.)
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: response.error || 'Erreur inconnue'
+            });
+        }
+    }
+
+    function telechargerFichierDirectTwo(blob, format) {
+        try {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            // Nom du fichier
+            const timestamp = new Date().toISOString().split('T')[0];
+            a.download = `rapport_solvabilite_${timestamp}.${format}`;
+            
+            // Ajouter au DOM et cliquer
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            // Libérer l'URL
+            window.URL.revokeObjectURL(url);
+            
+            // Message de succès
+            Swal.fire({
+                icon: 'success',
+                title: 'Export réussi!',
+                text: `Le fichier ${format.toUpperCase()} a été téléchargé.`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            
+        } catch (error) {
+            console.error('❌ Erreur téléchargement:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur téléchargement',
+                text: 'Impossible de télécharger le fichier'
+            });
+        }
+    }
+
+    function getMimeType(format) {
+        const mimeTypes = {
+            'pdf': 'application/pdf',
+            'html': 'text/html',
+            'xml': 'application/xml',
+            'json': 'application/json'
+        };
+        return mimeTypes[format] || 'application/octet-stream';
+    }
+
 
     // Fonction pour réinitialiser les boutons d'export
     function resetExportButton(buttonId, format) {

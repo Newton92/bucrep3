@@ -86,6 +86,21 @@ from django.core.serializers.json import DjangoJSONEncoder
 from decimal import Decimal
 from datetime import datetime, date
 
+# Dans views_reporting.py - ajoutez ces imports
+from main.api.views_report import (
+    generate_pdf_weasyprint_3,
+    generate_html,
+    generate_xml_v2,
+    render_html_template,
+    generate_xml_with_xsd,
+    render_to_string,
+    HttpResponse,
+    Response,
+    status
+)
+
+# Importez aussi la fonction de génération de logo si besoin
+from main.api.views_report import get_logo_data, get_logo_path
 
 
 # ... vos autres vues ...
@@ -1375,10 +1390,130 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 import base64
+from datetime import datetime
+import random
+
+def generate_code_reference():
+    date_du_jour = datetime.now().strftime("%Y%m%d")  # ex : 20241204
+    chiffre_aleatoire = random.randint(10000, 99999)  # 5 chiffres aléatoires
+    codeReference = f"{date_du_jour}.{chiffre_aleatoire}"
+    return codeReference
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def exporter_rapport(request):
+    """
+    Vue principale pour exporter le rapport
+    """
+    try:
+        data = request.data
+        report_data = data.get('report_data', {})
+        form_data = data.get('form_data', {})
+        export_format = data.get('export_format', 'pdf').lower()
+        acheteur_id = data.get('acheteur_id')
+        
+        print(f"📤 Export demandé: {export_format}")
+        print(f"📊 Données reçues - Clés: {list(report_data.keys())}")
+        print(f"📝 Form data - Clés: {list(form_data.keys())}")
+        
+        chiffre_aleatoire = random.randint(10000, 99999)
+        print(chiffre_aleatoire)
+        
+        if export_format.upper() == 'PDF':
+            print("Génération du PDF...")  # Debug
+            # Rendre le template HTML
+            html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
+            
+            # Générer le PDF en mémoire
+            pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()
+            
+            # Préparer la réponse HTTP
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="rapport_solvabilite.pdf"'
+            response['Content-Length'] = len(pdf_file)
+            
+            return response
+        elif export_format.upper() == 'JSON':
+            # Renvoyer le dictionnaire directement comme une réponse JSON pour inspection
+            return Response(report_data, status=status.HTTP_200_OK)
+        elif export_format.upper() == 'XML':
+            logger.info("Génération du XML + XSD...")
+
+            try:
+                response = generate_xml_with_xsd(report_data)
+                logger.info("XML + XSD généré avec succès")
+                return response
+
+            except Exception as e:
+                logger.error(f"Erreur lors de la génération XML/XSD : {str(e)}")
+
+                error_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+                <erreur>
+                    <message>Erreur lors de la génération du rapport XML</message>
+                    <details>{str(e)}</details>
+                </erreur>'''
+
+                response = HttpResponse(
+                    error_xml, 
+                    content_type='application/xml; charset=utf-8',
+                    status=500
+                )
+                response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+                return response
+        elif export_format.upper() == 'HTML':
+            print("Génération du HTML...")  # Debug
+            response = generate_report_html_standalone(report_data)
+            response['Content-Disposition'] = f'attachment; filename="rapport_{chiffre_aleatoire}.html"'
+            return response
+        else:
+            print("Génération du JSON...")  # Debug
+            print(report_data)  # Debug
+            return Response(report_data, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"Erreur : {str(e)}")  # Debug
+        return Response(
+            {"error": f"Erreur lors de la génération du rapport : {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def exporter_rapport_two(request):
+    """
+    Vue principale pour exporter le rapport
+    """
+    try:
+        data = request.data
+        report_data = data.get('report_data', {})
+        form_data = data.get('form_data', {})
+        export_format = data.get('export_format', 'pdf').lower()
+        
+        print(f"📤 Export demandé: {export_format}")
+        print(f"📊 Données reçues - Clés: {list(report_data.keys())}")
+        print(f"📝 Form data - Clés: {list(form_data.keys())}")
+        
+        if not report_data:
+            return Response({'error': 'Aucune donnée de rapport fournie'}, status=400)
+        
+        # Utiliser la fonction unifiée d'export avec la requête
+        return exporter_rapport_unifie(request, report_data, form_data, export_format)
+        
+    except Exception as e:
+        print(f"❌ Erreur lors de l'export: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {'error': f'Erreur lors de l\'export: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def exporter_rapport_version1(request):
     """
     Vue pour exporter le rapport dans différents formats
     """
@@ -1450,6 +1585,8 @@ def generer_pdf_weasyprint(report_data, form_data, nom_fichier):
             {"error": f"Erreur lors de la génération du rapport : {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
 
 def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier):
     """Générer un PDF avec WeasyPrint optimisé"""
@@ -1752,3 +1889,398 @@ def generer_json(report_data, nom_fichier):
         import traceback
         traceback.print_exc()
         return Response({'error': f'Erreur génération JSON: {str(e)}'}, status=500)
+    
+    
+    
+def exporter_rapport_unifie(request, report_data, form_data, export_format):
+    """
+    Fonction unifiée pour exporter dans tous les formats
+    """
+    try:
+        print(f"🔄 Début export {export_format.upper()}...")
+        print(f"📋 Données reçues - Sections: {list(report_data.keys())}")
+        
+        # 1. Préparer les données pour être compatible avec le module 1
+        data_complete = preparer_donnees_pour_export(report_data, form_data, export_format)
+        
+        # 2. Sélectionner le bon format
+        format_lower = export_format.lower()
+        
+        if format_lower == 'pdf':
+            return exporter_pdf(data_complete, form_data, request)
+        elif format_lower == 'html':
+            return exporter_html(data_complete, form_data, request)
+        elif format_lower == 'xml':
+            return exporter_xml(data_complete, form_data, request)
+        elif format_lower == 'json':
+            return exporter_json(data_complete, form_data, request)
+        else:
+            from rest_framework.response import Response
+            from rest_framework import status
+            return Response(
+                {"error": f"Format {export_format} non supporté"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+    except Exception as e:
+        print(f"❌ Erreur export: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        from rest_framework.response import Response
+        from rest_framework import status
+        return Response(
+            {"error": f"Erreur lors de l'export: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
+def preparer_donnees_pour_export(report_data, form_data, export_format):
+    """
+    Prépare les données dans le format attendu par le module 1
+    """
+    print("🔧 Préparation des données pour l'export...")
+    
+    # Commencez avec les données existantes
+    data_complete = report_data.copy()
+    
+    # Sections obligatoires pour le module 1
+    sections_requises = [
+        'header_report',
+        'footer_report', 
+        'identification',
+        'executive_summary',
+        'summary_and_opinion',
+        'acremac_opinion',
+        'registered_data',
+        'legal_background',
+        'management',
+        'commande'
+    ]
+    
+    # Vérifiez et ajoutez les sections manquantes
+    for section in sections_requises:
+        if section not in data_complete:
+            print(f"⚠️ Section manquante: {section}")
+            data_complete[section] = {}
+    
+    # Assurez-vous d'avoir header_report avec tous les champs nécessaires
+    if 'header_report' not in data_complete or not data_complete['header_report']:
+        data_complete['header_report'] = {
+            "acremac_services": "Services ACREMAC",
+            "acremac_mail": "credit.report@acremac.com",
+            "date_today": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            "bilan_report": form_data.get('type_bilan', 'Classique').upper(),
+            "format_report": export_format.upper(),
+            "language_report": "français" if form_data.get('langue', 'fr') == 'fr' else "english"
+        }
+    else:
+        # Complétez les champs manquants dans header_report existant
+        header = data_complete['header_report']
+        if 'acremac_services' not in header:
+            header['acremac_services'] = "Services ACREMAC"
+        if 'acremac_mail' not in header:
+            header['acremac_mail'] = "credit.report@acremac.com"
+        if 'date_today' not in header:
+            header['date_today'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        if 'bilan_report' not in header:
+            header['bilan_report'] = form_data.get('type_bilan', 'Classique').upper()
+    
+    # Assurez-vous d'avoir footer_report
+    if 'footer_report' not in data_complete or not data_complete['footer_report']:
+        data_complete['footer_report'] = {
+            "footer_text_1": "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages-intérêts.",
+            "footer_text_2": "Acremac s'engage à mettre en œuvre avec diligence les ",
+            "footer_text_3": "moyens à sa disposition sans être liée par une obligation de résultat."
+        }
+    
+    # Assurez-vous d'avoir identification avec acremac_info
+    if 'identification' in data_complete:
+        ident = data_complete['identification']
+        if 'acremac_info' not in ident:
+            ident['acremac_info'] = {}
+        
+        acremac_info = ident['acremac_info']
+        if 'nom' not in acremac_info:
+            acremac_info['nom'] = "Nom inconnu"
+        if 'email' not in acremac_info:
+            acremac_info['email'] = "email@inconnu.com"
+    else:
+        data_complete['identification'] = {
+            "acremac_info": {
+                "nom": "Nom inconnu",
+                "email": "email@inconnu.com"
+            }
+        }
+    
+    print(f"✅ Données préparées - Sections: {list(data_complete.keys())}")
+    return data_complete      
+        
+    
+        
+def exporter_pdf(report_data, form_data, request=None):
+    """
+    Export PDF en réutilisant la fonction du module 1
+    """
+    try:
+        print("📄 Début génération PDF...")
+        
+        # Si request n'est pas fourni, créez un objet request minimal
+        if request is None:
+            from django.http import HttpRequest
+            request = HttpRequest()
+            request.META['SERVER_NAME'] = 'localhost'
+            request.META['SERVER_PORT'] = '8000'
+        
+        # Utilisez la fonction qui fonctionne déjà dans views_report.py
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+        from django.http import HttpResponse
+        
+        # Rendre le template HTML
+        html_string = render_to_string('main/report_deep_seek_test.html', report_data)
+        
+        # Générer le PDF en mémoire
+        pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+        
+        # Préparer la réponse HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        filename = f"rapport_solvabilite_{nom_acheteur}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(pdf_file)
+        
+        print(f"✅ PDF généré: {len(pdf_file)} bytes")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Retourner une réponse d'erreur
+        from rest_framework.response import Response
+        from rest_framework import status
+        return Response(
+            {"error": f"Erreur lors de la génération du PDF: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
+def exporter_html(report_data, form_data, request=None):
+    """
+    Export HTML en réutilisant la fonction du module 1
+    """
+    try:
+        print("🌐 Début génération HTML...")
+        
+        # Utilisez directement la fonction du module 1 si disponible
+        try:
+            from main.api.views_report import generate_html
+            response = generate_html(report_data)
+            return response
+        except ImportError:
+            print("⚠️ Fonction generate_html non trouvée, fallback local")
+        
+        # Fallback : générer un HTML simple
+        from django.template.loader import render_to_string
+        from django.http import HttpResponse
+        
+        html_content = render_to_string('main/report_html_standalone.html', {
+            'report_data': report_data,
+            'form_data': form_data
+        })
+        
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        filename = f"rapport_solvabilite_{nom_acheteur}.html"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        print(f"✅ HTML généré: {len(html_content)} caractères")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur HTML: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # HTML d'erreur
+        html_content = f"""
+        <html>
+            <head><title>Erreur Rapport</title></head>
+            <body>
+                <h1>Erreur lors de la génération du rapport HTML</h1>
+                <p>{str(e)}</p>
+            </body>
+        </html>
+        """
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.html"'
+        return response
+
+
+
+def exporter_xml(report_data, form_data, request=None):
+    """
+    Export XML en utilisant la fonction qui fonctionne déjà dans le module 1
+    """
+    try:
+        print("📤 Début génération XML + XSD...")
+        
+        # Utiliser directement la fonction du module 1 qui fonctionne
+        from main.api.views_report import generate_xml_with_xsd
+        response = generate_xml_with_xsd(report_data)
+        
+        print("✅ XML + XSD généré avec succès")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur lors de la génération XML/XSD : {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Créer un XML d'erreur propre
+        error_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<erreur>
+    <message>Erreur lors de la génération du rapport XML</message>
+    <details>{str(e)}</details>
+    <timestamp>{datetime.now().isoformat()}</timestamp>
+</erreur>'''
+        
+        from django.http import HttpResponse
+        response = HttpResponse(
+            error_xml, 
+            content_type='application/xml; charset=utf-8',
+            status=500
+        )
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+        return response
+
+
+
+def exporter_json(report_data, form_data, request=None):
+    """
+    Export JSON
+    """
+    try:
+        print("📊 Début génération JSON...")
+        
+        # Nettoyer les données pour JSON
+        def clean_for_json(obj):
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            elif isinstance(obj, Decimal):
+                return float(obj)
+            elif hasattr(obj, '__dict__'):
+                return {k: clean_for_json(v) for k, v in obj.__dict__.items() 
+                        if not k.startswith('_')}
+            elif isinstance(obj, dict):
+                return {k: clean_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_for_json(item) for item in obj]
+            else:
+                return obj
+        
+        cleaned_data = clean_for_json(report_data)
+        json_content = json.dumps(cleaned_data, ensure_ascii=False, indent=2)
+        
+        from django.http import HttpResponse
+        response = HttpResponse(json_content, content_type='application/json; charset=utf-8')
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        filename = f"rapport_solvabilite_{nom_acheteur}.json"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        print(f"✅ JSON généré: {len(json_content)} caractères")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        from rest_framework.response import Response
+        from rest_framework import status
+        return Response(
+            {"error": f"Erreur lors de la génération du JSON: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    """
+    Export JSON
+    """
+    try:
+        # Nettoyer les données pour JSON
+        def clean_for_json(obj):
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            elif isinstance(obj, Decimal):
+                return float(obj)
+            elif hasattr(obj, '__dict__'):
+                return {k: clean_for_json(v) for k, v in obj.__dict__.items() 
+                        if not k.startswith('_')}
+            elif isinstance(obj, dict):
+                return {k: clean_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_for_json(item) for item in obj]
+            else:
+                return obj
+        
+        cleaned_data = clean_for_json(report_data)
+        json_content = json.dumps(cleaned_data, ensure_ascii=False, indent=2)
+        
+        response = HttpResponse(json_content, content_type='application/json; charset=utf-8')
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        filename = f"rapport_solvabilite_{nom_acheteur}.json"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur JSON: {str(e)}")
+        return Response(
+            {"error": f"Erreur lors de la génération du JSON: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+        
+        
+def generate_report_html_standalone(report_data):
+    """Génère un rapport HTML complet et le force en téléchargement"""
+    try:
+        # Utiliser render_to_string pour générer le HTML à partir du template
+        html_content = render_to_string('main/report_html_standalone_html.html', report_data)
+        
+        # Créer une réponse HTTP avec le contenu HTML
+        response = HttpResponse(html_content, content_type='text/html')
+        
+        # Forcer le téléchargement avec Content-Disposition
+        response['Content-Disposition'] = f'attachment; filename="rapport_solvabilite_{report_data.get("identification", {}).get("acremac_info", {}).get("nom", "acheteur")}.html"'
+        
+        return response
+        
+    except Exception as e:
+        # En cas d'erreur, retourner un HTML simple
+        html_content = f"""
+        <html>
+            <head>
+                <title>Rapport d'erreur</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; padding: 20px; }}
+                    .error {{ color: red; border: 1px solid #ddd; padding: 15px; background-color: #f8d7da; }}
+                </style>
+            </head>
+            <body>
+                <h1>Erreur lors de la génération du rapport</h1>
+                <div class="error">
+                    <h3>Détails de l'erreur :</h3>
+                    <p>{str(e)}</p>
+                </div>
+            </body>
+        </html>
+        """
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.html"'
+        return response
