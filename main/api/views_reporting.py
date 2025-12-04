@@ -435,10 +435,36 @@ def generer_rapport_solvabilite(request):
             pass
             
         # Recuperation des codes NAF de l'acheteur
-        naf_codes = list(CodeNafAcheteur.objects.filter(acheteur=acheteur).values_list('code', flat=True))
-        
         # Recuperation des codes NACE de l'acheteur
-        nace_codes = list(CodeNaceAcheteur.objects.filter(acheteur=acheteur).values_list('code', flat=True))
+        # naf_codes = list(CodeNafAcheteur.objects.filter(acheteur=acheteur).values_list('code', flat=True))
+        # nace_codes = list(CodeNaceAcheteur.objects.filter(acheteur=acheteur).values_list('code', flat=True))
+        # Recuperation des codes NACE avec leurs libellés
+        nace_codes_data = list(CodeNaceAcheteur.objects.filter(acheteur=acheteur)
+            .select_related('code__category')
+            .values('code__code', 'code__libelle', 'code__category__libelle')
+            .distinct())
+
+        # Formatage pour affichage
+        nace_codes_formatted = []
+        for item in nace_codes_data:
+            if item['code__libelle']:
+                nace_codes_formatted.append(f"{item['code__code']} - {item['code__libelle']}")
+            else:
+                nace_codes_formatted.append(item['code__code'])
+
+        # Recuperation des codes NAF avec leurs libellés
+        naf_codes_data = list(CodeNafAcheteur.objects.filter(acheteur=acheteur)
+            .select_related('code__category')
+            .values('code__code', 'code__libelle', 'code__category__libelle')
+            .distinct())
+
+        # Formatage pour affichage
+        naf_codes_formatted = []
+        for item in naf_codes_data:
+            if item['code__libelle']:
+                naf_codes_formatted.append(f"{item['code__code']} - {item['code__libelle']}")
+            else:
+                naf_codes_formatted.append(item['code__code'])
         
         # Récupération Evaluation de risque
         # Au niveau du template il faudra afficher une image en fonction de la valeur totale trouve
@@ -975,8 +1001,8 @@ def generer_rapport_solvabilite(request):
             "additional_information": {
                 "title_3": "INFORMATIONS SUPPLEMENTAIRES",
                 "date_creation": acheteur.date_creation.strftime("%d/%m/%Y") if hasattr(acheteur, 'date_creation') and acheteur.date_creation else "Non spécifié",
-                "naf_codes": naf_codes if naf_codes else ["Aucun code NAF disponible"],
-                "nace_codes": nace_codes if nace_codes else "Aucun code NACE disponible",
+                "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
+                "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
                 "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "Non spécifié",
                 "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "Non spécifié",
                 "description": acheteur.description if hasattr(acheteur, 'description') else "Non spécifié",
@@ -1085,8 +1111,8 @@ def generer_rapport_solvabilite(request):
             },
             "sector_analysis": {
                 "title_13": "ANALYSE SECTORIELLE",
-                "naf_codes": naf_codes if naf_codes else ["Aucun code NAF disponible"],
-                "nace_codes": nace_codes if nace_codes else ["Aucun code NACE disponible"],
+                "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
+                "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
                 "sectorielle": {
                     "commentaire": analyse_sectorielle.commentaire if analyse_sectorielle and analyse_sectorielle.commentaire else "Aucun commentaire disponible",
                     "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "Non spécifié",
