@@ -31,6 +31,12 @@ import random
 from django.db.models import Q
 from main.utils import generate_test_commandes
 
+import random
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport
+
 
 CustomUser = get_user_model()
 
@@ -1557,25 +1563,109 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
     
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+        "coloration_list": coloration_list,
+    }
+    
+    return render(
+        request,
+        "main/root/acheteur/mailing/dash_root_manage_acheteur_emailling.html",
+        context,
+    )
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_emailling_test(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
     # Générer 15 commandes
     # NETTOYAGE AVANT GÉNÉRATION (optionnel - décommenter si besoin)
-    cleanup_done = False
-    if request.GET.get('cleanup') == 'true':
-        from main.utils import cleanup_test_data
-        cleanup_test_data(keep_today=False)
-        cleanup_done = True
-        print("🧹 Nettoyage effectué à la demande")
+    # cleanup_done = False
+    # if request.GET.get('cleanup') == 'true':
+        # from main.utils import cleanup_test_data
+        # cleanup_test_data(keep_today=False)
+        # cleanup_done = True
+        # print("🧹 Nettoyage effectué à la demande")
     
     # Générer des commandes seulement si nécessaire
-    from main.utils import generate_test_commandes
-    if Commande.objects.count() < 10:  # Seulement si peu de commandes
-        print("🎯 Génération de commandes de test...")
-        generate_test_commandes(15)
+    # from main.utils import generate_test_commandes
+    # if Commande.objects.count() < 10:  # Seulement si peu de commandes
+        # print("🎯 Génération de commandes de test...")
+        # generate_test_commandes(15)
     
     # Afficher des infos de debug
-    clients_count = Client.objects.count()
-    commandes_count = Commande.objects.count()
-    print(f"🔍 Debug - Clients: {clients_count}, Commandes: {commandes_count}")
+    # clients_count = Client.objects.count()
+    # commandes_count = Commande.objects.count()
+    # print(f"🔍 Debug - Clients: {clients_count}, Commandes: {commandes_count}")
+    
+    nombre = 50
+    print(f"🎯 Génération de {nombre} commandes de test...")
+
+    # Récupérer ou créer les données de base
+    clients = Client.objects.all()
+    acheteurs = Acheteur.objects.all()
+    demandeurs = CustomUser.objects.filter(role='Client')
+    pays = Pays.objects.filter(nom='Gabon').first() or Pays.objects.create(nom='Gabon')
+    ville = Ville.objects.first() or Ville.objects.create(nom='Libreville', pays=pays)
+    devise = Devise.objects.first() or Devise.objects.create(code='XAF', nom='Franc CFA', symbole='FCFA')
+    modele_rapport = ModeleRapport.objects.first() or ModeleRapport.objects.create(nom='Standard', code='STD')
+
+    # Générer les commandes
+    commandes_crees = []
+    for i in range(nombre):
+        # Choisir un client aléatoire (CLIENT, pas ACHETEUR)
+        client_choisi = random.choice(clients)  # ← CORRECTION ICI
+        acheteur_choisi = random.choice(acheteurs)  # ← Acheteur séparé
+        
+        commande = Commande.objects.create(
+            notre_ref=f'CMD-2025-{i+1:03d}',
+            reference_client=f'REF-ACHETEUR-{i+1:03d}',
+            date_recept_commande=timezone.now().date() - timedelta(days=random.randint(1, 60)),
+            date_rapport=timezone.now().date() + timedelta(days=random.randint(1, 30)),
+            delais=f'{random.randint(1, 30)} jours',
+            priorite=random.choice(['Haute', 'Moyenne', 'Basse']),
+            raison_sociale=acheteur_choisi.nom,  # Nom du ACHETEUR (nom de l'acheteur)
+            type_rapport=random.choice(['Standard', 'Détaillé', 'Express']),
+            ref_type_rapport=modele_rapport,
+            credit_demande=random.uniform(1000, 50000),
+            devise_credit_demande=devise,
+            credit_recommande=random.uniform(800, 45000),
+            devise_credit_recommande=devise,
+            numero_adresse=str(random.randint(1, 200)),
+            rue_adresse=random.choice(['Rue de la Paix', 'Avenue des Ternes', 'Boulevard Saint-Germain']),
+            code_postale_adresse=f'750{random.randint(1, 20):02d}',
+            telephone=acheteur_choisi.fax,  # Téléphone du ACHETEUR
+            email=acheteur_choisi.email,  # Email du ACHETEUR - IMPORTANT pour le filtrage!
+            pays=pays,
+            ville=ville,
+            client=random.choice(demandeurs),  # L'analyste responsable
+            acheteur=acheteur_choisi,  # L'acheteur (différent du client)
+            status=random.choice(["nouvelle", "en_cours"]),
+        )
+        commandes_crees.append(commande)
+        print(f"✅ Commande {i+1}/{nombre}: {commande.notre_ref} pour {client_choisi.nom} (Acheteur: {acheteur_choisi.nom})")
+        print(f"🎉 {len(commandes_crees)} commandes générées avec succès!")
 
     context = {
         "acheteur_active": "active",
@@ -1585,11 +1675,13 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
         "id_acheteur": id_acheteur,
         "coloration_list": coloration_list,
     }
+    
     return render(
         request,
         "main/root/acheteur/mailing/dash_root_manage_acheteur_emailling.html",
         context,
     )
+
 
 
 @login_required

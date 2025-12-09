@@ -1,7 +1,7 @@
 # management/commands/setup_mailing_test.py
 from django.core.management.base import BaseCommand
-from your_app.utils.generate_test_data import generate_test_commandes
-from your_app.utils.fix_commandes_emails import assign_commandes_to_clients
+from main.utils.generate_test_data import generate_test_commandes
+from main.utils.fix_commandes_emails import assign_commandes_to_clients
 
 class Command(BaseCommand):
     help = 'Setup complet pour tester le module mailing'
@@ -29,7 +29,7 @@ class Command(BaseCommand):
         
         # Étape 3: Vérification
         self.stdout.write('3. Vérification...')
-        from your_app.models import Client, Commande
+        from main.models import Client, Commande
         
         clients = Client.objects.all()
         self.stdout.write(f"👥 Clients: {clients.count()}")

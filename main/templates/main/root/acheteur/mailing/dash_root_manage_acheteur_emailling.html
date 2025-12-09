@@ -4,13 +4,33 @@
 {% block styles %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+    /* Style pour Select2 */
     .select2-container--default .select2-selection--single {
         height: 45px;
-        padding: 8px;
         border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
     }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 45px;
+        padding-left: 10px;
+    }
+
     .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 43px;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    .select2-results__option {
+        padding: 10px;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #0d6efd;
     }
     .commandes-list {
         max-height: 400px;
@@ -23,7 +43,7 @@
 
     .list-tile-item {
         transition: all 0.2s ease;
-        border-left: 3px solid transparent;
+        border-left: 6px solid transparent;
     }
 
     .list-tile-item:hover {
@@ -34,6 +54,101 @@
 
     .list-tile-item:last-child {
         border-bottom: none !important;
+    }
+     /* Styles pour les pièces jointes */
+    .attachment-item {
+        transition: all 0.2s ease;
+    }
+    
+    .attachment-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .attachment-icon {
+        width: 30px;
+        text-align: center;
+        color: #6c757d;
+    }
+    
+    .file-progress {
+        height: 4px;
+        margin-top: 5px;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .file-progress-bar {
+        height: 100%;
+        background-color: #0d6efd;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    
+    .file-status {
+        font-size: 0.75rem;
+    }
+    
+    .attachment-preview {
+        max-width: 100px;
+        max-height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid #dee2e6;
+    }
+    
+    .attachment-preview:hover {
+        border-color: #0d6efd;
+        transform: scale(1.05);
+        transition: transform 0.2s ease;
+    }
+
+    /* Styles pour les rapports */
+    .report-item {
+        transition: all 0.2s ease;
+    }
+    
+    .report-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .report-icon {
+        width: 30px;
+        text-align: center;
+    }
+    
+    .report-badge-pdf {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .report-badge-html {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .report-badge-xml {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .report-status {
+        font-size: 0.75rem;
+    }
+    
+    .report-progress {
+        height: 4px;
+        margin-top: 5px;
+        border-radius: 2px;
+        overflow: hidden;
+        background-color: #e9ecef;
+    }
+    
+    .report-progress-bar {
+        height: 100%;
+        background-color: #0d6efd;
+        width: 0%;
+        transition: width 0.3s ease;
     }
 </style>
 {% endblock %}
@@ -94,168 +209,399 @@
 <!-- Module d'envoi d'emails START -->
 <div class="row g-4 mt-2">
     <div class="col-12">
-        <div class="card border">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">Nouvel envoi d'email</h5>
-            </div>
-            <div class="card-body">
-                <form id="emailForm" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <!-- Sélection du client -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Client *</label>
-                            <select id="clientSelect" class="form-select" required>
-                                <option value="">Sélectionnez un client...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Période des commandes *</label>
-                            <select id="periodeSelect" class="form-select" required>
-                                <option value="today">Aujourd'hui</option>
-                                <option value="7days">7 derniers jours</option>
-                                <option value="month">Ce mois</option>
-                                <option value="all">Toutes</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <!-- Liste des commandes -->
-                    <!-- Dans la section Liste des commandes -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">Commandes à inclure * 
-                                <span id="commandesCount" class="badge bg-info ms-2"></span>
-                            </label>
-                            <div id="commandesContainer" class="commandes-list border p-3" style="display: none;">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="selectAllCommandes">
-                                    <label class="form-check-label fw-bold" for="selectAllCommandes">
-                                        Sélectionner toutes les commandes
+        <ul class="nav nav-tabs" id="emailTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="send-tab" data-bs-toggle="tab" 
+                        data-bs-target="#send-pane" type="button" role="tab">
+                    <i class="bi bi-send me-2"></i>Nouvel envoi
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" 
+                        data-bs-target="#history-pane" type="button" role="tab">
+                    <i class="bi bi-clock-history me-2"></i>Historique
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="emailTabsContent">
+
+            <!-- Onglet Envoi -->
+            <div class="tab-pane fade show active" id="send-pane" role="tabpanel">
+                <br><br>
+                <div class="card border">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Nouvel envoi d'email</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="emailForm" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            
+                            <!-- Sélection du client -->
+                            <div class="row mb-3">
+                                <div class="col-md-5">
+                                    <label class="form-label">Client *</label>
+                                    <select id="clientSelect" class="form-select" required>
+                                        <option value="">Sélectionnez un client...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label">Période des commandes *</label>
+                                    <select id="periodeSelect" class="form-select" required>
+                                        <option value="">Sélectionnez une période...</option>
+                                        <option value="today">Aujourd'hui</option>
+                                        <option value="7days">Derniers jours</option>
+                                        <option value="month">Ce mois</option>
+                                        <option value="all">Toutes</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2" id="joursContainer" style="display: none;">
+                                    <label class="form-label">Nombre de jours *</label>
+                                    <input class="form-control" type="number" id="nbreDays" name="nbreDays" value="7" min="1" max="365">
+                                </div>
+                            </div>
+
+                            <!-- Liste des commandes -->
+                            <!-- Dans la section Liste des commandes -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Commandes à inclure * 
+                                        <span id="commandesCount" class="badge bg-info ms-2"></span>
                                     </label>
-                                </div>
-                                <div id="commandesList" class="mt-2"></div>
-                            </div>
-                            <div id="noCommandesMessage" class="alert alert-warning" style="display: none;">
-                                Aucune commande trouvée pour ce client et cette période.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Formats de rapport -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">Formats de rapport *</label>
-                            <div>
-                                <div class="format-option">
-                                    <input class="form-check-input" type="checkbox" id="formatPdf" value="pdf">
-                                    <label class="form-check-label" for="formatPdf">PDF</label>
-                                </div>
-                                <div class="format-option">
-                                    <input class="form-check-input" type="checkbox" id="formatHtml" value="html">
-                                    <label class="form-check-label" for="formatHtml">HTML</label>
-                                </div>
-                                <div class="format-option">
-                                    <input class="form-check-input" type="checkbox" id="formatXml" value="xml">
-                                    <label class="form-check-label" for="formatXml">XML</label>
+                                    <div id="commandesContainer" class="commandes-list border p-3" style="display: none;">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="selectAllCommandes">
+                                            <label class="form-check-label fw-bold" for="selectAllCommandes">
+                                                Sélectionner toutes les commandes
+                                            </label>
+                                        </div>
+                                        <br>
+                                        <div id="commandesList" class="mt-2"></div>
+                                    </div>
+                                    <div id="noCommandesMessage" class="alert alert-warning" style="display: none;">
+                                        Aucune commande trouvée pour ce client et cette période.
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+
+                            <!-- Liste des documents des acheteurs (cachée par défaut) -->
+                            <div class="row mb-3" id="documentsSection" style="display: none;">
+                                <div class="col-12">
+                                    <label class="form-label">
+                                        Documents des acheteurs liés aux commandes sélectionnées
+                                        <span id="documentsCount" class="badge bg-info ms-2">0</span>
+                                    </label>
+                                    <div class="alert alert-info mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Ces documents sont associés aux acheteurs des commandes que vous avez sélectionnées.
+                                        Vous pouvez les inclure comme pièces jointes supplémentaires.
+                                    </div>
+                                    
+                                    <div id="documentsContainer" class="border p-3 rounded" style="display: none;">
+                                        <!-- En-tête avec sélection multiple -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="selectAllDocuments">
+                                                    <label class="form-check-label fw-bold" for="selectAllDocuments">
+                                                        Sélectionner tous les documents
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 text-end">
+                                                <button type="button" id="addSelectedDocuments" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-paperclip me-1"></i>Ajouter les documents sélectionnés aux pièces jointes
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Onglets par acheteur -->
+                                        <div id="documentsTabsContainer">
+                                            <!-- Les onglets seront générés dynamiquement -->
+                                        </div>
+                                        
+                                        <!-- Liste des documents -->
+                                        <div id="documentsList" class="mt-3">
+                                            <!-- Les documents seront ajoutés ici dynamiquement -->
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="noDocumentsMessage" class="alert alert-warning mt-3" style="display: none;">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        Aucun document trouvé pour les acheteurs des commandes sélectionnées.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Formats de rapport - Version améliorée -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Formats de rapport *</label>
+                                    <div class="mb-2">
+                                        <div class="format-option">
+                                            <input class="form-check-input" type="checkbox" id="formatPdf" value="pdf">
+                                            <label class="form-check-label" for="formatPdf">
+                                                <i class="bi bi-file-pdf text-danger me-1"></i>PDF
+                                            </label>
+                                        </div>
+                                        <div class="format-option">
+                                            <input class="form-check-input" type="checkbox" id="formatHtml" value="html">
+                                            <label class="form-check-label" for="formatHtml">
+                                                <i class="bi bi-file-earmark-code text-primary me-1"></i>HTML
+                                            </label>
+                                        </div>
+                                        <div class="format-option">
+                                            <input class="form-check-input" type="checkbox" id="formatXml" value="xml">
+                                            <label class="form-check-label" for="formatXml">
+                                                <i class="bi bi-file-code text-success me-1"></i>XML
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Liste des rapports générés -->
+                                    <div id="reportsContainer" class="mt-3" style="display: none;">
+                                        <div class="card border">
+                                            <div class="card-header bg-light py-2">
+                                                <h6 class="mb-0">
+                                                    <i class="bi bi-file-earmark-text me-2"></i>Rapports générés
+                                                    <span id="reportsCount" class="badge bg-primary ms-2">0</span>
+                                                </h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover mb-0">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th width="40">#</th>
+                                                                <th>Nom du rapport</th>
+                                                                <th>Commande</th>
+                                                                <th>Format</th>
+                                                                <th>Taille</th>
+                                                                <th>Statut</th>
+                                                                <th width="100">Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="reportsTableBody">
+                                                            <!-- Les rapports seront ajoutés ici dynamiquement -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer py-2 bg-light" id="reportsActions" style="display: none;">
+                                                <button type="button" id="generateAllReports" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-gear me-1"></i>Générer tous les rapports
+                                                </button>
+                                                <button type="button" id="clearAllReports" class="btn btn-sm btn-outline-secondary ms-2">
+                                                    <i class="bi bi-x-circle me-1"></i>Tout supprimer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Message d'information -->
+                                    <div id="reportsInfo" class="alert alert-info mt-2" style="display: none;">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        Sélectionnez les formats de rapport souhaités. Les rapports seront générés automatiquement pour chaque commande sélectionnée.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fichiers joints supplémentaires -->
+                            <!-- Section des pièces jointes améliorée -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Pièces jointes</label>
+                                    
+                                    <!-- Bouton pour ajouter des fichiers -->
+                                    <div class="mb-3">
+                                        <button type="button" id="addAttachmentBtn" class="btn btn-outline-primary">
+                                            <i class="bi bi-paperclip me-2"></i>Ajouter des fichiers
+                                        </button>
+                                        <input type="file" id="fichiersInput" class="d-none" multiple>
+                                        <small class="text-muted ms-2">Formats acceptés: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (Max 10MB par fichier)</small>
+                                    </div>
+                                    
+                                    <!-- Liste des pièces jointes -->
+                                    <div id="attachmentsList" class="mt-3" style="display: none;">
+                                        <div class="card border">
+                                            <div class="card-header bg-light py-2">
+                                                <h6 class="mb-0">
+                                                    <i class="bi bi-files me-2"></i>Pièces jointes 
+                                                    <span id="attachmentsCount" class="badge bg-primary ms-2">0</span>
+                                                </h6>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover mb-0">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th width="40">
+                                                                    <div class="form-check">
+                                                                        <input class="form-check-input" type="checkbox" id="selectAllAttachments">
+                                                                    </div>
+                                                                </th>
+                                                                <th>Nom du fichier</th>
+                                                                <th>Taille</th>
+                                                                <th>Type</th>
+                                                                <th>Statut</th>
+                                                                <th width="80">Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="attachmentsTableBody">
+                                                            <!-- Les fichiers seront ajoutés ici dynamiquement -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer py-2 bg-light" id="attachmentsActions" style="display: none;">
+                                                <button type="button" id="removeSelectedAttachments" class="btn btn-sm btn-danger">
+                                                    <i class="bi bi-trash me-1"></i>Supprimer la sélection
+                                                </button>
+                                                <button type="button" id="clearAllAttachments" class="btn btn-sm btn-outline-secondary ms-2">
+                                                    <i class="bi bi-x-circle me-1"></i>Tout supprimer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Total taille des pièces jointes -->
+                                    <div id="totalSizeContainer" class="mt-2" style="display: none;">
+                                        <small>
+                                            <i class="bi bi-hdd me-1"></i>
+                                            Taille totale: <span id="totalSize">0 MB</span>
+                                            <span id="sizeWarning" class="text-warning ms-2" style="display: none;">
+                                                <i class="bi bi-exclamation-triangle"></i> Taille importante
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sujet et message -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Sujet *</label>
+                                    <input type="text" id="sujetInput" class="form-control" 
+                                        placeholder="Sujet de l'email..." required>
+                                </div>
+                            </div>
+
+                            <!-- NOUVEAU : Champ pour les copies carbones -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Copie carbone (CC)</label>
+                                    <input type="text" id="ccInput" class="form-control" 
+                                        placeholder="email1@example.com; email2@example.com">
+                                    <small class="text-muted">Séparez les adresses par des points-virgules (;)</small>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label">Message *</label>
+                                    <textarea id="message" class="form-control" rows="20" placeholder="Votre message..." required>
+                                        Hello,<br><br>
+
+                                        Votre message ici...<br><br><br><br>
+
+                                        <br><br><br><br>
+                                        Kind Regards│Cordialement <br>
+                                        Votre nom complet<br>
+                                        Votre poste<br><br>
+                                        <img src="{% static 'images/acremac_option.png' %}" /><br>
+                                        
+                                        │URL: www.acremac.com Email: votre.email@acremac.com<br>
+                                        │Cell: +241 077 08 34 34: +223 76 45 00 00: +336 76 55 35 97│Ph: +223 20 29 26 45 │<br>
+                                        |Address: Mali: Hamdallaye ACI 2000 Imm. Sabaly BP :1081 Bamako<br>
+                                        |Gabon : Boulevard de l’Indépendance Imm. Dumez BP :1070 Libreville<br>
+                                        |France : 14 Rue Rouvet 19 ème Arrondissement 75019 Paris<br>
+                                        │We are committed to serve | We act with honesty & integrity | We develop & inspire |We transform & lead | We are one team <br><br>
+
+                                        |This message contains information which may be confidential and privileged. Unless you are the addressee (or authorized to receive for the addressee), you may not use, copy, or disclose to anyone the message or any information contained in the message. If you have received the message in error, please advise the sender by reply e-mail and delete/destroy the message.
+
+                                    </textarea>
+                                </div>
+                            </div>
+
+                            <!-- Boutons -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-send me-2"></i>Envoyer l'email
+                                    </button>
+                                    <button type="button" id="resetForm" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-clockwise me-2"></i>Réinitialiser
+                                    </button>
+                                    <button type="button" id="previewPlainText" class="btn btn-outline-info">
+                                        <i class="bi bi-eye me-2"></i>Prévisualiser en texte brut
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
-
-                    <!-- Sujet et message -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">Sujet *</label>
-                            <input type="text" id="sujetInput" class="form-control" 
-                                   placeholder="Sujet de l'email..." required>
-                        </div>
-                    </div>
-
-                    <!-- NOUVEAU : Champ pour les copies carbones -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">Copie carbone (CC)</label>
-                            <input type="text" id="ccInput" class="form-control" 
-                                placeholder="email1@example.com; email2@example.com">
-                            <small class="text-muted">Séparez les adresses par des points-virgules (;)</small>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">Message *</label>
-                            <textarea id="message" class="form-control" rows="20" placeholder="Votre message..." required>
-                                Hello,<br><br>
-
-                                Votre message ici...<br><br><br><br>
-
-                                <br><br><br><br>
-                                Kind Regards│Cordialement <br>
-                                Votre nom complet<br>
-                                Votre poste<br><br>
-                                <img src="{% static 'images/acremac_option.png' %}" /><br>
-                                
-                                │URL: www.acremac.com Email: votre.email@acremac.com<br>
-                                │Cell: +241 077 08 34 34: +223 76 45 00 00: +336 76 55 35 97│Ph: +223 20 29 26 45 │<br>
-                                |Address: Mali: Hamdallaye ACI 2000 Imm. Sabaly BP :1081 Bamako<br>
-                                |Gabon : Boulevard de l’Indépendance Imm. Dumez BP :1070 Libreville<br>
-                                |France : 14 Rue Rouvet 19 ème Arrondissement 75019 Paris<br>
-                                │We are committed to serve | We act with honesty & integrity | We develop & inspire |We transform & lead | We are one team <br><br>
-
-                                |This message contains information which may be confidential and privileged. Unless you are the addressee (or authorized to receive for the addressee), you may not use, copy, or disclose to anyone the message or any information contained in the message. If you have received the message in error, please advise the sender by reply e-mail and delete/destroy the message.
-
-                            </textarea>
-                        </div>
-                    </div>
-
-                    <!-- Fichiers joints supplémentaires -->
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">Fichiers joints supplémentaires</label>
-                            <input type="file" id="fichiersInput" class="form-control" multiple>
-                            <small class="text-muted">Vous pouvez sélectionner plusieurs fichiers</small>
-                        </div>
-                    </div>
-
-                    <!-- Boutons -->
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-send me-2"></i>Envoyer l'email
-                            </button>
-                            <button type="button" id="resetForm" class="btn btn-secondary">
-                                <i class="bi bi-arrow-clockwise me-2"></i>Réinitialiser
-                            </button>
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
+
+            <!-- Onglet Historique -->
+            <div class="tab-pane fade" id="history-pane" role="tabpanel">
+                <br><br>
+                <div class="card border">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">Historique des envois</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="emailHistory">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
+
+
+        
     </div>
 </div>
 
-<!-- Historique des envois START -->
-<div class="row g-4 mt-4">
-    <div class="col-12">
-        <div class="card border">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">Historique des envois</h5>
+<!-- Modal pour les détails du mail -->
+<div class="modal fade" id="mailDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails de l'envoi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="card-body">
-                <div id="emailHistory">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Chargement...</span>
-                        </div>
-                    </div>
+            <div class="modal-body">
+                <div id="mailDetailContent">
+                    <!-- Chargé dynamiquement -->
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Historique des envois END -->
+
+<!-- Modal de prévisualisation -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prévisualisation de l'email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-container">
+                    <!-- Contenu généré dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -265,7 +611,7 @@
     $(document).ready(function() {
         // Initialiser TinyMCE
         tinymce.init({
-            selector: '#message',  // Sélecteurs pour les textareas
+            selector: '#message',
             plugins: 'link image code',
             toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
             height: 850
@@ -332,336 +678,2679 @@
 <script>
     // Configuration des tokens
     const ACCESS_TOKEN = '{{ access }}';
-    let currentClientId = null;
+    const ACHETEUR_ID = '{{ id_acheteur }}';
+</script>
 
-    // Initialisation Select2 pour les clients
+
+
+
+
+<script>
     $(document).ready(function() {
+        // Initialiser TinyMCE
+        tinymce.init({
+            selector: '#message',
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 850
+        });
+
+        // Charger l'historique si on est sur l'onglet historique
+        $('#history-tab').on('shown.bs.tab', function(e) {
+            loadEmailHistory();
+        });
+        
+        // Charger l'historique au premier chargement si onglet actif
+        if ($('#history-tab').hasClass('active')) {
+            loadEmailHistory();
+        }
+
+        // Gérer l'affichage du champ nombre de jours
+        function toggleJoursField() {
+            const periode = $('#periodeSelect').val();
+            const joursContainer = $('#joursContainer');
+            
+            if (periode === '7days') {
+                joursContainer.show();
+            } else {
+                joursContainer.hide();
+            }
+        }
+
+        // Événement pour afficher/masquer le champ nombre de jours
+        $('#periodeSelect').on('change', function() {
+            toggleJoursField();
+            
+            // Recharger les commandes si un client est sélectionné
+            const clientInfo = $('#clientSelect').data('client-info');
+            if (clientInfo && clientInfo.id) {
+                loadCommandes(clientInfo.id);
+            }
+        });
+
+        // Événement pour le champ nombre de jours
+        $('#nbreDays').on('change', function() {
+            const clientInfo = $('#clientSelect').data('client-info');
+            if (clientInfo && clientInfo.id) {
+                loadCommandes(clientInfo.id);
+            }
+        });
+
+        // Initialiser Select2 pour le champ client
         $('#clientSelect').select2({
-            placeholder: 'Rechercher un client...',
-            minimumInputLength: 2,
+            placeholder: "Sélectionnez un client...",
+            allowClear: true,
+            language: "fr",
             ajax: {
-                url: '/api/mailing/clients/autocomplete/',
+                url: '/api/mailing/clients/',  // URL de votre API
                 dataType: 'json',
-                delay: 300,
+                delay: 250,
                 data: function (params) {
                     return {
-                        q: params.term
+                        search: params.term,
+                        page: params.page || 1
                     };
                 },
-                processResults: function (data) {
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
+                    
                     return {
-                        results: $.map(data, function (client) {
+                        results: data.map(function(client) {
                             return {
                                 id: client.id,
-                                text: client.nom + ' (' + client.email + ')',
-                                data: client
+                                text: `${client.nom} - ${client.email}`,
+                                email: client.email,
+                                telephone: client.telephone
                             };
-                        })
+                        }),
+                        pagination: {
+                            more: (params.page * 30) < data.length
+                        }
                     };
                 },
                 cache: true
-            }
-        });
-
-        // Événement lors de la sélection d'un client
-        $('#clientSelect').on('select2:select', function (e) {
-            currentClientId = e.params.data.id;
-            loadCommandes(currentClientId);
-        });
-
-        // Événement changement de période
-        $('#periodeSelect').change(function() {
-            if (currentClientId) {
-                loadCommandes(currentClientId);
-            }
-        });
-
-        // Sélection/désélection de toutes les commandes
-        $('#selectAllCommandes').change(function() {
-            $('.commande-checkbox').prop('checked', this.checked);
-        });
-
-        // Initialisation TinyMCE
-        tinymce.init({
-            selector: '#message',
-            plugins: 'link image lists code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link image | code',
-            height: 250,
-            menubar: false
-        });
-
-        // Chargement de l'historique
-        loadEmailHistory();
-
-        // Soumission du formulaire
-        $('#emailForm').submit(function(e) {
-            e.preventDefault();
-            sendEmail();
-        });
-
-        // Réinitialisation du formulaire
-        $('#resetForm').click(function() {
-            resetForm();
-        });
-    });
-
-    function loadCommandes(clientId) {
-        const periode = $('#periodeSelect').val();
-        
-        $.ajax({
-            url: `/api/mailing/client/${clientId}/commandes/?periode=${periode}`,
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
-            success: function(response) {
-                const commandesList = $('#commandesList');
-                const container = $('#commandesContainer');
-                const noCommandesMsg = $('#noCommandesMessage');
-                
+            minimumInputLength: 3,
+            templateResult: formatClient,
+            templateSelection: formatClientSelection
+        });
+
+        // Fonctions pour formater l'affichage
+        function formatClient(client) {
+            if (!client.id) {
+                return client.text;
+            }
+            
+            var $container = $(
+                '<div>' +
+                    '<strong>' + client.text + '</strong>' +
+                    (client.telephone ? '<br><small>Téléphone: ' + client.telephone + '</small>' : '') +
+                '</div>'
+            );
+            
+            return $container;
+        }
+
+        function formatClientSelection(client) {
+            if (!client.id) {
+                return client.text;
+            }
+            return client.text.split(' - ')[0];
+        }
+
+        // Événements Select2
+        $('#clientSelect').on('select2:select', function (e) {
+            var data = e.params.data;
+            console.log('Client sélectionné:', data);
+            
+            $('#clientSelect').data('client-info', {
+                id: data.id,
+                nom: data.text.split(' - ')[0],
+                email: data.email,
+                telephone: data.telephone
+            });
+            
+            loadCommandes(data.id);
+        });
+
+        $('#clientSelect').on('select2:clear', function (e) {
+            $('#clientSelect').removeData('client-info');
+            resetCommandesList();
+        });
+
+        // Fonction pour charger les commandes
+        function loadCommandes(clientId) {
+            if (!clientId) {
+                console.error('Aucun client sélectionné');
+                return;
+            }
+
+            const periode = $('#periodeSelect').val();
+            const nbreDays = $('#nbreDays').val() || 7;
+            
+            // Vérifier qu'une période est sélectionnée
+            if (!periode) {
+                $('#commandesList').html(
+                    '<div class="alert alert-warning">' +
+                        'Veuillez sélectionner une période.' +
+                    '</div>'
+                );
+                return;
+            }
+
+            // Afficher l'indicateur de chargement
+            $('#commandesList').html(
+                '<div class="text-center py-3">' +
+                    '<div class="spinner-border spinner-border-sm" role="status"></div>' +
+                    '<span class="ms-2">Chargement des commandes...</span>' +
+                '</div>'
+            );
+            $('#commandesContainer').show();
+            
+            // Construire l'URL avec les paramètres
+            const url = `/api/mailing/clients/${clientId}/commandes/?periode=${periode}&jours=${nbreDays}`;
+            
+            console.log('Chargement des commandes depuis:', url);
+            
+            $.ajax({
+                url: url,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    console.log('Commandes reçues:', response);
+                    updateCommandesList(response.commandes);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur AJAX:', xhr.responseText || error);
+                    $('#commandesList').html(
+                        '<div class="alert alert-danger">' +
+                            'Erreur lors du chargement des commandes. ' +
+                            (xhr.responseJSON ? xhr.responseJSON.error : '') +
+                        '</div>'
+                    );
+                }
+            });
+        }
+
+        // Fonction pour mettre à jour la liste des commandes
+        function updateCommandesList(commandes) {
+            const commandesList = $('#commandesList');
+            const commandesContainer = $('#commandesContainer');
+            const noCommandesMessage = $('#noCommandesMessage');
+            const commandesCount = $('#commandesCount');
+            
+            if (commandes && commandes.length > 0) {
                 commandesList.empty();
                 
-                if (response.length > 0) {
-                    response.forEach(function(commande) {
-                        const checked = commande.email_envoye ? '' : 'checked';
-                        const disabled = commande.email_envoye ? 'disabled' : '';
-                        const tooltip = commande.email_envoye ? 'title="Déjà envoyé"' : '';
-                        
-                        // Formatage des statuts et priorités
-                        const statusBadge = getStatusBadge(commande.status);
-                        const prioriteBadge = getPrioriteBadge(commande.priorite);
-                        
-                        commandesList.append(`
-                            <div class="d-flex align-items-center p-3 border-bottom list-tile-item ${commande.email_envoye ? 'bg-light' : ''}" ${tooltip}>
-                                <!-- Content -->
-                                <div class="flex-grow-1 me-4">
-                                    <!-- Titre principal -->
-                                    <div class="d-flex align-items-center mb-1">
-                                        <h6 class="mb-0 fw-bold text-dark me-2">${commande.notre_ref}</h6>
-                                        <span class="text-muted fs-6">${commande.raison_sociale}</span>
+                // Ajouter une note d'information sur le filtrage
+                const infoHtml = `
+                    <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Seules les commandes avec statut "Nouvelle" ou "En cours de traitement" sont affichées.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                commandesList.append(infoHtml);
+                
+                commandes.forEach(function(commande, index) {
+                    const commandeId = commande.id;
+                    const commandeRef = commande.notre_ref || `Commande #${commandeId}`;
+                    const commandeDate = commande.date_recept_commande_formatted || 'Date inconnue';
+                    const raisonSociale = commande.raison_sociale || '';
+                    
+                    // Badge selon le statut
+                    let statusBadge = '';
+                    if (commande.status === 'nouvelle') {
+                        statusBadge = '<span class="badge bg-primary">Nouvelle</span>';
+                    } else if (commande.status === 'en_cours') {
+                        statusBadge = '<span class="badge bg-warning">En cours</span>';
+                    }
+                    
+                    const commandeHtml = `
+                        &nbsp;&nbsp;
+                        <div class="form-check mb-2 list-tile-item border-bottom pb-2">
+                            
+                            <input class="form-check-input commande-checkbox" 
+                                type="checkbox" 
+                                name="commandes" 
+                                value="${commandeId}" 
+                                id="commande-${commandeId}"
+                                data-commande-ref="${commandeRef}"
+                                data-commande-status="${commande.status}"
+                                data-acheteur-id="${commande.acheteur_id || ''}"  // AJOUTEZ CETTE LIGNE
+                                ${commande.email_envoye ? 'disabled' : ''}>
+                            <label class="form-check-label" for="commande-${commandeId}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>${commandeRef}</strong> ${statusBadge}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>${commandeDate}
+                                            <i class="bi bi-building ms-2 me-1"></i>${raisonSociale}
+                                        </small>
                                     </div>
-                                    
-                                    <!-- Sous-titre -->
-                                    <div class="text-muted small mb-2">
-                                        <span class="me-3">
-                                            <i class="bi bi-calendar3 me-1"></i>
-                                            ${commande.date_recept_commande_formatted}
-                                        </span>
-                                        <span class="me-3">
-                                            <i class="bi bi-tag me-1"></i>
-                                            ${commande.type_rapport}
-                                        </span>
-                                        ${commande.acheteur_nom ? `
-                                        <span>
-                                            <i class="bi bi-person me-1"></i>
-                                            ${commande.acheteur_nom}
-                                        </span>
-                                        ` : ''}
-                                    </div>
-                                    
-                                    <!-- Chips -->
-                                    <div class="d-flex flex-wrap gap-2">
-                                        ${statusBadge}
-                                        ${prioriteBadge}
+                                    <div>
                                         ${commande.email_envoye ? 
-                                            '<span class="badge bg-light text-dark border"><i class="bi bi-check-lg me-1"></i>Envoyé</span>' : 
-                                            '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"><i class="bi bi-clock me-1"></i>En attente</span>'
-                                        }
+                                            '&nbsp;<span class="badge bg-success"><i class="bi bi-check-circle"></i> Déjà envoyé</span>&nbsp;' : 
+                                            '&nbsp;<span class="badge bg-secondary"><i class="bi bi-clock"></i> Prêt à envoyer</span>&nbsp;'}
                                     </div>
                                 </div>
-                                
-                                <!-- Trailing checkbox -->
-                                <div class="flex-shrink-0">
-                                    <input class="form-check-input commande-checkbox" 
-                                        type="checkbox" 
-                                        value="${commande.id}" 
-                                        ${checked} 
-                                        ${disabled}
-                                        style="width: 1.4em; height: 1.4em;">
+                            </label>
+                        </div>
+                    `;
+                    
+                    commandesList.append(commandeHtml);
+                });
+                
+                commandesContainer.show();
+                noCommandesMessage.hide();
+                commandesCount.text(`${commandes.length} commande(s) éligibles`);
+                commandesCount.removeClass('bg-info').addClass('bg-success');
+                
+                // Gérer la sélection/désélection de toutes les commandes
+                $('#selectAllCommandes').off('change').on('change', function() {
+                    const isChecked = $(this).prop('checked');
+                    $('.commande-checkbox:not(:disabled)').prop('checked', isChecked);
+                    updateSelectedCount();
+                });
+                
+                // Mettre à jour le compteur de sélection
+                $('.commande-checkbox').on('change', updateSelectedCount);
+                updateSelectedCount();
+                
+            } else {
+                commandesContainer.show();
+                commandesList.html(`
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Aucune commande éligible trouvée pour ce client et cette période.
+                        <br><small>Seules les commandes avec statut "Nouvelle" ou "En cours de traitement" sont affichées.</small>
+                    </div>
+                `);
+                noCommandesMessage.hide();
+                commandesCount.text('0 commande');
+                commandesCount.removeClass('bg-success').addClass('bg-warning');
+            }
+        }
+
+        // Fonction pour mettre à jour le compteur de sélection
+        function updateSelectedCount() {
+            const selectedCount = $('.commande-checkbox:checked:not(:disabled)').length;
+            const totalCount = $('.commande-checkbox:not(:disabled)').length;
+            
+            if (selectedCount > 0) {
+                $('#commandesCount').text(`${selectedCount}/${totalCount} sélectionnée(s)`);
+            } else {
+                $('#commandesCount').text(`${totalCount} commande(s) éligibles`);
+            }
+        }
+
+        // Fonction pour réinitialiser la liste des commandes
+        function resetCommandesList() {
+            $('#commandesList').empty();
+            $('#commandesContainer').hide();
+            $('#noCommandesMessage').hide();
+            $('#commandesCount').text('');
+            $('#selectAllCommandes').prop('checked', false);
+        }
+
+        // Configuration des tokens
+        const ACCESS_TOKEN = '{{ access }}';
+        const ACHETEUR_ID = '{{ id_acheteur }}';
+        
+        // Initialisation
+        console.log('Module email initialisé pour l\'acheteur:', ACHETEUR_ID);
+        
+        // Variables pour les pièces jointes
+        let attachments = [];
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB total
+        
+        // Gestionnaire pour le bouton d'ajout de fichiers
+        $('#addAttachmentBtn').on('click', function() {
+            $('#fichiersInput').click();
+        });
+        
+        // Gestionnaire pour la sélection de fichiers
+        $('#fichiersInput').on('change', function(e) {
+            const files = e.target.files;
+            addAttachments(files);
+            // Réinitialiser l'input pour pouvoir sélectionner les mêmes fichiers à nouveau
+            $(this).val('');
+        });
+        
+        // Fonction pour ajouter des fichiers
+        function addAttachments(files) {
+            let hasErrors = false;
+            let newAttachments = [];
+            
+            // Vérifier chaque fichier
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Vérifier la taille
+                if (file.size > MAX_FILE_SIZE) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Fichier trop volumineux',
+                        text: `"${file.name}" dépasse la taille maximale de 10MB`,
+                        confirmButtonText: 'OK'
+                    });
+                    hasErrors = true;
+                    continue;
+                }
+                
+                // Vérifier le type
+                const allowedTypes = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'image/jpeg',
+                    'image/jpg',
+                    'image/png',
+                    'image/gif',
+                    'text/plain'
+                ];
+                
+                if (!allowedTypes.includes(file.type)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Type de fichier non supporté',
+                        text: `Le format de "${file.name}" n'est pas autorisé`,
+                        confirmButtonText: 'OK'
+                    });
+                    hasErrors = true;
+                    continue;
+                }
+                
+                // Vérifier la taille totale
+                const currentTotalSize = attachments.reduce((sum, att) => sum + att.size, 0);
+                if (currentTotalSize + file.size > MAX_TOTAL_SIZE) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Limite de taille dépassée',
+                        text: `La taille totale des pièces jointes ne doit pas dépasser 25MB`,
+                        confirmButtonText: 'OK'
+                    });
+                    hasErrors = true;
+                    continue;
+                }
+                
+                // Ajouter le fichier
+                const attachment = {
+                    id: Date.now() + i,
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    status: 'ready',
+                    progress: 0
+                };
+                
+                newAttachments.push(attachment);
+            }
+            
+            // Ajouter les nouveaux fichiers valides
+            if (newAttachments.length > 0) {
+                attachments = [...attachments, ...newAttachments];
+                updateAttachmentsList();
+                
+                // Afficher un message de succès
+                if (newAttachments.length === 1) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Fichier ajouté',
+                        text: `${newAttachments[0].name} a été ajouté aux pièces jointes`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Fichiers ajoutés',
+                        text: `${newAttachments.length} fichiers ont été ajoutés aux pièces jointes`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            }
+        }
+        
+        // Fonction pour mettre à jour la liste des pièces jointes
+        function updateAttachmentsList() {
+            const tableBody = $('#attachmentsTableBody');
+            const attachmentsList = $('#attachmentsList');
+            const attachmentsCount = $('#attachmentsCount');
+            const attachmentsActions = $('#attachmentsActions');
+            const totalSizeContainer = $('#totalSizeContainer');
+            const totalSizeElement = $('#totalSize');
+            
+            // Mettre à jour le compteur
+            attachmentsCount.text(attachments.length);
+            
+            // Afficher/masquer la liste
+            if (attachments.length > 0) {
+                attachmentsList.show();
+                totalSizeContainer.show();
+                attachmentsActions.show();
+            } else {
+                attachmentsList.hide();
+                totalSizeContainer.hide();
+                attachmentsActions.hide();
+                return;
+            }
+            
+            // Vider le tableau
+            tableBody.empty();
+            
+            // Calculer la taille totale
+            const totalSize = attachments.reduce((sum, att) => sum + att.size, 0);
+            const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+            totalSizeElement.text(`${totalSizeMB} MB`);
+            
+            // Afficher un avertissement si la taille est importante
+            const sizeWarning = $('#sizeWarning');
+            if (totalSize > 15 * 1024 * 1024) { // > 15MB
+                sizeWarning.show();
+            } else {
+                sizeWarning.hide();
+            }
+            
+            // Ajouter chaque fichier au tableau
+            attachments.forEach((attachment, index) => {
+                const fileIcon = getFileIcon(attachment.type);
+                const fileSize = formatFileSize(attachment.size);
+                const fileType = getFileTypeLabel(attachment.type);
+                
+                const row = `
+                    <tr class="attachment-item" data-attachment-id="${attachment.id}">
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input attachment-checkbox" 
+                                       type="checkbox" 
+                                       value="${attachment.id}">
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="attachment-icon">
+                                    <i class="bi ${fileIcon}"></i>
+                                </div>
+                                <div class="ms-2">
+                                    <div class="fw-medium">${attachment.name}</div>
+                                    ${attachment.status === 'uploading' ? `
+                                        <div class="file-progress bg-light">
+                                            <div class="file-progress-bar" style="width: ${attachment.progress}%"></div>
+                                        </div>
+                                    ` : ''}
+                                    <div class="file-status text-muted">
+                                        ${attachment.status === 'ready' ? 'Prêt' : 
+                                          attachment.status === 'uploading' ? 'En cours...' : 
+                                          attachment.status === 'error' ? 'Erreur' : 'Terminé'}
+                                    </div>
                                 </div>
                             </div>
-                        `);
-                    });
-                    
-                    container.show();
-                    noCommandesMsg.hide();
-                } else {
-                    container.hide();
-                    noCommandesMsg.show();
-                }
-            },
-            error: function(xhr) {
-                console.error('Erreur lors du chargement des commandes:', xhr);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de charger les commandes'
-                });
-            }
-        });
-    }
-
-    // Fonctions helper pour les badges
-    function getStatusBadge(status) {
-        const statusMap = {
-            'nouvelle': 'bg-primary',
-            'en_cours': 'bg-info',
-            'rapport_soumis': 'bg-warning',
-            'rapport_valide': 'bg-success',
-            'envoye_client': 'bg-secondary',
-            'terminee': 'bg-dark',
-            'annulee': 'bg-danger'
-        };
-        const classe = statusMap[status] || 'bg-secondary';
-        return `<span class="badge ${classe}">${status}</span>`;
-    }
-
-    function getPrioriteBadge(priorite) {
-        const prioriteMap = {
-            'Haute': 'bg-danger',
-            'Moyenne': 'bg-warning', 
-            'Basse': 'bg-success'
-        };
-        if (!priorite) return '';
-        const classe = prioriteMap[priorite] || 'bg-secondary';
-        return `<span class="badge ${classe}">${priorite}</span>`;
-    }
-
-    function sendEmail() {
-        // Validation
-        const clientId = currentClientId;
-        const selectedCommandes = $('.commande-checkbox:checked').map(function() {
-            return $(this).val();
-        }).get();
-        const selectedFormats = $('input[type="checkbox"]:checked').map(function() {
-            return $(this).val();
-        }).get();
-        const sujet = $('#sujetInput').val();
-        const message = tinymce.get('message').getContent();
-        const ccEmails = $('#ccInput').val(); // Nouveau champ CC
-        
-        if (!clientId || selectedCommandes.length === 0 || selectedFormats.length === 0 || !sujet || !message) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Champs manquants',
-                text: 'Veuillez remplir tous les champs obligatoires'
+                        </td>
+                        <td>${fileSize}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">${fileType}</span>
+                        </td>
+                        <td>
+                            ${attachment.status === 'ready' ? 
+                                '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Prêt</span>' : 
+                              attachment.status === 'uploading' ? 
+                                '<span class="badge bg-warning"><i class="bi bi-clock"></i> En cours</span>' : 
+                              attachment.status === 'error' ? 
+                                '<span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Erreur</span>' : 
+                                '<span class="badge bg-secondary"><i class="bi bi-check-all"></i> Terminé</span>'}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary preview-attachment" 
+                                        title="Prévisualiser" data-file-name="${attachment.name}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger remove-attachment" 
+                                        title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                tableBody.append(row);
             });
-            return;
+            
+            // Ajouter les événements
+            bindAttachmentEvents();
         }
-
-        // Préparation des données
-        const formData = new FormData();
-        formData.append('client_id', clientId);
-        formData.append('sujet', sujet);
-        formData.append('message', message);
-        formData.append('periode', $('#periodeSelect').val());
-        formData.append('cc_emails', ccEmails); // Ajout du CC
         
-        selectedCommandes.forEach(id => formData.append('commandes_ids', id));
-        selectedFormats.forEach(format => formData.append('formats', format));
-        
-        // Fichiers joints
-        const fichiers = $('#fichiersInput')[0].files;
-        for (let i = 0; i < fichiers.length; i++) {
-            formData.append('fichiers_joints', fichiers[i]);
-        }
-
-        // Envoi
-        $.ajax({
-            url: '/api/mailing/send-email/',
-            type: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
-            },
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.success) {
-                    let successMessage = response.message;
-                    if (response.cc_count > 0) {
-                        successMessage += ` avec ${response.cc_count} copie(s) carbone`;
+        // Fonction pour lier les événements aux boutons d'action
+        function bindAttachmentEvents() {
+            // Supprimer un fichier individuel
+            $('.remove-attachment').on('click', function() {
+                const row = $(this).closest('tr');
+                const attachmentId = row.data('attachment-id');
+                
+                Swal.fire({
+                    title: 'Supprimer ce fichier?',
+                    text: "Cette action ne peut pas être annulée.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        removeAttachment(attachmentId);
                     }
+                });
+            });
+            
+            // Prévisualiser un fichier
+            $('.preview-attachment').on('click', function() {
+                const fileName = $(this).data('file-name');
+                const attachment = attachments.find(a => a.name === fileName);
+                
+                if (attachment) {
+                    previewAttachment(attachment);
+                }
+            });
+            
+            // Sélectionner/désélectionner toutes les pièces jointes
+            $('#selectAllAttachments').on('change', function() {
+                const isChecked = $(this).prop('checked');
+                $('.attachment-checkbox').prop('checked', isChecked);
+                updateSelectedAttachmentsCount();
+            });
+            
+            // Mettre à jour le compteur de sélection
+            $('.attachment-checkbox').on('change', updateSelectedAttachmentsCount);
+        }
+        
+        // Fonction pour supprimer un fichier
+        function removeAttachment(attachmentId) {
+            attachments = attachments.filter(a => a.id !== attachmentId);
+            updateAttachmentsList();
+        }
+        
+        // Fonction pour prévisualiser un fichier
+        function previewAttachment(attachment) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                let previewContent = '';
+                
+                if (attachment.type.startsWith('image/')) {
+                    previewContent = `
+                        <div class="text-center">
+                            <img src="${e.target.result}" class="img-fluid" style="max-height: 500px;">
+                            <p class="mt-3"><strong>${attachment.name}</strong> (${formatFileSize(attachment.size)})</p>
+                        </div>
+                    `;
+                } else if (attachment.type === 'application/pdf') {
+                    previewContent = `
+                        <div class="text-center">
+                            <iframe src="${e.target.result}" width="100%" height="500px"></iframe>
+                            <p class="mt-3"><strong>${attachment.name}</strong> (${formatFileSize(attachment.size)})</p>
+                        </div>
+                    `;
+                } else {
+                    previewContent = `
+                        <div class="text-center p-5">
+                            <i class="bi bi-file-earmark-text" style="font-size: 5rem; color: #6c757d;"></i>
+                            <h5 class="mt-3">${attachment.name}</h5>
+                            <p>${formatFileSize(attachment.size)} - ${getFileTypeLabel(attachment.type)}</p>
+                            <p class="text-muted">La prévisualisation n'est pas disponible pour ce type de fichier.</p>
+                        </div>
+                    `;
+                }
+                
+                Swal.fire({
+                    title: 'Prévisualisation',
+                    html: previewContent,
+                    width: 800,
+                    showConfirmButton: false,
+                    showCloseButton: true
+                });
+            };
+            
+            reader.readAsDataURL(attachment.file);
+        }
+        
+        // Fonction pour mettre à jour le compteur de sélection
+        function updateSelectedAttachmentsCount() {
+            const selectedCount = $('.attachment-checkbox:checked').length;
+            
+            if (selectedCount > 0) {
+                $('#removeSelectedAttachments').text(`Supprimer (${selectedCount})`);
+            } else {
+                $('#removeSelectedAttachments').text('Supprimer la sélection');
+            }
+        }
+        
+        // Supprimer les fichiers sélectionnés
+        $('#removeSelectedAttachments').on('click', function() {
+            const selectedIds = [];
+            $('.attachment-checkbox:checked').each(function() {
+                selectedIds.push(parseInt($(this).val()));
+            });
+            
+            if (selectedIds.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Aucune sélection',
+                    text: 'Veuillez sélectionner au moins un fichier à supprimer',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Supprimer les fichiers sélectionnés?',
+                text: `Vous allez supprimer ${selectedIds.length} fichier(s)`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    attachments = attachments.filter(a => !selectedIds.includes(a.id));
+                    updateAttachmentsList();
                     
                     Swal.fire({
                         icon: 'success',
-                        title: 'Succès',
-                        text: successMessage
-                    });
-                    resetForm();
-                    loadEmailHistory();
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur',
-                        text: response.error
+                        title: 'Fichiers supprimés',
+                        text: `${selectedIds.length} fichier(s) ont été supprimés`,
+                        timer: 2000,
+                        showConfirmButton: false
                     });
                 }
-            },
-            error: function(xhr) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Une erreur est survenue lors de l\'envoi'
+            });
+        });
+        
+        // Supprimer tous les fichiers
+        $('#clearAllAttachments').on('click', function() {
+            if (attachments.length === 0) return;
+            
+            Swal.fire({
+                title: 'Supprimer tous les fichiers?',
+                text: `Vous allez supprimer ${attachments.length} fichier(s)`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, tout supprimer',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    attachments = [];
+                    updateAttachmentsList();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tous les fichiers supprimés',
+                        text: 'Les pièces jointes ont été vidées',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        });
+        
+        // Fonctions utilitaires
+        function getFileIcon(fileType) {
+            if (fileType.startsWith('image/')) return 'bi-file-image';
+            if (fileType === 'application/pdf') return 'bi-file-pdf';
+            if (fileType.includes('word') || fileType.includes('document')) return 'bi-file-word';
+            if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'bi-file-excel';
+            if (fileType === 'text/plain') return 'bi-file-text';
+            return 'bi-file-earmark';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function getFileTypeLabel(fileType) {
+            if (fileType.startsWith('image/')) return 'Image';
+            if (fileType === 'application/pdf') return 'PDF';
+            if (fileType.includes('word')) return 'Document Word';
+            if (fileType.includes('excel')) return 'Feuille Excel';
+            if (fileType === 'text/plain') return 'Texte';
+            return 'Autre';
+        }
+        
+        // Fonction pour récupérer les fichiers joints pour l'envoi
+        function getAttachmentsForSubmit() {
+            return attachments.map(att => att.file);
+        }
+
+        // Ajoutez cette fonction dans $(document).ready()
+        function initDragAndDrop() {
+            const dropArea = $('#attachmentsList .card-body');
+            
+            // Créer une zone de drop overlay
+            const dropOverlay = $('<div>').addClass('drop-overlay').css({
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                background: 'rgba(13, 110, 253, 0.1)',
+                border: '3px dashed #0d6efd',
+                borderRadius: '4px',
+                display: 'none',
+                zIndex: 1000,
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#0d6efd',
+                fontSize: '1.2rem',
+                fontWeight: 'bold'
+            }).html('<i class="bi bi-cloud-arrow-up me-2"></i>Déposez les fichiers ici');
+            
+            dropArea.css('position', 'relative').append(dropOverlay);
+            
+            // Événements pour le drag and drop
+            $(document).on('dragenter', '#attachmentsList .card-body', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropOverlay.show();
+            });
+            
+            $(document).on('dragover', '#attachmentsList .card-body', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropOverlay.show();
+            });
+            
+            $(document).on('dragleave', '#attachmentsList .card-body', function(e) {
+                if (!$(e.relatedTarget).closest('#attachmentsList .card-body').length) {
+                    dropOverlay.hide();
+                }
+            });
+            
+            $(document).on('drop', '#attachmentsList .card-body', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropOverlay.hide();
+                
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    addAttachments(files);
+                }
+            });
+        }
+
+        // Appelez cette fonction après l'initialisation
+        // initDragAndDrop();
+
+        // Variables pour la gestion des documents
+        let acheteursDocuments = {}; // Stocke les documents par acheteur
+        let selectedAcheteurs = new Set(); // IDs des acheteurs sélectionnés
+
+        // Fonction pour mettre à jour la liste des documents
+        function updateDocumentsList() {
+            const documentsSection = $('#documentsSection');
+            const documentsContainer = $('#documentsContainer');
+            const noDocumentsMessage = $('#noDocumentsMessage');
+            const documentsCount = $('#documentsCount');
+            const documentsTabsContainer = $('#documentsTabsContainer');
+            const documentsList = $('#documentsList');
+            
+            // Vérifier si des acheteurs sont sélectionnés
+            if (selectedAcheteurs.size === 0) {
+                documentsSection.hide();
+                return;
+            }
+            
+            documentsSection.show();
+            
+            // Récupérer les documents pour les acheteurs sélectionnés
+            const acheteursIds = Array.from(selectedAcheteurs).join(',');
+            
+            if (!acheteursIds) {
+                documentsContainer.hide();
+                noDocumentsMessage.show();
+                documentsCount.text('0');
+                return;
+            }
+            
+            // Afficher l'indicateur de chargement
+            documentsList.html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    <span class="ms-2">Chargement des documents...</span>
+                </div>
+            `);
+            documentsContainer.show();
+            noDocumentsMessage.hide();
+            
+            // Faire la requête AJAX
+            $.ajax({
+                url: `/api/mailing/documents-by-acheteurs/?acheteurs=${acheteursIds}`,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    console.log('Documents reçus:', response);
+                    acheteursDocuments = {};
+                    
+                    // Organiser les documents par acheteur
+                    response.documents.forEach(doc => {
+                        const acheteurId = doc.acheteur_id;
+                        if (!acheteursDocuments[acheteurId]) {
+                            acheteursDocuments[acheteurId] = {
+                                acheteur_nom: doc.acheteur_nom,
+                                documents: []
+                            };
+                        }
+                        acheteursDocuments[acheteurId].documents.push(doc);
+                    });
+                    
+                    // Mettre à jour l'affichage
+                    renderDocuments(response.documents);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur lors du chargement des documents:', xhr);
+                    documentsList.html(`
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Erreur lors du chargement des documents.
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        // Fonction pour afficher les documents
+        function renderDocuments(documents) {
+            const documentsContainer = $('#documentsContainer');
+            const noDocumentsMessage = $('#noDocumentsMessage');
+            const documentsCount = $('#documentsCount');
+            const documentsTabsContainer = $('#documentsTabsContainer');
+            const documentsList = $('#documentsList');
+            
+            if (documents.length === 0) {
+                documentsContainer.hide();
+                noDocumentsMessage.show();
+                documentsCount.text('0');
+                return;
+            }
+            
+            // Mettre à jour le compteur
+            documentsCount.text(`${documents.length} document(s)`);
+            documentsContainer.show();
+            noDocumentsMessage.hide();
+            
+            // Vider les conteneurs
+            documentsTabsContainer.empty();
+            documentsList.empty();
+            
+            // Créer les onglets si plusieurs acheteurs
+            const acheteursCount = Object.keys(acheteursDocuments).length;
+            
+            if (acheteursCount > 1) {
+                // Créer la structure des onglets
+                const tabsNav = $('<ul class="nav nav-tabs" id="documentsTabs" role="tablist"></ul>');
+                const tabsContent = $('<div class="tab-content mt-3" id="documentsTabsContent"></div>');
+                
+                let isFirst = true;
+                Object.keys(acheteursDocuments).forEach((acheteurId, index) => {
+                    const acheteurData = acheteursDocuments[acheteurId];
+                    const tabId = `tab-${acheteurId}`;
+                    
+                    // Onglet
+                    const tabButton = `
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link ${isFirst ? 'active' : ''}" 
+                                    id="${tabId}-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#${tabId}" 
+                                    type="button" role="tab">
+                                ${acheteurData.acheteur_nom}
+                                <span class="badge bg-secondary ms-1">${acheteurData.documents.length}</span>
+                            </button>
+                        </li>
+                    `;
+                    tabsNav.append(tabButton);
+                    
+                    // Contenu de l'onglet
+                    const tabPane = $(`
+                        <div class="tab-pane fade ${isFirst ? 'show active' : ''}" 
+                            id="${tabId}" role="tabpanel">
+                            <div class="documents-group" data-acheteur-id="${acheteurId}"></div>
+                        </div>
+                    `);
+                    
+                    // Ajouter les documents dans cet onglet
+                    acheteurData.documents.forEach((doc, docIndex) => {
+                        const docElement = createDocumentElement(doc, acheteurId);
+                        tabPane.find('.documents-group').append(docElement);
+                    });
+                    
+                    tabsContent.append(tabPane);
+                    isFirst = false;
+                });
+                
+                documentsTabsContainer.append(tabsNav);
+                documentsTabsContainer.append(tabsContent);
+                
+                // Initialiser les onglets Bootstrap
+                const tabTriggerElList = [].slice.call(documentsTabsContainer.find('#documentsTabs button'));
+                tabTriggerElList.forEach(function (tabTriggerEl) {
+                    new bootstrap.Tab(tabTriggerEl);
+                });
+            } else {
+                // Un seul acheteur, afficher directement
+                const acheteurId = Object.keys(acheteursDocuments)[0];
+                const acheteurData = acheteursDocuments[acheteurId];
+                
+                const acheteurHeader = `
+                    <div class="alert alert-light mb-3">
+                        <h6 class="mb-0">
+                            <i class="bi bi-person-badge me-2"></i>
+                            ${acheteurData.acheteur_nom}
+                            <span class="badge bg-info ms-2">${acheteurData.documents.length} document(s)</span>
+                        </h6>
+                    </div>
+                `;
+                documentsList.append(acheteurHeader);
+                
+                acheteurData.documents.forEach((doc, index) => {
+                    const docElement = createDocumentElement(doc, acheteurId);
+                    documentsList.append(docElement);
                 });
             }
-        });
-    }
+            
+            // Ajouter les événements
+            bindDocumentsEvents();
+        }
 
-    
+        // Fonction pour créer un élément document
+        function createDocumentElement(doc, acheteurId) {
+            const fileIcon = getFileIconByExtension(doc.file_type);
+            const fileSize = formatFileSize(doc.file_size);
+            
+            return `
+                <div class="form-check mb-3 p-3 border rounded document-item" 
+                    data-document-id="${doc.id}" 
+                    data-acheteur-id="${acheteurId}">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <input class="form-check-input document-checkbox" 
+                                type="checkbox" 
+                                value="${doc.id}"
+                                id="document-${doc.id}"
+                                data-file-url="${doc.fichier}"
+                                data-file-name="${doc.file_name}">
+                        </div>
+                        <div class="col">
+                            <div class="d-flex align-items-center">
+                                <div class="attachment-icon me-3">
+                                    <i class="bi ${fileIcon} fs-4"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <label class="form-check-label fw-medium" for="document-${doc.id}">
+                                        ${doc.titre}
+                                    </label>
+                                    <div class="text-muted small mt-1">
+                                        <div>
+                                            <i class="bi bi-file-earmark me-1"></i>
+                                            ${doc.file_name}
+                                            <span class="ms-2">
+                                                <i class="bi bi-hdd me-1"></i>${fileSize}
+                                            </span>
+                                            <span class="ms-2">
+                                                <i class="bi bi-calendar me-1"></i>${doc.created_at_formatted}
+                                            </span>
+                                        </div>
+                                        ${doc.description ? `
+                                            <div class="mt-1">
+                                                <i class="bi bi-card-text me-1"></i>
+                                                ${doc.description}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-primary preview-document" 
+                                                data-document-id="${doc.id}"
+                                                title="Prévisualiser">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info view-document" 
+                                                data-file-url="${doc.fichier}"
+                                                title="Télécharger">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-    function loadEmailHistory() {
-        $.ajax({
-            url: '/api/mailing/history/',
-            type: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN
-            },
-            success: function(response) {
-                const historyContainer = $('#emailHistory');
+        // Fonction pour lier les événements des documents
+        function bindDocumentsEvents() {
+            // Sélectionner/désélectionner tous les documents
+            $('#selectAllDocuments').off('change').on('change', function() {
+                const isChecked = $(this).prop('checked');
+                $('.document-checkbox').prop('checked', isChecked);
+                updateSelectedDocumentsCount();
+            });
+            
+            // Mettre à jour le compteur de sélection
+            $('.document-checkbox').on('change', updateSelectedDocumentsCount);
+            
+            // Prévisualiser un document
+            $('.preview-document').on('click', function() {
+                const documentId = $(this).data('document-id');
+                const document = findDocumentById(documentId);
                 
-                if (response.length > 0) {
-                    let html = '<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Date</th><th>Client</th><th>Commandes</th><th>Statut</th></tr></thead><tbody>';
+                if (document) {
+                    previewDocument(document);
+                }
+            });
+            
+            // Télécharger un document
+            $('.view-document').on('click', function() {
+                const fileUrl = $(this).data('file-url');
+                if (fileUrl) {
+                    window.open(fileUrl, '_blank');
+                }
+            });
+            
+            // Ajouter les documents sélectionnés aux pièces jointes
+            $('#addSelectedDocuments').off('click').on('click', function() {
+                addSelectedDocumentsToAttachments();
+            });
+        }
+
+        // Fonction pour trouver un document par son ID
+        function findDocumentById(documentId) {
+            for (const acheteurId in acheteursDocuments) {
+                const doc = acheteursDocuments[acheteurId].documents.find(d => d.id == documentId);
+                if (doc) return doc;
+            }
+            return null;
+        }
+
+        // Fonction pour mettre à jour le compteur de documents sélectionnés
+        function updateSelectedDocumentsCount() {
+            const selectedCount = $('.document-checkbox:checked').length;
+            const totalCount = $('.document-checkbox').length;
+            
+            if (selectedCount > 0) {
+                $('#addSelectedDocuments').text(`Ajouter les documents sélectionnés (${selectedCount})`);
+            } else {
+                $('#addSelectedDocuments').text('Ajouter les documents sélectionnés aux pièces jointes');
+            }
+        }
+
+        // Fonction pour ajouter les documents sélectionnés aux pièces jointes
+        function addSelectedDocumentsToAttachments() {
+            const selectedDocuments = $('.document-checkbox:checked');
+            
+            if (selectedDocuments.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Aucun document sélectionné',
+                    text: 'Veuillez sélectionner au moins un document à ajouter',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            // Compter combien de documents seront ajoutés
+            let addedCount = 0;
+            let skippedCount = 0;
+            
+            selectedDocuments.each(function() {
+                const documentId = $(this).val();
+                const fileName = $(this).data('file-name');
+                const fileUrl = $(this).data('file-url');
+                
+                // Vérifier si le document n'est pas déjà dans les pièces jointes
+                const isAlreadyAdded = attachments.some(att => 
+                    att.name === fileName || att.source === `document_${documentId}`
+                );
+                
+                if (isAlreadyAdded) {
+                    skippedCount++;
+                    return;
+                }
+                
+                // Créer un objet fichier simulé (en réalité, il faudrait télécharger le fichier)
+                const simulatedFile = {
+                    name: fileName,
+                    size: 0, // Taille inconnue sans téléchargement
+                    type: getMimeTypeFromFileName(fileName),
+                    lastModified: Date.now()
+                };
+                
+                const attachment = {
+                    id: `document_${documentId}_${Date.now()}`,
+                    file: simulatedFile,
+                    name: fileName,
+                    size: 0,
+                    type: simulatedFile.type,
+                    status: 'ready',
+                    progress: 0,
+                    source: 'document', // Pour identifier l'origine
+                    documentId: documentId,
+                    documentUrl: fileUrl
+                };
+                
+                attachments.push(attachment);
+                addedCount++;
+            });
+            
+            // Mettre à jour la liste des pièces jointes
+            updateAttachmentsList();
+            
+            // Afficher un message de confirmation
+            let message = '';
+            if (addedCount > 0) {
+                message += `${addedCount} document(s) ajouté(s) aux pièces jointes. `;
+            }
+            if (skippedCount > 0) {
+                message += `${skippedCount} document(s) déjà présent(s) dans les pièces jointes.`;
+            }
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Documents ajoutés',
+                text: message.trim(),
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }
+
+        // Fonction utilitaire pour obtenir le type MIME à partir du nom de fichier
+        function getMimeTypeFromFileName(filename) {
+            const extension = filename.split('.').pop().toLowerCase();
+            const mimeTypes = {
+                'pdf': 'application/pdf',
+                'doc': 'application/msword',
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls': 'application/vnd.ms-excel',
+                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif',
+                'txt': 'text/plain'
+            };
+            return mimeTypes[extension] || 'application/octet-stream';
+        }
+
+        // Fonction pour obtenir l'icône par extension
+        function getFileIconByExtension(extension) {
+            const icons = {
+                'pdf': 'bi-file-pdf',
+                'doc': 'bi-file-word',
+                'docx': 'bi-file-word',
+                'xls': 'bi-file-excel',
+                'xlsx': 'bi-file-excel',
+                'jpg': 'bi-file-image',
+                'jpeg': 'bi-file-image',
+                'png': 'bi-file-image',
+                'gif': 'bi-file-image',
+                'txt': 'bi-file-text'
+            };
+            return icons[extension.toLowerCase()] || 'bi-file-earmark';
+        }
+
+        // Fonction pour prévisualiser un document (version simplifiée)
+        function previewDocument(document) {
+            Swal.fire({
+                title: document.titre,
+                html: `
+                    <div class="text-center p-4">
+                        <i class="bi ${getFileIconByExtension(document.file_type)}" style="font-size: 4rem; color: #6c757d;"></i>
+                        <h5 class="mt-3">${document.titre}</h5>
+                        <p class="text-muted">
+                            <i class="bi bi-file-earmark me-1"></i>${document.file_name}<br>
+                            <i class="bi bi-hdd me-1"></i>${formatFileSize(document.file_size)}<br>
+                            <i class="bi bi-person me-1"></i>${document.acheteur_nom}<br>
+                            <i class="bi bi-calendar me-1"></i>${document.created_at_formatted}
+                        </p>
+                        ${document.description ? `
+                            <div class="alert alert-light mt-3">
+                                <i class="bi bi-card-text me-2"></i>
+                                ${document.description}
+                            </div>
+                        ` : ''}
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Télécharger',
+                cancelButtonText: 'Fermer',
+                showCloseButton: true
+            }).then((result) => {
+                if (result.isConfirmed && document.fichier) {
+                    window.open(document.fichier, '_blank');
+                }
+            });
+        }
+
+        // Modifiez la fonction updateSelectedCount pour gérer les acheteurs
+        function updateSelectedCountTwo() {
+            const selectedCount = $('.commande-checkbox:checked:not(:disabled)').length;
+            const totalCount = $('.commande-checkbox:not(:disabled)').length;
+            
+            // Récupérer les IDs des acheteurs des commandes sélectionnées
+            const selectedAcheteursSet = new Set();
+            $('.commande-checkbox:checked:not(:disabled)').each(function() {
+                const commandeId = $(this).val();
+                // Ici, vous devriez récupérer l'acheteur de la commande
+                // Pour l'instant, utilisons une approche temporaire
+                const commandeRef = $(this).data('commande-ref');
+                // Cette information devrait venir de l'API
+            });
+            
+            // Pour l'instant, utilisons une simulation
+            // En production, vous devrez récupérer l'acheteur_id de chaque commande
+            if (selectedCount > 0) {
+                // Simuler la récupération des acheteurs
+                // En attendant l'API complète, on peut charger tous les documents des acheteurs
+                loadAcheteursDocuments();
+            } else {
+                selectedAcheteurs.clear();
+                updateDocumentsList();
+            }
+            
+            if (selectedCount > 0) {
+                $('#commandesCount').text(`${selectedCount}/${totalCount} sélectionnée(s)`);
+            } else {
+                $('#commandesCount').text(`${totalCount} commande(s) éligibles`);
+            }
+        }
+
+        // Modifiez la fonction updateSelectedCount
+        function updateSelectedCount() {
+            const selectedCount = $('.commande-checkbox:checked:not(:disabled)').length;
+            const totalCount = $('.commande-checkbox:not(:disabled)').length;
+            
+            // Récupérer les IDs des acheteurs des commandes sélectionnées
+            selectedAcheteurs.clear();
+            
+            $('.commande-checkbox:checked:not(:disabled)').each(function() {
+                const commandeId = $(this).val();
+                // Essayer de récupérer l'acheteur depuis les données stockées
+                // Vous devez stocker l'acheteur_id dans les données de la commande
+                const acheteurId = $(this).data('acheteur-id');
+                if (acheteurId) {
+                    selectedAcheteurs.add(parseInt(acheteurId));
+                }
+            });
+            
+            // Mettre à jour la liste des documents
+            if (selectedAcheteurs.size > 0) {
+                updateDocumentsList();
+            } else {
+                $('#documentsSection').hide();
+            }
+            
+            if (selectedCount > 0) {
+                $('#commandesCount').text(`${selectedCount}/${totalCount} sélectionnée(s)`);
+            } else {
+                $('#commandesCount').text(`${totalCount} commande(s) éligibles`);
+            }
+        }
+
+        // Nouvelle fonction pour charger les documents des acheteurs
+        function loadAcheteursDocuments() {
+            // Récupérer les IDs des acheteurs à partir des commandes sélectionnées
+            const commandesIds = [];
+            $('.commande-checkbox:checked:not(:disabled)').each(function() {
+                commandesIds.push($(this).val());
+            });
+            
+            if (commandesIds.length === 0) {
+                selectedAcheteurs.clear();
+                updateDocumentsList();
+                return;
+            }
+            
+            // Récupérer les acheteurs pour ces commandes
+            $.ajax({
+                url: `/api/mailing/commandes-acheteurs/?commandes=${commandesIds.join(',')}`,
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    selectedAcheteurs = new Set(response.acheteurs_ids);
+                    updateDocumentsList();
+                },
+                error: function() {
+                    // En cas d'erreur, on peut essayer de deviner les acheteurs
+                    // ou simplement cacher la section
+                    selectedAcheteurs.clear();
+                    updateDocumentsList();
+                }
+            });
+        }
+
+
+
+        // Variables pour la gestion des rapports
+        let generatedReports = [];
+        let isGenerating = false;
+
+        // Écouteurs pour les cases à cocher des formats
+        $('#formatPdf, #formatHtml, #formatXml').on('change', function() {
+            updateReportsSection();
+        });
+
+        // Fonction pour mettre à jour la section des rapports
+        function updateReportsSection() {
+            const reportsContainer = $('#reportsContainer');
+            const reportsInfo = $('#reportsInfo');
+            const selectedFormats = getSelectedFormats();
+            
+            if (selectedFormats.length > 0) {
+                reportsContainer.show();
+                reportsInfo.show();
+                generateReportsForSelectedCommandes();
+            } else {
+                reportsContainer.hide();
+                reportsInfo.hide();
+                clearAllReports();
+            }
+        }
+
+        // Fonction pour obtenir les formats sélectionnés
+        function getSelectedFormats() {
+            const formats = [];
+            if ($('#formatPdf').is(':checked')) formats.push('pdf');
+            if ($('#formatHtml').is(':checked')) formats.push('html');
+            if ($('#formatXml').is(':checked')) formats.push('xml');
+            return formats;
+        }
+
+        // Fonction pour générer les rapports pour les commandes sélectionnées
+        function generateReportsForSelectedCommandes() {
+            const selectedCommandes = $('.commande-checkbox:checked:not(:disabled)');
+            const selectedFormats = getSelectedFormats();
+            
+            if (selectedCommandes.length === 0 || selectedFormats.length === 0) {
+                clearAllReports();
+                return;
+            }
+            
+            // Filtrer les rapports existants pour ne garder que ceux correspondants
+            const updatedReports = [];
+            
+            selectedCommandes.each(function() {
+                const commandeId = $(this).val();
+                const commandeRef = $(this).data('commande-ref');
+                
+                selectedFormats.forEach(format => {
+                    // Vérifier si le rapport existe déjà
+                    const existingReport = generatedReports.find(report => 
+                        report.commandeId == commandeId && report.format === format
+                    );
                     
-                    response.forEach(function(mail) {
-                        const commandes = mail.commands_details.map(c => c.notre_ref).join(', ');
-                        const statusBadge = mail.success ? 
-                            '<span class="badge bg-success">Succès</span>' : 
-                            '<span class="badge bg-danger">Échec</span>';
-                        
-                        html += `
-                            <tr>
-                                <td>${new Date(mail.date_sent).toLocaleString()}</td>
-                                <td>${mail.user_name}</td>
-                                <td>${commandes}</td>
-                                <td>${statusBadge}</td>
-                            </tr>
-                        `;
+                    if (existingReport) {
+                        updatedReports.push(existingReport);
+                    } else {
+                        // Créer un nouveau rapport à générer
+                        updatedReports.push({
+                            id: `report_${commandeId}_${format}_${Date.now()}`,
+                            commandeId: commandeId,
+                            commandeRef: commandeRef,
+                            format: format,
+                            status: 'pending',
+                            progress: 0,
+                            filename: '',
+                            filesize: 0,
+                            blobUrl: null
+                        });
+                    }
+                });
+            });
+            
+            generatedReports = updatedReports;
+            updateReportsList();
+            
+            // Générer automatiquement les rapports
+            if (!isGenerating) {
+                generatePendingReports();
+            }
+        }
+
+        // Fonction pour mettre à jour la liste des rapports
+        function updateReportsList() {
+            const tableBody = $('#reportsTableBody');
+            const reportsContainer = $('#reportsContainer');
+            const reportsCount = $('#reportsCount');
+            const reportsActions = $('#reportsActions');
+            
+            // Mettre à jour le compteur
+            reportsCount.text(generatedReports.length);
+            
+            if (generatedReports.length > 0) {
+                reportsContainer.show();
+                reportsActions.show();
+            } else {
+                reportsContainer.hide();
+                reportsActions.hide();
+                return;
+            }
+            
+            // Vider le tableau
+            tableBody.empty();
+            
+            // Ajouter chaque rapport au tableau
+            generatedReports.forEach((report, index) => {
+                const formatBadge = getFormatBadge(report.format);
+                const statusBadge = getStatusBadge(report.status);
+                const progressBar = report.status === 'generating' ? 
+                    `<div class="report-progress">
+                        <div class="report-progress-bar" style="width: ${report.progress}%"></div>
+                    </div>` : '';
+                
+                const row = `
+                    <tr class="report-item" data-report-id="${report.id}">
+                        <td>${index + 1}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="report-icon me-2">
+                                    <i class="bi ${getFileIconByFormat(report.format)}"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">${report.filename || `Rapport en attente...`}</div>
+                                    ${progressBar}
+                                    <div class="report-status text-muted">
+                                        ${getStatusText(report.status)}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${report.commandeRef}</td>
+                        <td>${formatBadge}</td>
+                        <td>${report.filesize ? formatFileSize(report.filesize) : '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                ${report.status === 'completed' ? `
+                                    <button type="button" class="btn btn-outline-primary download-report" 
+                                            title="Télécharger" data-blob-url="${report.blobUrl}">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary preview-report" 
+                                            title="Prévisualiser" data-blob-url="${report.blobUrl}" data-format="${report.format}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                ` : ''}
+                                <button type="button" class="btn btn-outline-danger remove-report" 
+                                        title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                tableBody.append(row);
+            });
+            
+            // Ajouter les événements
+            bindReportsEvents();
+        }
+
+        // Fonction pour obtenir le badge de format
+        function getFormatBadge(format) {
+            const badges = {
+                'pdf': '<span class="badge report-badge-pdf">PDF</span>',
+                'html': '<span class="badge report-badge-html">HTML</span>',
+                'xml': '<span class="badge report-badge-xml">XML</span>'
+            };
+            return badges[format] || `<span class="badge bg-secondary">${format.toUpperCase()}</span>`;
+        }
+
+        // Fonction pour obtenir le badge de statut
+        function getStatusBadge(status) {
+            const badges = {
+                'pending': '<span class="badge bg-secondary"><i class="bi bi-clock"></i> En attente</span>',
+                'generating': '<span class="badge bg-warning"><i class="bi bi-gear"></i> Génération</span>',
+                'completed': '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Terminé</span>',
+                'error': '<span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Erreur</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">Inconnu</span>';
+        }
+
+        // Fonction pour obtenir le texte du statut
+        function getStatusText(status) {
+            const texts = {
+                'pending': 'En attente de génération',
+                'generating': 'Génération en cours...',
+                'completed': 'Prêt au téléchargement',
+                'error': 'Erreur lors de la génération'
+            };
+            return texts[status] || 'Statut inconnu';
+        }
+
+        // Fonction pour obtenir l'icône par format
+        function getFileIconByFormat(format) {
+            const icons = {
+                'pdf': 'bi-file-pdf',
+                'html': 'bi-file-earmark-code',
+                'xml': 'bi-file-code'
+            };
+            return icons[format] || 'bi-file-earmark';
+        }
+
+        // Fonction pour lier les événements des rapports
+        function bindReportsEvents() {
+            // Télécharger un rapport
+            $('.download-report').on('click', function() {
+                const blobUrl = $(this).data('blob-url');
+                if (blobUrl) {
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = $(this).closest('tr').find('.fw-medium').text();
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            });
+            
+            // Prévisualiser un rapport
+            $('.preview-report').on('click', function() {
+                const blobUrl = $(this).data('blob-url');
+                const format = $(this).data('format');
+                
+                if (blobUrl) {
+                    if (format === 'pdf') {
+                        // Ouvrir le PDF dans un nouvel onglet
+                        window.open(blobUrl, '_blank');
+                    } else if (format === 'html') {
+                        // Ouvrir le HTML dans un nouvel onglet
+                        window.open(blobUrl, '_blank');
+                    } else {
+                        // Pour XML, afficher dans une modal
+                        fetch(blobUrl)
+                            .then(response => response.text())
+                            .then(xmlContent => {
+                                Swal.fire({
+                                    title: 'Prévisualisation XML',
+                                    html: `
+                                        <div class="text-start">
+                                            <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; max-height: 400px; overflow: auto;">
+        ${xmlContent}
+                                            </pre>
+                                        </div>
+                                    `,
+                                    width: 800,
+                                    showCloseButton: true,
+                                    showConfirmButton: false
+                                });
+                            });
+                    }
+                }
+            });
+            
+            // Supprimer un rapport
+            $('.remove-report').on('click', function() {
+                const row = $(this).closest('tr');
+                const reportId = row.data('report-id');
+                
+                Swal.fire({
+                    title: 'Supprimer ce rapport?',
+                    text: "Cette action ne peut pas être annulée.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        removeReport(reportId);
+                    }
+                });
+            });
+            
+            // Générer tous les rapports
+            $('#generateAllReports').off('click').on('click', function() {
+                generatePendingReports();
+            });
+            
+            // Supprimer tous les rapports
+            $('#clearAllReports').off('click').on('click', function() {
+                clearAllReports();
+            });
+        }
+
+        // Fonction pour supprimer un rapport
+        function removeReport(reportId) {
+            generatedReports = generatedReports.filter(report => report.id !== reportId);
+            updateReportsList();
+        }
+
+        // Fonction pour effacer tous les rapports
+        function clearAllReports() {
+            generatedReports = [];
+            updateReportsList();
+        }
+
+        // Fonction pour générer les rapports en attente
+        async function generatePendingReports() {
+            const pendingReports = generatedReports.filter(report => report.status === 'pending');
+            
+            if (pendingReports.length === 0 || isGenerating) {
+                return;
+            }
+            
+            isGenerating = true;
+            $('#generateAllReports').prop('disabled', true).text('Génération en cours...');
+            
+            // Générer les rapports un par un
+            for (const report of pendingReports) {
+                try {
+                    // Mettre à jour le statut
+                    report.status = 'generating';
+                    report.progress = 0;
+                    updateReportsList();
+                    
+                    // Simuler une progression
+                    for (let i = 0; i <= 100; i += 20) {
+                        report.progress = i;
+                        updateReportsList();
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    // Générer le rapport via l'API
+                    const formData = new FormData();
+                    formData.append('commande_id', report.commandeId);
+                    formData.append('format', report.format);
+                    formData.append('commande_ref', report.commandeRef);
+                    
+                    const response = await fetch('/api/mailing/generate-report/', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer ' + ACCESS_TOKEN
+                        },
+                        body: formData
                     });
                     
-                    html += '</tbody></table></div>';
-                    historyContainer.html(html);
-                } else {
-                    historyContainer.html('<p class="text-muted text-center">Aucun historique d\'envoi</p>');
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const filename = response.headers.get('X-Filename') || 
+                            `report_${report.commandeRef}_${report.format}.${report.format}`;
+                        const filesize = parseInt(response.headers.get('X-File-Size')) || blob.size;
+                        
+                        // Créer une URL pour le blob
+                        const blobUrl = URL.createObjectURL(blob);
+                        
+                        // Mettre à jour le rapport
+                        report.status = 'completed';
+                        report.progress = 100;
+                        report.filename = filename;
+                        report.filesize = filesize;
+                        report.blobUrl = blobUrl;
+                        
+                        // Afficher une notification pour le premier rapport généré
+                        if (pendingReports.indexOf(report) === 0) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Rapport généré!',
+                                text: `Le rapport ${filename} a été généré avec succès.`,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        }
+                    } else {
+                        report.status = 'error';
+                        report.progress = 0;
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur de génération',
+                            text: `Erreur lors de la génération du rapport pour ${report.commandeRef}`,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                    
+                    updateReportsList();
+                    
+                } catch (error) {
+                    console.error('Erreur lors de la génération du rapport:', error);
+                    report.status = 'error';
+                    report.progress = 0;
+                    updateReportsList();
                 }
-            },
-            error: function(xhr) {
-                $('#emailHistory').html('<p class="text-danger text-center">Erreur lors du chargement de l\'historique</p>');
             }
-        });
-    }
+            
+            isGenerating = false;
+            $('#generateAllReports').prop('disabled', false).text('Générer tous les rapports');
+        }
 
-    function resetForm() {
-        $('#clientSelect').val(null).trigger('change');
-        $('#periodeSelect').val('today');
-        $('#commandesContainer').hide();
-        $('#sujetInput').val('');
-        $('#ccInput').val(''); // Reset du champ CC
-        tinymce.get('message').setContent('');
-        $('input[type="checkbox"]').prop('checked', false);
-        $('#fichiersInput').val('');
-        currentClientId = null;
-    }
+        // Modifiez la fonction updateSelectedCount pour inclure la génération de rapports
+        function updateSelectedCount() {
+            const selectedCount = $('.commande-checkbox:checked:not(:disabled)').length;
+            const totalCount = $('.commande-checkbox:not(:disabled)').length;
+            
+            // Récupérer les IDs des acheteurs des commandes sélectionnées
+            selectedAcheteurs.clear();
+            
+            $('.commande-checkbox:checked:not(:disabled)').each(function() {
+                const acheteurId = $(this).data('acheteur-id');
+                if (acheteurId) {
+                    selectedAcheteurs.add(parseInt(acheteurId));
+                }
+            });
+            
+            // Mettre à jour la liste des documents
+            if (selectedAcheteurs.size > 0) {
+                updateDocumentsList();
+            } else {
+                $('#documentsSection').hide();
+            }
+            
+            // Mettre à jour les rapports
+            updateReportsSection();
+            
+            if (selectedCount > 0) {
+                $('#commandesCount').text(`${selectedCount}/${totalCount} sélectionnée(s)`);
+            } else {
+                $('#commandesCount').text(`${totalCount} commande(s) éligibles`);
+            }
+        }
+
+
+        // Fonction pour collecter tous les documents sélectionnés
+        function collectSelectedDocuments() {
+            const selectedDocuments = [];
+            
+            // 1. Documents sélectionnés dans la section documents
+            $('.document-checkbox:checked').each(function() {
+                const documentId = $(this).val();
+                const fileName = $(this).data('file-name');
+                const fileUrl = $(this).data('file-url');
+                
+                if (documentId) {
+                    selectedDocuments.push({
+                        id: documentId,
+                        name: fileName,
+                        url: fileUrl,
+                        source: 'database'
+                    });
+                }
+            });
+            
+            // 2. Documents qui ont été ajoutés aux pièces jointes depuis la base
+            attachments.forEach(att => {
+                if (att.source === 'document' && att.documentId) {
+                    selectedDocuments.push({
+                        id: att.documentId,
+                        name: att.name,
+                        source: 'attachment'
+                    });
+                }
+            });
+            
+            return selectedDocuments;
+        }
+
+
+        // Nouvelle fonction pour soumettre le formulaire
+        function submitEmailForm() {
+            // ... code existant de préparation du formulaire ...
+            
+            // Ajouter les rapports générés aux pièces jointes
+            generatedReports.forEach((report, index) => {
+                if (report.status === 'completed' && report.blobUrl) {
+                    // Convertir l'URL blob en fichier
+                    fetch(report.blobUrl)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const file = new File([blob], report.filename, { 
+                                type: getMimeTypeByFormat(report.format) 
+                            });
+                            // Ajouter aux pièces jointes
+                            const attachment = {
+                                id: `report_${report.id}_${Date.now()}`,
+                                file: file,
+                                name: report.filename,
+                                size: report.filesize,
+                                type: getMimeTypeByFormat(report.format),
+                                status: 'ready',
+                                progress: 0,
+                                source: 'report'
+                            };
+                            attachments.push(attachment);
+                            
+                            // Mettre à jour la liste des pièces jointes
+                            if (index === generatedReports.length - 1) {
+                                updateAttachmentsList();
+                            }
+                        });
+                }
+            });
+            
+            // ... reste du code d'envoi ...
+        }
+
+        // Fonction utilitaire pour obtenir le type MIME par format
+        function getMimeTypeByFormat(format) {
+            const mimeTypes = {
+                'pdf': 'application/pdf',
+                'html': 'text/html',
+                'xml': 'application/xml'
+            };
+            return mimeTypes[format] || 'application/octet-stream';
+        }
+
+        
+
+        // Fonction pour charger l'historique des emails
+        function loadEmailHistory() {
+            const historyContainer = $('#emailHistory');
+            
+            // Afficher un indicateur de chargement
+            historyContainer.html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p class="mt-2">Chargement de l'historique...</p>
+                </div>
+            `);
+            
+            $.ajax({
+                url: '/api/mailing/history/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    console.log('Historique reçu:', response);
+                    
+                    // Vérifier la structure de la réponse
+                    const mails = response.mails || response.data || response;
+                    updateEmailHistory(mails);
+                },
+                error: function(xhr) {
+                    console.error('Erreur lors du chargement de l\'historique:', xhr);
+                    historyContainer.html(`
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Erreur lors du chargement de l'historique: ${xhr.responseJSON?.error || xhr.statusText}
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        function updateEmailHistory(mails) {
+            const historyContainer = $('#emailHistory');
+            
+            if (!mails || mails.length === 0) {
+                historyContainer.html(`
+                    <div class="text-center py-5">
+                        <i class="bi bi-envelope-x" style="font-size: 3rem; color: #6c757d;"></i>
+                        <h5 class="mt-3">Aucun historique d'envoi</h5>
+                        <p class="text-muted">Commencez par envoyer votre premier email</p>
+                    </div>
+                `);
+                return;
+            }
+            
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Sujet</th>
+                                <th>Commandes</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            mails.forEach(mail => {
+                // Vérifier si mail a une structure valide
+                if (!mail) return;
+                
+                const date = new Date(mail.date_sent || mail.created_at);
+                const dateStr = date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                const statusBadge = mail.success ? 
+                    '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Succès</span>' : 
+                    '<span class="badge bg-danger"><i class="bi bi-x-circle"></i> Échec</span>';
+                
+                // Récupérer le nom du client depuis la première commande
+                let clientName = 'Client inconnu';
+                let commandesCount = 0;
+                
+                if (mail.commands_details && mail.commands_details.length > 0) {
+                    commandesCount = mail.commands_details.length;
+                    // Essayer de récupérer le nom du client
+                    const firstCommande = mail.commands_details[0];
+                    if (firstCommande.acheteur_nom) {
+                        clientName = firstCommande.acheteur_nom;
+                    } else if (firstCommande.raison_sociale) {
+                        clientName = firstCommande.raison_sociale;
+                    }
+                }
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="fw-medium">${dateStr}</div>
+                            <small class="text-muted">${timeStr}</small>
+                        </td>
+                        <td>${clientName}</td>
+                        <td>${mail.subject || 'Sans sujet'}</td>
+                        <td>
+                            <span class="badge bg-info">${commandesCount} commande(s)</span>
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary view-mail-details" 
+                                    data-mail-id="${mail.id}">
+                                <i class="bi bi-eye"></i> Détails
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            historyContainer.html(html);
+            
+            // Réinitialiser les événements
+            $('.view-mail-details').off('click').on('click', function() {
+                const mailId = $(this).data('mail-id');
+                viewMailDetails(mailId);
+            });
+        }
+
+        function viewMailDetails(mailId) {
+            $.ajax({
+                url: `/api/mailing/history/${mailId}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    showMailDetailsModal(response);
+                },
+                error: function(xhr) {
+                    console.error('Erreur lors du chargement des détails:', xhr);
+                }
+            });
+        }
+
+        function showMailDetailsModal(data) {
+            const mail = data.mail;
+            const attachments = data.attachments;
+            
+            let detailsHtml = `
+                <div class="mail-details">
+                    <h6>Informations de l'envoi</h6>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th width="30%">Date d'envoi:</th>
+                            <td>${new Date(mail.date_sent).toLocaleString('fr-FR')}</td>
+                        </tr>
+                        <tr>
+                            <th>Expéditeur:</th>
+                            <td>${mail.user_name}</td>
+                        </tr>
+                        <tr>
+                            <th>Sujet:</th>
+                            <td>${mail.subject || 'Non spécifié'}</td>
+                        </tr>
+                        <tr>
+                            <th>CC:</th>
+                            <td>${mail.cc_list?.join(', ') || 'Aucun'}</td>
+                        </tr>
+                        <tr>
+                            <th>Formats:</th>
+                            <td>${mail.formats_generes?.join(', ') || 'Aucun'}</td>
+                        </tr>
+                        <tr>
+                            <th>Statut:</th>
+                            <td>${mail.success ? 
+                                '<span class="badge bg-success">Succès</span>' : 
+                                '<span class="badge bg-danger">Échec</span>'}</td>
+                        </tr>
+                    </table>
+                    
+                    <h6 class="mt-4">Commandes incluses</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Référence</th>
+                                    <th>Raison sociale</th>
+                                    <th>Date réception</th>
+                                    <th>Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            mail.commands_details.forEach(cmd => {
+                detailsHtml += `
+                    <tr>
+                        <td>${cmd.notre_ref}</td>
+                        <td>${cmd.raison_sociale}</td>
+                        <td>${cmd.date_recept_commande_formatted}</td>
+                        <td>${cmd.type_rapport}</td>
+                    </tr>
+                `;
+            });
+            
+            detailsHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+            `;
+            
+            if (attachments && attachments.length > 0) {
+                detailsHtml += `
+                    <h6 class="mt-4">Pièces jointes (${attachments.length})</h6>
+                    <div class="list-group">
+                `;
+                
+                attachments.forEach(att => {
+                    const sizeMB = (att.size / (1024 * 1024)).toFixed(2);
+                    detailsHtml += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-paperclip me-2"></i>
+                                    ${att.name}
+                                    <small class="text-muted ms-2">${sizeMB} MB</small>
+                                </div>
+                                <a href="${att.url}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                detailsHtml += `</div>`;
+            }
+            
+            detailsHtml += `</div>`;
+            
+            // Afficher dans la modal
+            $('#mailDetailContent').html(detailsHtml);
+            $('#mailDetailModal').modal('show');
+        }
+
+
+
+        // Dans votre script, ajoutez cette fonction
+        function stripHtmlTags(html) {
+            if (!html) return '';
+            
+            // Créer un élément DOM temporaire
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Remplacer les balises de saut de ligne par des sauts de ligne réels
+            const brElements = tempDiv.getElementsByTagName('br');
+            for (let i = brElements.length - 1; i >= 0; i--) {
+                const br = brElements[i];
+                const parent = br.parentNode;
+                parent.insertBefore(document.createTextNode('\n'), br);
+                parent.removeChild(br);
+            }
+            
+            // Remplacer les paragraphes
+            const pElements = tempDiv.getElementsByTagName('p');
+            for (let i = pElements.length - 1; i >= 0; i--) {
+                const p = pElements[i];
+                const parent = p.parentNode;
+                parent.insertBefore(document.createTextNode('\n\n'), p);
+                parent.removeChild(p);
+            }
+            
+            // Extraire le texte
+            let text = tempDiv.textContent || tempDiv.innerText || '';
+            
+            // Nettoyer les espaces multiples mais garder les sauts de ligne
+            text = text.replace(/[ \t]+/g, ' '); // Remplacer multiples espaces/tab par un seul
+            text = text.replace(/\n\s*\n\s*\n/g, '\n\n'); // Remplacer 3+ sauts de ligne par 2
+            text = text.trim();
+            
+            return text;
+        }
+
+        function htmlToPlainText(html) {
+            if (!html) return '';
+            
+            // Créer un élément pour manipuler le HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Remplacer les balises par des caractères de formatage
+            let text = html
+                .replace(/<br\s*\/?>/gi, '\n') // <br> -> saut de ligne
+                .replace(/<\/p>/gi, '\n\n') // Fin de paragraphe -> double saut
+                .replace(/<p>/gi, '') // Début de paragraphe -> rien
+                .replace(/<\/div>/gi, '\n') // Fin de div -> saut
+                .replace(/<div[^>]*>/gi, '') // Début de div -> rien
+                .replace(/<[^>]+>/g, ''); // Supprimer toutes les autres balises
+            
+            // Nettoyer les espaces
+            text = text
+                .replace(/\n\s+/g, '\n') // Supprimer espaces après saut
+                .replace(/\s+\n/g, '\n') // Supprimer espaces avant saut
+                .replace(/\n{3,}/g, '\n\n') // Limiter à 2 sauts consécutifs max
+                .trim();
+            
+            return text;
+        }
+
+        function htmlToPlainTextWithFormatting(html) {
+            if (!html) return '';
+            
+            let text = html
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/p>/gi, '\n\n')
+                .replace(/<p>/gi, '')
+                .replace(/<[^>]+>/g, '') // Supprimer toutes les balises
+                .replace(/&nbsp;/g, ' ') // Remplacer les espaces insécables
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+            
+            // Nettoyer l'espacement
+            text = text
+                .replace(/[ \t]+/g, ' ') // Remplacer multiples espaces/tabs
+                .replace(/\n[ \t]+/g, '\n') // Supprimer espaces après saut
+                .replace(/[ \t]+\n/g, '\n') // Supprimer espaces avant saut
+                .replace(/\n{3,}/g, '\n\n') // Max 2 sauts consécutifs
+                .trim();
+            
+            return text;
+        }
+
+        // Code JavaScript pour la prévisualisation
+        $('#previewPlainText').on('click', function() {
+            const htmlContent = tinymce.get('message').getContent();
+            const plainText = stripHtmlTags(htmlContent);
+            
+            Swal.fire({
+                title: 'Prévisualisation du message (texte brut)',
+                html: `
+                    <div class="text-start">
+                        <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+        ${plainText}
+                        </pre>
+                        <div class="mt-3 text-muted">
+                            <small><i class="bi bi-info-circle"></i> C'est ainsi que le message apparaîtra dans l'email</small>
+                        </div>
+                    </div>
+                `,
+                width: 800,
+                showCloseButton: true,
+                showConfirmButton: false
+            });
+        });
+
+        // Ajouter/modifier dans le script JavaScript existant
+        function sendEmailWithAttachments() {
+            // Vérifications préalables
+            const clientInfo = $('#clientSelect').data('client-info');
+            if (!clientInfo || !clientInfo.id) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Client manquant',
+                    text: 'Veuillez sélectionner un client',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            const selectedCommandes = $('.commande-checkbox:checked');
+            if (selectedCommandes.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Aucune commande sélectionnée',
+                    text: 'Veuillez sélectionner au moins une commande',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            const selectedFormats = getSelectedFormats();
+            if (selectedFormats.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Aucun format sélectionné',
+                    text: 'Veuillez sélectionner au moins un format de rapport',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            // Vérifier que tous les rapports sont générés
+            const pendingReports = generatedReports.filter(report => report.status !== 'completed');
+            if (pendingReports.length > 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Rapports en cours de génération',
+                    text: `${pendingReports.length} rapport(s) sont encore en cours de génération. Voulez-vous continuer?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, envoyer',
+                    cancelButtonText: 'Attendre'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        proceedWithEmailSending();
+                    }
+                });
+                return;
+            }
+            
+            proceedWithEmailSending();
+        }
+
+        // Fonction pour afficher un résumé avant envoi
+        function showSendConfirmation(formData) {
+            const commandesIds = formData.getAll('commandes');
+            const documentsIds = formData.getAll('documents_ids');
+            const formats = formData.getAll('formats');
+            
+            let summaryHtml = `
+                <div class="text-start">
+                    <h6>Résumé de l'envoi:</h6>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><strong>Commandes:</strong></span>
+                            <span class="badge bg-primary">${commandesIds.length}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><strong>Formats de rapport:</strong></span>
+                            <span>${formats.join(', ')}</span>
+                        </li>
+            `;
+            
+            if (documentsIds.length > 0) {
+                summaryHtml += `
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span><strong>Documents à joindre:</strong></span>
+                            <span class="badge bg-success">${documentsIds.length}</span>
+                        </li>
+                `;
+                
+                // Afficher la liste des documents
+                summaryHtml += `
+                        <li class="list-group-item">
+                            <strong>Liste des documents:</strong>
+                            <ul class="mt-2" style="padding-left: 20px;">
+                `;
+                
+                // Récupérer les noms des documents sélectionnés
+                const documentNames = [];
+                $('.document-checkbox:checked').each(function() {
+                    const fileName = $(this).data('file-name');
+                    if (fileName) {
+                        documentNames.push(fileName);
+                    }
+                });
+                
+                attachments.forEach(att => {
+                    if (att.documentId && att.name) {
+                        documentNames.push(att.name);
+                    }
+                });
+                
+                // Éliminer les doublons
+                const uniqueNames = [...new Set(documentNames)];
+                uniqueNames.forEach(name => {
+                    summaryHtml += `<li><small>${name}</small></li>`;
+                });
+                
+                summaryHtml += `
+                            </ul>
+                        </li>
+                `;
+            }
+            
+            summaryHtml += `
+                    </ul>
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i> Vérifiez que tous les éléments sont corrects avant d'envoyer.
+                    </div>
+                </div>
+            `;
+            
+            return Swal.fire({
+                title: 'Confirmer l\'envoi',
+                html: summaryHtml,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Oui, envoyer',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                width: 600
+            });
+        }
+
+        // Fonction pour envoyer l'email - version corrigée
+        function proceedWithEmailSending() {
+            // Afficher un indicateur de chargement
+            const sendButton = $('#emailForm button[type="submit"]');
+            const originalText = sendButton.html();
+            sendButton.prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Envoi en cours...');
+            
+            const clientInfo = $('#clientSelect').data('client-info');
+            const selectedCommandes = $('.commande-checkbox:checked');
+            
+            // Vérifications de base
+            if (!clientInfo || !clientInfo.id) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Client manquant',
+                    text: 'Veuillez sélectionner un client',
+                    confirmButtonText: 'OK'
+                });
+                sendButton.prop('disabled', false).html(originalText);
+                return;
+            }
+            
+            if (selectedCommandes.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Aucune commande sélectionnée',
+                    text: 'Veuillez sélectionner au moins une commande',
+                    confirmButtonText: 'OK'
+                });
+                sendButton.prop('disabled', false).html(originalText);
+                return;
+            }
+            
+            const selectedFormats = getSelectedFormats();
+            if (selectedFormats.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Aucun format sélectionné',
+                    text: 'Veuillez sélectionner au moins un format de rapport',
+                    confirmButtonText: 'OK'
+                });
+                sendButton.prop('disabled', false).html(originalText);
+                return;
+            }
+            
+            // Préparer FormData
+            const formData = new FormData();
+            formData.append('client_id', clientInfo.id);
+            formData.append('sujet', $('#sujetInput').val());
+            
+            // Message avec HTML converti en texte
+            const messageHtml = tinymce.get('message').getContent();
+            const plainTextMessage = stripHtmlTags(messageHtml);
+            // Version HTML propre (sans les balises problématiques)
+            const cleanHtml = messageHtml
+                .replace(/<br\s*\/?>/gi, '<br>')
+                .replace(/\n/g, '') // Supprimer les \n du HTML
+                .replace(/\s+/g, ' ') // Normaliser les espaces dans le HTML
+                .trim();
+            
+            // Version texte avec formatage préservé
+            const plainText = htmlToPlainTextWithFormatting(messageHtml);
+            formData.append('message', plainText);
+            formData.append('html_message', cleanHtml);
+            
+            // CC
+            const ccInput = $('#ccInput').val();
+            if (ccInput) {
+                formData.append('cc', ccInput);
+            }
+            
+            // Commandes
+            const commandesIds = [];
+            selectedCommandes.each(function() {
+                commandesIds.push($(this).val());
+                formData.append('commandes', $(this).val());
+            });
+            
+            // Formats
+            selectedFormats.forEach(format => {
+                formData.append('formats', format);
+            });
+            
+            // Documents
+            const documentIds = [];
+            $('.document-checkbox:checked').each(function() {
+                const docId = $(this).val();
+                if (docId) {
+                    documentIds.push(docId);
+                    formData.append('documents_ids', docId);
+                }
+            });
+            
+            // Pièces jointes
+            attachments.forEach((attachment, index) => {
+                formData.append(`attachments_${index}`, attachment.file);
+            });
+            
+            // Période
+            formData.append('periode', $('#periodeSelect').val());
+            formData.append('nbre_days', $('#nbreDays').val() || '7');
+            
+            // DEBUG
+            console.log('FormData préparé:');
+            console.log('- Client:', clientInfo.id);
+            console.log('- Commandes:', commandesIds.length);
+            console.log('- Formats:', selectedFormats);
+            console.log('- Documents:', documentIds.length);
+            console.log('- Pièces jointes:', attachments.length);
+            
+            // Envoyer directement sans confirmation (ou avec confirmation simplifiée)
+            $.ajax({
+                url: '/api/mailing/send-email/',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                timeout: 300000, // 5 minutes timeout
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function(response) {
+                    console.log('Réponse API:', response);
+                    
+                    if (response.success) {
+                        let successHtml = `
+                            <div class="text-start">
+                                <p>✅ Email envoyé avec succès!</p>
+                                <p><strong>Destinataire:</strong> ${clientInfo.nom}</p>
+                                <p><strong>Commandes:</strong> ${response.commandes_count}</p>
+                                <p><strong>Formats:</strong> ${response.formats.join(', ')}</p>
+                        `;
+                        
+                        if (response.documents_count > 0) {
+                            successHtml += `<p><strong>Documents joints:</strong> ${response.documents_count}</p>`;
+                        }
+                        
+                        successHtml += `
+                                <p><strong>Référence:</strong> #${response.mail_id}</p>
+                            </div>
+                        `;
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès!',
+                            html: successHtml,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            resetForm();
+                            loadEmailHistory();
+                            $('#history-tab').tab('show');
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: response.error || 'Une erreur est survenue',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erreur AJAX:', xhr);
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    
+                    let errorMessage = 'Erreur lors de l\'envoi';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseText) {
+                        // Essayez de parser l'erreur
+                        try {
+                            const errorData = JSON.parse(xhr.responseText);
+                            errorMessage = errorData.error || errorMessage;
+                        } catch (e) {
+                            errorMessage = xhr.responseText.substring(0, 200);
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur d\'envoi',
+                        html: `
+                            <div class="text-start">
+                                <p><strong>Erreur:</strong></p>
+                                <p class="text-danger">${errorMessage}</p>
+                                <p class="text-muted">Code HTTP: ${xhr.status}</p>
+                            </div>
+                        `,
+                        confirmButtonText: 'OK'
+                    });
+                },
+                complete: function() {
+                    // Toujours réactiver le bouton
+                    sendButton.prop('disabled', false).html(originalText);
+                }
+            });
+        }
+
+
+
+        // Dans la fonction de soumission du formulaire
+        // Gestionnaire PRINCIPAL et UNIQUE du formulaire
+        $('#emailForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            // Vérifications rapides
+            const clientInfo = $('#clientSelect').data('client-info');
+            if (!clientInfo || !clientInfo.id) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Client manquant',
+                    text: 'Veuillez sélectionner un client',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            const selectedCommandes = $('.commande-checkbox:checked');
+            if (selectedCommandes.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Aucune commande sélectionnée',
+                    text: 'Veuillez sélectionner au moins une commande',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            // Appeler la fonction d'envoi principale
+            proceedWithEmailSending();
+        });
+
+        // SUPPRIMEZ tout le code qui suit dans l'ancien gestionnaire
+        
+        // Gérer le reset du formulaire
+        // Modifier la fonction resetForm
+        function resetForm() {
+            // Réinitialiser les champs du formulaire
+            $('#clientSelect').val(null).trigger('change');
+            $('#periodeSelect').val('');
+            $('#nbreDays').val('7');
+            $('#sujetInput').val('');
+            $('#ccInput').val('');
+            tinymce.get('message').setContent('');
+            $('#fichiersInput').val('');
+            
+            // Réinitialiser les listes
+            resetCommandesList();
+            
+            // Réinitialiser les pièces jointes
+            attachments = [];
+            updateAttachmentsList();
+            
+            // Réinitialiser les documents
+            selectedAcheteurs.clear();
+            $('#documentsSection').hide();
+            
+            // Réinitialiser les rapports
+            generatedReports = [];
+            updateReportsList();
+            
+            // Masquer le champ jours
+            $('#joursContainer').hide();
+            
+            // Réinitialiser les données client
+            $('#clientSelect').removeData('client-info');
+        }
+        
+        // Initialiser l'état du champ jours
+        toggleJoursField();
+    });
 </script>
+
+
 {% endblock %}

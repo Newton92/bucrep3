@@ -4973,12 +4973,53 @@ urlpatterns = [
     path('api/reporting/commandes/acheteur/<int:acheteur_id>/', liste_commandes_acheteur, name='liste_commandes_acheteur'),
     path('api/reporting/generer-rapport-solvabilite/', generer_rapport_solvabilite, name='generer_rapport_solvabilite'),
     
+    
+    path('api/mailing/clients/', ClientListView.as_view(), name='client-list'),
+    path('api/mailing/clients/<int:client_id>/commandes/', get_client_commandes, name='client-commandes'),
+    path('api/mailing/documents-by-acheteurs/', get_documents_by_acheteurs, name='documents-by-acheteurs'),
+    path('api/mailing/commandes-acheteurs/', get_acheteurs_by_commandes, name='commandes-acheteurs'),
+    # path('api/mailing/generate-report/', generate_report, name='generate-report'),
+    # path('api/mailing/generate-report-commandes-acheteurs/', GenerateReportCommandeAcheteur.as_view(), name='generate-commandes-acheteurs'),
+    
     path('api/mailing/clients/autocomplete/', get_clients_autocomplete, name='api_mailing_clients_autocomplete'),
     path('api/mailing/client/<int:client_id>/commandes/', get_commandes_by_client, name='api_mailing_client_commandes'),
-    path('api/mailing/send-email/', send_rapports_email, name='api_mailing_send_email'),
-    path('api/mailing/history/', get_email_history, name='api_mailing_history'),
+    path('api/mailing/documents/by-acheteurs/', get_documents_by_acheteurs, name='api_mailing_documents_by_acheteurs'),
+    # path('api/mailing/send-detailed-email/', send_detailed_email, name='api_mailing_send_detailed_email'),
+    # path('api/mailing/send-email/', send_rapports_email, name='api_mailing_send_email'),
+    # path('api/mailing/history/', get_email_history, name='api_mailing_history'),
+    # path('api/mailing/history/<int:mail_id>/', get_mail_details, name='api_mailing_history_detail'),
     
+    # path('api/mailing/clients/', get_clients, name='api_mailing_clients'),
+    # path('api/mailing/commandes-acheteurs/', get_acheteurs_from_commandes, name='api_mailing_commandes_acheteurs'),
+    # path('api/mailing/generate-report/', generate_report, name='api_mailing_generate_report'),
+    # path('api/mailing/send-email/', send_email, name='api_mailing_send_email'),
+    
+    
+    
+    # Clients
+    # path('api/mailing/clients/', get_clients, name='api_mailing_clients'),
+    # path('api/mailing/clients/autocomplete/', get_clients_autocomplete, name='api_mailing_clients_autocomplete'),
+    
+    # Commandes
+    path('api/mailing/clients/<int:client_id>/commandes/', get_commandes_by_client, name='api_mailing_client_commandes'),
+    
+    # Documents
+    path('api/mailing/documents/by-acheteurs/', get_documents_by_acheteurs, name='api_mailing_documents_by_acheteurs'),
+    path('api/mailing/commandes-acheteurs/', get_acheteurs_from_commandes, name='api_mailing_commandes_acheteurs'),
+    
+    # Rapports
+    path('api/mailing/generate-report/', generate_report, name='api_mailing_generate_report'),
+    
+    # Envoi d'emails
+    path('api/mailing/send-email/', send_email, name='api_mailing_send_email'),
+    
+    # Historique
+    path('api/mailing/history/', get_email_history, name='api_mailing_history'),
+    path('api/mailing/history/<int:mail_id>/', get_mail_details, name='api_mailing_history_detail'),
+    
+    # Exportation
     path('api/reporting/exporter-rapport/', exporter_rapport, name='exporter_rapport'),
+    
 
         
     

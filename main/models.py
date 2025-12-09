@@ -11120,12 +11120,24 @@ class MailInfo(SafeDeleteModel):
     commands = models.ManyToManyField('Commande')
 
     success = models.BooleanField(default=False)
+    
+    # Ajouter ces champs
+    subject = models.CharField(_("Sujet"), max_length=500, blank=True, null=True)
+    cc_emails = models.TextField(_("Emails en CC"), blank=True, null=True)
+    formats_generes = models.JSONField(_("Formats générés"), default=list, blank=True)
+    custom_days = models.IntegerField(_("Nombre de jours personnalisé"), null=True, blank=True)
 
     # Historique complet
     history = HistoricalRecords()
 
     def __str__(self):
         return f"Mail envoyé le {self.date_sent} par {self.user}"
+    
+    def get_cc_list(self):
+        """Retourne la liste des emails en CC"""
+        if self.cc_emails:
+            return [email.strip() for email in self.cc_emails.split(';') if email.strip()]
+        return []
 
 
 class MailAttachment(SafeDeleteModel):

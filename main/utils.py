@@ -5014,9 +5014,9 @@ def generate_test_commandes(nombre=15):
     clients = Client.objects.all()[:5]
     acheteurs = Acheteur.objects.all()[:5] 
     analysts = CustomUser.objects.filter(role='analyste')[:3]
-    pays = Pays.objects.first() or Pays.objects.create(nom='France')
-    ville = Ville.objects.first() or Ville.objects.create(nom='Paris', pays=pays)
-    devise = Devise.objects.first() or Devise.objects.create(code='EUR', nom='Euro', symbole='€')
+    pays = Pays.objects.first() or Pays.objects.create(nom='Gabon')
+    ville = Ville.objects.first() or Ville.objects.create(nom='Libreville', pays=pays)
+    devise = Devise.objects.first() or Devise.objects.create(code='XAF', nom='Franc CFA', symbole='FCFA')
     modele_rapport = ModeleRapport.objects.first() or ModeleRapport.objects.create(nom='Standard', code='STD')
     
     # Si pas assez de clients, en créer
@@ -5045,7 +5045,7 @@ def generate_test_commandes(nombre=15):
                 username=f"analyste{i}",
                 email=f"analyste{i}@acremac.fr",
                 password="password123",
-                role="analyste",
+                role="Analyste",
                 first_name=f"Analyste{i}",
                 last_name="Test"
             )
