@@ -684,6 +684,11 @@ urlpatterns = [
         dash_root_manage_acheteur_emailling,
         name="dash_root_manage_acheteur_emailling",
     ),
+    path(
+        "root-dashboard/acheteurs/rapports/envoi-des-emails/",
+        dash_root_manage_report_mailing,
+        name="dash_root_manage_report_mailing",
+    ),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR ROOT                                                                                             #

@@ -1578,6 +1578,34 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
         context,
     )
 
+@login_required
+def dash_root_manage_report_mailing(request):
+    token = request.GET.get("token")
+    if not token:
+        pass
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Récupérer tous les colorations
+    coloration_list = CouleurCommentaire.objects.all()
+    
+    context = {
+        "reports_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "coloration_list": coloration_list,
+    }
+    
+    return render(
+        request,
+        "main/root/report/dash_root_manage_report_mailing.html",
+        context,
+    )
+
 
 
 
