@@ -43,6 +43,7 @@ from main.api.views_scoring_ifrs import *
 from main.api.views_solvency_reporting_system import *
 from main.api.views_reporting import *
 from main.api.views_api_emailling import *
+from main.api.views_bucrep3 import *
 
 # from .views import PaysViewSet
 
@@ -688,6 +689,11 @@ urlpatterns = [
         "root-dashboard/acheteurs/rapports/envoi-des-emails/",
         dash_root_manage_report_mailing,
         name="dash_root_manage_report_mailing",
+    ),
+    path(
+        "root-dashboard/sauvegardes/",
+        dash_root_manage_backup,
+        name="dash_root_manage_backup",
     ),
     ########################################################################################################################
     #                                                                                                                      #
@@ -5031,6 +5037,9 @@ urlpatterns = [
     path("api/profile/", UserProfileView.as_view(), name="user-profile"),
     path("api/profile/avatar/", UserAvatarView.as_view(), name="user-avatar-update"),
     path("api/profile/change-password/", ChangePasswordView.as_view(), name="change-password"),
+    
+    path('api/database/dump/', DatabaseDumpAPIView.as_view(), name='api-db-dump'),
+    path('api/telecharger-data-sql/', telecharger_donnees_postgres_sql_texte, name='telecharger_data_sql'),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END                                                                                                      #

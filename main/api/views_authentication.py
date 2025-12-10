@@ -16,10 +16,39 @@ from rest_framework.permissions import IsAuthenticated
 
 from main.models import CustomUser, Pays
 from main.serializers import PaysSerializer
+import requests
 
 # Create your views here.
 
 # === Fonctions Utilitaires === #
+
+
+def get_country_from_ip(ip):
+    try:
+        # API gratuite : ipapi.co (pas besoin de clé)
+        url = f"https://ipapi.co/{ip}/json/"
+        data = requests.get(url, timeout=3).json()
+
+        country_code = data.get("country_code")
+        country_name = data.get("country_name")
+
+        if country_code:
+            try:
+                return Pays.objects.get(code__iexact=country_code)
+            except Pays.DoesNotExist:
+                pass
+
+        if country_name:
+            try:
+                return Pays.objects.get(nom__iexact=country_name)
+            except Pays.DoesNotExist:
+                pass
+
+    except Exception:
+        pass
+
+    return None   # Aucun pays trouvé
+
 
 
 def generate_token(length=32):
@@ -232,8 +261,40 @@ class CustomLoginView(APIView):
             user.save()
             
             # Récupérer le pays sélectionné depuis la session (ou utiliser celui de l'utilisateur par défaut)
-            selected_pays_id = request.session.get('selected_pays_id', user.pays.id)
-            selected_pays = Pays.objects.get(id=selected_pays_id)
+            # selected_pays_id = request.session.get('selected_pays_id', user.pays.id)
+            # selected_pays = Pays.objects.get(id=selected_pays_id)
+            
+            # Détection du pays selon le rôle
+            if user.role == "Root":
+
+                # 1) IP du client
+                client_ip = request.META.get("REMOTE_ADDR")
+
+                # 2) Géolocalisation
+                selected_pays = get_country_from_ip(client_ip)
+
+                # 3) Si la géolocalisation échoue → pays par défaut
+                if not selected_pays:
+                    selected_pays = Pays.objects.filter(is_active=True).first()
+                    # Pays.objects.get(code=settings.DEFAULT_COUNTRY_CODE)
+
+
+                selected_pays_id = selected_pays.id if selected_pays else None
+
+            else:
+                # Pour les utilisateurs normaux
+                selected_pays_id = request.session.get("selected_pays_id")
+
+                if selected_pays_id:
+                    selected_pays = Pays.objects.get(id=selected_pays_id)
+                elif user.pays:
+                    selected_pays = user.pays
+                    selected_pays_id = user.pays.id
+                else:
+                    # Pays.objects.get(code=settings.DEFAULT_COUNTRY_CODE)
+                    selected_pays = Pays.objects.filter(is_active=True).first()
+                    selected_pays_id = selected_pays.id if selected_pays else None
+
 
             # Réponse avec cookies sécurisés
             response = Response({"message": "Authentification réussie."})

@@ -205,18 +205,6 @@ elements = [
     },
 ]
 
-
-# Recuperer les mails ici !
-# Exécuter la récupération des emails en tâche de fond
-def run_fetch_emails():
-    try:
-        fetch_and_save_emails()
-    except Exception as e:
-        print(f"Erreur lors de la récupération des emails : {e}")
-
-    threading.Thread(target=run_fetch_emails, daemon=True).start()
-    
-    
     
     
 def dash_root_profile_page(request):
@@ -4709,6 +4697,28 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
         context,
     )
 
+    
+    
+    
+
+@login_required
+def dash_root_manage_backup(request):
+    token = request.GET.get("token")
+    if not token:
+        pass
+    user = request.user
+    refresh = RefreshToken.for_user(user)
+    context = {
+        "acheteurs_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+    }
+    return render(
+        request,
+        "main/root/backup/dash_root_manage_backup.html",
+        context,
+    )
 
 
 

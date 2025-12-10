@@ -1,0 +1,161 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Sauvegardes</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countCategories">Module de Gestion des Sauvegardes</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à la sauvegarde de la base de données.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+
+<!-- Catégories d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Sauvegardes & Backups</h5>
+            </div>
+            <!-- Card header END -->
+
+            
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-12">
+                        <h3 class="mb-4">🔒 Espace de Sauvegarde Administrateur</h3>
+                        <p>Cliquez sur le bouton ci-dessous pour lancer l'exportation complète de la base de données PostgreSQL. Cela peut prendre plusieurs minutes.</p>
+
+                        <button 
+                            id="download-btn" 
+                            class="btn btn-primary btn-lg" 
+                            onclick="telechargerBaseDeDonnees()">
+                            💾 Télécharger la Sauvegarde (.dump)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0"></div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- Catégories d'Entreprise END -->
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.tiny.cloud/1/15g9gea93s4iu2nc0kbwy400iy8l76gi94t0gkjkn7f1gzrz/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    $(document).ready(function() {
+        // Initialiser TinyMCE
+        tinymce.init({
+            selector: '#description, #editDescription',  // Sélecteurs pour les textareas
+            plugins: 'link image code',
+            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
+            height: 250
+        });
+
+        // Votre script JavaScript existant ici
+    });
+</script>
+
+<script>
+    // L'URL de votre API DRF
+    const API_URL = "{% url 'api-db-dump' %}"; 
+
+    async function telechargerBaseDeDonnees() {
+        const downloadButton = document.getElementById('download-btn');
+        downloadButton.disabled = true;
+
+        // 1. Afficher le SweetAlert de chargement
+        Swal.fire({
+            title: 'Sauvegarde en cours...',
+            html: 'Veuillez patienter, cela peut prendre plusieurs minutes en fonction du volume de données (10 ans). N\'actualisez pas la page.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            // 2. Consommer l'API avec Axios
+            const response = await axios({
+                url: API_URL,
+                method: 'GET',
+                responseType: 'blob', // IMPORTANT: On attend un Blob (fichier binaire)
+                headers: {
+                    // Si vous utilisez Token Auth ou Session Auth, vous pourriez devoir ajouter le token CSRF/Auth ici
+                    'X-CSRFToken': '{{ csrf_token }}' 
+                }
+            });
+
+            // 3. Traitement du téléchargement (Astuce pour forcer le téléchargement)
+            const filename = response.headers['content-disposition'].split('filename=')[1].replace(/"/g, '');
+            
+            // Créer un lien temporaire pour déclencher le téléchargement du Blob
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            
+            // 4. Fermer le SweetAlert et afficher le succès
+            Swal.close();
+            Swal.fire('Succès !', 'La sauvegarde a été téléchargée avec succès.', 'success');
+
+        } catch (error) {
+            // 5. Gérer les erreurs (Timeout, 403 Forbidden, 500 Server Error, etc.)
+            console.error("Erreur de téléchargement :", error);
+            
+            let errorMessage = 'Une erreur inattendue est survenue.';
+            if (error.response) {
+                // Si l'erreur vient du serveur (4xx, 5xx)
+                errorMessage = `Erreur ${error.response.status} : Vous n'êtes pas autorisé ou le serveur a échoué.`;
+            }
+            
+            Swal.close();
+            Swal.fire('Erreur !', errorMessage, 'error');
+
+        } finally {
+            downloadButton.disabled = false;
+        }
+    }
+</script>
+
+{% endblock %}
