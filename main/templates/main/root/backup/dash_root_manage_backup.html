@@ -22,7 +22,7 @@
             <div class="d-flex align-items-center">
                 <!-- Content -->
                 <div class="ms-3">
-                    <h4 id="countCategories">Module de Gestion des Sauvegardes</h4>
+                    <h4 id="countCategories">Module de Gestion des Sauvegardes & Importations</h4>
                     <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à la sauvegarde de la base de données.</span>
                 </div>
             </div>
@@ -56,6 +56,24 @@
                             class="btn btn-primary btn-lg" 
                             onclick="telechargerBaseDeDonnees()">
                             💾 Télécharger la Sauvegarde (.dump)
+                        </button>
+
+                        <button 
+                            class="btn btn-primary"
+                            onclick="executeCommand('nace')">
+                            Importer NACE
+                        </button>
+
+                        <button 
+                            class="btn btn-warning"
+                            onclick="executeCommand('notation')">
+                            Importer Modèle Notation
+                        </button>
+
+                        <button 
+                            class="btn btn-danger"
+                            onclick="executeCommand('comportement')">
+                            Importer Modèle Comportement Paiement
                         </button>
                     </div>
                 </div>
@@ -94,39 +112,38 @@
 </script>
 
 <script>
-    // L'URL de votre API DRF
-    const API_URL = "{% url 'api-db-dump' %}"; 
+    const API_URL = "{% url 'api-db-dump' %}";
+    const accessToken = "{{ access }}"; // JWT injecté depuis Django
 
     async function telechargerBaseDeDonnees() {
         const downloadButton = document.getElementById('download-btn');
         downloadButton.disabled = true;
 
-        // 1. Afficher le SweetAlert de chargement
+        // Afficher SweetAlert de chargement
         Swal.fire({
             title: 'Sauvegarde en cours...',
-            html: 'Veuillez patienter, cela peut prendre plusieurs minutes en fonction du volume de données (10 ans). N\'actualisez pas la page.',
+            html: 'Veuillez patienter, cela peut prendre plusieurs minutes en fonction du volume de données. N\'actualisez pas la page.',
             allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            didOpen: () => Swal.showLoading()
         });
 
         try {
-            // 2. Consommer l'API avec Axios
-            const response = await axios({
-                url: API_URL,
-                method: 'GET',
-                responseType: 'blob', // IMPORTANT: On attend un Blob (fichier binaire)
+            // Appel API avec JWT
+            const response = await axios.get(API_URL, {
+                responseType: 'blob',
                 headers: {
-                    // Si vous utilisez Token Auth ou Session Auth, vous pourriez devoir ajouter le token CSRF/Auth ici
-                    'X-CSRFToken': '{{ csrf_token }}' 
+                    'Authorization': 'Bearer ' + accessToken
                 }
             });
 
-            // 3. Traitement du téléchargement (Astuce pour forcer le téléchargement)
-            const filename = response.headers['content-disposition'].split('filename=')[1].replace(/"/g, '');
-            
-            // Créer un lien temporaire pour déclencher le téléchargement du Blob
+            // Extraire le nom du fichier depuis les headers
+            let filename = 'sauvegarde.dump';
+            const disposition = response.headers['content-disposition'];
+            if (disposition && disposition.includes('filename=')) {
+                filename = disposition.split('filename=')[1].replace(/"/g, '');
+            }
+
+            // Créer un lien temporaire pour télécharger le Blob
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -134,28 +151,78 @@
             document.body.appendChild(link);
             link.click();
             link.remove();
-            
-            // 4. Fermer le SweetAlert et afficher le succès
+
+            // Afficher succès
             Swal.close();
-            Swal.fire('Succès !', 'La sauvegarde a été téléchargée avec succès.', 'success');
+            Swal.fire('Succès !', `La sauvegarde "${filename}" a été téléchargée.`, 'success');
 
         } catch (error) {
-            // 5. Gérer les erreurs (Timeout, 403 Forbidden, 500 Server Error, etc.)
+            // Gestion améliorée des erreurs
             console.error("Erreur de téléchargement :", error);
-            
-            let errorMessage = 'Une erreur inattendue est survenue.';
+
+            let message = 'Une erreur inattendue est survenue.';
             if (error.response) {
-                // Si l'erreur vient du serveur (4xx, 5xx)
-                errorMessage = `Erreur ${error.response.status} : Vous n'êtes pas autorisé ou le serveur a échoué.`;
+                // Erreur côté serveur
+                if (error.response.status === 401) {
+                    message = 'Vous n’êtes pas autorisé à effectuer cette opération.';
+                } else if (error.response.status === 403) {
+                    message = 'Accès refusé. Vous devez être administrateur.';
+                } else {
+                    message = `Erreur ${error.response.status} : ${error.response.statusText}`;
+                }
+            } else if (error.request) {
+                // Pas de réponse du serveur
+                message = 'Aucune réponse du serveur. Vérifiez votre connexion.';
             }
-            
+
             Swal.close();
-            Swal.fire('Erreur !', errorMessage, 'error');
+            Swal.fire('Erreur ❌', message, 'error');
 
         } finally {
             downloadButton.disabled = false;
         }
     }
 </script>
+
+
+<script>
+    const API_URL_DATA = "{% url 'api-load-data' %}";
+    const accessTokenData = "{{ access }}";  // JWT injecté depuis la vue Django
+
+    function executeCommand(cmd) {
+
+        Swal.fire({
+            title: "Exécution...",
+            html: "Veuillez patienter pendant l'exécution de la commande.",
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        axios.get(API_URL_DATA, {
+            params: { cmd: cmd },
+            headers: {
+                'Authorization': 'Bearer ' + accessTokenData
+            }
+        })
+        .then(response => {
+            Swal.fire(
+                "Succès ✔",
+                "Commande exécutée avec succès",
+                "success"
+            );
+            console.log(response.data);
+        })
+        .catch(error => {
+            Swal.fire(
+                "Erreur ❌",
+                "Impossible d'exécuter la commande.",
+                "error"
+            );
+            console.error(error);
+        });
+    }
+</script>
+
+
 
 {% endblock %}

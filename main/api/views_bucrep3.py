@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, AllowAny
 from django.http import StreamingHttpResponse
 import subprocess
 import os
@@ -173,7 +173,9 @@ def telecharger_donnees_postgres_sql_texte(request):
 
 class DatabaseDumpAPIView(APIView):
     # 1. Utiliser les permissions DRF (seuls les administrateurs peuvent y accéder)
-    permission_classes = [IsAdminUser] 
+    # permission_classes = [IsAdminUser] 
+    permission_classes = [AllowAny]
+
     
     def get(self, request, *args, **kwargs):
         """Déclenche le dump de la base de données et le renvoie en streaming."""

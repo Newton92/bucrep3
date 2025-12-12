@@ -22,6 +22,7 @@ from main.api.views_warning import *
 from main.api.views_account import *
 from main.api.views_report import *
 from main.api.views_reporting import *
+from main.api.views_api_load_data import *
 from main.views import *
 from main.api.views_scoring import (
     ScoringSansBilanAcheteurDetailView,
@@ -5030,6 +5031,9 @@ urlpatterns = [
     
     # Exportation
     path('api/reporting/exporter-rapport/', exporter_rapport, name='exporter_rapport'),
+    
+    # Load data
+    path("load-data/", APILoadDataView.as_view(), name="api-load-data"),
     
 
         
