@@ -5043,6 +5043,7 @@ urlpatterns = [
     path("api/profile/change-password/", ChangePasswordView.as_view(), name="change-password"),
     
     path('api/database/dump/', DatabaseDumpAPIView.as_view(), name='api-db-dump'),
+    path('api/load-data/', APILoadDataView.as_view(), name='api-load-data'),
     path('api/telecharger-data-sql/', telecharger_donnees_postgres_sql_texte, name='telecharger_data_sql'),
     ########################################################################################################################
     #                                                                                                                      #

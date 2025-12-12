@@ -4,7 +4,30 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 
+from rest_framework.permissions import BasePermission
+
+class IsAdminOrHasPermission(BasePermission):
+    """
+    Permission personnalisée pour les imports
+    """
+    def has_permission(self, request, view):
+        # Vérifie si l'utilisateur est admin
+        if request.user.is_superuser:
+            return True
+        
+        # Vérifie les permissions spécifiques
+        allowed_commands = request.query_params.get('cmd', '')
+        if allowed_commands in ['provinces_pays', 'provinces_villes', 'provinces_complet']:
+            # Nécessite une permission spécifique
+            return request.user.has_perm('your_app.can_import_geographic_data')
+        
+        return request.user.has_perm('your_app.can_import_data')
+
+# Appliquer à la vue
+from rest_framework.permissions import IsAuthenticated
+
 class APILoadDataView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrHasPermission]
     """
     Lance une commande Django depuis une API.
     Ex : import_nace_simple, import_modele_notation_simple, etc.
@@ -23,7 +46,15 @@ class APILoadDataView(APIView):
         allowed_commands = {
             "nace": "import_nace_simple",
             "notation": "import_modele_notation_simple",
-            "comportement": "import_modele_comportement_paiement",
+            "comportement": "import_modele_comportement_paiement --clear",
+            "forme": "import_forme_juridique --clear --dry-run",
+            "poste": "import_domaines_poste_entreprise --clear --dry-run",
+            "poste_real": "import_domaines_poste_entreprise --clear",  # ← SANS dry-run
+            
+            # NOUVELLES COMMANDES POUR LES PROVINCES
+            "provinces_pays": "import_province_pays",
+            "provinces_villes": "import_province_in_ville",
+            "provinces_villes_dry": "import_province_in_ville --dry-run",  # Mode test
         }
 
         if command not in allowed_commands:
