@@ -19,6 +19,15 @@ from celery.schedules import crontab
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+
+# settings.py - Ajoutez à la configuration LOGGING
+import warnings
+warnings.filterwarnings('ignore', message="Invalid or unsupported selector")
+
+# Ou dans votre commande
+import warnings
+warnings.filterwarnings('ignore')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

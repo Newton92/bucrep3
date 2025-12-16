@@ -2248,7 +2248,6 @@ class RiskRating(Model):
         return svg_url
 
 
-
 class DonneesEnregistrement(Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
@@ -2260,6 +2259,9 @@ class DonneesEnregistrement(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
+    
+    nom_anterieur = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Nom antérieur"))
+    
     date_creation = models.DateField(
         null=True, blank=True, verbose_name=_("Date de création")
     )
@@ -2309,6 +2311,7 @@ class DonneesEnregistrement(Model):
     )
 
     commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
+    couleur_commentaire = models.ForeignKey("CouleurCommentaire", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur Commentaire"))
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -2359,6 +2362,10 @@ class Tendance(Model):
     principaux_concurrent = models.TextField(
         blank=True, verbose_name=_("Principaux concurrents")
     )
+    
+    plus_informations = models.CharField(max_length=100, choices=LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE, blank=True, verbose_name=_("Plus d'informations sur la notation"))
+    alarmes = models.CharField(max_length=100, choices=LIEN_ALARMES_CHOICE, blank=True, verbose_name=_("Alarmes"))
+    
     commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
 
     created_at = models.DateTimeField(
@@ -11197,5 +11204,19 @@ class DocDownload(models.Model):
 ##########################################################
 ##########################################################
 # Fin API
+##########################################################
+##########################################################
+
+
+##########################################################
+##########################################################
+# Debut Modules Pelba
+##########################################################
+##########################################################
+
+
+##########################################################
+##########################################################
+# Debut Modules Pelba
 ##########################################################
 ##########################################################
