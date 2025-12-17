@@ -3104,18 +3104,60 @@ class CompteFinancier(Model):
     safedelete_policy  = SOFT_DELETE_CASCADE
     
 
-    XAF = "XAF"
-    XOF = "XOF"
-    EUR = "EUR"
-    USD = "USD"
-    CHF = "CHF"
+    XAF = 'XAF'  # Franc CFA d'Afrique centrale (CEMAC)
+    XOF = 'XOF'  # Franc CFA d'Afrique de l'Ouest (UEMOA)
+    EUR = 'EUR'  # Euro
+    USD = 'USD'  # Dollar US
+    CHF = 'CHF'  # Franc suisse
+    GNF = 'GNF'  # Franc guinéen
+    GHS = 'GHS'  # Cedi ghanéen
+    MRU = 'MRU'  # Ouguiya mauritanien (nouvelle version, ex-MRO)
+    ZAR = 'ZAR'  # Rand sud-africain
+
+    # Maghreb
+    DZD = 'DZD'  # Dinar algérien
+    MAD = 'MAD'  # Dirham marocain
+    TND = 'TND'  # Dinar tunisien
+    LYD = 'LYD'  # Dinar libyen
+    SDG = 'SDG'  # Livre soudanaise (même si Soudan ≠ Maghreb, souvent associée)
+
+    # Autres monnaies africaines importantes
+    NGN = 'NGN'  # Naira nigérian
+    KES = 'KES'  # Shilling kényan
+    TZS = 'TZS'  # Shilling tanzanien
+    UGX = 'UGX'  # Shilling ougandais
+    ETB = 'ETB'  # Birr éthiopien
+    EGP = 'EGP'  # Livre égyptienne
+    AOA = 'AOA'  # Kwanza angolais
+    MWK = 'MWK'  # Kwacha malawite
+    ZMW = 'ZMW'  # Kwacha zambien
+    BWP = 'BWP'  # Pula botswanais
 
     STATUS_CHANGE = (
-        (XAF, "XAF"),
-        (XOF, "XOF"),
-        (EUR, "EUR"),
-        (USD, "USD"),
-        (CHF, "CHF"),
+        (XAF, 'XAF'),
+        (XOF, 'XOF'),
+        (EUR, 'EUR'),
+        (USD, 'USD'),
+        (CHF, 'CHF'),
+        (GNF, 'GNF'),
+        (GHS, 'GHS'),
+        (MRU, 'MRU'),
+        (ZAR, 'ZAR'),
+        (DZD, 'DZD'),
+        (MAD, 'MAD'),
+        (TND, 'TND'),
+        (LYD, 'LYD'),
+        (SDG, 'SDG'),
+        (NGN, 'NGN'),
+        (KES, 'KES'),
+        (TZS, 'TZS'),
+        (UGX, 'UGX'),
+        (ETB, 'ETB'),
+        (EGP, 'EGP'),
+        (AOA, 'AOA'),
+        (MWK, 'MWK'),
+        (ZMW, 'ZMW'),
+        (BWP, 'BWP'),
     )
 
     acheteur = models.ForeignKey(

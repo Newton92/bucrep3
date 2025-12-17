@@ -4699,6 +4699,37 @@ urlpatterns = [
         DeleteModeleAgeSocieteView.as_view(),
         name="delete-modele-age-societe",
     ),
+    
+    
+    
+    
+    
+    
+    path(
+        "api/liste-des-comportements-de-jugement/",
+        ListModeleComportementJugementView.as_view(),
+        name="list-comportement-de-jugement",
+    ),
+    path(
+        "api/recherche-comportement-de-jugement/",
+        SearchModeleComportementJugementView.as_view(),
+        name="search-comportement-de-jugement",
+    ),
+    path(
+        "api/ajouter-un-comportement-de-jugement/",
+        AddModeleComportementJugementView.as_view(),
+        name="add-comportement-de-jugement",
+    ),
+    path(
+        "api/editer-un-comportement-de-jugement/<int:id>/",
+        EditModeleComportementJugementView.as_view(),
+        name="edit-comportement-de-jugement",
+    ),
+    path(
+        "api/supprimer-des-comportements-de-jugement/",
+        DeleteModeleComportementJugementView.as_view(),
+        name="delete-comportement-de-jugement",
+    ),
 
     
     

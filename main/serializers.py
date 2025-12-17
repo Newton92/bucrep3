@@ -621,14 +621,42 @@ class SearchModeleComportementPaiementSerializer(serializers.ModelSerializer):
 class ModeleComportementJugementSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleComportementJugement
+              
+class AddModeleModeleComportementJugementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementJugement
+        fields = [
+            "code",
+            "libelle",
+        ]
+
+class EditModeleModeleComportementJugementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementJugement
+        fields = [
+            "id",
+            "code",
+            "libelle",
+        ]
+        extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+
+class SearchModeleModeleComportementJugementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ModeleComportementJugement
+        fields = "__all__"
+        
+     
+
+
+
+
 
 
 class ModeleAgeSocieteSerializer(BaseModeleSerializer):
     class Meta(BaseModeleSerializer.Meta):
         model = ModeleAgeSociete
         fields = "__all__"
-        
-        
+              
 class AddModeleAgeSocieteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModeleAgeSociete

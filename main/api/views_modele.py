@@ -1392,3 +1392,136 @@ class DeleteModeleAgeSocieteView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ListModeleModeleComportementJugementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get("search", "")
+        page_number = request.query_params.get("page", 1)
+        modele_list = ModeleComportementJugement.objects.filter(
+            Q(code__icontains=search_query) | Q(libelle__icontains=search_query)
+        ).order_by("libelle")
+        paginator = Paginator(modele_list, 10)
+        modele_page = paginator.get_page(page_number)
+        serializer = ModeleComportementJugementSerializer(modele_page, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": modele_page.has_next(),
+                "previous": modele_page.has_previous(),
+            }
+        )
+
+
+class SearchModeleComportementJugementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        search_term = request.query_params.get("search", "")
+        if not search_term:
+            return Response(
+                {"detail": "Terme de recherche manquant."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        modele_list = ModeleComportementJugement.objects.filter(
+            Q(code__icontains=search_term) | Q(libelle__icontains=search_term)
+        ).order_by("libelle")
+        paginator = Paginator(modele_list, 10)
+        page_number = request.query_params.get("page", 1)
+        modele_page = paginator.get_page(page_number)
+        serializer = SearchModeleComportementJugementSerializer(modele_page, many=True)
+        return Response(
+            {
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": modele_page.has_next(),
+                "previous": modele_page.has_previous(),
+            }
+        )
+
+
+class AddModeleComportementJugementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = AddModeleComportementJugementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EditModeleComportementJugementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id, *args, **kwargs):
+        modele = ModeleComportementJugement.objects.filter(id=id).first()
+        if not modele:
+            return Response(
+                {"detail": "Modèle de comportement de jugement non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = ModeleComportementJugementSerializer(modele)
+        return Response(serializer.data)
+
+    def put(self, request, id, *args, **kwargs):
+        modele = ModeleComportementJugement.objects.filter(id=id).first()
+        if not modele:
+            return Response(
+                {"detail": "Modèle de comportement de jugement non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        serializer = EditModeleComportementJugementSerializer(
+            modele, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteModeleComportementJugementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, *args, **kwargs):
+        ids = request.data.get("ids", [])
+        if not ids or not isinstance(ids, list):
+            return Response(
+                {"error": "Une liste d'IDs est requise."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        modeles = ModeleComportementJugement.objects.filter(id__in=ids)
+        if not modeles.exists():
+            return Response(
+                {
+                    "error": "Aucun modèle de comportement de jugement trouvé pour les IDs fournis."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        count, _ = modeles.delete()
+        return Response(
+            {
+                "message": f"{count} modèles de comportement de jugement supprimés avec succès."
+            },
+            status=status.HTTP_200_OK,
+        )
+

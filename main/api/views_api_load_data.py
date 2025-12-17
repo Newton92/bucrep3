@@ -25,8 +25,9 @@ class APILoadDataView(APIView):
         # Liste blanche des commandes autorisées
         allowed_commands = {
             "nace": "import_nace_simple",
-            "notation": "import_modele_notation_simple",
-            "comportement": "import_modele_comportement_paiement --clear",
+            "notation": "import_modele_notation --clear",
+            "comportementp": "import_modele_comportement_paiement --clear",
+            "comportementj": "import_modele_comportement_jugement --clear",
             "forme": "import_forme_juridique --clear --dry-run",
             "poste": "import_domaines_poste_entreprise --clear --dry-run",
             "poste_real": "import_domaines_poste_entreprise --clear",
