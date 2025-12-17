@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.min.css">
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{% static 'assets/images/bucrep-image.png' %}">
+    <link rel="shortcut icon" href="{% static 'assets/images/bucrep-image.PNG' %}">
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,6 +39,75 @@
 
     <!-- Theme CSS -->
     <link rel="stylesheet" type="text/css" href="{% static 'assets/css/style.css' %}">
+
+    <style>
+        .goog-te-banner-frame.skiptranslate {display: none !important;}
+        body {top: 0px !important;}
+    </style>
+
+    <style>
+      /* Supprime le bandeau bleu Google */
+      .goog-te-banner-frame.skiptranslate {display: none !important;}
+      body {top: 0px !important;}
+      #google_translate_element {display: none;} /* Cache le widget original */
+
+      /* Drapeaux */
+      .flag-icon {
+        width: 28px;
+        height: 20px;
+        cursor: pointer;
+        margin-left: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+
+      .flag-icon:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      }
+
+      /* Drapeau actif */
+      .flag-active {
+        border-color: #facc15 !important; /* jaune */
+        box-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
+        transform: scale(1.1);
+        animation: pulse 1.5s infinite;
+      }
+
+      /* Animation pulsation */
+      @keyframes pulse {
+        0% { box-shadow: 0 0 8px rgba(250, 204, 21, 0.7); }
+        50% { box-shadow: 0 0 15px rgba(250, 204, 21, 1); }
+        100% { box-shadow: 0 0 8px rgba(250, 204, 21, 0.7); }
+      }
+    </style>
+
+    <style>
+    /* Supprime la barre Google et ajuste la position du body */
+    .goog-te-banner-frame.skiptranslate { 
+        display: none !important; 
+    }
+    body { 
+        top: 0px !important; 
+    }
+
+    /* Masque le menu Google Translate (le sélecteur natif) */
+    #goog-gt-tt, .goog-te-balloon-frame, .goog-tooltip {
+        display: none !important;
+    }
+
+    /* Empêche Google de forcer une couleur de fond */
+    .goog-text-highlight { 
+        background: none !important; 
+        box-shadow: none !important; 
+    }
+
+    /* Masque la boîte de traduction contextuelle */
+    .goog-te-gadget { 
+        display: none !important; 
+    }
+    </style>
 </head>
 
 <body>
@@ -70,7 +139,7 @@
                                         <div class="p-4 p-sm-7">
                                             <!-- Logo -->
                                             <a href="{% url 'index' %}">
-                                                <img class="h-50px mb-4" src="{% static 'assets/images/bucrep-image.png' %}" alt="logo">
+                                                <img class="h-50px mb-4" src="{% static 'assets/images/bucrep-image.PNG' %}" alt="logo">
                                             </a>
                                             <!-- Title -->
                                             <h1 class="mb-2 h3" style="color: #0A95CA;">MOT DE PASSE OUBLIÉ</h1>
@@ -124,11 +193,11 @@
                                                 <!-- Drapeaux de sélection de langue -->
                                                 <div class="text-primary-hover text-body mt-3 text-center">
                                                     <a href="#" class="lang-flag" data-lang="fr">
-                                                        <img height="30" width="25" src="{% static 'assets/images/french.png' %}" alt="Français">
+                                                        <img height="30" width="25" src="{% static 'assets/images/french.png' %}" id="flag-fr" alt="Français">
                                                     </a>
                                                     &nbsp;
                                                     <a href="#" class="lang-flag" data-lang="en">
-                                                        <img height="30" width="27" src="{% static 'assets/images/english.png' %}" alt="Anglais">
+                                                        <img height="30" width="27" src="{% static 'assets/images/english.png' %}" id="flag-en" alt="Anglais">
                                                     </a>
                                                 </div>
 
@@ -150,69 +219,71 @@
 
     </div>
 
-<!-- Back to top -->
-<div class="back-top"></div>
+    
+     <!-- Élément caché Google Translate -->
+    <div id="google_translate_element" style="display: none;"></div>
 
-<!-- Bootstrap JS -->
-<script src="{% static 'assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Back to top -->
+    <div class="back-top"></div>
 
-<!-- ThemeFunctions -->
-<script src="{% static 'assets/js/functions.js' %}"></script>
+    <!-- Bootstrap JS -->
+    <script src="{% static 'assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
 
-<!-- SweetAlert JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.all.min.js"></script>
+    <!-- ThemeFunctions -->
+    <script src="{% static 'assets/js/functions.js' %}"></script>
 
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- SweetAlert JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.4.24/sweetalert2.all.min.js"></script>
 
-<!-- Ajax Script -->
-<script>
-    $(document).ready(function() {
-        $('#forgotPasswordForm').on('submit', function(event) {
-            event.preventDefault();
-            var email = $('#email').val();
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-            // Validation des champs
-            if (!email) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Veuillez entrer votre adresse email.',
-                });
-                return;
-            }
+    <!-- Ajax Script -->
+    <script>
+        $(document).ready(function() {
+            $('#forgotPasswordForm').on('submit', function(event) {
+                event.preventDefault();
+                var email = $('#email').val();
 
-            $.ajax({
-                url: '/forgot-password/',
-                type: 'POST',
-                data: JSON.stringify({email: email}),
-                contentType: 'application/json',
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Un courriel de réinitialisation du mot de passe a été envoyé.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        window.location.href = response.reset_url; // Rediriger vers la page de réinitialisation du mot de passe avec le token dans l'URL
-                    });
-                },
-                error: function(response) {
+                // Validation des champs
+                if (!email) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
-                        text: 'Aucun utilisateur trouvé avec cet email.',
+                        text: 'Veuillez entrer votre adresse email.',
                     });
+                    return;
                 }
+
+                $.ajax({
+                    url: '/forgot-password/',
+                    type: 'POST',
+                    data: JSON.stringify({email: email}),
+                    contentType: 'application/json',
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Un courriel de réinitialisation du mot de passe a été envoyé.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.href = response.reset_url; // Rediriger vers la page de réinitialisation du mot de passe avec le token dans l'URL
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Aucun utilisateur trouvé avec cet email.',
+                        });
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
 
-
-
-<script>
+    <script>
     $(document).ready(function () {
         $(".lang-flag").click(function (e) {
             e.preventDefault(); // Empêche le rechargement immédiat
@@ -252,6 +323,110 @@
     });
 
 
+    </script>
+
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'fr',
+                includedLanguages: 'en,fr',
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    <script>
+        // Fonction pour masquer la barre Google Translate (Bandeau bleu)
+        function hideGoogleToolbar() {
+            const toolbar = document.querySelector('.goog-te-banner-frame.skiptranslate');
+            if (toolbar) {
+                toolbar.style.display = 'none';
+            }
+            // S'assurer que le <body> n'a pas de padding-top
+            document.body.style.top = '0px';
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const flags = {
+                fr: document.getElementById("flag-fr"),
+                en: document.getElementById("flag-en")
+            };
+
+            let currentLang = localStorage.getItem('site_lang') || "fr";
+
+            function updateActiveFlag(lang) {
+                Object.keys(flags).forEach(code => {
+                    if (flags[code]) flags[code].classList.toggle("flag-active", code === lang);
+                });
+            }
+
+            function waitForGoogleCombo(maxRetries = 20, interval = 250) {
+                return new Promise((resolve, reject) => {
+                    let tries = 0;
+                    const timer = setInterval(() => {
+                        const combo = document.querySelector(".goog-te-combo");
+                        if (combo) {
+                            clearInterval(timer);
+                            resolve(combo);
+                        } else {
+                            tries++;
+                            if (tries >= maxRetries) {
+                                clearInterval(timer);
+                                reject(new Error("google-combo-not-found"));
+                            }
+                        }
+                    }, interval);
+                });
+            }
+
+            async function applyLanguage(lang) {
+                try {
+                    const combo = await waitForGoogleCombo(40, 250);
+                    
+                    // 1. Déclenche la traduction
+                    combo.value = lang;
+                    const event = new Event('change', { bubbles: true });
+                    combo.dispatchEvent(event);
+
+                    // 2. Masque la barre immédiatement après le changement
+                    // Note: Le délai est essentiel car le changement est asynchrone
+                    setTimeout(() => {
+                        hideGoogleToolbar();
+                    }, 50); // Petit délai pour laisser Google commencer la traduction
+
+                    // 3. Mise à jour UI et stockage
+                    currentLang = lang;
+                    localStorage.setItem('site_lang', lang);
+                    updateActiveFlag(lang);
+
+                } catch (err) {
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Traduction non prête",
+                        text: "Le traducteur Google n'est pas encore chargé. Réessayez dans quelques secondes.",
+                        confirmButtonColor: "#3085d6",
+                        confirmButtonText: "OK"
+                    });
+                }
+            }
+
+            // Attache les événements aux drapeaux
+            if (flags.fr) flags.fr.addEventListener("click", () => applyLanguage("fr"));
+            if (flags.en) flags.en.addEventListener("click", () => applyLanguage("en"));
+
+            // Initialise le visuel
+            updateActiveFlag(currentLang);
+
+            // Tente d'appliquer la langue mémorisée au chargement initial
+            if (currentLang && currentLang !== "fr") {
+                setTimeout(() => applyLanguage(currentLang), 800);
+            }
+
+
+            // 🚨 Solution Persistante : Vérifie toutes les 500ms si la barre est revenue et la masque
+            setInterval(hideGoogleToolbar, 500);
+        });
     </script>
 
 
