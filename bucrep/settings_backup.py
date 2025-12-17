@@ -45,15 +45,11 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 # CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = [
-    "http://10.0.57.47",
-    "http://localhost",
-    "http://127.0.0.1",
-    "http://preprod.bucrep3.bucrep.net",
-]
+# CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost"])
+CSRF_TRUSTED_ORIGINS = ['http://10.0.57.47', 'http://10.0.57.47/admin/', 'http://localhost', 'http://127.0.0.1', 'http://preprod.bucrep3.bucrep.net/', ]
 
 # User autorisé
 AUTH_USER_MODEL = "main.CustomUser"
@@ -70,13 +66,24 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")  # SMTP password
 DEFAULT_FROM_EMAIL = "bucrepcontact@gmail.com"  # Ou env('EMAIL_HOST_USER')
 
 
+# settings.py
+
+# Configuration de Redis en tant que broker
+# CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+
+# Pour détecter automatiquement les tâches dans tes apps
+#
+
 # Configuration de Celery
 CELERY_BROKER_URL = "redis://localhost:6379/0"
+# CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Libreville"
 CELERY_IMPORTS = ("main.tasks",)  # Mets le nom de ton app Django
+
 
 # Backend pour stocker les résultats des tâches
 CELERY_RESULT_BACKEND = "django-db"  # Utilise la base de données Django
@@ -141,6 +148,9 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "channels",  # Ajout de Django Channels
     
+    
+    
+    
     # Mon app
     "main.apps.MainConfig",
     "django_celery_results",
@@ -150,6 +160,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    
+    
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -185,16 +197,51 @@ WSGI_APPLICATION = "bucrep.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Commentez ou supprimez l'ancienne configuration SQLite
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+#     }
+# }
+
+# Nouvelle configuration pour PostgreSQL
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("LOCAL_DB_NAME"),
-        "USER": env("LOCAL_DB_USER"),
-        "PASSWORD": env("LOCAL_DB_PASS"),
-        "HOST": env("LOCAL_DB_HOST"),
-        "PORT": env("LOCAL_DB_PORT"),
+        "NAME": env("LOCAL_DB_NAME"),  # Le nom de la base de données créée à l'étape 2
+        "USER": env("LOCAL_DB_USER"),  # Le nom de l'utilisateur créé à l'étape 2
+        "PASSWORD": env("LOCAL_DB_PASS"),  # Le mot de passe que vous avez noté
+        "HOST": env("LOCAL_DB_HOST"),  # ou '127.0.0.1'
+        "PORT": env("LOCAL_DB_PORT"),  # Le port par défaut de PostgreSQL
     }
 }
+
+# Configuration pour PostgreSQL
+# pip install psycopg2-binary
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'your_postgresql_database_name',  # Nom de votre base de données PostgreSQL
+#         'USER': 'your_postgresql_database_user',  # Nom d'utilisateur de la base de données PostgreSQL
+#         'PASSWORD': env("LOCAL_DB_PASS"),  # Mot de passe de la base de données PostgreSQL
+#         'HOST': 'localhost',  # Adresse de l'hôte de la base de données PostgreSQL
+#         'PORT': '5432',  # Port de la base de données PostgreSQL (par défaut 5432)
+#     }
+# }
+
+
+# Configuration pour MySQL (masquée)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'your_mysql_database_name',  # Nom de votre base de données MySQL
+#         'USER': 'your_mysql_database_user',  # Nom d'utilisateur de la base de données MySQL
+#         'PASSWORD': env("LOCAL_DB_PASS"),  # Mot de passe de la base de données MySQL
+#         'HOST': 'localhost',  # Adresse de l'hôte de la base de données MySQL
+#         'PORT': '3306',  # Port de la base de données MySQL (par défaut 3306)
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -221,6 +268,7 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, "locale"),
 ]
 
+
 LANGUAGE_CODE = "fr-fr"  # Langue par défaut
 
 # Languages
@@ -232,11 +280,15 @@ LANGUAGES = [
 TIME_ZONE = "Africa/Libreville"
 
 USE_I18N = True
+
 USE_L10N = True
+
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/5.1/howto/static-files/
+
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
@@ -249,46 +301,35 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "main/media/")
 
 # Default primary key field type
+# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SITE_ID = 1
 
-# =========== CONFIGURATION SÉCURITÉ POUR HTTP ===========
-# IMPORTANT: En HTTP, les cookies ne doivent PAS être Secure
+# Sécurité en production
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = "DENY"
+
+
 SECURE_SSL_REDIRECT = False
-SECURE_HSTS_SECONDS = 0  # Désactivé en HTTP
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-SECURE_HSTS_PRELOAD = False
-
-# Cookies configuration for HTTP
 CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_USE_SESSIONS = False
-
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-# Durée de vie d'une session en secondes (30 minutes ici)
-SESSION_COOKIE_AGE = 30 * 60  # 1800 secondes
-
-# Pour supprimer la session quand l’utilisateur ferme le navigateur
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# (Optionnel) Si tu veux que la session expire uniquement après inactivité
-SESSION_SAVE_EVERY_REQUEST = True
-# ========================================================
+CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
 
 # CORS Config
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True  # Ou configure des domaines spécifiques
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
-    "http://localhost:8004",
-    "http://10.0.57.47",
-    "http://3.236.213.114:26354",
+    "http://localhost:8004",  # Remplace par le domaine de ton frontend
+    "http://10.0.57.47",  # Remplace par le domaine de ton frontend
+    "http://3.236.213.114:26354",  # Remplace par le domaine de ton frontend
     "http://preprod.bucrep3.bucrep.net",
 ]
 CORS_ALLOW_HEADERS = [
@@ -296,12 +337,13 @@ CORS_ALLOW_HEADERS = [
     "content-type",
 ]
 
-# REST Framework
+
+# settings.py
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.TokenAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.SessionAuthentication", # Optional but useful for the browsable API
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
@@ -311,6 +353,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
 }
+
 
 # SimpleJWT settings
 SIMPLE_JWT = {
@@ -328,16 +371,65 @@ SIMPLE_JWT = {
     "TOKEN_TYPE_CLAIM": "token_type",
 }
 
+
+# Pour contourner les problèmes de cookies en développement
+if DEBUG:
+    # Désactiver Secure pour HTTP
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_HTTPONLY = False
+    SESSION_COOKIE_HTTPONLY = False
+    CSRF_USE_SESSIONS = False
+    
+    # Important: pour éviter que le middleware n'ajoute Secure
+    CSRF_COOKIE_SAMESITE = 'Lax'  # ou 'None'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+else:
+    # Production avec HTTPS
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+
+
+
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Durée de vie d'une session en secondes (30 minutes ici)
+SESSION_COOKIE_AGE = 30 * 60  # 1800 secondes
+
+# Pour supprimer la session quand l’utilisateur ferme le navigateur
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# (Optionnel) Si tu veux que la session expire uniquement après inactivité
+SESSION_SAVE_EVERY_REQUEST = True
+
+
+# python manage.py shell
+# from main.models import CustomUser
+# from rest_framework.authtoken.models import Token
+
+
 ASGI_APPLICATION = "bucrep.asgi.application"
 
 # Utilisation de Redis comme broker pour les WebSockets
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels.layers.InMemoryChannelLayer",  # Pour du local
+        # Pour un environnement de production avec Redis, utilise :
+        # "BACKEND": "channels_redis.core.RedisChannelLayer",
+        # "CONFIG": {
+        #     "hosts": [("127.0.0.1", 6379)],  # Assure-toi que Redis est installé et en marche
+        # },
     },
 }
 
-# LOGGING
+
+# settings.py
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -353,9 +445,9 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "DEBUG",
+            "level": "DEBUG",  # Ou INFO
             "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "formatter": "simple",  # Ou verbose
         },
     },
     "loggers": {
@@ -364,12 +456,12 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "main": {
+        "main": {  # Assurez-vous d'avoir une entrée pour votre app 'main'
             "handlers": ["console"],
-            "level": "INFO",
+            "level": "INFO",  # Définir le niveau ici
             "propagate": False,
         },
-        "celery": {
+        "celery": {  # Pour les logs de Celery lui-même
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
@@ -381,12 +473,17 @@ LOGGING = {
     },
 }
 
-# Authentication backends
+# settings.py
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
+    # Add any other custom authentication backends here
 ]
+
 
 LOGIN_URL = '/'
 
+
 DEFAULT_CHARSET = 'utf-8'
+
 DEFAULT_COUNTRY_CODE = "GA"
+
