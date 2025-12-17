@@ -49,7 +49,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 # CSRF Trusted Origins
 # CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost"])
-CSRF_TRUSTED_ORIGINS = ['http://10.0.57.47', 'http://localhost', 'http://127.0.0.1', 'http://preprod.bucrep3.bucrep.net/']
+CSRF_TRUSTED_ORIGINS = ['http://10.0.57.47', 'http://10.0.57.47/admin/', 'http://localhost', 'http://127.0.0.1', 'http://preprod.bucrep3.bucrep.net/']
 
 # User autorisé
 AUTH_USER_MODEL = "main.CustomUser"
