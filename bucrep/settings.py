@@ -49,6 +49,7 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 # CSRF Trusted Origins
 # CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost"])
+CSRF_TRUSTED_ORIGINS = ['http://10.0.57.47', 'http://localhost', 'http://127.0.0.1', 'http://preprod.bucrep3.bucrep.net/']
 
 # User autorisé
 AUTH_USER_MODEL = "main.CustomUser"
@@ -369,18 +370,24 @@ SIMPLE_JWT = {
 
 # Pour contourner les problèmes de cookies en développement
 if DEBUG:
-    CSRF_USE_SESSIONS = False
-    CSRF_COOKIE_DOMAIN = None
-    SESSION_COOKIE_DOMAIN = None
-    CSRF_COOKIE_PATH = '/'
-    SESSION_COOKIE_PATH = '/'
-
-
-if DEBUG:
-    SESSION_COOKIE_SECURE = False
+    # Désactiver Secure pour HTTP
     CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_HTTPONLY = False
+    SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_HTTPONLY = False
+    SESSION_COOKIE_HTTPONLY = False
+    CSRF_USE_SESSIONS = False
+    
+    # Important: pour éviter que le middleware n'ajoute Secure
+    CSRF_COOKIE_SAMESITE = 'Lax'  # ou 'None'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+else:
+    # Production avec HTTPS
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
     
 
 
