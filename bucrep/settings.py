@@ -47,6 +47,9 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 # IP autorisés
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost"])
+
 # User autorisé
 AUTH_USER_MODEL = "main.CustomUser"
 
