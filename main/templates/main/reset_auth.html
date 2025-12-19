@@ -4,7 +4,6 @@
 {% load i18n %}
 {% load static %}
 
-
 <!-- ACREMAC | Bucrep 3.0 -->
 <head>
     <title>BUCREP - Réinitialisation Mot de Passe</title>
@@ -49,7 +48,7 @@
       /* Supprime le bandeau bleu Google */
       .goog-te-banner-frame.skiptranslate {display: none !important;}
       body {top: 0px !important;}
-      #google_translate_element {display: none;} /* Cache le widget original */
+      #google_translate_element {display: none;}
 
       /* Drapeaux */
       .flag-icon {
@@ -67,15 +66,13 @@
         box-shadow: 0 0 8px rgba(0,0,0,0.2);
       }
 
-      /* Drapeau actif */
       .flag-active {
-        border-color: #facc15 !important; /* jaune */
+        border-color: #facc15 !important;
         box-shadow: 0 0 10px rgba(250, 204, 21, 0.7);
         transform: scale(1.1);
         animation: pulse 1.5s infinite;
       }
 
-      /* Animation pulsation */
       @keyframes pulse {
         0% { box-shadow: 0 0 8px rgba(250, 204, 21, 0.7); }
         50% { box-shadow: 0 0 15px rgba(250, 204, 21, 1); }
@@ -92,20 +89,141 @@
         top: 0px !important; 
     }
 
-    /* Masque le menu Google Translate (le sélecteur natif) */
+    /* Masque le menu Google Translate */
     #goog-gt-tt, .goog-te-balloon-frame, .goog-tooltip {
         display: none !important;
     }
 
-    /* Empêche Google de forcer une couleur de fond */
     .goog-text-highlight { 
         background: none !important; 
         box-shadow: none !important; 
     }
 
-    /* Masque la boîte de traduction contextuelle */
     .goog-te-gadget { 
         display: none !important; 
+    }
+    
+    /* Styles pour les icônes de basculement mot de passe */
+    .password-input-wrapper {
+        position: relative;
+    }
+    
+    .password-toggle {
+        cursor: pointer;
+        color: #6c757d;
+        transition: color 0.3s;
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 1.2rem;
+    }
+    
+    .password-toggle:hover {
+        color: #0A95CA;
+    }
+    
+    /* Ajustement pour les champs de saisie avec icône */
+    .form-control {
+        padding-right: 40px !important;
+    }
+    
+    /* Styles pour les indicateurs de force du mot de passe */
+    .password-strength {
+        height: 5px;
+        border-radius: 2px;
+        margin-top: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .strength-weak {
+        background-color: #dc3545;
+        width: 25%;
+    }
+    
+    .strength-medium {
+        background-color: #ffc107;
+        width: 50%;
+    }
+    
+    .strength-good {
+        background-color: #28a745;
+        width: 75%;
+    }
+    
+    .strength-strong {
+        background-color: #20c997;
+        width: 100%;
+    }
+    
+    /* Styles pour les exigences du mot de passe */
+    .requirement-item {
+        font-size: 0.85rem;
+        margin-bottom: 3px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .requirement-valid {
+        color: #28a745;
+    }
+    
+    .requirement-invalid {
+        color: #dc3545;
+    }
+    
+    .requirement-valid i {
+        color: #28a745 !important;
+    }
+    
+    .requirement-invalid i {
+        color: #dc3545 !important;
+    }
+    
+    /* Ajustement pour la disposition des exigences */
+    .requirement-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    @media (max-width: 768px) {
+        .requirement-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Amélioration de l'apparence des boutons */
+    .btn-link.password-toggle {
+        color: #6c757d;
+        text-decoration: none;
+        padding: 0.375rem 0.5rem;
+        background: transparent;
+        border: none;
+        outline: none;
+    }
+    
+    .btn-link.password-toggle:hover {
+        color: #0A95CA;
+        background: transparent;
+        border: none;
+    }
+    
+    /* Ajustement pour le bouton de soumission désactivé */
+    #submitBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    #submitBtn:not(:disabled) {
+        opacity: 1;
+        cursor: pointer;
     }
     </style>
 </head>
@@ -113,10 +231,8 @@
 <body>
     <!-- Vue.js App -->
     <div id="app">
-
         <!-- **************** MAIN CONTENT START **************** -->
         <main>
-
             <!-- =======================
             Main Content START -->
             <section class="vh-xxl-100">
@@ -150,28 +266,67 @@
                                                 <!-- Code Secret -->
                                                 <div class="mb-3">
                                                     <label class="form-label">Code Secret</label>
-                                                    <input type="text" class="form-control" id="code_secret" name="code_secret" required>
-                                                    <span class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3">
-                                                        <i class="fakepasswordicon bi bi-eye-slash cursor-pointer p-2"></i>
-                                                    </span>
+                                                    <div class="password-input-wrapper">
+                                                        <input type="password" class="form-control" id="code_secret" name="code_secret" required minlength="6">
+                                                        <button type="button" class="btn btn-link password-toggle" id="toggleCodeSecret">
+                                                            <i class="bi bi-eye-slash"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
 
-                                                <!-- New Password -->
+                                                <!-- Nouveau Mot de Passe avec indicateur de force -->
                                                 <div class="mb-3">
                                                     <label class="form-label">Nouveau Mot de Passe</label>
-                                                    <input type="password" class="form-control fakepassword" id="new_password" name="new_password" required>
-                                                    <span class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3">
-                                                        <i class="fakepasswordicon bi bi-eye-slash cursor-pointer p-2"></i>
-                                                    </span>
+                                                    <div class="password-input-wrapper">
+                                                        <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                                                        <button type="button" class="btn btn-link password-toggle" id="toggleNewPassword">
+                                                            <i class="bi bi-eye-slash"></i>
+                                                        </button>
+                                                    </div>
+                                                    <!-- Indicateur de force du mot de passe -->
+                                                    <div class="password-strength strength-weak" id="passwordStrength"></div>
                                                 </div>
 
-                                                <!-- Confirm Password -->
+                                                <!-- Exigences du mot de passe -->
+                                                <div class="mb-3">
+                                                    <small class="text-muted d-block mb-2">Le mot de passe doit contenir :</small>
+                                                    <div class="requirement-grid">
+                                                        <div class="requirement-item" id="req-length">
+                                                            <i class="bi bi-x-circle requirement-invalid"></i>
+                                                            <span>8 caractères minimum</span>
+                                                        </div>
+                                                        <div class="requirement-item" id="req-uppercase">
+                                                            <i class="bi bi-x-circle requirement-invalid"></i>
+                                                            <span>Une majuscule (A-Z)</span>
+                                                        </div>
+                                                        <div class="requirement-item" id="req-lowercase">
+                                                            <i class="bi bi-x-circle requirement-invalid"></i>
+                                                            <span>Une minuscule (a-z)</span>
+                                                        </div>
+                                                        <div class="requirement-item" id="req-number">
+                                                            <i class="bi bi-x-circle requirement-invalid"></i>
+                                                            <span>Un chiffre (0-9)</span>
+                                                        </div>
+                                                        <div class="requirement-item" id="req-special">
+                                                            <i class="bi bi-x-circle requirement-invalid"></i>
+                                                            <span>Un caractère spécial (@$!%*?&)</span>
+                                                        </div>
+                                                        <div class="requirement-item" id="req-match">
+                                                            <i class="bi bi-x-circle requirement-invalid"></i>
+                                                            <span>Les mots de passe correspondent</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Confirmer Mot de Passe -->
                                                 <div class="mb-3">
                                                     <label class="form-label">Confirmer Mot de Passe</label>
-                                                    <input type="password" class="form-control fakepassword" id="confirm_password" name="confirm_password" required>
-                                                    <span class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3">
-                                                        <i class="fakepasswordicon bi bi-eye-slash cursor-pointer p-2"></i>
-                                                    </span>
+                                                    <div class="password-input-wrapper">
+                                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                                                        <button type="button" class="btn btn-link password-toggle" id="toggleConfirmPassword">
+                                                            <i class="bi bi-eye-slash"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 <br>
@@ -183,7 +338,7 @@
                                                 <!-- Button -->
                                                 <div>
                                                     <br>
-                                                    <button type="submit" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;">
+                                                    <button type="submit" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" id="submitBtn" disabled>
                                                         Réinitialiser
                                                     </button>
                                                 </div>
@@ -199,8 +354,6 @@
                                                 <!-- Copyright -->
                                                 <div class="text-primary-hover text-body mt-3 text-center"> Copyrights ©2025. Built by <a href="https://www.acremac.com/" class="text-body">ACREMAC</a>. </div>
 
-
-                                                <!-- Translation -->
                                                 <!-- Formulaire de changement de langue -->
                                                 <form id="language-form" action="{% url 'set_language' %}" method="post">
                                                     {% csrf_token %}
@@ -231,14 +384,11 @@
             </section>
             <!-- =======================
             Main Content END -->
-
         </main>
         <!-- **************** MAIN CONTENT END **************** -->
-
     </div>
 
-    
-     <!-- Élément caché Google Translate -->
+    <!-- Élément caché Google Translate -->
     <div id="google_translate_element" style="display: none;"></div>
 
     <!-- Back to top -->
@@ -256,56 +406,311 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- Ajax Script -->
+    <!-- Script principal pour la gestion des mots de passe -->
+    <script>
+        // Déclarer les variables globales pour les fonctions de validation
+        window.passwordValidation = {
+            // Fonction pour basculer la visibilité du mot de passe
+            togglePasswordVisibility: function(inputId, toggleButtonId) {
+                const passwordInput = document.getElementById(inputId);
+                const toggleButton = document.getElementById(toggleButtonId);
+                const icon = toggleButton.querySelector('i');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.className = 'bi bi-eye';
+                    toggleButton.setAttribute('aria-label', 'Masquer le mot de passe');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.className = 'bi bi-eye-slash';
+                    toggleButton.setAttribute('aria-label', 'Afficher le mot de passe');
+                }
+            },
+
+            // Fonction pour vérifier la force du mot de passe
+            checkPasswordStrength: function(password) {
+                let strength = 0;
+                const requirements = {
+                    length: password.length >= 8,
+                    uppercase: /[A-Z]/.test(password),
+                    lowercase: /[a-z]/.test(password),
+                    number: /[0-9]/.test(password),
+                    special: /[@$!%*?&]/.test(password)
+                };
+
+                // Calcul du score
+                if (requirements.length) strength += 1;
+                if (requirements.uppercase) strength += 1;
+                if (requirements.lowercase) strength += 1;
+                if (requirements.number) strength += 1;
+                if (requirements.special) strength += 1;
+
+                // Mise à jour des indicateurs visuels
+                Object.keys(requirements).forEach(key => {
+                    const element = document.getElementById('req-' + key);
+                    if (element) {
+                        if (requirements[key]) {
+                            element.className = 'requirement-item requirement-valid';
+                            const icon = element.querySelector('i');
+                            if (icon) icon.className = 'bi bi-check-circle requirement-valid';
+                        } else {
+                            element.className = 'requirement-item requirement-invalid';
+                            const icon = element.querySelector('i');
+                            if (icon) icon.className = 'bi bi-x-circle requirement-invalid';
+                        }
+                    }
+                });
+
+                // Mise à jour de l'indicateur de force
+                const strengthBar = document.getElementById('passwordStrength');
+                if (strengthBar) {
+                    if (strength <= 2) {
+                        strengthBar.className = 'password-strength strength-weak';
+                    } else if (strength === 3) {
+                        strengthBar.className = 'password-strength strength-medium';
+                    } else if (strength === 4) {
+                        strengthBar.className = 'password-strength strength-good';
+                    } else if (strength === 5) {
+                        strengthBar.className = 'password-strength strength-strong';
+                    }
+                }
+
+                return strength === 5; // Retourne true si toutes les exigences sont remplies
+            },
+
+            // Fonction pour vérifier si les mots de passe correspondent
+            checkPasswordMatch: function() {
+                const password = document.getElementById('new_password')?.value || '';
+                const confirmPassword = document.getElementById('confirm_password')?.value || '';
+                const matchElement = document.getElementById('req-match');
+                
+                if (password && confirmPassword) {
+                    if (password === confirmPassword) {
+                        if (matchElement) {
+                            matchElement.className = 'requirement-item requirement-valid';
+                            const icon = matchElement.querySelector('i');
+                            if (icon) icon.className = 'bi bi-check-circle requirement-valid';
+                        }
+                        return true;
+                    } else {
+                        if (matchElement) {
+                            matchElement.className = 'requirement-item requirement-invalid';
+                            const icon = matchElement.querySelector('i');
+                            if (icon) icon.className = 'bi bi-x-circle requirement-invalid';
+                        }
+                        return false;
+                    }
+                }
+                return false;
+            },
+
+            // Fonction pour activer/désactiver le bouton de soumission
+            updateSubmitButton: function() {
+                const password = document.getElementById('new_password')?.value || '';
+                const confirmPassword = document.getElementById('confirm_password')?.value || '';
+                const codeSecret = document.getElementById('code_secret')?.value || '';
+                
+                const isPasswordStrong = this.checkPasswordStrength(password);
+                const doPasswordsMatch = this.checkPasswordMatch();
+                const isCodeValid = codeSecret.length >= 6;
+                
+                const submitBtn = document.getElementById('submitBtn');
+                
+                if (submitBtn) {
+                    if (isPasswordStrong && doPasswordsMatch && isCodeValid) {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                    } else {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.6';
+                        submitBtn.style.cursor = 'not-allowed';
+                    }
+                }
+            }
+        };
+
+        // Initialisation des événements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuration des basculements de visibilité
+            const toggleCodeSecret = document.getElementById('toggleCodeSecret');
+            const toggleNewPassword = document.getElementById('toggleNewPassword');
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            
+            if (toggleCodeSecret) {
+                toggleCodeSecret.addEventListener('click', function() {
+                    window.passwordValidation.togglePasswordVisibility('code_secret', 'toggleCodeSecret');
+                });
+            }
+            
+            if (toggleNewPassword) {
+                toggleNewPassword.addEventListener('click', function() {
+                    window.passwordValidation.togglePasswordVisibility('new_password', 'toggleNewPassword');
+                });
+            }
+            
+            if (toggleConfirmPassword) {
+                toggleConfirmPassword.addEventListener('click', function() {
+                    window.passwordValidation.togglePasswordVisibility('confirm_password', 'toggleConfirmPassword');
+                });
+            }
+
+            // Validation en temps réel
+            const newPasswordInput = document.getElementById('new_password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
+            const codeSecretInput = document.getElementById('code_secret');
+            
+            if (newPasswordInput) {
+                newPasswordInput.addEventListener('input', function() {
+                    window.passwordValidation.updateSubmitButton();
+                });
+            }
+            
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', function() {
+                    window.passwordValidation.updateSubmitButton();
+                });
+            }
+            
+            if (codeSecretInput) {
+                codeSecretInput.addEventListener('input', function() {
+                    window.passwordValidation.updateSubmitButton();
+                });
+            }
+            
+            // Initialiser l'état du bouton
+            window.passwordValidation.updateSubmitButton();
+            
+            // Ajouter des attributs ARIA pour l'accessibilité
+            document.querySelectorAll('.password-toggle').forEach(button => {
+                button.setAttribute('aria-label', 'Afficher le mot de passe');
+                button.setAttribute('type', 'button');
+            });
+            
+            // Initialiser les indicateurs au chargement
+            if (newPasswordInput && newPasswordInput.value) {
+                window.passwordValidation.checkPasswordStrength(newPasswordInput.value);
+                window.passwordValidation.checkPasswordMatch();
+            }
+        });
+    </script>
+
+    <!-- Ajax Script pour la soumission du formulaire -->
     <script>
         $(document).ready(function() {
+            function getCsrfToken() {
+                return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+            }
+
             $('#resetPasswordForm').on('submit', function(event) {
                 event.preventDefault();
+                
                 var code_secret = $('#code_secret').val();
                 var new_password = $('#new_password').val();
                 var confirm_password = $('#confirm_password').val();
                 var token = new URLSearchParams(window.location.search).get('token');
 
-                // Validation des champs
+                // Validation côté client
                 if (!code_secret || !new_password || !confirm_password || !token) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
+                        title: 'Champs manquants',
                         text: 'Veuillez remplir tous les champs.',
                     });
                     return;
                 }
 
-                if (new_password !== confirm_password) {
+                // Validation de la longueur du code secret
+                if (code_secret.length < 6) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
+                        title: 'Code trop court',
+                        text: 'Le code secret doit contenir au moins 8 caractères.',
+                    });
+                    return;
+                }
+
+                // Utiliser la fonction globale pour vérifier la force du mot de passe
+                if (!window.passwordValidation.checkPasswordStrength(new_password)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Mot de passe faible',
+                        text: 'Le mot de passe ne respecte pas toutes les exigences de sécurité.',
+                    });
+                    return;
+                }
+
+                // Utiliser la fonction globale pour vérifier la correspondance
+                if (!window.passwordValidation.checkPasswordMatch()) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Mots de passe différents',
                         text: 'Les mots de passe ne correspondent pas.',
                     });
                     return;
                 }
 
+                // Vérification que le nouveau mot de passe n'est pas trop simple
+                if (new_password.length < 8) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Mot de passe trop court',
+                        text: 'Le mot de passe doit contenir au moins 8 caractères.',
+                    });
+                    return;
+                }
+
+                // Empêcher les mots de passe courants
+                const commonPasswords = ['password', '12345678', 'qwerty', 'azerty', 'admin123', 'bucrep2025'];
+                if (commonPasswords.includes(new_password.toLowerCase())) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Mot de passe trop commun',
+                        text: 'Veuillez choisir un mot de passe plus complexe.',
+                    });
+                    return;
+                }
+
+                // Soumission AJAX
                 $.ajax({
                     url: '/reset-password/',
                     type: 'POST',
-                    data: JSON.stringify({code_secret: code_secret, new_password: new_password, token: token}),
+                    data: JSON.stringify({
+                        code_secret: code_secret, 
+                        new_password: new_password, 
+                        token: token
+                    }),
                     contentType: 'application/json',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken()
+                    },
                     success: function(response) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Success',
+                            title: 'Succès',
                             text: 'Mot de passe réinitialisé avec succès.',
                             showConfirmButton: false,
                             timer: 1500
                         }).then(() => {
-                            window.location.href = '/'; // Rediriger vers la page de connexion ou une autre page
+                            window.location.href = '/';
                         });
                     },
                     error: function(response) {
+                        let errorMessage = 'Une erreur est survenue.';
+                        if (response.responseJSON && response.responseJSON.detail) {
+                            errorMessage = response.responseJSON.detail;
+                        } else if (response.responseJSON && response.responseJSON.error) {
+                            errorMessage = response.responseJSON.error;
+                        } else if (response.status === 400) {
+                            errorMessage = 'Token invalide ou expiré.';
+                        } else if (response.status === 403) {
+                            errorMessage = 'Code secret incorrect.';
+                        }
+                        
                         Swal.fire({
                             icon: 'error',
-                            title: 'Oops...',
-                            text: 'Token invalide ou expiré.',
+                            title: 'Erreur',
+                            text: errorMessage,
                         });
                     }
                 });
@@ -313,14 +718,14 @@
         });
     </script>
 
+    <!-- Scripts pour la traduction -->
     <script>
         $(document).ready(function () {
             $(".lang-flag").click(function (e) {
-                e.preventDefault(); // Empêche le rechargement immédiat
-
-                var lang = $(this).data("lang"); // Récupère la langue sélectionnée
-                var url = $("#language-form").attr("action"); // URL du formulaire
-                var csrfToken = $("input[name=csrfmiddlewaretoken]").val(); // Token CSRF
+                e.preventDefault();
+                var lang = $(this).data("lang");
+                var url = $("#language-form").attr("action");
+                var csrfToken = $("input[name=csrfmiddlewaretoken]").val();
 
                 $.ajax({
                     type: "POST",
@@ -330,7 +735,6 @@
                         csrfmiddlewaretoken: csrfToken
                     },
                     success: function () {
-                        console.log("Langue changée avec succès !");
                         Swal.fire({
                             title: "Succès",
                             text: "Langue changée avec succès.",
@@ -338,7 +742,7 @@
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            location.reload(true); // Recharge la page après le changement de langue
+                            location.reload(true);
                         });
                     },
                     error: function () {
@@ -351,8 +755,6 @@
                 });
             });
         });
-
-
     </script>
 
     <script type="text/javascript">
@@ -367,13 +769,12 @@
     <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <script>
-        // Fonction pour masquer la barre Google Translate (Bandeau bleu)
+        // Fonction pour masquer la barre Google Translate
         function hideGoogleToolbar() {
             const toolbar = document.querySelector('.goog-te-banner-frame.skiptranslate');
             if (toolbar) {
                 toolbar.style.display = 'none';
             }
-            // S'assurer que le <body> n'a pas de padding-top
             document.body.style.top = '0px';
         }
 
@@ -414,18 +815,14 @@
                 try {
                     const combo = await waitForGoogleCombo(40, 250);
                     
-                    // 1. Déclenche la traduction
                     combo.value = lang;
                     const event = new Event('change', { bubbles: true });
                     combo.dispatchEvent(event);
 
-                    // 2. Masque la barre immédiatement après le changement
-                    // Note: Le délai est essentiel car le changement est asynchrone
                     setTimeout(() => {
                         hideGoogleToolbar();
-                    }, 50); // Petit délai pour laisser Google commencer la traduction
+                    }, 50);
 
-                    // 3. Mise à jour UI et stockage
                     currentLang = lang;
                     localStorage.setItem('site_lang', lang);
                     updateActiveFlag(lang);
@@ -441,27 +838,18 @@
                 }
             }
 
-            // Attache les événements aux drapeaux
             if (flags.fr) flags.fr.addEventListener("click", () => applyLanguage("fr"));
             if (flags.en) flags.en.addEventListener("click", () => applyLanguage("en"));
 
-            // Initialise le visuel
             updateActiveFlag(currentLang);
 
-            // Tente d'appliquer la langue mémorisée au chargement initial
             if (currentLang && currentLang !== "fr") {
                 setTimeout(() => applyLanguage(currentLang), 800);
             }
 
-
-            // 🚨 Solution Persistante : Vérifie toutes les 500ms si la barre est revenue et la masque
             setInterval(hideGoogleToolbar, 500);
         });
     </script>
-
-
-
-
 </body>
 
 <!-- ACREMAC | Bucrep 3.0 -->

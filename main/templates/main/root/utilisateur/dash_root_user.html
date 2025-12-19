@@ -2,7 +2,387 @@
 
 {% load static %}
 
-{% block css %}{% endblock %}
+{% block styles %}
+<style>
+/* Styles pour la pagination */
+.pagination-primary-soft .page-link {
+    color: #0A95CA;
+    border: 1px solid #dee2e6;
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.pagination-primary-soft .page-item.active .page-link {
+    background-color: #0A95CA;
+    border-color: #0A95CA;
+    color: white;
+}
+
+.pagination-primary-soft .page-link:hover {
+    background-color: #e9f7fe;
+    border-color: #0A95CA;
+}
+
+/* Avatar par défaut */
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+/* Table responsive */
+.table-shrink td, .table-shrink th {
+    white-space: nowrap;
+}
+
+/* Loader */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Styles pour les états vides */
+.text-muted {
+    opacity: 1;
+}
+</style>
+
+<style>
+/* Styles pour les champs requis */
+.form-label.required:after {
+    content: " *";
+    color: #dc3545;
+}
+
+/* Styles pour les modals */
+.modal-header.bg-light {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Styles pour les formulaires */
+.form-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Animation pour les boutons */
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+/* Styles pour les messages d'erreur */
+.is-invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.is-valid {
+    border-color: #28a745;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+</style>
+
+<style>
+/* Styles spécifiques pour le formulaire d'ajout */
+
+/* Header du modal */
+.modal-header.bg-primary {
+    background: linear-gradient(135deg, #0A95CA 0%, #0879a8 100%);
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Cartes des sections */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Labels avec icônes */
+.form-label i {
+    width: 20px;
+    text-align: center;
+    margin-right: 5px;
+    color: #0A95CA;
+}
+
+.form-label.required:after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Champs de formulaire */
+.form-control, .form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px 12px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+/* Input groups */
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+/* Alert info */
+.alert-info {
+    background-color: #e8f4fc;
+    border-color: #b6e0f7;
+    color: #0c5460;
+    border-radius: 8px;
+}
+
+/* Badges pour les rôles */
+.badge {
+    font-size: 0.7em;
+    padding: 0.3em 0.6em;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* Prévisualisation des rôles */
+.form-select option {
+    padding: 8px;
+    position: relative;
+}
+
+.form-select option:after {
+    content: attr(data-badge);
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7em;
+    display: none;
+}
+
+/* Placeholders stylisés */
+::placeholder {
+    color: #adb5bd;
+    opacity: 0.8;
+}
+
+/* Tooltips pour les infos */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+}
+
+/* Animation pour le bouton submit */
+#addUserSubmitBtn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#addUserSubmitBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(10, 149, 202, 0.3);
+}
+
+#addUserSubmitBtn:active {
+    transform: translateY(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .card-body {
+        padding: 15px !important;
+    }
+    
+    .row {
+        margin-left: -8px;
+        margin-right: -8px;
+    }
+    
+    .col-md-6 {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
+</style>
+
+<style>
+/* Thème d'édition (warning/orange) */
+.modal-header.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Couleur spécifique pour l'édition */
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: white;
+}
+
+/* Cartes avec bordure subtile */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+/* Labels avec icônes spécifiques à l'édition */
+.form-label i {
+    width: 20px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+.form-label.required:after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Champs en lecture seule */
+.form-control:read-only {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+/* Input groups avec icônes */
+.input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    min-width: 45px;
+    justify-content: center;
+}
+
+/* Alert warning pour l'édition */
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+    border-radius: 8px;
+}
+
+/* Badges pour les rôles */
+.badge {
+    font-size: 0.7em;
+    padding: 0.3em 0.6em;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+/* Animation pour le bouton submit */
+#editUserSubmitBtn {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#editUserSubmitBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+#editUserSubmitBtn:active {
+    transform: translateY(0);
+}
+
+/* Animation d'ouverture du modal */
+.modal.fade .modal-content {
+    transform: translateY(-50px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .card-body {
+        padding: 15px !important;
+    }
+    
+    .row {
+        margin-left: -8px;
+        margin-right: -8px;
+    }
+    
+    .col-md-6 {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+}
+</style>
+{% endblock %}
 
 {% block body %}
 
@@ -55,11 +435,17 @@
                     </div>
 
                     <!-- Select option -->
+                    <!-- Ajouter dans votre template, près du bouton de recherche -->
                     <div class="col-md-5">
-                        <!-- Short by filter -->
-                        <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                                Ajouter un Utilisateur
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary w-100 mb-0" 
+                                    style="background-color: #0A95CA; border-color: #0A95CA;" 
+                                    data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                <i class="bi bi-person-add me-1"></i> Ajouter un Utilisateur
+                            </button>
+                            <button type="button" class="btn btn-outline-primary mb-0" 
+                                    id="refreshUsersBtn" title="Rafraîchir la liste">
+                                <i class="bi bi-arrow-clockwise"></i>
                             </button>
                         </div>
                     </div>
@@ -110,78 +496,237 @@
 </div>
 <!-- USERS END -->
 
-<!-- Add User Modal START -->
+<!-- Add User Modal START - Version embellie -->
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addUserModalLabel">Ajouter un Utilisateur</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- Header avec icône et couleur -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="bi bi-person-plus-fill me-2"></i>Ajouter un Nouvel Utilisateur
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            
+            <!-- Body avec sections organisées -->
             <div class="modal-body">
                 <form id="addUserForm">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Pseudo</label>
-                        <input type="text" class="form-control" id="username" name="username" placeholder="Ex. John1987" required>
+                    <!-- Section 1: Informations de base -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-primary">
+                                <i class="bi bi-person-badge me-1"></i>Informations de base
+                            </h6>
+                            <small class="text-muted">Identifiants principaux de l'utilisateur</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Pseudo -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="username" class="form-label required">
+                                        <i class="bi bi-person-circle me-1"></i>Pseudo
+                                    </label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="john.doe" required>
+                                    <div class="form-text">Identifiant unique pour la connexion</div>
+                                </div>
+                                
+                                <!-- Rôle -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="role" class="form-label required">
+                                        <i class="bi bi-shield-check me-1"></i>Rôle
+                                    </label>
+                                    <select class="form-select" id="role" name="role" required>
+                                        <option value="" disabled selected>Sélectionnez un rôle</option>
+                                        <option value="Root" data-badge="bg-danger">Root</option>
+                                        <option value="Validateur" data-badge="bg-warning">Analyste Validateur</option>
+                                        <option value="Analyste" data-badge="bg-info">Analyste</option>
+                                        <option value="Client" data-badge="bg-success">Client</option>
+                                    </select>
+                                    <div class="form-text">Définit les permissions de l'utilisateur</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="first_name" class="form-label">Prénom(s)</label>
-                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Ex. John">
+                    
+                    <!-- Section 2: Informations personnelles -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-primary">
+                                <i class="bi bi-person-vcard me-1"></i>Informations personnelles
+                            </h6>
+                            <small class="text-muted">Nom, prénom et coordonnées</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Prénom -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="first_name" class="form-label">
+                                        <i class="bi bi-person me-1"></i>Prénom(s)
+                                    </label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           placeholder="John">
+                                </div>
+                                
+                                <!-- Nom -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="last_name" class="form-label">
+                                        <i class="bi bi-person-fill me-1"></i>Nom(s)
+                                    </label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           placeholder="DOE">
+                                </div>
+                            </div>
+                            
+                            <!-- Adresse -->
+                            <div class="mb-3">
+                                <label for="adresse" class="form-label">
+                                    <i class="bi bi-geo-alt me-1"></i>Adresse
+                                </label>
+                                <input type="text" class="form-control" id="adresse" name="address" 
+                                       placeholder="Quartier Mokolo, Ouagadougou, Burkina Faso">
+                            </div>
+                            
+                            <!-- Téléphone et Profession -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="telephone" class="form-label">
+                                        <i class="bi bi-telephone me-1"></i>Téléphone
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-phone"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="telephone" name="telephone" 
+                                               placeholder="+241 06 68 23 51">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="profession" class="form-label">
+                                        <i class="bi bi-briefcase me-1"></i>Profession
+                                    </label>
+                                    <input type="text" class="form-control" id="profession" name="profession" 
+                                           placeholder="Analyste validateur">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="last_name" class="form-label">Nom(s)</label>
-                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Ex. DOE">
+                    
+                    <!-- Section 3: Emails -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-primary">
+                                <i class="bi bi-envelope me-1"></i>Adresses email
+                            </h6>
+                            <small class="text-muted">Pour les notifications et communications</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Email principal -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label required">
+                                        <i class="bi bi-envelope-at me-1"></i>Email principal
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-at"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               placeholder="john.doe@acremac.com" required>
+                                    </div>
+                                    <div class="form-text">Adresse email principale pour les notifications</div>
+                                </div>
+                                
+                                <!-- Email en copie -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="email_cc" class="form-label">
+                                        <i class="bi bi-envelope-paper me-1"></i>Email en copie
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-copy"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="email_cc" name="email_cc" 
+                                               placeholder="info@acremac.com">
+                                    </div>
+                                    <div class="form-text">Adresse email supplémentaire (optionnel)</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="Ex. john.doe@acremac.com">
+                    
+                    <!-- Section 4: Configuration -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-primary">
+                                <i class="bi bi-gear me-1"></i>Configuration
+                            </h6>
+                            <small class="text-muted">Paramètres du compte</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Statut -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="activation" class="form-label required">
+                                        <i class="bi bi-toggle-on me-1"></i>Statut du compte
+                                    </label>
+                                    <select class="form-select" id="activation" name="activation" required>
+                                        <option value="true" selected>Activé</option>
+                                        <option value="false">Désactivé</option>
+                                    </select>
+                                    <div class="form-text">Désactivez pour bloquer l'accès temporairement</div>
+                                </div>
+                                
+                                <!-- Pays -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="pays" class="form-label required">
+                                        <i class="bi bi-globe-americas me-1"></i>Pays d'affectation
+                                    </label>
+                                    <select class="form-select" id="pays" name="pays" required>
+                                        <option value="" disabled selected>Sélectionnez un pays</option>
+                                        {% for pays in pays_list %}
+                                            <option value="{{ pays.id }}">
+                                                {% if pays.drapeau %}
+                                                    <img src="{{ pays.drapeau.url }}" alt="{{ pays.nom }}" class="me-2" style="width: 20px; height: 15px;">
+                                                {% endif %}
+                                                {{ pays.nom }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Pays où l'utilisateur sera affecté</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="email_cc" class="form-label">Email (en copie)</label>
-                        <input type="email" class="form-control" id="email_cc" name="email_cc" placeholder="Ex. info@acremac.com">
+                    
+                    <!-- Information sur la génération du mot de passe -->
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-key fs-4"></i>
+                            </div>
+                            <div>
+                                <h6 class="alert-heading mb-1">
+                                    <i class="bi bi-info-circle me-1"></i>Information importante
+                                </h6>
+                                <p class="mb-0">
+                                    Un mot de passe sécurisé sera généré automatiquement et envoyé par email à l'utilisateur. 
+                                    Il devra le changer lors de sa première connexion.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="telephone" class="form-label">Téléphone</label>
-                        <input type="text" class="form-control" id="telephone" name="telephone" placeholder="Ex. (+241) 02 02 02 02">
+                    
+                    <!-- Boutons d'action -->
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-1"></i> Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="addUserSubmitBtn">
+                            <i class="bi bi-person-add me-1"></i> Créer l'utilisateur
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="profession" class="form-label">Profession</label>
-                        <input type="text" class="form-control" id="profession" name="profession" placeholder="Ex. Analyste validateur">
-                    </div>
-                    <div class="mb-3">
-                        <label for="adresse" class="form-label">Adresse</label>
-                        <input type="text" class="form-control" id="adresse" name="address" placeholder="Ex. Quartier Mokolo, Ouagadougou, Burkina faso">
-                    </div>
-                    <div class="mb-3">
-                        <label for="role" class="form-label">Rôle</label>
-                        <select class="form-select" id="role" name="role" required>
-                            <option value="">Sélectionnez un rôle</option>
-                            <option value="Root">Root</option>
-                            <option value="Validateur">Validateur</option>
-                            <option value="Analyste">Analyste</option>
-                            <option value="Client">Client</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="activation" class="form-label">Activation</label>
-                        <select class="form-select" id="activation" name="activation" required>
-                            <option value="true">Activé</option>
-                            <option value="false">Désactivé</option>
-                        </select>
-                    </div>
-
-                    <!-- Pays -->
-                    <div class="mb-3">
-                        <label for="pays" class="form-label">Pays</label>
-                        <select class="form-select" id="pays" name="pays" required>
-                            <option value="">Sélectionnez un pays</option>
-                            {% for pays in pays_list %}
-                                <option value="{{ pays.id }}">{{ pays.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
                 </form>
             </div>
         </div>
@@ -189,79 +734,305 @@
 </div>
 <!-- Add User Modal END -->
 
-<!-- Edit User Modal START -->
+<!-- Edit User Modal START - Version embellie -->
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editUserModalLabel">Editer un Utilisateur</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- Header avec icône et couleur d'édition -->
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editUserModalLabel">
+                    <i class="bi bi-person-gear-fill me-2"></i>Éditer un Utilisateur
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            
+            <!-- Body avec sections organisées -->
             <div class="modal-body">
                 <form id="editUserForm">
                     <input type="hidden" id="editUserId" name="id">
-                    <div class="mb-3">
-                        <label for="editUsername" class="form-label">Pseudo</label>
-                        <input type="text" class="form-control" id="editUsername" name="username" required>
+                    
+                    <!-- Section d'identification -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-warning">
+                                <i class="bi bi-person-bounding-box me-1"></i>Identification
+                            </h6>
+                            <small class="text-muted">ID: <span id="editUserIdentifier" class="fw-bold">-</span></small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Pseudo -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editUsername" class="form-label required">
+                                        <i class="bi bi-person-circle me-1"></i>Pseudo
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-at"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editUsername" name="username" 
+                                               placeholder="john.doe" required>
+                                    </div>
+                                    <div class="form-text">Identifiant unique pour la connexion</div>
+                                </div>
+                                
+                                <!-- Rôle -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editRole" class="form-label required">
+                                        <i class="bi bi-shield-check me-1"></i>Rôle
+                                    </label>
+                                    <select class="form-select" id="editRole" name="role" required>
+                                        <option value="" disabled>Sélectionnez un rôle</option>
+                                        <option value="Root" data-badge="bg-danger">Root</option>
+                                        <option value="Validateur" data-badge="bg-warning">Analyste Validateur</option>
+                                        <option value="Analyste" data-badge="bg-info">Analyste</option>
+                                        <option value="Client" data-badge="bg-success">Client</option>
+                                    </select>
+                                    <div class="form-text">Définit les permissions de l'utilisateur</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editFirstName" class="form-label">Prénom(s)</label>
-                        <input type="text" class="form-control" id="editFirstName" name="first_name">
+                    
+                    <!-- Section: Informations personnelles -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-warning">
+                                <i class="bi bi-person-vcard me-1"></i>Informations personnelles
+                            </h6>
+                            <small class="text-muted">Nom, prénom et coordonnées</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Prénom -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editFirstName" class="form-label">
+                                        <i class="bi bi-person me-1"></i>Prénom(s)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-person-arms-up"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editFirstName" name="first_name" 
+                                               placeholder="John">
+                                    </div>
+                                </div>
+                                
+                                <!-- Nom -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editLastName" class="form-label">
+                                        <i class="bi bi-person-fill me-1"></i>Nom(s)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-person-standing"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editLastName" name="last_name" 
+                                               placeholder="DOE">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Adresse -->
+                            <div class="mb-3">
+                                <label for="editAdresse" class="form-label">
+                                    <i class="bi bi-geo-alt me-1"></i>Adresse
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-house"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="editAdresse" name="address" 
+                                           placeholder="Quartier Mokolo, Ouagadougou, Burkina Faso">
+                                </div>
+                            </div>
+                            
+                            <!-- Téléphone et Profession -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="editTelephone" class="form-label">
+                                        <i class="bi bi-telephone me-1"></i>Téléphone
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-phone"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editTelephone" name="telephone" 
+                                               placeholder="+241 06 68 23 51">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="editProfession" class="form-label">
+                                        <i class="bi bi-briefcase me-1"></i>Profession
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-briefcase-fill"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editProfession" name="profession" 
+                                               placeholder="Analyste validateur">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editLastName" class="form-label">Nom(s)</label>
-                        <input type="text" class="form-control" id="editLastName" name="last_name">
+                    
+                    <!-- Section: Emails -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-warning">
+                                <i class="bi bi-envelope me-1"></i>Adresses email
+                            </h6>
+                            <small class="text-muted">Pour les notifications et communications</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Email principal -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editEmail" class="form-label required">
+                                        <i class="bi bi-envelope-at me-1"></i>Email principal
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-envelope-fill"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="editEmail" name="email" 
+                                               placeholder="john.doe@acremac.com" required>
+                                    </div>
+                                    <div class="form-text">Adresse email principale pour les notifications</div>
+                                </div>
+                                
+                                <!-- Email en copie -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editEmailCc" class="form-label">
+                                        <i class="bi bi-envelope-paper me-1"></i>Email en copie
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-copy"></i>
+                                        </span>
+                                        <input type="email" class="form-control" id="editEmailCc" name="email_cc" 
+                                               placeholder="info@acremac.com">
+                                    </div>
+                                    <div class="form-text">Adresse email supplémentaire (optionnel)</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="editEmail" name="email">
+                    
+                    <!-- Section: Configuration -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-warning">
+                                <i class="bi bi-gear me-1"></i>Configuration
+                            </h6>
+                            <small class="text-muted">Paramètres du compte</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Statut -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editActivation" class="form-label required">
+                                        <i class="bi bi-toggle-on me-1"></i>Statut du compte
+                                    </label>
+                                    <select class="form-select" id="editActivation" name="activation" required>
+                                        <option value="true">Activé</option>
+                                        <option value="false">Désactivé</option>
+                                    </select>
+                                    <div class="form-text">Désactivez pour bloquer l'accès temporairement</div>
+                                </div>
+                                
+                                <!-- Pays -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="editPays" class="form-label required">
+                                        <i class="bi bi-globe-americas me-1"></i>Pays d'affectation
+                                    </label>
+                                    <select class="form-select" id="editPays" name="pays" required>
+                                        <option value="" disabled>Sélectionnez un pays</option>
+                                        {% for pays in pays_list %}
+                                            <option value="{{ pays.id }}">
+                                                {% if pays.drapeau %}
+                                                    <img src="{{ pays.drapeau.url }}" alt="{{ pays.nom }}" class="me-2" style="width: 20px; height: 15px;">
+                                                {% endif %}
+                                                {{ pays.nom }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">Pays où l'utilisateur est affecté</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editEmailCc" class="form-label">Email (en copie)</label>
-                        <input type="email" class="form-control" id="editEmailCc" name="email_cc">
+                    
+                    <!-- Informations système (en lecture seule) -->
+                    <div class="card border-0 mb-4">
+                        <div class="card-header bg-transparent border-bottom pb-2">
+                            <h6 class="mb-0 text-warning">
+                                <i class="bi bi-info-circle me-1"></i>Informations système
+                            </h6>
+                            <small class="text-muted">Données non modifiables</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row">
+                                <!-- Date de création -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="bi bi-calendar-plus me-1"></i>Date de création
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-clock-history"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editDateJoined" readonly 
+                                               placeholder="Chargement...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Dernière connexion -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="bi bi-calendar-check me-1"></i>Dernière connexion
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="bi bi-door-open"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="editLastLogin" readonly 
+                                               placeholder="Chargement...">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Information sur la modification -->
+                            <div class="alert alert-warning mt-3">
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <i class="bi bi-exclamation-triangle fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="alert-heading mb-1">
+                                            <i class="bi bi-info-circle me-1"></i>Modification en cours
+                                        </h6>
+                                        <p class="mb-0">
+                                            Les modifications seront appliquées immédiatement. 
+                                            L'utilisateur sera notifié si nécessaire.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editTelephone" class="form-label">Téléphone</label>
-                        <input type="text" class="form-control" id="editTelephone" name="telephone">
+                    
+                    <!-- Boutons d'action -->
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-1"></i> Annuler
+                        </button>
+                        <button type="submit" class="btn btn-warning text-white" id="editUserSubmitBtn">
+                            <i class="bi bi-check-circle me-1"></i> Mettre à jour
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="editProfession" class="form-label">Profession</label>
-                        <input type="text" class="form-control" id="editProfession" name="profession">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editAdresse" class="form-label">Adresse</label>
-                        <input type="text" class="form-control" id="editAdresse" name="address">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRole" class="form-label">Rôle</label>
-                        <select class="form-select" id="editRole" name="role" required>
-                            <option value="">Sélectionnez un rôle</option>
-                            <option value="Root">Root</option>
-                            <option value="Validateur">Validateur</option>
-                            <option value="Analyste">Analyste</option>
-                            <option value="Client">Client</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editActivation" class="form-label">Activation</label>
-                        <select class="form-select" id="editActivation" name="activation" required>
-                            <option value="true">Activé</option>
-                            <option value="false">Désactivé</option>
-                        </select>
-                    </div>
-
-                    <!-- Pays -->
-                    <div class="mb-3">
-                        <label for="pays" class="form-label">Pays</label>
-                        <select class="form-select" id="editPays" name="pays" required>
-                            <option value="">Sélectionnez un pays</option>
-                            {% for pays in pays_list %}
-                                <option value="{{ pays.id }}">{{ pays.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
                 </form>
             </div>
         </div>
@@ -275,180 +1046,1181 @@
 
 <script>
     $(document).ready(function() {
+
+        // Stockage des tokens
+        let accessToken = '{{ access }}';
+        let refreshToken = '{{ refresh }}';
+
+        // Variables pour suivre l'état actuel
+        let currentPage = 1;
+        let currentSearch = '';
+
+
+
         // Function to load users
+        // Function to load users - Version corrigée
         function loadUsers(page = 1, search = '') {
+            currentPage = page;
+            currentSearch = search;
+
+            // Afficher un loader
+            $('#userTableBody').html(`
+                <tr>
+                    <td colspan="8" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="mt-2">Chargement des utilisateurs...</p>
+                    </td>
+                </tr>
+            `);
+
             $.ajax({
-                url: '/api/liste-des-utilisateurs/?page=' + page + '&search=' + search,
+                url: '/api/liste-des-utilisateurs/?page=' + page + '&search=' + encodeURIComponent(search),
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + accessToken
                 },
                 success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+                    console.log("Réponse API:", response); // Pour debug
+                    
+                    // Mettre à jour les informations de pagination
+                    const pagination = response.pagination;
+                    $('#paginationInfo').text(
+                        `Affichage ${pagination.start_index || 1} à ${pagination.end_index || pagination.total} sur ${pagination.total || 0} utilisateur(s)`
+                    );
 
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
+                    // Mettre à jour les contrôles de pagination
+                    updatePaginationControls(pagination, page, search);
 
-                    // Update user table body
-                    $('#userTableBody').html('');
-                    response.results.forEach(function(user, index) {
-                        console.log(response.results);
-                        $('#userTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + user.username + '</td>' +
-                            '<td>' + (user.role ? user.role : 'Non défini') + '</td>' +
-                            '<td>' + (user.telephone ? user.telephone : 'Non défini') + '</td>' +
-                            '<td>' + (user.activation ? 'Activé' : 'Désactivé') + '</td>' +
-                            '<td>' + (user.pays ? user.pays.nom : 'Non défini')  + '</td>' +
-                            '<td>' + user.date_joined_formatted + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + user.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + user.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
+                    // Mettre à jour le tableau des utilisateurs
+                    updateUserTable(response.results, pagination);
                 },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
+                error: function(jqxhr) {
+                    console.error("Erreur AJAX:", jqxhr);
+                    $('#userTableBody').html(`
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-danger">
+                                <i class="bi bi-exclamation-triangle fs-1"></i>
+                                <p class="mt-2">Erreur lors du chargement des données.</p>
+                                <button class="btn btn-sm btn-primary mt-2" onclick="loadUsers(currentPage, currentSearch)">
+                                    <i class="bi bi-arrow-clockwise"></i> Réessayer
+                                </button>
+                            </td>
+                        </tr>
+                    `);
                 }
             });
         }
 
+        // Fonction pour mettre à jour le tableau des utilisateurs - Version corrigée
+        function updateUserTable(users, pagination) {
+            const userTableBody = $('#userTableBody');
+            userTableBody.empty();
+            
+            if (!users || users.length === 0) {
+                userTableBody.html(`
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="bi bi-people fs-1 text-muted"></i>
+                            <p class="mt-2">Aucun utilisateur trouvé.</p>
+                            ${currentSearch ? 
+                                '<p class="text-muted">Essayez avec d\'autres termes de recherche.</p>' : 
+                                '<button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addUserModal">' +
+                                '<i class="bi bi-plus-circle"></i> Ajouter le premier utilisateur</button>'
+                            }
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+            
+            // Ajouter chaque utilisateur au tableau
+            users.forEach(function(user, index) {
+                // Calculer le numéro de ligne
+                const rowNumber = (pagination.start_index || 1) + index;
+                
+                // Formater le statut
+                const statusBadge = user.activation ? 
+                    '<span class="badge bg-success">Activé</span>' : 
+                    '<span class="badge bg-danger">Désactivé</span>';
+                
+                // Formater le pays - plusieurs options
+                let country = '<span class="text-muted">Non défini</span>';
+                if (user.pays) {
+                    if (typeof user.pays === 'object') {
+                        country = user.pays.nom || user.pays;
+                    } else if (typeof user.pays === 'string') {
+                        country = user.pays;
+                    }
+                } else if (user.pays_nom) {
+                    country = user.pays_nom;
+                }
+                
+                // Formater la date - plusieurs options
+                let dateFormatted = '<span class="text-muted">-</span>';
+                if (user.date_joined_formatted) {
+                    dateFormatted = user.date_joined_formatted;
+                } else if (user.date_joined) {
+                    // Essayer de parser la date
+                    try {
+                        const date = new Date(user.date_joined);
+                        if (!isNaN(date.getTime())) {
+                            dateFormatted = date.toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                            });
+                        }
+                    } catch (e) {
+                        console.warn("Erreur de format de date:", e);
+                    }
+                }
+                
+                // Avatar ou initiale
+                const firstLetter = user.username ? user.username.charAt(0).toUpperCase() : '?';
+                const avatarHtml = user.avatar_url ? 
+                    `<img src="${user.avatar_url}" class="avatar-sm rounded-circle me-2" alt="${user.username}">` : 
+                    `<div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                        <span class="text-white">${firstLetter}</span>
+                    </div>`;
+                
+                // Créer la ligne
+                userTableBody.append(`
+                    <tr>
+                        <td class="fw-bold">${user.id}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                ${avatarHtml}
+                                <div>
+                                    <h6 class="mb-0">${user.username || 'Non défini'}</h6>
+                                    <small class="text-danger">${user.email || ''}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">${user.role || 'Non défini'}</span>
+                        </td>
+                        <td>${user.telephone || '<span class="text-muted">-</span>'}</td>
+                        <td>${statusBadge}</td>
+                        <td>${country}</td>
+                        <td>
+                            <small class="text-muted">
+                                ${dateFormatted}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-success edit-btn" 
+                                        data-id="${user.id}" 
+                                        data-bs-toggle="tooltip" 
+                                        title="Éditer">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-btn" 
+                                        data-id="${user.id}"
+                                        data-username="${user.username}"
+                                        data-bs-toggle="tooltip" 
+                                        title="Supprimer">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+            
+            // Initialiser les tooltips Bootstrap
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        }
+
+        // Fonction pour mettre à jour les contrôles de pagination - Version corrigée
+        function updatePaginationControls(pagination, currentPage, search) {
+            const paginationControls = $('#paginationControls');
+            paginationControls.empty();
+            
+            const totalPages = pagination.total_pages || 1;
+            const maxVisiblePages = 5;
+            
+            // Bouton Précédent
+            if (pagination.has_previous) {
+                paginationControls.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="${pagination.previous_page}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                `);
+            } else {
+                paginationControls.append(`
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="bi bi-chevron-left"></i>
+                        </span>
+                    </li>
+                `);
+            }
+            
+            // Calculer les pages à afficher
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            // Ajuster si on est proche de la fin
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            // Première page
+            if (startPage > 1) {
+                paginationControls.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="1">1</a>
+                    </li>
+                    ${startPage > 2 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+                `);
+            }
+            
+            // Pages numérotées
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === currentPage) {
+                    paginationControls.append(`
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">${i}</span>
+                        </li>
+                    `);
+                } else {
+                    paginationControls.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `);
+                }
+            }
+            
+            // Dernière page
+            if (endPage < totalPages) {
+                paginationControls.append(`
+                    ${endPage < totalPages - 1 ? '<li class="page-item disabled"><span class="page-link">...</span></li>' : ''}
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
+                    </li>
+                `);
+            }
+            
+            // Bouton Suivant
+            if (pagination.has_next) {
+                paginationControls.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="#" data-page="${pagination.next_page}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                `);
+            } else {
+                paginationControls.append(`
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="bi bi-chevron-right"></i>
+                        </span>
+                    </li>
+                `);
+            }
+        }
+
         // Initial load
         loadUsers();
-
+            
         // Search form submission
         $('#searchForm').on('submit', function(event) {
             event.preventDefault();
-            var search = $('#searchInput').val();
+            const search = $('#searchInput').val();
             loadUsers(1, search);
         });
+        
+        // Clear search button (optionnel)
+        $('#searchInput').on('input', function() {
+            if ($(this).val() === '') {
+                loadUsers(1, '');
+            }
+        });
 
+        // Bouton de rafraîchissement
+        $('#refreshUsersBtn').on('click', function() {
+            const btn = $(this);
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+            
+            // Forcer un rechargement sans cache
+            loadUsers(currentPage, currentSearch);
+            
+            // Réactiver le bouton après 1 seconde
+            setTimeout(() => {
+                btn.prop('disabled', false).html('<i class="bi bi-arrow-clockwise"></i>');
+            }, 10000);
+        });
+        
+        // Rafraîchissement automatique toutes les 10 secondes (au lieu de 30)
+        setInterval(() => {
+            if (!document.hidden) {
+                loadUsers(currentPage, currentSearch);
+            }
+        }, 15000000);
+        
         // Pagination controls
         $(document).on('click', '#paginationControls .page-link', function(event) {
             event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadUsers(page, search);
+            const page = $(this).data('page');
+            const search = $('#searchInput').val();
+            if (page) {
+                loadUsers(page, search);
+            }
+        });
+        
+        // Rafraîchissement automatique toutes les 30 secondes
+        setInterval(() => {
+            if (!document.hidden) {
+                loadUsers(currentPage, currentSearch);
+            }
+        }, 30000);
+
+        // Animation pour l'ouverture du modal
+        $('#addUserModal').on('show.bs.modal', function() {
+            $(this).find('.modal-content').css({
+                'transform': 'scale(0.95)',
+                'opacity': '0'
+            }).animate({
+                'transform': 'scale(1)',
+                'opacity': '1'
+            }, 300);
+        });
+        
+        // Validation en temps réel
+        $('#addUserForm input, #addUserForm select').on('blur', function() {
+            validateAddField($(this));
+        });
+        
+        // Prévisualisation des rôles avec badges
+        $('#role').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const badgeClass = selectedOption.data('badge');
+            
+            // Mettre à jour un badge de prévisualisation
+            $('#rolePreview').remove();
+            if (badgeClass) {
+                $(this).after(`
+                    <div id="rolePreview" class="mt-2">
+                        <small>Rôle sélectionné : 
+                            <span class="badge ${badgeClass}">${selectedOption.text()}</span>
+                        </small>
+                    </div>
+                `);
+            }
+        });
+        
+        // Formatage automatique du téléphone
+        $('#telephone').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    value = `+${value}`;
+                } else if (value.length <= 6) {
+                    value = `+${value.substring(0, 3)} ${value.substring(3)}`;
+                } else if (value.length <= 9) {
+                    value = `+${value.substring(0, 3)} ${value.substring(3, 6)} ${value.substring(6)}`;
+                } else {
+                    value = `+${value.substring(0, 3)} ${value.substring(3, 6)} ${value.substring(6, 9)} ${value.substring(9, 12)}`;
+                }
+            }
+            
+            $(this).val(value);
+        });
+        
+        // Validation de l'email
+        $('#email, #email_cc').on('blur', function() {
+            const email = $(this).val();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (email && !emailRegex.test(email)) {
+                $(this).addClass('is-invalid');
+                $(this).after('<div class="invalid-feedback">Adresse email invalide</div>');
+            } else {
+                $(this).removeClass('is-invalid').addClass('is-valid');
+                $(this).next('.invalid-feedback').remove();
+            }
+        });
+        
+        // Gestion du bouton submit
+        $('#addUserForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateAddForm()) {
+                submitAddForm();
+            } else {
+                // Scroll vers le premier champ invalide
+                const firstInvalid = $('.is-invalid').first();
+                if (firstInvalid.length) {
+                    $('html, body').animate({
+                        scrollTop: firstInvalid.offset().top - 100
+                    }, 500);
+                    
+                    // Focus sur le champ invalide
+                    firstInvalid.focus();
+                    
+                    // Afficher un message d'erreur
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Formulaire incomplet',
+                        text: 'Veuillez corriger les erreurs dans le formulaire.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+        
+        // Réinitialisation du formulaire quand le modal se ferme
+        $('#addUserModal').on('hidden.bs.modal', function() {
+            $('#addUserForm')[0].reset();
+            $('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
+            $('.invalid-feedback, .valid-feedback').remove();
+            $('#rolePreview').remove();
         });
 
-        // Add User form submission
-        $('#addUserForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
+        // Fonction de validation des champs
+        function validateAddField(field) {
+            const value = field.val();
+            const name = field.attr('name');
+            
+            field.removeClass('is-invalid is-valid');
+            field.next('.invalid-feedback').remove();
+            
+            // Validation des champs requis
+            if (field.attr('required') && (!value || value.trim() === '')) {
+                field.addClass('is-invalid');
+                field.after('<div class="invalid-feedback">Ce champ est requis</div>');
+                return false;
+            }
+            
+            // Validation spécifique par champ
+            switch(name) {
+                case 'username':
+                    if (value && value.length < 3) {
+                        field.addClass('is-invalid');
+                        field.after('<div class="invalid-feedback">Le pseudo doit contenir au moins 3 caractères</div>');
+                        return false;
+                    }
+                    break;
+                    
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (value && !emailRegex.test(value)) {
+                        field.addClass('is-invalid');
+                        field.after('<div class="invalid-feedback">Adresse email invalide</div>');
+                        return false;
+                    }
+                    break;
+                    
+                case 'telephone':
+                    if (value) {
+                        const phoneDigits = value.replace(/\D/g, '');
+                        if (phoneDigits.length < 8) {
+                            field.addClass('is-invalid');
+                            field.after('<div class="invalid-feedback">Numéro de téléphone invalide</div>');
+                            return false;
+                        }
+                    }
+                    break;
+            }
+            
+            field.addClass('is-valid');
+            return true;
+        }
+
+        // Fonction de validation globale du formulaire
+        function validateAddForm() {
+            let isValid = true;
+            
+            $('#addUserForm [required]').each(function() {
+                if (!validateAddField($(this))) {
+                    isValid = false;
+                }
+            });
+            
+            return isValid;
+        }
+
+        // Fonction de soumission du formulaire
+        function submitAddForm() {
+            const submitBtn = $('#addUserSubmitBtn');
+            const originalText = submitBtn.html();
+            
+            // Désactiver le bouton
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Création...');
+            
+            // Préparer les données
+            const formData = $('#addUserForm').serializeArray();
+            const data = {};
+            
+            formData.forEach(item => {
+                if (item.value !== '') {
+                    data[item.name] = item.value;
+                }
+            });
+            
+            // Convertir les types
+            if (data.activation) {
+                data.activation = data.activation === 'true';
+            }
+            
+            if (data.pays) {
+                data.pays = parseInt(data.pays);
+            }
+            
+            // Envoyer la requête AJAX
             $.ajax({
                 url: '/api/ajouter-une-utilisateur/',
                 type: 'POST',
-                data: formData,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + accessToken,
+                    'X-CSRFToken': getCookie('csrftoken')
                 },
                 success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Utilisateur ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addUserModal').modal('hide');
-                        loadUsers();
-                    });
+                    if (response.success) {
+                        // Succès
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Utilisateur créé !',
+                            html: `
+                                <div class="text-center">
+                                    <i class="bi bi-check-circle-fill text-success fs-1 mb-3"></i>
+                                    <p class="fs-5">${response.user.username} a été créé avec succès.</p>
+                                    <div class="alert ${response.email_sent ? 'alert-success' : 'alert-warning'}">
+                                        <i class="bi ${response.email_sent ? 'bi-envelope-check' : 'bi-envelope-exclamation'} me-1"></i>
+                                        ${response.email_sent ? 
+                                            'Les identifiants ont été envoyés par email.' : 
+                                            'Les identifiants n\'ont pas pu être envoyés par email.'
+                                        }
+                                    </div>
+                                </div>
+                            `,
+                            showConfirmButton: true,
+                            confirmButtonText: 'Fermer'
+                        }).then(() => {
+                            $('#addUserModal').modal('hide');
+                            loadUsers();
+                        });
+                    } else {
+                        // Erreur de validation
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur de validation',
+                            html: response.message || 'Erreur lors de la création',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                 },
-                error: function(response) {
+                error: function(xhr) {
+                    // Erreur serveur
+                    let errorMessage = 'Erreur lors de la création de l\'utilisateur.';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        const errors = xhr.responseJSON.errors;
+                        let errorDetails = '<ul class="text-start">';
+                        
+                        for (const field in errors) {
+                            const fieldErrors = Array.isArray(errors[field]) ? errors[field] : [errors[field]];
+                            fieldErrors.forEach(error => {
+                                errorDetails += `<li><strong>${field}:</strong> ${error}</li>`;
+                            });
+                        }
+                        errorDetails += '</ul>';
+                        
+                        errorMessage = `<p>Des erreurs ont été détectées :</p>${errorDetails}`;
+                    }
+                    
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de l\'utilisateur.',
+                        title: 'Erreur',
+                        html: errorMessage,
+                        confirmButtonText: 'OK'
                     });
+                },
+                complete: function() {
+                    // Réactiver le bouton
+                    submitBtn.prop('disabled', false).html(originalText);
                 }
             });
-        });
 
-        // Edit User button click
+        }
+
+
+        // Edit User button click - Version améliorée
         $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
+            const id = $(this).data('id');
+            const btn = $(this);
+            
+            // Désactiver le bouton et afficher un loader
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+            
             $.ajax({
                 url: '/api/editer-une-utilisateur/' + id + '/',
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Cache-Control': 'no-cache'
                 },
+                cache: false,
                 success: function(response) {
-                    console.log(response);
+                    console.log('Données utilisateur:', response);
+                    
+                    // Mettre à jour l'identifiant
                     $('#editUserId').val(response.id);
-                    $('#editUsername').val(response.username);
-                    $('#editFirstName').val(response.first_name);
-                    $('#editLastName').val(response.last_name);
-                    $('#editEmail').val(response.email);
-                    $('#editEmailCc').val(response.email_cc);
-                    $('#editTelephone').val(response.telephone);
-                    $('#editAdresse').val(response.address);
-                    $('#editRole').val(response.role);
-                    $('#editActivation').val(response.activation.toString()); // Convertir en chaîne de caractères
-                    $('#editPays').val(response.pays);
+                    $('#editUserIdentifier').text(`#${response.id} - ${response.username}`);
+                    
+                    // Remplir le formulaire
+                    $('#editUsername').val(response.username || '');
+                    $('#editFirstName').val(response.first_name || '');
+                    $('#editLastName').val(response.last_name || '');
+                    $('#editEmail').val(response.email || '');
+                    $('#editEmailCc').val(response.email_cc || '');
+                    $('#editTelephone').val(response.telephone || '');
+                    $('#editProfession').val(response.profession || '');
+                    $('#editAdresse').val(response.address || '');
+                    $('#editRole').val(response.role || '');
+                    
+                    // Prévisualisation du rôle
+                    const roleOption = $(`#editRole option[value="${response.role}"]`);
+                    if (roleOption.length) {
+                        const badgeClass = roleOption.data('badge');
+                        $('#editRolePreview').remove();
+                        if (badgeClass) {
+                            $('#editRole').after(`
+                                <div id="editRolePreview" class="mt-2">
+                                    <small>Rôle actuel : 
+                                        <span class="badge ${badgeClass}">${roleOption.text()}</span>
+                                    </small>
+                                </div>
+                            `);
+                        }
+                    }
+                    
+                    // Gérer l'activation
+                    const activationValue = response.activation ? 'true' : 'false';
+                    $('#editActivation').val(activationValue);
+                    
+                    // Gérer le pays
+                    let paysId = '';
+                    if (response.pays_id) {
+                        paysId = response.pays_id;
+                    } else if (response.pays && typeof response.pays === 'object') {
+                        paysId = response.pays.id;
+                    } else if (response.pays) {
+                        paysId = response.pays;
+                    }
+                    $('#editPays').val(paysId);
+                    
+                    // Informations système (lecture seule)
+                    if (response.date_joined_formatted) {
+                        $('#editDateJoined').val(response.date_joined_formatted);
+                    } else if (response.date_joined) {
+                        const date = new Date(response.date_joined);
+                        if (!isNaN(date.getTime())) {
+                            $('#editDateJoined').val(date.toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }));
+                        }
+                    }
+                    
+                    if (response.last_login) {
+                        const date = new Date(response.last_login);
+                        if (!isNaN(date.getTime())) {
+                            $('#editLastLogin').val(date.toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }));
+                        }
+                    } else {
+                        $('#editLastLogin').val('Jamais connecté');
+                    }
+                    
+                    // Afficher le modal avec animation
                     $('#editUserModal').modal('show');
+                    
+                    // Animation d'entrée
+                    setTimeout(() => {
+                        $('.modal-content').addClass('show');
+                    }, 10);
+                    
+                    // Réactiver le bouton
+                    btn.prop('disabled', false).html('<i class="bi bi-pencil"></i>');
                 },
-                error: function(response) {
+                error: function(xhr) {
+                    console.error('Erreur:', xhr);
+                    
+                    let errorMessage = 'Erreur lors de la récupération des données.';
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    }
+                    
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'utilisateur.',
+                        title: 'Erreur',
+                        html: `
+                            <div class="text-center">
+                                <i class="bi bi-exclamation-triangle text-danger fs-1 mb-3"></i>
+                                <p class="fs-5">${errorMessage}</p>
+                            </div>
+                        `,
+                        confirmButtonText: 'OK'
                     });
+                    
+                    // Réactiver le bouton
+                    btn.prop('disabled', false).html('<i class="bi bi-pencil"></i>');
                 }
             });
         });
 
+        // Formatage automatique du téléphone dans l'édition
+        $('#editTelephone').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            
+            if (value.length > 0) {
+                if (value.length <= 3) {
+                    value = `+${value}`;
+                } else if (value.length <= 6) {
+                    value = `+${value.substring(0, 3)} ${value.substring(3)}`;
+                } else if (value.length <= 9) {
+                    value = `+${value.substring(0, 3)} ${value.substring(3, 6)} ${value.substring(6)}`;
+                } else {
+                    value = `+${value.substring(0, 3)} ${value.substring(3, 6)} ${value.substring(6, 9)} ${value.substring(9, 12)}`;
+                }
+            }
+            
+            $(this).val(value);
+        });
 
-        // Edit User form submission
+        // Validation en temps réel pour l'édition
+        $('#editUserForm input, #editUserForm select').on('blur', function() {
+            validateEditField($(this));
+        });
+
+        // Gestion de la soumission du formulaire d'édition
+        $('#editUserForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateEditForm()) {
+                submitEditForm();
+            } else {
+                const firstInvalid = $('.is-invalid').first();
+                if (firstInvalid.length) {
+                    $('html, body').animate({
+                        scrollTop: firstInvalid.offset().top - 100
+                    }, 500);
+                    firstInvalid.focus();
+                    
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Formulaire incomplet',
+                        text: 'Veuillez corriger les erreurs dans le formulaire.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+
+        // Réinitialisation du formulaire quand le modal se ferme
+        $('#editUserModal').on('hidden.bs.modal', function() {
+            $('#editUserForm')[0].reset();
+            $('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
+            $('.invalid-feedback, .valid-feedback').remove();
+            $('#editRolePreview').remove();
+            $('#editUserIdentifier').text('-');
+            $('#editDateJoined').val('');
+            $('#editLastLogin').val('');
+        });
+
+        // Fonction de validation pour l'édition
+        function validateEditField(field) {
+            const value = field.val();
+            const name = field.attr('name');
+            
+            field.removeClass('is-invalid is-valid');
+            field.next('.invalid-feedback').remove();
+            
+            // Validation des champs requis
+            if (field.attr('required') && (!value || value.trim() === '')) {
+                field.addClass('is-invalid');
+                field.after('<div class="invalid-feedback">Ce champ est requis</div>');
+                return false;
+            }
+            
+            // Validation spécifique par champ
+            switch(name) {
+                case 'username':
+                    if (value && value.length < 3) {
+                        field.addClass('is-invalid');
+                        field.after('<div class="invalid-feedback">Le pseudo doit contenir au moins 3 caractères</div>');
+                        return false;
+                    }
+                    break;
+                    
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (value && !emailRegex.test(value)) {
+                        field.addClass('is-invalid');
+                        field.after('<div class="invalid-feedback">Adresse email invalide</div>');
+                        return false;
+                    }
+                    break;
+                    
+                case 'telephone':
+                    if (value) {
+                        const phoneDigits = value.replace(/\D/g, '');
+                        if (phoneDigits.length < 8 && phoneDigits.length > 0) {
+                            field.addClass('is-invalid');
+                            field.after('<div class="invalid-feedback">Numéro de téléphone invalide</div>');
+                            return false;
+                        }
+                    }
+                    break;
+            }
+            
+            field.addClass('is-valid');
+            return true;
+        }
+
+        // Fonction de validation globale pour l'édition
+        function validateEditForm() {
+            let isValid = true;
+            
+            $('#editUserForm [required]').each(function() {
+                if (!validateEditField($(this))) {
+                    isValid = false;
+                }
+            });
+            
+            return isValid;
+        }
+
+        // Fonction de soumission pour l'édition
+        function submitEditForm() {
+            const submitBtn = $('#editUserSubmitBtn');
+            const originalText = submitBtn.html();
+            const userId = $('#editUserId').val();
+            
+            // Désactiver le bouton
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Mise à jour...');
+            
+            // Préparer les données
+            const formData = $('#editUserForm').serializeArray();
+            const data = {};
+            
+            formData.forEach(item => {
+                if (item.name !== 'id' && item.value !== '') {
+                    data[item.name] = item.value;
+                }
+            });
+            
+            // Convertir les types
+            if (data.activation) {
+                data.activation = data.activation === 'true';
+            }
+            
+            if (data.pays) {
+                data.pays = parseInt(data.pays);
+            }
+            
+            console.log('Données envoyées pour édition:', data);
+            
+            // Envoyer la requête AJAX
+            $.ajax({
+                url: '/api/editer-une-utilisateur/' + userId + '/',
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Cache-Control': 'no-cache'
+                },
+                cache: false,
+                success: function(response) {
+                    if (response.success) {
+                        // Succès avec animation
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Modifications enregistrées !',
+                            html: `
+                                <div class="text-center">
+                                    <i class="bi bi-check-circle-fill text-success fs-1 mb-3"></i>
+                                    <p class="fs-5">${response.user.username} a été mis à jour.</p>
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Les modifications ont été appliquées avec succès.
+                                    </div>
+                                </div>
+                            `,
+                            showConfirmButton: false,
+                            timer: 2000,
+                            didClose: () => {
+                                $('#editUserModal').modal('hide');
+                                // Forcer le rechargement sans cache
+                                loadUsers(currentPage, currentSearch);
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Modification partielle',
+                            html: response.message || 'Certaines modifications n\'ont pas pu être appliquées.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Erreur lors de la mise à jour.';
+                    let errorDetails = '';
+                    
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            const errors = xhr.responseJSON.errors;
+                            errorDetails = '<ul class="text-start">';
+                            
+                            for (const field in errors) {
+                                const fieldErrors = Array.isArray(errors[field]) ? errors[field] : [errors[field]];
+                                fieldErrors.forEach(error => {
+                                    errorDetails += `<li><strong>${field}:</strong> ${error}</li>`;
+                                });
+                            }
+                            errorDetails += '</ul>';
+                            
+                            errorMessage = `<p>Des erreurs ont été détectées :</p>${errorDetails}`;
+                        } else if (xhr.responseJSON.detail) {
+                            errorMessage = xhr.responseJSON.detail;
+                        }
+                    }
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage,
+                        confirmButtonText: 'OK'
+                    });
+                },
+                complete: function() {
+                    // Réactiver le bouton
+                    submitBtn.prop('disabled', false).html(originalText);
+                }
+            });
+        }
+
+
+        // Edit User form submission - Version optimisée
         $('#editUserForm').on('submit', function(event) {
             event.preventDefault();
-            var id = $('#editUserId').val();
-            var formData = $(this).serialize();
+            
+            const id = $('#editUserId').val();
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.html();
+            
+            // Désactiver le bouton
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Mise à jour...');
+            
+            // Préparer les données
+            const formData = $(this).serializeArray();
+            const data = {};
+            
+            // Convertir en objet
+            formData.forEach(item => {
+                if (item.value !== '') {
+                    data[item.name] = item.value;
+                }
+            });
+            
+            // Convertir les types
+            if (data.activation) {
+                data.activation = data.activation === 'true';
+            }
+            
+            if (data.pays) {
+                data.pays = parseInt(data.pays);
+            }
+            
+            console.log('Données envoyées:', data);
+            
+            // Envoyer la requête
             $.ajax({
                 url: '/api/editer-une-utilisateur/' + id + '/',
                 type: 'PUT',
-                data: formData,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                    'Authorization': 'Bearer ' + accessToken,
+                    'X-CSRFToken': getCookie('csrftoken')
                 },
                 success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Utilisateur mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editUserModal').modal('hide');
-                        loadUsers();
-                    });
+                    console.log('Réponse mise à jour:', response);
+                    
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            html: `
+                                <p>Utilisateur <strong>${response.user.username}</strong> mis à jour avec succès.</p>
+                                <div class="alert alert-success mt-3">
+                                    ✓ Les modifications ont été enregistrées.
+                                </div>
+                            `,
+                            showConfirmButton: false,
+                            timer: 2000
+                        }).then(() => {
+                            $('#editUserModal').modal('hide');
+                            loadUsers(currentPage, currentSearch);
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Avertissement',
+                            html: response.message || 'Mise à jour partielle.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                 },
-                error: function(response) {
+                error: function(xhr) {
+                    console.error('Erreur mise à jour:', xhr);
+                    
+                    let errorMessage = 'Erreur lors de la mise à jour.';
+                    let errorDetails = '';
+                    
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.errors) {
+                            // Afficher les erreurs de validation
+                            const errors = xhr.responseJSON.errors;
+                            errorDetails = '<ul class="text-start">';
+                            
+                            for (const field in errors) {
+                                const fieldErrors = Array.isArray(errors[field]) ? errors[field] : [errors[field]];
+                                fieldErrors.forEach(error => {
+                                    errorDetails += `<li><strong>${field}:</strong> ${error}</li>`;
+                                });
+                            }
+                            errorDetails += '</ul>';
+                            
+                            errorMessage = `<p>Des erreurs de validation ont été détectées :</p>${errorDetails}`;
+                        } else if (xhr.responseJSON.detail) {
+                            errorMessage = xhr.responseJSON.detail;
+                        } else if (xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                    }
+                    
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de l\'utilisateur.',
+                        title: 'Erreur',
+                        html: errorMessage,
+                        confirmButtonText: 'OK'
                     });
+                },
+                complete: function() {
+                    // Réactiver le bouton
+                    submitBtn.prop('disabled', false).html(originalText);
                 }
             });
         });
+
+
+        // Fonction pour récupérer le token CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Fonction utilitaire pour gérer l'état du formulaire
+        function setupEditFormValidation() {
+            // Validation en temps réel
+            $('#editUserForm input, #editUserForm select').on('blur', function() {
+                validateField($(this));
+            });
+            
+            // Validation du formulaire avant soumission
+            $('#editUserForm').on('submit', function(event) {
+                if (!validateForm()) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        function validateField(field) {
+            const value = field.val();
+            const name = field.attr('name');
+            
+            field.removeClass('is-invalid is-valid');
+            
+            // Validation basique
+            if (field.attr('required') && (!value || value.trim() === '')) {
+                field.addClass('is-invalid');
+                return false;
+            }
+            
+            // Validation email
+            if (name === 'email' || name === 'email_cc') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (value && !emailRegex.test(value)) {
+                    field.addClass('is-invalid');
+                    return false;
+                }
+            }
+            
+            field.addClass('is-valid');
+            return true;
+        }
+
+
+        function validateForm() {
+            let isValid = true;
+            
+            $('#editUserForm input[required], #editUserForm select[required]').each(function() {
+                if (!validateField($(this))) {
+                    isValid = false;
+                }
+            });
+            
+            return isValid;
+        }
+
+
+        // Initialiser la validation quand le modal s'ouvre
+        $('#editUserModal').on('shown.bs.modal', function() {
+            setupEditFormValidation();
+        });
+
+        // Réinitialiser le formulaire quand le modal se ferme
+        $('#editUserModal').on('hidden.bs.modal', function() {
+            $('#editUserForm')[0].reset();
+            $('#editUserForm input, #editUserForm select').removeClass('is-invalid is-valid');
+        });
+
+
 
         // Delete User button click
         $(document).on('click', '.delete-btn', function() {
@@ -467,7 +2239,7 @@
                         url: '/api/supprimer-des-utilisateurs/' + id + '/',
                         type: 'DELETE',
                         headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                            'Authorization': 'Bearer ' + accessToken  // Utiliser le token d'accès
                         },
                         success: function(response) {
                             Swal.fire(
@@ -490,44 +2262,62 @@
             });
         });
 
-        // Intercept AJAX responses to check for token expiration
+        // Configuration AJAX globale avec intercepteur
         $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
+            beforeSend: function(xhr) {
+                if (accessToken) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
                 }
             }
         });
 
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
+        // Intercepteur pour les erreurs d'authentification
+        $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+            if (jqxhr.status === 401) {
+                // Token expiré, tenter de le rafraîchir
+                refreshAccessToken();
+                return false; // Empêcher d'autres gestionnaires d'erreurs
+            }
+        });
+
+        // Fonction pour rafraîchir le token
+        function refreshAccessToken() {
+            Swal.fire({
+                title: 'Session expirée',
+                text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Rafraîchir',
+                cancelButtonText: 'Recharger la page',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    return $.ajax({
+                        url: '/api/token/refresh/',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ refresh: refreshToken }),
+                        success: function(response) {
+                            accessToken = response.access;
+                            localStorage.setItem('access_token', accessToken);
+                            localStorage.setItem('refresh_token', refreshToken);
+                            
+                            // Recharger les données
+                            loadUsers(currentPage, currentSearch);
+                            
+                            return true;
+                        },
+                        error: function() {
+                            return false;
                         }
                     });
+                }
+            }).then((result) => {
+                if (result.dismiss === Swal.DismissReason.cancel) {
+                    window.location.reload();
+                } else if (result.isConfirmed) {
+                    Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+                } else {
+                    Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
                 }
             });
         }

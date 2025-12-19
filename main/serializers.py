@@ -34,6 +34,68 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "profession",
             "email_cc",
         ]
+        
+        
+        
+# serializers.py
+class ProfileUserSerializer(serializers.ModelSerializer):
+    avatar_url = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+    password_changed_at = serializers.SerializerMethodField()
+    last_login_formatted = serializers.SerializerMethodField()
+    date_joined_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id", "username", "email", "first_name", "last_name", 
+            "full_name", "avatar", "avatar_url", "telephone", 
+            "profession", "address", "email_cc", "role",
+            "last_login", "last_login_formatted",
+            "date_joined", "date_joined_formatted",
+            "password_changed_at"
+        ]
+        read_only_fields = ['id', 'username', 'role', 'last_login', 'date_joined']
+    
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        # Avatar par défaut avec initiales
+        return None
+    
+    def get_full_name(self, obj):
+        name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+        return name if name else obj.username
+    
+    def get_password_changed_at(self, obj):
+        if hasattr(obj, 'password_changed_at') and obj.password_changed_at:
+            return obj.password_changed_at.strftime('%d/%m/%Y %H:%M')
+        return "Non défini"
+    
+    def get_last_login_formatted(self, obj):
+        if obj.last_login:
+            return obj.last_login.strftime('%d/%m/%Y %H:%M')
+        return "Jamais connecté"
+    
+    def get_date_joined_formatted(self, obj):
+        if obj.date_joined:
+            return obj.date_joined.strftime('%d/%m/%Y %H:%M')
+        return "Non défini"
+    
+    def validate_email(self, value):
+        # Vérifier que l'email n'est pas déjà utilisé par un autre utilisateur
+        user = self.instance
+        if user and CustomUser.objects.filter(email=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé.")
+        return value
+    
+    def validate_telephone(self, value):
+        if value and not value.startswith('+'):
+            raise serializers.ValidationError("Le numéro de téléphone doit commencer par + (ex: +241...)")
+        return value
 
 
 class PaysSerializer(serializers.ModelSerializer):
@@ -4262,26 +4324,62 @@ class EditValeurRatioIrfsSerializer(serializers.ModelSerializer):
         fields = ["id", "acheteur", "ratio", "annee", "valeur"]
 
 
+
+
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 CustomUser = get_user_model()
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
-    pays = PaysSerializer()
+# serializers.py
+class NewCustomUserSerializer(serializers.ModelSerializer):
+    pays = serializers.SerializerMethodField()
     date_joined_formatted = serializers.SerializerMethodField()
-
+    avatar_url = serializers.SerializerMethodField()
+    
     class Meta:
         model = CustomUser
-        fields = "__all__"
-
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'role', 'telephone', 'activation', 'pays', 
+            'date_joined', 'date_joined_formatted', 'avatar_url',
+            'profession', 'address', 'email_cc'
+        ]
+    
+    def get_pays(self, obj):
+        if obj.pays:
+            return {
+                'id': obj.pays.id,
+                'nom': obj.pays.nom,
+                'code': obj.pays.code if hasattr(obj.pays, 'code') else None
+            }
+        return None
+    
     def get_date_joined_formatted(self, obj):
-        # Formatez la date selon vos besoins
-        return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
+        """Formate la date d'inscription"""
+        if obj.date_joined:
+            # Formater selon votre préférence
+            # Option 1: "15/12/2024"
+            # return obj.date_joined.strftime('%d/%m/%Y')
+            
+            # Option 2: "15 déc. 2024"
+            mois_fr = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+                      'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+            return f"{obj.date_joined.day} {mois_fr[obj.date_joined.month-1]} {obj.date_joined.year}"
+        
+        return None
+    
+    def get_avatar_url(self, obj):
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
-
-class GetCustomUserSerializer(serializers.ModelSerializer):
+class GetCustomUserSerializerTwo(serializers.ModelSerializer):
     # pays = PaysSerializer()
     date_joined_formatted = serializers.SerializerMethodField()
 
@@ -4294,7 +4392,7 @@ class GetCustomUserSerializer(serializers.ModelSerializer):
         return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
 
 
-class AddCustomUserSerializer(serializers.ModelSerializer):
+class AddCustomUserSerializerTwo(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
@@ -4310,32 +4408,138 @@ class AddCustomUserSerializer(serializers.ModelSerializer):
             "role",
             "pays",
         ]
+        
+        
+class AddCustomUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+    activation = serializers.BooleanField(default=True)
+    pays = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        required=True,
+        error_messages={
+            'does_not_exist': 'Le pays sélectionné n\'existe pas.',
+            'incorrect_type': 'Veuillez fournir un ID de pays valide.'
+        }
+    )
+    
+    class Meta:
+        model = CustomUser
+        fields = [
+            "username", "first_name", "last_name", "email",
+            "email_cc", "address", "activation", "telephone",
+            "profession", "role", "pays", "password"
+        ]
+        extra_kwargs = {
+            'username': {'required': True},
+            'email': {'required': True},
+            'role': {'required': True},
+            'pays': {'required': True},
+        }
+    
+    def validate(self, data):
+        # Validation de l'email
+        if CustomUser.objects.filter(email=data.get('email')).exists():
+            raise serializers.ValidationError({
+                "email": "Cet email est déjà utilisé par un autre utilisateur."
+            })
+        
+        # Validation du username
+        if CustomUser.objects.filter(username=data.get('username')).exists():
+            raise serializers.ValidationError({
+                "username": "Ce nom d'utilisateur est déjà pris."
+            })
+        
+        # S'assurer que le pays existe
+        if 'pays' in data and not Pays.objects.filter(id=data['pays'].id).exists():
+            raise serializers.ValidationError({
+                "pays": "Le pays sélectionné n'existe pas."
+            })
+        
+        return data
+    
+    def create(self, validated_data):
+        # Extraire le mot de passe
+        password = validated_data.pop('password', None)
+        
+        # Créer l'utilisateur
+        user = CustomUser(**validated_data)
+        
+        # Définir le mot de passe
+        if password:
+            user.set_password(password)
+        else:
+            # Générer un mot de passe par défaut
+            import secrets
+            default_password = secrets.token_urlsafe(12)
+            user.set_password(default_password)
+        
+        user.save()
+        return user
+
+
+
+# serializers.py
+class GetCustomUserSerializer(serializers.ModelSerializer):
+    pays_id = serializers.IntegerField(source='pays.id', read_only=True)
+    pays_nom = serializers.CharField(source='pays.nom', read_only=True)
+    date_joined_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id", "username", "first_name", "last_name", "email",
+            "email_cc", "address", "activation", "telephone", "profession",
+            "role", "pays_id", "pays_nom", "date_joined", "date_joined_formatted"
+        ]
+    
+    def get_date_joined_formatted(self, obj):
+        if obj.date_joined:
+            return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
+        return None
 
 
 class EditCustomUserSerializer(serializers.ModelSerializer):
-
+    pays = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = CustomUser
         fields = [
-            "id",
-            "username",
-            "first_name",
-            "last_name",
-            "email",
-            "address",
-            "activation",
-            "telephone",
-            "profession",
-            "email_cc",
-            "role",
-            "pays",
+            "username", "first_name", "last_name", "email",
+            "email_cc", "address", "activation", "telephone",
+            "profession", "role", "pays"
         ]
+    
+    def validate_email(self, value):
+        # Exclure l'utilisateur actuel de la vérification d'unicité
+        instance = self.instance
+        if instance and CustomUser.objects.filter(email=value).exclude(id=instance.id).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé.")
+        elif not instance and CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé.")
+        return value
+    
+    def validate_username(self, value):
+        instance = self.instance
+        if instance and CustomUser.objects.filter(username=value).exclude(id=instance.id).exists():
+            raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
+        elif not instance and CustomUser.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
+        return value
 
 
 class EditCustomUserAvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["id", "avatar"]
+
+
+
+
+
 
 
 from rest_framework import serializers

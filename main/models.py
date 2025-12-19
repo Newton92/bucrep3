@@ -240,6 +240,13 @@ class CustomUser(AbstractUser):
         "Pays", blank=True, related_name='affectations_possibles'
     )
     
+    password_changed_at = models.DateTimeField(
+        _("password changed at"),
+        null=True,
+        blank=True,
+        help_text=_("Date de la dernière modification du mot de passe.")
+    )
+    
     
     history = HistoricalRecords()
     
@@ -252,6 +259,18 @@ class CustomUser(AbstractUser):
 
     def fullname(self):
         return f"{self.first_name} {self.last_name}"
+    
+    def save(self, *args, **kwargs):
+        # Détecter si le mot de passe a changé
+        if self.pk:
+            old_user = CustomUser.objects.get(pk=self.pk)
+            if self.password != old_user.password:
+                self.password_changed_at = timezone.now()
+        elif self.password:
+            # Nouvel utilisateur
+            self.password_changed_at = timezone.now()
+        
+        super().save(*args, **kwargs)
 
 
 # === Models Localisation === #

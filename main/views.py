@@ -211,19 +211,30 @@ def dash_root_profile_page(request):
     """
     Vue front-end pour afficher et gérer le profil utilisateur.
     """
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
     user = request.user
-    refresh = RefreshToken.for_user(user)
-
+    
+    # Génération des tokens d'accès avec gestion d'erreur
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        # Log l'erreur mais ne pas bloquer l'accès
+        print(f"Erreur génération token: {e}")
+        access_token = ""
+        refresh_token = ""
+    
     context = {
+        "account_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access_token": str(refresh.access_token),
+        "refresh": refresh_token,
+        "access": access_token,
     }
-    return render(
-        request,
-        "main/root/profile/user_profile.html",
-        context,
-    )
+    return render(request, "main/root/profile/user_profile.html", context)
     
 
 
@@ -400,7 +411,7 @@ def dash_root(request):
     # populate_database()
 
     context = {
-        "users_active": "active",
+        "dash_active": "active",
         "user": user,
         "refresh": refresh,
         "access": str(RefreshToken.for_user(user).access_token),
@@ -411,24 +422,29 @@ def dash_root(request):
 
 @login_required
 def dash_root_user(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    if not request.user.role in ['Root', 'Validateur', 'Analyste']:
+        return redirect('dash_root')
+    
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Récupérer tous les pays
-    pays_list = Pays.objects.all()
-
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        # Gestion d'erreur
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('dash_root')
+    
+    # Récupérer les pays (avec optimisation)
+    pays_list = Pays.objects.all().only('id', 'nom')
+    
     context = {
         "users_active": "active",
         "pays_list": pays_list,
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
     }
     return render(request, "main/root/utilisateur/dash_root_user.html", context)
 

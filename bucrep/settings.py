@@ -18,6 +18,7 @@ import environ
 from celery.schedules import crontab
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.core.cache.backends.redis import RedisCache
 
 
 # settings.py - Ajoutez à la configuration LOGGING
@@ -45,11 +46,12 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "3.236.213.114", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
     "http://10.0.57.47",
+    "http://3.236.213.114",
     "http://localhost",
     "http://127.0.0.1",
     "http://preprod.bucrep3.bucrep.net",
@@ -150,6 +152,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "simple_history.middleware.HistoryRequestMiddleware",
+    
+    # "django.middleware.cache.UpdateCacheMiddleware",
+    # "django.middleware.cache.FetchFromCacheMiddleware",
+    
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -205,12 +211,22 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+    # Ajoutez votre validateur personnalisé
+    {
+        'NAME': 'main.validators.PasswordValidator',
+    },
+    {
+        'NAME': 'main.validators.PasswordStrengthValidator',
     },
 ]
 
@@ -312,20 +328,30 @@ REST_FRAMEWORK = {
     ],
 }
 
+
+
 # SimpleJWT settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
+    "UPDATE_LAST_LOGIN": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
+}
+
+# Désactiver le cache temporairement
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
 }
 
 ASGI_APPLICATION = "bucrep.asgi.application"

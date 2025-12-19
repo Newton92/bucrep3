@@ -1775,7 +1775,7 @@ urlpatterns = [
     ),
     path("reset-password/", CustomResetPasswordView.as_view(), name="reset-password"),
     path("api/logout/", CustomLogoutView.as_view(), name="api-logout"),
-    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("api/token/refresh/", CustomRefreshTokenView.as_view(), name="token_refresh"),
 
     # === GRAPHES === #
     path('api/acheteurs-par-mois/', AcheteursParMois.as_view(), name='acheteurs-par-mois'),
@@ -1810,12 +1810,12 @@ urlpatterns = [
         EditUtilisateurAvatarView.as_view(),
         name="edit-utilisateur-avatar",
     ),
-    path(
-        "api/supprimer-des-utilisateurs/",
-        DeleteUtilisateurView.as_view(),
-        name="delete-utilisateur",
-    ),
+    path('api/supprimer-des-utilisateurs/<int:id>/', DeleteUtilisateurView.as_view(), name='delete-single-user'),
+    path('api/supprimer-des-utilisateurs/', DeleteUtilisateurView.as_view(), name='delete-multiple-users'),
+    
     # === MODULES STANDARD === #
+    path("api/pays-carte/", PaysCarteView.as_view(), name="pays-carte"),
+    path('api/pays-statistiques/', PaysStatistiquesView.as_view(), name='pays-statistiques'),
     path("api/liste-des-pays/", ListPaysView.as_view(), name="list-pays"),
     path("api/recherche-pays/", SearchPaysView.as_view(), name="search-pays"),
     path("api/ajouter-un-pays/", AddPaysView.as_view(), name="add-pays"),

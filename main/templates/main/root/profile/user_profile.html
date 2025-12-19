@@ -1,277 +1,1151 @@
 {% extends 'main/root/base.html' %}
 
 {% load i18n %}
-
 {% load static %}
 
-{% block css %}
+{% block styles %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<style>
+    /* Thème pour le profil */
+    :root {
+        --primary-color: #0A95CA;
+        --secondary-color: #6c757d;
+        --success-color: #198754;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #0dcaf0;
+    }
+
+    /* Cartes améliorées */
+    .profile-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .profile-card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+
+    .card-header-profile {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #0879a8 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        border: none;
+    }
+
+    /* Avatar amélioré */
+    .avatar-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+    .avatar-img:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .avatar-edit-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        color: white;
+        border: 3px solid white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-edit-btn:hover {
+        background: #0879a8;
+        transform: scale(1.1);
+    }
+
+    /* Informations profil */
+    .profile-info-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-info-item:last-child {
+        border-bottom: none;
+    }
+
+    .profile-info-label {
+        min-width: 150px;
+        font-weight: 600;
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .profile-info-value {
+        flex: 1;
+        color: #495057;
+    }
+
+    /* Badges de statut */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+    .status-inactive {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: var(--danger-color);
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    /* Sections collapse améliorées */
+    .collapse-section {
+        animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Boutons action */
+    .action-btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Formulaire amélioré */
+    .form-control-profile {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-profile:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+    }
+
+    /* Barre de force mot de passe */
+    .password-strength-meter {
+        height: 6px;
+        border-radius: 3px;
+        margin-top: 5px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+
+    .strength-fill {
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    /* Grille des exigences */
+    .requirement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        padding: 5px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .requirement-item.valid {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: var(--success-color);
+    }
+
+    .requirement-item.invalid {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: var(--secondary-color);
+    }
+
+    /* Preview avatar */
+    .avatar-preview-container {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 3px dashed #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin: 0 auto 20px;
+        transition: all 0.3s ease;
+    }
+
+    .avatar-preview-container.has-image {
+        border-color: var(--primary-color);
+        border-style: solid;
+    }
+
+    .avatar-preview-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-info-label {
+            min-width: 120px;
+        }
+        
+        .requirement-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+    }
+</style>
 {% endblock %}
 
+
+
+
 {% block body %}
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-person-circle fa-fw me-1"></i> Profil Utilisateur</h3>
-    </div>
-</div>
-<div class="row g-4">
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h4 id="profileTitle">Gestion de votre profil</h4>
-                    <span>Dans cet espace, vous pouvez consulter et mettre à jour vos informations personnelles.</span>
-                </div>
-            </div>
+<div id="alert-container" class="row mb-4">
+
+    <div class="row">
+        <div class="col-12">
+            <h3 class="fs-4 mb-0"><i class="bi bi-person-circle fa-fw me-1"></i> {% trans "Profil" %} &nbsp; {{ user.role|default:"Utilisateur" }}</h3>
         </div>
     </div>
-</div>
-<div class="row g-4">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="card-header-title">Mes Informations</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-12">
 
-                        <div id="alert-messages" class="alert d-none"></div>
-
-                        <div id="user-profile-details" class="card p-4">
-                            <div class="d-flex align-items-center">
-                                <img id="profile-avatar" src="{{ user.avatar.url }}" alt="User Avatar" class="rounded-circle me-3" style="width: 100px; height: 100px; object-fit: cover;">
-                                <div>
-                                    <b id="profile-fullname" style="font-weight: bold;color: green;">{{ user.first_name }} {{ user.last_name }}</b><br>
-                                    <b id="profile-username">{{ user.username }} </b><br>
-                                    <b id="profile-email">{{ user.email }}</b>
-                                </div>
-                            </div>
-                            <hr>
-                            <p><strong>{% trans "Téléphone" %}:</strong> <span id="profile-telephone">{{ user.telephone }}</span></p>
-                            <p><strong>{% trans "Profession" %}:</strong> <span id="profile-profession">{{ user.profession }}</span></p>
-                            <p><strong>{% trans "Adresse" %}:</strong> <span id="profile-address">{{ user.address }}</span></p>
-                            <p><strong>{% trans "Rôle" %}:</strong> <span id="profile-role">{{ user.role }}</span></p>
-                        </div>
-
-                        <div class="mt-4">
-                            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#editProfileForm" aria-expanded="false">
-                                {% trans "Modifier le Profil" %}
-                            </button>
-                            <button class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#editAvatarForm" aria-expanded="false">
-                                {% trans "Modifier l'Avatar" %}
-                            </button>
-                            <button class="btn btn-info text-white" data-bs-toggle="collapse" data-bs-target="#changePasswordForm" aria-expanded="false">
-                                {% trans "Modifier le mot de passe" %}
-                            </button>
-                        </div>
-
-                        <div class="collapse mt-3" id="editProfileForm">
-                            <div class="card p-4">
-                                <form id="profile-form">
-                                    {% csrf_token %}
-                                    <div class="mb-3">
-                                        <label for="first_name" class="form-label">{% trans "Prénom" %}</label>
-                                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="last_name" class="form-label">{% trans "Nom de famille" %}</label>
-                                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">{% trans "Email" %}</label>
-                                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="telephone" class="form-label">{% trans "Téléphone" %}</label>
-                                        <input type="text" class="form-control" id="telephone" name="telephone" value="{{ user.telephone }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="profession" class="form-label">{% trans "Profession" %}</label>
-                                        <input type="text" class="form-control" id="profession" name="profession" value="{{ user.profession }}">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="address" class="form-label">{% trans "Adresse" %}</label>
-                                        <input type="text" class="form-control" id="address" name="address" value="{{ user.address }}">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">{% trans "Sauvegarder les modifications" %}</button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <div class="collapse mt-3" id="editAvatarForm">
-                            <div class="card p-4">
-                                <form id="avatar-form" enctype="multipart/form-data">
-                                    {% csrf_token %}
-                                    <div class="mb-3">
-                                        <label for="avatar" class="form-label">{% trans "Changer d'Avatar" %}</label>
-                                        <input type="file" class="form-control" id="avatar" name="avatar">
-                                    </div>
-                                    <button type="submit" class="btn btn-secondary">{% trans "Télécharger l'avatar" %}</button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <div class="collapse mt-3" id="changePasswordForm">
-                            <div class="card p-4">
-                                <form id="password-form">
-                                    {% csrf_token %}
-                                    <div class="mb-3">
-                                        <label for="current_password" class="form-label">{% trans "Ancien mot de passe" %}</label>
-                                        <input type="password" class="form-control" id="current_password" name="current_password" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="new_password" class="form-label">{% trans "Nouveau mot de passe" %}</label>
-                                        <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="confirm_password" class="form-label">{% trans "Confirmer le nouveau mot de passe" %}</label>
-                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-info text-white">{% trans "Modifier le mot de passe" %}</button>
-                                </form>
-                            </div>
-                        </div>
-
+    <div class="row g-4">
+        <div class="col-sm-12 col-xl-12">
+            <div class="card card-body border">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h4 id="profileTitle">{% trans "Gestion de votre profil" %}</h4>
+                        <span>{% trans "Dans cet espace, vous pouvez consulter et mettre à jour vos informations personnelles." %}</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="row g-4"><br></div>
+
+    <div class="row">
+        <!-- Colonne gauche: Informations profil -->
+        <div class="col-lg-5 mb-4">
+            <div class="card card-body border">
+                <div class="profile-card h-100">
+                    <div class="card-header card-header-profile">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person-vcard me-2"></i>Mon Profil
+                        </h5>
+                    </div>
+                    <div class="card-body text-center p-4">
+                        <!-- Avatar -->
+                        <div class="avatar-container">
+                            <img id="profile-avatar" 
+                                src="{{ user.avatar.url|default:'/static/images/default-avatar.png' }}" 
+                                alt="Avatar" 
+                                class="avatar-img"><br><br>
+                            <div class="avatar-edit-btn" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#editAvatarForm"
+                                title="Modifier l'avatar">
+                                <i class="bi bi-camera"></i>
+                            </div>
+                        </div><br>
+
+                        <!-- Informations principales -->
+                        <h4 id="profile-fullname" class="mb-2">
+                            {{ user.first_name|default:"" }} {{ user.last_name|default:"" }}
+                        </h4>
+                        <p class="text-muted mb-3" id="profile-username">@{{ user.username }}</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            <button class="btn border text-success status-active">
+                                <i class="bi bi-check-circle me-1"></i> Actif
+                            </button>
+                            <button class="btn bg-info text-white">
+                                <i class="bi bi-calendar-event me-1"></i>
+                                Membre depuis {{ user.date_joined|date:"m/Y" }}
+                            </button>
+                        </div>
+
+                        <!-- Statistiques rapides -->
+                        <div class="row g-2 mb-4">
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded">
+                                    <i class="bi bi-clock-history fs-4 text-primary mb-2 d-block"></i>
+                                    <small class="text-muted d-block">Dernière connexion</small>
+                                    <strong id="profile-lastlogin">
+                                        {% if user.last_login %}
+                                            {{ user.last_login|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            Jamais
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 bg-light rounded">
+                                    <i class="bi bi-shield-lock fs-4 text-warning mb-2 d-block"></i>
+                                    <small class="text-muted d-block">MDP changé</small>
+                                    <strong id="profile-pwdchanged">
+                                        {% if user.password_changed_at %}
+                                            {{ user.password_changed_at|date:"d/m/Y" }}
+                                        {% else %}
+                                            Jamais
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions rapides -->
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary action-btn" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#editProfileForm">
+                                <i class="bi bi-pencil-square"></i> Modifier le profil
+                            </button>
+                            <button class="btn btn-info text-white action-btn" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#changePasswordForm">
+                                <i class="bi bi-shield-lock"></i> Changer le mot de passe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite: Détails et formulaires -->
+        <div class="col-lg-7">
+            <div class="card card-body border">
+                <!-- Détails du profil -->
+                <div class="profile-card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle text-primary me-2"></i>Informations détaillées
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-info-list">
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">
+                                    <i class="bi bi-envelope"></i> Email : 
+                                </span>
+                                <span class="profile-info-value" id="profile-email">{{ user.email }}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">
+                                    <i class="bi bi-telephone"></i> Téléphone :
+                                </span>
+                                <span class="profile-info-value" id="profile-telephone">
+                                    {{ user.telephone|default:"Non renseigné" }}
+                                </span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">
+                                    <i class="bi bi-briefcase"></i> Profession :
+                                </span>
+                                <span class="profile-info-value" id="profile-profession">
+                                    {{ user.profession|default:"Non renseigné" }}
+                                </span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">
+                                    <i class="bi bi-geo-alt"></i> Adresse :
+                                </span>
+                                <span class="profile-info-value" id="profile-address">
+                                    {{ user.address|default:"Non renseigné" }}
+                                </span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">
+                                    <i class="bi bi-envelope-paper"></i> Email CC :
+                                </span>
+                                <span class="profile-info-value" id="profile-emailcc">
+                                    {{ user.email_cc|default:"Non renseigné" }}
+                                </span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">
+                                    <i class="bi bi-calendar-plus"></i> Date d'inscription : 
+                                </span>
+                                <span class="profile-info-value" id="profile-datejoined">
+                                    {{ user.date_joined|date:"d/m/Y à H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire édition profil -->
+                <div class="collapse collapse-section mb-4" id="editProfileForm">
+                    <div class="profile-card">
+                        <div class="card-header card-header-profile">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-gear me-2"></i>Modifier mes informations
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <form id="profile-form">
+                                {% csrf_token %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label">
+                                            <i class="bi bi-person me-1"></i> Prénom
+                                        </label>
+                                        <input type="text" class="form-control form-control-profile" 
+                                                id="first_name" name="first_name" 
+                                                value="{{ user.first_name }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label">
+                                            <i class="bi bi-person-fill me-1"></i> Nom
+                                        </label>
+                                        <input type="text" class="form-control form-control-profile" 
+                                                id="last_name" name="last_name" 
+                                                value="{{ user.last_name }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">
+                                            <i class="bi bi-envelope me-1"></i> Email principal
+                                        </label>
+                                        <input type="email" class="form-control form-control-profile" 
+                                                id="email" name="email" 
+                                                value="{{ user.email }}" required>
+                                        <div class="form-text">Utilisé pour la connexion et notifications</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email_cc" class="form-label">
+                                            <i class="bi bi-envelope-paper me-1"></i> Email secondaire
+                                        </label>
+                                        <input type="email" class="form-control form-control-profile" 
+                                                id="email_cc" name="email_cc" 
+                                                value="{{ user.email_cc }}">
+                                        <div class="form-text">Pour recevoir des copies des emails</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="telephone" class="form-label">
+                                            <i class="bi bi-telephone me-1"></i> Téléphone
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">+</span>
+                                            <input type="text" class="form-control form-control-profile" 
+                                                    id="telephone" name="telephone" 
+                                                    value="{{ user.telephone|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="profession" class="form-label">
+                                            <i class="bi bi-briefcase me-1"></i> Profession
+                                        </label>
+                                        <input type="text" class="form-control form-control-profile" 
+                                                id="profession" name="profession" 
+                                                value="{{ user.profession|default:'' }}">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="address" class="form-label">
+                                            <i class="bi bi-geo-alt me-1"></i> Adresse
+                                        </label>
+                                        <textarea class="form-control form-control-profile" 
+                                                    id="address" name="address" 
+                                                    rows="2">{{ user.address|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-4 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="bi bi-check-circle me-1"></i> Enregistrer
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#editProfileForm">
+                                        <i class="bi bi-x-circle me-1"></i> Annuler
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire avatar -->
+                <div class="collapse collapse-section mb-4" id="editAvatarForm">
+                    <div class="profile-card">
+                        <div class="card-header card-header-profile">
+                            <h5 class="mb-0">
+                                <i class="bi bi-camera me-2"></i>Modifier mon avatar
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <div class="avatar-preview-container" id="avatarPreviewContainer">
+                                    <img id="avatar-preview" 
+                                            src="{{ user.avatar.url|default:'/static/images/default-avatar.png' }}" 
+                                            alt="Aperçu avatar" 
+                                            class="avatar-preview-img">
+                                </div>
+                                <small class="text-muted">Aperçu de votre nouvel avatar</small>
+                            </div>
+
+                            <form id="avatar-form" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="mb-4">
+                                    <label for="avatar" class="form-label">
+                                        <i class="bi bi-upload me-1"></i>Sélectionner une image
+                                    </label>
+                                    <input type="file" class="form-control form-control-profile" 
+                                            id="avatar" name="avatar" 
+                                            accept="image/jpeg,image/png,image/gif,image/webp">
+                                    <div class="form-text">
+                                        Formats acceptés: JPG, PNG, GIF, WEBP | Max 5MB | Recommandé: 400x400px
+                                    </div>
+                                    <div class="progress mt-2 d-none" id="avatar-upload-progress">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        <i class="bi bi-upload me-1"></i> Télécharger
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#editAvatarForm">
+                                        <i class="bi bi-x-circle me-1"></i> Annuler
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire changement mot de passe -->
+                <div class="collapse collapse-section" id="changePasswordForm">
+                    <div class="profile-card">
+                        <div class="card-header card-header-profile">
+                            <h5 class="mb-0">
+                                <i class="bi bi-shield-lock me-2"></i>Changer mon mot de passe
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="alert alert-info mb-4">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Pour la sécurité de votre compte, choisissez un mot de passe fort et unique.
+                            </div>
+
+                            <!-- Exigences -->
+                            <div class="mb-4">
+                                <h6 class="mb-3">
+                                    <i class="bi bi-list-check me-1"></i>Exigences de sécurité
+                                </h6>
+                                <div class="requirement-grid">
+                                    <div class="requirement-item invalid" id="req-length">
+                                        <i class="bi bi-circle"></i>
+                                        <span>Minimum 8 caractères</span>
+                                    </div>
+                                    <div class="requirement-item invalid" id="req-uppercase">
+                                        <i class="bi bi-circle"></i>
+                                        <span>Une majuscule (A-Z)</span>
+                                    </div>
+                                    <div class="requirement-item invalid" id="req-lowercase">
+                                        <i class="bi bi-circle"></i>
+                                        <span>Une minuscule (a-z)</span>
+                                    </div>
+                                    <div class="requirement-item invalid" id="req-number">
+                                        <i class="bi bi-circle"></i>
+                                        <span>Un chiffre (0-9)</span>
+                                    </div>
+                                    <div class="requirement-item invalid" id="req-special">
+                                        <i class="bi bi-circle"></i>
+                                        <span>Un caractère spécial (@$!%*?&)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Force du mot de passe -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-speedometer2 me-1"></i>Force du mot de passe
+                                    </h6>
+                                    <span class="badge" id="strength-text">Non évalué</span>
+                                </div>
+                                <div class="password-strength-meter">
+                                    <div class="strength-fill" id="password-strength-bar"></div>
+                                </div>
+                            </div>
+
+                            <!-- Formulaire -->
+                            <form id="password-form">
+                                {% csrf_token %}
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="current_password" class="form-label">
+                                            <i class="bi bi-key me-1"></i>Mot de passe actuel
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control form-control-profile" 
+                                                    id="current_password" name="current_password" required>
+                                            <button type="button" class="btn btn-outline-secondary password-toggle" 
+                                                    data-target="current_password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_password" class="form-label">
+                                            <i class="bi bi-key-fill me-1"></i>Nouveau mot de passe
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control form-control-profile" 
+                                                    id="new_password" name="new_password" required>
+                                            <button type="button" class="btn btn-outline-secondary password-toggle" 
+                                                    data-target="new_password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="confirm_password" class="form-label">
+                                            <i class="bi bi-key-fill me-1"></i>Confirmer le mot de passe
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control form-control-profile" 
+                                                    id="confirm_password" name="confirm_password" required>
+                                            <button type="button" class="btn btn-outline-secondary password-toggle" 
+                                                    data-target="confirm_password">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div id="password-match-feedback" class="mt-2"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary px-4" id="submit-password" disabled>
+                                        <i class="bi bi-shield-check me-1"></i> Changer le mot de passe
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#changePasswordForm">
+                                        <i class="bi bi-x-circle me-1"></i> Annuler
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
-{% endblock body %}
+{% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    const API_PROFILE_URL = "{% url 'user-profile' %}";
-    const API_AVATAR_URL = "{% url 'user-avatar-update' %}";
-    const API_PASSWORD_URL = "{% url 'change-password' %}";
-    const ACCESS_TOKEN = "{{ access_token }}";
-
-    function showMessage(message, type = 'success') {
-        const alertDiv = document.getElementById('alert-messages');
-        alertDiv.textContent = message;
-        alertDiv.className = `alert alert-${type} mt-3`;
-        alertDiv.classList.remove('d-none');
-        setTimeout(() => alertDiv.classList.add('d-none'), 5000);
+    // Stockage des tokens (comme dans le module users)
+    let accessToken = '{{ access }}';
+    let refreshToken = '{{ refresh }}';
+    
+    // Variables pour gérer les tokens
+    let currentAccessToken = accessToken;
+    let currentRefreshToken = refreshToken;
+    
+    // Configuration AJAX globale avec gestion des tokens
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (currentAccessToken && !settings.crossDomain) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + currentAccessToken);
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            // Gérer l'expiration du token
+            if (xhr.status === 401) {
+                handleTokenExpiration();
+                return false;
+            }
+        }
+    });
+    
+    // Fonction pour gérer l'expiration du token
+    function handleTokenExpiration() {
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: currentRefreshToken }),
+                    success: function(response) {
+                        currentAccessToken = response.access;
+                        localStorage.setItem('access_token', currentAccessToken);
+                        localStorage.setItem('refresh_token', currentRefreshToken);
+                        return true;
+                    },
+                    error: function() {
+                        Swal.showValidationMessage('Impossible de rafraîchir le token');
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+                // Recharger les données
+                loadProfileData();
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            }
+        });
     }
-
-    function updateProfileDetails(data) {
-        document.getElementById('profile-username').textContent = data.username;
-        document.getElementById('profile-fullname').textContent = `${data.first_name} ${data.last_name}`;
-        document.getElementById('profile-email').textContent = data.email;
-        document.getElementById('profile-telephone').textContent = data.telephone || 'N/A';
-        document.getElementById('profile-profession').textContent = data.profession || 'N/A';
-        document.getElementById('profile-address').textContent = data.address || 'N/A';
-        if (data.avatar) {
-            document.getElementById('profile-avatar').src = data.avatar;
+    
+    // URLs API
+    const API_URLS = {
+        profile: '/api/profile/',
+        avatar: '/api/profile/avatar/',
+        password: '/api/profile/change-password/'
+    };
+    
+    // Classe pour la validation des mots de passe
+    class PasswordValidator {
+        static checkStrength(password) {
+            if (!password) return { strength: 0, score: 0, valid: false };
+            
+            let score = 0;
+            
+            // Longueur
+            if (password.length >= 8) score += 1;
+            if (password.length >= 12) score += 1;
+            if (password.length >= 16) score += 1;
+            
+            // Complexité
+            if (/[A-Z]/.test(password)) score += 1;
+            if (/[a-z]/.test(password)) score += 1;
+            if (/\d/.test(password)) score += 1;
+            if (/[@$!%*?&]/.test(password)) score += 1;
+            
+            // Diversité
+            const uniqueChars = new Set(password).size;
+            if (uniqueChars >= 8) score += 1;
+            
+            // Déterminer la force
+            let strength = 0;
+            if (score <= 2) strength = 0; // Très faible
+            else if (score <= 4) strength = 1; // Faible
+            else if (score <= 6) strength = 2; // Moyen
+            else if (score <= 8) strength = 3; // Bon
+            else strength = 4; // Fort
+            
+            return {
+                strength: strength,
+                score: score,
+                valid: score >= 5 && password.length >= 8
+            };
+        }
+        
+        static validateRequirements(password) {
+            return {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /\d/.test(password),
+                special: /[@$!%*?&]/.test(password)
+            };
         }
     }
-
-    document.getElementById('profile-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const data = {};
-        formData.forEach((value, key) => data[key] = value);
-
-        fetch(API_PROFILE_URL, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.id) {
-                updateProfileDetails(data);
-                showMessage("{% trans 'Profil mis à jour avec succès !' %}");
-            } else {
-                let errorMessage = "{% trans 'Erreur lors de la mise à jour du profil.' %}";
-                if (data.non_field_errors) {
-                    errorMessage = data.non_field_errors.join(' ');
-                } else if (Object.values(data).length > 0) {
-                    errorMessage = Object.values(data).map(error => error.join(' ')).join(' ');
-                }
-                showMessage(errorMessage, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showMessage("{% trans 'Une erreur est survenue lors de la communication avec le serveur.' %}", 'danger');
-        });
-    });
-
-    document.getElementById('avatar-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        fetch(API_AVATAR_URL, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${ACCESS_TOKEN}`,
-            },
-            body: formData,
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.id) {
-                updateProfileDetails(data);
-                showMessage("{% trans 'Avatar mis à jour avec succès !' %}");
-                document.getElementById('editAvatarForm').classList.remove('show');
-            } else {
-                let errorMessage = "{% trans 'Erreur lors du téléchargement de l\'avatar.' %}";
-                if (data.non_field_errors) {
-                    errorMessage = data.non_field_errors.join(' ');
-                } else if (Object.values(data).length > 0) {
-                    errorMessage = Object.values(data).map(error => error.join(' ')).join(' ');
-                }
-                showMessage(errorMessage, 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Erreur:', error);
-            showMessage("{% trans 'Une erreur est survenue lors de la communication avec le serveur.' %}", 'danger');
-        });
-    });
-
-    document.getElementById('password-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const data = {};
-        formData.forEach((value, key) => data[key] = value);
-
-        fetch(API_PASSWORD_URL, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${ACCESS_TOKEN}`,
-            },
-            body: JSON.stringify(data),
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-            return response.json().then(errorData => {
-                throw errorData;
+    
+    // Classe pour la gestion de l'interface
+    class UIHelper {
+        static showAlert(message, type = 'success', duration = 5000) {
+            const alertId = 'alert-' + Date.now();
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" id="${alertId}" role="alert">
+                    <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            $('#alert-container').append(alertHtml);
+            
+            // Auto-dismiss
+            setTimeout(() => {
+                $(`#${alertId}`).alert('close');
+            }, duration);
+        }
+        
+        static showToast(message, type = 'success') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: type,
+                title: message,
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
             });
-        })
-        .then(data => {
-            showMessage(data.message);
-            // Réinitialiser les champs du formulaire après succès
-            document.getElementById('password-form').reset();
-            document.getElementById('changePasswordForm').classList.remove('show');
-        })
-        .catch(error => {
-            let errorMessage = "{% trans 'Une erreur est survenue lors du changement de mot de passe.' %}";
-            if (typeof error === 'object' && Object.values(error).length > 0) {
-                errorMessage = Object.values(error).map(msg => msg).join(' ');
+        }
+        
+        static updatePasswordUI(password, confirmPassword) {
+            // Mettre à jour les exigences
+            const requirements = PasswordValidator.validateRequirements(password);
+            Object.entries(requirements).forEach(([key, isValid]) => {
+                const element = $(`#req-${key}`);
+                if (element.length) {
+                    element.toggleClass('valid invalid', isValid);
+                    element.find('i').toggleClass('bi-check-circle bi-circle', isValid);
+                }
+            });
+            
+            // Mettre à jour la force
+            const strength = PasswordValidator.checkStrength(password);
+            const strengthText = ['Très faible', 'Faible', 'Moyen', 'Bon', 'Fort'][strength.strength];
+            const strengthColors = ['#dc3545', '#fd7e14', '#ffc107', '#20c997', '#198754'];
+            
+            $('#strength-text').text(strengthText).css('color', strengthColors[strength.strength]);
+            $('#password-strength-bar').css({
+                'width': ((strength.strength + 1) * 20) + '%',
+                'background-color': strengthColors[strength.strength]
+            });
+            
+            // Vérifier la correspondance
+            const matchFeedback = $('#password-match-feedback');
+            if (confirmPassword && password) {
+                if (password === confirmPassword) {
+                    matchFeedback.html('<span class="text-success"><i class="bi bi-check-circle me-1"></i>Les mots de passe correspondent</span>');
+                } else {
+                    matchFeedback.html('<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Les mots de passe ne correspondent pas</span>');
+                }
+            } else {
+                matchFeedback.empty();
             }
-            showMessage(errorMessage, 'danger');
+            
+            return strength.valid && (password === confirmPassword);
+        }
+        
+        static togglePasswordVisibility(inputId) {
+            const input = $(`#${inputId}`);
+            const toggleBtn = $(`button[data-target="${inputId}"]`);
+            
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                toggleBtn.find('i').removeClass('bi-eye').addClass('bi-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                toggleBtn.find('i').removeClass('bi-eye-slash').addClass('bi-eye');
+            }
+        }
+    }
+    
+    // Fonction pour charger les données du profil
+    function loadProfileData() {
+        $.ajax({
+            url: API_URLS.profile,
+            method: 'GET',
+            cache: false,
+            success: function(response) {
+                if (response.success) {
+                    updateProfileUI(response.user);
+                }
+            },
+            error: function(xhr) {
+                console.error('Erreur chargement profil:', xhr);
+            }
         });
+    }
+    
+    // Mettre à jour l'interface avec les données du profil
+    function updateProfileUI(userData) {
+        // Informations principales
+        $('#profile-fullname').text(userData.full_name || userData.username);
+        $('#profile-username').text('@' + userData.username);
+        $('#profile-email').text(userData.email);
+        $('#profile-telephone').text(userData.telephone || 'Non renseigné');
+        $('#profile-profession').text(userData.profession || 'Non renseigné');
+        $('#profile-address').text(userData.address || 'Non renseigné');
+        $('#profile-emailcc').text(userData.email_cc || 'Non renseigné');
+        $('#profile-datejoined').text(userData.date_joined_formatted);
+        $('#profile-lastlogin').text(userData.last_login_formatted);
+        
+        // Avatar
+        if (userData.avatar_url) {
+            $('#profile-avatar').attr('src', userData.avatar_url);
+        }
+        
+        // Mettre à jour les formulaires
+        $('#first_name').val(userData.first_name || '');
+        $('#last_name').val(userData.last_name || '');
+        $('#email').val(userData.email || '');
+        $('#email_cc').val(userData.email_cc || '');
+        $('#telephone').val(userData.telephone || '');
+        $('#profession').val(userData.profession || '');
+        $('#address').val(userData.address || '');
+    }
+    
+    // Initialisation
+    $(document).ready(function() {
+        // Initialiser les toggles de mot de passe
+        $('.password-toggle').on('click', function() {
+            const target = $(this).data('target');
+            UIHelper.togglePasswordVisibility(target);
+        });
+        
+        // Gestion de la prévisualisation de l'avatar
+        $('#avatar').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#avatar-preview').attr('src', e.target.result);
+                    $('#avatarPreviewContainer').addClass('has-image');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Validation en temps réel du mot de passe
+        $('#new_password, #confirm_password').on('input', function() {
+            const password = $('#new_password').val();
+            const confirm = $('#confirm_password').val();
+            const isValid = UIHelper.updatePasswordUI(password, confirm);
+            const currentPassword = $('#current_password').val();
+            
+            // Activer/désactiver le bouton de soumission
+            $('#submit-password').prop('disabled', !(isValid && currentPassword.length > 0));
+        });
+        
+        $('#current_password').on('input', function() {
+            const password = $('#new_password').val();
+            const confirm = $('#confirm_password').val();
+            const isValid = UIHelper.updatePasswordUI(password, confirm);
+            const currentPassword = $(this).val();
+            
+            $('#submit-password').prop('disabled', !(isValid && currentPassword.length > 0));
+        });
+        
+        // Formatage automatique du téléphone
+        $('#telephone').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length > 0 && !value.startsWith('+')) {
+                value = '+' + value;
+            }
+            $(this).val(value);
+        });
+        
+        // Soumission du formulaire de profil
+        $('#profile-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = $(this).serializeArray();
+            const data = {};
+            formData.forEach(item => {
+                if (item.value.trim() !== '') {
+                    data[item.name] = item.value.trim();
+                } else {
+                    data[item.name] = null;
+                }
+            });
+            
+            $.ajax({
+                url: API_URLS.profile,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                cache: false,
+                success: function(response) {
+                    if (response.success) {
+                        updateProfileUI(response.user);
+                        UIHelper.showAlert('Profil mis à jour avec succès !');
+                        $('#editProfileForm').collapse('hide');
+                    } else {
+                        let errorMsg = 'Erreur lors de la mise à jour';
+                        if (response.errors) {
+                            errorMsg += ': ' + Object.values(response.errors).flat().join(', ');
+                        }
+                        UIHelper.showAlert(errorMsg, 'danger');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur:', xhr);
+                    UIHelper.showAlert('Une erreur est survenue', 'danger');
+                }
+            });
+        });
+        
+        // Soumission du formulaire d'avatar
+        $('#avatar-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const fileInput = $('#avatar')[0];
+            
+            if (!fileInput.files[0]) {
+                UIHelper.showAlert('Veuillez sélectionner une image', 'warning');
+                return;
+            }
+            
+            // Afficher la barre de progression
+            const progressBar = $('#avatar-upload-progress');
+            progressBar.removeClass('d-none');
+            
+            $.ajax({
+                url: API_URLS.avatar,
+                method: 'PUT',
+                data: formData,
+                contentType: false,
+                processData: false,
+                cache: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percent = (e.loaded / e.total) * 100;
+                            progressBar.find('.progress-bar').css('width', percent + '%');
+                        }
+                    });
+                    return xhr;
+                },
+                success: function(response) {
+                    if (response.success) {
+                        updateProfileUI(response.user);
+                        UIHelper.showAlert('Avatar mis à jour avec succès !');
+                        $('#editAvatarForm').collapse('hide');
+                        progressBar.addClass('d-none');
+                    } else {
+                        UIHelper.showAlert(response.error || 'Erreur lors du téléchargement', 'danger');
+                        progressBar.addClass('d-none');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur:', xhr);
+                    UIHelper.showAlert('Une erreur est survenue', 'danger');
+                    progressBar.addClass('d-none');
+                }
+            });
+        });
+        
+        // Soumission du formulaire de mot de passe
+        $('#password-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = $(this).serializeArray();
+            const data = {};
+            formData.forEach(item => data[item.name] = item.value);
+            
+            // Validation finale côté client
+            const password = data.new_password;
+            const confirm = data.confirm_password;
+            const strength = PasswordValidator.checkStrength(password);
+            
+            if (!strength.valid) {
+                UIHelper.showAlert('Le mot de passe ne répond pas aux exigences de sécurité', 'warning');
+                return;
+            }
+            
+            if (password !== confirm) {
+                UIHelper.showAlert('Les mots de passe ne correspondent pas', 'warning');
+                return;
+            }
+            
+            $.ajax({
+                url: API_URLS.password,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                cache: false,
+                success: function(response) {
+                    if (response.success) {
+                        UIHelper.showAlert('Mot de passe modifié avec succès !');
+                        $('#password-form')[0].reset();
+                        $('#submit-password').prop('disabled', true);
+                        UIHelper.updatePasswordUI('', '');
+                        $('#changePasswordForm').collapse('hide');
+                    } else {
+                        UIHelper.showAlert(response.error || 'Erreur lors du changement de mot de passe', 'danger');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur:', xhr);
+                    UIHelper.showAlert('Une erreur est survenue', 'danger');
+                }
+            });
+        });
+        
+        // Animation pour les sections collapse
+        $('.collapse-section').on('show.bs.collapse', function() {
+            $(this).addClass('showing');
+        }).on('shown.bs.collapse', function() {
+            $(this).removeClass('showing');
+        });
+        
+        // Charger les données initiales
+        loadProfileData();
     });
 </script>
 {% endblock %}
