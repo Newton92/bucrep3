@@ -1788,11 +1788,9 @@ class Acheteur(Model):
 
     def _check_for_changes_and_log_alerts(self):
         # Cartographie des champs aux codes internes des ElementSurveillance
-        # Utiliser les codes de votre liste fournie
         field_to_element_code = {
-            # Identité et Structure de l'Entreprise
-            "nom": "COMPANY_NAME_CHANGE",  # Raison sociale
-            "forme_juridique_id": "FORME_JURIDIQUE_CHANGE",  # Ajouté, voir plus bas pour le détail
+            "nom": "COMPANY_NAME_CHANGE",
+            "forme_juridique_id": "FORME_JURIDIQUE_CHANGE",
             "email": "CONTACT_INFO_CHANGE",
             "site_internet": "CONTACT_INFO_CHANGE",
             "numero_adresse": "CONTACT_INFO_CHANGE",
@@ -1803,81 +1801,63 @@ class Acheteur(Model):
             "pays_id": "CONTACT_INFO_CHANGE",
             "province_id": "CONTACT_INFO_CHANGE",
             "ville_id": "CONTACT_INFO_CHANGE",
-            # Activité Commerciale et Contrats (si applicable, ex: changement d'activité principale)
-            "activite_principale": "ACTIVITY_CHANGE",  # Ajout d'un code si vous voulez surveiller ce champ
-            # Santé Financière et Risque de Crédit (si des champs comme scoring ou limite de crédit sont directement dans Acheteur)
-            # Sinon, ces alertes proviendraient de modèles liés
-            "statut_entreprise_id": "STATUT_ENTREPRISE_CHANGE",  # Si le statut peut être "en liquidation", "dissoute", etc.
+            "activite_principale": "ACTIVITY_CHANGE",
+            "statut_entreprise_id": "STATUT_ENTREPRISE_CHANGE",
         }
 
-        changes_detected = {}  # Pour regrouper les messages par code d'élément
+        changes_detected = {}
 
         for field_name, element_code in field_to_element_code.items():
             original_value = self.__original_data.get(field_name)
             current_value = getattr(self, field_name)
 
-            # Traitement spécial pour les champs ForeignKey (_id)
             if field_name.endswith("_id"):
                 if original_value != current_value:
-                    original_obj_display = "vide"
-                    current_obj_display = "vide"
-
-                    # Tenter de récupérer l'objet lié pour un affichage plus lisible
-                    if original_value:
-                        try:
-                            original_obj = getattr(
-                                self, field_name.replace("_id", "")
-                            )._default_manager.get(pk=original_value)
-                            original_obj_display = str(original_obj)
-                        except models.ObjectDoesNotExist:
-                            original_obj_display = "Inconnu (ID: {})".format(
-                                original_value
-                            )
-
-                    if current_value:
-                        try:
-                            current_obj = getattr(
-                                self, field_name.replace("_id", "")
-                            )._default_manager.get(pk=current_value)
-                            current_obj_display = str(current_obj)
-                        except models.ObjectDoesNotExist:
-                            current_obj_display = "Inconnu (ID: {})".format(
-                                current_value
-                            )
-
+                    field_verbose = self._meta.get_field(field_name).verbose_name
                     changes_detected.setdefault(element_code, []).append(
-                        f"Le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
-                        f"'{original_obj_display}' à '{current_obj_display}'."
+                        f"Le champ '{field_verbose}' a été modifié."
                     )
-            else:  # Champs non ForeignKey (CharFields, DateFields, etc.)
-                # Assurez-vous que les comparaisons sont robustes (ex: éviter de comparer None avec '')
-                # Utilisez str() pour les dates ou d'autres types si nécessaire
+            else:
                 if str(original_value or "") != str(current_value or ""):
+                    field_verbose = self._meta.get_field(field_name).verbose_name
                     changes_detected.setdefault(element_code, []).append(
-                        f"Le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
-                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                        f"Le champ '{field_verbose}' est passé de '{original_value or 'vide'}' à '{current_value or 'vide'}'."
                     )
 
-        # Logique pour les changements de statut d'entreprise qui peuvent impliquer LIQUIDATION ou DISSOLUTION
+        # Logique pour les changements de statut d'entreprise
         original_statut_id = self.__original_data.get("statut_entreprise_id")
         current_statut_id = self.statut_entreprise_id
 
-        if original_statut_id != current_statut_id:
-            if current_statut_id:
-                try:
-                    current_statut = StatutEntreprise.objects.get(pk=current_statut_id)
-                    if "liquidation" in current_statut.nom.lower():
-                        changes_detected.setdefault("LIQUIDATION", []).append(
-                            f"Le statut de l'entreprise est passé à '{current_statut.nom}' (Liquidation)."
-                        )
-                    elif "dissolution" in current_statut.nom.lower():
-                        changes_detected.setdefault("DISSOLUTION", []).append(
-                            f"Le statut de l'entreprise est passé à '{current_statut.nom}' (Dissolution)."
-                        )
-                    # Vous pouvez ajouter d'autres conditions pour SAFEGUARD_PROCEDURE, JUDICIAL_RECOVERY_PROCEDURE
-                    # si votre modèle StatutEntreprise peut refléter ces états
-                except StatutEntreprise.DoesNotExist:
-                    pass  # Gérer si le statut n'existe pas
+        if original_statut_id != current_statut_id and current_statut_id:
+            try:
+                current_statut = StatutEntreprise.objects.get(pk=current_statut_id)
+                
+                # CORRECTION ICI: Utilisez le bon nom d'attribut
+                # Essayer différents noms possibles
+                statut_name = ""
+                if hasattr(current_statut, 'libelle'):
+                    statut_name = current_statut.libelle.lower()
+                elif hasattr(current_statut, 'nom'):
+                    statut_name = current_statut.nom.lower()
+                elif hasattr(current_statut, 'name'):
+                    statut_name = current_statut.name.lower()
+                elif hasattr(current_statut, 'titre'):
+                    statut_name = current_statut.titre.lower()
+                
+                # Utiliser la valeur brute si on ne trouve pas le bon attribut
+                if not statut_name:
+                    statut_name = str(current_statut).lower()
+                
+                if "liquidation" in statut_name:
+                    changes_detected.setdefault("LIQUIDATION", []).append(
+                        f"Le statut de l'entreprise est passé à '{str(current_statut)}' (Liquidation)."
+                    )
+                elif "dissolution" in statut_name:
+                    changes_detected.setdefault("DISSOLUTION", []).append(
+                        f"Le statut de l'entreprise est passé à '{str(current_statut)}' (Dissolution)."
+                    )
+            except StatutEntreprise.DoesNotExist:
+                pass
 
         if changes_detected:
             portefeuilles_concernés = Portefeuille.objects.filter(
@@ -1893,9 +1873,7 @@ class Acheteur(Model):
                         if portefeuille.elements_surveillance_actifs.filter(
                             pk=element_surveillance.pk
                         ).exists():
-                            for (
-                                message
-                            ) in messages:  # Créer une alerte par message de changement
+                            for message in messages:
                                 AlerteLog.objects.create(
                                     portefeuille=portefeuille,
                                     acheteur=self,
@@ -1904,9 +1882,8 @@ class Acheteur(Model):
                                     content_object=self,
                                 )
                     except ElementSurveillance.DoesNotExist:
-                        print(
-                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
-                        )
+                        # Ignorer silencieusement les éléments non trouvés
+                        continue
 
     def clean(self):
         # Ajouter des validateurs pour éviter les doublons
@@ -9909,6 +9886,7 @@ class StrategiePlanification(Model):
         field_to_element_code = {
             "type_strategie": "STRATEGY_CHANGE",  # Générique pour tout changement de stratégie
             "date_mise_en_place": "STRATEGY_CHANGE",
+            
         }
 
         # Logique pour les éléments spécifiques comme NEW_STRATEGIC_PARTNERSHIP ou PRICING_POLICY_CHANGE
@@ -11281,3 +11259,25 @@ class DocDownload(models.Model):
 # Debut Modules Pelba
 ##########################################################
 ##########################################################
+
+
+
+
+class ActivityLog(models.Model):
+    """Journal d'activité pour suivre les actions"""
+    user = models.ForeignKey("CustomUser", on_delete=models.SET_NULL, null=True)
+    action_type = models.CharField(max_length=50)
+    object_id = models.IntegerField(null=True, blank=True)
+    object_type = models.CharField(max_length=50)
+    details = models.TextField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Journal d\'activité'
+        verbose_name_plural = 'Journaux d\'activité'
+    
+    def __str__(self):
+        return f"{self.action_type} par {self.user} à {self.created_at}"

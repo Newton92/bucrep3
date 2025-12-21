@@ -1,0 +1,1163 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<!-- Leaflet CSS -->
+<!-- MapLibre GL JS -->
+<link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
+<style>
+.map-container {
+    border-radius: 15px;  /* Bordures arrondies */
+    overflow: hidden; /* Empêche la carte de dépasser */
+    height: 400px; /* Hauteur fixe */
+    border: 2px solid #ddd; /* Bordure grise légère */
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px; /* Bordures arrondies pour la carte aussi */
+}
+
+#commandeInfo {
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+
+#commandeInfo .card-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+}
+
+#commandeInfo .card-body {
+    padding: 0.75rem;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+}
+
+.alert {
+    margin-bottom: 0;
+    padding: 0.5rem;
+}
+
+</style>
+
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-globe fa-fw me-1"></i>Acheteurs</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countAcheteurs">Module de Gestion des Acheteurs</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un acheteur d'entreprise notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                        <!-- Title -->
+                    <div class="ms-2">
+                        <h6 class="card-title mb-0" id="editNom"></h6>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" target="_blank" class="btn btn-dark-soft mb-0">Numero Interne ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Description</h6>
+                        <span id="editDescription"></span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Activité principale</h6>
+                        <span id="editActivitePrincipale"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Date création</h6>
+                        <span id="editDateCreation"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Contats & Adresse</h6>
+                        <strong>Fax : </strong><span id="editFax"></span><br>
+                        <strong>Email : </strong><span id="editEmail"></span><br>
+                        <strong>Site web : </strong><span id="editSiteInternet"></span><br>
+                        <strong>Boite postale : </strong><span id="editBoitePostale"></span><br>
+                        <strong>Rue adresse : </strong><span id="editRueAdresse"></span><br>
+                        <strong>Numéro adresse : </strong><span id="editNumeroAdresse"></span><br>
+                        <strong>Pays : </strong><span id="editPays"></span><br>
+                        <strong>Province : </strong><span id="editProvince"></span><br>
+                        <strong>Ville : </strong><span id="editVille"></span><br>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Forme juridique</h6>
+                        <span id="editFormeJuridique"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Taille</h6>
+                        <span id="editCategorieEntreprise"></span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs">Statut actuel</h6>
+                        <span class="text-success" id="editStatutEntreprise"></span>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </div>
+        <!-- Card item END -->
+
+
+
+
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Modules</u></h6>
+                <br>
+                <a href="{% url 'dash_root_manage_acheteur_resume' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Résumé &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_risk_rating' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Evaluation du Risque &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Opinion Crédit ACREMAC &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_data_save' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Données enregistrées &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_tendance' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Tendance &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_acheteur_responsable' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Responsables &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_antecedent' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Antécédents Juridiques &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_gestion_risque' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Management du Risque &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_membre_conseil' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Conseil d'administration &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_acheteur_composition_capital' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Composition Capital Social &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_actionnaire' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Actionnaires &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_filiale' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Filiales ou Branches &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_analyse_sectorielle' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Analyse Sectorielle &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_acheteur_operation_historique' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Opérations et Historique &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_propriete_actif' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Propriétés et Actifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_condition_achat' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Conditions d'achat &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_condition_vente' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Conditions de vente &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_acheteur_sommaire_avis' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Sommaire et Avis &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_advice' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Conseils &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_geopolitic' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Géopolitiques &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_compte_financier' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-0">Comptes Financiers &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_banking' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Données Bancaires &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_portable_acheteur' id_acheteur %}" target="_blank" class="btn btn-warning btn-sm mb-0">Portables &nbsp;</a>
+                <a href="{% url 'dash_root_manage_telephone_acheteur' id_acheteur %}" target="_blank" class="btn btn-warning btn-sm mb-0">Téléphones &nbsp;</a>
+                <a href="{% url 'dash_root_manage_adresse_acheteur' id_acheteur %}" target="_blank" class="btn btn-warning btn-sm mb-0">Adresses &nbsp;</a>
+                <a href="{% url 'dash_root_manage_email_acheteur' id_acheteur %}" target="_blank" class="btn btn-warning btn-sm mb-2 mb-sm-0">Emails &nbsp;</a>
+                <a href="{% url 'dash_root_manage_code_nace_acheteur' id_acheteur %}" target="_blank" class="btn btn-warning btn-sm mb-0">Codes NACE &nbsp;</a>
+                <a href="{% url 'dash_root_manage_code_naf_acheteur' id_acheteur %}" target="_blank" class="btn btn-warning btn-sm mb-2 mb-sm-0">Codes NAF &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_document_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-0">Documents &nbsp;</a>
+                <a href="{% url 'dash_root_manage_procedure_collective_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-0">Procédures collectives &nbsp;</a>
+                <a href="{% url 'dash_root_manage_registre_commerce_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-2 mb-sm-0">Registres de Commerce &nbsp;</a>
+                <a href="{% url 'dash_root_manage_cotisation_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-2 mb-sm-0">Cotisations Sociales &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_produit_service_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-0">Produits & Services &nbsp;</a>
+                <a href="{% url 'dash_root_manage_marque_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-0">Marques &nbsp;</a>
+                <a href="{% url 'dash_root_manage_swot_acheteur' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-0">SWOT &nbsp;</a>
+
+                <br><br>
+
+                <a href="{% url 'dash_root_certification_acheteur' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-0">Certifications &nbsp;</a>
+                <a href="{% url 'dash_root_innovation_acheteur' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-0">Innovation & Developpement &nbsp;</a>
+                <a href="{% url 'dash_root_strategie_acheteur' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-0">Strategie & Planification &nbsp;</a>
+                <a href="{% url 'dash_root_conformite_acheteur' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-0">Conformite & Reglementation &nbsp;</a>
+
+                <br><br>
+                
+                <a href="{% url 'dash_root_manage_acheteur_scoring' id_acheteur %}" target="_blank" class="btn btn-secondary btn-sm mb-0">Scoring sans bilan &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}" target="_blank" class="btn btn-secondary btn-sm mb-0">Scoring avec bilan &nbsp;</a>
+                <br><br>
+                
+                
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- Acheteurs Bilans  START -->
+<div class="row">
+
+    <!-- Bilan Anglais START -->
+    <div class="col-6">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Bilan Anglais</u></h6>
+                <br>
+
+                <a href="{% url 'dash_root_manage_acheteur_actif_anglais' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Actifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_passif_anglais' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Passifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_resultat_anglais' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Résultats &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_bilan_anglais' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Modules anglais &nbsp;</a>
+
+                <br><br><br><br>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+        <br>
+    </div>
+    <!-- Bilan Anglais END -->
+
+    <!-- Bilan Classique START -->
+    <div class="col-6">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Bilan Classique</u></h6>
+                <br>
+
+                <a href="{% url 'dash_root_manage_acheteur_actif_classique' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Actifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_passif_classique' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Passifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_resultat_classique' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Résultats &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_bilan_classique' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Modules classiques &nbsp;</a>
+
+                <br><br><br><br>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+        <br>
+    </div>
+    <!-- Bilan Classique END -->
+
+    <br><br>
+
+    <!-- Bilan SysCohada START -->
+    <div class="col-6">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Bilan SYSCOHADA</u></h6>
+                <br>
+
+                <a href="{% url 'dash_root_manage_acheteur_actif_syscohada' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Actifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_passif_syscohada' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Passifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_resultat_syscohada' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Résultats &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_bilan_syscohada' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Modules sysohada &nbsp;</a>
+
+                <br><br>
+                <a href="#" target="_blank" class="btn btn-default btn-sm mb-0">&nbsp;</a>
+
+                <br><br><br><br>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+    <!-- Bilan SysCohada END -->
+
+    <!-- Bilan Bancaire START -->
+    <div class="col-6">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Bilan Bancaire</u></h6>
+                <br>
+
+                <a href="{% url 'dash_root_manage_acheteur_asset_bancaire' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Actifs &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_bilan_actif_bancaire' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Modules bancaires &nbsp;</a>
+
+                <br><br>
+                <a href="{% url 'dash_root_manage_acheteur_liabilitie_bancaire' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Passifs &nbsp;</a>
+
+                <br><br>
+                <a href="{% url 'dash_root_manage_acheteur_expense_bancaire' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Dépenses</a>
+                <a href="{% url 'dash_root_manage_acheteur_product_bancaire' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Produits</a>
+                <a href="{% url 'dash_root_manage_acheteur_offbalancesheet_bancaire' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Données Hors Bilans</a>
+
+                <br><br><br><br>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+    <!-- Bilan Bancaire END -->
+
+    <br><br><br><br>
+
+
+
+
+</div>
+<!-- Acheteurs Bilans END -->
+
+
+<div class="row">
+    <!-- IRFS COBAC START -->
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <br><br>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>IRFS COBAC</u></h6>
+                <br>
+
+                <a href="{% url 'dash_root_manage_acheteur_compte_financier_irfs' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Comptes Financiers IRFS COBAC &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_ratio_financier_irfs' id_acheteur %}" target="_blank" class="btn btn-success btn-sm mb-2 mb-sm-0">Ratios Financiers IRFS COBAC &nbsp;</a>
+                <br><br>
+                <a href="{% url 'dash_root_manage_acheteur_actif_irfs' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Actifs IRFS Acheteur &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_passif_irfs' id_acheteur %}" target="_blank" class="btn btn-danger btn-sm mb-0">Passifs IRFS Acheteur &nbsp;</a>
+                <a href="" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Résultats IRFS Acheteur &nbsp;</a>
+                <a href="" target="_blank" class="btn btn-danger btn-sm mb-2 mb-sm-0">Ratios IRFS Acheteur &nbsp;</a>
+
+                <br><br>
+                <a href="{% url 'dash_root_manage_acheteur_bilan_irfs_cobac' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Modules IRFS COBAC &nbsp;</a>
+
+
+                <br><br>
+            </div>
+        </div>
+        <!-- Wishlist END -->
+        <br>
+    </div>
+    <!-- IRFS COBAC END -->
+</div>
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+        <!-- Wishlist START -->
+        <div class="card border">
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <h6><u>Rapports (consultation)</u></h6>
+                <span>A partir de ces boutons d'action, vous avez la possibilité de prévisualiser le rapport d'un acheteur sous divers formats !</span>
+                <br><br>
+
+                <a href="{% url 'dash_root_manage_acheteur_report_solvency' id_acheteur %}" target="_blank" class="btn btn-dark btn-sm mb-2 mb-sm-0">Rapports de solvabilité &nbsp;</a>
+                <a href="{% url 'dash_root_manage_acheteur_emailling' id_acheteur %}" target="_blank" class="btn btn-info btn-sm mb-0">Mailings &nbsp;</a>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#generateReportModal"  data-acheteur-id="{{ id_acheteur }}" class="btn btn-primary btn-sm mb-0">Générer un rapport &nbsp;</a>
+            
+            </div>
+        </div>
+        <!-- Wishlist END -->
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+
+
+
+<!-- Modal -->
+<!-- Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generateReportModalLabel">Paramètres du Rapport</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <!-- Nouveau champ pour sélectionner une commande -->
+                    <div class="mb-3">
+                        <label for="commandeId" class="form-label">Sélectionner une commande</label>
+                        <input type="text" class="form-control" id="commandeId" placeholder="Entrez l'ID de la commande">
+                        <div class="form-text">Recherchez une commande par son ID</div>
+                    </div>
+                    
+                    <!-- Zone d'affichage des informations de la commande -->
+                    <div id="commandeInfo" class="card mb-3" style="display: none;">
+                        <div class="card-header">Informations de la commande</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Référence:</strong> <span id="commandeRef"></span></p>
+                                    <p><strong>Client:</strong> <span id="commandeClient"></span></p>
+                                    <p><strong>Acheteur:</strong> <span id="commandeAcheteur"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Date réception:</strong> <span id="commandeDateReception"></span></p>
+                                    <p><strong>Pays:</strong> <span id="commandePays"></span></p>
+                                    <p><strong>Devise:</strong> <span id="commandeDevise"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="language" class="form-label">Langue</label>
+                        <select class="form-select" id="language">
+                            <option value="fr">Français</option>
+                            <option value="en">Anglais</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="currency" class="form-label">Devise</label>
+                        <select class="form-select" id="currency">
+                            <option value="USD">Dollar US</option>
+                            <option value="EUR">Euro</option>
+                            <option value="FCFA">FCFA</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="balanceType" class="form-label">Type de Bilan</label>
+                        <select class="form-select" id="balanceType">
+                            <option value="Classique">Classique</option>
+                            <option value="Anglais">Anglais</option>
+                            <option value="Syscohada">SYSOHADA</option>
+                            <option value="Bancaire">Bancaire</option>
+                            <option value="Ifrs">IFRS COBAC</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="format" class="form-label">Format</label>
+                        <select class="form-select" id="format">
+                            <option value="pdf">PDF</option>
+                            <option value="html">HTML</option>
+                            <option value="json">JSON</option>
+                            <option value="xml">XML</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" id="confirmGenerate">Générer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Ajoute SweetAlert2 via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
+
+
+
+<script>
+$(document).ready(function() {
+
+
+    const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+    if (!id) {
+        console.error("L'ID de l'acheteur est introuvable.");
+        return;
+    }
+
+    $.ajax({
+        url: `/api/consulter-un-acheteur/${id}/`,
+        type: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + '{{ access }}'
+        },
+        success: function(response) {
+            console.log(response);
+            $('#editAcheteurId').val(response.id);
+            $('#editCode').val(response.code).text(response.code);
+            $('#editNom').val(response.nom).text(response.nom);
+            $('#editSigle').val(response.sigle).text(response.sigle);
+            if (response.date_creation) {
+                let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                $('#editDateCreation').val(response.date_creation).text(formattedDate);
+            }
+
+            $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+            $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+            $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+            $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+            $('#editDescription').html(response.description);
+            $('#editEmail').val(response.email).text(response.email);
+            $('#editFax').val(response.fax).text(response.fax);
+            $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+            $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+            $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+            $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+            $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+            $('#editPays').val(response.pays.nom).text(response.pays.nom);
+            $('#editProvince').val(response.province.nom).text(response.province.nom);
+            $('#editVille').val(response.ville.nom).text(response.ville.nom);
+
+        },
+        error: function(xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'Erreur lors de la récupération des données de l\'acheteur.',
+            });
+            console.error("Erreur AJAX :", xhr.responseText);
+        }
+    });
+
+
+    // Gestion de l'expiration du token
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
+            }
+        }
+    });
+
+    // Rafraîchir le token si expiré
+    function refreshToken() {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: localStorage.getItem('refresh_token') }),
+            contentType: 'application/json',
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                $.ajax(this); // Réessayer la requête
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+
+});
+
+</script>
+
+
+<script>
+$(document).ready(function() {
+
+    // Fonction pour obtenir la langue active
+    function getActiveLanguage() {
+        // 1. Vérifie d'abord le champ de sélection dans le modal
+        const selectedLanguage = $('#language').val();
+        if (selectedLanguage) {
+            return selectedLanguage;
+        }
+        // 2. Sinon, vérifie l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('language');
+        if (urlLang) {
+            return urlLang;
+        }
+        // 3. Sinon, vérifie le localStorage
+        const storedLang = localStorage.getItem('site_lang');
+        if (storedLang) {
+            return storedLang;
+        }
+        // 4. Par défaut, retourne 'fr'
+        return 'fr';
+    }
+
+    // Fonctions utilitaires
+    function formatXML(xml) {
+        try {
+            // Essayer de formater le XML avec indentation
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xml, "application/xml");
+            const serializer = new XMLSerializer();
+            let formatted = serializer.serializeToString(xmlDoc);
+            
+            // Ajouter une indentation basique
+            formatted = formatted.replace(/(>)(<)(\/*)/g, '$1\n$2$3');
+            
+            // Limiter la taille pour l'affichage
+            if (formatted.length > 10000) {
+                formatted = formatted.substring(0, 10000) + '\n\n... (contenu tronqué)';
+            }
+            
+            return formatted;
+        } catch (e) {
+            // Si le formatage échoue, retourner le texte brut
+            return xml.length > 10000 ? xml.substring(0, 10000) + '\n\n... (contenu tronqué)' : xml;
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function downloadXML(xmlContent) {
+        const blob = new Blob([xmlContent], { type: 'application/xml; charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapport_${new Date().getTime()}.xml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).catch(err => {
+            console.error('Erreur copie:', err);
+            // Fallback pour les anciens navigateurs
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        });
+    }
+
+
+    let selectedCommandeId = null;
+    let searchTimeout = null;
+    
+    // Recherche de commande par ID avec délai pour éviter trop de requêtes
+    $('#commandeId').on('input', function() {
+        const commandeId = $(this).val().trim();
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        if (!commandeId) {
+            $('#commandeInfo').hide();
+            selectedCommandeId = null;
+            return;
+        }
+        
+        // Masquer les anciennes informations pendant la nouvelle recherche
+        $('#commandeInfo').html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Chargement...</span></div> Recherche en cours...</div>').show();
+        
+        // Déclencher la recherche après un délai de 500ms
+        searchTimeout = setTimeout(function() {
+            searchCommande(commandeId);
+        }, 500);
+    });
+    
+    // Fonction pour rechercher une commande
+    function searchCommande(commandeId) {
+        // Vérifier que l'ID est un nombre valide
+        if (!/^\d+$/.test(commandeId)) {
+            $('#commandeInfo').html('<div class="alert alert-warning p-2">Veuillez entrer un ID numérique valide</div>').show();
+            return;
+        }
+        
+        // Requête AJAX pour récupérer les informations de la commande
+        $.ajax({
+            url: `/api/commande-details/${commandeId}/`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    // Afficher les informations de la commande
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-light">Informations de la commande #${commandeId}</div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Référence:</strong> <span class="text-primary">${response.data.notre_ref || 'N/A'}</span></p>
+                                    <p><strong>Client:</strong> ${response.data.client ? response.data.client.username : 'N/A'}</p>
+                                    <p><strong>Acheteur:</strong> ${response.data.acheteur ? response.data.acheteur.nom : 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Date réception:</strong> ${response.data.date_recept_commande || 'N/A'}</p>
+                                    <p><strong>Pays:</strong> ${response.data.pays ? response.data.pays.nom : 'N/A'}</p>
+                                    <p><strong>Devise:</strong> <span class="badge bg-secondary">${response.data.devise_credit_demande ? response.data.devise_credit_demande.code : 'N/A'}</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <small class="text-muted">Commande sélectionnée</small>
+                            </div>
+                        </div>
+                    `).show();
+                    
+                    // Stocker l'ID de la commande sélectionnée
+                    selectedCommandeId = commandeId;
+                } else {
+                    $('#commandeInfo').html(`<div class="alert alert-danger p-2">${response.message || 'Commande non trouvée'}</div>`).show();
+                    selectedCommandeId = null;
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#commandeInfo').html('<div class="alert alert-danger p-2">Erreur de connexion au serveur</div>').show();
+                selectedCommandeId = null;
+                console.error("Erreur:", error);
+            }
+        });
+    }
+
+    // Gestion du click sur le bouton Générer - VERSION DEBUG
+    // Gestion du click sur le bouton Générer - VERSION CORRIGÉE
+    // Gestion du click sur le bouton Générer - URL CORRIGÉE
+    $('#confirmGenerate').on('click', function(e) {
+        e.preventDefault();
+        console.log("Bouton Générer cliqué !");
+        
+        // Récupération des valeurs
+        const languageSite = getActiveLanguage();
+        const commandeId = $('#commandeId').val() || selectedCommandeId;
+        const language = $('#language').val();
+        const currency = $('#currency').val();
+        const balanceType = $('#balanceType').val();
+        const format = $('#format').val();
+        const acheteurId = $(this).data('acheteur-id') || 1;
+        
+        console.log("Paramètres:", {language, currency, balanceType, format, acheteurId, commandeId});
+
+        // Récupérer le token d'authentification
+        const token = getAuthToken();
+        
+        if (!token) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur d\'authentification',
+                text: 'Token d\'authentification manquant. Veuillez vous reconnecter.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Afficher un SweetAlert pendant le chargement
+        Swal.fire({
+            title: 'Génération en cours...',
+            text: 'Veuillez patienter pendant la génération du rapport.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Construire l'URL CORRECTE (sans -final)
+        const params = new URLSearchParams({
+            id_commande: commandeId || '',
+            language: language,
+            devise: currency,
+            bilan_report: balanceType,
+            format_report: format,
+        });
+
+        // URL CORRIGÉE : /api/acheteur/1/generer-report/ (pas generer-report-final)
+        const url = `/api/acheteur/${acheteurId}/generer-report/?${params.toString()}`;
+        console.log("URL de requête:", url);
+
+        // Requête AJAX avec authentification
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            xhrFields: {
+                responseType: (format || '').toLowerCase() === 'pdf' ? 'blob' : (format || '').toLowerCase() === 'xml' ? 'blob' : 'text'
+            },
+            success: function(response, status, xhr) {
+                console.log("Réponse reçue avec succès, type:", typeof response);
+
+                // Fermer le SweetAlert de chargement
+                Swal.close();
+
+                if (format.toLowerCase() === 'pdf') {
+                    try {
+                        // Créer un Blob à partir de la réponse
+                        const blob = new Blob([response], { type: 'application/pdf' });
+
+                        // Créer un URL pour le Blob
+                        const url = window.URL.createObjectURL(blob);
+
+                        // Créer dynamiquement un lien <a> pour le téléchargement
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        // Nom du fichier (tu peux personnaliser avec l'ID de la commande)
+                        a.download = `rapport_solvabilite_${acheteurId || 'rapport'}.pdf`;
+
+                        // Ajouter le lien au DOM, cliquer dessus, puis le retirer
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+
+                        // Libérer l'URL pour éviter les fuites mémoire
+                        window.URL.revokeObjectURL(url);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            text: 'Le rapport PDF a été généré et téléchargé avec succès.',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } catch (e) {
+                        console.error("Erreur lors du téléchargement du PDF :", e);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur !',
+                            text: 'Impossible de télécharger le PDF.',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                }
+                
+                else if (format === 'html') {
+                    // Pour HTML, forcer le téléchargement
+                    const blob = new Blob([response], { type: 'text/html; charset=utf-8' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `rapport_solvabilite_${acheteurId}.html`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès !',
+                        text: 'Le rapport HTML a été généré et téléchargé avec succès.',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                }
+                
+                else if (format.toLowerCase() === 'xml') {
+
+                    try {
+                        const blob = new Blob([response], { type: 'application/zip' });
+
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+
+                        let filename = "rapport_solvabilite.zip";
+                        const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+
+                        if (contentDisposition && contentDisposition.includes("filename=")) {
+                            filename = contentDisposition.split("filename=")[1].replace(/"/g, "");
+                        }
+
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+
+                        window.URL.revokeObjectURL(url);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès !',
+                            text: 'Le XML et son schéma XSD ont été téléchargés.',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur XML/XSD',
+                            text: 'Impossible de télécharger le fichier ZIP.',
+                        });
+                    }
+                }
+                
+                else if (format === 'json') {
+                    try {
+                        // Vérifier que la réponse n'est pas vide
+                        if (!response) {
+                            throw new Error('Réponse vide du serveur');
+                        }
+                        
+                        let jsonData;
+                        if (typeof response === 'string') {
+                            // Essayer de parser comme JSON
+                            try {
+                                jsonData = JSON.parse(response);
+                            } catch (parseError) {
+                                // Si ce n'est pas du JSON, peut-être que c'est déjà un objet
+                                console.warn("La réponse n'est pas du JSON valide, tentative alternative...");
+                                jsonData = response;
+                            }
+                        } else {
+                            jsonData = response;
+                        }
+                        
+                        // S'assurer que nous avons des données
+                        if (!jsonData || (typeof jsonData === 'object' && Object.keys(jsonData).length === 0)) {
+                            throw new Error('Données JSON vides');
+                        }
+                        
+                        // Convertir en chaîne JSON
+                        const jsonString = JSON.stringify(jsonData, null, 2);
+                        
+                        // Télécharger
+                        const blob = new Blob([jsonString], { 
+                            type: 'application/json; charset=utf-8' 
+                        });
+                        
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `rapport_${acheteurId}_${new Date().toISOString().slice(0, 10)}.json`;
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Nettoyer
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }, 100);
+                        
+                        // Message de succès
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Téléchargement réussi',
+                            text: 'Le fichier JSON a été téléchargé.',
+                            timer: 2000,
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                        
+                    } catch (e) {
+                        console.error("Erreur JSON détaillée:", e);
+                        
+                        // Afficher plus de détails sur l'erreur
+                        let errorDetails = e.message;
+                        if (response && typeof response === 'string' && response.length > 0) {
+                            errorDetails += `\nPremiers caractères de la réponse: "${response.substring(0, 100)}..."`;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur JSON',
+                            html: `
+                                <div style="text-align: left; font-size: 14px;">
+                                    <p>Erreur lors du traitement du JSON:</p>
+                                    <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px;">${errorDetails}</pre>
+                                </div>
+                            `,
+                            width: '600px',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                }
+
+                // Fermer le modal
+                $('#generateReportModal').modal('hide');
+            },
+            
+            error: function(xhr, status, error) {
+                // Fermer le SweetAlert de chargement
+                Swal.close();
+
+                let errorMessage = 'Erreur lors de la génération du rapport';
+                let details = '';
+                
+                if (xhr.status === 400) {
+                    errorMessage = 'Requête incorrecte. Vérifiez les paramètres.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        details = xhr.responseJSON.error;
+                    }
+                } else if (xhr.status === 403) {
+                    errorMessage = 'Accès refusé. Vérifiez vos permissions.';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Endpoint non trouvé. URL incorrecte.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur interne du serveur.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        details = xhr.responseJSON.error;
+                    }
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur ' + xhr.status,
+                    text: errorMessage,
+                    html: details ? `<div>${errorMessage}<br><small>${details}</small></div>` : errorMessage,
+                    confirmButtonText: 'OK'
+                });
+
+                console.error("Erreur détaillée:", {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
+            }
+        });
+    });
+
+
+    // Fonction pour récupérer le token d'authentification
+    function getAuthToken() {
+        // Essayer plusieurs méthodes pour récupérer le token
+        const token = localStorage.getItem('access_token') || 
+                    sessionStorage.getItem('access_token') ||
+                    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                    '{{ access }}'; // Pour les templates Django
+        
+        if (!token) {
+            console.warn("Aucun token d'authentification trouvé");
+        }
+        
+        return token;
+    }
+
+    // Fonction pour rafraîchir le token si expiré
+    function refreshToken() {
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        if (!refreshToken) {
+            window.location.href = '/login/';
+            return;
+        }
+
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ refresh: refreshToken }),
+            success: function(response) {
+                localStorage.setItem('access_token', response.access);
+                // Réessayer la requête originale
+                // Vous devrez stocker la requête originale pour la rejouer
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    confirmButtonText: 'Se reconnecter'
+                }).then(() => {
+                    window.location.href = '/login/';
+                });
+            }
+        });
+    }
+});
+
+
+</script>
+
+
+
+{% endblock %}

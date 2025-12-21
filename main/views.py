@@ -37,6 +37,12 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
 
 CustomUser = get_user_model()
 
@@ -394,51 +400,66 @@ logger = logging.getLogger(__name__)
 CustomUser = get_user_model()
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
+
+
 @login_required
 def dash_root(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
+    # Vérifier les permissions
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
     user = request.user
-    
-    # create_fake_buyers(15)
-    
+
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-    
-    # Appeler la fonction
-    # populate_database()
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
 
     context = {
         "dash_active": "active",
-        "user": user,
-        "refresh": refresh,
-        "access": str(RefreshToken.for_user(user).access_token),
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
     }
-    return render(request, "main/root/dash_root.html", context)
+
+    return render(
+        request,
+        "main/root/dash_root.html",
+        context
+    )
+
 
 
 
 @login_required
 def dash_root_user(request):
     # Vérifier si l'utilisateur a les permissions nécessaires
-    if not request.user.role in ['Root', 'Validateur', 'Analyste']:
-        return redirect('dash_root')
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
     
+    user = request.user
+
     # Génération des tokens d'accès
     try:
-        refresh = RefreshToken.for_user(request.user)
+        refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
-    except Exception as e:
-        # Gestion d'erreur
+    except Exception:
         messages.error(request, "Erreur lors de la génération des tokens.")
-        return redirect('dash_root')
-    
-    # Récupérer les pays (avec optimisation)
+        return redirect('index')
+
     pays_list = Pays.objects.all().only('id', 'nom')
-    
+
     context = {
         "users_active": "active",
         "pays_list": pays_list,
@@ -446,7 +467,12 @@ def dash_root_user(request):
         "refresh": refresh_token,
         "access": access_token,
     }
-    return render(request, "main/root/utilisateur/dash_root_user.html", context)
+    return render(
+        request,
+        "main/root/utilisateur/dash_root_user.html",
+        context
+    )
+
 
 
 @login_required
@@ -1050,61 +1076,76 @@ def dash_root_statut_entreprise(request):
 
 @login_required
 def dash_root_acheteur(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
+    # Vérifier les permissions
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
     user = request.user
+    
+    # Récupérer le pays sélectionné
+    selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
+    
+    acheteurs = Acheteur.objects.filter(pays_id=selected_pays_id)
+    print(acheteurs)
+    print(acheteurs.count())
 
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "user_save": user,
+        "refresh": refresh_token,
+        "access": access_token,
     }
-    return render(request, "main/root/acheteur/dash_root_acheteur.html", context)
+
+    return render(
+        request,
+        "main/root/acheteur/dash_root_acheteur.html",
+        context
+    )
 
 
 @login_required
 def dash_root_add_acheteur(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
     user = request.user
 
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
 
-    # Récupérer tous les categories d'entreprise
+    # Activation des données de référence
+    StatutEntreprise.objects.update(active=True)
+    CategorieEntreprise.objects.update(active=True)
+    FormeJuridique.objects.update(active=True)
+    
+    # Récupération des données de référence
     categorie_list = CategorieEntreprise.objects.all()
-
-    # Récupérer tous les formes juridiques
     juridique_list = FormeJuridique.objects.all()
-
-    # Récupérer tous les statuts entreprise
     statut_list = StatutEntreprise.objects.all()
-
-    # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
-
-    # Récupérer tous les pays
     pays_list = Pays.objects.all()
-
-    # Récupérer tous les provinces
     province_list = Province.objects.all()
-
-    # Récupérer tous les villes
     ville_list = Ville.objects.all()
 
     context = {
         "acheteur_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "refresh": refresh_token,
+        "access": access_token,
         "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
@@ -1113,50 +1154,47 @@ def dash_root_add_acheteur(request):
         "province_list": province_list,
         "ville_list": ville_list,
     }
-    return render(request, "main/root/acheteur/dash_root_add_acheteur.html", context)
+
+    return render(
+        request,
+        "main/root/acheteur/dash_root_add_acheteur.html",
+        context
+    )
 
 
 @login_required
 def dash_root_edit_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
     user = request.user
 
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les categories d'entreprise
+    # Activation des données de référence
+    StatutEntreprise.objects.update(active=True)
+    CategorieEntreprise.objects.update(active=True)
+    FormeJuridique.objects.update(active=True)
+    
+    # Récupération des données de référence
     categorie_list = CategorieEntreprise.objects.all()
-
-    # Récupérer tous les formes juridiques
     juridique_list = FormeJuridique.objects.all()
-
-    # Récupérer tous les statuts entreprise
     statut_list = StatutEntreprise.objects.all()
-
-    # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
-
-    # Récupérer tous les pays
     pays_list = Pays.objects.all()
-
-    # Récupérer tous les provinces
     province_list = Province.objects.all()
-
-    # Récupérer tous les villes
     ville_list = Ville.objects.all()
 
     context = {
         "acheteur_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "refresh": refresh_token,
+        "access": access_token,
+        "id_acheteur": acheteur_id,
         "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
@@ -1165,19 +1203,27 @@ def dash_root_edit_acheteur(request, acheteur_id):
         "province_list": province_list,
         "ville_list": ville_list,
     }
-    return render(request, "main/root/acheteur/dash_root_edit_acheteur.html", context)
+
+    return render(
+        request,
+        "main/root/acheteur/dash_root_edit_acheteur.html",
+        context
+    )
+
 
 
 @login_required
 def dash_root_manage_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
     user = request.user
 
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
 
     # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
@@ -1206,8 +1252,8 @@ def dash_root_manage_acheteur(request, acheteur_id):
     context = {
         "acheteur_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "refresh": refresh_token,
+        "access": access_token,
         "id_acheteur": id_acheteur,
         "categorie_list": categorie_list,
         "juridique_list": juridique_list,
@@ -1218,6 +1264,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "ville_list": ville_list,
     }
     return render(request, "main/root/acheteur/dash_root_manage_acheteur.html", context)
+
 
 
 @login_required

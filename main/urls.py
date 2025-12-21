@@ -2348,6 +2348,7 @@ urlpatterns = [
     ),
     # === MODULES ACHETEUR === #
     path("api/liste-des-acheteurs/", ListAcheteurView.as_view(), name="list-acheteur"),
+    path("api/acheteurs/stats/", AcheteurStatsView.as_view(), name="acheteurs-stats"),
     path(
         "api/recherche-acheteur/", SearchAcheteurView.as_view(), name="search-acheteur"
     ),

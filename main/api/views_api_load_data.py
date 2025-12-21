@@ -43,6 +43,7 @@ class APILoadDataView(APIView):
             "aviscom": "import_modele_avis_commercial --clear",
             "agesoc": "import_modele_age_societe --clear",
             "statuse": "import_statut_entreprise --clear",
+            "categorie": "import_categorie_entreprise --clear",
         }
 
         if command not in allowed_commands:

@@ -592,108 +592,6 @@ body {
     color: #c0392b;
     border: 1px solid rgba(231, 76, 60, 0.3);
 }
-/* ========== MODULES SECTION - AMÉLIORATIONS ========== */
-.modules-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.25rem;
-}
-
-.module-card {
-    background: white;
-    border-radius: 10px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: var(--transition);
-    border: 1px solid #eef2f7;
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.module-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-    border-color: var(--secondary-color);
-}
-
-.module-card:hover .module-icon {
-    transform: scale(1.1);
-}
-
-.module-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    color: white;
-    font-size: 1.5rem;
-    transition: var(--transition);
-}
-
-.module-title {
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.module-btn {
-    width: 100%;
-    padding: 0.75rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: auto;
-}
-
-.module-btn i {
-    font-size: 0.9rem;
-}
-
-.module-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* ========== CATÉGORIE DE MODULES ========== */
-.modules-category {
-    margin-bottom: 2rem;
-}
-
-.modules-category-header {
-    border-left: 4px solid var(--secondary-color);
-    padding-left: 1rem;
-    margin-bottom: 1rem;
-}
-
-.modules-category-header h6 {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.modules-category-header p {
-    color: #666;
-    font-size: 0.9rem;
-}
 </style>
 {% endblock %}
 
@@ -723,7 +621,7 @@ body {
     <div class="company-header">
         <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
             <div class="company-logo">
-                <i class="fas fa-shield-alt text-dark"></i>
+                <i class="fas fa-building"></i>
             </div>
             <div class="flex-grow-1">
                 <h1 class="company-name" id="editNom"></h1>
@@ -804,7 +702,7 @@ body {
                     <span class="info-value" id="editFormeJuridique"></span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Catégorie :</span>
+                    <span class="info-label">Taille :</span>
                     <span class="info-value" id="editCategorieEntreprise"></span>
                 </div>
                 <div class="info-item">
@@ -957,14 +855,8 @@ body {
         <h5 class="mb-0"><i class="fas fa-th-large me-2"></i>Modules de Gestion</h5>
     </div>
     <div class="card-body">
-        <div class="modules-grid" id="modulesGridContainer">
-            <!-- Les modules seront chargés dynamiquement ici -->
-            <div class="text-center py-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Chargement des modules...</span>
-                </div>
-                <p class="text-muted mt-2">Chargement des modules de gestion...</p>
-            </div>
+        <div class="modules-grid">
+            {% comment %} Modules seront insérés dynamiquement {% endcomment %}
         </div>
     </div>
 </div>
@@ -1119,17 +1011,18 @@ body {
 {% endblock %}
 
 {% block scripts %}
-<!-- Ajoute SweetAlert2 via CDN -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
 <!-- Font Awesome -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    console.log("=== DEBUG: Script chargé ===");
+
+    // Stockage des tokens
+    let accessToken = '{{ access }}';
+    let refreshToken = '{{ refresh }}';
+
     
     // Initialize with fade-in effect
     $('.fade-in').css('opacity', '0');
@@ -1140,28 +1033,9 @@ $(document).ready(function() {
         });
     }, 100);
 
-    // Fonction utilitaire pour obtenir une valeur imbriquée en toute sécurité
-    function getSafeValue(obj, path, defaultValue = 'Non spécifié') {
-        if (!obj) return defaultValue;
-        
-        const keys = path.split('.');
-        let current = obj;
-        
-        for (let key of keys) {
-            if (current[key] === undefined || current[key] === null) {
-                return defaultValue;
-            }
-            current = current[key];
-        }
-        
-        return current || defaultValue;
-    }
-
-    // Load Acheteur Data - VERSION CORRIGÉE
+    // Load Acheteur Data
     function loadAcheteurData() {
         const id = '{{ id_acheteur }}';
-        
-        console.log("=== DEBUG: Chargement des données pour l'acheteur ID:", id);
         
         if (!id) {
             console.error("L'ID de l'acheteur est introuvable.");
@@ -1172,138 +1046,57 @@ $(document).ready(function() {
         // Show loading state
         $('.company-profile').addClass('loading');
         
-        // Construction de l'URL
-        const apiUrl = `/api/consulter-un-acheteur/${id}/`;
-        console.log("URL de l'API:", apiUrl);
-        
         $.ajax({
-            url: apiUrl,
+            url: `/api/consulter-un-acheteur/${id}/`,
             type: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + '{{ access }}'
             },
             success: function(response) {
-                console.log("=== DEBUG: Réponse API succès ===");
-                console.log("Données complètes:", response);
+                console.log('Données acheteur:', response);
                 
-                if (!response) {
-                    console.error("Réponse vide de l'API");
-                    showError('Erreur', 'Réponse vide du serveur');
-                    return;
-                }
-                
-                // Vérifier la structure de la réponse
-                const acheteur = response.acheteur || response;
-                console.log("Données acheteur:", acheteur);
-                
-                if (!acheteur) {
-                    console.error("Structure de réponse inattendue:", response);
-                    showError('Erreur', 'Format de données incorrect');
-                    return;
-                }
-                
-                // Update company profile avec valeurs sécurisées
-                $('#editNom').text(getSafeValue(acheteur, 'nom', 'Non spécifié'));
-                $('#editSigle').text(getSafeValue(acheteur, 'sigle', 'Non spécifié'));
-                $('#editCode').text(getSafeValue(acheteur, 'code', 'Non spécifié'));
+                // Update company profile
+                $('#editNom').text(response.nom || 'Non spécifié');
+                $('#editSigle').text(response.sigle || 'Non spécifié');
+                $('#editCode').text(response.code || 'Non spécifié');
                 
                 // Format date
-                const dateCreation = getSafeValue(acheteur, 'date_creation', null);
-                if (dateCreation) {
-                    try {
-                        const date = new Date(dateCreation);
-                        const formattedDate = date.toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                        });
-                        $('#editDateCreation').text(formattedDate);
-                    } catch (e) {
-                        console.error("Erreur format date:", e);
-                        $('#editDateCreation').text(dateCreation);
-                    }
-                } else {
-                    $('#editDateCreation').text('Non spécifié');
+                if (response.date_creation) {
+                    const date = new Date(response.date_creation);
+                    const formattedDate = date.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                    $('#editDateCreation').text(formattedDate);
                 }
                 
-                // Update other fields avec getSafeValue
-                $('#editActivitePrincipale').text(getSafeValue(acheteur, 'activite_principale', 'Non spécifié'));
-                
-                // Pour les objets imbriqués, essayer plusieurs propriétés possibles
-                const statutLibelle = getSafeValue(acheteur, 'statut_entreprise.libelle') || 
-                                      getSafeValue(acheteur, 'statut_entreprise.nom') || 
-                                      getSafeValue(acheteur, 'statut_entreprise');
-                $('#editStatutEntreprise').text(statutLibelle);
-                
-                const categorieLibelle = getSafeValue(acheteur, 'categorie_entreprise.libelle') || 
-                                         getSafeValue(acheteur, 'categorie_entreprise.nom') || 
-                                         getSafeValue(acheteur, 'categorie_entreprise');
-                $('#editCategorieEntreprise').text(categorieLibelle);
-                
-                const formeLibelle = getSafeValue(acheteur, 'forme_juridique.libelle') || 
-                                     getSafeValue(acheteur, 'forme_juridique.nom') || 
-                                     getSafeValue(acheteur, 'forme_juridique');
-                $('#editFormeJuridique').text(formeLibelle);
-                
-                // Description avec fallback
-                const description = getSafeValue(acheteur, 'description', 'Aucune description disponible');
-                $('#editDescription').html(description);
-                
-                // Contacts
-                $('#editEmail').text(getSafeValue(acheteur, 'email', 'Non spécifié'));
-                $('#editFax').text(getSafeValue(acheteur, 'fax', 'Non spécifié'));
-                $('#editBoitePostale').text(getSafeValue(acheteur, 'boite_postale', 'Non spécifié'));
-                $('#editCodePostal').text(getSafeValue(acheteur, 'code_postal', 'Non spécifié'));
-                
-                // Site internet avec lien
-                const siteInternet = getSafeValue(acheteur, 'site_internet', null);
-                if (siteInternet && siteInternet !== 'Non spécifié') {
-                    const siteUrl = siteInternet.startsWith('http') ? 
-                        siteInternet : 
-                        `https://${siteInternet}`;
-                    $('#editSiteInternet').html(`<a href="${siteUrl}" target="_blank">${siteInternet}</a>`);
-                } else {
-                    $('#editSiteInternet').text('Non spécifié');
-                }
-                
-                // Adresse
-                $('#editNumeroAdresse').text(getSafeValue(acheteur, 'numero_adresse', 'Non spécifié'));
-                $('#editRueAdresse').text(getSafeValue(acheteur, 'rue_adresse', 'Non spécifié'));
-                
-                // Localisation
-                const paysNom = getSafeValue(acheteur, 'pays.nom') || 
-                               getSafeValue(acheteur, 'pays.libelle') || 
-                               getSafeValue(acheteur, 'pays');
-                $('#editPays').text(paysNom);
-                
-                const provinceNom = getSafeValue(acheteur, 'province.nom') || 
-                                   getSafeValue(acheteur, 'province.libelle') || 
-                                   getSafeValue(acheteur, 'province');
-                $('#editProvince').text(provinceNom);
-                
-                const villeNom = getSafeValue(acheteur, 'ville.nom') || 
-                                getSafeValue(acheteur, 'ville.libelle') || 
-                                getSafeValue(acheteur, 'ville');
-                $('#editVille').text(villeNom);
+                // Update other fields
+                $('#editActivitePrincipale').text(response.activite_principale || 'Non spécifié');
+                $('#editStatutEntreprise').text(response.statut_entreprise?.libelle || 'Non spécifié');
+                $('#editCategorieEntreprise').text(response.categorie_entreprise?.libelle || 'Non spécifié');
+                $('#editFormeJuridique').text(response.forme_juridique?.libelle || 'Non spécifié');
+                $('#editDescription').html(response.description || 'Aucune description disponible');
+                $('#editEmail').text(response.email || 'Non spécifié');
+                $('#editFax').text(response.fax || 'Non spécifié');
+                $('#editBoitePostale').text(response.boite_postale || 'Non spécifié');
+                $('#editCodePostal').text(response.code_postal || 'Non spécifié');
+                $('#editSiteInternet').html(response.site_internet ? 
+                    `<a href="https://${response.site_internet}" target="_blank">${response.site_internet}</a>` : 
+                    'Non spécifié');
+                $('#editNumeroAdresse').text(response.numero_adresse || 'Non spécifié');
+                $('#editRueAdresse').text(response.rue_adresse || 'Non spécifié');
+                $('#editPays').text(response.pays?.nom || 'Non spécifié');
+                $('#editProvince').text(response.province?.nom || 'Non spécifié');
+                $('#editVille').text(response.ville?.nom || 'Non spécifié');
                 
                 // Remove loading state
                 $('.company-profile').removeClass('loading');
                 
-                console.log("=== DEBUG: Données mises à jour avec succès ===");
-                console.log("Nom:", getSafeValue(acheteur, 'nom'));
-                console.log("Statut:", statutLibelle);
-                console.log("Catégorie:", categorieLibelle);
-                
                 // Generate modules grid dynamically
                 generateModulesGrid();
             },
-            error: function(xhr, status, error) {
-                console.error("=== DEBUG: Erreur API ===");
-                console.error("Status:", status);
-                console.error("Error:", error);
-                console.error("Response:", xhr.responseText);
-                console.error("Status code:", xhr.status);
-                
+            error: function(xhr) {
                 $('.company-profile').removeClass('loading');
                 
                 let errorMessage = 'Erreur lors de la récupération des données';
@@ -1312,128 +1105,48 @@ $(document).ready(function() {
                 } else if (xhr.status === 401) {
                     errorMessage = 'Session expirée, veuillez vous reconnecter';
                     setTimeout(() => window.location.href = '/login/', 2000);
-                } else if (xhr.status === 403) {
-                    errorMessage = 'Accès non autorisé';
-                } else if (xhr.responseText) {
-                    try {
-                        const errorData = JSON.parse(xhr.responseText);
-                        errorMessage = errorData.detail || errorData.message || errorMessage;
-                    } catch (e) {
-                        errorMessage = xhr.responseText.substring(0, 100) + '...';
-                    }
                 }
                 
                 showError('Erreur', errorMessage);
+                console.error("Erreur AJAX:", xhr.responseText);
             }
         });
     }
 
     // Generate modules grid dynamically
-    // Generate modules grid dynamically - VERSION COMPLÈTE
-    // Generate modules grid dynamically - VERSION CORRIGÉE
     function generateModulesGrid() {
-        console.log("=== DEBUG: Génération des modules ===");
-        
         const modules = [
-
-            /* =======================
-            MODULES PRINCIPAUX
-            ======================= */
+            // Main modules (green)
             { title: "Résumé", url: "{% url 'dash_root_manage_acheteur_resume' id_acheteur %}", color: "success", icon: "fas fa-chart-pie" },
             { title: "Évaluation du Risque", url: "{% url 'dash_root_manage_acheteur_risk_rating' id_acheteur %}", color: "success", icon: "fas fa-shield-alt" },
-            { title: "Opinion Crédit ACREMAC", url: "{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}", color: "success", icon: "fas fa-comment-dollar" },
+            { title: "Opinion Crédit", url: "{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}", color: "success", icon: "fas fa-comment-dollar" },
             { title: "Données enregistrées", url: "{% url 'dash_root_manage_acheteur_data_save' id_acheteur %}", color: "success", icon: "fas fa-database" },
             { title: "Tendance", url: "{% url 'dash_root_manage_acheteur_tendance' id_acheteur %}", color: "success", icon: "fas fa-chart-line" },
-
-            /* =======================
-            GOUVERNANCE & RISQUES
-            ======================= */
             { title: "Responsables", url: "{% url 'dash_root_manage_acheteur_responsable' id_acheteur %}", color: "success", icon: "fas fa-users" },
-            { title: "Antécédents Juridiques", url: "{% url 'dash_root_manage_acheteur_antecedent' id_acheteur %}", color: "success", icon: "fas fa-balance-scale" },
-            { title: "Management du Risque", url: "{% url 'dash_root_manage_acheteur_gestion_risque' id_acheteur %}", color: "success", icon: "fas fa-exclamation-triangle" },
-            { title: "Conseil d'administration", url: "{% url 'dash_root_manage_acheteur_membre_conseil' id_acheteur %}", color: "success", icon: "fas fa-user-tie" },
-
-            /* =======================
-            STRUCTURE & CAPITAL
-            ======================= */
-            { title: "Capital Social", url: "{% url 'dash_root_manage_acheteur_composition_capital' id_acheteur %}", color: "success", icon: "fas fa-coins" },
-            { title: "Actionnaires", url: "{% url 'dash_root_manage_acheteur_actionnaire' id_acheteur %}", color: "success", icon: "fas fa-hand-holding-usd" },
-            { title: "Filiales & Branches", url: "{% url 'dash_root_manage_acheteur_filiale' id_acheteur %}", color: "success", icon: "fas fa-sitemap" },
-            { title: "Analyse Sectorielle", url: "{% url 'dash_root_manage_acheteur_analyse_sectorielle' id_acheteur %}", color: "success", icon: "fas fa-industry" },
-
-            /* =======================
-            ACTIVITÉS & OPÉRATIONS
-            ======================= */
-            { title: "Opérations & Historique", url: "{% url 'dash_root_manage_acheteur_operation_historique' id_acheteur %}", color: "success", icon: "fas fa-history" },
-            { title: "Propriétés & Actifs", url: "{% url 'dash_root_manage_acheteur_propriete_actif' id_acheteur %}", color: "success", icon: "fas fa-building" },
-            { title: "Conditions d'achat", url: "{% url 'dash_root_manage_acheteur_condition_achat' id_acheteur %}", color: "success", icon: "fas fa-shopping-cart" },
-            { title: "Conditions de vente", url: "{% url 'dash_root_manage_acheteur_condition_vente' id_acheteur %}", color: "success", icon: "fas fa-store" },
-
-            /* =======================
-            ANALYSES & AVIS
-            ======================= */
-            { title: "Sommaire & Avis", url: "{% url 'dash_root_manage_acheteur_sommaire_avis' id_acheteur %}", color: "success", icon: "fas fa-file-alt" },
-            { title: "Conseils", url: "{% url 'dash_root_manage_acheteur_advice' id_acheteur %}", color: "success", icon: "fas fa-lightbulb" },
-            { title: "Géopolitiques", url: "{% url 'dash_root_manage_acheteur_geopolitic' id_acheteur %}", color: "success", icon: "fas fa-globe-africa" },
-            { title: "Comptes Financiers", url: "{% url 'dash_root_manage_acheteur_compte_financier' id_acheteur %}", color: "success", icon: "fas fa-file-invoice-dollar" },
-            { title: "Données Bancaires", url: "{% url 'dash_root_manage_acheteur_banking' id_acheteur %}", color: "success", icon: "fas fa-university" },
-
-            /* =======================
-            CONTACT & IDENTITÉ
-            ======================= */
+            
+            // Secondary modules (orange)
             { title: "Portables", url: "{% url 'dash_root_manage_portable_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-mobile-alt" },
             { title: "Téléphones", url: "{% url 'dash_root_manage_telephone_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-phone" },
             { title: "Adresses", url: "{% url 'dash_root_manage_adresse_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-map-marker-alt" },
             { title: "Emails", url: "{% url 'dash_root_manage_email_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-envelope" },
             { title: "Codes NACE", url: "{% url 'dash_root_manage_code_nace_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-code" },
             { title: "Codes NAF", url: "{% url 'dash_root_manage_code_naf_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-barcode" },
-
-            /* =======================
-            DOCUMENTS & LÉGAL
-            ======================= */
-            { title: "Documents", url: "{% url 'dash_root_manage_document_acheteur' id_acheteur %}", color: "info", icon: "fas fa-folder-open" },
-            { title: "Procédures Collectives", url: "{% url 'dash_root_manage_procedure_collective_acheteur' id_acheteur %}", color: "info", icon: "fas fa-gavel" },
-            { title: "Registres de Commerce", url: "{% url 'dash_root_manage_registre_commerce_acheteur' id_acheteur %}", color: "info", icon: "fas fa-book" },
-            { title: "Cotisations Sociales", url: "{% url 'dash_root_manage_cotisation_acheteur' id_acheteur %}", color: "info", icon: "fas fa-file-contract" },
-
-            /* =======================
-            PRODUITS & STRATÉGIE
-            ======================= */
-            { title: "Produits & Services", url: "{% url 'dash_root_manage_produit_service_acheteur' id_acheteur %}", color: "info", icon: "fas fa-boxes" },
-            { title: "Marques", url: "{% url 'dash_root_manage_marque_acheteur' id_acheteur %}", color: "info", icon: "fas fa-trademark" },
+            
+            // Info modules (blue)
+            { title: "Documents", url: "{% url 'dash_root_manage_document_acheteur' id_acheteur %}", color: "info", icon: "fas fa-file" },
+            { title: "Produits & Services", url: "{% url 'dash_root_manage_produit_service_acheteur' id_acheteur %}", color: "info", icon: "fas fa-box" },
             { title: "SWOT", url: "{% url 'dash_root_manage_swot_acheteur' id_acheteur %}", color: "info", icon: "fas fa-crosshairs" },
-
-            /* =======================
-            PILOTAGE & CONFORMITÉ
-            ======================= */
             { title: "Certifications", url: "{% url 'dash_root_certification_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-certificate" },
-            { title: "Innovation & Développement", url: "{% url 'dash_root_innovation_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-lightbulb" },
-            { title: "Stratégie & Planification", url: "{% url 'dash_root_strategie_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-chess" },
-            { title: "Conformité & Réglementation", url: "{% url 'dash_root_conformite_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-balance-scale-right" },
-
-            /* =======================
-            SCORING
-            ======================= */
+            
+            // Scoring modules (gray)
             { title: "Scoring sans bilan", url: "{% url 'dash_root_manage_acheteur_scoring' id_acheteur %}", color: "secondary", icon: "fas fa-calculator" },
-            { title: "Scoring avec bilan", url: "{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}", color: "secondary", icon: "fas fa-chart-bar" }
-
+            { title: "Scoring avec bilan", url: "{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}", color: "secondary", icon: "fas fa-calculator" }
         ];
-
         
-
-        // CORRECTION ICI : Utilisez l'ID modulesGridContainer
-        const grid = $('#modulesGridContainer');
-        
-        // Vider le contenu existant
+        const grid = $('.modules-grid');
         grid.empty();
         
-        console.log("Nombre de modules à générer:", modules.length);
-        console.log("Élément grid trouvé:", grid.length);
-        
-        // Créer une grille responsive
-        modules.forEach((module, index) => {
-            console.log("Création module:", module.title);
-            
+        modules.forEach(module => {
             const moduleCard = `
                 <div class="module-card">
                     <div class="module-icon">
@@ -1441,18 +1154,238 @@ $(document).ready(function() {
                     </div>
                     <h6 class="module-title">${module.title}</h6>
                     <a href="${module.url}" target="_blank" 
-                    class="btn btn-${module.color}-module module-btn">
+                       class="btn btn-${module.color}-module module-btn">
                         <i class="fas fa-external-link-alt me-1"></i> Accéder
                     </a>
                 </div>
             `;
             grid.append(moduleCard);
         });
-        
-        console.log("=== DEBUG: Modules générés avec succès ===");
     }
 
+    // Search command functionality
+    let selectedCommandeId = null;
+    let searchTimeout = null;
+    
+    $('#commandeId').on('input', function() {
+        const commandeId = $(this).val().trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!commandeId) {
+            $('#commandeInfo').hide('fade');
+            selectedCommandeId = null;
+            return;
+        }
+        
+        $('#commandeInfo').html(`
+            <div class="card-header bg-light">
+                <i class="fas fa-spinner fa-spin me-2"></i>Recherche en cours...
+            </div>
+            <div class="card-body text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2 mb-0">Recherche de la commande #${commandeId}</p>
+            </div>
+        `).show();
+        
+        searchTimeout = setTimeout(() => searchCommande(commandeId), 500);
+    });
+    
+    function searchCommande(commandeId) {
+        if (!/^\d+$/.test(commandeId)) {
+            $('#commandeInfo').html(`
+                <div class="card-header bg-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>ID invalide
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">Veuillez entrer un ID numérique valide</p>
+                </div>
+            `).show();
+            return;
+        }
+        
+        $.ajax({
+            url: `/api/commande-details/${commandeId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-check-circle me-2"></i>Commande trouvée
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Référence:</strong> 
+                                        <span class="text-primary fw-bold">${response.data.notre_ref || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Client:</strong> 
+                                        <span>${response.data.client?.username || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Acheteur:</strong> 
+                                        <span>${response.data.acheteur?.nom || 'N/A'}</span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Date réception:</strong> 
+                                        <span class="badge bg-info">${response.data.date_recept_commande || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Pays:</strong> 
+                                        <span>${response.data.pays?.nom || 'N/A'}</span>
+                                    </p>
+                                    <p class="mb-2"><strong>Devise:</strong> 
+                                        <span class="badge bg-secondary">${response.data.devise_credit_demande?.code || 'N/A'}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Commande sélectionnée pour le rapport
+                                </small>
+                            </div>
+                        </div>
+                    `).show();
+                    selectedCommandeId = commandeId;
+                } else {
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-times-circle me-2"></i>Commande non trouvée
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">${response.message || 'Aucune commande correspondante'}</p>
+                        </div>
+                    `).show();
+                    selectedCommandeId = null;
+                }
+            },
+            error: function(xhr) {
+                $('#commandeInfo').html(`
+                    <div class="card-header bg-danger text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Erreur de connexion
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">Impossible de récupérer les informations de la commande</p>
+                    </div>
+                `).show();
+                selectedCommandeId = null;
+                console.error("Erreur:", xhr.responseText);
+            }
+        });
+    }
+
+    // Report generation
+    $('#confirmGenerate').on('click', function(e) {
+        e.preventDefault();
+        
+        const language = $('#language').val();
+        const currency = $('#currency').val();
+        const balanceType = $('#balanceType').val();
+        const format = $('#format').val();
+        const commandeId = selectedCommandeId || $('#commandeId').val();
+        const acheteurId = '{{ id_acheteur }}';
+        
+        // Validation
+        if (format === 'pdf' && !commandeId) {
+            showWarning('Information', 'Pour un rapport PDF, il est recommandé de sélectionner une commande.');
+        }
+        
+        // Show loading
+        Swal.fire({
+            title: 'Génération du rapport',
+            html: `
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p>Préparation du rapport en cours...</p>
+                    <div class="progress mt-3" style="height: 6px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             style="width: 45%"></div>
+                    </div>
+                </div>
+            `,
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+        
+        // Build URL
+        const params = new URLSearchParams({
+            id_commande: commandeId || '',
+            language: language,
+            devise: currency,
+            bilan_report: balanceType,
+            format_report: format,
+        });
+        
+        const url = `/api/acheteur/${acheteurId}/generer-report/?${params.toString()}`;
+        
+        // AJAX request
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer {{ access }}`
+            },
+            xhrFields: {
+                responseType: ['pdf', 'xml'].includes(format.toLowerCase()) ? 'blob' : 'text'
+            },
+            success: function(response, status, xhr) {
+                Swal.close();
+                
+                if (format.toLowerCase() === 'pdf') {
+                    downloadFile(response, `rapport_${acheteurId}.pdf`, 'application/pdf');
+                    showSuccess('Succès', 'Le rapport PDF a été téléchargé avec succès.');
+                } else if (format === 'html') {
+                    downloadFile(response, `rapport_${acheteurId}.html`, 'text/html');
+                    showSuccess('Succès', 'Le rapport HTML a été téléchargé.');
+                } else if (format.toLowerCase() === 'xml') {
+                    downloadFile(response, `rapport_${acheteurId}.zip`, 'application/zip');
+                    showSuccess('Succès', 'Le fichier ZIP (XML+XSD) a été téléchargé.');
+                } else if (format === 'json') {
+                    const jsonString = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+                    downloadFile(jsonString, `rapport_${acheteurId}.json`, 'application/json');
+                    showSuccess('Succès', 'Le fichier JSON a été téléchargé.');
+                }
+                
+                $('#generateReportModal').modal('hide');
+            },
+            error: function(xhr) {
+                Swal.close();
+                
+                let errorMessage = 'Erreur lors de la génération du rapport';
+                if (xhr.status === 400) {
+                    errorMessage = 'Paramètres incorrects';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Endpoint non trouvé';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur serveur interne';
+                }
+                
+                showError('Erreur', errorMessage);
+                console.error("Erreur détaillée:", xhr.responseText);
+            }
+        });
+    });
+
     // Utility functions
+    function downloadFile(data, filename, mimeType) {
+        const blob = new Blob([data], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
     function showSuccess(title, text) {
         Swal.fire({
             icon: 'success',
@@ -1481,8 +1414,68 @@ $(document).ready(function() {
         });
     }
 
+    
+    // Configuration AJAX globale avec intercepteur
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            if (accessToken) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+            }
+        }
+    });
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+            } else {
+                Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
+            }
+        });
+    }
+
     // Initialize
-    console.log("=== DEBUG: Initialisation en cours ===");
     loadAcheteurData();
     
     // Add hover effects to all cards
@@ -1490,8 +1483,6 @@ $(document).ready(function() {
         function() { $(this).addClass('shadow-lg'); },
         function() { $(this).removeClass('shadow-lg'); }
     );
-    
-    console.log("=== DEBUG: Initialisation terminée ===");
 });
 </script>
 {% endblock %}
