@@ -1,3 +1,5 @@
+# api_views.py
+from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
@@ -5,6 +7,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
+from django.db import transaction
+
 
 from main.serializers import *
 
@@ -1083,6 +1088,319 @@ class DeleteAcheteurResponsableView(APIView):
         )
 
 
+class ResponsablePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'results': data,
+            'next': self.page.has_next(),
+            'previous': self.page.has_previous(),
+            'start_index': self.page.start_index(),
+            'end_index': self.page.end_index()
+        })
+
+
+class AcheteurResponsableListView(APIView):
+    """
+    API pour gérer la liste des responsables d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = ResponsablePagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste paginée des responsables avec recherche"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Paramètres de recherche et filtrage
+        search_term = request.query_params.get('search', '')
+        sexe = request.query_params.get('sexe', '')
+        poste = request.query_params.get('poste', '')
+        
+        # Construction de la requête
+        responsables = ResponsableAcheteur.objects.filter(
+            acheteur=acheteur
+        ).select_related('poste_ref', 'couleur_commentaire')
+        
+        # Filtres
+        if sexe:
+            responsables = responsables.filter(sexe=sexe)
+        if poste:
+            responsables = responsables.filter(poste=poste)
+        
+        # Recherche
+        if search_term:
+            responsables = responsables.filter(
+                Q(nom__icontains=search_term) |
+                Q(prenom__icontains=search_term) |
+                Q(poste__icontains=search_term) |
+                Q(nationalite__icontains=search_term) |
+                Q(commentaire__icontains=search_term)
+            )
+        
+        # Tri
+        sort_by = request.query_params.get('sort_by', '-created_at')
+        if sort_by in ['nom', 'prenom', 'poste', 'created_at']:
+            responsables = responsables.order_by(sort_by)
+        else:
+            responsables = responsables.order_by('-created_at')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(responsables, request)
+        
+        if page is not None:
+            serializer = ResponsableAcheteurListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = ResponsableAcheteurListSerializer(responsables, many=True)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Ajoute un nouveau responsable"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si un responsable avec le même nom et prénom existe déjà
+        nom = request.data.get('nom', '').strip()
+        prenom = request.data.get('prenom', '').strip()
+        
+        if nom and prenom:
+            existe_deja = ResponsableAcheteur.objects.filter(
+                acheteur=acheteur,
+                nom__iexact=nom,
+                prenom__iexact=prenom
+            ).exists()
+            
+            if existe_deja:
+                return Response({
+                    'error': f"Un responsable avec le nom {nom} {prenom} existe déjà."
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Ajouter l'acheteur aux données
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+        
+        serializer = AddResponsableAcheteurSerializer(data=data)
+        if serializer.is_valid():
+            responsable = serializer.save()
+            
+            # Log d'activité
+            self.log_activity(
+                request=request,
+                action_type='CREATE_RESPONSABLE',
+                object_id=responsable.id,
+                object_type='ResponsableAcheteur',
+                details=f"Ajout du responsable {responsable.nom} {responsable.prenom} pour l'acheteur {acheteur.nom} ({acheteur.code})"
+            )
+            
+            return Response({
+                'message': 'Responsable ajouté avec succès',
+                'data': GetResponsableAcheteurSerializer(responsable).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id):
+        """Supprime un ou plusieurs responsables"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        responsable_ids = request.data.get('ids', [])
+        if not isinstance(responsable_ids, list) or not responsable_ids:
+            return Response(
+                {'error': 'Une liste d\'IDs est requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les responsables à supprimer
+        responsables = ResponsableAcheteur.objects.filter(
+            id__in=responsable_ids,
+            acheteur=acheteur
+        )
+        
+        if not responsables.exists():
+            return Response(
+                {'error': 'Aucun responsable trouvé pour les IDs fournis'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Log d'activité pour chaque responsable avant suppression
+        responsables_details = []
+        for resp in responsables:
+            responsables_details.append({
+                'id': resp.id,
+                'nom': resp.nom,
+                'prenom': resp.prenom
+            })
+            
+            # Log d'activité
+            self.log_activity(
+                request=request,
+                action_type='DELETE_RESPONSABLE',
+                object_id=resp.id,
+                object_type='ResponsableAcheteur',
+                details=f"Suppression du responsable {resp.nom} {resp.prenom} de l'acheteur {acheteur.nom}"
+            )
+        
+        # Suppression
+        count = responsables.count()
+        responsables.delete()
+        
+        return Response({
+            'message': f'{count} responsable(s) supprimé(s) avec succès',
+            'count': count
+        })
+
+
+class AcheteurResponsableDetailView(APIView):
+    """
+    API pour gérer un responsable spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (mise à jour)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id, responsable_id):
+        """Récupère les détails d'un responsable spécifique"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            responsable = ResponsableAcheteur.objects.get(
+                id=responsable_id,
+                acheteur=acheteur
+            )
+        except ResponsableAcheteur.DoesNotExist:
+            return Response(
+                {'error': 'Responsable non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = GetResponsableAcheteurSerializer(responsable)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, responsable_id):
+        """Met à jour un responsable existant"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            responsable = ResponsableAcheteur.objects.get(
+                id=responsable_id,
+                acheteur=acheteur
+            )
+        except ResponsableAcheteur.DoesNotExist:
+            return Response(
+                {'error': 'Responsable non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Vérifier les doublons (sauf pour le responsable en cours)
+        nom = request.data.get('nom', responsable.nom).strip()
+        prenom = request.data.get('prenom', responsable.prenom).strip()
+        
+        doublon = ResponsableAcheteur.objects.filter(
+            acheteur=acheteur,
+            nom__iexact=nom,
+            prenom__iexact=prenom
+        ).exclude(id=responsable_id).exists()
+        
+        if doublon:
+            return Response({
+                'error': f"Un autre responsable avec le nom {nom} {prenom} existe déjà."
+            }, status=status.HTTP_409_CONFLICT)
+        
+        # Sauvegarder les anciennes valeurs pour le log
+        old_values = {
+            'nom': responsable.nom,
+            'prenom': responsable.prenom,
+            'poste': responsable.poste,
+            'sexe': responsable.sexe,
+            'nationalite': responsable.nationalite,
+            'commentaire': responsable.commentaire
+        }
+        
+        serializer = EditResponsableAcheteurSerializer(
+            responsable,
+            data=request.data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            updated_responsable = serializer.save()
+            
+            # Détecter les changements pour le log
+            changes = []
+            new_values = serializer.validated_data
+            
+            for field in ['nom', 'prenom', 'poste', 'sexe', 'nationalite', 'commentaire']:
+                if field in new_values and new_values[field] != old_values[field]:
+                    old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
+                    new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
+                    changes.append(f"{field}: '{old_val}' → '{new_val}'")
+            
+            # Log d'activité
+            details = f"Mise à jour du responsable {responsable.nom} {responsable.prenom}"
+            if changes:
+                details += f" - Changements: {', '.join(changes)}"
+            
+            self.log_activity(
+                request=request,
+                action_type='UPDATE_RESPONSABLE',
+                object_id=responsable.id,
+                object_type='ResponsableAcheteur',
+                details=details
+            )
+            
+            return Response({
+                'message': 'Responsable mis à jour avec succès',
+                'data': GetResponsableAcheteurSerializer(updated_responsable).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 
 class ListAcheteurAntecedentView(APIView):
@@ -1230,6 +1548,299 @@ class DeleteAcheteurAntecedentView(APIView):
             {"message": f"{count} antécédents supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+
+class AntecedentPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'results': data,
+            'next': self.page.has_next(),
+            'previous': self.page.has_previous(),
+            'start_index': self.page.start_index(),
+            'end_index': self.page.end_index()
+        })
+
+
+
+class AcheteurAntecedentListView(APIView):
+    """
+    API pour gérer la liste des antécédents juridiques d'un acheteur
+    Méthodes: GET (liste), POST (création), DELETE (suppression multiple)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = AntecedentPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste paginée des antécédents avec recherche"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Paramètres de recherche et filtrage
+        search_term = request.query_params.get('search', '')
+        type_filter = request.query_params.get('type', '')
+        
+        # Construction de la requête
+        antecedents = AntecedantsJuridique.objects.filter(
+            acheteur=acheteur
+        ).select_related('couleur_commentaire')
+        
+        # Filtre par type
+        if type_filter:
+            if type_filter == 'faillite':
+                antecedents = antecedents.exclude(dossier_faillite='')
+            elif type_filter == 'jugement':
+                antecedents = antecedents.exclude(jugement_cour='')
+            elif type_filter == 'redressement':
+                antecedents = antecedents.exclude(antecedant_redressement='')
+            elif type_filter == 'autre':
+                antecedents = antecedents.exclude(autre='')
+            elif type_filter == 'avec_commentaire':
+                antecedents = antecedents.exclude(commentaire='')
+        
+        # Recherche
+        if search_term:
+            antecedents = antecedents.filter(
+                Q(dossier_faillite__icontains=search_term) |
+                Q(jugement_cour__icontains=search_term) |
+                Q(antecedant_redressement__icontains=search_term) |
+                Q(autre__icontains=search_term) |
+                Q(commentaire__icontains=search_term)
+            )
+        
+        # Tri
+        sort_by = request.query_params.get('sort_by', '-created_at')
+        if sort_by in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'autre', 'created_at']:
+            antecedents = antecedents.order_by(sort_by)
+        else:
+            antecedents = antecedents.order_by('-created_at')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(antecedents, request)
+        
+        if page is not None:
+            serializer = AntecedantJuridiqueListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = AntecedantJuridiqueListSerializer(antecedents, many=True)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Ajoute un nouvel antécédent juridique"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier s'il existe déjà un antécédent avec les mêmes données
+        data = request.data
+        
+        # Vérifier les doublons basés sur les champs principaux
+        if data.get('dossier_faillite') and data.get('jugement_cour'):
+            existe_deja = AntecedantsJuridique.objects.filter(
+                acheteur=acheteur,
+                dossier_faillite=data['dossier_faillite'].strip(),
+                jugement_cour=data['jugement_cour'].strip()
+            ).exists()
+            
+            if existe_deja:
+                return Response({
+                    'error': "Un antécédent avec ces informations existe déjà."
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Ajouter l'acheteur aux données
+        data['acheteur'] = acheteur_id
+        
+        serializer = AddAntecedantsJuridiqueSerializer(data=data)
+        if serializer.is_valid():
+            antecedent = serializer.save()
+            
+            # Log d'activité
+            self.log_activity(
+                request=request,
+                action_type='CREATE_ANTECEDENT',
+                object_id=antecedent.id,
+                object_type='AntecedantsJuridique',
+                details=f"Ajout d'un antécédent juridique pour l'acheteur {acheteur.nom} ({acheteur.code})"
+            )
+            
+            return Response({
+                'message': 'Antécédent juridique ajouté avec succès',
+                'data': GetAntecedantsJuridiqueSerializer(antecedent).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id):
+        """Supprime un ou plusieurs antécédents"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        antecedent_ids = request.data.get('ids', [])
+        if not isinstance(antecedent_ids, list) or not antecedent_ids:
+            return Response(
+                {'error': 'Une liste d\'IDs est requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les antécédents à supprimer
+        antecedents = AntecedantsJuridique.objects.filter(
+            id__in=antecedent_ids,
+            acheteur=acheteur
+        )
+        
+        if not antecedents.exists():
+            return Response(
+                {'error': 'Aucun antécédent trouvé pour les IDs fournis'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Log d'activité pour chaque antécédent avant suppression
+        for antecedent in antecedents:
+            self.log_activity(
+                request=request,
+                action_type='DELETE_ANTECEDENT',
+                object_id=antecedent.id,
+                object_type='AntecedantsJuridique',
+                details=f"Suppression d'un antécédent juridique de l'acheteur {acheteur.nom}"
+            )
+        
+        # Suppression
+        count = antecedents.count()
+        antecedents.delete()
+        
+        return Response({
+            'message': f'{count} antécédent(s) supprimé(s) avec succès',
+            'count': count
+        })
+
+
+
+class AcheteurAntecedentDetailView(APIView):
+    """
+    API pour gérer un antécédent juridique spécifique
+    Méthodes: GET (détail), PUT (mise à jour)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id, antecedent_id):
+        """Récupère les détails d'un antécédent spécifique"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            antecedent = AntecedantsJuridique.objects.get(
+                id=antecedent_id,
+                acheteur=acheteur
+            )
+        except AntecedantsJuridique.DoesNotExist:
+            return Response(
+                {'error': 'Antécédent non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = GetAntecedantsJuridiqueSerializer(antecedent)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, antecedent_id):
+        """Met à jour un antécédent existant"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            antecedent = AntecedantsJuridique.objects.get(
+                id=antecedent_id,
+                acheteur=acheteur
+            )
+        except AntecedantsJuridique.DoesNotExist:
+            return Response(
+                {'error': 'Antécédent non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Sauvegarder les anciennes valeurs pour le log
+        old_values = {
+            'dossier_faillite': antecedent.dossier_faillite,
+            'jugement_cour': antecedent.jugement_cour,
+            'antecedant_redressement': antecedent.antecedant_redressement,
+            'autre': antecedent.autre,
+            'commentaire': antecedent.commentaire
+        }
+        
+        serializer = EditAntecedantsJuridiqueSerializer(
+            antecedent,
+            data=request.data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            updated_antecedent = serializer.save()
+            
+            # Détecter les changements pour le log
+            changes = []
+            new_values = serializer.validated_data
+            
+            for field in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'autre', 'commentaire']:
+                if field in new_values and new_values[field] != old_values[field]:
+                    old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
+                    new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
+                    changes.append(f"{field}: '{old_val}' → '{new_val}'")
+            
+            # Log d'activité
+            details = f"Mise à jour d'un antécédent juridique pour l'acheteur {acheteur.nom}"
+            if changes:
+                details += f" - Changements: {', '.join(changes)}"
+            
+            self.log_activity(
+                request=request,
+                action_type='UPDATE_ANTECEDENT',
+                object_id=antecedent.id,
+                object_type='AntecedantsJuridique',
+                details=details
+            )
+            
+            return Response({
+                'message': 'Antécédent juridique mis à jour avec succès',
+                'data': GetAntecedantsJuridiqueSerializer(updated_antecedent).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -1372,6 +1983,74 @@ class DeleteAcheteurGestionRisqueView(APIView):
             {"message": f"{count} gestions de risque supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+
+class AcheteurGestionRisqueView(APIView):
+    """
+    API pour gérer la gestion des risques unique d'un acheteur
+    Un acheteur ne peut avoir qu'une seule gestion des risques
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la gestion des risques de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            gestion_risque = RiskManagment.objects.get(acheteur=acheteur)
+            serializer = GetRiskManagmentSerializer(gestion_risque)
+            return Response(serializer.data)
+        except RiskManagment.DoesNotExist:
+            return Response({
+                "message": "Aucune gestion des risques trouvée pour cet acheteur",
+                "acheteur_id": acheteur_id
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour la gestion des risques de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si une gestion des risques existe déjà
+        try:
+            gestion_risque = RiskManagment.objects.get(acheteur=acheteur)
+            serializer = EditRiskManagmentSerializer(
+                gestion_risque, data=request.data, partial=True
+            )
+            action = "mise à jour"
+        except RiskManagment.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddRiskManagmentSerializer(data=data)
+            action = "créée"
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": f"Gestion des risques {action} avec succès",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK if action == "mise à jour" else status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime la gestion des risques de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            gestion_risque = RiskManagment.objects.get(acheteur=acheteur)
+            gestion_risque.delete()
+            return Response({
+                "message": "Gestion des risques supprimée avec succès"
+            }, status=status.HTTP_200_OK)
+        except RiskManagment.DoesNotExist:
+            return Response({
+                "message": "Aucune gestion des risques à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -1515,6 +2194,305 @@ class DeleteAcheteurMembreConseilView(APIView):
             {"message": f"{count} membres du conseil supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+
+class ConseilPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'results': data,
+            'next': self.page.has_next(),
+            'previous': self.page.has_previous(),
+            'start_index': self.page.start_index(),
+            'end_index': self.page.end_index()
+        })
+
+
+class AcheteurConseilListView(APIView):
+    """
+    API pour gérer la liste des membres du conseil d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = ConseilPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste paginée des membres avec recherche"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Paramètres de recherche et filtrage
+        search_term = request.query_params.get('search', '')
+        
+        # Construction de la requête
+        membres = ConseilAdministration.objects.filter(
+            acheteur=acheteur
+        ).select_related('fonction_dans_le_conseil_ref', 'couleur_commentaire')
+        
+        # Recherche
+        if search_term:
+            membres = membres.filter(
+                Q(nom__icontains=search_term) |
+                Q(fonction_dans_le_conseil__icontains=search_term) |
+                Q(commentaire__icontains=search_term)
+            )
+        
+        # Tri
+        sort_by = request.query_params.get('sort_by', '-created_at')
+        if sort_by in ['nom', 'fonction_dans_le_conseil', 'created_at']:
+            membres = membres.order_by(sort_by)
+        else:
+            membres = membres.order_by('-created_at')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(membres, request)
+        
+        if page is not None:
+            serializer = ConseilAdministrationListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = ConseilAdministrationListSerializer(membres, many=True)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Ajoute un nouveau membre du conseil"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si un membre avec le même nom existe déjà
+        nom = request.data.get('nom', '').strip()
+        
+        if nom:
+            existe_deja = ConseilAdministration.objects.filter(
+                acheteur=acheteur,
+                nom__iexact=nom
+            ).exists()
+            
+            if existe_deja:
+                return Response({
+                    'error': f"Un membre du conseil avec le nom {nom} existe déjà."
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Ajouter l'acheteur aux données
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+        
+        serializer = AddConseilAdministrationSerializer(data=data)
+        if serializer.is_valid():
+            membre = serializer.save()
+            
+            # Log d'activité
+            self.log_activity(
+                request=request,
+                action_type='CREATE_CONSEIL',
+                object_id=membre.id,
+                object_type='ConseilAdministration',
+                details=f"Ajout du membre du conseil {membre.nom} pour l'acheteur {acheteur.nom} ({acheteur.code})"
+            )
+            
+            return Response({
+                'message': 'Membre du conseil ajouté avec succès',
+                'data': GetConseilAdministrationSerializer(membre).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id):
+        """Supprime un ou plusieurs membres du conseil"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        membre_ids = request.data.get('ids', [])
+        if not isinstance(membre_ids, list) or not membre_ids:
+            return Response(
+                {'error': 'Une liste d\'IDs est requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les membres à supprimer
+        membres = ConseilAdministration.objects.filter(
+            id__in=membre_ids,
+            acheteur=acheteur
+        )
+        
+        if not membres.exists():
+            return Response(
+                {'error': 'Aucun membre du conseil trouvé pour les IDs fournis'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Log d'activité pour chaque membre avant suppression
+        membres_details = []
+        for membre in membres:
+            membres_details.append({
+                'id': membre.id,
+                'nom': membre.nom
+            })
+            
+            # Log d'activité
+            self.log_activity(
+                request=request,
+                action_type='DELETE_CONSEIL',
+                object_id=membre.id,
+                object_type='ConseilAdministration',
+                details=f"Suppression du membre du conseil {membre.nom} de l'acheteur {acheteur.nom}"
+            )
+        
+        # Suppression
+        count = membres.count()
+        membres.delete()
+        
+        return Response({
+            'message': f'{count} membre(s) du conseil supprimé(s) avec succès',
+            'count': count
+        })
+
+
+class AcheteurConseilDetailView(APIView):
+    """
+    API pour gérer un membre du conseil spécifique
+    Méthodes: GET (détail), PUT (mise à jour)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id, membre_id):
+        """Récupère les détails d'un membre spécifique"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            membre = ConseilAdministration.objects.get(
+                id=membre_id,
+                acheteur=acheteur
+            )
+        except ConseilAdministration.DoesNotExist:
+            return Response(
+                {'error': 'Membre du conseil non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = GetConseilAdministrationSerializer(membre)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, membre_id):
+        """Met à jour un membre existant"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            membre = ConseilAdministration.objects.get(
+                id=membre_id,
+                acheteur=acheteur
+            )
+        except ConseilAdministration.DoesNotExist:
+            return Response(
+                {'error': 'Membre du conseil non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Vérifier les doublons (sauf pour le membre en cours)
+        nom = request.data.get('nom', membre.nom).strip()
+        
+        doublon = ConseilAdministration.objects.filter(
+            acheteur=acheteur,
+            nom__iexact=nom
+        ).exclude(id=membre_id).exists()
+        
+        if doublon:
+            return Response({
+                'error': f"Un autre membre du conseil avec le nom {nom} existe déjà."
+            }, status=status.HTTP_409_CONFLICT)
+        
+        # Sauvegarder les anciennes valeurs pour le log
+        old_values = {
+            'nom': membre.nom,
+            'fonction_dans_le_conseil': membre.fonction_dans_le_conseil,
+            'numero_adresse': membre.numero_adresse,
+            'rue_adresse': membre.rue_adresse,
+            'code_postale_adresse': membre.code_postale_adresse,
+            'commentaire': membre.commentaire
+        }
+        
+        serializer = EditConseilAdministrationSerializer(
+            membre,
+            data=request.data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            updated_membre = serializer.save()
+            
+            # Détecter les changements pour le log
+            changes = []
+            new_values = serializer.validated_data
+            
+            for field in ['nom', 'fonction_dans_le_conseil', 'numero_adresse', 
+                         'rue_adresse', 'code_postale_adresse', 'commentaire']:
+                if field in new_values and new_values[field] != old_values[field]:
+                    old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
+                    new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
+                    changes.append(f"{field}: '{old_val}' → '{new_val}'")
+            
+            # Log d'activité
+            details = f"Mise à jour du membre du conseil {membre.nom}"
+            if changes:
+                details += f" - Changements: {', '.join(changes)}"
+            
+            self.log_activity(
+                request=request,
+                action_type='UPDATE_CONSEIL',
+                object_id=membre.id,
+                object_type='ConseilAdministration',
+                details=details
+            )
+            
+            return Response({
+                'message': 'Membre du conseil mis à jour avec succès',
+                'data': GetConseilAdministrationSerializer(updated_membre).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 
 
 
@@ -1948,6 +2926,74 @@ class DeleteAcheteurOpinionAcremacView(APIView):
             {"message": f"{count} opinions de crédit supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+class AcheteurOpinionAcremacView(APIView):
+    """
+    API pour gérer l'opinion de crédit unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère l'opinion de crédit de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            opinion = OpinionCreditAcremac.objects.get(acheteur=acheteur)
+            serializer = GetOpinionCreditAcremacSerializer(opinion)
+            return Response(serializer.data)
+        except OpinionCreditAcremac.DoesNotExist:
+            return Response({
+                "message": "Aucune opinion de crédit trouvée pour cet acheteur",
+                "acheteur_id": acheteur_id
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour l'opinion de crédit de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si une opinion existe déjà
+        try:
+            opinion = OpinionCreditAcremac.objects.get(acheteur=acheteur)
+            serializer = EditOpinionCreditAcremacSerializer(
+                opinion, data=request.data, partial=True
+            )
+            action = "mise à jour"
+        except OpinionCreditAcremac.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddOpinionCreditAcremacSerializer(data=data)
+            action = "créée"
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": f"Opinion de crédit {action} avec succès",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK if action == "mise à jour" else status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime l'opinion de crédit de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            opinion = OpinionCreditAcremac.objects.get(acheteur=acheteur)
+            opinion.delete()
+            return Response({
+                "message": "Opinion de crédit supprimée avec succès"
+            }, status=status.HTTP_200_OK)
+        except OpinionCreditAcremac.DoesNotExist:
+            return Response({
+                "message": "Aucune opinion de crédit à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
 
 
 

@@ -2527,6 +2527,20 @@ urlpatterns = [
         name="delete-responsable-acheteur",
     ),
     path(
+        'api/acheteur/<int:acheteur_id>/responsables/',
+        AcheteurResponsableListView.as_view(),
+        name='api-responsables-acheteur'
+    ),
+    path(
+        'api/acheteur/<int:acheteur_id>/responsables/<int:responsable_id>/',
+        AcheteurResponsableDetailView.as_view(),
+        name='api-responsable-detail'
+    ),
+    
+    
+    
+    
+    path(
         "api/acheteur/<int:acheteur_id>/liste-des-antecdents-juridiques/",
         ListAcheteurAntecedentView.as_view(),
         name="list-antecedent-acheteur",
@@ -2551,6 +2565,22 @@ urlpatterns = [
         DeleteAcheteurAntecedentView.as_view(),
         name="delete-antecedent-acheteur",
     ),
+    path(
+        'api/acheteur/<int:acheteur_id>/antecedents/',
+        AcheteurAntecedentListView.as_view(),
+        name='api-antecedents-acheteur'
+    ),
+    path(
+        'api/acheteur/<int:acheteur_id>/antecedents/<int:antecedent_id>/',
+        AcheteurAntecedentDetailView.as_view(),
+        name='api-antecedent-detail'
+    ),
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-gestions-de-risque/",
         ListAcheteurGestionRisqueView.as_view(),
@@ -2577,6 +2607,17 @@ urlpatterns = [
         name="delete-gestion-de-risque-acheteur",
     ),
     path(
+        "api/acheteur/<int:acheteur_id>/gestion-risque/",
+        AcheteurGestionRisqueView.as_view(),
+        name="acheteur-gestion-risque",
+    ),
+    
+    
+    
+    
+    
+    
+    path(
         "api/acheteur/<int:acheteur_id>/liste-des-membres-du-conseil/",
         ListAcheteurMembreConseilView.as_view(),
         name="list-membre-du-conseil-acheteur",
@@ -2601,6 +2642,24 @@ urlpatterns = [
         DeleteAcheteurMembreConseilView.as_view(),
         name="delete-membre-du-conseil-acheteur",
     ),
+    path(
+        "api/acheteur/<int:acheteur_id>/conseil/",
+        AcheteurConseilListView.as_view(),
+        name="acheteur-conseil-list",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/conseil/<int:membre_id>/",
+        AcheteurConseilDetailView.as_view(),
+        name="acheteur-conseil-detail",
+    ),
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-compositions-du-capital/",
         ListAcheteurCompositionCapitalView.as_view(),
@@ -2679,7 +2738,11 @@ urlpatterns = [
         DeleteAcheteurOpinionAcremacView.as_view(),
         name="delete-opinion-acremac-acheteur",
     ),
-    
+    path(
+        "api/acheteur/<int:acheteur_id>/opinion-acremac/",
+        AcheteurOpinionAcremacView.as_view(),
+        name="acheteur-opinion-acremac",
+    ),
     
     
     

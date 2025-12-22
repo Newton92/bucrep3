@@ -1,824 +1,1317 @@
 {% extends 'main/root/base.html' %}
+{% load static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
 
+/* Carte d'opinion améliorée */
+.opinion-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.opinion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.opinion-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.opinion-card.risque-defaut::before { background: linear-gradient(to bottom, #E0201E, #FF6B6B); }
+.opinion-card.risque-concentration::before { background: linear-gradient(to bottom, #2F4A6D, #4A6FA5); }
+.opinion-card.risque-reputation::before { background: linear-gradient(to bottom, #F57C00, #FFA726); }
+.opinion-card.risque-pays::before { background: linear-gradient(to bottom, #2F85AB, #4FC3F7); }
+.opinion-card.risque-taux::before { background: linear-gradient(to bottom, #F5C400, #FFEE58); }
+.opinion-card.risque-liquidite::before { background: linear-gradient(to bottom, #66CC33, #9CCC65); }
+.opinion-card.risque-eleve::before { background: linear-gradient(to bottom, #D32F2F, #EF5350); }
+.opinion-card.risque-moyen::before { background: linear-gradient(to bottom, #F4A600, #FFB74D); }
+.opinion-card.risque-faible::before { background: linear-gradient(to bottom, #178B16, #66BB6A); }
+
+.opinion-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.opinion-card.risque-defaut .opinion-icon { background: rgba(224, 32, 30, 0.1); color: #E0201E; }
+.opinion-card.risque-concentration .opinion-icon { background: rgba(47, 74, 109, 0.1); color: #2F4A6D; }
+.opinion-card.risque-reputation .opinion-icon { background: rgba(245, 124, 0, 0.1); color: #F57C00; }
+.opinion-card.risque-pays .opinion-icon { background: rgba(47, 133, 171, 0.1); color: #2F85AB; }
+.opinion-card.risque-taux .opinion-icon { background: rgba(245, 196, 0, 0.1); color: #F5C400; }
+.opinion-card.risque-liquidite .opinion-icon { background: rgba(102, 204, 51, 0.1); color: #66CC33; }
+.opinion-card.risque-eleve .opinion-icon { background: rgba(211, 47, 47, 0.1); color: #D32F2F; }
+.opinion-card.risque-moyen .opinion-icon { background: rgba(244, 166, 0, 0.1); color: #F4A600; }
+.opinion-card.risque-faible .opinion-icon { background: rgba(23, 139, 22, 0.1); color: #178B16; }
+
+.opinion-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.opinion-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+/* Badge de risque */
+.risque-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.badge-risque-0 { background: rgba(108, 117, 125, 0.1); color: #6c757d; border: 1px solid rgba(108, 117, 125, 0.2); }
+.badge-risque-1 { background: rgba(224, 32, 30, 0.1); color: #E0201E; border: 1px solid rgba(224, 32, 30, 0.2); }
+.badge-risque-2 { background: rgba(47, 74, 109, 0.1); color: #2F4A6D; border: 1px solid rgba(47, 74, 109, 0.2); }
+.badge-risque-3 { background: rgba(245, 124, 0, 0.1); color: #F57C00; border: 1px solid rgba(245, 124, 0, 0.2); }
+.badge-risque-4 { background: rgba(47, 133, 171, 0.1); color: #2F85AB; border: 1px solid rgba(47, 133, 171, 0.2); }
+.badge-risque-5 { background: rgba(245, 196, 0, 0.1); color: #F5C400; border: 1px solid rgba(245, 196, 0, 0.2); }
+.badge-risque-6 { background: rgba(102, 204, 51, 0.1); color: #66CC33; border: 1px solid rgba(102, 204, 51, 0.2); }
+.badge-risque-7 { background: rgba(211, 47, 47, 0.1); color: #D32F2F; border: 1px solid rgba(211, 47, 47, 0.2); }
+.badge-risque-8 { background: rgba(244, 166, 0, 0.1); color: #F4A600; border: 1px solid rgba(244, 166, 0, 0.2); }
+.badge-risque-9 { background: rgba(23, 139, 22, 0.1); color: #178B16; border: 1px solid rgba(23, 139, 22, 0.2); }
+
+/* Contenu riche */
+.rich-content {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #0A95CA;
+    position: relative;
+    min-height: 100px;
+}
+
+.rich-content::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(0, 0, 0, 0.1);
+    font-family: Georgia, serif;
+}
+
+.rich-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Légende */
+.legend-box {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 0.75rem;
+}
+
+.legend-text {
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+/* Tableau de notation */
+.notation-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.notation-header {
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem;
+    color: white;
+}
+
+.notation-cell {
+    text-align: center;
+    padding: 0.75rem;
+    font-weight: 600;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.notation-cell.empty {
+    background: #f8f9fa;
+    color: #6c757d;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+.enhanced-form textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .opinion-card {
+        padding: 1rem;
+    }
+    
+    .opinion-value {
+        font-size: 1.25rem;
+    }
+    
+    .opinion-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .rich-content {
+        padding: 1rem;
+    }
+    
+    .notation-table {
+        font-size: 0.85rem;
+    }
+    
+    .notation-header {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .notation-cell {
+        padding: 0.5rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-credit-card-2-back fa-fw me-1"></i>Gestion des Opinions de Crédit Acremac</h3>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-credit-card text-primary me-2"></i>Opinion de Crédit ACREMAC
+            </h1>
+            <p class="text-muted mb-0">
+                Évaluation du risque de crédit selon la notation ACREMAC
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if opinion %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editOpinionModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addOpinionModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter l'opinion
+            </button>
+            {% endif %}
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countOpinions">Module de Gestion des Opinions de Crédit</h4>
-                    <span>Dans ce module, vous pouvez facilement gérer les opérations liées aux opinions de crédit, telles que la consultation, la recherche, l'ajout, la modification et la suppression.</span>
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Counter END -->
-
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countOpinions"><u>Systeme de Notation ACREMAC</u></h6>
-                        <br>
-                        <!-- Hotel room list START -->
-						<div class="table-responsive border-0">
-							<table class="table align-middle p-4 mb-0 table-hover table-shrink">
-								<!-- Table head -->
-								<thead class="table-light">
-									<tr>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #E0201E;">1</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #2F4A6D;">2</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #F57C00;">3</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #2F85AB;">4</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #F5C400;">5</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #66CC33;">6</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #D32F2F;">7</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #F4A600;">8</th>
-										<th scope="col" class="border-0 text-center text-light" style="background-color: #178B16;">9</th>
-									</tr>
-								</thead>
-
-								<!-- Table body START -->
-								<tbody class="border-top-0">
-									<!-- Table item -->
-									<tr class="bg-light">
-										<td class="border-0"> <div class="text-dark">RDEF</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RCCR&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RRÉP&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RPAY&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RTIR&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RLQT&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RÉLV&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RMOY&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-										<td> <div class="text-dark">&nbsp;&nbsp;&nbsp;&nbsp;RFAI&nbsp;&nbsp;&nbsp;&nbsp;</div> </td>
-									</tr>
-								</tbody>
-								<!-- Table body END -->
-							</table>
-						</div>
-						<!-- Hotel room list END -->
-                    </div>
-                </div>
-                <br>
-
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countOpinions"><u>Légende</u></h6>
-                        <strong>Risque de Défaut : </strong><span style="color: #FF5733;">RDEF</span><br>
-                        <strong>Risque de Concentration de Crédit : </strong><span style="color: #33FF57;">RCCR</span><br>
-                        <strong>Risque de Réputation : </strong><span style="color: #3357FF;">RRÉP</span><br>
-                        <strong>Risque Pays : </strong><span style="color: #FF33A6;">RPAY</span><br>
-                        <strong>Risque de Taux d'Intérêt : </strong><span style="color: #8A2BE2;">RTIR</span><br>
-                        <strong>Risque de Liquidité : </strong><span style="color: #FF6347;">RLQT</span><br>
-                        <strong>Risque Élevé : </strong><span style="color: #FF4500;">RÉLV</span><br>
-                        <strong>Risque Moyen : </strong><span style="color: #DA70D6;">RMOY</span><br>
-                        <strong>Risque Faible : </strong><span style="color: #32CD32;">RFAI</span><br>
-                        <strong>Couleur Commentaire : </strong><span style="color: #1E90FF;">COUL</span><br>
-
-                        <br>
-                        <h6><u>NB</u> : </h6><span>Un exemple de notation pourrait etre :  [ 1, 4, 6, 9 ]</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countOpinions"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si vous souhaitez retourner consulter la page de gestion de l'acheteur, il vous suffit de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
-            </div>
-        </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Opinions de Crédit START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Opinions de Crédit</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addOpinionModal">
-                                Ajouter une Opinion de Crédit
-                            </button>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Opinions de Crédit list START -->
-                <div class="table-responsive border-0" id="opinionList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start text-center">#</th>
-                                <th scope="col" class="border-0 text-center">RDEF</th>
-                                <th scope="col" class="border-0 text-center">RCCR</th>
-                                <th scope="col" class="border-0 text-center">RRÉP</th>
-                                <th scope="col" class="border-0 text-center">RPAY</th>
-                                <th scope="col" class="border-0 text-center">RTIR</th>
-                                <th scope="col" class="border-0 text-center">RLQT</th>
-                                <th scope="col" class="border-0 text-center">RÉLV</th>
-                                <th scope="col" class="border-0 text-center">RMOY</th>
-                                <th scope="col" class="border-0 text-center">RFAI</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
+    <!-- Légende -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="legend-box">
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-key me-2"></i>Système de Notation ACREMAC
+                </h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #E0201E;"></div>
+                            <span class="legend-text">
+                                <strong>RDEF:</strong> Risque de Défaut
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #2F4A6D;"></div>
+                            <span class="legend-text">
+                                <strong>RCCR:</strong> Risque de Concentration
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #F57C00;"></div>
+                            <span class="legend-text">
+                                <strong>RRÉP:</strong> Risque de Réputation
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #2F85AB;"></div>
+                            <span class="legend-text">
+                                <strong>RPAY:</strong> Risque Pays
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #F5C400;"></div>
+                            <span class="legend-text">
+                                <strong>RTIR:</strong> Risque de Taux d'Intérêt
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #66CC33;"></div>
+                            <span class="legend-text">
+                                <strong>RLQT:</strong> Risque de Liquidité
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #D32F2F;"></div>
+                            <span class="legend-text">
+                                <strong>RÉLV:</strong> Risque Élevé
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #F4A600;"></div>
+                            <span class="legend-text">
+                                <strong>RMOY:</strong> Risque Moyen
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #178B16;"></div>
+                            <span class="legend-text">
+                                <strong>RFAI:</strong> Risque Faible
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Note:</strong> Seuls les risques activés (valeurs > 0) apparaissent dans la notation finale.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="opinionTableBody"></tbody>
-                        <!-- Table body END -->
+    <!-- Opinion de Crédit -->
+    {% if opinion %}
+    <div class="card border enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Notation ACREMAC -->
+            <h5 class="fw-bold mb-3">
+                <i class="fas fa-chart-bar text-primary me-2"></i>Notation ACREMAC
+            </h5>
+            
+            <!-- Tableau de notation -->
+            <div class="notation-table mb-4">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="notation-header" style="background: #E0201E;">1</th>
+                            <th class="notation-header" style="background: #2F4A6D;">2</th>
+                            <th class="notation-header" style="background: #F57C00;">3</th>
+                            <th class="notation-header" style="background: #2F85AB;">4</th>
+                            <th class="notation-header" style="background: #F5C400;">5</th>
+                            <th class="notation-header" style="background: #66CC33;">6</th>
+                            <th class="notation-header" style="background: #D32F2F;">7</th>
+                            <th class="notation-header" style="background: #F4A600;">8</th>
+                            <th class="notation-header" style="background: #178B16;">9</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="notation-cell {% if opinion.risque_de_defaut == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_de_defaut > 0 %}background: #E0201E; color: white;{% endif %}">
+                                {{ opinion.risque_de_defaut|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_de_concentration_credit == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_de_concentration_credit > 0 %}background: #2F4A6D; color: white;{% endif %}">
+                                {{ opinion.risque_de_concentration_credit|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_de_reputation == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_de_reputation > 0 %}background: #F57C00; color: white;{% endif %}">
+                                {{ opinion.risque_de_reputation|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_pays == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_pays > 0 %}background: #2F85AB; color: white;{% endif %}">
+                                {{ opinion.risque_pays|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_de_taux_dinteret == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_de_taux_dinteret > 0 %}background: #F5C400; color: white;{% endif %}">
+                                {{ opinion.risque_de_taux_dinteret|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_de_liquidite == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_de_liquidite > 0 %}background: #66CC33; color: white;{% endif %}">
+                                {{ opinion.risque_de_liquidite|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_eleve == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_eleve > 0 %}background: #D32F2F; color: white;{% endif %}">
+                                {{ opinion.risque_eleve|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_moyen == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_moyen > 0 %}background: #F4A600; color: white;{% endif %}">
+                                {{ opinion.risque_moyen|default:"0" }}
+                            </td>
+                            <td class="notation-cell {% if opinion.risque_faible == 0 %}empty{% endif %}" 
+                                style="{% if opinion.risque_faible > 0 %}background: #178B16; color: white;{% endif %}">
+                                {{ opinion.risque_faible|default:"0" }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                        <!-- Modal -->
-                        <div class="modal fade" id="opinionModal" tabindex="-1" aria-labelledby="opinionModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                <h5 class="modal-title" id="opinionModalLabel">Détails de l'Opinion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                <p id="montantCreditMaximum"></p>
-                                <p id="commentaire" style="color: #000;"></p> <!-- La couleur sera définie dynamiquement -->
-                                </div>
-                                <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                                </div>
-                            </div>
+            <!-- Résumé des risques -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="opinion-card risque-defaut">
+                        <div class="opinion-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="opinion-label">Risque de Défaut</div>
+                        <span class="risque-badge badge-risque-{{ opinion.risque_de_defaut }}">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            {{ opinion.risque_de_defaut|default:"0" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="opinion-card risque-concentration">
+                        <div class="opinion-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <div class="opinion-label">Risque de Concentration</div>
+                        <span class="risque-badge badge-risque-{{ opinion.risque_de_concentration_credit }}">
+                            <i class="fas fa-chart-pie me-1"></i>
+                            {{ opinion.risque_de_concentration_credit|default:"0" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="opinion-card risque-reputation">
+                        <div class="opinion-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="opinion-label">Risque de Réputation</div>
+                        <span class="risque-badge badge-risque-{{ opinion.risque_de_reputation }}">
+                            <i class="fas fa-bullhorn me-1"></i>
+                            {{ opinion.risque_de_reputation|default:"0" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Montant de crédit maximum -->
+            {% if opinion.montant_credit_maximum %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-money-check-alt text-success me-2"></i>Recommandation de Crédit
+                </h5>
+                <div class="alert alert-success" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-piggy-bank fa-2x me-3"></i>
+                        <div>
+                            <h6 class="alert-heading mb-1">Montant crédit maximum conseillé</h6>
+                            <p class="mb-0 fs-4 fw-bold">{{ opinion.montant_credit_maximum|floatformat:2|intcomma }} FCFA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Commentaire -->
+            {% if opinion.commentaire %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-comment-dots text-orange me-2"></i>Commentaire d'analyse
+                </h5>
+                <div class="rich-content" {% if opinion.couleur_commentaire %}style="border-left-color: {{ opinion.couleur_commentaire.code }};"{% endif %}>
+                    {{ opinion.commentaire|linebreaks }}
+                    {% if opinion.couleur_commentaire %}
+                    <div class="mt-3">
+                        <span class="badge" style="color: {{ opinion.couleur_commentaire.code }}; background: {{ opinion.couleur_commentaire.code }}20;">
+                            <i class="fas fa-palette me-1"></i>{{ opinion.couleur_commentaire.couleur }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <i class="fas fa-calendar me-1"></i>
+                            Analyse créée le {{ opinion.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Dernière mise à jour : {{ opinion.updated_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-credit-card empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucune opinion de crédit</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore d'opinion de crédit ACREMAC.<br>
+                    Établissez une évaluation complète des risques de crédit.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addOpinionModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter l'opinion
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout d'Opinion -->
+<div class="modal fade" id="addOpinionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Opinion de Crédit
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addOpinionForm" class="enhanced-form">
+                <div class="modal-body">
+                    <h6 class="fw-bold mb-3 text-primary">
+                        <i class="fas fa-chart-line me-2"></i>Évaluation des Risques
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="risque_de_defaut" class="form-label">
+                                    <i class="fas fa-exclamation-triangle" style="color: #E0201E;"></i>Risque de Défaut (RDEF)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_de_defaut" name="risque_de_defaut" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="1">1 - Risque identifié</option>
+                                </select>
+                                <small class="form-text text-muted">Probabilité de non-remboursement</small>
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="risque_de_concentration_credit" class="form-label">
+                                    <i class="fas fa-balance-scale" style="color: #2F4A6D;"></i>Risque de Concentration (RCCR)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_de_concentration_credit" name="risque_de_concentration_credit" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="2">2 - Risque identifié</option>
+                                </select>
+                                <small class="form-text text-muted">Exposition à un seul contrepartie/secteur</small>
+                            </div>
+                        </div>
+                    </div>
 
-                    </table>
-                </div>
-                <!-- Opinions de Crédit list END -->
-            </div>
-            <!-- Card body END -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="risque_de_reputation" class="form-label">
+                                    <i class="fas fa-star" style="color: #F57C00;"></i>Risque de Réputation (RRÉP)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_de_reputation" name="risque_de_reputation" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="3">3 - Risque identifié</option>
+                                </select>
+                                <small class="form-text text-muted">Impact sur l'image et la réputation</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="risque_pays" class="form-label">
+                                    <i class="fas fa-globe" style="color: #2F85AB;"></i>Risque Pays (RPAY)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_pays" name="risque_pays" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="4">4 - Risque identifié</option>
+                                </select>
+                                <small class="form-text text-muted">Risques politiques et économiques du pays</small>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="risque_de_taux_dinteret" class="form-label">
+                                    <i class="fas fa-percentage" style="color: #F5C400;"></i>Risque de Taux (RTIR)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_de_taux_dinteret" name="risque_de_taux_dinteret" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="5">5 - Risque identifié</option>
+                                </select>
+                                <small class="form-text text-muted">Variations des taux d'intérêt</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="risque_de_liquidite" class="form-label">
+                                    <i class="fas fa-water" style="color: #66CC33;"></i>Risque de Liquidité (RLQT)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_de_liquidite" name="risque_de_liquidite" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="6">6 - Risque identifié</option>
+                                </select>
+                                <small class="form-text text-muted">Capacité à honorer les engagements</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="risque_eleve" class="form-label">
+                                    <i class="fas fa-fire" style="color: #D32F2F;"></i>Risque Élevé (RÉLV)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_eleve" name="risque_eleve" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="7">7 - Risque élevé</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="risque_moyen" class="form-label">
+                                    <i class="fas fa-sliders-h" style="color: #F4A600;"></i>Risque Moyen (RMOY)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_moyen" name="risque_moyen" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="8">8 - Risque moyen</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="risque_faible" class="form-label">
+                                    <i class="fas fa-leaf" style="color: #178B16;"></i>Risque Faible (RFAI)
+                                </label>
+                                <select class="form-select select2-with-search" id="risque_faible" name="risque_faible" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="9">9 - Risque faible</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="montant_credit_maximum" class="form-label">
+                                    <i class="fas fa-money-check-alt text-success"></i>Montant Crédit Maximum
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" 
+                                           id="montant_credit_maximum" name="montant_credit_maximum" 
+                                           placeholder="Ex: 5000000" required step="1000">
+                                    <span class="input-group-text">FCFA</span>
+                                </div>
+                                <small class="form-text text-muted">Montant maximum recommandé</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-info"></i>Couleur du Commentaire
+                                </label>
+                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Couleur d'alerte pour le commentaire</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-orange"></i>Commentaire d'analyse
+                        </label>
+                        <textarea class="form-control textarea-enhanced" id="commentaire" name="commentaire" 
+                                  rows="4" placeholder="Analyse détaillée, recommandations, observations..."></textarea>
+                        <small class="form-text text-muted">Synthèse de l'évaluation et recommandations</small>
+                    </div>
                 </div>
-            </div>
-            <!-- Card footer END -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Opinions de Crédit END -->
 
-<!-- Add Opinion Modal START -->
-<div class="modal fade" id="addOpinionModal" tabindex="-1" aria-labelledby="addOpinionModalLabel" aria-hidden="true">
+<!-- Modal Modification d'Opinion -->
+<div class="modal fade" id="editOpinionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addOpinionModalLabel">Ajouter une Opinion de Crédit</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Opinion de Crédit
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addOpinionForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="risque_de_defaut" class="form-label">Risque de Défaut</label>
-                        <select class="form-select" id="risque_de_defaut" name="risque_de_defaut" required>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                        </select>
+            <form id="editOpinionForm" class="enhanced-form">
+                <input type="hidden" id="editOpinionId" name="id">
+                <div class="modal-body">
+                    <h6 class="fw-bold mb-3 text-primary">
+                        <i class="fas fa-chart-line me-2"></i>Évaluation des Risques
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRisqueDeDefaut" class="form-label">
+                                    <i class="fas fa-exclamation-triangle" style="color: #E0201E;"></i>Risque de Défaut (RDEF)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueDeDefaut" name="risque_de_defaut" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="1">1 - Risque identifié</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRisqueDeConcentrationCredit" class="form-label">
+                                    <i class="fas fa-balance-scale" style="color: #2F4A6D;"></i>Risque de Concentration (RCCR)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueDeConcentrationCredit" name="risque_de_concentration_credit" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="2">2 - Risque identifié</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="risque_de_concentration_credit" class="form-label">Risque de Concentration de Crédit</label>
-                        <select class="form-select" id="risque_de_concentration_credit" name="risque_de_concentration_credit" required>
-                            <option value="0">0</option>
-                            <option value="2">2</option>
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRisqueDeReputation" class="form-label">
+                                    <i class="fas fa-star" style="color: #F57C00;"></i>Risque de Réputation (RRÉP)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueDeReputation" name="risque_de_reputation" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="3">3 - Risque identifié</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRisquePays" class="form-label">
+                                    <i class="fas fa-globe" style="color: #2F85AB;"></i>Risque Pays (RPAY)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisquePays" name="risque_pays" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="4">4 - Risque identifié</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="risque_de_reputation" class="form-label">Risque de Réputation</label>
-                        <select class="form-select" id="risque_de_reputation" name="risque_de_reputation" required>
-                            <option value="0">0</option>
-                            <option value="3">3</option>
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRisqueDeTauxDinteret" class="form-label">
+                                    <i class="fas fa-percentage" style="color: #F5C400;"></i>Risque de Taux (RTIR)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueDeTauxDinteret" name="risque_de_taux_dinteret" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="5">5 - Risque identifié</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRisqueDeLiquidite" class="form-label">
+                                    <i class="fas fa-water" style="color: #66CC33;"></i>Risque de Liquidité (RLQT)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueDeLiquidite" name="risque_de_liquidite" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="6">6 - Risque identifié</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="risque_pays" class="form-label">Risque Pays</label>
-                        <select class="form-select" id="risque_pays" name="risque_pays" required>
-                            <option value="0">0</option>
-                            <option value="4">4</option>
-                        </select>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editRisqueEleve" class="form-label">
+                                    <i class="fas fa-fire" style="color: #D32F2F;"></i>Risque Élevé (RÉLV)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueEleve" name="risque_eleve" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="7">7 - Risque élevé</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editRisqueMoyen" class="form-label">
+                                    <i class="fas fa-sliders-h" style="color: #F4A600;"></i>Risque Moyen (RMOY)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueMoyen" name="risque_moyen" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="8">8 - Risque moyen</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="editRisqueFaible" class="form-label">
+                                    <i class="fas fa-leaf" style="color: #178B16;"></i>Risque Faible (RFAI)
+                                </label>
+                                <select class="form-select select2-with-search" id="editRisqueFaible" name="risque_faible" required>
+                                    <option value="0">0 - Non applicable</option>
+                                    <option value="9">9 - Risque faible</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="risque_de_taux_dinteret" class="form-label">Risque de Taux d'Intérêt</label>
-                        <select class="form-select" id="risque_de_taux_dinteret" name="risque_de_taux_dinteret" required>
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                        </select>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editMontantCreditMaximum" class="form-label">
+                                    <i class="fas fa-money-check-alt text-success"></i>Montant Crédit Maximum
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" 
+                                           id="editMontantCreditMaximum" name="montant_credit_maximum" required step="1000">
+                                    <span class="input-group-text">FCFA</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette text-info"></i>Couleur du Commentaire
+                                </label>
+                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                        {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="risque_de_liquidite" class="form-label">Risque de Liquidité</label>
-                        <select class="form-select" id="risque_de_liquidite" name="risque_de_liquidite" required>
-                            <option value="0">0</option>
-                            <option value="6">6</option>
-                        </select>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-orange"></i>Commentaire d'analyse
+                        </label>
+                        <textarea class="form-control textarea-enhanced" id="editCommentaire" name="commentaire" rows="4"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="risque_eleve" class="form-label">Risque Élevé</label>
-                        <select class="form-select" id="risque_eleve" name="risque_eleve" required>
-                            <option value="0">0</option>
-                            <option value="7">7</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="risque_moyen" class="form-label">Risque Moyen</label>
-                        <select class="form-select" id="risque_moyen" name="risque_moyen" required>
-                            <option value="0">0</option>
-                            <option value="8">8</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="risque_faible" class="form-label">Risque Faible</label>
-                        <select class="form-select" id="risque_faible" name="risque_faible" required>
-                            <option value="0">0</option>
-                            <option value="9">9</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="montant_credit_maximum" class="form-label">Montant crédit maximum conseillée</label>
-                        <input type="number" class="form-control" id="montant_credit_maximum" name="montant_credit_maximum" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Opinion Modal END -->
 
-<!-- Edit Opinion Modal START -->
-<div class="modal fade" id="editOpinionModal" tabindex="-1" aria-labelledby="editOpinionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editOpinionModalLabel">Éditer une Opinion de Crédit</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editOpinionForm">
-                    <input type="hidden" id="editOpinionId" name="id">
-                    <div class="mb-3">
-                        <label for="editRisqueDeDefaut" class="form-label">Risque de Défaut</label>
-                        <select class="form-select" id="editRisqueDeDefaut" name="risque_de_defaut" required>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueDeConcentrationCredit" class="form-label">Risque de Concentration de Crédit</label>
-                        <select class="form-select" id="editRisqueDeConcentrationCredit" name="risque_de_concentration_credit" required>
-                            <option value="0">0</option>
-                            <option value="2">2</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueDeReputation" class="form-label">Risque de Réputation</label>
-                        <select class="form-select" id="editRisqueDeReputation" name="risque_de_reputation" required>
-                            <option value="0">0</option>
-                            <option value="3">3</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisquePays" class="form-label">Risque Pays</label>
-                        <select class="form-select" id="editRisquePays" name="risque_pays" required>
-                            <option value="0">0</option>
-                            <option value="4">4</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueDeTauxDinteret" class="form-label">Risque de Taux d'Intérêt</label>
-                        <select class="form-select" id="editRisqueDeTauxDinteret" name="risque_de_taux_dinteret" required>
-                            <option value="0">0</option>
-                            <option value="5">5</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueDeLiquidite" class="form-label">Risque de Liquidité</label>
-                        <select class="form-select" id="editRisqueDeLiquidite" name="risque_de_liquidite" required>
-                            <option value="0">0</option>
-                            <option value="6">6</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueEleve" class="form-label">Risque Élevé</label>
-                        <select class="form-select" id="editRisqueEleve" name="risque_eleve" required>
-                            <option value="0">0</option>
-                            <option value="7">7</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueMoyen" class="form-label">Risque Moyen</label>
-                        <select class="form-select" id="editRisqueMoyen" name="risque_moyen" required>
-                            <option value="0">0</option>
-                            <option value="8">8</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editRisqueFaible" class="form-label">Risque Faible</label>
-                        <select class="form-select" id="editRisqueFaible" name="risque_faible" required>
-                            <option value="0">0</option>
-                            <option value="9">9</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editMontantCreditMaximum" class="form-label">Montant crédit maximum conseillée</label>
-                        <input type="number" class="form-control" id="editMontantCreditMaximum" name="montant_credit_maximum" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'opinion de crédit</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer cette analyse ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Opinion Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
-
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
-<script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#commentaire, #editCommentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
-        });
-
-        // Votre script JavaScript existant ici
-    });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
+$(document).ready(function() {
+    // Configuration
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/opinion-acremac/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Charger les données de l'acheteur
+    const acheteurData = JSON.parse('{{ acheteur_json|escapejs }}');
+    
+    // Charger les données de l'opinion si elles existent
+    let opinionData = null;
+    try {
+        opinionData = JSON.parse('{{ opinion_json|escapejs }}');
+    } catch(e) {
+        console.log('Aucune donnée d\'opinion trouvée');
+        opinionData = null;
+    }
+    
+    // Fonction pour formater les options Select2 avec couleur
+    function formatOption(option) {
+        if (!option.id) return option.text;
+        
+        const color = $(option.element).data('color');
+        const text = option.text;
+        
+        if (color) {
+            return $(`
+                <span>
+                    <span style="display: inline-block; width: 16px; height: 16px; background: ${color}; border-radius: 3px; margin-right: 8px;"></span>
+                    ${text}
+                </span>
+            `);
         }
+        return text;
+    }
 
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 0,
+            dropdownParent: $('body'),
+            templateResult: formatOption,
+            templateSelection: formatOption
+        });
+    }
+
+    // Initialisation au chargement de la page
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addOpinionModal, #editOpinionModal').on('shown.bs.modal', function() {
+        setTimeout(initSelect2, 100);
+    });
+    
+    // Remplir le formulaire d'édition
+    function populateEditForm() {
+        if (!opinionData) return;
+        
+        console.log('Remplissage du formulaire avec:', opinionData);
+        
+        $('#editOpinionId').val(opinionData.id);
+        $('#editRisqueDeDefaut').val(opinionData.risque_de_defaut || '0').trigger('change');
+        $('#editRisqueDeConcentrationCredit').val(opinionData.risque_de_concentration_credit || '0').trigger('change');
+        $('#editRisqueDeReputation').val(opinionData.risque_de_reputation || '0').trigger('change');
+        $('#editRisquePays').val(opinionData.risque_pays || '0').trigger('change');
+        $('#editRisqueDeTauxDinteret').val(opinionData.risque_de_taux_dinteret || '0').trigger('change');
+        $('#editRisqueDeLiquidite').val(opinionData.risque_de_liquidite || '0').trigger('change');
+        $('#editRisqueEleve').val(opinionData.risque_eleve || '0').trigger('change');
+        $('#editRisqueMoyen').val(opinionData.risque_moyen || '0').trigger('change');
+        $('#editRisqueFaible').val(opinionData.risque_faible || '0').trigger('change');
+        $('#editMontantCreditMaximum').val(opinionData.montant_credit_maximum || '');
+        $('#editCouleurCommentaire').val(opinionData.couleur_commentaire || '').trigger('change');
+        $('#editCommentaire').val(opinionData.commentaire || '');
+    }
+    
+    // Gérer l'ouverture du modal d'édition
+    $('#editOpinionModal').on('shown.bs.modal', function() {
+        // Remplir les champs du formulaire
+        populateEditForm();
+    });
+    
+    // Réinitialiser quand les modaux se ferment
+    $('#addOpinionModal').on('hidden.bs.modal', function() {
+        // Réinitialiser le formulaire
+        $('#addOpinionForm')[0].reset();
+        $('.select2-with-search').val(null).trigger('change');
+    });
+    
+    // Formulaire d'ajout
+    $('#addOpinionForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Utiliser FormData pour une meilleure gestion
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitOpinionForm('POST', data, '#submitAddBtn', 'addOpinionModal');
+    });
+    
+    // Formulaire de modification
+    $('#editOpinionForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Utiliser FormData pour une meilleure gestion
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitOpinionForm('POST', data, '#submitEditBtn', 'editOpinionModal');
+    });
+    
+    // Soumission du formulaire
+    function submitOpinionForm(method, data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
             },
             error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    console.log('Erreur serveur:', xhr.responseJSON);
+                    if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    } else {
+                        errorMessage = xhr.responseJSON.detail || errorMessage;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitOpinionForm(method, data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+    
+    // Suppression de l'opinion
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Opinion de crédit supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de supprimer l\'opinion'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi avec succès');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load opinions data
-        function loadOpinions(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-opinions-acremac/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update opinions table body
-                    $('#opinionTableBody').html('');
-                    response.results.forEach(function(opinion, index) {
-                        let row = '<tr>' +
-                            '<td class="text-center">' + (index + 1 + (page - 1) * response.count) + '</td>';
-
-                        // Fonction pour ajouter un <td> vide avec fond blanc si la valeur est 0
-                        function addTd(value, bgColor) {
-                            let cellBgColor = (value != 0) ? bgColor : '#F0F0F0'; // Fond blanc si 0
-                            let cellContent = (value != 0) ? value : ''; // Vide si 0
-                            return '<td style="background-color: ' + cellBgColor + '; border-radius: 10%;" class="text-center text-light">' + cellContent + '</td>';
-                        }
-
-                        row += addTd(opinion.risque_de_defaut, '#E0201E');
-                        row += addTd(opinion.risque_de_concentration_credit, '#2F4A6D');
-                        row += addTd(opinion.risque_de_reputation, '#F57C00');
-                        row += addTd(opinion.risque_pays, '#2F85AB');
-                        row += addTd(opinion.risque_de_taux_dinteret, '#F5C400');
-                        row += addTd(opinion.risque_de_liquidite, '#66CC33');
-                        row += addTd(opinion.risque_eleve, '#D32F2F');
-                        row += addTd(opinion.risque_moyen, '#F4A600');
-                        row += addTd(opinion.risque_faible, '#178B16');
-
-                        row += '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + opinion.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + opinion.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button>' +
-                            '&nbsp; <button class="btn btn-info btn-round mb-0 view-btn" data-id="' + opinion.id + '" data-montant="' + opinion.montant_credit_maximum + '" data-commentaire="' + opinion.commentaire + '" data-couleur="' + opinion.couleur_commentaire + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Voir"><i class="bi bi-eye"></i></button>' +
-                            '</td>' +
-                            '</tr>';
-
-                        $('#opinionTableBody').append(row);
-                    });
-
-                    // Ajouter un gestionnaire d'événements pour les boutons "Voir"
-                    $('.view-btn').on('click', function() {
-                        let montant = $(this).data('montant');
-                        let commentaire = $(this).data('commentaire');
-                        let couleur = $(this).data('couleur');
-
-                        $('#montantCreditMaximum').text('Montant Crédit Maximum: ' + montant);
-                        $('#commentaire').text(commentaire).css('color', couleur);
-                        tinymce.get('commentaire').setContent('<span style="color: ' + couleur + ';">' + commentaire + '</span>');
-
-                        $('#opinionModal').modal('show');
-                    });
-
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-
-        // Initial load
-        loadOpinions();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadOpinions(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadOpinions(page, search);
-        });
-
-        // Add Opinion form submission
-        $('#addOpinionForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-opinion-acremac/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Opinion de crédit ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addOpinionModal').modal('hide');
-                        loadOpinions();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de l\'opinion de crédit.',
-                    });
-                }
-            });
-        });
-
-        // Edit Opinion button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-opinion-acremac/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editOpinionId').val(response.id);
-                    $('#editRisqueDeDefaut').val(response.risque_de_defaut);
-                    $('#editRisqueDeConcentrationCredit').val(response.risque_de_concentration_credit);
-                    $('#editRisqueDeReputation').val(response.risque_de_reputation);
-                    $('#editRisquePays').val(response.risque_pays);
-                    $('#editRisqueDeTauxDinteret').val(response.risque_de_taux_dinteret);
-                    $('#editRisqueDeLiquidite').val(response.risque_de_liquidite);
-                    $('#editRisqueEleve').val(response.risque_eleve);
-                    $('#editRisqueMoyen').val(response.risque_moyen);
-                    $('#editRisqueFaible').val(response.risque_faible);
-                    $('#editMontantCreditMaximum').val(response.montant_credit_maximum);
-                    $('#editCouleurCommentaire').val(response.couleur_commentaire);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editOpinionModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'opinion de crédit.',
-                    });
-                }
-            });
-        });
-
-        // Edit Opinion form submission
-        $('#editOpinionForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editOpinionId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-opinion-acremac/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Opinion de crédit mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editOpinionModal').modal('hide');
-                        loadOpinions();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de l\'opinion de crédit.',
-                    });
-                }
-            });
-        });
-
-        // Delete Opinion button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-opinions-acremac/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'L\'opinion de crédit a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadOpinions();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de l\'opinion de crédit.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
         }
     });
+});
 </script>
-
 {% endblock %}

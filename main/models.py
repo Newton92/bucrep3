@@ -2450,6 +2450,32 @@ class ResponsableAcheteur(Model):
             # Pour la détection de "Commentaires sur dirigeants"
             "commentaire": self.commentaire,
         }
+        
+    def get_initials(self):
+        """Retourne les initiales du responsable"""
+        return f"{self.nom[0] if self.nom else ''}{self.prenom[0] if self.prenom else ''}".upper()
+    
+    @property
+    def commentaire_preview(self):
+        """Retourne un aperçu du commentaire"""
+        if self.commentaire:
+            return self.commentaire[:100] + ('...' if len(self.commentaire) > 100 else '')
+        return ''
+    
+    @property
+    def full_name(self):
+        """Retourne le nom complet"""
+        return f"{self.nom} {self.prenom}"
+    
+    class Meta:
+        verbose_name = _("Responsable Acheteur")
+        verbose_name_plural = _("Responsables Acheteurs")
+        indexes = [
+            models.Index(fields=['acheteur', 'nom', 'prenom']),
+            models.Index(fields=['poste']),
+            models.Index(fields=['sexe']),
+        ]
+        ordering = ['nom', 'prenom']
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
@@ -2591,9 +2617,39 @@ class AntecedantsJuridique(Model):
     history = HistoricalRecords()
 
 
+    def get_antecedent_type(self):
+        """Retourne le type principal de l'antécédent"""
+        if self.dossier_faillite and self.dossier_faillite.strip():
+            return 'faillite'
+        elif self.jugement_cour and self.jugement_cour.strip():
+            return 'jugement'
+        elif self.antecedant_redressement and self.antecedant_redressement.strip():
+            return 'redressement'
+        elif self.autre and self.autre.strip():
+            return 'autre'
+        return 'autre'
+    
+    @property
+    def has_content(self):
+        """Vérifie si l'antécédent a du contenu"""
+        return any([
+            self.dossier_faillite and self.dossier_faillite.strip(),
+            self.jugement_cour and self.jugement_cour.strip(),
+            self.antecedant_redressement and self.antecedant_redressement.strip(),
+            self.autre and self.autre.strip()
+        ])
+    
+    @property
+    def commentaire_preview(self):
+        """Retourne un aperçu du commentaire"""
+        if self.commentaire:
+            return self.commentaire[:100] + ('...' if len(self.commentaire) > 100 else '')
+        return ''
+    
     class Meta:
         verbose_name = _("Antécédent Juridique")
         verbose_name_plural = _("Antécédents Juridiques")
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"Antécédent {self.id} - {self.acheteur}"
@@ -2711,11 +2767,11 @@ class RiskManagment(Model):
         
         # Logique de décision pour l'image
         if oui_count >= 4:
-            return "main/static/management/bien.png"
+            return "/static/management/bien.png"
         elif non_count >= 4:
-            return "main/static/management/mauvais.png"
+            return "/static/management/mauvais.png"
         else:
-            return "main/static/management/passable.png"
+            return "/static/management/passable.png"
         
     def get_management_image_path_report(self):
         fields = [

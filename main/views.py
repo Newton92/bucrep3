@@ -1702,105 +1702,315 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
 
 
 
-
 @login_required
 def dash_root_manage_acheteur_responsable(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des responsables d'un acheteur
+    """
+    try:
+        # Récupérer l'acheteur avec relations optimisées
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise',
+                'forme_juridique',
+                'categorie_entreprise'
+            ),
+            id=acheteur_id
+        )
 
-    user = request.user
+        # Récupérer les listes pour les formulaires
+        poste_list = PosteEntreprise.objects.all().order_by('libelle')
+        coloration_list = CouleurCommentaire.objects.all().order_by('couleur')
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+        # Récupérer les responsables existants (limité à 5 pour les statistiques)
+        responsables = ResponsableAcheteur.objects.filter(
+            acheteur=acheteur
+        ).select_related(
+            'poste_ref',
+            'couleur_commentaire'
+        ).order_by('-created_at')[:5]
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+        # Statistiques
+        stats = {
+            'total': ResponsableAcheteur.objects.filter(acheteur=acheteur).count(),
+            'masculin': ResponsableAcheteur.objects.filter(acheteur=acheteur, sexe='Masculin').count(),
+            'feminin': ResponsableAcheteur.objects.filter(acheteur=acheteur, sexe='Feminin').count(),
+            'avec_commentaire': ResponsableAcheteur.objects.filter(
+                acheteur=acheteur,
+                commentaire__isnull=False
+            ).exclude(commentaire='').count(),
+        }
 
-    # Récupérer tous les avis commerciaux
-    poste_list = PosteEntreprise.objects.all()
+        # Génération des tokens JWT
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
 
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
+        # Préparer les données pour JavaScript
+        acheteur_data = {
+            'id': acheteur.id,
+            'nom': acheteur.nom or 'Non spécifié',
+            'sigle': acheteur.sigle or '',
+            'code': acheteur.code or 'N/A',
+            'activite_principale': acheteur.activite_principale or 'Non spécifié',
+            'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
+            'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        }
 
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "poste_list": poste_list,
-        "coloration_list": coloration_list,
-    }
-    return render(
-        request,
-        "main/root/acheteur/responsable/dash_root_manage_acheteur_responsable.html",
-        context,
-    )
+        context = {
+            "acheteur_active": "active",
+            "user": request.user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "acheteur_json": json.dumps(acheteur_data),
+            "id_acheteur": acheteur_id,
+            "acheteur": acheteur,
+            "poste_list": poste_list,
+            "coloration_list": coloration_list,
+            "responsables_recent": responsables,
+            "stats": stats,
+            "BON_POST_CHOICES_CHOICES": ResponsableAcheteur._meta.get_field('poste').choices,
+        }
+        
+        return render(
+            request,
+            "main/root/acheteur/responsable/dash_root_manage_acheteur_responsable.html",
+            context,
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur dans dash_root_manage_acheteur_responsable: {e}")
+        messages.error(request, "Une erreur est survenue lors du chargement des responsables.")
+        return redirect('dash_root_manage_acheteur', acheteur_id=acheteur_id)
+
+
 
 
 @login_required
 def dash_root_manage_acheteur_antecedent(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des antécédents juridiques d'un acheteur
+    """
+    try:
+        # Récupérer l'acheteur avec relations optimisées
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise',
+                'forme_juridique',
+                'categorie_entreprise'
+            ),
+            id=acheteur_id
+        )
 
-    user = request.user
+        # Récupérer les listes pour les formulaires
+        coloration_list = CouleurCommentaire.objects.all().order_by('couleur')
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+        # Récupérer les antécédents récents
+        antecedents_recent = AntecedantsJuridique.objects.filter(
+            acheteur=acheteur
+        ).select_related('couleur_commentaire').order_by('-created_at')[:5]
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+        # Statistiques
+        # views.py - Correction des stats
+        stats = {
+            'total': AntecedantsJuridique.objects.filter(acheteur=acheteur).count(),
+            'avec_faillite': AntecedantsJuridique.objects.filter(
+                acheteur=acheteur
+            ).exclude(
+                Q(dossier_faillite__isnull=True) | Q(dossier_faillite='')
+            ).count(),
+            'avec_jugement': AntecedantsJuridique.objects.filter(
+                acheteur=acheteur
+            ).exclude(
+                Q(jugement_cour__isnull=True) | Q(jugement_cour='')
+            ).count(),
+            'avec_redressement': AntecedantsJuridique.objects.filter(
+                acheteur=acheteur
+            ).exclude(
+                Q(antecedant_redressement__isnull=True) | Q(antecedant_redressement='')
+            ).count(),
+            'avec_commentaire': AntecedantsJuridique.objects.filter(
+                acheteur=acheteur
+            ).exclude(
+                Q(commentaire__isnull=True) | Q(commentaire='')
+            ).count(),
+        }
 
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
+        # Génération des tokens JWT
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
 
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "coloration_list": coloration_list,
-    }
-    return render(
-        request,
-        "main/root/acheteur/antecedent/dash_root_manage_acheteur_antecedent.html",
-        context,
-    )
+        # Préparer les données pour JavaScript
+        acheteur_data = {
+            'id': acheteur.id,
+            'nom': acheteur.nom or 'Non spécifié',
+            'sigle': acheteur.sigle or '',
+            'code': acheteur.code or 'N/A',
+            'activite_principale': acheteur.activite_principale or 'Non spécifié',
+            'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
+            'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        }
 
+        context = {
+            "acheteur_active": "active",
+            "user": request.user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "acheteur_json": json.dumps(acheteur_data),
+            "id_acheteur": acheteur_id,
+            "acheteur": acheteur,
+            "coloration_list": coloration_list,
+            "antecedents_recent": antecedents_recent,
+            "stats": stats,
+        }
+        
+        return render(
+            request,
+            "main/root/acheteur/antecedent/dash_root_manage_acheteur_antecedent.html",
+            context,
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur dans dash_root_manage_acheteur_antecedent: {e}")
+        messages.error(request, "Une erreur est survenue lors du chargement des antécédents.")
+        return redirect('dash_root_manage_acheteur', acheteur_id=acheteur_id)
+
+
+
+# views/main/risk_views.py
 
 @login_required
 def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des risques unique d'un acheteur
+    Un acheteur ne peut avoir qu'une seule gestion des risques
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les colorations
+    # Récupérer la gestion des risques existante (une seule)
+    gestion_risque = RiskManagment.objects.filter(acheteur=acheteur).first()
+    
+    # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si une gestion des risques existe, préparer ses données
+    gestion_risque_json = None
+    if gestion_risque:
+        gestion_risque_data = {
+            'id': gestion_risque.id,
+            'professionalisme': gestion_risque.professionalisme or '',
+            'organisation': gestion_risque.organisation or '',
+            'turn_over': gestion_risque.turn_over or '',
+            'greve': gestion_risque.greve or '',
+            'degradation_qualite': gestion_risque.degradation_qualite or '',
+            'non_respect_condition': gestion_risque.non_respect_condition or '',
+            'couleur_commentaire': gestion_risque.couleur_commentaire.id if gestion_risque.couleur_commentaire else None,
+            'commentaire': gestion_risque.commentaire or '',
+        }
+        gestion_risque_json = json.dumps(gestion_risque_data, default=str)
+        
+    # Configuration des champs pour le template
+    fields = [
+        {
+            'id': 'professionalisme',
+            'name': 'professionalisme',
+            'label': 'Professionnalisme',
+            'icon': 'fa-user-tie',
+            'description': 'Évaluation du professionnalisme de l\'entreprise'
+        },
+        {
+            'id': 'organisation',
+            'name': 'organisation',
+            'label': 'Organisation',
+            'icon': 'fa-sitemap',
+            'description': 'Évaluation de l\'organisation interne'
+        },
+        {
+            'id': 'turn_over',
+            'name': 'turn_over',
+            'label': 'Non départ des employés',
+            'icon': 'fa-user-friends',
+            'description': 'Stabilité du personnel'
+        },
+        {
+            'id': 'greve',
+            'name': 'greve',
+            'label': 'Non grève',
+            'icon': 'fa-hand-paper',
+            'description': 'Absence de mouvements sociaux'
+        },
+        {
+            'id': 'degradation_qualite',
+            'name': 'degradation_qualite',
+            'label': 'Non dégradation de la qualité',
+            'icon': 'fa-chart-line',
+            'description': 'Maintien de la qualité du travail'
+        },
+        {
+            'id': 'non_respect_condition',
+            'name': 'non_respect_condition',
+            'label': 'Respect des Employés',
+            'icon': 'fa-handshake',
+            'description': 'Respect des conditions de travail'
+        }
+    ]
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "gestion_risque_json": gestion_risque_json or 'null',
+        "acheteur": acheteur,
+        "gestion_risque": gestion_risque,
+        "id_acheteur": acheteur_id,
         "coloration_list": coloration_list,
+        "fields": fields,
     }
     return render(
         request,
         "main/root/acheteur/gestion/dash_root_manage_acheteur_gestion_risque.html",
         context,
     )
+
 
 
 
@@ -2008,40 +2218,97 @@ def dash_root_manage_acheteur_emailling_test(request, acheteur_id):
 
 
 
+# views/main/conseil_views.py
+
 @login_required
 def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des membres du conseil d'administration
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les avis commerciaux
+    # Récupérer tous les postes pour les listes déroulantes
     poste_list = PosteEntreprise.objects.all()
-
-    # Récupérer tous les colorations
+    
+    # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Statistiques
+    stats = {
+        'total': ConseilAdministration.objects.filter(acheteur=acheteur).count(),
+        'avec_adresse': ConseilAdministration.objects.filter(
+            acheteur=acheteur
+        ).exclude(
+            Q(numero_adresse='') | Q(rue_adresse='')
+        ).count(),
+        'avec_commentaire': ConseilAdministration.objects.filter(
+            acheteur=acheteur
+        ).exclude(commentaire='').count(),
+    }
+    
+    # Membres récents
+    membres_recent = ConseilAdministration.objects.filter(
+        acheteur=acheteur
+    ).select_related(
+        'fonction_dans_le_conseil_ref', 
+        'couleur_commentaire'
+    ).order_by('-updated_at')[:4]
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "acheteur": acheteur,
         "poste_list": poste_list,
         "coloration_list": coloration_list,
+        "stats": stats,
+        "membres_recent": membres_recent,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
         "main/root/acheteur/conseil/dash_root_manage_acheteur_membre_conseil.html",
         context,
     )
+
 
 
 @login_required
@@ -2114,27 +2381,83 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion de l'opinion de crédit unique d'un acheteur
+    Un acheteur ne peut avoir qu'une seule opinion de crédit
+    """
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les colorations
+    # Récupérer l'opinion existante (une seule)
+    opinion = OpinionCreditAcremac.objects.filter(acheteur=acheteur).first()
+    
+    # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si une opinion existe, préparer ses données
+    opinion_json = None
+    if opinion:
+        opinion_data = {
+            'id': opinion.id,
+            'risque_de_defaut': opinion.risque_de_defaut or 0,
+            'risque_de_concentration_credit': opinion.risque_de_concentration_credit or 0,
+            'risque_de_reputation': opinion.risque_de_reputation or 0,
+            'risque_pays': opinion.risque_pays or 0,
+            'risque_de_taux_dinteret': opinion.risque_de_taux_dinteret or 0,
+            'risque_de_liquidite': opinion.risque_de_liquidite or 0,
+            'risque_eleve': opinion.risque_eleve or 0,
+            'risque_moyen': opinion.risque_moyen or 0,
+            'risque_faible': opinion.risque_faible or 0,
+            'montant_credit_maximum': str(opinion.montant_credit_maximum) if opinion.montant_credit_maximum else '',
+            'couleur_commentaire': opinion.couleur_commentaire.id if opinion.couleur_commentaire else None,
+            'commentaire': opinion.commentaire or '',
+        }
+        opinion_json = json.dumps(opinion_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "opinion_json": opinion_json or 'null',
+        "acheteur": acheteur,
+        "opinion": opinion,
+        "id_acheteur": acheteur_id,
         "coloration_list": coloration_list,
     }
     return render(

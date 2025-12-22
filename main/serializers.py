@@ -1611,55 +1611,412 @@ class EditTendanceSerializer(serializers.ModelSerializer):
 
 
 
+class CategorieEntrepriseMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategorieEntreprise
+        fields = ['id', 'libelle', 'code']
 
-class ResponsableAcheteurSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()
-    poste_ref = PosteEntrepriseSerializer()
-    couleur_commentaire = CouleurCommentaireSerializer()
+class FormeJuridiqueMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormeJuridique
+        fields = ['id', 'libelle', 'code']
 
+class StatutEntrepriseMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatutEntreprise
+        fields = ['id', 'libelle', 'code']
+
+class PaysMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pays
+        fields = ['id', 'nom', 'code']
+
+class ProvinceMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Province
+        fields = ['id', 'nom', 'code']
+
+class VilleMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ville
+        fields = ['id', 'nom', 'code']
+
+class CouleurCommentaireMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CouleurCommentaire
+        fields = ['id', 'couleur', 'code']
+
+class AcheteurMinimalSerializer(serializers.ModelSerializer):
+    """
+    Serializer minimal pour les acheteurs
+    Utilisé dans les listes et relations
+    """
+    categorie_entreprise = CategorieEntrepriseMinimalSerializer(read_only=True)
+    forme_juridique = FormeJuridiqueMinimalSerializer(read_only=True)
+    statut_entreprise = StatutEntrepriseMinimalSerializer(read_only=True)
+    pays = PaysMinimalSerializer(read_only=True)
+    province = ProvinceMinimalSerializer(read_only=True)
+    ville = VilleMinimalSerializer(read_only=True)
+    couleur_commentaire = CouleurCommentaireMinimalSerializer(read_only=True)
+    
+    # Champs calculés
+    date_creation_formatted = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            'id',
+            'code',
+            'nom',
+            'sigle',
+            'activite_principale',
+            'date_creation',
+            'date_creation_formatted',
+            'categorie_entreprise',
+            'forme_juridique',
+            'statut_entreprise',
+            'email',
+            'site_internet',
+            'pays',
+            'province',
+            'ville',
+            'couleur_commentaire',
+            'created_at',
+            'created_at_formatted',
+            'updated_at',
+            'updated_at_formatted'
+        ]
+        read_only_fields = fields
+    
+    def get_date_creation_formatted(self, obj):
+        if obj.date_creation:
+            return obj.date_creation.strftime('%d/%m/%Y')
+        return None
+    
+    def get_created_at_formatted(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime('%d/%m/%Y %H:%M')
+        return None
+    
+    def get_updated_at_formatted(self, obj):
+        if obj.updated_at:
+            return obj.updated_at.strftime('%d/%m/%Y %H:%M')
+        return None
+
+
+class AcheteurDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer détaillé pour les acheteurs
+    Inclut toutes les informations
+    """
+    categorie_entreprise = CategorieEntrepriseMinimalSerializer(read_only=True)
+    forme_juridique = FormeJuridiqueMinimalSerializer(read_only=True)
+    statut_entreprise = StatutEntrepriseMinimalSerializer(read_only=True)
+    pays = PaysMinimalSerializer(read_only=True)
+    province = ProvinceMinimalSerializer(read_only=True)
+    ville = VilleMinimalSerializer(read_only=True)
+    couleur_commentaire = CouleurCommentaireMinimalSerializer(read_only=True)
+    
+    # Pour l'édition, on peut aussi permettre l'écriture via PrimaryKeyRelatedField
+    categorie_entreprise_id = serializers.PrimaryKeyRelatedField(
+        queryset=CategorieEntreprise.objects.all(),
+        source='categorie_entreprise',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    forme_juridique_id = serializers.PrimaryKeyRelatedField(
+        queryset=FormeJuridique.objects.all(),
+        source='forme_juridique',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    statut_entreprise_id = serializers.PrimaryKeyRelatedField(
+        queryset=StatutEntreprise.objects.all(),
+        source='statut_entreprise',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    pays_id = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        source='pays',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    province_id = serializers.PrimaryKeyRelatedField(
+        queryset=Province.objects.all(),
+        source='province',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    ville_id = serializers.PrimaryKeyRelatedField(
+        queryset=Ville.objects.all(),
+        source='ville',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    couleur_commentaire_id = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        source='couleur_commentaire',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            'id',
+            'code',
+            'nom',
+            'sigle',
+            'activite_principale',
+            'description',
+            'date_creation',
+            'categorie_entreprise',
+            'categorie_entreprise_id',
+            'forme_juridique',
+            'forme_juridique_id',
+            'statut_entreprise',
+            'statut_entreprise_id',
+            'email',
+            'site_internet',
+            'fax',
+            'boite_postale',
+            'code_postal',
+            'numero_adresse',
+            'rue_adresse',
+            'pays',
+            'pays_id',
+            'province',
+            'province_id',
+            'ville',
+            'ville_id',
+            'couleur_commentaire',
+            'couleur_commentaire_id',
+            'commentaire',
+            'created_at',
+            'updated_at'
+        ]
+    
+    def to_internal_value(self, data):
+        """
+        Convertit les IDs en entiers pour les relations
+        """
+        if 'categorie_entreprise' in data and isinstance(data['categorie_entreprise'], str):
+            data['categorie_entreprise'] = int(data['categorie_entreprise']) if data['categorie_entreprise'] else None
+        if 'forme_juridique' in data and isinstance(data['forme_juridique'], str):
+            data['forme_juridique'] = int(data['forme_juridique']) if data['forme_juridique'] else None
+        if 'statut_entreprise' in data and isinstance(data['statut_entreprise'], str):
+            data['statut_entreprise'] = int(data['statut_entreprise']) if data['statut_entreprise'] else None
+        if 'pays' in data and isinstance(data['pays'], str):
+            data['pays'] = int(data['pays']) if data['pays'] else None
+        if 'province' in data and isinstance(data['province'], str):
+            data['province'] = int(data['province']) if data['province'] else None
+        if 'ville' in data and isinstance(data['ville'], str):
+            data['ville'] = int(data['ville']) if data['ville'] else None
+        if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
+            data['couleur_commentaire'] = int(data['couleur_commentaire']) if data['couleur_commentaire'] else None
+        
+        return super().to_internal_value(data)
+    
+    def validate(self, data):
+        """
+        Validation personnalisée
+        """
+        # Validation de l'email
+        if 'email' in data and data['email']:
+            from django.core.validators import validate_email
+            try:
+                validate_email(data['email'])
+            except ValidationError:
+                raise serializers.ValidationError({
+                    'email': 'Format d\'email invalide'
+                })
+        
+        # Validation de la date
+        if 'date_creation' in data and data['date_creation']:
+            from datetime import datetime
+            if data['date_creation'] > datetime.now().date():
+                raise serializers.ValidationError({
+                    'date_creation': 'La date de création ne peut pas être dans le futur'
+                })
+        
+        return data
+
+class AcheteurListSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour les listes d'acheteurs
+    Optimisé pour les performances
+    """
+    statut_entreprise = serializers.StringRelatedField()
+    categorie_entreprise = serializers.StringRelatedField()
+    pays = serializers.StringRelatedField()
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            'id',
+            'code',
+            'nom',
+            'sigle',
+            'activite_principale',
+            'statut_entreprise',
+            'categorie_entreprise',
+            'pays',
+            'created_at'
+        ]
+
+class PosteEntrepriseMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PosteEntreprise
+        fields = ['id', 'libelle', 'code']
+
+class CouleurCommentaireMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CouleurCommentaire
+        fields = ['id', 'couleur', 'code']
+
+class ResponsableAcheteurListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des responsables"""
+    poste_ref = PosteEntrepriseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    created_at_formatted = serializers.SerializerMethodField()
+    
     class Meta:
         model = ResponsableAcheteur
-        fields = "__all__"
-
+        fields = [
+            'id',
+            'nom',
+            'prenom',
+            'sexe',
+            'poste',
+            'poste_ref',
+            'nationalite',
+            'couleur_commentaire',
+            'commentaire_preview',
+            'created_at',
+            'created_at_formatted'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
 
 class GetResponsableAcheteurSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour un responsable"""
+    acheteur = AcheteurMinimalSerializer()
+    poste_ref = PosteEntrepriseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    
     class Meta:
         model = ResponsableAcheteur
-        fields = "__all__"
-
+        fields = '__all__'
 
 class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'un responsable"""
+    nom = serializers.CharField(
+        max_length=50,
+        required=True,
+        error_messages={'required': 'Le nom est obligatoire'}
+    )
+    prenom = serializers.CharField(
+        max_length=50,
+        required=True,
+        error_messages={'required': 'Le prénom est obligatoire'}
+    )
+    
     class Meta:
         model = ResponsableAcheteur
         fields = [
-            "id",
-            "acheteur",
-            "nom",
-            "prenom",
-            "sexe",
-            "poste",
-            "poste_ref",
-            "nationalite",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'nom',
+            'prenom',
+            'sexe',
+            'poste',
+            'poste_ref',
+            'nationalite',
+            'couleur_commentaire',
+            'commentaire'
         ]
-
+    
+    def validate(self, data):
+        # Validation personnalisée
+        if data.get('sexe') not in ['Masculin', 'Feminin']:
+            raise serializers.ValidationError({
+                'sexe': 'Le sexe doit être "Masculin" ou "Feminin"'
+            })
+        
+        # Validation de la nationalité
+        nationalite = data.get('nationalite', '').strip()
+        if len(nationalite) < 2:
+            raise serializers.ValidationError({
+                'nationalite': 'La nationalité doit contenir au moins 2 caractères'
+            })
+        
+        return data
 
 class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'un responsable"""
+    poste_ref = serializers.PrimaryKeyRelatedField(
+        queryset=PosteEntreprise.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = ResponsableAcheteur
         fields = [
-            "id",
-            "acheteur",
-            "nom",
-            "prenom",
-            "sexe",
-            "poste",
-            "poste_ref",
-            "nationalite",
-            "couleur_commentaire",
-            "commentaire",
+            'nom',
+            'prenom',
+            'sexe',
+            'poste',
+            'poste_ref',
+            'nationalite',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def to_internal_value(self, data):
+        # Gérer les IDs pour les relations
+        if 'poste_ref' in data and isinstance(data['poste_ref'], str):
+            if data['poste_ref']:
+                try:
+                    data['poste_ref'] = int(data['poste_ref'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'poste_ref': 'ID invalide'
+                    })
+            else:
+                data['poste_ref'] = None
+        
+        if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
+            if data['couleur_commentaire']:
+                try:
+                    data['couleur_commentaire'] = int(data['couleur_commentaire'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'couleur_commentaire': 'ID invalide'
+                    })
+            else:
+                data['couleur_commentaire'] = None
+        
+        return super().to_internal_value(data)
+
+
+
+
 
 
 class AntecedantsJuridiqueSerializer(serializers.ModelSerializer):
@@ -1671,40 +2028,132 @@ class AntecedantsJuridiqueSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+class AntecedantJuridiqueListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des antécédents"""
+    couleur_commentaire = serializers.StringRelatedField(source='couleur_commentaire.couleur', read_only=True)
+    created_at_formatted = serializers.SerializerMethodField()
+    has_faillite = serializers.SerializerMethodField()
+    has_jugement = serializers.SerializerMethodField()
+    has_redressement = serializers.SerializerMethodField()
+    has_autre = serializers.SerializerMethodField()
+    
     class Meta:
         model = AntecedantsJuridique
-        fields = "__all__"
+        fields = [
+            'id',
+            'dossier_faillite',
+            'jugement_cour',
+            'antecedant_redressement',
+            'autre',
+            'couleur_commentaire',
+            'commentaire_preview',
+            'has_faillite',
+            'has_jugement',
+            'has_redressement',
+            'has_autre',
+            'created_at',
+            'created_at_formatted'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
+    
+    def get_has_faillite(self, obj):
+        return bool(obj.dossier_faillite and obj.dossier_faillite.strip())
+    
+    def get_has_jugement(self, obj):
+        return bool(obj.jugement_cour and obj.jugement_cour.strip())
+    
+    def get_has_redressement(self, obj):
+        return bool(obj.antecedant_redressement and obj.antecedant_redressement.strip())
+    
+    def get_has_autre(self, obj):
+        return bool(obj.autre and obj.autre.strip())
+
+
+class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour un antécédent"""
+    acheteur = AcheteurMinimalSerializer(read_only=True)
+    couleur_commentaire = serializers.StringRelatedField(source='couleur_commentaire.couleur', read_only=True)
+    couleur_commentaire_id = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        source='couleur_commentaire',
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    
+    class Meta:
+        model = AntecedantsJuridique
+        fields = '__all__'
+        extra_fields = ['couleur_commentaire_id']
 
 
 class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'un antécédent"""
+    
     class Meta:
         model = AntecedantsJuridique
         fields = [
-            "id",
-            "acheteur",
-            "dossier_faillite",
-            "jugement_cour",
-            "antecedant_redressement",
-            "autre",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'dossier_faillite',
+            'jugement_cour',
+            'antecedant_redressement',
+            'autre',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate(self, data):
+        # Vérifier qu'au moins un champ est rempli
+        fields_to_check = ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'autre']
+        if not any(data.get(field) for field in fields_to_check):
+            raise serializers.ValidationError({
+                'non_field_errors': 'Au moins un champ (dossier de faillite, jugement, redressement ou autre) doit être rempli.'
+            })
+        
+        return data
 
 
 class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'un antécédent"""
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = AntecedantsJuridique
         fields = [
-            "id",
-            "acheteur",
-            "dossier_faillite",
-            "jugement_cour",
-            "antecedant_redressement",
-            "autre",
-            "couleur_commentaire",
-            "commentaire",
+            'dossier_faillite',
+            'jugement_cour',
+            'antecedant_redressement',
+            'autre',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def to_internal_value(self, data):
+        # Gérer les IDs pour les relations
+        if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
+            if data['couleur_commentaire']:
+                try:
+                    data['couleur_commentaire'] = int(data['couleur_commentaire'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'couleur_commentaire': 'ID invalide'
+                    })
+            else:
+                data['couleur_commentaire'] = None
+        
+        return super().to_internal_value(data)
+
+
+
+
+
+
 
 
 class RiskManagmentSerializer(serializers.ModelSerializer):
@@ -1756,6 +2205,11 @@ class EditRiskManagmentSerializer(serializers.ModelSerializer):
         ]
 
 
+
+
+
+
+
 class ConseilAdministrationSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     fonction_dans_le_conseil_ref = PosteEntrepriseSerializer()
@@ -1766,44 +2220,173 @@ class ConseilAdministrationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GetConseilAdministrationSerializer(serializers.ModelSerializer):
+class ConseilAdministrationListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des membres du conseil"""
+    fonction_dans_le_conseil_ref = PosteEntrepriseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    created_at_formatted = serializers.SerializerMethodField()
+    adresse_complete = serializers.SerializerMethodField()
+    
     class Meta:
         model = ConseilAdministration
-        fields = "__all__"
+        fields = [
+            'id',
+            'nom',
+            'fonction_dans_le_conseil',
+            'fonction_dans_le_conseil_ref',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'adresse_complete',
+            'couleur_commentaire',
+            'commentaire',
+            'created_at',
+            'created_at_formatted'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
+    
+    def get_adresse_complete(self, obj):
+        parts = []
+        if obj.numero_adresse:
+            parts.append(obj.numero_adresse)
+        if obj.rue_adresse:
+            parts.append(obj.rue_adresse)
+        if obj.code_postale_adresse:
+            parts.append(obj.code_postale_adresse)
+        return ', '.join(parts) if parts else 'Non spécifiée'
+
+
+class GetConseilAdministrationSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour un membre du conseil"""
+    acheteur = AcheteurMinimalSerializer()
+    fonction_dans_le_conseil_ref = PosteEntrepriseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    
+    class Meta:
+        model = ConseilAdministration
+        fields = '__all__'
 
 
 class AddConseilAdministrationSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'un membre du conseil"""
+    nom = serializers.CharField(
+        max_length=100,
+        required=True,
+        error_messages={'required': 'Le nom est obligatoire'}
+    )
+    
+    # Remplacer le champ par défaut
+    fonction_dans_le_conseil = serializers.CharField(required=False)
+    fonction_dans_le_conseil_ref = serializers.PrimaryKeyRelatedField(
+        queryset=PosteEntreprise.objects.all(),
+        required=False,
+        allow_null=True,
+        error_messages={
+            'does_not_exist': 'La fonction sélectionnée n\'existe pas.',
+            'incorrect_type': 'Veuillez fournir un ID numérique valide pour la fonction (ex: 16).'
+        }
+    )
+    
     class Meta:
         model = ConseilAdministration
         fields = [
-            "id",
-            "acheteur",
-            "nom",
-            "fonction_dans_le_conseil",
-            "fonction_dans_le_conseil_ref",
-            "numero_adresse",
-            "rue_adresse",
-            "code_postale_adresse",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'nom',
+            'fonction_dans_le_conseil',
+            'fonction_dans_le_conseil_ref',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate(self, data):
+        # Validation de l'adresse
+        if data.get('numero_adresse') and len(data['numero_adresse']) > 50:
+            raise serializers.ValidationError({
+                'numero_adresse': 'Le numéro d\'adresse ne peut pas dépasser 50 caractères'
+            })
+        
+        if data.get('rue_adresse') and len(data['rue_adresse']) > 200:
+            raise serializers.ValidationError({
+                'rue_adresse': 'La rue ne peut pas dépasser 200 caractères'
+            })
+        
+        if data.get('code_postale_adresse') and len(data['code_postale_adresse']) > 20:
+            raise serializers.ValidationError({
+                'code_postale_adresse': 'Le code postal ne peut pas dépasser 20 caractères'
+            })
+        
+        return data
 
 
 class EditConseilAdministrationSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'un membre du conseil"""
+    
+    # Remplacer le champ par défaut
+    fonction_dans_le_conseil = serializers.CharField(required=False)
+    fonction_dans_le_conseil_ref = serializers.PrimaryKeyRelatedField(
+        queryset=PosteEntreprise.objects.all(),
+        required=False,
+        allow_null=True,
+        error_messages={
+            'does_not_exist': 'La fonction sélectionnée n\'existe pas.',
+            'incorrect_type': 'Veuillez fournir un ID numérique valide pour la fonction (ex: 16).'
+        }
+    )
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = ConseilAdministration
         fields = [
-            "id",
-            "acheteur",
-            "nom",
-            "fonction_dans_le_conseil",
-            "fonction_dans_le_conseil_ref",
-            "numero_adresse",
-            "rue_adresse",
-            "code_postale_adresse",
-            "couleur_commentaire",
-            "commentaire",
+            'nom',
+            'fonction_dans_le_conseil',
+            'fonction_dans_le_conseil_ref',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def to_internal_value(self, data):
+        # Gérer les IDs pour les relations
+        if 'fonction_dans_le_conseil_ref' in data and isinstance(data['fonction_dans_le_conseil_ref'], str):
+            if data['fonction_dans_le_conseil_ref']:
+                try:
+                    data['fonction_dans_le_conseil_ref'] = int(data['fonction_dans_le_conseil_ref'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'fonction_dans_le_conseil_ref': 'ID invalide'
+                    })
+            else:
+                data['fonction_dans_le_conseil_ref'] = None
+        
+        if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
+            if data['couleur_commentaire']:
+                try:
+                    data['couleur_commentaire'] = int(data['couleur_commentaire'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'couleur_commentaire': 'ID invalide'
+                    })
+            else:
+                data['couleur_commentaire'] = None
+        
+        return super().to_internal_value(data)
+
+
+
+
+
+
 
 
 class CompositionCapitalSocialSerializer(serializers.ModelSerializer):
