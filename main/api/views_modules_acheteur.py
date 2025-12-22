@@ -208,14 +208,17 @@ class AcheteurResumeView(APIView):
         # Vérifier si un résumé existe déjà
         try:
             resume = Resume.objects.get(acheteur=acheteur)
+            print(resume)
             serializer = EditResumeSerializer(resume, data=request.data, partial=True)
             action = "mis à jour"
         except Resume.DoesNotExist:
             # Créez une copie modifiable de request.data
             data = request.data.copy()
             data["acheteur"] = acheteur_id
+            print(data)
 
             serializer = AddResumeSerializer(data=data)
+            print(serializer)
             action = "créé"
         
         if serializer.is_valid():
