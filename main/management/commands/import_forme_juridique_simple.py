@@ -307,12 +307,15 @@ class CommandSimple(BaseCommand):
     help = 'Simple import for Forme juridique (always updates or creates)'
     
     def handle(self, *args, **options):
+        # management/commands/import_forme_juridique.py
+        # ...
+        # TOUTES les formes juridiques complètes (y compris les nouvelles)
         formes_juridiques = [
             # Format: (code, libelle, poids, active, description)
             ("ADPU", "Administration publique", 0.2, True, None),
             ("ASS", "Association", 0.1, True, None),
             ("COOP", "Coopérative", 0.75, True, None),
-            ("EI", "Entreprise Individuelle", 0.1, True, None),
+            ("EI", "Entreprise Individuelle", 0.5, True, None),  # Poids mis à 0.5
             ("EIRL", "Entreprise individuelle à responsabilité limitée", 0.2, True, None),
             ("FEECC", "Fiducie exploitant une entreprise à caractère commercial", 0.25, True, None),
             ("GIE", "Groupement d'intérêt économique", 0.3, True, None),
@@ -327,7 +330,7 @@ class CommandSimple(BaseCommand):
             ("SACA", "Société anonyme avec conseil d'administration", 1.0, True, None),
             ("SAP", "Société anonyme pluripersonnelle", 1.0, True, None),
             ("SARL", "Société à responsabilité limitée pluripersonnelle", 0.5, True, None),
-            ("SARL U", "Société à responsabilité limitée unipersonnelle", 0.5, True, None),
+            ("SARLU", "Société à responsabilité limitée unipersonnelle", 0.5, True, None),  # Code modifié pour éviter le doublon avec "SARL U"
             ("SAS", "Société par action simplifiée pluripersonnelle", 0.5, True, None),
             ("SASU", "Société par action simplifiée unipersonnelle", 0.5, True, None),
             ("SAU", "Société anonyme unipersonnelle", 1.0, True, None),
@@ -342,7 +345,24 @@ class CommandSimple(BaseCommand):
             ("SPRL", "Société privée à responsabilité limitée", 0.5, True, None),
             ("SSPJ", "Société sans personnalité juridique", 0.0, True, None),
             ("SYDCO", "Syndicat de copropriété", 0.1, True, None),
+            # NOUVELLES FORMULES JURIDIQUES (poids = 0.5 par défaut)
+            ("EI_FULL", "Entreprise Individuelle (EI)", 0.5, True, None),
+            ("SARL_FULL", "Société à Responsabilité Limitée (SARL)", 0.5, True, None),
+            ("SARLU_FULL", "Société à Responsabilité Limitée Unipersonnelle (SARL U)", 0.5, True, None),
+            ("SCS_FULL", "Société en Commandite Simple (SCS)", 0.5, True, None),
+            ("SAS_FULL", "Société par Actions Simplifiée (SAS)", 0.5, True, None),
+            ("SNC_FULL", "Société en Nom Collectif (SNC)", 0.5, True, None),
+            ("SP_FULL", "Société en Participation (SP)", 0.5, True, None),
+            ("GIE_FULL", "Groupement d'Intérêt Economique (GIE)", 0.5, True, None),
+            ("ASS_FULL", "Association", 0.5, True, None),
+            ("COOP_FULL", "Coopérative de Groupement", 0.5, True, None),
+            ("SA_FULL", "Société Anonyme (SA)", 0.5, True, None),
+            ("EPIC", "Etablissement Public à Caractère Industriel et Commercial (EPIC)", 0.5, True, None),
+            ("EPCC", "Etablissement Public à Caractère Commercial (EPCC)", 0.5, True, None),
+            ("SUCC", "Succursale", 0.5, True, None),
+            ("FIL", "Filiale", 0.5, True, None),
         ]
+
         
         self.stdout.write(f"Importing {len(formes_juridiques)} Forme juridique entries...")
         

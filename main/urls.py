@@ -2395,6 +2395,12 @@ urlpatterns = [
         name="delete-resume-acheteur",
     ),
     path(
+        "api/acheteur/<int:acheteur_id>/resume/",
+        AcheteurResumeView.as_view(),
+        name="acheteur-resume"
+    ),
+    
+    path(
         "api/acheteur/<int:acheteur_id>/liste-des-evaluations-de-risque/",
         ListAcheteurRiskRatingView.as_view(),
         name="list-risk-rating-acheteur",
@@ -2419,6 +2425,14 @@ urlpatterns = [
         DeleteAcheteurRiskRatingView.as_view(),
         name="delete-risk-rating-acheteur",
     ),
+    path(
+        "api/acheteur/<int:acheteur_id>/evaluation-risque/",
+        AcheteurRiskRatingView.as_view(),
+        name="acheteur-evaluation-risque"
+    ),
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-donnees-enregistrees/",
         ListAcheteurDataSaveView.as_view(),
@@ -2445,6 +2459,16 @@ urlpatterns = [
         name="delete-donnee-enregistree-acheteur",
     ),
     path(
+        "api/acheteur/<int:acheteur_id>/donnees-enregistrement/",
+        AcheteurDonneesEnregistrementView.as_view(),
+        name="acheteur-donnees-enregistrement"
+    ),
+    
+    
+    
+    
+    
+    path(
         "api/acheteur/<int:acheteur_id>/liste-des-tendances/",
         ListAcheteurTendanceView.as_view(),
         name="list-tendance-acheteur",
@@ -2469,6 +2493,14 @@ urlpatterns = [
         DeleteAcheteurTendanceView.as_view(),
         name="delete-tendance-acheteur",
     ),
+    path(
+        "api/acheteur/<int:acheteur_id>/tendance/",
+        AcheteurTendanceView.as_view(),
+        name="acheteur-tendance",
+    ),
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-responsables/",
         ListAcheteurResponsableView.as_view(),
@@ -2619,6 +2651,9 @@ urlpatterns = [
         DeleteAcheteurActionnaireView.as_view(),
         name="delete-actionnaire-acheteur",
     ),
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-opinions-acremac/",
         ListAcheteurOpinionAcremacView.as_view(),
@@ -2644,6 +2679,12 @@ urlpatterns = [
         DeleteAcheteurOpinionAcremacView.as_view(),
         name="delete-opinion-acremac-acheteur",
     ),
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-filiales/",
         ListAcheteurFilialeView.as_view(),

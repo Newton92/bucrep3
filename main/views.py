@@ -426,7 +426,7 @@ def dash_root(request):
 
     context = {
         "dash_active": "active",
-        "user": request.user,
+        "user": user,
         "refresh": refresh_token,
         "access": access_token,
     }
@@ -1214,6 +1214,11 @@ def dash_root_edit_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur(request, acheteur_id):
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
     user = request.user
 
     # Génération des tokens d'accès
@@ -1267,39 +1272,99 @@ def dash_root_manage_acheteur(request, acheteur_id):
 
 
 
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
+from rest_framework_simplejwt.tokens import RefreshToken
+from main.models import Acheteur, Devise, CouleurCommentaire
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def dash_root_manage_acheteur_resume(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les devises
-    devise_list = Devise.objects.all()
-
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
-
-    # Passer les postes du fichier constantes.py ici
-    bons_postes_list = BON_POST_CHOICES_CHOICES
-
+    """
+    Vue pour la gestion des résumés financiers d'un acheteur
+    Un acheteur ne peut avoir qu'un seul résumé
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+    
+    # ⭐⭐ AJOUTEZ CETTE LIGNE : Récupérer le résumé existant ⭐⭐
+    resume = Resume.objects.filter(acheteur=acheteur).first()
+    
+    # Vérifier les permissions
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Récupération des données avec les champs corrects
+    devise_list = Devise.objects.all().values('id', 'nom', 'code', 'symbole')
+    
+    # CORRECTION ICI : Retirer 'description' qui n'existe pas
+    coloration_list = CouleurCommentaire.objects.all().values('id', 'couleur', 'code')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+        'description': acheteur.description or 'Aucune description disponible',
+        'email': acheteur.email or 'Non spécifié',
+        'fax': acheteur.fax or 'Non spécifié',
+        'boite_postale': acheteur.boite_postale or 'Non spécifié',
+        'site_internet': acheteur.site_internet or 'Non spécifié',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+        'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+    
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "devise_list": devise_list,
-        "coloration_list": coloration_list,
-        "bons_postes_list": bons_postes_list,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,  # JSON pour JavaScript
+        "acheteur": acheteur,  # Objet pour le template si besoin
+        "resume": resume,  # ⭐⭐ AJOUTEZ CECI AU CONTEXTE ⭐⭐
+        "id_acheteur": acheteur_id,
+        "devise_list": list(devise_list),
+        "coloration_list": list(coloration_list),
+        "bons_postes_list": BON_POST_CHOICES_CHOICES,
     }
+    
     return render(
         request,
         "main/root/acheteur/resume/dash_root_manage_acheteur_resume.html",
@@ -1307,27 +1372,82 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
     )
 
 
+
+
 @login_required
 def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des résumés financiers d'un acheteur
+    Un acheteur ne peut avoir qu'un seul résumé
+    """
     
-    # Recupere l'user connecte
-    user = request.user
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+    # Récupérer l'acheteur
+    acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+    
+    # ⭐ AJOUTER : Récupérer l'évaluation de risque existante ⭐
+    risk_rating = RiskRating.objects.filter(acheteur=acheteur).first()
+    
+    # Vérifier les permissions
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+        'description': acheteur.description or 'Aucune description disponible',
+        'email': acheteur.email or 'Non spécifié',
+        'fax': acheteur.fax or 'Non spécifié',
+        'boite_postale': acheteur.boite_postale or 'Non spécifié',
+        'site_internet': acheteur.site_internet or 'Non spécifié',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+        'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,  # JSON pour JavaScript
+        "acheteur": acheteur,  # ⭐ AJOUTER
+        "risk_rating": risk_rating,  # ⭐ AJOUTER
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -1396,32 +1516,101 @@ def dash_root_manage_acheteur_scoring_with_bilan(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_data_save(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des résumés financiers d'un acheteur
+    Un acheteur ne peut avoir qu'un seul résumé
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    # Récupérer l'acheteur
+    acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+    
+    # ⭐ AJOUTER : Récupérer les donnees existantes ⭐
+    data_save = DonneesEnregistrement.objects.filter(acheteur=acheteur).first()
+    
+    # Vérifier les permissions
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+        'description': acheteur.description or 'Aucune description disponible',
+        'email': acheteur.email or 'Non spécifié',
+        'fax': acheteur.fax or 'Non spécifié',
+        'boite_postale': acheteur.boite_postale or 'Non spécifié',
+        'site_internet': acheteur.site_internet or 'Non spécifié',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+        'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
     # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
 
     # Récupérer tous les statuts d'entreprise
     statut_list = StatutEntreprise.objects.all()
+    statut_list_two = StatutEntreprise.objects.all()
+    statut_list_tree = StatutEntreprise.objects.all()
+    statut_list_four = StatutEntreprise.objects.all()
 
     # Récupérer tous les formes juridiques
     juridique_list = FormeJuridique.objects.all()
+    juridique_list_two = FormeJuridique.objects.all()
+    juridique_list_tree = FormeJuridique.objects.all()
+    juridique_list_four = FormeJuridique.objects.all()
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,  # JSON pour JavaScript
+        "acheteur": acheteur,  # ⭐ AJOUTER
+        "data_save": data_save,  # ⭐ AJOUTER
         "id_acheteur": id_acheteur,
         "statut_list": statut_list,
+        "statut_list_two": statut_list_two,
+        "statut_list_tree": statut_list_tree,
+        "statut_list_four": statut_list_four,
         "juridique_list": juridique_list,
+        "juridique_list_two": juridique_list_two,
+        "juridique_list_tree": juridique_list_tree,
+        "juridique_list_four": juridique_list_four,
     }
     return render(
         request,
@@ -1432,27 +1621,77 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_tendance(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion de la tendance unique d'un acheteur
+    Un acheteur ne peut avoir qu'une seule tendance
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les avis commerciaux
+    # Récupérer la tendance existante (une seule)
+    tendance = Tendance.objects.filter(acheteur=acheteur).first()
+    
+    # Récupérer tous les avis commerciaux pour les listes déroulantes
     commercial_list = ModeleAvisCommercial.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si une tendance existe, préparer ses données
+    tendance_json = None
+    if tendance:
+        tendance_data = {
+            'id': tendance.id,
+            'avis_commercial': tendance.avis_commercial or '',
+            'avis_commercial_ref': tendance.avis_commercial_ref.id if tendance.avis_commercial_ref else None,
+            'presse_media': tendance.presse_media or '',
+            'principaux_concurrent': tendance.principaux_concurrent or '',
+            'commentaire': tendance.commentaire or '',
+        }
+        tendance_json = json.dumps(tendance_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "tendance_json": tendance_json or 'null',
+        "acheteur": acheteur,
+        "tendance": tendance,
+        "id_acheteur": acheteur_id,
         "commercial_list": commercial_list,
     }
     return render(
@@ -1460,6 +1699,8 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
         "main/root/acheteur/tendance/dash_root_manage_acheteur_tendance.html",
         context,
     )
+
+
 
 
 @login_required
@@ -1562,6 +1803,7 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
     )
 
 
+
 @login_required
 def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
     token = request.GET.get("token")
@@ -1597,6 +1839,8 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
         context,
     )
 
+
+
 @login_required
 def dash_root_manage_acheteur_emailling(request, acheteur_id):
     token = request.GET.get("token")
@@ -1629,6 +1873,8 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
         context,
     )
 
+
+
 @login_required
 def dash_root_manage_report_mailing(request):
     token = request.GET.get("token")
@@ -1656,7 +1902,6 @@ def dash_root_manage_report_mailing(request):
         "main/root/report/dash_root_manage_report_mailing.html",
         context,
     )
-
 
 
 
@@ -4766,16 +5011,22 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_backup(request):
-    token = request.GET.get("token")
-    if not token:
-        pass
     user = request.user
-    refresh = RefreshToken.for_user(user)
+
+    # Génération des tokens d'accès
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+    
     context = {
         "acheteurs_active": "active",
         "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "refresh": refresh,
+        "access": access_token,
     }
     return render(
         request,

@@ -1217,7 +1217,7 @@ class AddRiskRatingSerializer(serializers.ModelSerializer):
             "interpretation",
             "analyse",
         ]
-
+        
 
 class EditRiskRatingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -1239,6 +1239,9 @@ class EditRiskRatingSerializer(serializers.ModelSerializer):
             "analyse",
         ]
 
+
+
+# START MODEL RESUME
 
 class ResumeSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
@@ -1322,6 +1325,68 @@ class EditResumeSerializer(serializers.ModelSerializer):
         ]
 
 
+class ResumeSerializer(serializers.ModelSerializer):
+    """Serializer pour les opérations CRUD"""
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    devise_code = serializers.CharField(source='devise.code', read_only=True)
+    couleur_code = serializers.CharField(source='couleur_commentaire.code', read_only=True)
+    couleur_nom = serializers.CharField(source='couleur_commentaire.couleur', read_only=True)
+    
+    class Meta:
+        model = Resume
+        fields = [
+            'id', 'acheteur', 'acheteur_nom',
+            'devise', 'devise_code',
+            'capital_social', 'chiffre_affaire', 'resultat_net',
+            'capitaux_propre', 'nombre_employe', 'date_creation',
+            'couleur_commentaire', 'couleur_code', 'couleur_nom',
+            'commentaire', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'acheteur_nom']
+    
+    def validate(self, data):
+        """Validation globale"""
+        # Vérification cohérence des montants
+        if (data.get('resultat_net') and data.get('chiffre_affaire') and 
+            abs(data['resultat_net']) > abs(data['chiffre_affaire']) * 2):
+            raise serializers.ValidationError({
+                'resultat_net': "Le résultat net semble incohérent par rapport au chiffre d'affaires."
+            })
+        
+        # Vérification de l'unicité
+        if self.instance is None:  # Création
+            if Resume.objects.filter(acheteur=data.get('acheteur')).exists():
+                raise serializers.ValidationError({
+                    'acheteur': "Un résumé existe déjà pour cet acheteur."
+                })
+        
+        return data
+
+
+class ResumeSummarySerializer(serializers.ModelSerializer):
+    """Serializer léger pour l'affichage sommaire"""
+    devise = serializers.CharField(source='devise.code')
+    resultat_net_classe = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Resume
+        fields = [
+            'capital_social', 'chiffre_affaire', 'resultat_net',
+            'resultat_net_classe', 'capitaux_propre', 'nombre_employe',
+            'devise', 'date_creation'
+        ]
+    
+    def get_resultat_net_classe(self, obj):
+        """Classe CSS en fonction du résultat net"""
+        if obj.resultat_net is None:
+            return 'neutral'
+        return 'positive' if obj.resultat_net >= 0 else 'negative'
+
+# END MODEL RESUME
+
+
+
+
 class DonneesEnregistrementSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     forme_juridique_ref = FormeJuridiqueSerializer()
@@ -1341,6 +1406,9 @@ class GetDonneesEnregistrementSerializer(serializers.ModelSerializer):
 
 
 class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
+    # Remplacer le champ par défaut
+    forme_juridique = serializers.CharField(required=False)
+    statut_registre = serializers.CharField(required=False)
     class Meta:
         model = DonneesEnregistrement
         fields = [
@@ -1359,22 +1427,123 @@ class AddDonneesEnregistrementSerializer(serializers.ModelSerializer):
 
 
 class EditDonneesEnregistrementSerializer(serializers.ModelSerializer):
+    forme_juridique = serializers.CharField(required=False)
+    statut_registre = serializers.CharField(required=False)
+    forme_juridique_ref = serializers.PrimaryKeyRelatedField(
+        queryset=FormeJuridique.objects.all(),
+        required=False,
+        allow_null=True,
+        error_messages={
+            'does_not_exist': 'La forme juridique sélectionnée n\'existe pas.',
+            'incorrect_type': 'Veuillez fournir un ID numérique valide pour la forme juridique (ex: 16).'
+        }
+    )
+    statut_registre_ref = serializers.PrimaryKeyRelatedField(
+        queryset=StatutEntreprise.objects.all(),
+        required=False,
+        allow_null=True,
+        error_messages={
+            'does_not_exist': 'Le statut sélectionné n\'existe pas.',
+            'incorrect_type': 'Veuillez fournir un ID numérique valide pour le statut (ex: 26).'
+        }
+    )
 
     class Meta:
         model = DonneesEnregistrement
         fields = [
-            "id",
-            "acheteur",
-            "date_creation",
-            "date_registre",
-            "forme_juridique",
-            "forme_juridique_ref",
-            "numero_registre_commerce",
-            "numero_fiscale",
-            "statut_registre",
-            "statut_registre_ref",
+            "id", "acheteur", "date_creation", "date_registre",
+            "forme_juridique", "forme_juridique_ref",
+            "numero_registre_commerce", "numero_fiscale",
+            "statut_registre", "statut_registre_ref",
             "commentaire",
         ]
+
+    def to_internal_value(self, data):
+        # Créer une copie mutable des données
+        data = data.copy()
+        
+        # Gérer l'inversion des champs
+        # Si forme_juridique contient un ID numérique, le déplacer vers forme_juridique_ref
+        if 'forme_juridique' in data and data['forme_juridique'] and data['forme_juridique'].isdigit():
+            data['forme_juridique_ref'] = data['forme_juridique']
+            # Conserver l'ancienne valeur textuelle dans forme_juridique si nécessaire
+            # ou laisser vide car c'est un champ déprécié
+            if 'forme_juridique_ref' in data and isinstance(data['forme_juridique_ref'], str):
+                try:
+                    # Essayer de trouver l'objet correspondant au texte
+                    fj_obj = FormeJuridique.objects.filter(libelle__icontains=data['forme_juridique_ref']).first()
+                    if fj_obj:
+                        data['forme_juridique_ref'] = fj_obj.id
+                    else:
+                        # Si non trouvé, essayer de convertir en ID
+                        try:
+                            data['forme_juridique_ref'] = int(data['forme_juridique_ref'])
+                        except (ValueError, TypeError):
+                            pass
+                except:
+                    pass
+        
+        # Si forme_juridique_ref contient du texte, essayer de le convertir
+        elif 'forme_juridique_ref' in data and isinstance(data['forme_juridique_ref'], str) and not data['forme_juridique_ref'].isdigit():
+            try:
+                # Essayer de trouver l'objet par le libellé
+                fj_obj = FormeJuridique.objects.filter(libelle__icontains=data['forme_juridique_ref']).first()
+                if fj_obj:
+                    data['forme_juridique_ref'] = fj_obj.id
+                else:
+                    # Si non trouvé, essayer de le trouver dans l'ancien système de choix
+                    for choice_key, choice_label in FORMEJURIDIQUE_CHOICES:
+                        if choice_label == data['forme_juridique_ref']:
+                            # Stocker dans l'ancien champ
+                            data['forme_juridique'] = choice_label
+                            # Laisser forme_juridique_ref vide
+                            data['forme_juridique_ref'] = None
+                            break
+            except:
+                pass
+        
+        # Même logique pour statut_registre
+        if 'statut_registre' in data and data['statut_registre'] and data['statut_registre'].isdigit():
+            data['statut_registre_ref'] = data['statut_registre']
+        elif 'statut_registre_ref' in data and isinstance(data['statut_registre_ref'], str) and not data['statut_registre_ref'].isdigit():
+            try:
+                statut_obj = StatutEntreprise.objects.filter(libelle__icontains=data['statut_registre_ref']).first()
+                if statut_obj:
+                    data['statut_registre_ref'] = statut_obj.id
+                else:
+                    # Essayer de trouver dans l'ancien système
+                    for choice_key, choice_label in LIEN_STATUT_CHOICE:
+                        if choice_label == data['statut_registre_ref']:
+                            data['statut_registre'] = choice_label
+                            data['statut_registre_ref'] = None
+                            break
+            except:
+                pass
+        
+        # Convertir les IDs en entiers si nécessaire
+        if 'forme_juridique_ref' in data and isinstance(data['forme_juridique_ref'], str) and data['forme_juridique_ref'].isdigit():
+            try:
+                data['forme_juridique_ref'] = int(data['forme_juridique_ref'])
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({
+                    'forme_juridique_ref': 'Veuillez fournir un ID numérique valide (ex: 16).'
+                })
+
+        if 'statut_registre_ref' in data and isinstance(data['statut_registre_ref'], str) and data['statut_registre_ref'].isdigit():
+            try:
+                data['statut_registre_ref'] = int(data['statut_registre_ref'])
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({
+                    'statut_registre_ref': 'Veuillez fournir un ID numérique valide (ex: 26).'
+                })
+
+        return super().to_internal_value(data)
+
+
+
+
+
+
 
 
 class TendanceSerializer(serializers.ModelSerializer):
@@ -1389,38 +1558,58 @@ class TendanceSerializer(serializers.ModelSerializer):
 class GetTendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tendance
-        fields = "__all__"
+        fields = [
+            'id', 'acheteur', 'avis_commercial', 'avis_commercial_ref',
+            'presse_media', 'principaux_concurrent', 'commentaire',
+            'created_at', 'updated_at'
+        ]
 
 
 class AddTendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tendance
         fields = [
-            "id",
-            "acheteur",
-            "avis_commercial",
-            "avis_commercial_ref",
-            "presse_media",
-            "principaux_concurrent",
-            "commentaire",
+            'acheteur', 'avis_commercial', 'avis_commercial_ref',
+            'presse_media', 'principaux_concurrent', 'commentaire'
         ]
 
 
 class EditTendanceSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()
-    avis_commercial_ref = ModeleAvisCommercialSerializer()
+    avis_commercial = serializers.CharField(required=False)
+    avis_commercial_ref = serializers.PrimaryKeyRelatedField(
+        queryset=ModeleAvisCommercial.objects.all(),
+        required=False,
+        allow_null=True,
+        error_messages={
+            'does_not_exist': 'L\'avis commercial sélectionné n\'existe pas.',
+            'incorrect_type': 'Veuillez fournir un ID numérique valide pour l\'avis commercial.'
+        }
+    )
 
     class Meta:
         model = Tendance
         fields = [
-            "id",
-            "acheteur",
-            "avis_commercial",
-            "avis_commercial_ref",
-            "presse_media",
-            "principaux_concurrent",
-            "commentaire",
+            'avis_commercial', 'avis_commercial_ref',
+            'presse_media', 'principaux_concurrent', 'commentaire'
         ]
+
+    def to_internal_value(self, data):
+        # Convertir les IDs en entiers si nécessaire
+        if 'avis_commercial_ref' in data and isinstance(data['avis_commercial_ref'], str):
+            try:
+                data['avis_commercial_ref'] = int(data['avis_commercial_ref'])
+            except (ValueError, TypeError):
+                raise serializers.ValidationError({
+                    'avis_commercial_ref': 'Veuillez fournir un ID numérique valide.'
+                })
+        return super().to_internal_value(data)
+
+
+
+
+
+
+
 
 
 class ResponsableAcheteurSerializer(serializers.ModelSerializer):
@@ -1706,6 +1895,10 @@ class EditCompositionActionSerializer(serializers.ModelSerializer):
         ]
 
 
+
+
+
+
 class OpinionCreditAcremacSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
     couleur_commentaire = CouleurCommentaireSerializer()
@@ -1760,6 +1953,12 @@ class EditOpinionCreditAcremacSerializer(serializers.ModelSerializer):
             "montant_credit_maximum",
             "commentaire",
         ]
+
+
+
+
+
+
 
 
 class StructureSerializer(serializers.ModelSerializer):

@@ -136,7 +136,7 @@ class EditAcheteurResumeView(APIView):
         serializer = GetResumeSerializer(resume)
         return Response(serializer.data)
 
-    def put(self, request, acheteur_id, resume_id, *args, **kwargs):
+    def post(self, request, acheteur_id, resume_id, *args, **kwargs):
         resume = Resume.objects.filter(id=resume_id, acheteur_id=acheteur_id).first()
         if not resume:
             return Response(
@@ -175,6 +175,78 @@ class DeleteAcheteurResumeView(APIView):
         )
 
 
+class AcheteurResumeView(APIView):
+    """
+    API pour gérer le résumé unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère le résumé de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            resume = Resume.objects.get(acheteur=acheteur)
+            serializer = GetResumeSerializer(resume)
+            return Response(serializer.data)
+        except Resume.DoesNotExist:
+            return Response({
+                "message": "Aucun résumé trouvé pour cet acheteur",
+                "acheteur_id": acheteur_id
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour le résumé de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si un résumé existe déjà
+        try:
+            resume = Resume.objects.get(acheteur=acheteur)
+            serializer = EditResumeSerializer(resume, data=request.data, partial=True)
+            action = "mis à jour"
+        except Resume.DoesNotExist:
+            # Créez une copie modifiable de request.data
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+
+            serializer = AddResumeSerializer(data=data)
+            action = "créé"
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": f"Résumé {action} avec succès",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK if action == "mis à jour" else status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime le résumé de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            resume = Resume.objects.get(acheteur=acheteur)
+            resume.delete()
+            return Response({
+                "message": "Résumé supprimé avec succès"
+            }, status=status.HTTP_200_OK)
+        except Resume.DoesNotExist:
+            return Response({
+                "message": "Aucun résumé à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
 class ListAcheteurRiskRatingView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -203,6 +275,7 @@ class ListAcheteurRiskRatingView(APIView):
                 "previous": risk_rating_page.has_previous(),
             }
         )
+
 
 
 class SearchAcheteurRiskRatingView(APIView):
@@ -240,19 +313,46 @@ class SearchAcheteurRiskRatingView(APIView):
         )
 
 
+
 class AddAcheteurRiskRatingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, acheteur_id, *args, **kwargs):
-        # Créez une copie modifiable de request.data
         data = request.data.copy()
         data["acheteur"] = acheteur_id
+
+        # Convertir les champs booléens
+        boolean_fields = [
+            'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+            'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+            'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+        ]
+        for field in boolean_fields:
+            if field in data:
+                data[field] = data[field].lower() == 'true'  # Convertit "true" en True, "false" en False
 
         serializer = AddRiskRatingSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def validate(self, data):
+        print("=== DONNÉES REÇUES ===")
+        print(f"cotation_du_risque: {data.get('cotation_du_risque')}")
+        print(f"indice_du_risque: {data.get('indice_du_risque')}")
+        print(f"Type cotation: {type(data.get('cotation_du_risque'))}")
+        print(f"Type indice: {type(data.get('indice_du_risque'))}")
+
+        # Vérifiez que les valeurs sont bien dans les choix autorisés
+        if data.get('cotation_du_risque') not in dict(RISK_RATING_CHOICES):
+            raise serializers.ValidationError(f"'{data.get('cotation_du_risque')}' n'est pas un choix valide pour cotation_du_risque.")
+
+        if data.get('indice_du_risque') not in dict(RISK_INDEX_CHOICES):
+            raise serializers.ValidationError(f"'{data.get('indice_du_risque')}' n'est pas un choix valide pour indice_du_risque.")
+
+        return data
+
 
 
 class EditAcheteurRiskRatingView(APIView):
@@ -271,7 +371,7 @@ class EditAcheteurRiskRatingView(APIView):
         serializer = GetRiskRatingSerializer(risk_rating)
         return Response(serializer.data)
 
-    def put(self, request, acheteur_id, risk_rating_id, *args, **kwargs):
+    def post(self, request, acheteur_id, risk_rating_id, *args, **kwargs):
         risk_rating = RiskRating.objects.filter(
             id=risk_rating_id, acheteur_id=acheteur_id
         ).first()
@@ -312,7 +412,88 @@ class DeleteAcheteurRiskRatingView(APIView):
         return Response(
             {"message": f"{count} évaluations de risque supprimées avec succès."},
             status=status.HTTP_200_OK,
-        )
+        )    
+        
+        
+class AcheteurRiskRatingView(APIView):
+    """
+    API pour gérer l'évaluation de risque unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère l'évaluation de risque de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            risk_rating = RiskRating.objects.get(acheteur=acheteur)
+            serializer = GetRiskRatingSerializer(risk_rating)
+            return Response(serializer.data)
+        except RiskRating.DoesNotExist:
+            return Response({
+                "message": "Aucune évaluation de risque trouvée pour cet acheteur",
+                "acheteur_id": acheteur_id
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour l'évaluation de risque de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si une évaluation existe déjà
+        try:
+            risk_rating = RiskRating.objects.get(acheteur=acheteur)
+            serializer = EditRiskRatingSerializer(
+                risk_rating, data=request.data, partial=True
+            )
+            action = "mis à jour"
+        except RiskRating.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+
+            # Convertir les champs booléens
+            boolean_fields = [
+                'remboursabilite', 'situation_liquidite', 'performance_rentabilite',
+                'perspective_secteur', 'qualite_information_analyse', 'existence_garantie',
+                'terme_financier_duree_pret', 'mesure_propre_soutenir_credit'
+            ]
+            for field in boolean_fields:
+                if field in data:
+                    data[field] = data[field].lower() == 'true'  # Convertit "true" en True, "false" en False
+
+            serializer = AddRiskRatingSerializer(data=data)
+            action = "créé"
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": f"Évaluation de risque {action} avec succès",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK if action == "mis à jour" else status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime l'évaluation de risque de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            risk_rating = RiskRating.objects.get(acheteur=acheteur)
+            risk_rating.delete()
+            return Response({
+                "message": "Évaluation de risque supprimée avec succès"
+            }, status=status.HTTP_200_OK)
+        except RiskRating.DoesNotExist:
+            return Response({
+                "message": "Aucune évaluation de risque à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
 
 
 class ListAcheteurDataSaveView(APIView):
@@ -460,6 +641,86 @@ class DeleteAcheteurDataSaveView(APIView):
         )
 
 
+
+class AcheteurDonneesEnregistrementView(APIView):
+    """
+    API pour gérer les données d'enregistrement unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère les données d'enregistrement de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            data_save = DonneesEnregistrement.objects.get(acheteur=acheteur)
+            serializer = GetDonneesEnregistrementSerializer(data_save)
+            print(serializer.data)
+            return Response(serializer.data)
+        except DonneesEnregistrement.DoesNotExist:
+            return Response({
+                "message": "Aucune donnée d'enregistrement trouvée pour cet acheteur",
+                "acheteur_id": acheteur_id
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour les données d'enregistrement de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si des données existent déjà
+        try:
+            print(request.data)
+            data_save = DonneesEnregistrement.objects.get(acheteur=acheteur)
+            serializer = EditDonneesEnregistrementSerializer(
+                data_save, data=request.data, partial=True
+            )
+            print(serializer)
+            action = "mis à jour"
+        except DonneesEnregistrement.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            print(data)
+
+            serializer = AddDonneesEnregistrementSerializer(data=data)
+            action = "créé"
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": f"Données d'enregistrement {action} avec succès",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK if action == "mis à jour" else status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime les données d'enregistrement de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            data_save = DonneesEnregistrement.objects.get(acheteur=acheteur)
+            data_save.delete()
+            return Response({
+                "message": "Données d'enregistrement supprimées avec succès"
+            }, status=status.HTTP_200_OK)
+        except DonneesEnregistrement.DoesNotExist:
+            return Response({
+                "message": "Aucune donnée d'enregistrement à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
 class ListAcheteurTendanceView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -597,6 +858,81 @@ class DeleteAcheteurTendanceView(APIView):
             {"message": f"{count} tendances supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+              
+        
+class AcheteurTendanceView(APIView):
+    """
+    API pour gérer la tendance unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la tendance de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            tendance = Tendance.objects.get(acheteur=acheteur)
+            serializer = GetTendanceSerializer(tendance)
+            return Response(serializer.data)
+        except Tendance.DoesNotExist:
+            return Response({
+                "message": "Aucune tendance trouvée pour cet acheteur",
+                "acheteur_id": acheteur_id
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour la tendance de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si une tendance existe déjà
+        try:
+            tendance = Tendance.objects.get(acheteur=acheteur)
+            serializer = EditTendanceSerializer(
+                tendance, data=request.data, partial=True
+            )
+            action = "mise à jour"
+        except Tendance.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddTendanceSerializer(data=data)
+            action = "créée"
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": f"Tendance {action} avec succès",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK if action == "mise à jour" else status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime la tendance de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            tendance = Tendance.objects.get(acheteur=acheteur)
+            tendance.delete()
+            return Response({
+                "message": "Tendance supprimée avec succès"
+            }, status=status.HTTP_200_OK)
+        except Tendance.DoesNotExist:
+            return Response({
+                "message": "Aucune tendance à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
 
 
 class ListAcheteurResponsableView(APIView):
@@ -742,6 +1078,8 @@ class DeleteAcheteurResponsableView(APIView):
             {"message": f"{count} responsables supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
 
 
 class ListAcheteurAntecedentView(APIView):
@@ -891,6 +1229,10 @@ class DeleteAcheteurAntecedentView(APIView):
         )
 
 
+
+
+
+
 class ListAcheteurGestionRisqueView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1027,6 +1369,10 @@ class DeleteAcheteurGestionRisqueView(APIView):
             {"message": f"{count} gestions de risque supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
 
 
 class ListAcheteurMembreConseilView(APIView):
@@ -1168,6 +1514,10 @@ class DeleteAcheteurMembreConseilView(APIView):
         )
 
 
+
+
+
+
 class ListAcheteurCompositionCapitalView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1306,6 +1656,11 @@ class DeleteAcheteurCompositionCapitalView(APIView):
             {"message": f"{count} compositions du capital supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
+
 
 
 class ListAcheteurActionnaireView(APIView):
@@ -1451,6 +1806,11 @@ class DeleteAcheteurActionnaireView(APIView):
         )
 
 
+
+
+
+
+
 class ListAcheteurOpinionAcremacView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1585,6 +1945,11 @@ class DeleteAcheteurOpinionAcremacView(APIView):
             {"message": f"{count} opinions de crédit supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
+
 
 
 class ListAcheteurFilialeView(APIView):

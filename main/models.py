@@ -2028,7 +2028,7 @@ RISK_RATING_CHOICES = [
 RISK_INDEX_CHOICES = [
     ("eleve", _("Élevé")),
     ("moyen", _("Moyen")),
-    ("medium", _("Moyen")),
+    ("medium", _("Medium")),
     ("faible", _("Faible")),
 ]
 

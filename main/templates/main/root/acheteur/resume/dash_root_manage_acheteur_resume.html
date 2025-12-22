@@ -1,645 +1,1011 @@
 {% extends 'main/root/base.html' %}
+{% load static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+}
+
+/* Carte de statistiques améliorée */
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.stat-card.capital::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
+.stat-card.ca::before { background: linear-gradient(to bottom, #28a745, #20c997); }
+.stat-card.resultat::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
+.stat-card.employes::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.stat-card.capital .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
+.stat-card.ca .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+.stat-card.resultat .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+.stat-card.employes .stat-icon { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-devise {
+    font-size: 0.75rem;
+    color: #0A95CA;
+    font-weight: 600;
+    background: rgba(10, 149, 202, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Boutons améliorés */
+.btn-action {
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Formulaire amélioré */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+.enhanced-form .input-with-icon {
+    position: relative;
+}
+
+.enhanced-form .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control.with-icon {
+    padding-left: 3rem;
+}
+
+/* Commentaire coloré */
+.colored-comment {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid;
+    position: relative;
+}
+
+.colored-comment::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(0, 0, 0, 0.1);
+    font-family: Georgia, serif;
+}
+
+/* État vide amélioré */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Badge de couleur */
+.color-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.color-badge::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Résumés de l'Acheteur</h3>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-contract text-primary me-2"></i>Résumé Financier
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion du résumé financier pour l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if resume %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editResumeModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter un résumé
+            </button>
+            {% endif %}
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countResumes">Module de Gestion des Résumés</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un résumé notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+    <!-- Carte Acheteur -->
+    <div class="card enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Counter END -->
-
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
-                        <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Capital Social : </strong><span id="">CSO</span><br>
-                        <strong>Chiffre d'affaires : </strong><span id="">CAF</span><br>
-                        <strong>Résultat net : </strong><span id="">RNE</span><br>
-                        <strong>Capitaux propres : </strong><span id="">CPR</span><br>
-                        <strong>Nombre d'employés : </strong><span id="">NEM</span><br>
-                        <strong>Date de création : </strong><span id="">DDC</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous etes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
-
-            </div>
-        </div>
-        <!-- Card item END -->
-
-
-
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- RESUME START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Résumés</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-8">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-4">
-                        <!-- Short by filter -->
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addResumeModal">
-                                Ajouter un Résumé
-                            </button>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Resume list START -->
-                <div class="table-responsive border-0" id="resumeList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">CSO</th>
-                                <th scope="col" class="border-0">CAF</th>
-                                <th scope="col" class="border-0">RNE</th>
-                                <th scope="col" class="border-0">CPR</th>
-                                <th scope="col" class="border-0">NEM</th>
-                                <th scope="col" class="border-0">DDC</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="resumeTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Resume list END -->
-            </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
         </div>
     </div>
-</div>
-<!-- RESUME END -->
 
-<!-- Add Resume Modal START -->
-<div class="modal fade" id="addResumeModal" tabindex="-1" aria-labelledby="addResumeModalLabel" aria-hidden="true">
+    <!-- Résumé Financier -->
+    {% if resume %}
+    <div class="card enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Statistiques -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card capital">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-value">{{ resume.capital_social|intcomma|default:"-" }}</div>
+                        <div class="stat-label">Capital Social</div>
+                        {% if resume.devise %}
+                        <span class="stat-devise">{{ resume.devise.code }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card ca">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-value">{{ resume.chiffre_affaire|intcomma|default:"-" }}</div>
+                        <div class="stat-label">Chiffre d'Affaires</div>
+                        {% if resume.devise %}
+                        <span class="stat-devise">{{ resume.devise.code }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card resultat">
+                        <div class="stat-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-value {% if resume.resultat_net >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ resume.resultat_net|intcomma|default:"-" }}
+                        </div>
+                        <div class="stat-label">Résultat Net</div>
+                        {% if resume.devise %}
+                        <span class="stat-devise">{{ resume.devise.code }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card employes">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-value">{{ resume.nombre_employe|intcomma|default:"-" }}</div>
+                        <div class="stat-label">Employés</div>
+                        <span class="stat-devise">personnes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations supplémentaires -->
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 bg-light h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-calendar me-2 text-primary"></i>Informations temporelles
+                            </h6>
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Date de création de l'entreprise</small>
+                                <span class="fw-medium">{{ resume.date_creation|date:"d/m/Y"|default:"-" }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Dernière mise à jour</small>
+                                <span class="fw-medium">{{ resume.updated_at|date:"d/m/Y H:i"|default:"-" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    {% if resume.commentaire %}
+                    <div class="colored-comment" style="border-left-color: {{ resume.couleur_commentaire.code|default:'#6c757d' }};">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-comment-dots me-2"></i>Commentaire
+                        </h6>
+                        <p class="mb-0">{{ resume.commentaire }}</p>
+                        {% if resume.couleur_commentaire %}
+                        <div class="mt-3">
+                            <span class="color-badge" style="color: {{ resume.couleur_commentaire.code }}; background: {{ resume.couleur_commentaire.code }}20;">
+                                {{ resume.couleur_commentaire.couleur }}
+                            </span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 border rounded bg-light">
+                        <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Aucun commentaire</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-file-contract empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucun résumé financier</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de résumé financier.<br>
+                    Créez-en un pour commencer à suivre ses performances.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+                    <i class="fas fa-plus-circle me-2"></i>Créer le premier résumé
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Résumé -->
+<div class="modal fade" id="addResumeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addResumeModalLabel">Ajouter un Résumé</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Résumé Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addResumeForm">
-                    <input type="hidden" value="id_acheteur" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="capital_social" class="form-label">Capital Social</label>
-                        <input type="number" class="form-control" id="capital_social" name="capital_social" required>
+            <form id="addResumeForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="capital_social" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Capital Social
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-money-bill-wave"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="capital_social" name="capital_social" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Montant du capital social de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="chiffre_affaire" class="form-label">
+                                    <i class="fas fa-chart-line text-success"></i>Chiffre d'Affaires
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-chart-line"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="chiffre_affaire" name="chiffre_affaire" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Chiffre d'affaires annuel</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="chiffre_affaire" class="form-label">Chiffre d'Affaire</label>
-                        <input type="number" class="form-control" id="chiffre_affaire" name="chiffre_affaire" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="resultat_net" class="form-label">
+                                    <i class="fas fa-calculator text-warning"></i>Résultat Net
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calculator"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="resultat_net" name="resultat_net" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Résultat net après impôts</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="capitaux_propre" class="form-label">
+                                    <i class="fas fa-hand-holding-usd text-info"></i>Capitaux Propres
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hand-holding-usd"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="capitaux_propre" name="capitaux_propre" 
+                                           step="0.01" placeholder="0.00" required>
+                                </div>
+                                <small class="form-text text-muted">Total des capitaux propres</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="resultat_net" class="form-label">Résultat Net</label>
-                        <input type="number" class="form-control" id="resultat_net" name="resultat_net" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="nombre_employe" class="form-label">
+                                    <i class="fas fa-users text-danger"></i>Nombre d'Employés
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-users"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="nombre_employe" name="nombre_employe" 
+                                           min="0" placeholder="0" required>
+                                </div>
+                                <small class="form-text text-muted">Effectif total de l'entreprise</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_creation" class="form-label">
+                                    <i class="fas fa-calendar-alt text-primary"></i>Date de Création
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="date_creation" name="date_creation" required>
+                                </div>
+                                <small class="form-text text-muted">Date de création de l'entreprise</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="capitaux_propre" class="form-label">Capitaux Propres</label>
-                        <input type="number" class="form-control" id="capitaux_propre" name="capitaux_propre" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="devise" class="form-label">
+                                    <i class="fas fa-globe text-info"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="devise" name="devise" required>
+                                    <option value="">Sélectionnez une devise</option>
+                                    {% for devise in devise_list %}
+                                    <option value="{{ devise.id }}" data-code="{{ devise.code }}">
+                                        {{ devise.nom }} ({{ devise.code }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Devise utilisée pour les montants</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-warning"></i>Couleur du Commentaire
+                                </label>
+                                <select class="form-select select2-with-color" id="couleur_commentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
+                                        <span style="color: {{ coloration.code }}">●</span> {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">Couleur associée au commentaire</small>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="nombre_employe" class="form-label">Nombre d'Employés</label>
-                        <input type="number" class="form-control" id="nombre_employe" name="nombre_employe" required>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="4" placeholder="Ajoutez un commentaire décrivant la situation financière..."></textarea>
+                        <small class="form-text text-muted">Commentaire libre sur la situation financière</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="date_creation" class="form-label">Date de Création</label>
-                        <input type="date" class="form-control" id="date_creation" name="date_creation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="devise" class="form-label">Devise</label>
-                        <select class="form-select" id="devise" name="devise" required>
-                            {% for devise in devise_list %}
-                                <option value="{{ devise.id }}">{{ devise.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }} - [{{ coloration.code }}]</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Créer le résumé
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Resume Modal END -->
 
-<!-- Edit Resume Modal START -->
-<div class="modal fade" id="editResumeModal" tabindex="-1" aria-labelledby="editResumeModalLabel" aria-hidden="true">
+<!-- Modal Modification de Résumé -->
+<div class="modal fade" id="editResumeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editResumeModalLabel">Editer un Résumé</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Résumé Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editResumeForm">
-                    <input type="hidden" id="editResumeId" name="id">
-                    <div class="mb-3">
-                        <label for="editCapitalSocial" class="form-label">Capital Social</label>
-                        <input type="number" class="form-control" id="editCapitalSocial" name="capital_social" required>
+            <form id="editResumeForm" class="enhanced-form">
+                <input type="hidden" id="edit_resume_id" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_capital_social" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Capital Social
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-money-bill-wave"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_capital_social" name="capital_social" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_chiffre_affaire" class="form-label">
+                                    <i class="fas fa-chart-line text-success"></i>Chiffre d'Affaires
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-chart-line"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_chiffre_affaire" name="chiffre_affaire" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editChiffreAffaire" class="form-label">Chiffre d'Affaire</label>
-                        <input type="number" class="form-control" id="editChiffreAffaire" name="chiffre_affaire" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_resultat_net" class="form-label">
+                                    <i class="fas fa-calculator text-warning"></i>Résultat Net
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calculator"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_resultat_net" name="resultat_net" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_capitaux_propre" class="form-label">
+                                    <i class="fas fa-hand-holding-usd text-info"></i>Capitaux Propres
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-hand-holding-usd"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_capitaux_propre" name="capitaux_propre" 
+                                           step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editResultatNet" class="form-label">Résultat Net</label>
-                        <input type="number" class="form-control" id="editResultatNet" name="resultat_net" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_nombre_employe" class="form-label">
+                                    <i class="fas fa-users text-danger"></i>Nombre d'Employés
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-users"></i>
+                                    <input type="number" class="form-control with-icon" 
+                                           id="edit_nombre_employe" name="nombre_employe" 
+                                           min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_date_creation" class="form-label">
+                                    <i class="fas fa-calendar-alt text-primary"></i>Date de Création
+                                </label>
+                                <div class="input-with-icon">
+                                    <i class="input-icon fas fa-calendar-alt"></i>
+                                    <input type="date" class="form-control with-icon" 
+                                           id="edit_date_creation" name="date_creation" required>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editCapitauxPropre" class="form-label">Capitaux Propres</label>
-                        <input type="number" class="form-control" id="editCapitauxPropre" name="capitaux_propre" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_devise" class="form-label">
+                                    <i class="fas fa-globe text-info"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="edit_devise" name="devise" required>
+                                    <option value="">Sélectionnez une devise</option>
+                                    {% for devise in devise_list %}
+                                    <option value="{{ devise.id }}" data-code="{{ devise.code }}">
+                                        {{ devise.nom }} ({{ devise.code }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit_couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-warning"></i>Couleur du Commentaire
+                                </label>
+                                <select class="form-select select2-with-color" id="edit_couleur_commentaire" name="couleur_commentaire" required>
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code }}">
+                                        <span style="color: {{ coloration.code }}">●</span> {{ coloration.couleur }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editNombreEmploye" class="form-label">Nombre d'Employés</label>
-                        <input type="number" class="form-control" id="editNombreEmploye" name="nombre_employe" required>
+
+                    <div class="form-group">
+                        <label for="edit_commentaire" class="form-label">
+                            <i class="fas fa-comment text-success"></i>Commentaire
+                        </label>
+                        <textarea class="form-control" id="edit_commentaire" name="commentaire" 
+                                  rows="4"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateCreation" class="form-label">Date de Création</label>
-                        <input type="date" class="form-control" id="editDateCreation" name="date_creation" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDevise" class="form-label">Devise</label>
-                        <select class="form-select" id="editDevise" name="devise" required>
-                            {% for devise in devise_list %}
-                                <option value="{{ devise.id }}">{{ devise.nom }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }} - [{{ coloration.code }}]</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le résumé financier</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer ce résumé ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Resume Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
-
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    new nicEditor({
-        buttonList: [
-            'bold','italic','underline','left','center','right','justify',
-            'ol','ul','fontSize','fontFamily','fontFormat','link','unlink','image'
-        ]
-    }).panelInstance('message');
-});
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+$(document).ready(function() {
+    const API_BASE_URL = `/api/acheteur/${window.acheteurId}/resume/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    let currentResume = null;
 
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
+    // Fonction pour formater les options (devise, couleur, etc.)
+    function formatOption(option) {
+        if (!option.id) return option.text;
+        const $option = $(`
+            <span>
+                ${option.element.dataset.color ? `<span style="color: ${option.element.dataset.color}; margin-right: 8px;">●</span>` : ''}
+                ${option.element.dataset.code ? `<span class="float-end text-muted">${option.element.dataset.code}</span>` : ''}
+                ${option.text}
+            </span>
+        `);
+        return $option;
+    }
 
+    // Fonction pour formater la sélection
+    function formatOptionSelection(option) {
+        if (!option.id) return option.text;
+        return option.text.replace(/<[^>]*>/g, '');
+    }
+
+    // Initialisation de Select2
+    function initSelect2() {
+        $('.select2-with-search, .select2-with-color').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10, // Active la recherche dès 10 résultats
+            dropdownParent: $('body'), // Pour les modales
+            templateResult: formatOption,
+            templateSelection: formatOptionSelection,
+            escapeMarkup: function(m) { return m; }
+        });
+    }
+
+    // Initialisation au chargement de la page
+    initSelect2();
+
+    // Réinitialisation pour les modales
+    $('#addResumeModal, #editResumeModal').on('shown.bs.modal', function() {
+        initSelect2();
+    });
+
+    // Charger les données du résumé
+    function loadResumeData() {
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
+            url: API_BASE_URL,
             type: 'GET',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
-                console.log(response);
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+                if (response && !response.message) {
+                    currentResume = response;
+                    populateEditForm(response);
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status !== 404) {
+                    showError('Erreur', 'Impossible de charger les données du résumé');
+                }
+            }
+        });
+    }
 
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+    // Remplir le formulaire d'édition
+    function populateEditForm(resume) {
+        if (!resume) return;
+
+        $('#edit_resume_id').val(resume.id);
+        $('#edit_capital_social').val(resume.capital_social || '');
+        $('#edit_chiffre_affaire').val(resume.chiffre_affaire || '');
+        $('#edit_resultat_net').val(resume.resultat_net || '');
+        $('#edit_capitaux_propre').val(resume.capitaux_propre || '');
+        $('#edit_nombre_employe').val(resume.nombre_employe || '');
+        $('#edit_date_creation').val(resume.date_creation || '');
+
+        // Sélectionner la devise et la couleur dans les Select2
+        if (resume.devise) {
+            $('#edit_devise').val(resume.devise.id).trigger('change');
+        }
+        if (resume.couleur_commentaire) {
+            $('#edit_couleur_commentaire').val(resume.couleur_commentaire.id).trigger('change');
+        }
+
+        $('#edit_commentaire').val(resume.commentaire || '');
+    }
+
+    // Formulaire d'ajout
+    $('#addResumeForm').on('submit', function(e) {
+        e.preventDefault();
+        submitResumeForm('POST', $(this).serialize(), '#submitAddBtn', 'addResumeModal');
+    });
+
+    // Formulaire de modification
+    $('#editResumeForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+        submitResumeForm('POST', formData, '#submitEditBtn', 'editResumeModal');
+    });
+
+    // Soumission du formulaire
+    function submitResumeForm(method, formData, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+
+        $.ajax({
+            url: API_BASE_URL,
+            type: method,
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                $('#' + modalId).modal('hide');
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: method === 'POST' ? 'Résumé créé avec succès' : 'Résumé modifié avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    errorMessage = Object.values(xhr.responseJSON).join('\n');
                 }
 
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    }
 
+    // Suppression du résumé
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Résumé supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
             },
             error: function(xhr) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Erreur',
+                    text: 'Impossible de supprimer le résumé'
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
     });
 
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load resumes data
-        function loadResumes(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-resumes/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update resumes table body
-                    $('#resumeTableBody').html('');
-                    response.results.forEach(function(resume, index) {
-                        $('#resumeTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td class="text-success">' + resume.capital_social + '</td>' +
-                            '<td class="text-success">' + resume.chiffre_affaire + '</td>' +
-                            '<td class="text-danger">' + resume.resultat_net + '</td>' +
-                            '<td class="text-info">' + resume.capitaux_propre + '</td>' +
-                            '<td>' + resume.nombre_employe + '</td>' +
-                            '<td>' + resume.date_creation + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + resume.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + resume.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadResumes();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadResumes(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadResumes(page, search);
-        });
-
-        // Add Resume form submission
-        $('#addResumeForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            console.log(formData);
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-un-resume/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Résumé ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addResumeModal').modal('hide');
-                        loadResumes();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout du résumé.',
-                    });
-                }
-            });
-        });
-
-        // Edit Resume button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-un-resume/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editResumeId').val(response.id);
-                    $('#editCapitalSocial').val(response.capital_social);
-                    $('#editChiffreAffaire').val(response.chiffre_affaire);
-                    $('#editResultatNet').val(response.resultat_net);
-                    $('#editCapitauxPropre').val(response.capitaux_propre);
-                    $('#editNombreEmploye').val(response.nombre_employe);
-                    $('#editDateCreation').val(response.date_creation);
-                    $('#editDevise').val(response.devise.id);
-                    $('#editCouleurCommentaire').val(response.couleur_commentaire.id);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editResumeModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données du résumé.',
-                    });
-                }
-            });
-        });
-
-        // Edit Resume form submission
-        $('#editResumeForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editResumeId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-un-resume/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Résumé mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editResumeModal').modal('hide');
-                        loadResumes();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour du résumé.',
-                    });
-                }
-            });
-        });
-
-        // Delete Resume button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-resumes/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'Le résumé a été supprimé.',
-                                'success'
-                            ).then(() => {
-                                loadResumes();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression du résumé.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
         }
-    });
-</script>
+        return cookieValue;
+    }
 
+    // Charger les données au démarrage
+    loadResumeData();
+});
+
+</script>
 {% endblock %}
