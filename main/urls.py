@@ -72,6 +72,7 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     path("", index, name="index"),
+    path("login/", index, name="index"),
     path("verification/compte/", check_auth, name="check_auth"),
     path("mot-de-passe-oublie/", forgot_auth, name="forgot_auth"),
     path("reinitialisation-mot-de-passe-oublie/", reset_auth, name="reset_auth"),
@@ -307,8 +308,8 @@ urlpatterns = [
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/filiales/",
-        dash_root_manage_acheteur_filiale,
-        name="dash_root_manage_acheteur_filiale",
+        dash_root_manage_acheteur_filiale_optimized,
+        name="dash_root_manage_acheteur_filiale_optimized",
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/analyses-sectorielles/",
@@ -350,6 +351,14 @@ urlpatterns = [
         dash_root_manage_acheteur_advice,
         name="dash_root_manage_acheteur_advice",
     ),
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/geopolitiques/",
         dash_root_manage_acheteur_geopolitic,
@@ -357,8 +366,8 @@ urlpatterns = [
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/donnees-bancaires/",
-        dash_root_manage_acheteur_banking,
-        name="dash_root_manage_acheteur_banking",
+        dash_root_manage_acheteur_banking_optimized,
+        name="dash_root_manage_acheteur_banking_optimized",
     ),
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/certifications/",
@@ -2685,6 +2694,17 @@ urlpatterns = [
         DeleteAcheteurCompositionCapitalView.as_view(),
         name="delete-composition-du-capital-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/capital/', AcheteurCapitalView.as_view(), name='acheteur-capital'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-actionnaires/",
         ListAcheteurActionnaireView.as_view(),
@@ -2710,6 +2730,34 @@ urlpatterns = [
         DeleteAcheteurActionnaireView.as_view(),
         name="delete-actionnaire-acheteur",
     ),
+    path(
+        "api/acheteur/<int:acheteur_id>/actionnaires/",
+        AcheteurActionnaireListView.as_view(),
+        name="acheteur-actionnaire-list",
+    ),
+    path(
+        'api/acheteur/<int:acheteur_id>/actionnaires/stats/',
+        ActionnaireStatsView.as_view(),
+        name='actionnaire-stats'
+    ),
+    path(
+        'api/acheteur/<int:acheteur_id>/actionnaires/<int:pk>/',
+        ActionnaireDetailView.as_view(),
+        name='actionnaire-detail'
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/supprimer-des-actionnaires/",
+        AcheteurActionnaireListView.as_view(),
+        name="delete-actionnaire-acheteur",
+    ),
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -2774,6 +2822,28 @@ urlpatterns = [
         name="delete-filiale-acheteur",
     ),
     path(
+        "api/acheteur/<int:acheteur_id>/filiales/",
+        AcheteurFilialeListView.as_view(),
+        name="acheteur-filiale-list",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/filiales/<int:filiale_id>/",
+        AcheteurFilialeDetailView.as_view(),
+        name="acheteur-filiale-detail",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/filiales/stats/",
+        FilialeStatsView.as_view(),
+        name="acheteur-filiale-stats",
+    ),
+    
+    
+    
+    
+    
+    
+    
+    path(
         "api/acheteur/<int:acheteur_id>/liste-des-analyses-sectorielles/",
         ListAcheteurAnalyseSectorielleView.as_view(),
         name="list-analyse-sectorielle-acheteur",
@@ -2798,6 +2868,15 @@ urlpatterns = [
         DeleteAcheteurAnalyseSectorielleView.as_view(),
         name="delete-analyse-sectorielle-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/analyse-sectorielle/', AcheteurAnalyseSectorielleView.as_view(), name='acheteur-analyse-sectorielle'),
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-comptes-financiers/",
         ListAcheteurCompteFinancierView.as_view(),
@@ -2823,6 +2902,14 @@ urlpatterns = [
         DeleteAcheteurCompteFinancierView.as_view(),
         name="delete-compte-financier-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/compte-financier/',  AcheteurCompteFinancierView.as_view(), name='acheteur-compte-financier'),
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-operations-et-historiques/",
         ListAcheteurOperationHistoriqueView.as_view(),
@@ -2848,6 +2935,27 @@ urlpatterns = [
         DeleteAcheteurOperationHistoriqueView.as_view(),
         name="delete-operation-et-historique-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/operations/', 
+     AcheteurOperationHistoriqueListView.as_view(), 
+     name='acheteur-operations-list'),
+    path('api/acheteur/<int:acheteur_id>/operations/<int:operation_id>/', 
+        AcheteurOperationHistoriqueDetailView.as_view(), 
+        name='acheteur-operation-detail'),
+    path('api/liste-importations/', 
+        ListeImportationListView.as_view(), 
+        name='liste-importations'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-proprietes-et-actifs/",
         ListAcheteurProprieteActifView.as_view(),
@@ -2873,6 +2981,24 @@ urlpatterns = [
         DeleteAcheteurProprieteActifView.as_view(),
         name="delete-propriete-et-actif-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/propriete-actif/', 
+        AcheteurProprieteActifView.as_view(), 
+        name='acheteur-propriete-actif'),
+    
+    # Locaux
+    path('api/locaux/', 
+        LocauxListView.as_view(), 
+        name='locaux-list'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-conditions-achat/",
         ListAcheteurConditionAchatView.as_view(),
@@ -2898,6 +3024,22 @@ urlpatterns = [
         DeleteAcheteurConditionAchatView.as_view(),
         name="delete-condition-achat-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/condition-achat/', 
+        AcheteurConditionAchatView.as_view(), 
+        name='acheteur-condition-achat'),
+    
+    # Liste des conditions d'achat
+    path('api/conditions-achat/', 
+        ListeConditionAchatListView.as_view(), 
+        name='conditions-achat-list'),
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-conditions-vente/",
         ListAcheteurConditionVenteView.as_view(),
@@ -2923,6 +3065,25 @@ urlpatterns = [
         DeleteAcheteurConditionVenteView.as_view(),
         name="delete-condition-vente-acheteur",
     ),
+    # Conditions de Vente
+    path('api/acheteur/<int:acheteur_id>/condition-vente/', 
+        AcheteurConditionVenteView.as_view(), 
+        name='acheteur-condition-vente'),
+    
+    # Liste des conditions de vente
+    path('api/conditions-vente/', 
+        ListeConditionVenteListView.as_view(), 
+        name='conditions-vente-list'),
+    
+    # Choix pour les conditions de vente
+    path('api/condition-vente/choices/', 
+        ConditionVenteChoicesView.as_view(), 
+        name='condition-vente-choices'),
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-sommaires-et-avis/",
         ListAcheteurSommaireAvisView.as_view(),
@@ -2948,6 +3109,12 @@ urlpatterns = [
         DeleteAcheteurSommaireAvisView.as_view(),
         name="delete-sommaire-et-avis-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/sommaire-avis/', AcheteurSommaireEtAvisView.as_view(), name='acheteur-sommaire-avis'),
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-conseils/",
         ListAcheteurConseilView.as_view(),
@@ -2973,6 +3140,11 @@ urlpatterns = [
         DeleteAcheteurConseilView.as_view(),
         name="delete-conseil-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/advice/', AcheteurAdviceView.as_view(),  name='acheteur-advice'),
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-donnees-geopolitiques/",
         ListAcheteurGeopoliticView.as_view(),
@@ -2998,6 +3170,18 @@ urlpatterns = [
         DeleteAcheteurGeopoliticView.as_view(),
         name="delete-donnee-geopolitique-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/geopolitics/',  AcheteurGeopoliticsView.as_view(), name='acheteur-geopolitics'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-donnees-bancaires/",
         ListAcheteurBankingView.as_view(),
@@ -3023,6 +3207,28 @@ urlpatterns = [
         DeleteAcheteurBankingView.as_view(),
         name="delete-donnee-bancaire-acheteur",
     ),
+    path(
+        "api/acheteur/<int:acheteur_id>/banquiers/",
+        AcheteurBanquierListView.as_view(),
+        name="acheteur-banquier-list",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/banquiers/<int:banquier_id>/",
+        AcheteurBanquierDetailView.as_view(),
+        name="acheteur-banquier-detail",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/banquiers/stats/",
+        BanquierStatsView.as_view(),
+        name="acheteur-banquier-stats",
+    ),
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/bilan-anglais/liste-des-actifs/",
         ListAcheteurActifAnglaisView.as_view(),
@@ -4033,6 +4239,9 @@ urlpatterns = [
         name="ifrs-get-ratio",
     ),
     
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-portables/",
         ListAcheteurPortableView.as_view(),
@@ -4058,6 +4267,19 @@ urlpatterns = [
         DeleteAcheteurPortableView.as_view(),
         name="delete-portable-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/portables/', 
+         AcheteurPortableListView.as_view(), 
+         name='acheteur-portables-list'),
+    
+    path('api/acheteur/<int:acheteur_id>/portables/<int:portable_id>/', 
+         AcheteurPortableDetailView.as_view(), 
+         name='acheteur-portable-detail'),
+    
+    
+    
+    
+    
+    
     
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-emails/",
@@ -4084,6 +4306,12 @@ urlpatterns = [
         DeleteAcheteurEmailView.as_view(),
         name="delete-email-acheteur",
     ),
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-adresses/",
         ListAcheteurAdresseView.as_view(),
@@ -4109,6 +4337,18 @@ urlpatterns = [
         DeleteAcheteurAdresseView.as_view(),
         name="delete-adresse-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/adresses/', 
+        AcheteurAdresseListView.as_view(), 
+        name='acheteur-adresses-list'),
+    path('api/acheteur/<int:acheteur_id>/adresses/<int:adresse_id>/', 
+        AcheteurAdresseDetailView.as_view(), 
+        name='acheteur-adresse-detail'),
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-analyses-swot/",
         ListAcheteurSwotView.as_view(),
@@ -4310,6 +4550,11 @@ urlpatterns = [
         name="delete-cotisation-acheteur",
     ),
     
+    
+    
+    
+    
+    
     # Liste et recherche des numéros de téléphone pour un acheteur donné
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-telephones/",
@@ -4331,6 +4576,19 @@ urlpatterns = [
         DeleteAcheteurTelephoneView.as_view(),
         name="delete-telephone-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/telephones/', 
+     AcheteurTelephoneListView.as_view(), 
+     name='acheteur-telephones-list'),
+    path('api/acheteur/<int:acheteur_id>/telephones/<int:telephone_id>/', 
+        AcheteurTelephoneDetailView.as_view(), 
+        name='acheteur-telephone-detail'),
+    
+    
+    
+    
+    
+    
+    
     
     
     path(
@@ -4643,6 +4901,11 @@ urlpatterns = [
     
     
     
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-emails/",
         ListAcheteurEmailView.as_view(),
@@ -4673,6 +4936,23 @@ urlpatterns = [
         DeleteAcheteurEmailView.as_view(),
         name="delete-email-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/emails/', 
+     AcheteurEmailListView.as_view(), 
+     name='acheteur-emails-list'),
+    path('api/acheteur/<int:acheteur_id>/emails/<int:email_id>/', 
+        AcheteurEmailDetailView.as_view(), 
+        name='acheteur-email-detail'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     # Codes NACE

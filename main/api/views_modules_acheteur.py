@@ -10,10 +10,47 @@ from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.db import transaction
 
+from django.db.models import Q, Count, Sum  # Ajouter Sum ici
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+from decimal import Decimal, InvalidOperation
+
+from django.core.cache import cache
+import logging
+logger = logging.getLogger(__name__)
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 from main.serializers import *
 
 # === Fonctions utiles === #
+
+class StandardPagination(PageNumberPagination):
+    """
+    Pagination standard pour toutes les API
+    """
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    def get_paginated_response(self, data):
+        """
+        Retourne une réponse paginée formatée
+        """
+        return Response({
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
 
 
 def str_to_bool(value):
@@ -2637,6 +2674,93 @@ class DeleteAcheteurCompositionCapitalView(APIView):
             {"message": f"{count} compositions du capital supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+
+class AcheteurCapitalView(APIView):
+    """
+    API pour gérer le capital social unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère le capital social de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            capital = CompositionCapitalSocial.objects.get(acheteur=acheteur)
+            serializer = GetCompositionCapitalSocialSerializer(capital)
+            return Response(serializer.data)
+        except CompositionCapitalSocial.DoesNotExist:
+            return Response({
+                "message": "Aucun capital social trouvé pour cet acheteur",
+                "exists": False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour le capital social de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Validation des montants
+        for field in ['emis', 'publie', 'libere']:
+            value = request.data.get(field)
+            if value and float(value) < 0:
+                return Response({
+                    'error': f'Le capital {field} ne peut pas être négatif'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Vérifier si un capital existe déjà
+        try:
+            capital = CompositionCapitalSocial.objects.get(acheteur=acheteur)
+            # Mise à jour
+            serializer = EditCompositionCapitalSocialSerializer(
+                capital, 
+                data=request.data, 
+                partial=True
+            )
+            action = "mis à jour"
+            http_status = status.HTTP_200_OK
+        except CompositionCapitalSocial.DoesNotExist:
+            # Création
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddCompositionCapitalSocialSerializer(data=data)
+            action = "créé"
+            http_status = status.HTTP_201_CREATED
+        
+        if serializer.is_valid():
+            capital = serializer.save()
+            return Response({
+                "message": f"Capital social {action} avec succès",
+                "data": GetCompositionCapitalSocialSerializer(capital).data
+            }, status=http_status)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime le capital social de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            capital = CompositionCapitalSocial.objects.get(acheteur=acheteur)
+            capital.delete()
+            return Response({
+                "message": "Capital social supprimé avec succès"
+            }, status=status.HTTP_200_OK)
+        except CompositionCapitalSocial.DoesNotExist:
+            return Response({
+                "message": "Aucun capital social à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
 
 
 
@@ -2785,6 +2909,508 @@ class DeleteAcheteurActionnaireView(APIView):
             {"message": f"{count} actionnaires supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+class ActionnairePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'results': data,
+            'next': self.page.has_next(),
+            'previous': self.page.has_previous(),
+            'start_index': self.page.start_index(),
+            'end_index': self.page.end_index()
+        })
+
+
+class AcheteurActionnaireListView(APIView):
+    """
+    API optimisée pour gérer la liste des actionnaires
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = ActionnairePagination
+    
+    def get_acheteur(self, acheteur_id):
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste paginée des actionnaires avec recherche"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Paramètres
+        search_term = request.query_params.get('search', '')
+        sort_by = request.query_params.get('sort_by', '-created_at')
+        
+        # Construction de la requête optimisée
+        actionnaires = CompositionAction.objects.filter(
+            acheteur=acheteur
+        ).select_related('couleur_commentaire')
+        
+        # Recherche avancée
+        if search_term:
+            actionnaires = actionnaires.filter(
+                Q(nom__icontains=search_term) |
+                Q(prenom__icontains=search_term) |
+                Q(commentaire__icontains=search_term)
+            )
+        
+        # Tri sécurisé
+        valid_sort_fields = ['nom', 'prenom', 'pourcentage', 'created_at', 'updated_at']
+        if sort_by.lstrip('-') in valid_sort_fields:
+            actionnaires = actionnaires.order_by(sort_by)
+        else:
+            actionnaires = actionnaires.order_by('-created_at')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(actionnaires, request)
+        
+        if page is not None:
+            serializer = CompositionActionListSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = CompositionActionListSerializer(actionnaires, many=True)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Ajoute un nouvel actionnaire avec validation améliorée"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # CORRECTION CRITIQUE : Gérer proprement le pourcentage
+        pourcentage = request.data.get('pourcentage')
+        
+        if pourcentage is not None:
+            try:
+                # Convertir en Decimal pour une précision exacte
+                pourcentage_val = Decimal(str(pourcentage))
+                
+                # Validation du format
+                if pourcentage_val < 0 or pourcentage_val > 100:
+                    return Response({
+                        'error': 'Le pourcentage doit être compris entre 0 et 100'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Calculer le total actuel
+                total_pourcentage = CompositionAction.objects.filter(
+                    acheteur=acheteur
+                ).aggregate(total=Sum('pourcentage'))['total'] or Decimal('0')
+                
+                # CORRECTION : S'assurer que total_pourcentage est Decimal
+                if isinstance(total_pourcentage, float):
+                    total_pourcentage = Decimal(str(total_pourcentage))
+                
+                # Vérifier que le total ne dépasse pas 100%
+                nouveau_total = total_pourcentage + pourcentage_val
+                
+                if nouveau_total > 100:
+                    disponible = 100 - total_pourcentage
+                    return Response({
+                        'error': f'Pourcentage maximum disponible: {disponible:.2f}%'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                    
+            except (ValueError, InvalidOperation, TypeError) as e:
+                return Response({
+                    'error': f'Pourcentage invalide: {str(e)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Si pas de pourcentage, mettre à None
+            pourcentage_val = None
+        
+        # Vérification des doublons (nom + prénom)
+        nom = request.data.get('nom', '').strip().upper()
+        prenom = request.data.get('prenom', '').strip()
+        
+        if nom and prenom:
+            existe_deja = CompositionAction.objects.filter(
+                acheteur=acheteur,
+                nom__iexact=nom,
+                prenom__iexact=prenom
+            ).exists()
+            
+            if existe_deja:
+                return Response({
+                    'error': f'Un actionnaire {nom} {prenom} existe déjà.'
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Préparation des données avec conversion appropriée
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+        
+        # Nettoyer les données
+        if 'pourcentage' in data:
+            if data['pourcentage'] == '':
+                data['pourcentage'] = None
+            else:
+                try:
+                    data['pourcentage'] = Decimal(str(data['pourcentage']))
+                except:
+                    data['pourcentage'] = None
+        
+        # Mettre le nom en majuscules
+        if 'nom' in data:
+            data['nom'] = data['nom'].strip().upper()
+        if 'prenom' in data:
+            data['prenom'] = data['prenom'].strip()
+        
+        serializer = AddCompositionActionSerializer(data=data)
+        
+        if serializer.is_valid():
+            try:
+                actionnaire = serializer.save()
+                
+                # Log d'activité
+                self.log_activity(
+                    request=request,
+                    action_type='CREATE_ACTIONNAIRE',
+                    object_id=actionnaire.id,
+                    object_type='CompositionAction',
+                    details=f"Ajout de l'actionnaire {actionnaire.nom} {actionnaire.prenom} ({actionnaire.pourcentage}%) pour l'acheteur {acheteur.nom}"
+                )
+                
+                # Mettre à jour les statistiques en cache
+                cache.delete(f'actionnaire_stats_{acheteur_id}')
+                
+                return Response({
+                    'message': 'Actionnaire ajouté avec succès',
+                    'data': GetCompositionActionSerializer(actionnaire).data,
+                    'pourcentage_total': CompositionAction.objects.filter(
+                        acheteur=acheteur
+                    ).aggregate(total=Sum('pourcentage'))['total'] or 0
+                }, status=status.HTTP_201_CREATED)
+                
+            except Exception as e:
+                logger.error(f"Erreur création actionnaire: {str(e)}")
+                return Response({
+                    'error': 'Erreur interne lors de la création'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Retourner les erreurs de validation
+        errors = serializer.errors
+        if errors:
+            error_message = self.format_serializer_errors(errors)
+            return Response({
+                'error': error_message
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    def format_serializer_errors(self, errors):
+        """Formate les erreurs du serializer pour l'affichage"""
+        formatted_errors = []
+        for field, field_errors in errors.items():
+            if isinstance(field_errors, list):
+                for error in field_errors:
+                    formatted_errors.append(f"{field}: {error}")
+            else:
+                formatted_errors.append(f"{field}: {field_errors}")
+        return " | ".join(formatted_errors)
+    
+    
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id):
+        """Supprime un ou plusieurs actionnaires"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        actionnaire_ids = request.data.get('ids', [])
+        if not isinstance(actionnaire_ids, list) or not actionnaire_ids:
+            return Response(
+                {'error': 'Une liste d\'IDs est requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les actionnaires
+        actionnaires = CompositionAction.objects.filter(
+            id__in=actionnaire_ids,
+            acheteur=acheteur
+        )
+        
+        if not actionnaires.exists():
+            return Response(
+                {'error': 'Aucun actionnaire trouvé pour les IDs fournis'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Log avant suppression
+        for actionnaire in actionnaires:
+            self.log_activity(
+                request=request,
+                action_type='DELETE_ACTIONNAIRE',
+                object_id=actionnaire.id,
+                object_type='CompositionAction',
+                details=f"Suppression de l'actionnaire {actionnaire.nom} {actionnaire.prenom}"
+            )
+        
+        # Suppression
+        count = actionnaires.count()
+        actionnaires.delete()
+        
+        # CORRECTION : Mettre à jour le cache
+        from django.core.cache import cache
+        cache.delete(f'actionnaire_stats_{acheteur_id}')
+        
+        return Response({
+            'message': f'{count} actionnaire(s) supprimé(s) avec succès',
+            'count': count
+        })
+
+
+class ActionnaireDetailView(APIView):
+    """Vue pour récupérer, modifier ou supprimer un actionnaire spécifique"""
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_actionnaire(self, acheteur_id, actionnaire_id):
+        return get_object_or_404(
+            CompositionAction, 
+            id=actionnaire_id,
+            acheteur_id=acheteur_id
+        )
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id, pk):
+        """Récupère les détails d'un actionnaire"""
+        try:
+            actionnaire = self.get_actionnaire(acheteur_id, pk)
+            serializer = GetCompositionActionSerializer(actionnaire)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Erreur récupération actionnaire: {str(e)}")
+            return Response(
+                {'error': 'Actionnaire non trouvé'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, pk):
+        """Met à jour un actionnaire"""
+        try:
+            acheteur = self.get_acheteur(acheteur_id)
+            actionnaire = self.get_actionnaire(acheteur_id, pk)
+            
+            # Validation du pourcentage
+            pourcentage = request.data.get('pourcentage')
+            pourcentage_val = None
+            
+            if pourcentage is not None and pourcentage != '':
+                try:
+                    # Convertir en Decimal
+                    pourcentage_val = Decimal(str(pourcentage))
+                    
+                    # Validation de base
+                    if pourcentage_val < Decimal('0') or pourcentage_val > Decimal('100'):
+                        return Response({
+                            'error': 'Le pourcentage doit être compris entre 0 et 100'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Vérifier les décimales
+                    if pourcentage_val.as_tuple().exponent < -2:
+                        return Response({
+                            'error': 'Maximum 2 décimales autorisées'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Calculer le total actuel (sans l'actionnaire en cours)
+                    total_pourcentage = CompositionAction.objects.filter(
+                        acheteur=acheteur
+                    ).exclude(id=pk).aggregate(
+                        total=Sum('pourcentage')
+                    )['total'] or Decimal('0')
+                    
+                    # Vérifier que total_pourcentage est Decimal
+                    if isinstance(total_pourcentage, float):
+                        total_pourcentage = Decimal(str(total_pourcentage))
+                    
+                    # Vérifier le nouveau total
+                    nouveau_total = total_pourcentage + pourcentage_val
+                    if nouveau_total > Decimal('100'):
+                        disponible = Decimal('100') - total_pourcentage
+                        return Response({
+                            'error': f'Pourcentage maximum disponible: {disponible:.2f}%'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                        
+                except (ValueError, InvalidOperation, TypeError) as e:
+                    logger.error(f"Erreur conversion pourcentage: {str(e)}")
+                    return Response({
+                        'error': 'Pourcentage invalide. Format attendu: 25.50'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Préparation des données
+            data = request.data.copy()
+            
+            # Nettoyer le pourcentage
+            if 'pourcentage' in data:
+                if data['pourcentage'] == '':
+                    data['pourcentage'] = None
+                elif data['pourcentage'] is not None:
+                    try:
+                        data['pourcentage'] = Decimal(str(data['pourcentage']))
+                    except:
+                        data['pourcentage'] = None
+            
+            # Normaliser les noms
+            if 'nom' in data:
+                data['nom'] = data['nom'].strip().upper()
+            if 'prenom' in data:
+                data['prenom'] = data['prenom'].strip().title()
+            
+            # Validation avec serializer
+            serializer = EditCompositionActionSerializer(
+                actionnaire, 
+                data=data, 
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Log d'activité
+                self.log_activity(
+                    request=request,
+                    action_type='UPDATE_ACTIONNAIRE',
+                    object_id=actionnaire.id,
+                    object_type='CompositionAction',
+                    details=f"Modification de l'actionnaire {actionnaire.nom} {actionnaire.prenom}"
+                )
+                
+                # Mettre à jour le cache
+                from django.core.cache import cache
+                cache.delete(f'actionnaire_stats_{acheteur_id}')
+                
+                # Recalculer le pourcentage total
+                nouveau_total = CompositionAction.objects.filter(
+                    acheteur=acheteur
+                ).aggregate(total=Sum('pourcentage'))['total'] or Decimal('0')
+                
+                return Response({
+                    'message': 'Actionnaire mis à jour avec succès',
+                    'data': GetCompositionActionSerializer(actionnaire).data,
+                    'pourcentage_total': float(nouveau_total)
+                })
+            
+            # Formater les erreurs
+            errors = []
+            for field, field_errors in serializer.errors.items():
+                if isinstance(field_errors, list):
+                    for error in field_errors:
+                        errors.append(f"{field}: {error}")
+                else:
+                    errors.append(f"{field}: {field_errors}")
+            
+            return Response({
+                'error': ' | '.join(errors)
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            logger.error(f"Erreur mise à jour actionnaire: {str(e)}", exc_info=True)
+            return Response({
+                'error': 'Une erreur interne est survenue lors de la mise à jour'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, pk):
+        """Supprime un actionnaire spécifique"""
+        try:
+            actionnaire = self.get_actionnaire(acheteur_id, pk)
+            
+            # Log avant suppression
+            self.log_activity(
+                request=request,
+                action_type='DELETE_ACTIONNAIRE',
+                object_id=actionnaire.id,
+                object_type='CompositionAction',
+                details=f"Suppression de l'actionnaire {actionnaire.nom} {actionnaire.prenom}"
+            )
+            
+            # Suppression
+            actionnaire.delete()
+            
+            # Mettre à jour le cache
+            from django.core.cache import cache
+            cache.delete(f'actionnaire_stats_{acheteur_id}')
+            
+            return Response({
+                'message': 'Actionnaire supprimé avec succès'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Erreur suppression actionnaire: {str(e)}")
+            return Response({
+                'error': 'Actionnaire non trouvé'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+
+class ActionnaireStatsView(APIView):
+    """
+    API pour les statistiques des actionnaires
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, acheteur_id):
+        acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+        
+        stats = CompositionAction.objects.filter(acheteur=acheteur).aggregate(
+            total=Count('id'),
+            avec_pourcentage=Count('id', filter=Q(pourcentage__isnull=False)),
+            total_pourcentage=Sum('pourcentage'),
+            avec_commentaire=Count('id', filter=~Q(commentaire='')),
+            avec_couleur=Count('id', filter=Q(couleur_commentaire__isnull=False)),
+        )
+        
+        # Répartition par pourcentage
+        repartition = {
+            '0-10%': CompositionAction.objects.filter(
+                acheteur=acheteur,
+                pourcentage__range=(0, 10)
+            ).count(),
+            '10-25%': CompositionAction.objects.filter(
+                acheteur=acheteur,
+                pourcentage__range=(10, 25)
+            ).count(),
+            '25-50%': CompositionAction.objects.filter(
+                acheteur=acheteur,
+                pourcentage__range=(25, 50)
+            ).count(),
+            '50-100%': CompositionAction.objects.filter(
+                acheteur=acheteur,
+                pourcentage__range=(50, 100)
+            ).count(),
+        }
+        
+        return Response({
+            'stats': stats,
+            'repartition': repartition,
+            'pourcentage_total': stats['total_pourcentage'] or 0
+        })
 
 
 
@@ -3132,6 +3758,399 @@ class DeleteAcheteurFilialeView(APIView):
             {"message": f"{count} filiales supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+        
+class FilialePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+    
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+            'results': data,
+            'next': self.page.has_next(),
+            'previous': self.page.has_previous(),
+            'start_index': self.page.start_index(),
+            'end_index': self.page.end_index()
+        })
+
+
+class AcheteurFilialeListView(APIView):
+    """
+    API optimisée pour gérer la liste des filiales
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = FilialePagination
+    
+    def get_acheteur(self, acheteur_id):
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        """Enregistre une activité dans le log"""
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste paginée des filiales avec recherche"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Paramètres
+        search_term = request.query_params.get('search', '')
+        sort_by = request.query_params.get('sort_by', '-created_at')
+        
+        # Construction de la requête optimisée
+        filiales = Structure.objects.filter(
+            acheteur=acheteur
+        ).select_related('type_affiliation_ref', 'couleur_commentaire')
+        
+        # Recherche avancée
+        if search_term:
+            filiales = filiales.filter(
+                Q(nom__icontains=search_term) |
+                Q(type_affiliation__icontains=search_term) |
+                Q(commentaire__icontains=search_term) |
+                Q(numero_adresse__icontains=search_term) |
+                Q(rue_adresse__icontains=search_term)
+            )
+        
+        # Tri sécurisé
+        valid_sort_fields = ['nom', 'type_affiliation', 'created_at', 'updated_at']
+        if sort_by.lstrip('-') in valid_sort_fields:
+            filiales = filiales.order_by(sort_by)
+        else:
+            filiales = filiales.order_by('-created_at')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(filiales, request)
+        
+        if page is not None:
+            serializer = StructureListSerializer(page, many=True)
+            print(serializer)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = StructureListSerializer(filiales, many=True)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Ajoute une nouvelle filiale avec validation"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérification des doublons (même nom pour le même acheteur)
+        nom = request.data.get('nom', '').strip()
+        
+        if nom:
+            existe_deja = Structure.objects.filter(
+                acheteur=acheteur,
+                nom__iexact=nom
+            ).exists()
+            
+            if existe_deja:
+                return Response({
+                    'error': f"Une filiale avec le nom {nom} existe déjà."
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Préparation des données
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+        
+        # Nettoyage et validation des données
+        if 'nom' in data:
+            data['nom'] = data['nom'].strip()
+        
+        serializer = AddStructureSerializer(data=data)
+        
+        if serializer.is_valid():
+            filiale = serializer.save()
+            
+            # Log d'activité
+            self.log_activity(
+                request=request,
+                action_type='CREATE_FILIALE',
+                object_id=filiale.id,
+                object_type='Structure',
+                details=f"Ajout de la filiale {filiale.nom} ({filiale.type_affiliation}) pour l'acheteur {acheteur.nom}"
+            )
+            
+            return Response({
+                'message': 'Filiale ajoutée avec succès',
+                'data': GetStructureSerializer(filiale).data
+            }, status=status.HTTP_201_CREATED)
+        
+        # Formater les erreurs
+        errors = []
+        for field, field_errors in serializer.errors.items():
+            if isinstance(field_errors, list):
+                for error in field_errors:
+                    errors.append(f"{field}: {error}")
+            else:
+                errors.append(f"{field}: {field_errors}")
+        
+        return Response({
+            'error': ' | '.join(errors)
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id):
+        """Supprime une ou plusieurs filiales"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        filiale_ids = request.data.get('ids', [])
+        if not isinstance(filiale_ids, list) or not filiale_ids:
+            return Response(
+                {'error': 'Une liste d\'IDs est requise'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les filiales
+        filiales = Structure.objects.filter(
+            id__in=filiale_ids,
+            acheteur=acheteur
+        )
+        
+        if not filiales.exists():
+            return Response(
+                {'error': 'Aucune filiale trouvée pour les IDs fournis'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Log avant suppression
+        for filiale in filiales:
+            self.log_activity(
+                request=request,
+                action_type='DELETE_FILIALE',
+                object_id=filiale.id,
+                object_type='Structure',
+                details=f"Suppression de la filiale {filiale.nom}"
+            )
+        
+        # Suppression
+        count = filiales.count()
+        filiales.delete()
+        
+        return Response({
+            'message': f'{count} filiale(s) supprimée(s) avec succès',
+            'count': count
+        })
+
+
+class AcheteurFilialeDetailView(APIView):
+    """
+    API pour gérer une filiale spécifique
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_filiale(self, acheteur_id, filiale_id):
+        return get_object_or_404(
+            Structure, 
+            id=filiale_id,
+            acheteur_id=acheteur_id
+        )
+    
+    def log_activity(self, request, action_type, object_id, object_type, details):
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type=action_type,
+            object_id=object_id,
+            object_type=object_type,
+            details=details,
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+    
+    def get(self, request, acheteur_id, filiale_id):
+        """Récupère les détails d'une filiale"""
+        try:
+            filiale = Structure.objects.select_related(
+                'type_affiliation_ref', 
+                'couleur_commentaire'
+            ).get(
+                id=filiale_id,
+                acheteur_id=acheteur_id
+            )
+        except Structure.DoesNotExist:
+            return Response(
+                {'error': 'Filiale non trouvée'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = GetStructureSerializer(filiale)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, filiale_id):
+        """Met à jour une filiale"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            filiale = Structure.objects.get(
+                id=filiale_id,
+                acheteur=acheteur
+            )
+        except Structure.DoesNotExist:
+            return Response(
+                {'error': 'Filiale non trouvée'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Vérification des doublons (sauf pour la filiale en cours)
+        nom = request.data.get('nom', filiale.nom).strip()
+        
+        if nom:
+            doublon = Structure.objects.filter(
+                acheteur=acheteur,
+                nom__iexact=nom
+            ).exclude(id=filiale_id).exists()
+            
+            if doublon:
+                return Response({
+                    'error': f"Une autre filiale avec le nom {nom} existe déjà."
+                }, status=status.HTTP_409_CONFLICT)
+        
+        # Préparation des données
+        data = request.data.copy()
+        
+        # Nettoyage des données
+        if 'nom' in data:
+            data['nom'] = data['nom'].strip()
+        
+        serializer = EditStructureSerializer(
+            filiale,
+            data=data,
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            updated_filiale = serializer.save()
+            
+            # Détection des changements pour le log
+            old_values = {
+                'nom': filiale.nom,
+                'type_affiliation': filiale.type_affiliation,
+                'numero_adresse': filiale.numero_adresse,
+                'rue_adresse': filiale.rue_adresse,
+                'commentaire': filiale.commentaire
+            }
+            
+            changes = []
+            new_values = serializer.validated_data
+            
+            for field in ['nom', 'type_affiliation', 'numero_adresse', 'rue_adresse', 'commentaire']:
+                if field in new_values and new_values[field] != old_values[field]:
+                    old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
+                    new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
+                    changes.append(f"{field}: '{old_val}' → '{new_val}'")
+            
+            # Log d'activité
+            details = f"Mise à jour de la filiale {filiale.nom}"
+            if changes:
+                details += f" - Changements: {', '.join(changes)}"
+            
+            self.log_activity(
+                request=request,
+                action_type='UPDATE_FILIALE',
+                object_id=filiale.id,
+                object_type='Structure',
+                details=details
+            )
+            
+            return Response({
+                'message': 'Filiale mise à jour avec succès',
+                'data': GetStructureSerializer(updated_filiale).data
+            })
+        
+        # Formater les erreurs
+        errors = []
+        for field, field_errors in serializer.errors.items():
+            if isinstance(field_errors, list):
+                for error in field_errors:
+                    errors.append(f"{field}: {error}")
+            else:
+                errors.append(f"{field}: {field_errors}")
+        
+        return Response({
+            'error': ' | '.join(errors)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FilialeStatsView(APIView):
+    """
+    API pour les statistiques des filiales
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, acheteur_id):
+        acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+        
+        stats = Structure.objects.filter(acheteur=acheteur).aggregate(
+            total=Count('id'),
+            avec_adresse=Count('id', filter=~Q(numero_adresse='') & ~Q(rue_adresse='')),
+            avec_commentaire=Count('id', filter=~Q(commentaire='')),
+            avec_couleur=Count('id', filter=Q(couleur_commentaire__isnull=False)),
+        )
+        
+        # Répartition par type d'affiliation
+        repartition = Structure.objects.filter(
+            acheteur=acheteur
+        ).values('type_affiliation').annotate(
+            count=Count('id'),
+            percentage=Count('id') * 100.0 / stats['total']
+        ).order_by('-count')
+        
+        # Types d'affiliation disponibles
+        types_disponibles = [
+            'Société - mère',
+            'Filiale', 
+            'Subsidiary',
+            'Société Sœur',
+            'La holding',
+            'Le groupe de sociétés',
+            'Société de gestion'
+        ]
+        
+        repartition_complete = []
+        for type_aff in types_disponibles:
+            count = Structure.objects.filter(
+                acheteur=acheteur,
+                type_affiliation=type_aff
+            ).count()
+            
+            if count > 0 or stats['total'] == 0:
+                repartition_complete.append({
+                    'type': type_aff,
+                    'count': count,
+                    'percentage': (count * 100.0 / stats['total']) if stats['total'] > 0 else 0
+                })
+        
+        return Response({
+            'stats': stats,
+            'repartition': repartition_complete,
+            'total': stats['total']
+        })
+
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurAnalyseSectorielleView(APIView):
@@ -3275,6 +4294,109 @@ class DeleteAcheteurAnalyseSectorielleView(APIView):
             {"message": f"{count} analyses sectorielles supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+
+        
+class AcheteurAnalyseSectorielleView(APIView):
+    """
+    API pour gérer l'analyse sectorielle unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère l'analyse sectorielle de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            analyse = AnalyseSectorielle.objects.get(acheteur=acheteur)
+            serializer = GetAnalyseSectorielleSerializer(analyse)
+            return Response(serializer.data)
+        except AnalyseSectorielle.DoesNotExist:
+            return Response({
+                "message": "Aucune analyse sectorielle trouvée pour cet acheteur",
+                "exists": False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour l'analyse sectorielle de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si une analyse existe déjà
+        try:
+            analyse = AnalyseSectorielle.objects.get(acheteur=acheteur)
+            serializer = EditAnalyseSectorielleSerializer(
+                analyse, data=request.data, partial=True
+            )
+            action = "mise à jour"
+            http_status = status.HTTP_200_OK
+        except AnalyseSectorielle.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddAnalyseSectorielleSerializer(data=data)
+            action = "créée"
+            http_status = status.HTTP_201_CREATED
+        
+        if serializer.is_valid():
+            analyse = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_ANALYSE' if action == "créée" else 'UPDATE_ANALYSE',
+                object_id=analyse.id,
+                object_type='AnalyseSectorielle',
+                details=f"Analyse sectorielle {action} pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": f"Analyse sectorielle {action} avec succès",
+                "data": GetAnalyseSectorielleSerializer(analyse).data
+            }, status=http_status)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime l'analyse sectorielle de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            analyse = AnalyseSectorielle.objects.get(acheteur=acheteur)
+            
+            # Log d'activité avant suppression
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='DELETE_ANALYSE',
+                object_id=analyse.id,
+                object_type='AnalyseSectorielle',
+                details=f"Analyse sectorielle supprimée pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            analyse.delete()
+            return Response({
+                "message": "Analyse sectorielle supprimée avec succès"
+            }, status=status.HTTP_200_OK)
+        except AnalyseSectorielle.DoesNotExist:
+            return Response({
+                "message": "Aucune analyse sectorielle à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurCompteFinancierView(APIView):
@@ -3416,6 +4538,116 @@ class DeleteAcheteurCompteFinancierView(APIView):
             {"message": f"{count} comptes financiers supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+class AcheteurCompteFinancierView(APIView):
+    """
+    API pour gérer le compte financier unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère le compte financier de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
+            serializer = GetCompteFinancierSerializer(compte_financier)
+            return Response({
+                "exists": True,
+                "data": serializer.data
+            })
+        except CompteFinancier.DoesNotExist:
+            return Response({
+                "message": "Aucun compte financier trouvé pour cet acheteur",
+                "exists": False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour le compte financier de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si un compte financier existe déjà
+        try:
+            compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
+            serializer = EditCompteFinancierSerializer(
+                compte_financier, data=request.data, partial=True
+            )
+            action = "mis à jour"
+            http_status = status.HTTP_200_OK
+        except CompteFinancier.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddCompteFinancierSerializer(data=data)
+            action = "créé"
+            http_status = status.HTTP_201_CREATED
+        
+        if serializer.is_valid():
+            compte_financier = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_COMPTE_FINANCIER' if action == "créé" else 'UPDATE_COMPTE_FINANCIER',
+                object_id=compte_financier.id,
+                object_type='CompteFinancier',
+                details=f"Compte financier {action} pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": f"Compte financier {action} avec succès",
+                "data": GetCompteFinancierSerializer(compte_financier).data
+            }, status=http_status)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime le compte financier de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
+            
+            # Log d'activité avant suppression
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='DELETE_COMPTE_FINANCIER',
+                object_id=compte_financier.id,
+                object_type='CompteFinancier',
+                details=f"Compte financier supprimé pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            compte_financier.delete()
+            return Response({
+                "message": "Compte financier supprimé avec succès"
+            }, status=status.HTTP_200_OK)
+        except CompteFinancier.DoesNotExist:
+            return Response({
+                "message": "Aucun compte financier à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+            
+            
+            
+            
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurOperationHistoriqueView(APIView):
@@ -3565,6 +4797,182 @@ class DeleteAcheteurOperationHistoriqueView(APIView):
             {"message": f"{count} opérations et historiques supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+           
+class AcheteurOperationHistoriqueListView(APIView):
+    """
+    API pour gérer les opérations et historiques d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des opérations/historiques de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        operations = OperationEtHistorique.objects.filter(
+            acheteur=acheteur
+        ).select_related('acheteur').prefetch_related('importation').order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            operations = operations.filter(
+                Q(description_complete_activite__icontains=search) |
+                Q(commentaire_ratios__icontains=search) |
+                Q(historique__icontains=search)
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(operations, request)
+        
+        serializer = OperationEtHistoriqueSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle opération/historique pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = OperationEtHistoriqueCreateSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder en passant created_by si nécessaire
+            operation = serializer.save()
+            
+            # Gérer les importations ManyToMany
+            if 'importation' in data:
+                operation.importation.set(data['importation'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_OPERATION',
+                object_id=operation.id,
+                object_type='OperationEtHistorique',
+                details=f"Opération/historique créé pour l'acheteur {acheteur.nom}: {operation.description_complete_activite[:100]}...",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Opération/historique créé avec succès",
+                "data": OperationEtHistoriqueSerializer(operation).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AcheteurOperationHistoriqueDetailView(APIView):
+    """
+    API pour gérer une opération/historique spécifique
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_operation(self, acheteur_id, operation_id):
+        """Récupère l'opération ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            OperationEtHistorique.objects.select_related('acheteur').prefetch_related('importation'),
+            id=operation_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, operation_id):
+        """Récupère les détails d'une opération spécifique"""
+        operation = self.get_operation(acheteur_id, operation_id)
+        serializer = OperationEtHistoriqueSerializer(operation)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, operation_id):
+        """Modifie une opération/historique existante"""
+        operation = self.get_operation(acheteur_id, operation_id)
+        
+        serializer = OperationEtHistoriqueUpdateSerializer(
+            operation, data=request.data, partial=True
+        )
+        
+        if serializer.is_valid():
+            operation = serializer.save()
+            
+            # Mettre à jour les importations ManyToMany
+            if 'importation' in request.data:
+                operation.importation.set(request.data['importation'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_OPERATION',
+                object_id=operation.id,
+                object_type='OperationEtHistorique',
+                details=f"Opération/historique modifié pour l'acheteur {operation.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Opération/historique modifié avec succès",
+                "data": OperationEtHistoriqueSerializer(operation).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id, operation_id):
+        """Supprime une opération/historique"""
+        operation = self.get_operation(acheteur_id, operation_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_OPERATION',
+            object_id=operation.id,
+            object_type='OperationEtHistorique',
+            details=f"Opération/historique supprimé pour l'acheteur {operation.acheteur.nom}: {operation.description_complete_activite[:100]}...",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        operation.delete()
+        return Response({
+            "message": "Opération/historique supprimé avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+# API pour récupérer les listes d'importation
+class ListeImportationListView(APIView):
+    """
+    API pour récupérer la liste des importations disponibles
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Récupère toutes les importations"""
+        importations = ListeImportation.objects.all().order_by('libelle')
+        serializer = ListeImportationSerializer(importations, many=True)
+        return Response(serializer.data)
+
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurProprieteActifView(APIView):
@@ -3710,6 +5118,184 @@ class DeleteAcheteurProprieteActifView(APIView):
             {"message": f"{count} propriétés et actifs supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+class AcheteurProprieteActifView(APIView):
+    """
+    API pour gérer la propriété et les actifs d'un acheteur
+    - GET : Récupère la propriété/actif de l'acheteur (une seule)
+    - POST : Crée la propriété/actif pour l'acheteur
+    - PUT : Met à jour la propriété/actif existante
+    - DELETE : Supprime la propriété/actif
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_propriete_actif(self, acheteur_id):
+        """Récupère la propriété/actif de l'acheteur ou retourne None"""
+        acheteur = self.get_acheteur(acheteur_id)
+        try:
+            return ProprieteEtActif.objects.select_related('acheteur').prefetch_related('locaux').get(
+                acheteur=acheteur
+            )
+        except ProprieteEtActif.DoesNotExist:
+            return None
+    
+    def get(self, request, acheteur_id):
+        """Récupère la propriété/actif de l'acheteur"""
+        propriete_actif = self.get_propriete_actif(acheteur_id)
+        
+        if propriete_actif:
+            serializer = ProprieteEtActifSerializer(propriete_actif)
+            return Response(serializer.data)
+        else:
+            return Response({
+                "exists": False,
+                "message": "Aucune propriété/actif enregistrée pour cet acheteur"
+            }, status=status.HTTP_200_OK)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une propriété/actif pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si une propriété/actif existe déjà
+        existing = ProprieteEtActif.objects.filter(acheteur=acheteur).first()
+        if existing:
+            return Response({
+                "error": "Une propriété/actif existe déjà pour cet acheteur",
+                "id": existing.id
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = ProprieteEtActifCreateSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder la propriété/actif
+            propriete_actif = serializer.save()
+            
+            # Gérer les locaux ManyToMany
+            if 'locaux' in data:
+                propriete_actif.locaux.set(data['locaux'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_PROPRIETE_ACTIF',
+                object_id=propriete_actif.id,
+                object_type='ProprieteEtActif',
+                details=f"Propriété/actif créé pour l'acheteur {acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Propriété/actif créé avec succès",
+                "data": ProprieteEtActifSerializer(propriete_actif).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id):
+        """Met à jour la propriété/actif existante"""
+        propriete_actif = self.get_propriete_actif(acheteur_id)
+        
+        if not propriete_actif:
+            return Response({
+                "error": "Aucune propriété/actif trouvée pour cet acheteur"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ProprieteEtActifUpdateSerializer(
+            propriete_actif, data=request.data, partial=True
+        )
+        
+        if serializer.is_valid():
+            propriete_actif = serializer.save()
+            
+            # Mettre à jour les locaux ManyToMany
+            if 'locaux' in request.data:
+                propriete_actif.locaux.set(request.data['locaux'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_PROPRIETE_ACTIF',
+                object_id=propriete_actif.id,
+                object_type='ProprieteEtActif',
+                details=f"Propriété/actif modifié pour l'acheteur {propriete_actif.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Propriété/actif modifié avec succès",
+                "data": ProprieteEtActifSerializer(propriete_actif).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime la propriété/actif de l'acheteur"""
+        propriete_actif = self.get_propriete_actif(acheteur_id)
+        
+        if not propriete_actif:
+            return Response({
+                "error": "Aucune propriété/actif trouvée pour cet acheteur"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_PROPRIETE_ACTIF',
+            object_id=propriete_actif.id,
+            object_type='ProprieteEtActif',
+            details=f"Propriété/actif supprimé pour l'acheteur {propriete_actif.acheteur.nom}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        propriete_actif.delete()
+        return Response({
+            "message": "Propriété/actif supprimé avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+# API pour récupérer les locaux
+class LocauxListView(APIView):
+    """
+    API pour récupérer la liste des locaux disponibles
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Récupère tous les locaux"""
+        search = request.query_params.get('search', '')
+        
+        locaux = Locaux.objects.all().order_by('nom')
+        
+        if search:
+            locaux = locaux.filter(nom__icontains=search)
+        
+        serializer = LocauxSerializer(locaux, many=True)
+        return Response(serializer.data)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurConditionAchatView(APIView):
@@ -3855,6 +5441,185 @@ class DeleteAcheteurConditionAchatView(APIView):
             {"message": f"{count} conditions d'achat supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+            
+        
+class AcheteurConditionAchatView(APIView):
+    """
+    API pour gérer les conditions d'achat d'un acheteur
+    - GET : Récupère les conditions d'achat de l'acheteur (une seule)
+    - POST : Crée les conditions d'achat pour l'acheteur
+    - PUT : Met à jour les conditions d'achat existantes
+    - DELETE : Supprime les conditions d'achat
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_condition_achat(self, acheteur_id):
+        """Récupère les conditions d'achat de l'acheteur ou retourne None"""
+        acheteur = self.get_acheteur(acheteur_id)
+        try:
+            return ConditionAchat.objects.select_related('acheteur').prefetch_related('local', 'importation').get(
+                acheteur=acheteur
+            )
+        except ConditionAchat.DoesNotExist:
+            return None
+    
+    def get(self, request, acheteur_id):
+        """Récupère les conditions d'achat de l'acheteur"""
+        condition_achat = self.get_condition_achat(acheteur_id)
+        
+        if condition_achat:
+            serializer = ConditionAchatSerializer(condition_achat)
+            return Response(serializer.data)
+        else:
+            return Response({
+                "exists": False,
+                "message": "Aucune condition d'achat enregistrée pour cet acheteur"
+            }, status=status.HTTP_200_OK)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée des conditions d'achat pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si des conditions d'achat existent déjà
+        existing = ConditionAchat.objects.filter(acheteur=acheteur).first()
+        if existing:
+            return Response({
+                "error": "Des conditions d'achat existent déjà pour cet acheteur",
+                "id": existing.id
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = ConditionAchatCreateSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder les conditions d'achat
+            condition_achat = serializer.save()
+            
+            # Gérer les ManyToMany
+            if 'local' in data:
+                condition_achat.local.set(data['local'])
+            if 'importation' in data:
+                condition_achat.importation.set(data['importation'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_CONDITION_ACHAT',
+                object_id=condition_achat.id,
+                object_type='ConditionAchat',
+                details=f"Conditions d'achat créées pour l'acheteur {acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Conditions d'achat créées avec succès",
+                "data": ConditionAchatSerializer(condition_achat).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id):
+        """Met à jour les conditions d'achat existantes"""
+        condition_achat = self.get_condition_achat(acheteur_id)
+        
+        if not condition_achat:
+            return Response({
+                "error": "Aucune condition d'achat trouvée pour cet acheteur"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ConditionAchatUpdateSerializer(
+            condition_achat, data=request.data, partial=True
+        )
+        
+        if serializer.is_valid():
+            condition_achat = serializer.save()
+            
+            # Mettre à jour les ManyToMany
+            if 'local' in request.data:
+                condition_achat.local.set(request.data['local'])
+            if 'importation' in request.data:
+                condition_achat.importation.set(request.data['importation'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_CONDITION_ACHAT',
+                object_id=condition_achat.id,
+                object_type='ConditionAchat',
+                details=f"Conditions d'achat modifiées pour l'acheteur {condition_achat.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Conditions d'achat modifiées avec succès",
+                "data": ConditionAchatSerializer(condition_achat).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime les conditions d'achat de l'acheteur"""
+        condition_achat = self.get_condition_achat(acheteur_id)
+        
+        if not condition_achat:
+            return Response({
+                "error": "Aucune condition d'achat trouvée pour cet acheteur"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_CONDITION_ACHAT',
+            object_id=condition_achat.id,
+            object_type='ConditionAchat',
+            details=f"Conditions d'achat supprimées pour l'acheteur {condition_achat.acheteur.nom}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        condition_achat.delete()
+        return Response({
+            "message": "Conditions d'achat supprimées avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+# API pour récupérer les conditions d'achat disponibles
+class ListeConditionAchatListView(APIView):
+    """
+    API pour récupérer la liste des conditions d'achat disponibles
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Récupère toutes les conditions d'achat"""
+        search = request.query_params.get('search', '')
+        
+        conditions = ListeConditionAchat.objects.all().order_by('nom')
+        
+        if search:
+            conditions = conditions.filter(nom__icontains=search)
+        
+        serializer = ListeConditionAchatSerializer(conditions, many=True)
+        return Response(serializer.data)
+
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurConditionVenteView(APIView):
@@ -4000,6 +5765,208 @@ class DeleteAcheteurConditionVenteView(APIView):
             {"message": f"{count} conditions de vente supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+class AcheteurConditionVenteView(APIView):
+    """
+    API pour gérer les conditions de vente d'un acheteur
+    - GET : Récupère les conditions de vente de l'acheteur (une seule)
+    - POST : Crée les conditions de vente pour l'acheteur
+    - PUT : Met à jour les conditions de vente existantes
+    - DELETE : Supprime les conditions de vente
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_condition_vente(self, acheteur_id):
+        """Récupère les conditions de vente de l'acheteur ou retourne None"""
+        acheteur = self.get_acheteur(acheteur_id)
+        try:
+            return ConditionDeVente.objects.select_related('acheteur').prefetch_related('local').get(
+                acheteur=acheteur
+            )
+        except ConditionDeVente.DoesNotExist:
+            return None
+    
+    def get(self, request, acheteur_id):
+        """Récupère les conditions de vente de l'acheteur"""
+        condition_vente = self.get_condition_vente(acheteur_id)
+        
+        if condition_vente:
+            serializer = ConditionDeVenteSerializer(condition_vente)
+            return Response(serializer.data)
+        else:
+            return Response({
+                "exists": False,
+                "message": "Aucune condition de vente enregistrée pour cet acheteur"
+            }, status=status.HTTP_200_OK)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée des conditions de vente pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si des conditions de vente existent déjà
+        existing = ConditionDeVente.objects.filter(acheteur=acheteur).first()
+        if existing:
+            return Response({
+                "error": "Des conditions de vente existent déjà pour cet acheteur",
+                "id": existing.id
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = ConditionDeVenteCreateSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder les conditions de vente
+            condition_vente = serializer.save()
+            
+            # Gérer les ManyToMany
+            if 'local' in data:
+                condition_vente.local.set(data['local'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_CONDITION_VENTE',
+                object_id=condition_vente.id,
+                object_type='ConditionDeVente',
+                details=f"Conditions de vente créées pour l'acheteur {acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Conditions de vente créées avec succès",
+                "data": ConditionDeVenteSerializer(condition_vente).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id):
+        """Met à jour les conditions de vente existantes"""
+        condition_vente = self.get_condition_vente(acheteur_id)
+        
+        if not condition_vente:
+            return Response({
+                "error": "Aucune condition de vente trouvée pour cet acheteur"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = ConditionDeVenteUpdateSerializer(
+            condition_vente, data=request.data, partial=True
+        )
+        
+        if serializer.is_valid():
+            condition_vente = serializer.save()
+            
+            # Mettre à jour les ManyToMany
+            if 'local' in request.data:
+                condition_vente.local.set(request.data['local'])
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_CONDITION_VENTE',
+                object_id=condition_vente.id,
+                object_type='ConditionDeVente',
+                details=f"Conditions de vente modifiées pour l'acheteur {condition_vente.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Conditions de vente modifiées avec succès",
+                "data": ConditionDeVenteSerializer(condition_vente).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime les conditions de vente de l'acheteur"""
+        condition_vente = self.get_condition_vente(acheteur_id)
+        
+        if not condition_vente:
+            return Response({
+                "error": "Aucune condition de vente trouvée pour cet acheteur"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_CONDITION_VENTE',
+            object_id=condition_vente.id,
+            object_type='ConditionDeVente',
+            details=f"Conditions de vente supprimées pour l'acheteur {condition_vente.acheteur.nom}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        condition_vente.delete()
+        return Response({
+            "message": "Conditions de vente supprimées avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+# API pour récupérer les conditions de vente disponibles
+class ListeConditionVenteListView(APIView):
+    """
+    API pour récupérer la liste des conditions de vente disponibles
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Récupère toutes les conditions de vente"""
+        search = request.query_params.get('search', '')
+        
+        conditions = ListeConditionVente.objects.all().order_by('nom')
+        
+        if search:
+            conditions = conditions.filter(nom__icontains=search)
+        
+        serializer = ListeConditionVenteSerializer(conditions, many=True)
+        return Response(serializer.data)
+
+
+# API pour récupérer les choix disponibles
+class ConditionVenteChoicesView(APIView):
+    """
+    API pour récupérer les choix disponibles pour les champs
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Récupère les choix disponibles"""
+        # Récupérer les choix du modèle
+        recouvrement_choices = [
+            {'value': choice[0], 'label': str(choice[1])}
+            for choice in ConditionDeVente.LIEN_COMPORTEMENT_JUGEMENT_CHOICE
+        ]
+        
+        paiement_choices = [
+            {'value': choice[0], 'label': str(choice[1])}
+            for choice in ConditionDeVente.LIEN_COMPORTEMENT_PAIEMENT_CHOICE
+        ]
+        
+        return Response({
+            'recouvrement_choices': recouvrement_choices,
+            'paiement_choices': paiement_choices
+        })
+        
+        
+        
+        
+        
+
+
+
+
+
 
 
 class ListAcheteurSommaireAvisView(APIView):
@@ -4134,6 +6101,111 @@ class DeleteAcheteurSommaireAvisView(APIView):
             {"message": f"{count} sommaires et avis supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+class AcheteurSommaireEtAvisView(APIView):
+    """
+    API pour gérer le sommaire et avis unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère le sommaire et avis de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            sommaire_avis = SommaireEtAvis.objects.get(acheteur=acheteur)
+            serializer = GetSommaireEtAvisSerializer(sommaire_avis)
+            return Response({
+                "exists": True,
+                "data": serializer.data
+            })
+        except SommaireEtAvis.DoesNotExist:
+            return Response({
+                "message": "Aucun sommaire et avis trouvé pour cet acheteur",
+                "exists": False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour le sommaire et avis de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si un sommaire/avis existe déjà
+        try:
+            sommaire_avis = SommaireEtAvis.objects.get(acheteur=acheteur)
+            serializer = EditSommaireEtAvisSerializer(
+                sommaire_avis, data=request.data, partial=True
+            )
+            action = "mis à jour"
+            http_status = status.HTTP_200_OK
+        except SommaireEtAvis.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddSommaireEtAvisSerializer(data=data)
+            action = "créé"
+            http_status = status.HTTP_201_CREATED
+        
+        if serializer.is_valid():
+            sommaire_avis = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_SOMMAIRE' if action == "créé" else 'UPDATE_SOMMAIRE',
+                object_id=sommaire_avis.id,
+                object_type='SommaireEtAvis',
+                details=f"Sommaire et avis {action} pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": f"Sommaire et avis {action} avec succès",
+                "data": GetSommaireEtAvisSerializer(sommaire_avis).data
+            }, status=http_status)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime le sommaire et avis de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            sommaire_avis = SommaireEtAvis.objects.get(acheteur=acheteur)
+            
+            # Log d'activité avant suppression
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='DELETE_SOMMAIRE',
+                object_id=sommaire_avis.id,
+                object_type='SommaireEtAvis',
+                details=f"Sommaire et avis supprimé pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            sommaire_avis.delete()
+            return Response({
+                "message": "Sommaire et avis supprimé avec succès"
+            }, status=status.HTTP_200_OK)
+        except SommaireEtAvis.DoesNotExist:
+            return Response({
+                "message": "Aucun sommaire et avis à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurConseilView(APIView):
@@ -4271,6 +6343,111 @@ class DeleteAcheteurConseilView(APIView):
             {"message": f"{count} conseils supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+
+class AcheteurAdviceView(APIView):
+    """
+    API pour gérer les conseils unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère les conseils de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            advice = Advice.objects.get(acheteur=acheteur)
+            serializer = GetAdviceSerializer(advice)
+            return Response({
+                "exists": True,
+                "data": serializer.data
+            })
+        except Advice.DoesNotExist:
+            return Response({
+                "message": "Aucun conseil trouvé pour cet acheteur",
+                "exists": False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour les conseils de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Vérifier si un conseil existe déjà
+        try:
+            advice = Advice.objects.get(acheteur=acheteur)
+            serializer = EditAdviceSerializer(
+                advice, data=request.data, partial=True
+            )
+            action = "mis à jour"
+            http_status = status.HTTP_200_OK
+        except Advice.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddAdviceSerializer(data=data)
+            action = "créé"
+            http_status = status.HTTP_201_CREATED
+        
+        if serializer.is_valid():
+            advice = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_ADVICE' if action == "créé" else 'UPDATE_ADVICE',
+                object_id=advice.id,
+                object_type='Advice',
+                details=f"Conseil {action} pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": f"Conseil {action} avec succès",
+                "data": GetAdviceSerializer(advice).data
+            }, status=http_status)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime les conseils de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            advice = Advice.objects.get(acheteur=acheteur)
+            
+            # Log d'activité avant suppression
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='DELETE_ADVICE',
+                object_id=advice.id,
+                object_type='Advice',
+                details=f"Conseil supprimé pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            advice.delete()
+            return Response({
+                "message": "Conseil supprimé avec succès"
+            }, status=status.HTTP_200_OK)
+        except Advice.DoesNotExist:
+            return Response({
+                "message": "Aucun conseil à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurGeopoliticView(APIView):
@@ -4412,6 +6589,140 @@ class DeleteAcheteurGeopoliticView(APIView):
             {"message": f"{count} données géopolitiques supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+            
+class AcheteurGeopoliticsView(APIView):
+    """
+    API pour gérer l'analyse géopolitique unique d'un acheteur
+    Méthodes: GET, POST (create/update), DELETE
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère l'analyse géopolitique de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            geopolitic = Geopolitics.objects.get(acheteur=acheteur)
+            serializer = GetGeopoliticsSerializer(geopolitic)
+            
+            # Ajouter le score moyen calculé
+            data = serializer.data
+            scores = []
+            for field in ['stabilite_politique', 'etat_droit', 'efficacite', 'qualite', 'liberte_expression']:
+                if data[field] and data[field].isdigit():
+                    scores.append(int(data[field]))
+            
+            if scores:
+                data['score_moyen'] = round(sum(scores) / len(scores), 1)
+            else:
+                data['score_moyen'] = 0
+                
+            return Response({
+                "exists": True,
+                "data": data
+            })
+        except Geopolitics.DoesNotExist:
+            return Response({
+                "message": "Aucune analyse géopolitique trouvée pour cet acheteur",
+                "exists": False
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée ou met à jour l'analyse géopolitique de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        # Validation des scores (0-10)
+        score_fields = ['stabilite_politique', 'etat_droit', 'efficacite', 'qualite', 'liberte_expression']
+        for field in score_fields:
+            if field in request.data and request.data[field]:
+                try:
+                    score = int(request.data[field])
+                    if not (0 <= score <= 10):
+                        return Response({
+                            field: [f"Le score doit être compris entre 0 et 10. Valeur reçue: {score}"]
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                except ValueError:
+                    return Response({
+                        field: ["Le score doit être un nombre entier entre 0 et 10"]
+                    }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Vérifier si une analyse existe déjà
+        try:
+            geopolitic = Geopolitics.objects.get(acheteur=acheteur)
+            serializer = EditGeopoliticsSerializer(
+                geopolitic, data=request.data, partial=True
+            )
+            action = "mise à jour"
+            http_status = status.HTTP_200_OK
+        except Geopolitics.DoesNotExist:
+            data = request.data.copy()
+            data["acheteur"] = acheteur_id
+            serializer = AddGeopoliticsSerializer(data=data)
+            action = "créée"
+            http_status = status.HTTP_201_CREATED
+        
+        if serializer.is_valid():
+            geopolitic = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_GEOPOLITIC' if action == "créée" else 'UPDATE_GEOPOLITIC',
+                object_id=geopolitic.id,
+                object_type='Geopolitics',
+                details=f"Analyse géopolitique {action} pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": f"Analyse géopolitique {action} avec succès",
+                "data": GetGeopoliticsSerializer(geopolitic).data
+            }, status=http_status)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id):
+        """Supprime l'analyse géopolitique de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        try:
+            geopolitic = Geopolitics.objects.get(acheteur=acheteur)
+            
+            # Log d'activité avant suppression
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='DELETE_GEOPOLITIC',
+                object_id=geopolitic.id,
+                object_type='Geopolitics',
+                details=f"Analyse géopolitique supprimée pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            geopolitic.delete()
+            return Response({
+                "message": "Analyse géopolitique supprimée avec succès"
+            }, status=status.HTTP_200_OK)
+        except Geopolitics.DoesNotExist:
+            return Response({
+                "message": "Aucune analyse géopolitique à supprimer"
+            }, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+
+
+
+
 
 
 class ListAcheteurBankingView(APIView):
@@ -4555,6 +6866,383 @@ class DeleteAcheteurBankingView(APIView):
             {"message": f"{count} données bancaires supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+
+class AcheteurBanquierListView(APIView):
+    """Vue pour lister et créer des banquiers pour un acheteur"""
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self, acheteur_id):
+        """Retourne le queryset des banquiers pour un acheteur"""
+        return Banquier.objects.filter(
+            acheteur_id=acheteur_id,
+            deleted__isnull=True
+        ).select_related('ville', 'couleur_commentaire').order_by('-created_at')
+    
+    def get(self, request, acheteur_id, *args, **kwargs):
+        """Lister les banquiers d'un acheteur"""
+        # Vérifier que l'acheteur existe
+        try:
+            acheteur = Acheteur.objects.get(id=acheteur_id, deleted__isnull=True)
+        except Acheteur.DoesNotExist:
+            return Response(
+                {"error": "Acheteur non trouvé"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Récupérer les banquiers avec pagination
+        banquiers = self.get_queryset(acheteur_id)
+        
+        # Pagination
+        page = request.GET.get('page', 1)
+        page_size = request.GET.get('page_size', 20)
+        
+        try:
+            page = int(page)
+            page_size = int(page_size)
+        except ValueError:
+            page = 1
+            page_size = 20
+        
+        # Limiter la taille de page
+        page_size = min(page_size, 100)
+        
+        # Calculer les indices
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        
+        total_count = banquiers.count()
+        total_pages = (total_count + page_size - 1) // page_size
+        
+        # Récupérer les données paginées
+        paginated_banquiers = banquiers[start_index:end_index]
+        
+        # Sérialiser les données
+        serializer = BanquierListSerializer(paginated_banquiers, many=True)
+        
+        # Retourner la réponse avec les métadonnées de pagination
+        return Response({
+            'count': total_count,
+            'total_pages': total_pages,
+            'current_page': page,
+            'page_size': page_size,
+            'start_index': start_index + 1 if total_count > 0 else 0,
+            'end_index': min(end_index, total_count),
+            'previous': page > 1,
+            'next': page < total_pages,
+            'results': serializer.data
+        })
+    
+    def post(self, request, acheteur_id, *args, **kwargs):
+        """Créer un nouveau banquier pour un acheteur"""
+        # Vérifier que l'acheteur existe
+        try:
+            acheteur = Acheteur.objects.get(id=acheteur_id, deleted__isnull=True)
+        except Acheteur.DoesNotExist:
+            return Response(
+                {"error": "Acheteur non trouvé"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Ajouter l'acheteur aux données
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+        
+        # Sérialiser et valider les données
+        serializer = AddBanquierSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder le banquier
+            banquier = serializer.save(acheteur=acheteur)
+            
+            # Retourner la réponse avec le banquier créé
+            response_serializer = GetBanquierSerializer(banquier)
+            return Response(
+                {
+                    'message': 'Banquier créé avec succès',
+                    'data': response_serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+        
+        # Retourner les erreurs de validation
+        return Response(
+            {'errors': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        """Supprimer plusieurs banquiers"""
+        # Vérifier que l'acheteur existe
+        try:
+            acheteur = Acheteur.objects.get(id=acheteur_id, deleted__isnull=True)
+        except Acheteur.DoesNotExist:
+            return Response(
+                {"error": "Acheteur non trouvé"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Vérifier les IDs fournis
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response(
+                {"error": "Aucun ID fourni"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les banquiers à supprimer
+        banquiers_to_delete = Banquier.objects.filter(
+            acheteur=acheteur,
+            id__in=ids,
+            deleted__isnull=True
+        )
+        
+        count = banquiers_to_delete.count()
+        
+        if count == 0:
+            return Response(
+                {"error": "Aucun banquier trouvé avec les IDs fournis"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Soft delete des banquiers
+        for banquier in banquiers_to_delete:
+            banquier.delete()
+        
+        return Response(
+            {
+                'message': f'{count} banquier(s) supprimé(s) avec succès',
+                'count': count
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class AcheteurBanquierDetailView(APIView):
+    """Vue pour récupérer, modifier et supprimer un banquier"""
+    permission_classes = [IsAuthenticated]
+    
+    def get_banquier(self, acheteur_id, banquier_id):
+        """Récupère un banquier spécifique"""
+        try:
+            acheteur = Acheteur.objects.get(id=acheteur_id, deleted__isnull=True)
+        except Acheteur.DoesNotExist:
+            return None, Response(
+                {"error": "Acheteur non trouvé"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            banquier = Banquier.objects.select_related('ville', 'couleur_commentaire').get(
+                id=banquier_id,
+                acheteur=acheteur,
+                deleted__isnull=True
+            )
+            return banquier, None
+        except Banquier.DoesNotExist:
+            return None, Response(
+                {"error": "Banquier non trouvé"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
+    def get(self, request, acheteur_id, banquier_id, *args, **kwargs):
+        """Récupérer les détails d'un banquier"""
+        banquier, error_response = self.get_banquier(acheteur_id, banquier_id)
+        
+        if error_response:
+            return error_response
+        
+        serializer = GetBanquierSerializer(banquier)
+        return Response(serializer.data)
+    
+    def put(self, request, acheteur_id, banquier_id, *args, **kwargs):
+        """Mettre à jour complètement un banquier"""
+        banquier, error_response = self.get_banquier(acheteur_id, banquier_id)
+        
+        if error_response:
+            return error_response
+        
+        serializer = EditBanquierSerializer(banquier, data=request.data)
+        
+        if serializer.is_valid():
+            updated_banquier = serializer.save()
+            
+            # Retourner les données mises à jour
+            response_serializer = GetBanquierSerializer(updated_banquier)
+            return Response(
+                {
+                    'message': 'Banquier mis à jour avec succès',
+                    'data': response_serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        return Response(
+            {'errors': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def patch(self, request, acheteur_id, banquier_id, *args, **kwargs):
+        """Mettre à jour partiellement un banquier"""
+        banquier, error_response = self.get_banquier(acheteur_id, banquier_id)
+        
+        if error_response:
+            return error_response
+        
+        serializer = EditBanquierSerializer(banquier, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            updated_banquier = serializer.save()
+            
+            # Retourner les données mises à jour
+            response_serializer = GetBanquierSerializer(updated_banquier)
+            return Response(
+                {
+                    'message': 'Banquier mis à jour avec succès',
+                    'data': response_serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        return Response(
+            {'errors': serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    def delete(self, request, acheteur_id, banquier_id, *args, **kwargs):
+        """Supprimer un banquier"""
+        banquier, error_response = self.get_banquier(acheteur_id, banquier_id)
+        
+        if error_response:
+            return error_response
+        
+        # Soft delete
+        banquier.delete()
+        
+        return Response(
+            {'message': 'Banquier supprimé avec succès'},
+            status=status.HTTP_200_OK
+        )
+
+
+class BanquierStatsView(APIView):
+    """Vue pour les statistiques des banquiers d'un acheteur"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, acheteur_id, *args, **kwargs):
+        """Récupérer les statistiques des banquiers"""
+        try:
+            acheteur = Acheteur.objects.get(id=acheteur_id, deleted__isnull=True)
+        except Acheteur.DoesNotExist:
+            return Response(
+                {"error": "Acheteur non trouvé"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Récupérer tous les banquiers de l'acheteur
+        banquiers = Banquier.objects.filter(
+            acheteur=acheteur,
+            deleted__isnull=True
+        )
+        
+        total_banquiers = banquiers.count()
+        
+        # Statistiques basiques
+        stats = {
+            'total': total_banquiers,
+            'avec_commentaire': banquiers.filter(
+                commentaire__isnull=False,
+                commentaire__gt=''
+            ).count(),
+            'avec_compte': banquiers.filter(
+                numero_compte__isnull=False,
+                numero_compte__gt=''
+            ).count(),
+        }
+        
+        stats['sans_compte'] = total_banquiers - stats['avec_compte']
+        
+        # Calculer les pourcentages
+        if total_banquiers > 0:
+            stats['pourcentage_avec_commentaire'] = round(
+                (stats['avec_commentaire'] / total_banquiers * 100), 2
+            )
+            stats['pourcentage_avec_compte'] = round(
+                (stats['avec_compte'] / total_banquiers * 100), 2
+            )
+            stats['pourcentage_avec_adresse'] = round(
+                (banquiers.exclude(
+                    Q(numero='') | Q(rue='')
+                ).count() / total_banquiers * 100), 2
+            )
+        else:
+            stats['pourcentage_avec_commentaire'] = 0
+            stats['pourcentage_avec_compte'] = 0
+            stats['pourcentage_avec_adresse'] = 0
+        
+        # Répartition par ville
+        banquiers_par_ville = banquiers.filter(
+            ville__isnull=False
+        ).values('ville__nom', 'ville__code').annotate(  # CORRECTION : ville__code au lieu de ville__code_postal
+            count=Count('id')
+        ).order_by('-count')
+        
+        stats['repartition_par_ville'] = [
+            {
+                'ville': item['ville__nom'],
+                'code': item['ville__code'],  # CORRECTION : code au lieu de code_postal
+                'count': item['count']
+            }
+            for item in banquiers_par_ville
+        ]
+        
+        # Répartition par couleur de commentaire
+        banquiers_par_couleur = banquiers.filter(
+            couleur_commentaire__isnull=False
+        ).values(
+            'couleur_commentaire__couleur',
+            'couleur_commentaire__code'
+        ).annotate(count=Count('id')).order_by('-count')
+        
+        stats['repartition_par_couleur'] = [
+            {
+                'couleur': item['couleur_commentaire__couleur'],
+                'code_couleur': item['couleur_commentaire__code'],
+                'count': item['count']
+            }
+            for item in banquiers_par_couleur
+        ]
+        
+        # Répartition par type de relation
+        banquiers_par_relation = banquiers.exclude(
+            type_relation=''
+        ).values('type_relation').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        stats['repartition_par_relation'] = [
+            {
+                'relation': item['type_relation'],
+                'count': item['count']
+            }
+            for item in banquiers_par_relation
+        ]
+        
+        # Banques uniques
+        stats['banques_uniques'] = banquiers.values('nom_banque').distinct().count()
+        
+        # Dernière mise à jour
+        dernier_banquier = banquiers.order_by('-updated_at').first()
+        if dernier_banquier:
+            stats['derniere_mise_a_jour'] = dernier_banquier.updated_at.isoformat()
+        
+        return Response(stats)
+
+
+
+
+
+
 
 
 class ListAcheteurActifAnglaisView(APIView):
@@ -8707,6 +11395,166 @@ class DeleteAcheteurAdresseView(APIView):
             status=status.HTTP_200_OK,
         )
 
+class AcheteurAdresseListView(APIView):
+    """
+    API pour gérer les adresses d'un acheteur
+    - GET : Liste toutes les adresses de l'acheteur
+    - POST : Crée une nouvelle adresse pour l'acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des adresses de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        adresses = AdresseAcheteur.objects.filter(
+            acheteur=acheteur
+        ).select_related('acheteur', 'created_by', 'updated_by').order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            adresses = adresses.filter(adresse__icontains=search)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(adresses, request)
+        
+        serializer = AdresseAcheteurSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle adresse pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AdresseAcheteurCreateSerializer(
+            data=data,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            # Sauvegarder l'adresse
+            adresse = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_ADRESSE',
+                object_id=adresse.id,
+                object_type='AdresseAcheteur',
+                details=f"Adresse créée pour l'acheteur {acheteur.nom}: {adresse.adresse[:50]}...",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Adresse créée avec succès",
+                "data": AdresseAcheteurSerializer(adresse).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurAdresseDetailView(APIView):
+    """
+    API pour gérer une adresse spécifique d'un acheteur
+    - GET : Détails d'une adresse
+    - PUT : Modifie une adresse
+    - DELETE : Supprime une adresse
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_adresse(self, acheteur_id, adresse_id):
+        """Récupère l'adresse ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            AdresseAcheteur.objects.select_related('acheteur', 'created_by', 'updated_by'),
+            id=adresse_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, adresse_id):
+        """Récupère les détails d'une adresse spécifique"""
+        adresse = self.get_adresse(acheteur_id, adresse_id)
+        serializer = AdresseAcheteurSerializer(adresse)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, adresse_id):
+        """Modifie une adresse existante"""
+        adresse = self.get_adresse(acheteur_id, adresse_id)
+        
+        serializer = AdresseAcheteurUpdateSerializer(
+            adresse, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            adresse = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_ADRESSE',
+                object_id=adresse.id,
+                object_type='AdresseAcheteur',
+                details=f"Adresse modifiée pour l'acheteur {adresse.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Adresse modifiée avec succès",
+                "data": AdresseAcheteurSerializer(adresse).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id, adresse_id):
+        """Supprime une adresse"""
+        adresse = self.get_adresse(acheteur_id, adresse_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_ADRESSE',
+            object_id=adresse.id,
+            object_type='AdresseAcheteur',
+            details=f"Adresse supprimée pour l'acheteur {adresse.acheteur.nom}: {adresse.adresse[:50]}...",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        adresse.delete()
+        return Response({
+            "message": "Adresse supprimée avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -9496,6 +12344,9 @@ class DeleteAcheteurCotisationView(APIView):
         
 
 
+
+
+
 class ListAcheteurPortableView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -9618,8 +12469,157 @@ class DeleteAcheteurPortableView(APIView):
             {"message": f"{count} portables supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+             
+class StandardPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class AcheteurPortableListView(APIView):
+    """
+    API pour gérer les numéros de portable d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des portables de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        portables = PortableAcheteur.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            portables = portables.filter(portable__icontains=search)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(portables, request)
+        
+        serializer = PortableAcheteurSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée un nouveau numéro de portable pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddPortableAcheteurSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder en passant created_by comme argument supplémentaire
+            portable = serializer.save(
+                created_by=request.user,
+                updated_by=request.user  # Si nécessaire
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_PORTABLE',
+                object_id=portable.id,
+                object_type='PortableAcheteur',
+                details=f"Numéro de portable ajouté pour l'acheteur {acheteur.nom} ({acheteur.code}): {portable.portable}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Numéro de portable ajouté avec succès",
+                "data": PortableAcheteurSerializer(portable).data
+            }, status=status.HTTP_201_CREATED)
+        
+        print(f"Erreurs serializer: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurPortableDetailView(APIView):
+    """
+    API pour gérer un numéro de portable spécifique
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_portable(self, acheteur_id, portable_id):
+        """Récupère le portable ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(PortableAcheteur, id=portable_id, acheteur=acheteur)
+    
+    def get(self, request, acheteur_id, portable_id):
+        """Récupère les détails d'un portable spécifique"""
+        portable = self.get_portable(acheteur_id, portable_id)
+        serializer = PortableAcheteurSerializer(portable)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, portable_id):
+        """Modifie un numéro de portable existant"""
+        portable = self.get_portable(acheteur_id, portable_id)
+        
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        
+        serializer = EditPortableAcheteurSerializer(
+            portable, data=data, partial=True
+        )
+        
+        if serializer.is_valid():
+            portable = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_PORTABLE',
+                object_id=portable.id,
+                object_type='PortableAcheteur',
+                details=f"Numéro de portable modifié pour l'acheteur {portable.acheteur.nom}: {portable.portable}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Numéro de portable modifié avec succès",
+                "data": PortableAcheteurSerializer(portable).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id, portable_id):
+        """Supprime un numéro de portable"""
+        portable = self.get_portable(acheteur_id, portable_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_PORTABLE',
+            object_id=portable.id,
+            object_type='PortableAcheteur',
+            details=f"Numéro de portable supprimé pour l'acheteur {portable.acheteur.nom}: {portable.portable}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        portable.delete()
+        return Response({
+            "message": "Numéro de portable supprimé avec succès"
+        }, status=status.HTTP_200_OK)
         
         
+ 
+ 
         
         
         
@@ -10683,6 +13683,147 @@ class DeleteAcheteurTelephoneView(APIView):
             {"message": f"{count} numéros de téléphone supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+class AcheteurTelephoneListView(APIView):
+    """
+    API pour gérer les numéros de téléphone fixe d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des téléphones de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        telephones = TelephoneAcheteur.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            telephones = telephones.filter(telephone__icontains=search)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(telephones, request)
+        
+        serializer = TelephoneAcheteurSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée un nouveau numéro de téléphone pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddTelephoneAcheteurSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder en passant created_by comme argument supplémentaire
+            telephone = serializer.save(
+                created_by=request.user,
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_TELEPHONE',
+                object_id=telephone.id,
+                object_type='TelephoneAcheteur',
+                details=f"Numéro de téléphone fixe ajouté pour l'acheteur {acheteur.nom} ({acheteur.code}): {telephone.telephone}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Numéro de téléphone fixe ajouté avec succès",
+                "data": TelephoneAcheteurSerializer(telephone).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurTelephoneDetailView(APIView):
+    """
+    API pour gérer un numéro de téléphone fixe spécifique
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_telephone(self, acheteur_id, telephone_id):
+        """Récupère le téléphone ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(TelephoneAcheteur, id=telephone_id, acheteur=acheteur)
+    
+    def get(self, request, acheteur_id, telephone_id):
+        """Récupère les détails d'un téléphone spécifique"""
+        telephone = self.get_telephone(acheteur_id, telephone_id)
+        serializer = TelephoneAcheteurSerializer(telephone)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, telephone_id):
+        """Modifie un numéro de téléphone existant"""
+        telephone = self.get_telephone(acheteur_id, telephone_id)
+        
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        
+        serializer = EditTelephoneAcheteurSerializer(
+            telephone, data=data, partial=True
+        )
+        
+        if serializer.is_valid():
+            telephone = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_TELEPHONE',
+                object_id=telephone.id,
+                object_type='TelephoneAcheteur',
+                details=f"Numéro de téléphone fixe modifié pour l'acheteur {telephone.acheteur.nom}: {telephone.telephone}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Numéro de téléphone fixe modifié avec succès",
+                "data": TelephoneAcheteurSerializer(telephone).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id, telephone_id):
+        """Supprime un numéro de téléphone"""
+        telephone = self.get_telephone(acheteur_id, telephone_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_TELEPHONE',
+            object_id=telephone.id,
+            object_type='TelephoneAcheteur',
+            details=f"Numéro de téléphone fixe supprimé pour l'acheteur {telephone.acheteur.nom}: {telephone.telephone}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        telephone.delete()
+        return Response({
+            "message": "Numéro de téléphone fixe supprimé avec succès"
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -10772,6 +13913,147 @@ class DeleteAcheteurEmailView(APIView):
             {"message": f"{count} adresses email supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+class AcheteurEmailListView(APIView):
+    """
+    API pour gérer les adresses email d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des emails de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        emails = EmailAcheteur.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            emails = emails.filter(email__icontains=search)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(emails, request)
+        
+        serializer = EmailAcheteurSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle adresse email pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddEmailAcheteurSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder en passant created_by comme argument supplémentaire
+            email = serializer.save(
+                created_by=request.user,
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_EMAIL',
+                object_id=email.id,
+                object_type='EmailAcheteur',
+                details=f"Adresse email ajoutée pour l'acheteur {acheteur.nom} ({acheteur.code}): {email.email}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Adresse email ajoutée avec succès",
+                "data": EmailAcheteurSerializer(email).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurEmailDetailView(APIView):
+    """
+    API pour gérer une adresse email spécifique
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_email(self, acheteur_id, email_id):
+        """Récupère l'email ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(EmailAcheteur, id=email_id, acheteur=acheteur)
+    
+    def get(self, request, acheteur_id, email_id):
+        """Récupère les détails d'un email spécifique"""
+        email = self.get_email(acheteur_id, email_id)
+        serializer = EmailAcheteurSerializer(email)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, email_id):
+        """Modifie une adresse email existante"""
+        email = self.get_email(acheteur_id, email_id)
+        
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+        
+        serializer = EditEmailAcheteurSerializer(
+            email, data=data, partial=True
+        )
+        
+        if serializer.is_valid():
+            email = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_EMAIL',
+                object_id=email.id,
+                object_type='EmailAcheteur',
+                details=f"Adresse email modifiée pour l'acheteur {email.acheteur.nom}: {email.email}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Adresse email modifiée avec succès",
+                "data": EmailAcheteurSerializer(email).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, acheteur_id, email_id):
+        """Supprime une adresse email"""
+        email = self.get_email(acheteur_id, email_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_EMAIL',
+            object_id=email.id,
+            object_type='EmailAcheteur',
+            details=f"Adresse email supprimée pour l'acheteur {email.acheteur.nom}: {email.email}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        email.delete()
+        return Response({
+            "message": "Adresse email supprimée avec succès"
+        }, status=status.HTTP_200_OK)
 
 
 

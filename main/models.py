@@ -1,5 +1,6 @@
 import datetime
 import time
+import re
 import base64
 from django.conf import settings
 from django.contrib.staticfiles.storage import staticfiles_storage
@@ -16,6 +17,11 @@ from django.utils.translation import gettext_lazy as _
 
 from safedelete.models import SafeDeleteModel as Model, SOFT_DELETE_CASCADE
 from simple_history.models import HistoricalRecords
+
+from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
+
 
 from main.utilitaires.constantes import *
 
@@ -2329,6 +2335,19 @@ class DonneesEnregistrement(Model):
 
 class Tendance(Model):
     
+    LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE = (
+        (gettext_lazy("40 Cette société est une filiale d'un groupe"),
+        gettext_lazy("40 Cette société est une filiale d'un groupe")),
+        (gettext_lazy("35 Cette société est une société autonome"),
+        gettext_lazy("35 Cette société est une société autonome")),
+        (gettext_lazy("30 En raison de ses liens avec le groupe, elle est considérée comme une filiale indépendante"),
+        gettext_lazy("30 En raison de ses liens avec le groupe, elle est considérée comme une filiale indépendante")),
+        (gettext_lazy("25 Cette entreprise est considérée comme une grande entreprise"), gettext_lazy("25 Cette entreprise est considérée comme une grande entreprise")),
+        (gettext_lazy("20 Cette entreprise est considérée comme une entreprise de taille moyenne"), gettext_lazy("20 Cette entreprise est considérée comme une entreprise de taille moyenne")),
+        (gettext_lazy("15 Cette entreprise est considérée comme une petite entreprise"), gettext_lazy("15 Cette entreprise est considérée comme une petite entreprise")),
+        (gettext_lazy("10 Inconnu de nos sources"), gettext_lazy("10 Inconnu de nos sources"))
+    )
+    
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     acheteur = models.ForeignKey(
@@ -2351,6 +2370,7 @@ class Tendance(Model):
         on_delete=models.SET_NULL,
         verbose_name=_("Référence Avis Commercial"),
     )
+    # avis_commercial = models.ForeignKey(ListeInformationsAvisCommercial, null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Avis commercial"))
 
     presse_media = models.CharField(
         max_length=100, blank=True, verbose_name=_("Presse et Médias")
@@ -2956,9 +2976,13 @@ class CompositionAction(Model):
         _("Pourcentage"),
         max_digits=100,
         decimal_places=2,
-        blank=True,
         null=True,
-        help_text=_("Pourcentage de détention d'actions"),
+        blank=True,
+        validators=[
+            MinValueValidator(Decimal('0')),
+            MaxValueValidator(Decimal('100'))
+        ],
+        help_text=_("Pourcentage de détention (0-100) avec 2 décimales max")
     )
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -2981,6 +3005,44 @@ class CompositionAction(Model):
             if self.nom
             else _("Composition Action")
         )
+        
+    def clean(self):
+        """Validation au niveau modèle"""
+        super().clean()
+        
+        # Validation du pourcentage
+        if self.pourcentage is not None:
+            # Vérifier le format décimal
+            if self.pourcentage.as_tuple().exponent < -2:
+                raise ValidationError({
+                    'pourcentage': 'Maximum 2 décimales autorisées'
+                })
+            
+            # Vérifier que le total ne dépasse pas 100%
+            if self.pk:  # Si mise à jour
+                total = CompositionAction.objects.filter(
+                    acheteur=self.acheteur
+                ).exclude(pk=self.pk).aggregate(
+                    total=models.Sum('pourcentage')
+                )['total'] or Decimal('0')
+            else:  # Si création
+                total = CompositionAction.objects.filter(
+                    acheteur=self.acheteur
+                ).aggregate(
+                    total=models.Sum('pourcentage')
+                )['total'] or Decimal('0')
+            
+            nouveau_total = total + (self.pourcentage or Decimal('0'))
+            if nouveau_total > 100:
+                disponible = 100 - total
+                raise ValidationError({
+                    'pourcentage': f'Pourcentage disponible: {disponible:.2f}%'
+                })
+    
+    def save(self, *args, **kwargs):
+        """Override save pour inclure la validation"""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Composition de l'Actionnariat")
@@ -3184,6 +3246,15 @@ class CompteFinancier(Model):
     MWK = 'MWK'  # Kwacha malawite
     ZMW = 'ZMW'  # Kwacha zambien
     BWP = 'BWP'  # Pula botswanais
+    
+    OUI = 'OUI'
+    NON = 'NON'
+    
+    # Choix OUI/NON
+    STATUS__OUI_NON = (
+        (OUI, _('Oui')),
+        (NON, _('Non')),
+    )
 
     STATUS_CHANGE = (
         (XAF, 'XAF'),
@@ -3210,6 +3281,13 @@ class CompteFinancier(Model):
         (MWK, 'MWK'),
         (ZMW, 'ZMW'),
         (BWP, 'BWP'),
+    )
+    
+    LIEN_TYPE_BILAN_CHOICE = (
+        (gettext_lazy("Classique"), gettext_lazy("Classique")),
+        (gettext_lazy("Syscohada"), gettext_lazy("Syscohada")),
+        (gettext_lazy("Anglais"), gettext_lazy("Anglais")),
+        (gettext_lazy("Bancaire"), gettext_lazy("Bancaire")),
     )
 
     acheteur = models.ForeignKey(
@@ -3269,13 +3347,6 @@ class CompteFinancier(Model):
         default="--------",
         verbose_name=_("Type de bilan"),
     )
-    type_bilan_ref = models.ForeignKey(
-        "ModeleBilan",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence Type de bilan"),
-    )
 
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -3327,7 +3398,7 @@ class OperationEtHistorique(Model):
     description_complete_activite = models.TextField(
         blank=True, verbose_name=_("Description complète de l'activité")
     )
-    importation = models.TextField(blank=True, verbose_name=_("Importation"))
+    importation = models.ManyToManyField("ListeImportation", related_name=_("importation"), blank=True, null=True)
     historique = models.TextField(blank=True, verbose_name=_("Historique"))
 
     created_at = models.DateTimeField(
@@ -3346,6 +3417,10 @@ class OperationEtHistorique(Model):
             if self.acheteur
             else _("Opération et Historique")
         )
+        
+    def get_importation_display(self):
+        return ", ".join([str(imp) for imp in self.importation.all()])
+    get_importation_display.short_description = 'Importations'
 
     class Meta:
         verbose_name = _("Opération et Historique")
@@ -3363,19 +3438,7 @@ class ProprieteEtActif(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    locaux = models.CharField(
-        max_length=255,
-        choices=LIEN_COMPORTEMENT_PREMISES_CHOICE,
-        blank=True,
-        verbose_name=_("Locaux"),
-    )
-    locaux_ref = models.ForeignKey(
-        "ModeleBail",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
+    locaux = models.ManyToManyField("Locaux", related_name=_("Locaux"), blank=True)
 
     branche = models.CharField(max_length=255, blank=True, verbose_name=_("Branche"))
 
@@ -3395,6 +3458,10 @@ class ProprieteEtActif(Model):
             if self.acheteur
             else _("Propriété et Actif")
         )
+        
+    def get_locaux_display(self):
+        return ", ".join([str(local) for local in self.locaux.all()])
+    get_locaux_display.short_description = 'Locaux'
 
     class Meta:
         verbose_name = _("Propriété et Actif")
@@ -3412,8 +3479,8 @@ class ConditionAchat(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    local = models.CharField(max_length=255, blank=True, verbose_name=_("Local"))
-    importation = models.TextField(blank=True, verbose_name=_("Importation"))
+    local = models.ManyToManyField("ListeConditionAchat", related_name=_("local"), blank=True)  # Enlevez null=True
+    importation = models.ManyToManyField("ListeConditionAchat", related_name=_("importation"), blank=True)  # Enlevez null=True
     les_clients = models.TextField(blank=True, verbose_name=_("Les clients"))
     fournisseur = models.TextField(blank=True, verbose_name=_("Fournisseur"))
 
@@ -3433,6 +3500,14 @@ class ConditionAchat(Model):
             if self.acheteur
             else _("Condition d'Achat")
         )
+        
+    def get_local_display(self):
+        return ", ".join([str(item) for item in self.local.all()])
+    get_local_display.short_description = 'Conditions Locales'
+    
+    def get_importation_display(self):
+        return ", ".join([str(item) for item in self.importation.all()])
+    get_importation_display.short_description = 'Conditions Importation'
 
     class Meta:
         verbose_name = _("Condition d'Achat")
@@ -3440,6 +3515,45 @@ class ConditionAchat(Model):
 
 
 class ConditionDeVente(Model):
+    
+    LIEN_COMPORTEMENT_JUGEMENT_CHOICE = (
+        (gettext_lazy("Aucune information négative n'a été trouvée"),
+        gettext_lazy("Aucune information négative n'a été trouvée")),
+        (gettext_lazy(
+            "Il n'existe aucune trace d'une quelconque action de recouvrement de créances par ACREMAC à l'encontre de cette entreprise"),
+        gettext_lazy(
+            "Il n'existe aucune trace d'une quelconque action de recouvrement de créances par ACREMAC à l'encontre de cette entreprise")),
+        (gettext_lazy(
+            "Selon nos sources, l'entreprise n'est pas en situation d'insolvabilité/procédure préliminaire/procédure de répartition des dettes"),
+        gettext_lazy(
+            "Selon nos sources, l'entreprise n'est pas en situation d'insolvabilité/procédure préliminaire/procédure de répartition des dettes")),
+        (gettext_lazy("Des actions en recouvrement judiciaire sont ouvertes contre l'acheteur"),
+        gettext_lazy("Des actions en recouvrement judiciaire sont ouvertes contre l'acheteur")),
+        (gettext_lazy("Des actions de recouvrement à l'amiable sont ouvertes contre l'acheteur"),
+        gettext_lazy("Des actions de recouvrement à l'amiable sont ouvertes contre l'acheteur")),
+        (gettext_lazy("Des cas de recouvrement fermés existent chez nos sources sur l'acheteur"), 
+         gettext_lazy("Des cas de recouvrement fermés existent chez nos sources sur l'acheteur")),
+        (gettext_lazy("Inconnu de nos sources"), gettext_lazy("Inconnu de nos sources")),
+
+    )
+    
+    LIEN_COMPORTEMENT_PAIEMENT_CHOICE = (
+        (LIEN_TYPE_RAPPORT_CHOICE_DEFAUT, LIEN_TYPE_RAPPORT_CHOICE_DEFAUT),
+        (gettext_lazy('En Avance'), gettext_lazy('En Avance')),
+        (gettext_lazy('En Temps et en heure'), gettext_lazy('En Temps et en heure')),
+        (gettext_lazy('En Retard'), gettext_lazy('En Retard')),
+        (gettext_lazy('Normal'), gettext_lazy('Normal')),
+        (gettext_lazy('Mauvais payeur'), gettext_lazy('Mauvais payeur')),
+        (gettext_lazy('Plainte isolée'), gettext_lazy('Plainte isolée')),
+        (gettext_lazy("Inconnu de nos sources"), gettext_lazy("Inconnu de nos sources")),
+        (gettext_lazy(
+            "En raison des informations sur les procédures d'insolvabilité/préliminaires/réglementaires, ACREMAC n'est pas en mesure de donner une évaluation finale du comportement de paiement de l'entreprise à ce stade"),
+        gettext_lazy(
+            "En raison des informations sur les procédures d'insolvabilité/préliminaires/réglementaires, ACREMAC n'est pas en mesure de donner une évaluation finale du comportement de paiement de l'entreprise à ce stade")),
+        (gettext_lazy("Aucune expérience de paiement d'une quelconque importance n'est disponible"),
+        gettext_lazy("Aucune expérience de paiement d'une quelconque importance n'est disponible")),
+
+    )
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3450,7 +3564,7 @@ class ConditionDeVente(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    local = models.CharField(max_length=255, blank=True, verbose_name=_("Local"))
+    local = models.ManyToManyField("ListeConditionVente", related_name=_("local"), blank=True)  # Enlevez null=True
 
     recouvrement_de_dette_jugement = models.CharField(
         max_length=255,
@@ -3458,26 +3572,12 @@ class ConditionDeVente(Model):
         default="--------",
         verbose_name=_("Recouvrement de dette jugement"),
     )
-    recouvrement_de_dette_jugement_ref = models.ForeignKey(
-        "ModeleComportementJugement",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
 
     comportement_de_paiement = models.CharField(
         max_length=255,
         choices=LIEN_COMPORTEMENT_PAIEMENT_CHOICE,
         default="--------",
         verbose_name=_("Comportement de paiement"),
-    )
-    comportement_de_paiement_ref = models.ForeignKey(
-        "ModeleComportementPaiement",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
     )
 
     created_at = models.DateTimeField(
@@ -3492,6 +3592,10 @@ class ConditionDeVente(Model):
 
     def __str__(self):
         return f"Condition de vente for {self.acheteur} - {self.local}"
+    
+    def get_local_display(self):
+        return ", ".join([str(item) for item in self.local.all()])
+    get_local_display.short_description = 'Conditions Locales'
 
     class Meta:
         verbose_name = _("Condition de Vente")
@@ -3544,18 +3648,22 @@ class Advice(Model):
     acheteur = models.ForeignKey(
         "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
+    
     points_forts = models.TextField(
         max_length=10000000, blank=True, verbose_name=_("Points forts")
     )
     points_faibles = models.TextField(
         max_length=10000000, blank=True, verbose_name=_("Points faibles")
     )
+    
     dynamisme_court_terme = models.TextField(
         max_length=10000000, blank=True, verbose_name=_("Dynamisme à court terme")
     )
     dynamisme_long_terme = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Dynamisme à long terme")
+        max_length=10000000, blank=True, null=True, verbose_name=_("Dynamisme à long terme")
     )
+    risque_potentiel_court_terme = models.TextField(max_length=10000000, blank=True, null=True, verbose_name=_("Risques potentiel à court terme"))
+    
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
@@ -3581,6 +3689,47 @@ class Geopolitics(Model):
     acheteur = models.ForeignKey(
         "Acheteur", on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
     )
+    
+    stabilite_politique = models.CharField(
+        max_length=4, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('Stabilité politique'),
+        help_text=_("Score de 0 à 10: 0=Très instable, 5=Moyen, 10=Très stable")
+    )
+    
+    etat_droit = models.CharField(
+        max_length=4, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('Etat de droit'),
+        help_text=_("Score de 0 à 10: 0=Faible, 5=Moyen, 10=Forte application de la loi")
+    )
+    
+    efficacite = models.CharField(
+        max_length=4, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('Efficacité gouvernementale'),
+        help_text=_("Score de 0 à 10: 0=Très inefficace, 5=Moyen, 10=Très efficace")
+    )
+    
+    qualite = models.CharField(
+        max_length=4, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('Qualité réglementaire'),
+        help_text=_("Score de 0 à 10: 0=Mauvaise, 5=Moyenne, 10=Excellente réglementation")
+    )
+    
+    liberte_expression = models.CharField(
+        max_length=4, 
+        blank=True, 
+        null=True, 
+        verbose_name=_("Liberté d'expression"),
+        help_text=_("Score de 0 à 10: 0=Très restrictive, 5=Moyenne, 10=Très libre")
+    )
+    
     donnees_politiques = models.TextField(
         max_length=10000000, blank=True, verbose_name=_("Données politiques")
     )
@@ -3599,6 +3748,25 @@ class Geopolitics(Model):
 
     def __str__(self):
         return f"Geopolitics for {self.acheteur}"
+    
+    def get_average_score(self):
+        """Calcule le score moyen des indicateurs"""
+        scores = []
+        score_fields = [
+            self.stabilite_politique,
+            self.etat_droit,
+            self.efficacite,
+            self.qualite,
+            self.liberte_expression
+        ]
+        
+        for score in score_fields:
+            if score and score.isdigit():
+                scores.append(int(score))
+        
+        if scores:
+            return round(sum(scores) / len(scores), 1)
+        return 0
 
     class Meta:
         verbose_name = _("Geopolitique")
@@ -9040,6 +9208,66 @@ class TelephoneAcheteur(Model):
 
     def __str__(self):
         return f"Numéro de téléphone de {self.acheteur.nom}"
+    
+    def get_formatted_number(self):
+        """Retourne le numéro formaté pour l'affichage"""
+        if not self.telephone:
+            return ""
+        
+        # Nettoyer le numéro
+        cleaned = re.sub(r'\D', '', str(self.telephone))
+        
+        # Format par préfixe de pays
+        format_rules = {
+            '241': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:11]}" if len(num) == 11 else self.telephone,
+            '225': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:12]}" if len(num) == 12 else self.telephone,
+            '223': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:11]}" if len(num) == 11 else self.telephone,
+        }
+        
+        # Chercher le format correspondant
+        for prefix in format_rules:
+            if cleaned.startswith(prefix):
+                return format_rules[prefix](cleaned)
+        
+        # Format général pour les numéros locaux
+        if len(cleaned) == 8 and cleaned.startswith('0'):
+            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]}"
+        elif len(cleaned) == 9 and cleaned.startswith('0'):
+            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:9]}"
+        elif len(cleaned) == 10:
+            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:10]}"
+        
+        return self.telephone
+    
+    def get_call_link(self):
+        """Retourne le lien pour appeler le numéro"""
+        if not self.telephone:
+            return ""
+        
+        # Nettoyer le numéro de tous les caractères non numériques
+        cleaned_number = re.sub(r'\D', '', str(self.telephone))
+        
+        # Si le numéro ne commence pas par +, l'ajouter
+        if cleaned_number and not cleaned_number.startswith('+'):
+            # Vérifier s'il s'agit d'un numéro local (commence par 0)
+            if cleaned_number.startswith('0'):
+                cleaned_number = cleaned_number[1:]
+            
+            # Ajouter l'indicatif par défaut si nécessaire
+            cleaned_number = '+' + cleaned_number
+        
+        return f"tel:{cleaned_number}"
+    
+    def clean(self):
+        """Validation du modèle"""
+        super().clean()
+        if self.telephone:
+            # S'assurer que le téléphone contient au moins quelques chiffres
+            digits = re.sub(r'\D', '', self.telephone)
+            if len(digits) < 6:
+                raise ValidationError({
+                    'telephone': _("Le numéro de téléphone doit contenir au moins 6 chiffres.")
+                })
 
 
 class AdresseAcheteur(Model):
@@ -9092,7 +9320,7 @@ class PortableAcheteur(Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
-    portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"))
+    portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"), help_text=_("Format: +241 XX XX XX XX ou 0X XX XX XX"))
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -9125,12 +9353,120 @@ class PortableAcheteur(Model):
     history = HistoricalRecords()
 
 
-    class Meta:
-        verbose_name = _("Portable")
-        verbose_name_plural = _("Portables")
+    def clean(self):
+        """Validation du numéro de portable - VERSION AVEC DEBUG"""
+        super().clean()
+        
+        import re
+        
+        print(f"DEBUG clean() - portable: {self.portable}")
+        print(f"DEBUG clean() - acheteur: {self.acheteur}")
+        print(f"DEBUG clean() - created_by: {self.created_by}")
+        print(f"DEBUG clean() - type created_by: {type(self.created_by)}")
+        
+        if not self.portable:
+            raise ValidationError({'portable': _("Le numéro de portable est requis.")})
+        
+        # Nettoyer le numéro
+        cleaned = re.sub(r'\D', '', self.portable)
+        
+        # Validation de base
+        if len(cleaned) < 8:
+            raise ValidationError({
+                'portable': _("Le numéro de portable doit contenir au moins 8 chiffres.")
+            })
+        
+        if len(cleaned) > 15:
+            raise ValidationError({
+                'portable': _("Le numéro de portable ne peut pas dépasser 15 chiffres.")
+            })
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Valider avant de sauvegarder
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Numéro de portable de {self.acheteur.nom}"
+        return f"{self.portable} - {self.acheteur.nom}"
+    
+    def get_formatted_number(self):
+        """Retourne le numéro formaté pour l'affichage - VERSION AMÉLIORÉE"""
+        import re
+        
+        cleaned = re.sub(r'\D', '', self.portable)
+        
+        # Format selon la longueur et le préfixe
+        if cleaned.startswith(('241', '225', '223')) and len(cleaned) == 11:
+            # Format international: +XXX XX XX XX XX
+            return f"+{cleaned[:3]} {cleaned[3:5]} {cleaned[5:7]} {cleaned[7:9]} {cleaned[9:11]}"
+        elif cleaned.startswith('0') and len(cleaned) == 9:
+            # Format local: 0X XX XX XX
+            return f"{cleaned[0:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:9]}"
+        elif len(cleaned) >= 10:
+            # Format générique pour les longs numéros
+            if cleaned.startswith('1') and len(cleaned) == 11:  # USA/Canada
+                return f"+{cleaned[0]} ({cleaned[1:4]}) {cleaned[4:7]}-{cleaned[7:11]}"
+            else:
+                # Groupement par 2 ou 3 chiffres
+                formatted = ''
+                if cleaned.startswith('+'):
+                    formatted = '+'
+                    cleaned = cleaned[1:]
+                
+                while len(cleaned) > 0:
+                    if len(cleaned) >= 3:
+                        formatted += cleaned[:3] + ' '
+                        cleaned = cleaned[3:]
+                    else:
+                        formatted += cleaned + ' '
+                        cleaned = ''
+                
+                return formatted.strip()
+        
+        # Retourner le numéro original si aucun format ne correspond
+        return self.portable
+    
+    def get_call_link(self):
+        """Retourne le lien pour appeler le numéro"""
+        if not self.portable:
+            return ""
+        
+        # Nettoyer le numéro de tous les caractères non numériques
+        cleaned_number = re.sub(r'\D', '', str(self.portable))
+        
+        # Si le numéro ne commence pas par +, l'ajouter
+        if cleaned_number and not cleaned_number.startswith('+'):
+            # Vérifier s'il s'agit d'un numéro local (commence par 0)
+            if cleaned_number.startswith('0'):
+                # Supprimer le 0 initial pour certains pays
+                cleaned_number = cleaned_number[1:]
+            
+            # Ajouter l'indicatif par défaut si nécessaire
+            # (ajuster selon vos besoins)
+            cleaned_number = '+' + cleaned_number
+        
+        return f"tel:{cleaned_number}"
+    
+    def get_whatsapp_link(self):
+        """Retourne le lien WhatsApp"""
+        if not self.portable:
+            return ""
+        
+        # Nettoyer le numéro de tous les caractères non numériques
+        cleaned_number = re.sub(r'\D', '', str(self.portable))
+        
+        # WhatsApp nécessite un format international sans le +
+        return f"https://wa.me/{cleaned_number}"
+
+    class Meta:
+        verbose_name = _("Portable d'Acheteur")
+        verbose_name_plural = _("Portables d'Acheteurs")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['acheteur']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['portable']),
+        ]
+        unique_together = [['acheteur', 'portable']]  # Empêche les doublons pour le même acheteur
 
 
 
@@ -9180,6 +9516,49 @@ class EmailAcheteur(Model):
 
     def __str__(self):
         return f"Email de {self.acheteur.nom}"
+    
+    def get_mailto_link(self):
+        """Retourne le lien mailto: pour l'email"""
+        if not self.email:
+            return ""
+        return f"mailto:{self.email}"
+    
+    def get_display_email(self):
+        """Retourne l'email formaté pour l'affichage"""
+        if not self.email:
+            return ""
+        
+        # Pour les longs emails, on peut tronquer l'affichage
+        email = self.email.strip().lower()
+        if len(email) > 30:
+            # Garder le début et la fin pour l'affichage
+            local_part, domain = email.split('@')
+            if len(local_part) > 15:
+                local_part = local_part[:12] + '...'
+            return f"{local_part}@{domain}"
+        return email
+    
+    def clean(self):
+        """Validation du modèle"""
+        super().clean()
+        
+        if self.email:
+            # Normaliser l'email
+            self.email = self.email.strip().lower()
+            
+            # Vérifier la longueur
+            if len(self.email) > 254:
+                raise ValidationError({
+                    'email': _("L'adresse email ne peut pas dépasser 254 caractères.")
+                })
+            
+            # Vérifier le format
+            try:
+                validate_email(self.email)
+            except DjangoValidationError:
+                raise ValidationError({
+                    'email': _("Adresse email invalide.")
+                })
 
 
 class Document(Model):
@@ -11309,10 +11688,69 @@ class DocDownload(models.Model):
 ##########################################################
 ##########################################################
 
+class Locaux(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    nom = models.CharField(_("nom"), max_length=100)
+
+    def __str__(self):
+        return self.nom
+
+class ListeConditionAchat(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    nom = models.CharField(_("nom"), max_length=100)
+
+    def __str__(self):
+        return self.nom   
+    
+    
+class ListeConditionVente(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    nom = models.CharField(_("nom"), max_length=100)
+
+    def __str__(self):
+        return self.nom
+    
+    
+
+class ListeImportation(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    libelle = models.TextField(_("nom"), max_length=2000)
+
+    def __str__(self):
+        return self.libelle
+
+
+class ListeComportementsPaiement(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    libelle = models.TextField(_("libelle"), max_length=255)
+    couleur = models.CharField(_("couleur"), max_length=10)
+
+    def __str__(self):
+        return self.libelle
+
+
+
+class ListeInformationsRating(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    libelle = models.TextField(_("libelle"), max_length=255)
+    couleur = models.CharField(_("couleur"), max_length=10)
+
+    def __str__(self):
+        return self.libelle
+
+
+class ListeInformationsAvisCommercial(models.Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+    libelle = models.TextField(_("libelle"), max_length=255)
+    couleur = models.CharField(_("couleur"), max_length=20)
+    def __str__(self):
+        return self.libelle
+
+
 
 ##########################################################
 ##########################################################
-# Debut Modules Pelba
+# Fin Modules Pelba
 ##########################################################
 ##########################################################
 

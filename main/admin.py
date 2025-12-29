@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.utils.translation import gettext_lazy as _
+
 
 from main.models import *
 
@@ -797,7 +799,7 @@ class OperationEtHistoriqueAdmin(admin.ModelAdmin):
         "acheteur",
         "commentaire_ratios",
         "description_complete_activite",
-        "importation",
+        "get_importation_display",  # Utilisez la méthode au lieu du champ
         "historique",
         "created_at",
         "updated_at",
@@ -833,17 +835,22 @@ admin.site.register(OperationEtHistorique, OperationEtHistoriqueAdmin)
 
 
 class ProprieteEtActifAdmin(admin.ModelAdmin):
-    list_display = ("acheteur", "locaux", "branche", "created_at", "updated_at")
-    search_fields = ("acheteur__nom", "locaux", "branche")
+    list_display = ("acheteur", "locaux_list", "branche", "created_at", "updated_at")
+    search_fields = ("acheteur__nom", "locaux__nom", "branche")
     list_filter = ("created_at", "updated_at")
     date_hierarchy = "created_at"
+    readonly_fields = ("created_at", "updated_at")
 
     fieldsets = (
         (None, {"fields": ("acheteur", "locaux", "branche")}),
-        ("Dates", {"fields": ("created_at", "updated_at")}),
+        (_("Dates"), {"fields": ("created_at", "updated_at")}),
     )
 
-    readonly_fields = ("created_at", "updated_at")
+    def locaux_list(self, obj):
+        return ", ".join(obj.locaux.values_list("nom", flat=True))
+
+    locaux_list.short_description = _("Locaux")
+
 
 
 admin.site.register(ProprieteEtActif, ProprieteEtActifAdmin)
@@ -852,8 +859,8 @@ admin.site.register(ProprieteEtActif, ProprieteEtActifAdmin)
 class ConditionAchatAdmin(admin.ModelAdmin):
     list_display = (
         "acheteur",
-        "local",
-        "importation",
+        "local_list",  # Remplacez par une méthode
+        "importation_list",  # Remplacez par une méthode
         "les_clients",
         "fournisseur",
         "created_at",
@@ -861,8 +868,8 @@ class ConditionAchatAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "acheteur__nom",
-        "local",
-        "importation",
+        "local__nom",  # Ajoutez le champ de recherche
+        "importation__nom",  # Ajoutez le champ de recherche
         "les_clients",
         "fournisseur",
     )
@@ -886,6 +893,16 @@ class ConditionAchatAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("created_at", "updated_at")
+    
+    def local_list(self, obj):
+        return ", ".join(obj.local.values_list("nom", flat=True)[:3])  # Ajustez "nom" selon votre modèle ListeConditionAchat
+    
+    local_list.short_description = _("Local")
+    
+    def importation_list(self, obj):
+        return ", ".join(obj.importation.values_list("nom", flat=True)[:3])  # Ajustez "nom" selon votre modèle ListeConditionAchat
+    
+    importation_list.short_description = _("Importation")
 
 
 admin.site.register(ConditionAchat, ConditionAchatAdmin)
@@ -894,7 +911,7 @@ admin.site.register(ConditionAchat, ConditionAchatAdmin)
 class ConditionDeVenteAdmin(admin.ModelAdmin):
     list_display = (
         "acheteur",
-        "local",
+        "local_list",  # Remplacez par une méthode
         "recouvrement_de_dette_jugement",
         "comportement_de_paiement",
         "created_at",
@@ -902,7 +919,7 @@ class ConditionDeVenteAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "acheteur__nom",
-        "local",
+        "local__nom",  # Ajoutez le champ de recherche
         "recouvrement_de_dette_jugement",
         "comportement_de_paiement",
     )
@@ -930,6 +947,11 @@ class ConditionDeVenteAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("created_at", "updated_at")
+    
+    def local_list(self, obj):
+        return ", ".join(obj.local.values_list("nom", flat=True)[:3])  # Ajustez "nom" selon votre modèle ListeConditionVente
+    
+    local_list.short_description = _("Local")
 
 
 admin.site.register(ConditionDeVente, ConditionDeVenteAdmin)
@@ -1355,3 +1377,98 @@ admin.site.register(Certification)
 admin.site.register(InnovationDeveloppement)
 admin.site.register(StrategiePlanification)
 admin.site.register(ConformiteReglementation)
+
+
+
+@admin.register(Locaux)
+class LocauxAdmin(admin.ModelAdmin):
+    list_display = ("nom",)
+    search_fields = ("nom",)
+
+
+@admin.register(ListeConditionAchat)
+class ListeConditionAchatAdmin(admin.ModelAdmin):
+    list_display = ("nom",)
+    search_fields = ("nom",)
+
+
+
+@admin.register(ListeConditionVente)
+class ListeConditionVenteAdmin(admin.ModelAdmin):
+    list_display = ("nom",)
+    search_fields = ("nom",)
+
+
+
+@admin.register(ListeImportation)
+class ListeImportationAdmin(admin.ModelAdmin):
+    list_display = ("short_libelle",)
+    search_fields = ("libelle",)
+
+    def short_libelle(self, obj):
+        return obj.libelle[:80] + "…" if len(obj.libelle) > 80 else obj.libelle
+
+    short_libelle.short_description = _("Libellé")
+
+
+
+@admin.register(ListeComportementsPaiement)
+class ListeComportementsPaiementAdmin(admin.ModelAdmin):
+    list_display = ("libelle", "couleur")
+    search_fields = ("libelle",)
+    list_filter = ("couleur",)
+
+
+
+
+@admin.register(ListeInformationsRating)
+class ListeInformationsRatingAdmin(admin.ModelAdmin):
+    list_display = ("libelle", "couleur")
+    search_fields = ("libelle",)
+    list_filter = ("couleur",)
+
+
+
+
+
+
+@admin.register(ListeInformationsAvisCommercial)
+class ListeInformationsAvisCommercialAdmin(admin.ModelAdmin):
+    list_display = ("libelle", "couleur")
+    search_fields = ("libelle",)
+    list_filter = ("couleur",)
+
+
+
+
+@admin.register(ActivityLog)
+class ActivityLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "user",
+        "action_type",
+        "object_type",
+        "object_id",
+        "ip_address",
+    )
+    list_filter = ("action_type", "object_type", "created_at")
+    search_fields = ("user__username", "action_type", "details", "ip_address")
+    date_hierarchy = "created_at"
+
+    readonly_fields = (
+        "user",
+        "action_type",
+        "object_type",
+        "object_id",
+        "details",
+        "ip_address",
+        "user_agent",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+

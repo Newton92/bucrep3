@@ -28,7 +28,7 @@ from main.utils import populate_database, create_fake_commands, create_fake_buye
 from django.utils import timezone
 from faker import Faker
 import random
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 from main.utils import generate_test_commandes
 
 import random
@@ -41,6 +41,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Sum
 
 
 
@@ -1214,6 +1215,20 @@ def dash_root_edit_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur(request, acheteur_id):
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+    
     # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
@@ -1253,6 +1268,29 @@ def dash_root_manage_acheteur(request, acheteur_id):
 
     # Récupérer tous les villes
     ville_list = Ville.objects.all()
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+        'description': acheteur.description or 'Aucune description disponible',
+        'email': acheteur.email or 'Non spécifié',
+        'fax': acheteur.fax or 'Non spécifié',
+        'boite_postale': acheteur.boite_postale or 'Non spécifié',
+        'site_internet': acheteur.site_internet or 'Non spécifié',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+        'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
     context = {
         "acheteur_active": "active",
@@ -1260,6 +1298,8 @@ def dash_root_manage_acheteur(request, acheteur_id):
         "refresh": refresh_token,
         "access": access_token,
         "id_acheteur": id_acheteur,
+        "acheteur_json": acheteur_json,  # JSON pour JavaScript
+        "acheteur": acheteur,  # Objet pour le template si besoin
         "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
@@ -2311,32 +2351,102 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
 
 
 
+# views/main/capital_views.py
+
 @login_required
 def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion du capital social unique d'un acheteur
+    Un acheteur ne peut avoir qu'un seul capital social
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les devises
+    # Récupérer le capital social existant (un seul)
+    capital = CompositionCapitalSocial.objects.filter(acheteur=acheteur).first()
+    
+    # Calculer le pourcentage de capital libéré si le capital existe
+    if capital and capital.emis and capital.emis > 0:
+        capital.pourcentage_libere = round((capital.libere / capital.emis) * 100, 2)
+    elif capital:
+        capital.pourcentage_libere = 0
+    
+    # Récupérer toutes les devises pour les listes déroulantes
     devise_list = Devise.objects.all()
-
-    # Récupérer tous les colorations
+    
+    # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si un capital existe, préparer ses données pour le template et JavaScript
+    capital_json = None
+    if capital:
+        capital_data = {
+            'id': capital.id,
+            'emis': float(capital.emis) if capital.emis else 0,
+            'publie': float(capital.publie) if capital.publie else 0,
+            'libere': float(capital.libere) if capital.libere else 0,
+            'pourcentage_libere': capital.pourcentage_libere,
+            'devise': {
+                'id': capital.devise.id if capital.devise else None,
+                'nom': capital.devise.nom if capital.devise else '',
+                'symbole': capital.devise.symbole if capital.devise else '',
+            } if capital.devise else None,
+            'couleur_commentaire': {
+                'id': capital.couleur_commentaire.id if capital.couleur_commentaire else None,
+                'couleur': capital.couleur_commentaire.couleur if capital.couleur_commentaire else '',
+                'code': capital.couleur_commentaire.code if capital.couleur_commentaire else '',
+            } if capital.couleur_commentaire else None,
+            'commentaire': capital.commentaire or '',
+            'created_at': capital.created_at.isoformat() if capital.created_at else None,
+            'updated_at': capital.updated_at.isoformat() if capital.updated_at else None,
+        }
+        capital_json = json.dumps(capital_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "capital_json": capital_json or 'null',
+        "acheteur": acheteur,
+        "capital": capital,
+        "id_acheteur": acheteur_id,
         "devise_list": devise_list,
         "coloration_list": coloration_list,
     }
@@ -2347,36 +2457,95 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
     )
 
 
+
+
+
 @login_required
 def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue optimisée pour la gestion des actionnaires avec préfetch et statistiques
+    """
+    try:
+        # Récupérer l'acheteur avec préfetch pour optimiser
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise',
+                'forme_juridique',
+                'categorie_entreprise',
+                'pays',
+                'province',
+                'ville'
+            ).prefetch_related('compositionaction_set'),
+            id=acheteur_id
+        )
 
-    user = request.user
+        # Récupérer toutes les colorations
+        coloration_list = CouleurCommentaire.objects.all()
+        
+        # Statistiques détaillées
+        actionnaires = CompositionAction.objects.filter(acheteur=acheteur)
+        
+        stats = {
+            'total': actionnaires.count(),
+            'avec_pourcentage': actionnaires.exclude(pourcentage__isnull=True).count(),
+            'pourcentage_total': actionnaires.aggregate(total=Sum('pourcentage'))['total'] or 0,
+            'avec_commentaire': actionnaires.exclude(commentaire='').count(),
+            'avec_couleur': actionnaires.exclude(couleur_commentaire__isnull=True).count(),
+        }
+        
+        # Actionnaires récents
+        actionnaires_recent = actionnaires.select_related(
+            'couleur_commentaire'
+        ).order_by('-updated_at')[:4]
+        
+        # Génération des tokens JWT
+        try:
+            refresh = RefreshToken.for_user(request.user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération des tokens: {e}")
+            messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+            return redirect('login')
+        
+        # Préparer les données de l'acheteur pour le template
+        acheteur_data = {
+            'id': acheteur.id,
+            'nom': acheteur.nom or 'Non spécifié',
+            'sigle': acheteur.sigle or '',
+            'code': acheteur.code or 'N/A',
+            'activite_principale': acheteur.activite_principale or 'Non spécifié',
+            'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+            'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+            'pourcentage_total_actionnaires': stats['pourcentage_total'],
+        }
+        
+        # Convertir en JSON sécurisé
+        acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+        context = {
+            "acheteur_active": "active",
+            "user": request.user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "acheteur_json": acheteur_json,
+            "acheteur": acheteur,
+            "coloration_list": coloration_list,
+            "stats": stats,
+            "actionnaires_recent": actionnaires_recent,
+            "id_acheteur": acheteur_id,
+        }
+        return render(
+            request,
+            "main/root/acheteur/actionnaire/dash_root_manage_acheteur_actionnaire.html",
+            context,
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur dans la vue actionnaire: {e}")
+        messages.error(request, "Erreur lors du chargement de la page.")
+        return redirect('dash_root_manage_acheteur', acheteur_id=acheteur_id)
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
-
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "coloration_list": coloration_list,
-    }
-    return render(
-        request,
-        "main/root/acheteur/actionnaire/dash_root_manage_acheteur_actionnaire.html",
-        context,
-    )
 
 
 @login_required
@@ -2467,69 +2636,192 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
     )
 
 
+
+
 @login_required
-def dash_root_manage_acheteur_filiale(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+def dash_root_manage_acheteur_filiale_optimized(request, acheteur_id):
+    """
+    Vue optimisée pour la gestion des filiales avec préfetch et statistiques
+    """
+    try:
+        # Récupérer l'acheteur avec préfetch pour optimiser
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise',
+                'forme_juridique',
+                'categorie_entreprise',
+                'pays',
+                'province',
+                'ville'
+            ).prefetch_related('structure_set'),
+            id=acheteur_id
+        )
 
-    user = request.user
+        # Récupérer les listes pour les formulaires
+        structure_list = StructureEntreprise.objects.all()
+        coloration_list = CouleurCommentaire.objects.all()
+        
+        # Statistiques détaillées
+        filiales = Structure.objects.filter(acheteur=acheteur)
+        
+        # Calcul des statistiques
+        filiales_total = filiales.count()
+        
+        # Récupérer la répartition par type
+        repartition_par_type = list(filiales.values('type_affiliation').annotate(
+            count=Count('id')
+        ).order_by('-count'))
+        
+        # Calculer le nombre total avec structure définie
+        avec_structure = filiales.exclude(type_affiliation_ref__isnull=True).count()
+        
+        stats = {
+            'total': filiales_total,
+            'avec_adresse': filiales.exclude(
+                Q(numero_adresse='') | Q(rue_adresse='')
+            ).count(),
+            'avec_commentaire': filiales.exclude(commentaire='').count(),
+            'avec_couleur': filiales.exclude(couleur_commentaire__isnull=True).count(),
+            'avec_structure': avec_structure,
+            'par_type': repartition_par_type,  # Liste de dictionnaires
+            'par_type_json': json.dumps(repartition_par_type),  # Pour JavaScript
+        }
+        
+        # Filiales récentes
+        filiales_recent = filiales.select_related(
+            'type_affiliation_ref', 
+            'couleur_commentaire'
+        ).order_by('-updated_at')[:4]
+        
+        # Génération des tokens JWT
+        try:
+            refresh = RefreshToken.for_user(request.user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération des tokens: {e}")
+            messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+            return redirect('login')
+        
+        # Préparer les données de l'acheteur pour le template
+        acheteur_data = {
+            'id': acheteur.id,
+            'nom': acheteur.nom or 'Non spécifié',
+            'sigle': acheteur.sigle or '',
+            'code': acheteur.code or 'N/A',
+            'activite_principale': acheteur.activite_principale or 'Non spécifié',
+            'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+            'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+            'filiales_total': stats['total'],
+        }
+        
+        # Convertir en JSON sécurisé
+        acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+        context = {
+            "acheteur_active": "active",
+            "user": request.user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "acheteur_json": acheteur_json,
+            "acheteur": acheteur,
+            "structure_list": structure_list,
+            "coloration_list": coloration_list,
+            "stats": stats,
+            "filiales_recent": filiales_recent,
+            "id_acheteur": acheteur_id,
+        }
+        return render(
+            request,
+            "main/root/acheteur/filiale/dash_root_manage_acheteur_filiale_optimized.html",
+            context,
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur dans la vue filiale: {e}")
+        messages.error(request, "Erreur lors du chargement de la page.")
+        return redirect('dash_root_manage_acheteur', acheteur_id=acheteur_id)
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
 
-    # Récupérer tous les structures d'entreprise
-    structure_list = StructureEntreprise.objects.all()
-
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
-
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "structure_list": structure_list,
-        "coloration_list": coloration_list,
-    }
-    return render(
-        request,
-        "main/root/acheteur/filiale/dash_root_manage_acheteur_filiale.html",
-        context,
-    )
 
 
 @login_required
 def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion de l'analyse sectorielle unique d'un acheteur
+    Un acheteur ne peut avoir qu'une seule analyse sectorielle
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les structures d'entreprise
-    structure_list = StructureEntreprise.objects.all()
-
-    # Récupérer tous les colorations
+    # Récupérer l'analyse sectorielle existante (une seule)
+    analyse = AnalyseSectorielle.objects.filter(acheteur=acheteur).first()
+    
+    # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si une analyse existe, préparer ses données pour le template et JavaScript
+    analyse_json = None
+    if analyse:
+        analyse_data = {
+            'id': analyse.id,
+            'commentaire': analyse.commentaire or '',
+            'impact_covid_19': analyse.impact_covid_19 or '',
+            'couleur_commentaire': {
+                'id': analyse.couleur_commentaire.id if analyse.couleur_commentaire else None,
+                'couleur': analyse.couleur_commentaire.couleur if analyse.couleur_commentaire else '',
+                'code': analyse.couleur_commentaire.code if analyse.couleur_commentaire else '',
+            } if analyse.couleur_commentaire else None,
+            'created_at': analyse.created_at.isoformat() if analyse.created_at else None,
+            'updated_at': analyse.updated_at.isoformat() if analyse.updated_at else None,
+        }
+        analyse_json = json.dumps(analyse_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "structure_list": structure_list,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "analyse_json": analyse_json or 'null',
+        "acheteur": acheteur,
+        "analyse": analyse,
+        "id_acheteur": acheteur_id,
         "coloration_list": coloration_list,
     }
     return render(
@@ -2539,34 +2831,103 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
     )
 
 
+
+
 @login_required
 def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion du compte financier unique d'un acheteur
+    Un acheteur ne peut avoir qu'un seul compte financier
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les modeles de bilan
-    bilan_list = ModeleBilan.objects.all()
-
-    # Récupérer tous les colorations
+    # Récupérer le compte financier existant (un seul)
+    compte_financier = CompteFinancier.objects.filter(acheteur=acheteur).first()
+    
+    # Récupérer les listes pour les formulaires
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si un compte financier existe, préparer ses données pour le template et JavaScript
+    compte_financier_json = None
+    if compte_financier:
+        compte_financier_data = {
+            'id': compte_financier.id,
+            'cabinet': compte_financier.cabinet or '',
+            'requis_pour_deposer': compte_financier.requis_pour_deposer or '',
+            'credibilite_cabinet': compte_financier.credibilite_cabinet or '',
+            'source': compte_financier.source or '',
+            'presentation': compte_financier.presentation or '',
+            'date_compte': compte_financier.date_compte.isoformat() if compte_financier.date_compte else None,
+            'date_fin': compte_financier.date_fin.isoformat() if compte_financier.date_fin else None,
+            'date_compte_n_moins_un': compte_financier.date_compte_n_moins_un.isoformat() if compte_financier.date_compte_n_moins_un else None,
+            'date_fin_n_moins_un': compte_financier.date_fin_n_moins_un.isoformat() if compte_financier.date_fin_n_moins_un else None,
+            'date_compte_n_moins_deux': compte_financier.date_compte_n_moins_deux.isoformat() if compte_financier.date_compte_n_moins_deux else None,
+            'date_fin_n_moins_deux': compte_financier.date_fin_n_moins_deux.isoformat() if compte_financier.date_fin_n_moins_deux else None,
+            'type_compte': compte_financier.type_compte or '',
+            'devise': compte_financier.devise or 'XAF',
+            'type_bilan': compte_financier.type_bilan or '',
+            'couleur_commentaire': {
+                'id': compte_financier.couleur_commentaire.id if compte_financier.couleur_commentaire else None,
+                'couleur': compte_financier.couleur_commentaire.couleur if compte_financier.couleur_commentaire else '',
+                'code': compte_financier.couleur_commentaire.code if compte_financier.couleur_commentaire else '',
+            } if compte_financier.couleur_commentaire else None,
+            'commentaire': compte_financier.commentaire or '',
+            'created_at': compte_financier.created_at.isoformat() if compte_financier.created_at else None,
+            'updated_at': compte_financier.updated_at.isoformat() if compte_financier.updated_at else None,
+        }
+        compte_financier_json = json.dumps(compte_financier_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "bilan_list": bilan_list,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "compte_financier_json": compte_financier_json or 'null',
+        "acheteur": acheteur,
+        "compte_financier": compte_financier,
+        "id_acheteur": acheteur_id,
         "coloration_list": coloration_list,
+        "devise_choices": CompteFinancier.STATUS_CHANGE,
+        "type_bilan_choices": CompteFinancier.LIEN_TYPE_BILAN_CHOICE,
+        "oui_non_choices": CompteFinancier.STATUS__OUI_NON,  # Si disponible dans le modèle
     }
     return render(
         request,
@@ -2575,30 +2936,93 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
     )
 
 
+
+
 @login_required
 def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des opérations et historiques d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
+    # Récupérer les opérations de l'acheteur
+    operations = OperationEtHistorique.objects.filter(
+        acheteur=acheteur
+    ).prefetch_related('importation').order_by('-created_at')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Récupérer toutes les importations disponibles
+    importations = ListeImportation.objects.all().order_by('libelle')
+    importations_json = json.dumps([
+        {'id': imp.id, 'libelle': str(imp)} for imp in importations
+    ], default=str)
+    
+    print(importations)
+    print(importations_json)
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
+    # Préparer les données des opérations pour le template
+    operations_data = []
+    for operation in operations:
+        operations_data.append({
+            'id': operation.id,
+            'commentaire_ratios': operation.commentaire_ratios or '',
+            'description_complete_activite': operation.description_complete_activite or '',
+            'historique': operation.historique or '',
+            'importation_list': [{'id': imp.id, 'nom': str(imp)} for imp in operation.importation.all()],
+            'created_at': operation.created_at.isoformat() if operation.created_at else None,
+            'updated_at': operation.updated_at.isoformat() if operation.updated_at else None,
+        })
+    
+    operations_json = json.dumps(operations_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "coloration_list": coloration_list,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "operations_json": operations_json or '[]',
+        "importations_json": importations_json or '[]',
+        "acheteur": acheteur,
+        "operations": operations,
+        "operations_count": operations.count(),
+        "importations": importations,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -2607,30 +3031,90 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     )
 
 
+
+
+# views.py
+
 @login_required
 def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des propriétés et actifs d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
+    # Récupérer la propriété/actif de l'acheteur
+    propriete_actif = ProprieteEtActif.objects.filter(
+        acheteur=acheteur
+    ).prefetch_related('locaux').first()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Récupérer tous les locaux disponibles
+    locaux = Locaux.objects.all().order_by('nom')
+    locaux_json = json.dumps([
+        {'id': local.id, 'nom': local.nom} for local in locaux
+    ], default=str)
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les reference des locaux
-    locaux_list = ModeleBail.objects.all()
+    # Préparer les données de la propriété/actif pour le template
+    propriete_actif_data = None
+    if propriete_actif:
+        propriete_actif_data = {
+            'id': propriete_actif.id,
+            'branche': propriete_actif.branche or '',
+            'locaux_list': [{'id': local.id, 'nom': local.nom} for local in propriete_actif.locaux.all()],
+            'created_at': propriete_actif.created_at.isoformat() if propriete_actif.created_at else None,
+            'updated_at': propriete_actif.updated_at.isoformat() if propriete_actif.updated_at else None,
+        }
+    
+    propriete_actif_json = json.dumps(propriete_actif_data, default=str) if propriete_actif_data else 'null'
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "locaux_list": locaux_list,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "propriete_actif_json": propriete_actif_json or 'null',
+        "locaux_json": locaux_json or '[]',
+        "acheteur": acheteur,
+        "propriete_actif": propriete_actif,
+        "locaux": locaux,
+        "has_propriete_actif": propriete_actif is not None,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -2639,26 +3123,95 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
     )
 
 
+
+
+# views.py
+
 @login_required
 def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des conditions d'achat d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
+    # Récupérer les conditions d'achat de l'acheteur
+    condition_achat = ConditionAchat.objects.filter(
+        acheteur=acheteur
+    ).prefetch_related('local', 'importation').first()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Récupérer toutes les conditions d'achat disponibles
+    conditions_liste = ListeConditionAchat.objects.all().order_by('nom')
+    conditions_json = json.dumps([
+        {'id': cond.id, 'nom': cond.nom} for cond in conditions_liste
+    ], default=str)
+    
+    print(conditions_liste)
+    print(conditions_json)
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+    # Préparer les données des conditions d'achat pour le template
+    condition_achat_data = None
+    if condition_achat:
+        condition_achat_data = {
+            'id': condition_achat.id,
+            'les_clients': condition_achat.les_clients or '',
+            'fournisseur': condition_achat.fournisseur or '',
+            'local_list': [{'id': item.id, 'nom': item.nom} for item in condition_achat.local.all()],
+            'importation_list': [{'id': item.id, 'nom': item.nom} for item in condition_achat.importation.all()],
+            'created_at': condition_achat.created_at.isoformat() if condition_achat.created_at else None,
+            'updated_at': condition_achat.updated_at.isoformat() if condition_achat.updated_at else None,
+        }
+    
+    condition_achat_json = json.dumps(condition_achat_data, default=str) if condition_achat_data else 'null'
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "condition_achat_json": condition_achat_json or 'null',
+        "conditions_json": conditions_json or '[]',
+        "acheteur": acheteur,
+        "condition_achat": condition_achat,
+        "conditions_liste": conditions_liste,
+        "has_condition_achat": condition_achat is not None,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -2667,34 +3220,105 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
     )
 
 
+
+# views.py
+
 @login_required
 def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des conditions de vente d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
+    # Récupérer les conditions de vente de l'acheteur
+    condition_vente = ConditionDeVente.objects.filter(
+        acheteur=acheteur
+    ).prefetch_related('local').first()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Récupérer toutes les conditions de vente disponibles
+    conditions_liste = ListeConditionVente.objects.all().order_by('nom')
+    conditions_json = json.dumps([
+        {'id': cond.id, 'nom': cond.nom} for cond in conditions_liste
+    ], default=str)
+    
+    # Préparer les choix pour les champs
+    recouvrement_choices = [
+        {'value': choice[0], 'label': str(choice[1])}
+        for choice in ConditionDeVente.LIEN_COMPORTEMENT_JUGEMENT_CHOICE
+    ]
+    
+    paiement_choices = [
+        {'value': choice[0], 'label': str(choice[1])}
+        for choice in ConditionDeVente.LIEN_COMPORTEMENT_PAIEMENT_CHOICE
+    ]
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les modeles de comportement de paiement
-    paiement_list = ModeleComportementPaiement.objects.all()
-
-    # Récupérer tous les reference de comportement de jugement
-    jugement_list = ModeleComportementJugement.objects.all()
+    # Préparer les données des conditions de vente pour le template
+    condition_vente_data = None
+    if condition_vente:
+        condition_vente_data = {
+            'id': condition_vente.id,
+            'recouvrement_de_dette_jugement': condition_vente.recouvrement_de_dette_jugement,
+            'comportement_de_paiement': condition_vente.comportement_de_paiement,
+            'local_list': [{'id': item.id, 'nom': item.nom} for item in condition_vente.local.all()],
+            'created_at': condition_vente.created_at.isoformat() if condition_vente.created_at else None,
+            'updated_at': condition_vente.updated_at.isoformat() if condition_vente.updated_at else None,
+        }
+    
+    condition_vente_json = json.dumps(condition_vente_data, default=str) if condition_vente_data else 'null'
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "paiement_list": paiement_list,
-        "jugement_list": jugement_list,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "condition_vente_json": condition_vente_json or 'null',
+        "conditions_json": conditions_json or '[]',
+        "recouvrement_choices": json.dumps(recouvrement_choices, default=str),
+        "paiement_choices": json.dumps(paiement_choices, default=str),
+        "acheteur": acheteur,
+        "condition_vente": condition_vente,
+        "conditions_liste": conditions_liste,
+        "recouvrement_choices_list": recouvrement_choices,
+        "paiement_choices_list": paiement_choices,
+        "has_condition_vente": condition_vente is not None,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -2703,29 +3327,83 @@ def dash_root_manage_acheteur_condition_vente(request, acheteur_id):
     )
 
 
+
 @login_required
 def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion du sommaire et avis unique d'un acheteur
+    Un acheteur ne peut avoir qu'un seul sommaire et avis
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les colorations
+    # Récupérer le sommaire et avis existant (un seul)
+    sommaire_avis = SommaireEtAvis.objects.filter(acheteur=acheteur).first()
+    
+    # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Si un sommaire/avis existe, préparer ses données pour le template et JavaScript
+    sommaire_avis_json = None
+    if sommaire_avis:
+        sommaire_avis_data = {
+            'id': sommaire_avis.id,
+            'commentaire': sommaire_avis.commentaire or '',
+            'couleur_commentaire': {
+                'id': sommaire_avis.couleur_commentaire.id if sommaire_avis.couleur_commentaire else None,
+                'couleur': sommaire_avis.couleur_commentaire.couleur if sommaire_avis.couleur_commentaire else '',
+                'code': sommaire_avis.couleur_commentaire.code if sommaire_avis.couleur_commentaire else '',
+            } if sommaire_avis.couleur_commentaire else None,
+            'created_at': sommaire_avis.created_at.isoformat() if sommaire_avis.created_at else None,
+            'updated_at': sommaire_avis.updated_at.isoformat() if sommaire_avis.updated_at else None,
+        }
+        sommaire_avis_json = json.dumps(sommaire_avis_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "sommaire_avis_json": sommaire_avis_json or 'null',
+        "acheteur": acheteur,
+        "sommaire_avis": sommaire_avis,
+        "id_acheteur": acheteur_id,
         "coloration_list": coloration_list,
     }
     return render(
@@ -2735,26 +3413,80 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
     )
 
 
+
+
 @login_required
 def dash_root_manage_acheteur_advice(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion des conseils unique d'un acheteur
+    Un acheteur ne peut avoir qu'un seul conseil
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
+    # Récupérer le conseil existant (un seul)
+    advice = Advice.objects.filter(acheteur=acheteur).first()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+    # Si un conseil existe, préparer ses données pour le template et JavaScript
+    advice_json = None
+    if advice:
+        advice_data = {
+            'id': advice.id,
+            'points_forts': advice.points_forts or '',
+            'points_faibles': advice.points_faibles or '',
+            'dynamisme_court_terme': advice.dynamisme_court_terme or '',
+            'dynamisme_long_terme': advice.dynamisme_long_terme or '',
+            'risque_potentiel_court_terme': advice.risque_potentiel_court_terme or '',
+            'created_at': advice.created_at.isoformat() if advice.created_at else None,
+            'updated_at': advice.updated_at.isoformat() if advice.updated_at else None,
+        }
+        advice_json = json.dumps(advice_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "advice_json": advice_json or 'null',
+        "acheteur": acheteur,
+        "advice": advice,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -2763,26 +3495,84 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
     )
 
 
+
+
 @login_required
 def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    """
+    Vue pour la gestion de la géopolitique unique d'un acheteur
+    Un acheteur ne peut avoir qu'une seule analyse géopolitique
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
 
-    user = request.user
+    # Récupérer l'analyse géopolitique existante (une seule)
+    geopolitic = Geopolitics.objects.filter(acheteur=acheteur).first()
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
+    # Si une analyse géopolitique existe, préparer ses données pour le template et JavaScript
+    geopolitic_json = None
+    if geopolitic:
+        geopolitic_data = {
+            'id': geopolitic.id,
+            'stabilite_politique': geopolitic.stabilite_politique or '',
+            'etat_droit': geopolitic.etat_droit or '',
+            'efficacite': geopolitic.efficacite or '',
+            'qualite': geopolitic.qualite or '',
+            'liberte_expression': geopolitic.liberte_expression or '',
+            'donnees_politiques': geopolitic.donnees_politiques or '',
+            'donnees_economiques': geopolitic.donnees_economiques or '',
+            'created_at': geopolitic.created_at.isoformat() if geopolitic.created_at else None,
+            'updated_at': geopolitic.updated_at.isoformat() if geopolitic.updated_at else None,
+            'score_moyen': calculate_average_score(geopolitic)
+        }
+        geopolitic_json = json.dumps(geopolitic_data, default=str)
 
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "geopolitic_json": geopolitic_json or 'null',
+        "acheteur": acheteur,
+        "geopolitic": geopolitic,
+        "id_acheteur": acheteur_id,
     }
     return render(
         request,
@@ -2790,41 +3580,115 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
         context,
     )
 
+def calculate_average_score(geopolitic):
+    """Calcule la moyenne des scores géopolitiques"""
+    scores = []
+    if geopolitic.stabilite_politique and geopolitic.stabilite_politique.isdigit():
+        scores.append(int(geopolitic.stabilite_politique))
+    if geopolitic.etat_droit and geopolitic.etat_droit.isdigit():
+        scores.append(int(geopolitic.etat_droit))
+    if geopolitic.efficacite and geopolitic.efficacite.isdigit():
+        scores.append(int(geopolitic.efficacite))
+    if geopolitic.qualite and geopolitic.qualite.isdigit():
+        scores.append(int(geopolitic.qualite))
+    if geopolitic.liberte_expression and geopolitic.liberte_expression.isdigit():
+        scores.append(int(geopolitic.liberte_expression))
+    
+    if scores:
+        return round(sum(scores) / len(scores), 1)
+    return 0
+
+
+
 
 @login_required
-def dash_root_manage_acheteur_banking(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
+    """
+    Vue optimisée pour la gestion des données bancaires
+    """
+    try:
+        # Récupérer l'acheteur avec préfetch pour optimiser
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise',
+                'forme_juridique',
+                'categorie_entreprise',
+                'pays',
+                'province',
+                'ville'
+            ).prefetch_related('banquier_set'),
+            id=acheteur_id
+        )
 
-    user = request.user
+        # Récupérer les listes pour les formulaires
+        ville_list = Ville.objects.all()
+        coloration_list = CouleurCommentaire.objects.all()
+        
+        # Statistiques détaillées
+        bankings = Banquier.objects.filter(acheteur=acheteur)
+        
+        # Calcul des statistiques
+        bankings_total = bankings.count()
+        
+        # Statistiques
+        stats = {
+            'total': bankings_total,
+            'banques_uniques': bankings.values('nom_banque').distinct().count(),
+            'avec_compte': bankings.exclude(numero_compte='').count(),
+            'avec_adresse': bankings.exclude(
+                Q(numero='') | Q(rue='')
+            ).count(),
+            'avec_commentaire': bankings.exclude(commentaire='').count(),
+            'avec_couleur': bankings.exclude(couleur_commentaire__isnull=True).count(),
+            'par_relation': list(bankings.values('type_relation').annotate(
+                count=Count('id')
+            ).order_by('-count')),
+        }
+        
+        # Données bancaires récentes
+        banking_recent = bankings.select_related(
+            'ville', 
+            'couleur_commentaire'
+        ).order_by('-updated_at')[:4]
+        
+        # Génération des tokens JWT
+        try:
+            refresh = RefreshToken.for_user(request.user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération des tokens: {e}")
+            messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+            return redirect('login')
+        
+        context = {
+            "acheteur_active": "active",
+            "user": request.user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "acheteur": acheteur,
+            "ville_list": ville_list,
+            "coloration_list": coloration_list,
+            "stats": stats,
+            "banking_recent": banking_recent,
+            "id_acheteur": acheteur_id,
+        }
+        
+        return render(
+            request,
+            "main/root/acheteur/banque/dash_root_manage_acheteur_banking_optimized.html",
+            context,
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur dans la vue banking: {e}")
+        messages.error(request, "Erreur lors du chargement de la page.")
+        return redirect('dash_root_manage_acheteur', acheteur_id=acheteur_id)
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
 
-    # Récupérer tous les villes
-    ville_list = Ville.objects.all()
 
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
 
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "ville_list": ville_list,
-        "coloration_list": coloration_list,
-    }
-    return render(
-        request,
-        "main/root/acheteur/banque/dash_root_manage_acheteur_banking.html",
-        context,
-    )
 
 
 @login_required
@@ -5172,18 +6036,81 @@ def dash_root_manage_document_acheteur(request, acheteur_id):
 
 
 
+# views.py
+
 @login_required
 def dash_root_manage_adresse_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
+    """
+    Vue pour la gestion des adresses d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+
+    # Récupérer les adresses de l'acheteur avec pagination
+    adresses_list = AdresseAcheteur.objects.filter(
+        acheteur=acheteur
+    ).select_related('created_by', 'updated_by').order_by('-created_at')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Préparer les données des adresses pour le template
+    adresses_data = []
+    for adresse in adresses_list:
+        adresses_data.append({
+            'id': adresse.id,
+            'adresse': adresse.adresse or '',
+            'created_at': adresse.created_at.isoformat() if adresse.created_at else None,
+            'updated_at': adresse.updated_at.isoformat() if adresse.updated_at else None,
+            'created_by': adresse.created_by.get_full_name() if adresse.created_by else None,
+            'updated_by': adresse.updated_by.get_full_name() if adresse.updated_by else None,
+        })
+    
+    adresses_json = json.dumps(adresses_data, default=str)
+
     context = {
-        "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "acheteur_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "adresses_json": adresses_json or '[]',
+        "acheteur": acheteur,
+        "adresses": adresses_list,
+        "adresses_count": adresses_list.count(),
         "id_acheteur": acheteur_id,
     }
     return render(
@@ -5201,16 +6128,75 @@ def dash_root_manage_adresse_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_portable_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
+    """
+    Vue pour la gestion des numéros de portable d'un acheteur
+    Un acheteur peut avoir plusieurs numéros de portable
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+
+    # Récupérer tous les portables de l'acheteur
+    portables = PortableAcheteur.objects.filter(acheteur=acheteur).order_by('-created_at')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Préparer les données des portables pour le template
+    portables_data = []
+    for portable in portables:
+        portables_data.append({
+            'id': portable.id,
+            'portable': portable.portable or '',
+            'created_at': portable.created_at.isoformat() if portable.created_at else None,
+            'updated_at': portable.updated_at.isoformat() if portable.updated_at else None,
+            'created_by': portable.created_by.get_full_name() if portable.created_by else 'Inconnu',
+        })
+    
+    portables_json = json.dumps(portables_data, default=str)
+
     context = {
-        "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "acheteur_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "portables_json": portables_json or '[]',
+        "acheteur": acheteur,
+        "portables": portables,
+        "portables_count": portables.count(),
         "id_acheteur": acheteur_id,
     }
     return render(
@@ -5228,16 +6214,75 @@ def dash_root_manage_portable_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_telephone_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
+    """
+    Vue pour la gestion des numéros de téléphone fixe d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+
+    # Récupérer tous les téléphones de l'acheteur
+    telephones = TelephoneAcheteur.objects.filter(acheteur=acheteur).order_by('-created_at')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Préparer les données des téléphones pour le template
+    telephones_data = []
+    for telephone in telephones:
+        telephones_data.append({
+            'id': telephone.id,
+            'telephone': telephone.telephone or '',
+            'formatted_number': telephone.get_formatted_number(),
+            'created_at': telephone.created_at.isoformat() if telephone.created_at else None,
+            'updated_at': telephone.updated_at.isoformat() if telephone.updated_at else None,
+            'created_by': telephone.created_by.get_full_name() if telephone.created_by else 'Inconnu',
+        })
+    
+    telephones_json = json.dumps(telephones_data, default=str)
+
     context = {
         "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "telephones_json": telephones_json or '[]',
+        "acheteur": acheteur,
+        "telephones": telephones,
+        "telephones_count": telephones.count(),
         "id_acheteur": acheteur_id,
     }
     return render(
@@ -5255,16 +6300,75 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_email_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
+    """
+    Vue pour la gestion des adresses email d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ),
+        id=acheteur_id
+    )
+
+    # Récupérer tous les emails de l'acheteur
+    emails = EmailAcheteur.objects.filter(acheteur=acheteur).order_by('-created_at')
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+
+    # Préparer les données des emails pour le template
+    emails_data = []
+    for email in emails:
+        emails_data.append({
+            'id': email.id,
+            'email': email.email or '',
+            'display_email': email.get_display_email(),
+            'created_at': email.created_at.isoformat() if email.created_at else None,
+            'updated_at': email.updated_at.isoformat() if email.updated_at else None,
+            'created_by': email.created_by.get_full_name() if email.created_by else 'Inconnu',
+        })
+    
+    emails_json = json.dumps(emails_data, default=str)
+
     context = {
         "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "emails_json": emails_json or '[]',
+        "acheteur": acheteur,
+        "emails": emails,
+        "emails_count": emails.count(),
         "id_acheteur": acheteur_id,
     }
     return render(
@@ -5272,7 +6376,6 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
         "main/root/acheteur/email/dash_root_email_acheteur.html",
         context,
     )
-
 
 
 

@@ -1,747 +1,1312 @@
 {% extends 'main/root/base.html' %}
+{% load static humanize %}
 
-{% load static %}
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-{% block css %}{% endblock %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Carte unique */
+.compte-financier-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.compte-financier-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.compte-financier-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0A95CA, #20c997);
+}
+
+/* En-tête de la carte */
+.compte-financier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.compte-financier-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.compte-financier-title i {
+    color: #0A95CA;
+    font-size: 1.75rem;
+}
+
+.compte-financier-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Grille des informations */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.info-card.informations {
+    border-left: 4px solid #0A95CA;
+}
+
+.info-card.periodes {
+    border-left: 4px solid #28a745;
+}
+
+.info-card.comptabilite {
+    border-left: 4px solid #ffc107;
+}
+
+/* Sections de contenu */
+.content-section {
+    margin-bottom: 1.5rem;
+}
+
+.content-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.content-label i {
+    color: #0A95CA;
+    font-size: 1.25rem;
+}
+
+.info-item {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 180px;
+}
+
+.info-value {
+    color: #6c757d;
+    flex: 1;
+}
+
+/* Badge de couleur */
+.color-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e3e6f0;
+}
+
+.color-preview {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Commentaire */
+.commentaire-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f8f9fa;
+}
+
+.commentaire-content {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    border-left: 4px solid #6f42c1;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+/* Informations temporelles */
+.info-temporelle {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f8f9fa;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.info-item-temp {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.enhanced-form textarea {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.enhanced-form textarea:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+.enhanced-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Date picker amélioré */
+.date-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.date-input-group .form-control {
+    flex: 1;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .compte-financier-card {
+        padding: 1rem;
+    }
+    
+    .compte-financier-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .info-label {
+        min-width: auto;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-temporelle {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .compte-financier-title {
+        font-size: 1.25rem;
+    }
+    
+    .content-label {
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-cash-coin fa-fw me-1"></i>Gestion des Comptes Financiers de l'Acheteur</h3>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>Compte Financier
+            </h1>
+            <p class="text-muted mb-0">
+                Informations financières et comptables de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countCompositionCapital">Module de Gestion des Comptes Financiers</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres aux comptes financiers notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Counter END -->
-
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Cabinet : </strong><span style="color: #FF5733;">CAB</span><br>
-                        <strong>Requis pour déposer : </strong><span style="color: #33FF57;">REQ</span><br>
-                        <strong>Crédibilité : </strong><span style="color: #3357FF;">CRD</span><br>
-                        <strong>Source : </strong><span style="color: #FF33A6;">SRC</span><br>
-                        <strong>Présentation : </strong><span style="color: #8A2BE2;">PRS</span><br>
-                        <strong>Devise : </strong><span style="color: #FFA500;">DEV</span><br>
-                        <strong>Type de bilan : </strong><span style="color: #008000;">BIL</span><br>
-                        <strong>Couleur Commentaire : </strong><span style="color: #8A2BE2;">COUL</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
-                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-
-            </div>
-        </div>
-        <!-- Card item END -->
-
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Comptes Financiers START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Comptes Financiers</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i></button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addCompteFinancierModal">
-                                Ajouter un Compte Financier
-                            </button>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Comptes Financiers list START -->
-                <div class="table-responsive border-0" id="compteFinancierList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">CAB</th>
-                                <th scope="col" class="border-0">REQ</th>
-                                <th scope="col" class="border-0">CRD</th>
-                                <th scope="col" class="border-0">SRC</th>
-                                <th scope="col" class="border-0">PRS</th>
-                                <th scope="col" class="border-0">DEV</th>
-                                <th scope="col" class="border-0">BIL</th>
-                                <th scope="col" class="border-0">Type</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="compteFinancierTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Comptes Financiers list END -->
-            </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
+        </div>
+    </div>
+
+    <!-- Section Compte Financier -->
+    <div class="row">
+        <div class="col-12">
+            {% if compte_financier %}
+            <!-- Affichage du compte financier existant -->
+            <div class="compte-financier-card">
+                <div class="compte-financier-header">
+                    <div class="compte-financier-title">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Compte Financier
+                    </div>
+                    <div class="compte-financier-actions">
+                        <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editCompteModal">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </button>
+                        <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                            <i class="fas fa-trash me-1"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grille des informations -->
+                <div class="info-grid">
+                    <!-- Informations générales -->
+                    <div class="info-card informations">
+                        <div class="content-section">
+                            <div class="content-label">
+                                <i class="fas fa-info-circle"></i>
+                                Informations Générales
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Cabinet:</span>
+                                <span class="info-value">{{ compte_financier.cabinet|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Requis pour déposer:</span>
+                                <span class="info-value">{{ compte_financier.requis_pour_deposer|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Crédibilité cabinet:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.credibilite_cabinet == 'OUI' %}
+                                    <span class="badge bg-success">Oui</span>
+                                    {% elif compte_financier.credibilite_cabinet == 'NON' %}
+                                    <span class="badge bg-danger">Non</span>
+                                    {% else %}
+                                    Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Source:</span>
+                                <span class="info-value">{{ compte_financier.source|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Présentation:</span>
+                                <span class="info-value">{{ compte_financier.presentation|default:"Non spécifié" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Périodes comptables -->
+                    <div class="info-card periodes">
+                        <div class="content-section">
+                            <div class="content-label">
+                                <i class="fas fa-calendar-alt"></i>
+                                Périodes Comptables
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Compte N:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.date_compte and compte_financier.date_fin %}
+                                        {{ compte_financier.date_compte|date:"d/m/Y" }} - {{ compte_financier.date_fin|date:"d/m/Y" }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Compte N-1:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.date_compte_n_moins_un and compte_financier.date_fin_n_moins_un %}
+                                        {{ compte_financier.date_compte_n_moins_un|date:"d/m/Y" }} - {{ compte_financier.date_fin_n_moins_un|date:"d/m/Y" }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Compte N-2:</span>
+                                <span class="info-value">
+                                    {% if compte_financier.date_compte_n_moins_deux and compte_financier.date_fin_n_moins_deux %}
+                                        {{ compte_financier.date_compte_n_moins_deux|date:"d/m/Y" }} - {{ compte_financier.date_fin_n_moins_deux|date:"d/m/Y" }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations comptables -->
+                    <div class="info-card comptabilite">
+                        <div class="content-section">
+                            <div class="content-label">
+                                <i class="fas fa-calculator"></i>
+                                Informations Comptables
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Type de compte:</span>
+                                <span class="info-value">{{ compte_financier.type_compte|default:"Non spécifié" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Devise:</span>
+                                <span class="info-value">
+                                    <span class="badge bg-info">{{ compte_financier.devise|default:"XAF" }}</span>
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Type de bilan:</span>
+                                <span class="info-value">{{ compte_financier.type_bilan|default:"Non spécifié" }}</span>
+                            </div>
+                            {% if compte_financier.couleur_commentaire %}
+                            <div class="info-item">
+                                <span class="info-label">Étiquette:</span>
+                                <span class="info-value">
+                                    <span class="color-badge">
+                                        <div class="color-preview" style="background-color: {{ compte_financier.couleur_commentaire.code|default:'#6c757d' }}"></div>
+                                        {{ compte_financier.couleur_commentaire.couleur }}
+                                    </span>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commentaire -->
+                {% if compte_financier.commentaire %}
+                <div class="commentaire-section">
+                    <div class="content-label">
+                        <i class="fas fa-comment-dots"></i>
+                        Commentaire
+                    </div>
+                    <div class="commentaire-content">
+                        {{ compte_financier.commentaire|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Informations temporelles -->
+                <div class="info-temporelle">
+                    <div class="info-item-temp">
+                        <i class="fas fa-calendar-plus"></i>
+                        Créé le {{ compte_financier.created_at|date:"d/m/Y H:i" }}
+                    </div>
+                    <div class="info-item-temp">
+                        <i class="fas fa-sync-alt"></i>
+                        Dernière mise à jour : {{ compte_financier.updated_at|date:"d/m/Y H:i" }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- État vide - Aucun compte financier défini -->
+            <div class="empty-state">
+                <i class="fas fa-file-invoice-dollar empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucun compte financier défini</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore de compte financier enregistré.<br>
+                    Ajoutez les informations financières et comptables de l'acheteur.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCompteModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter le compte financier
+                </button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
-<!-- Comptes Financiers END -->
 
-<!-- Add Compte Financier Modal START -->
-<div class="modal fade" id="addCompteFinancierModal" tabindex="-1" aria-labelledby="addCompteFinancierModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Ajout Compte Financier -->
+<div class="modal fade" id="addCompteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addCompteFinancierModalLabel">Ajouter un Compte Financier</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter le Compte Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addCompteFinancierForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="cabinet" class="form-label">Cabinet</label>
-                        <input type="text" class="form-control" id="cabinet" name="cabinet" required>
+            <form id="addCompteForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="cabinet" class="form-label">
+                                    <i class="fas fa-building text-primary"></i>Cabinet
+                                </label>
+                                <input type="text" class="form-control" id="cabinet" name="cabinet" 
+                                       placeholder="Nom du cabinet d'audit">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="requis_pour_deposer" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>Requis pour déposer
+                                </label>
+                                <input type="text" class="form-control" id="requis_pour_deposer" name="requis_pour_deposer" 
+                                       placeholder="Documents requis">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="requis_pour_deposer" class="form-label">Requis pour déposer</label>
-                        <input type="text" class="form-control" id="requis_pour_deposer" name="requis_pour_deposer" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="credibilite_cabinet" class="form-label">
+                                    <i class="fas fa-star text-warning"></i>Crédibilité du cabinet
+                                </label>
+                                <select class="form-select" id="credibilite_cabinet" name="credibilite_cabinet">
+                                    <option value="">Sélectionnez</option>
+                                    <option value="OUI">Oui</option>
+                                    <option value="NON">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="source" class="form-label">
+                                    <i class="fas fa-database text-primary"></i>Source
+                                </label>
+                                <input type="text" class="form-control" id="source" name="source" 
+                                       placeholder="Source des informations">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="credibilite_cabinet" class="form-label">Crédibilité du cabinet</label>
-                        <select class="form-select" id="credibilite_cabinet" name="credibilite_cabinet" required>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="presentation" class="form-label">
+                                    <i class="fas fa-eye text-primary"></i>Présentation
+                                </label>
+                                <input type="text" class="form-control" id="presentation" name="presentation" 
+                                       placeholder="Qualité de présentation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="type_compte" class="form-label">
+                                    <i class="fas fa-file-invoice text-primary"></i>Type de compte
+                                </label>
+                                <input type="text" class="form-control" id="type_compte" name="type_compte" 
+                                       placeholder="Type de compte">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="source" class="form-label">Source</label>
-                        <input type="text" class="form-control" id="source" name="source" required>
+
+                    <!-- Périodes comptables -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calendar-alt me-2"></i>Périodes Comptables</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_compte" class="form-label">Début période N</label>
+                                <input type="date" class="form-control" id="date_compte" name="date_compte">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_fin" class="form-label">Fin période N</label>
+                                <input type="date" class="form-control" id="date_fin" name="date_fin">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="presentation" class="form-label">Présentation</label>
-                        <input type="text" class="form-control" id="presentation" name="presentation" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_compte_n_moins_un" class="form-label">Début période N-1</label>
+                                <input type="date" class="form-control" id="date_compte_n_moins_un" name="date_compte_n_moins_un">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_fin_n_moins_un" class="form-label">Fin période N-1</label>
+                                <input type="date" class="form-control" id="date_fin_n_moins_un" name="date_fin_n_moins_un">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="devise" class="form-label">Devise</label>
-                        <select class="form-select" id="devise" name="devise" required>
-                            <option value="XAF">XAF</option>
-                            <option value="XOF">XOF</option>
-                            <option value="EUR">EUR</option>
-                            <option value="USD">USD</option>
-                            <option value="CHF">CHF</option>
-                        </select>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_compte_n_moins_deux" class="form-label">Début période N-2</label>
+                                <input type="date" class="form-control" id="date_compte_n_moins_deux" name="date_compte_n_moins_deux">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="date_fin_n_moins_deux" class="form-label">Fin période N-2</label>
+                                <input type="date" class="form-control" id="date_fin_n_moins_deux" name="date_fin_n_moins_deux">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="type_bilan" class="form-label">Type de bilan</label>
-                        <select class="form-select" id="type_bilan" name="type_bilan" required>
-                            <option value="Classique">Classique</option>
-                            <option value="Syscohada">Syscohada</option>
-                            <option value="Anglais">Anglais</option>
-                            <option value="Bancaire">Bancaire</option>
-                        </select>
+
+                    <!-- Informations financières -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calculator me-2"></i>Informations Financières</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="devise" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="devise" name="devise">
+                                    {% for code, label in devise_choices %}
+                                        <option value="{{ code }}" {% if code == 'XAF' %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="type_bilan" class="form-label">
+                                    <i class="fas fa-balance-scale text-primary"></i>Type de bilan
+                                </label>
+                                <select class="form-select select2-with-search" id="type_bilan" name="type_bilan">
+                                    {% for value, label in type_bilan_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="type_bilan_ref" class="form-label">Référence Type de bilan</label>
-                        <select class="form-select" id="type_bilan_ref" name="type_bilan_ref" required>
-                            {% for bilan in bilan_list %}
-                                <option value="{{ bilan.id }}">{{ bilan.libelle }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="couleur_commentaire" class="form-label">
+                                    <i class="fas fa-palette text-info"></i>Étiquette de couleur
+                                </label>
+                                <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                            {{ coloration.couleur }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="type_compte" class="form-label">Type de compte</label>
-                        <input type="text" class="form-control" id="type_compte" name="type_compte">
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="commentaire" class="form-label">
+                                    <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                                </label>
+                                <textarea class="form-control" id="commentaire" name="commentaire" rows="4"
+                                          placeholder="Commentaire et analyse des comptes financiers..."></textarea>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="date_compte" class="form-label">Début de période de compte N</label>
-                        <input type="date" class="form-control" id="date_compte" name="date_compte">
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_fin" class="form-label">Fin clôture de compte N</label>
-                        <input type="date" class="form-control" id="date_fin" name="date_fin">
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_compte_n_moins_un" class="form-label">Début de période de compte N-1</label>
-                        <input type="date" class="form-control" id="date_compte_n_moins_un" name="date_compte_n_moins_un">
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_fin_n_moins_un" class="form-label">Fin clôture de compte N-1</label>
-                        <input type="date" class="form-control" id="date_fin_n_moins_un" name="date_fin_n_moins_un">
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_compte_n_moins_deux" class="form-label">Début de période de compte N-2</label>
-                        <input type="date" class="form-control" id="date_compte_n_moins_deux" name="date_compte_n_moins_deux">
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_fin_n_moins_deux" class="form-label">Fin clôture de compte N-2</label>
-                        <input type="date" class="form-control" id="date_fin_n_moins_deux" name="date_fin_n_moins_deux">
-                    </div>
-                    <div class="mb-3">
-                        <label for="couleur_commentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="commentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Compte Financier Modal END -->
 
-<!-- Edit Compte Financier Modal START -->
-<div class="modal fade" id="editCompteFinancierModal" tabindex="-1" aria-labelledby="editCompteFinancierModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Modal Modification Compte Financier -->
+<div class="modal fade" id="editCompteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editCompteFinancierModalLabel">Editer un Compte Financier</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Compte Financier
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editCompteFinancierForm">
-                    <input type="hidden" id="editCompteFinancierId" name="id">
-                    <div class="mb-3">
-                        <label for="editCabinet" class="form-label">Cabinet</label>
-                        <input type="text" class="form-control" id="editCabinet" name="cabinet" required>
+            <form id="editCompteForm" class="enhanced-form">
+                <input type="hidden" id="editCompteId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCabinet" class="form-label">
+                                    <i class="fas fa-building text-primary"></i>Cabinet
+                                </label>
+                                <input type="text" class="form-control" id="editCabinet" name="cabinet">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editRequisPourDeposer" class="form-label">
+                                    <i class="fas fa-file-alt text-primary"></i>Requis pour déposer
+                                </label>
+                                <input type="text" class="form-control" id="editRequisPourDeposer" name="requis_pour_deposer">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editRequisPourDeposer" class="form-label">Requis pour déposer</label>
-                        <input type="text" class="form-control" id="editRequisPourDeposer" name="requis_pour_deposer" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCredibiliteCabinet" class="form-label">
+                                    <i class="fas fa-star text-warning"></i>Crédibilité du cabinet
+                                </label>
+                                <select class="form-select" id="editCredibiliteCabinet" name="credibilite_cabinet">
+                                    <option value="">Sélectionnez</option>
+                                    <option value="OUI">Oui</option>
+                                    <option value="NON">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editSource" class="form-label">
+                                    <i class="fas fa-database text-primary"></i>Source
+                                </label>
+                                <input type="text" class="form-control" id="editSource" name="source">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editCredibiliteCabinet" class="form-label">Crédibilité du cabinet</label>
-                        <select class="form-select" id="editCredibiliteCabinet" name="credibilite_cabinet" required>
-                            <option value="Oui">Oui</option>
-                            <option value="Non">Non</option>
-                        </select>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editPresentation" class="form-label">
+                                    <i class="fas fa-eye text-primary"></i>Présentation
+                                </label>
+                                <input type="text" class="form-control" id="editPresentation" name="presentation">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTypeCompte" class="form-label">
+                                    <i class="fas fa-file-invoice text-primary"></i>Type de compte
+                                </label>
+                                <input type="text" class="form-control" id="editTypeCompte" name="type_compte">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editSource" class="form-label">Source</label>
-                        <input type="text" class="form-control" id="editSource" name="source" required>
+
+                    <!-- Périodes comptables -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calendar-alt me-2"></i>Périodes Comptables</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCompte" class="form-label">Début période N</label>
+                                <input type="date" class="form-control" id="editDateCompte" name="date_compte">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateFin" class="form-label">Fin période N</label>
+                                <input type="date" class="form-control" id="editDateFin" name="date_fin">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editPresentation" class="form-label">Présentation</label>
-                        <input type="text" class="form-control" id="editPresentation" name="presentation" required>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCompteNMoinsUn" class="form-label">Début période N-1</label>
+                                <input type="date" class="form-control" id="editDateCompteNMoinsUn" name="date_compte_n_moins_un">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateFinNMoinsUn" class="form-label">Fin période N-1</label>
+                                <input type="date" class="form-control" id="editDateFinNMoinsUn" name="date_fin_n_moins_un">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDevise" class="form-label">Devise</label>
-                        <select class="form-select" id="editDevise" name="devise" required>
-                            <option value="XAF">XAF</option>
-                            <option value="XOF">XOF</option>
-                            <option value="EUR">EUR</option>
-                            <option value="USD">USD</option>
-                            <option value="CHF">CHF</option>
-                        </select>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateCompteNMoinsDeux" class="form-label">Début période N-2</label>
+                                <input type="date" class="form-control" id="editDateCompteNMoinsDeux" name="date_compte_n_moins_deux">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateFinNMoinsDeux" class="form-label">Fin période N-2</label>
+                                <input type="date" class="form-control" id="editDateFinNMoinsDeux" name="date_fin_n_moins_deux">
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editTypeBilan" class="form-label">Type de bilan</label>
-                        <select class="form-select" id="editTypeBilan" name="type_bilan" required>
-                            <option value="Classique">Classique</option>
-                            <option value="Syscohada">Syscohada</option>
-                            <option value="Anglais">Anglais</option>
-                            <option value="Bancaire">Bancaire</option>
-                        </select>
+
+                    <!-- Informations financières -->
+                    <h5 class="mt-4 mb-3"><i class="fas fa-calculator me-2"></i>Informations Financières</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDevise" class="form-label">
+                                    <i class="fas fa-money-bill-wave text-primary"></i>Devise
+                                </label>
+                                <select class="form-select select2-with-search" id="editDevise" name="devise">
+                                    {% for code, label in devise_choices %}
+                                        <option value="{{ code }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTypeBilan" class="form-label">
+                                    <i class="fas fa-balance-scale text-primary"></i>Type de bilan
+                                </label>
+                                <select class="form-select select2-with-search" id="editTypeBilan" name="type_bilan">
+                                    {% for value, label in type_bilan_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editTypeBilanRef" class="form-label">Référence Type de bilan</label>
-                        <select class="form-select" id="editTypeBilanRef" name="type_bilan_ref" required>
-                            {% for bilan in bilan_list %}
-                                <option value="{{ bilan.id }}">{{ bilan.libelle }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editCouleurCommentaire" class="form-label">
+                                    <i class="fas fa-palette text-info"></i>Étiquette de couleur
+                                </label>
+                                <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
+                                    <option value="">Sélectionnez une couleur</option>
+                                    {% for coloration in coloration_list %}
+                                        <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                            {{ coloration.couleur }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editTypeCompte" class="form-label">Type de compte</label>
-                        <input type="text" class="form-control" id="editTypeCompte" name="type_compte">
+
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="editCommentaire" class="form-label">
+                                    <i class="fas fa-comment-dots text-primary"></i>Commentaire
+                                </label>
+                                <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateCompte" class="form-label">Début de période de compte N</label>
-                        <input type="date" class="form-control" id="editDateCompte" name="date_compte">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDateFin" class="form-label">Fin clôture de compte N</label>
-                        <input type="date" class="form-control" id="editDateFin" name="date_fin">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDateCompteNMoinsUn" class="form-label">Début de période de compte N-1</label>
-                        <input type="date" class="form-control" id="editDateCompteNMoinsUn" name="date_compte_n_moins_un">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDateFinNMoinsUn" class="form-label">Fin clôture de compte N-1</label>
-                        <input type="date" class="form-control" id="editDateFinNMoinsUn" name="date_fin_n_moins_un">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDateCompteNMoinsDeux" class="form-label">Début de période de compte N-2</label>
-                        <input type="date" class="form-control" id="editDateCompteNMoinsDeux" name="date_compte_n_moins_deux">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDateFinNMoinsDeux" class="form-label">Fin clôture de compte N-2</label>
-                        <input type="date" class="form-control" id="editDateFinNMoinsDeux" name="date_fin_n_moins_deux">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCouleurCommentaire" class="form-label">Couleur Commentaire</label>
-                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire" required>
-                            {% for coloration in coloration_list %}
-                                <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCommentaire" class="form-label">Commentaire</label>
-                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le compte financier</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer ce compte financier ? 
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Compte Financier Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
 
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#commentaire, #editCommentaire',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/compte-financier/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Initialiser Select2
+    function initSelect2() {
+        $('.select2-with-search').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Sélectionnez une option',
+            language: 'fr',
+            allowClear: true,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
         });
+    }
+    
+    // Initialiser les datepickers
+    function initDatePickers() {
+        flatpickr.localize(flatpickr.l10ns.fr);
+        
+        $('input[type="date"]').each(function() {
+            flatpickr(this, {
+                dateFormat: "Y-m-d",
+                locale: "fr",
+                allowInput: true
+            });
+        });
+    }
 
-        // Votre script JavaScript existant ici
+    // Initialisation
+    initSelect2();
+    initDatePickers();
+    
+    // Si un compte existe, pré-remplir le formulaire d'édition
+    {% if compte_financier %}
+    function populateEditForm() {
+        const compteData = JSON.parse('{{ compte_financier_json|escapejs }}');
+        
+        $('#editCompteId').val(compteData.id);
+        $('#editCabinet').val(compteData.cabinet || '');
+        $('#editRequisPourDeposer').val(compteData.requis_pour_deposer || '');
+        $('#editCredibiliteCabinet').val(compteData.credibilite_cabinet || '');
+        $('#editSource').val(compteData.source || '');
+        $('#editPresentation').val(compteData.presentation || '');
+        $('#editTypeCompte').val(compteData.type_compte || '');
+        
+        // Dates
+        $('#editDateCompte').val(compteData.date_compte || '');
+        $('#editDateFin').val(compteData.date_fin || '');
+        $('#editDateCompteNMoinsUn').val(compteData.date_compte_n_moins_un || '');
+        $('#editDateFinNMoinsUn').val(compteData.date_fin_n_moins_un || '');
+        $('#editDateCompteNMoinsDeux').val(compteData.date_compte_n_moins_deux || '');
+        $('#editDateFinNMoinsDeux').val(compteData.date_fin_n_moins_deux || '');
+        
+        // Sélecteurs
+        $('#editDevise').val(compteData.devise || 'XAF').trigger('change');
+        $('#editTypeBilan').val(compteData.type_bilan || '').trigger('change');
+        $('#editCouleurCommentaire').val(compteData.couleur_commentaire?.id || '').trigger('change');
+        
+        // Commentaire
+        $('#editCommentaire').val(compteData.commentaire || '');
+    }
+    
+    $('#editCompteModal').on('shown.bs.modal', function() {
+        populateEditForm();
     });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
-        }
-
+    {% endif %}
+    
+    // Formulaire d'ajout
+    $('#addCompteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitCompteForm(data, '#submitAddBtn', 'addCompteModal');
+    });
+    
+    // Formulaire de modification
+    $('#editCompteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Inclure l'ID dans les données
+        const compteId = $('#editCompteId').val();
+        data['id'] = compteId;
+        
+        submitCompteForm(data, '#submitEditBtn', 'editCompteModal');
+    });
+    
+    // Soumission du formulaire - POST pour création et modification
+    function submitCompteForm(data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
-            type: 'GET',
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
-
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
-                }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
-
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                $(`#${modalId} form`)[0].reset();
+                $('.select2-with-search').val(null).trigger('change');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
             },
             error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitCompteForm(data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+
+    // Suppression du compte
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message || 'Compte financier supprimé avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.message || 'Impossible de supprimer le compte financier'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
-    });
-
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load compte financier data
-        function loadCompteFinancier(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-comptes-financiers/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update compte financier table body
-                    $('#compteFinancierTableBody').html('');
-                    response.results.forEach(function(compteFinancier, index) {
-                        $('#compteFinancierTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + compteFinancier.cabinet + '</td>' +
-                            '<td>' + compteFinancier.requis_pour_deposer + '</td>' +
-                            '<td>' + compteFinancier.credibilite_cabinet + '</td>' +
-                            '<td>' + compteFinancier.source + '</td>' +
-                            '<td>' + compteFinancier.presentation + '</td>' +
-                            '<td>' + compteFinancier.devise + '</td>' +
-                            '<td>' + compteFinancier.type_bilan + '</td>' +
-                            '<td>' + compteFinancier.type_compte + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + compteFinancier.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + compteFinancier.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadCompteFinancier();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadCompteFinancier(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadCompteFinancier(page, search);
-        });
-
-        // Add Compte Financier form submission
-        $('#addCompteFinancierForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-un-compte-financier/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Compte financier ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addCompteFinancierModal').modal('hide');
-                        loadCompteFinancier();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout du compte financier.',
-                    });
-                }
-            });
-        });
-
-        // Edit Compte Financier button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-un-compte-financier/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editCompteFinancierId').val(response.id);
-                    $('#editCabinet').val(response.cabinet);
-                    $('#editRequisPourDeposer').val(response.requis_pour_deposer);
-                    $('#editCredibiliteCabinet').val(response.credibilite_cabinet);
-                    $('#editSource').val(response.source);
-                    $('#editPresentation').val(response.presentation);
-                    $('#editDevise').val(response.devise);
-                    $('#editTypeBilan').val(response.type_bilan);
-                    $('#editTypeBilanRef').val(response.type_bilan_ref);
-                    $('#editTypeCompte').val(response.type_compte);
-                    $('#editDateCompte').val(response.date_compte);
-                    $('#editDateFin').val(response.date_fin);
-                    $('#editDateCompteNMoinsUn').val(response.date_compte_n_moins_un);
-                    $('#editDateFinNMoinsUn').val(response.date_fin_n_moins_un);
-                    $('#editDateCompteNMoinsDeux').val(response.date_compte_n_moins_deux);
-                    $('#editDateFinNMoinsDeux').val(response.date_fin_n_moins_deux);
-                    $('#editCouleurCommentaire').val(response.couleur_commentaire);
-                    $('#editCommentaire').val(response.commentaire);
-                    $('#editCompteFinancierModal').modal('show');
-
-                    tinymce.get('editCommentaire').setContent(response.commentaire);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données du compte financier.',
-                    });
-                }
-            });
-        });
-
-        // Edit Compte Financier form submission
-        $('#editCompteFinancierForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editCompteFinancierId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-un-compte-financier/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Compte financier mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editCompteFinancierModal').modal('hide');
-                        loadCompteFinancier();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour du compte financier.',
-                    });
-                }
-            });
-        });
-
-        // Delete Compte Financier button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-comptes-financiers/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'Le compte financier a été supprimé.',
-                                'success'
-                            ).then(() => {
-                                loadCompteFinancier();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression du compte financier.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
-                }
-            }
-        });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
-                    });
-                }
-            });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
         }
     });
+});
 </script>
-
 {% endblock %}

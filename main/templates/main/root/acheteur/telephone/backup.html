@@ -1,0 +1,684 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .telephone-card {
+        border-left: 4px solid #0d6efd; /* Bleu pour les téléphones fixes (vs vert pour portables) */
+        border-radius: 0 5px 5px 0;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    .telephone-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .telephone-number {
+        font-weight: 600;
+        color: #0d6efd; /* Bleu pour les téléphones fixes */
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+    }
+    .telephone-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #dee2e6;
+    }
+    .telephone-actions {
+        display: flex;
+        gap: 8px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+    }
+    .created-by {
+        font-style: italic;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    #noTelephonesMessage {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    .call-btn {
+        background-color: #0d6efd; /* Bleu pour les téléphones fixes */
+        border-color: #0d6efd;
+        color: white;
+    }
+    .call-btn:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+    .fax-btn {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    .fax-btn:hover {
+        background-color: #5c636a;
+        border-color: #565e64;
+    }
+    .type-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: white;
+        background-color: #6c757d;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-telephone-fill fa-fw me-1"></i> Numéros de Téléphone de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countTelephone">Module de Gestion des Numéros de Téléphone</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter, modifier ou supprimer les numéros de téléphone fixes associés à l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Numéro : </strong><span style="color: #0d6efd;">NT</span><br>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Créé par : </strong><span style="color: #6c757d;">CB</span><br>
+                                <strong>Mis à jour : </strong><span style="color: #ffc107;">MA</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion. Ce module concerne les numéros de téléphone fixes (vs portables).</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Téléphones START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Numéros de Téléphone</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search and Add START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Rechercher un numéro..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary w-100" style="background-color: #0d6efd; border-color: #0d6efd;" data-bs-toggle="modal" data-bs-target="#addTelephoneModal">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter un numéro
+                        </button>
+                    </div>
+                </div>
+                <!-- Search and Add END -->
+                <!-- Téléphones List START -->
+                <div id="telephoneList">
+                    <div id="telephoneContainer"></div>
+                    <div class="text-center my-4" id="noTelephonesMessage" style="display: none;">
+                        <i class="bi bi-telephone-x-fill fs-3 text-muted mb-2"></i>
+                        <p class="mb-0">Aucun numéro de téléphone enregistré pour cet acheteur.</p>
+                    </div>
+                </div>
+                <!-- Téléphones List END -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Téléphones END -->
+<!-- Add Téléphone Modal START -->
+<div class="modal fade" id="addTelephoneModal" tabindex="-1" aria-labelledby="addTelephoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTelephoneModalLabel">Ajouter un Numéro de Téléphone</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTelephoneForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="telephone" class="form-label">Numéro de téléphone <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="telephone" name="telephone" required>
+                        <div class="form-text">Format attendu: +241 XX XX XX XX (fixe) ou 01 XX XX XX</div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="isFax">
+                        <label class="form-check-label" for="isFax">
+                            Ce numéro est un fax
+                        </label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border-color: #0d6efd;">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Téléphone Modal END -->
+<!-- Edit Téléphone Modal START -->
+<div class="modal fade" id="editTelephoneModal" tabindex="-1" aria-labelledby="editTelephoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTelephoneModalLabel">Éditer un Numéro de Téléphone</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTelephoneForm">
+                    <input type="hidden" id="editTelephoneId" name="id" />
+                    <div class="mb-3">
+                        <label for="editTelephone" class="form-label">Numéro de téléphone <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editTelephone" name="telephone" required>
+                        <div class="form-text">Format attendu: +241 XX XX XX XX (fixe) ou 01 XX XX XX</div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="editIsFax">
+                        <label class="form-check-label" for="editIsFax">
+                            Ce numéro est un fax
+                        </label>
+                    </div>
+                    <div class="telephone-meta mb-3">
+                        <div class="created-by">
+                            <i class="bi bi-person-fill me-1"></i>
+                            Créé par: <span id="createdByInfo"></span> |
+                            Le: <span id="createdAtInfo"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border-color: #0d6efd;">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Téléphone Modal END -->
+<!-- Delete Confirmation Modal START -->
+<div class="modal fade" id="deleteTelephoneModal" tabindex="-1" aria-labelledby="deleteTelephoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTelephoneModalLabel">Supprimer un Numéro de Téléphone</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce numéro de téléphone ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                <div id="deleteTelephoneNumber" class="fw-bold mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteTelephone">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal END -->
+{% endblock %}
+{% block scripts %}
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Non spécifié";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    // Fonction pour formater un numéro de téléphone fixe
+    function formatPhoneNumber(phoneNumber) {
+        if (!phoneNumber) return "";
+
+        // Supprimer tous les caractères non numériques
+        let cleaned = phoneNumber.replace(/\D/g, '');
+
+        // Format gabonais standard pour les fixes
+        if (cleaned.startsWith('241')) {
+            if (cleaned.length === 11) {
+                return `+${cleaned.substring(0, 3)} ${cleaned.substring(3, 5)} ${cleaned.substring(5, 7)} ${cleaned.substring(7, 9)} ${cleaned.substring(9, 11)}`;
+            }
+        }
+        // Format local fixe (01...)
+        else if (cleaned.length === 8 && cleaned.startsWith('01')) {
+            return `0${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
+        }
+        // Format fax (02...)
+        else if (cleaned.length === 8 && cleaned.startsWith('02')) {
+            return `0${cleaned.substring(0, 2)} ${cleaned.substring(2, 4)} ${cleaned.substring(4, 6)} ${cleaned.substring(6, 8)}`;
+        }
+
+        // Retourner le numéro original si le format n'est pas reconnu
+        return phoneNumber;
+    }
+
+    // Variable pour stocker l'ID du téléphone à supprimer
+    var telephoneToDelete = null;
+
+    $(document).ready(function() {
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger les numéros de téléphone
+        function loadTelephones() {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-telephones/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    if (response.results.length === 0) {
+                        $('#telephoneContainer').html('');
+                        $('#noTelephonesMessage').show();
+                    } else {
+                        $('#noTelephonesMessage').hide();
+                        $('#telephoneContainer').html('');
+                        response.results.forEach(function(telephone) {
+                            const formattedNumber = formatPhoneNumber(telephone.telephone);
+                            const isFax = telephone.telephone && telephone.telephone.includes('02');
+
+                            $('#telephoneContainer').append(`
+                                <div class="telephone-card" data-id="${telephone.id}">
+                                    ${isFax ? '<div class="type-badge">FAX</div>' : ''}
+                                    <div class="telephone-actions">
+                                        <button class="btn btn-sm btn-outline-primary edit-telephone-btn" data-id="${telephone.id}" data-bs-toggle="tooltip" title="Éditer">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-telephone-btn" data-id="${telephone.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="telephone-number">${formattedNumber}</div>
+                                    <div class="mt-2">
+                                        ${!isFax ? `
+                                        <a href="tel:${telephone.telephone.replace(/\s+/g, '')}" class="btn btn-sm call-btn me-2">
+                                            <i class="bi bi-telephone-fill me-1"></i> Appeler
+                                        </a>` : `
+                                        <button class="btn btn-sm fax-btn" disabled>
+                                            <i class="bi bi-printer-fill me-1"></i> Fax
+                                        </button>`}
+                                    </div>
+                                    <div class="telephone-meta">
+                                        <div>
+                                            <i class="bi bi-person-fill me-1"></i>
+                                            Créé par: ${telephone.created_by ? telephone.created_by : 'Inconnu'} |
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${formatDateTime(telephone.created_at)}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Mis à jour: ${formatDateTime(telephone.updated_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des numéros de téléphone.',
+                    });
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout de téléphone
+        $('#addTelephoneForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-telephone/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Numéro de téléphone ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addTelephoneModal').modal('hide');
+                        $('#addTelephoneForm')[0].reset();
+                        loadTelephones();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de l\'ajout du numéro de téléphone.';
+                    if (response.responseJSON && response.responseJSON.telephone) {
+                        errorMessage = response.responseJSON.telephone[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale d'édition de téléphone
+        $(document).on('click', '.edit-telephone-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-telephone/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editTelephoneId').val(response.id);
+                    $('#editTelephone').val(response.telephone);
+                    $('#createdByInfo').text(response.created_by ? response.created_by : 'Inconnu');
+                    $('#createdAtInfo').text(formatDateTime(response.created_at));
+
+                    // Détecter si c'est un fax
+                    const isFax = response.telephone && response.telephone.includes('02');
+                    $('#editIsFax').prop('checked', isFax);
+
+                    $('#editTelephoneModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des détails du numéro de téléphone.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition de téléphone
+        $('#editTelephoneForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editTelephoneId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-telephone/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Numéro de téléphone mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editTelephoneModal').modal('hide');
+                        loadTelephones();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de la mise à jour du numéro de téléphone.';
+                    if (response.responseJSON && response.responseJSON.telephone) {
+                        errorMessage = response.responseJSON.telephone[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale de confirmation de suppression
+        $(document).on('click', '.delete-telephone-btn', function() {
+            var id = $(this).data('id');
+            var telephoneNumber = $(this).closest('.telephone-card').find('.telephone-number').text();
+
+            telephoneToDelete = id;
+            $('#deleteTelephoneNumber').text(telephoneNumber);
+            $('#deleteTelephoneModal').modal('show');
+        });
+
+        // Confirmer la suppression du téléphone
+        $('#confirmDeleteTelephone').on('click', function() {
+            if (telephoneToDelete) {
+                $.ajax({
+                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-telephones/',
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [telephoneToDelete] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: 'Numéro de téléphone supprimé avec succès.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#deleteTelephoneModal').modal('hide');
+                            loadTelephones();
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la suppression du numéro de téléphone.',
+                        });
+                    }
+                });
+            }
+        });
+
+        // Recherche de téléphones
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/recherche-telephone/?search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    if (response.results.length === 0) {
+                        $('#telephoneContainer').html('');
+                        $('#noTelephonesMessage').show();
+                    } else {
+                        $('#noTelephonesMessage').hide();
+                        $('#telephoneContainer').html('');
+                        response.results.forEach(function(telephone) {
+                            const formattedNumber = formatPhoneNumber(telephone.telephone);
+                            const isFax = telephone.telephone && telephone.telephone.includes('02');
+
+                            $('#telephoneContainer').append(`
+                                <div class="telephone-card" data-id="${telephone.id}">
+                                    ${isFax ? '<div class="type-badge">FAX</div>' : ''}
+                                    <div class="telephone-actions">
+                                        <button class="btn btn-sm btn-outline-primary edit-telephone-btn" data-id="${telephone.id}" data-bs-toggle="tooltip" title="Éditer">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-telephone-btn" data-id="${telephone.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="telephone-number">${formattedNumber}</div>
+                                    <div class="mt-2">
+                                        ${!isFax ? `
+                                        <a href="tel:${telephone.telephone.replace(/\s+/g, '')}" class="btn btn-sm call-btn me-2">
+                                            <i class="bi bi-telephone-fill me-1"></i> Appeler
+                                        </a>` : `
+                                        <button class="btn btn-sm fax-btn" disabled>
+                                            <i class="bi bi-printer-fill me-1"></i> Fax
+                                        </button>`}
+                                    </div>
+                                    <div class="telephone-meta">
+                                        <div>
+                                            <i class="bi bi-person-fill me-1"></i>
+                                            Créé par: ${telephone.created_by ? telephone.created_by : 'Inconnu'} |
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${formatDateTime(telephone.created_at)}
+                                        </div>
+                                        <div>
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Mis à jour: ${formatDateTime(telephone.updated_at)}
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la recherche des numéros de téléphone.',
+                    });
+                }
+            });
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadTelephones();
+    });
+</script>
+{% endblock %}

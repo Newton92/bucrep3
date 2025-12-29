@@ -13,6 +13,12 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from main.models import ScoringSansBilanAcheteur
 
+from decimal import Decimal, InvalidOperation
+
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 # Vos serializers ici !
 
 
@@ -2399,40 +2405,209 @@ class CompositionCapitalSocialSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GetCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+class DeviseMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Devise
+        fields = ['id', 'nom', 'code', 'symbole']
+
+
+class CouleurCommentaireMinimalSerializer(serializers.ModelSerializer):
+    code_couleur = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = CouleurCommentaire
+        fields = ['id', 'couleur', 'code_couleur']
+
+
+class CompositionCapitalListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des compositions de capital"""
+    devise = DeviseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    pourcentage_libere = serializers.SerializerMethodField()
+    
     class Meta:
         model = CompositionCapitalSocial
-        fields = "__all__"
+        fields = [
+            'id',
+            'emis',
+            'publie',
+            'libere',
+            'pourcentage_libere',
+            'devise',
+            'couleur_commentaire',
+            'commentaire',
+            'created_at',
+            'created_at_formatted',
+            'updated_at',
+            'updated_at_formatted'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else ''
+    
+    def get_pourcentage_libere(self, obj):
+        """Calcule le pourcentage du capital libéré"""
+        if obj.emis and obj.emis > 0:
+            try:
+                return round((obj.libere / obj.emis) * 100, 2)
+            except (TypeError, ZeroDivisionError):
+                return 0
+        return 0
+
+
+class GetCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour une composition de capital"""
+    acheteur = AcheteurMinimalSerializer()
+    devise = DeviseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    
+    class Meta:
+        model = CompositionCapitalSocial
+        fields = '__all__'
 
 
 class AddCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'une composition de capital"""
+    emis = serializers.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        required=True,
+        min_value=0
+    )
+    publie = serializers.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        required=True,
+        min_value=0
+    )
+    libere = serializers.DecimalField(
+        max_digits=100,
+        decimal_places=2,
+        required=True,
+        min_value=0
+    )
+    
     class Meta:
         model = CompositionCapitalSocial
         fields = [
-            "id",
-            "acheteur",
-            "devise",
-            "emis",
-            "publie",
-            "libere",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'devise',
+            'emis',
+            'publie',
+            'libere',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate(self, data):
+        # Validation des montants
+        emis = data.get('emis')
+        publie = data.get('publie')
+        libere = data.get('libere')
+        
+        # Le capital libéré ne peut pas dépasser le capital émis
+        if emis and libere and libere > emis:
+            raise serializers.ValidationError({
+                'libere': 'Le capital libéré ne peut pas dépasser le capital émis'
+            })
+        
+        # Le capital publié ne peut pas dépasser le capital émis
+        if emis and publie and publie > emis:
+            raise serializers.ValidationError({
+                'publie': 'Le capital publié ne peut pas dépasser le capital émis'
+            })
+        
+        return data
 
 
 class EditCompositionCapitalSocialSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'une composition de capital"""
+    devise = serializers.PrimaryKeyRelatedField(
+        queryset=Devise.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = CompositionCapitalSocial
         fields = [
-            "id",
-            "acheteur",
-            "devise",
-            "emis",
-            "publie",
-            "libere",
-            "couleur_commentaire",
-            "commentaire",
+            'devise',
+            'emis',
+            'publie',
+            'libere',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def to_internal_value(self, data):
+        # Gérer les IDs pour les relations
+        if 'devise' in data and isinstance(data['devise'], str):
+            if data['devise']:
+                try:
+                    data['devise'] = int(data['devise'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'devise': 'ID invalide'
+                    })
+            else:
+                data['devise'] = None
+        
+        if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
+            if data['couleur_commentaire']:
+                try:
+                    data['couleur_commentaire'] = int(data['couleur_commentaire'])
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'couleur_commentaire': 'ID invalide'
+                    })
+            else:
+                data['couleur_commentaire'] = None
+        
+        return super().to_internal_value(data)
+    
+    def validate(self, data):
+        # Validation des montants
+        emis = data.get('emis')
+        publie = data.get('publie')
+        libere = data.get('libere')
+        
+        # Vérifier les valeurs négatives
+        if emis is not None and emis < 0:
+            raise serializers.ValidationError({
+                'emis': 'Le capital émis ne peut pas être négatif'
+            })
+        
+        if publie is not None and publie < 0:
+            raise serializers.ValidationError({
+                'publie': 'Le capital publié ne peut pas être négatif'
+            })
+        
+        if libere is not None and libere < 0:
+            raise serializers.ValidationError({
+                'libere': 'Le capital libéré ne peut pas être négatif'
+            })
+        
+        return data
+
+
+
+
+
+
+
+
+
+
 
 
 class CompositionActionSerializer(serializers.ModelSerializer):
@@ -2444,38 +2619,292 @@ class CompositionActionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GetCompositionActionSerializer(serializers.ModelSerializer):
+class CouleurCommentaireMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les couleurs"""
+    class Meta:
+        model = CouleurCommentaire
+        fields = ['id', 'couleur', 'code']
+
+
+class CompositionActionListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des actionnaires"""
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    created_at_formatted = serializers.SerializerMethodField()
+    pourcentage_formatted = serializers.SerializerMethodField()
+    nom_complet = serializers.SerializerMethodField()
+    
     class Meta:
         model = CompositionAction
-        fields = "__all__"
+        fields = [
+            'id',
+            'nom',
+            'prenom',
+            'nom_complet',
+            'pourcentage',
+            'pourcentage_formatted',
+            'couleur_commentaire',
+            'commentaire',
+            'created_at',
+            'created_at_formatted',
+            'updated_at'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
+    
+    def get_pourcentage_formatted(self, obj):
+        return f"{obj.pourcentage}%" if obj.pourcentage else 'Non spécifié'
+    
+    def get_nom_complet(self, obj):
+        return f"{obj.nom} {obj.prenom}".strip()
+    
+    def get_commentaire_preview(self, obj):
+        return obj.commentaire[:100] + '...' if obj.commentaire and len(obj.commentaire) > 100 else obj.commentaire
+
+
+class GetCompositionActionSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour un actionnaire"""
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    
+    class Meta:
+        model = CompositionAction
+        fields = '__all__'
 
 
 class AddCompositionActionSerializer(serializers.ModelSerializer):
+    """Serializer amélioré pour l'ajout d'un actionnaire"""
+    
+    nom = serializers.CharField(
+        max_length=200,
+        required=True,
+        trim_whitespace=True,
+        error_messages={
+            'required': 'Le nom est obligatoire',
+            'blank': 'Le nom ne peut pas être vide'
+        }
+    )
+    
+    prenom = serializers.CharField(
+        max_length=200,
+        required=True,
+        trim_whitespace=True,
+        error_messages={
+            'required': 'Le prénom est obligatoire',
+            'blank': 'Le prénom ne peut pas être vide'
+        }
+    )
+    
+    pourcentage = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        min_value=Decimal('0'),
+        max_value=Decimal('100'),
+        error_messages={
+            'invalid': 'Veuillez entrer un nombre valide (ex: 25.50)',
+            'min_value': 'Le pourcentage ne peut pas être négatif',
+            'max_value': 'Le pourcentage ne peut pas dépasser 100%',
+            'max_digits': 'Le pourcentage ne peut avoir que 5 chiffres au total',
+            'max_decimal_places': 'Maximum 2 décimales autorisées'
+        }
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = CompositionAction
         fields = [
-            "id",
-            "acheteur",
-            "nom",
-            "prenom",
-            "pourcentage",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'nom',
+            'prenom',
+            'pourcentage',
+            'couleur_commentaire',
+            'commentaire'
         ]
-
+    
+    def validate_nom(self, value):
+        """Validation du nom"""
+        value = value.strip().upper()
+        if not value:
+            raise serializers.ValidationError("Le nom est obligatoire")
+        if len(value) < 2:
+            raise serializers.ValidationError("Le nom doit contenir au moins 2 caractères")
+        return value
+    
+    def validate_prenom(self, value):
+        """Validation du prénom"""
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Le prénom est obligatoire")
+        if len(value) < 2:
+            raise serializers.ValidationError("Le prénom doit contenir au moins 2 caractères")
+        return value.title()
+    
+    def validate_pourcentage(self, value):
+        """Validation spécifique du pourcentage"""
+        if value is None:
+            return value
+        
+        try:
+            # S'assurer que c'est un Decimal
+            if not isinstance(value, Decimal):
+                value = Decimal(str(value))
+            
+            # Vérifier les limites
+            if value < 0:
+                raise serializers.ValidationError("Le pourcentage ne peut pas être négatif")
+            
+            if value > 100:
+                raise serializers.ValidationError("Le pourcentage ne peut pas dépasser 100%")
+            
+            # Vérifier le format décimal
+            if value.as_tuple().exponent < -2:
+                raise serializers.ValidationError("Maximum 2 décimales autorisées")
+            
+            return value
+            
+        except (ValueError, InvalidOperation, TypeError):
+            raise serializers.ValidationError("Format de pourcentage invalide. Exemple: 25.50")
+    
+    def validate(self, attrs):
+        """Validation globale"""
+        # Normalisation des noms
+        if 'nom' in attrs:
+            attrs['nom'] = attrs['nom'].strip().upper()
+        if 'prenom' in attrs:
+            attrs['prenom'] = attrs['prenom'].strip().title()
+        
+        # Vérification de la longueur du commentaire
+        commentaire = attrs.get('commentaire', '')
+        if len(commentaire) > 10000:  # Réduit à 10k caractères
+            raise serializers.ValidationError({
+                'commentaire': 'Le commentaire est trop long (max: 10,000 caractères)'
+            })
+        
+        return attrs
+    
 
 class EditCompositionActionSerializer(serializers.ModelSerializer):
+    """Serializer amélioré pour l'édition d'un actionnaire"""
+    
+    nom = serializers.CharField(
+        required=False,
+        max_length=200,
+        trim_whitespace=True,
+        error_messages={
+            'max_length': 'Le nom ne peut pas dépasser 200 caractères'
+        }
+    )
+    
+    prenom = serializers.CharField(
+        required=False,
+        max_length=200,
+        trim_whitespace=True,
+        error_messages={
+            'max_length': 'Le prénom ne peut pas dépasser 200 caractères'
+        }
+    )
+    
+    pourcentage = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        min_value=Decimal('0'),
+        max_value=Decimal('100'),
+        error_messages={
+            'invalid': 'Veuillez entrer un nombre valide (ex: 25.50)',
+            'min_value': 'Le pourcentage ne peut pas être négatif',
+            'max_value': 'Le pourcentage ne peut pas dépasser 100%'
+        }
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
+    commentaire = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=10000
+    )
+    
     class Meta:
         model = CompositionAction
         fields = [
-            "id",
-            "acheteur",
-            "nom",
-            "prenom",
-            "pourcentage",
-            "couleur_commentaire",
-            "commentaire",
+            'nom',
+            'prenom',
+            'pourcentage',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate_nom(self, value):
+        """Validation du nom"""
+        if value is not None:
+            value = value.strip().upper()
+            if not value:
+                raise serializers.ValidationError("Le nom ne peut pas être vide")
+            if len(value) < 2:
+                raise serializers.ValidationError("Le nom doit contenir au moins 2 caractères")
+        return value
+    
+    def validate_prenom(self, value):
+        """Validation du prénom"""
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise serializers.ValidationError("Le prénom ne peut pas être vide")
+            if len(value) < 2:
+                raise serializers.ValidationError("Le prénom doit contenir au moins 2 caractères")
+            value = value.title()
+        return value
+    
+    def validate_pourcentage(self, value):
+        """Validation spécifique du pourcentage"""
+        if value is None:
+            return value
+        
+        try:
+            # S'assurer que c'est un Decimal
+            if not isinstance(value, Decimal):
+                value = Decimal(str(value))
+            
+            # Vérifier les limites
+            if value < Decimal('0'):
+                raise serializers.ValidationError("Le pourcentage ne peut pas être négatif")
+            
+            if value > Decimal('100'):
+                raise serializers.ValidationError("Le pourcentage ne peut pas dépasser 100%")
+            
+            # Vérifier le format décimal
+            if value.as_tuple().exponent < -2:
+                raise serializers.ValidationError("Maximum 2 décimales autorisées")
+            
+            return value
+            
+        except (ValueError, InvalidOperation, TypeError):
+            raise serializers.ValidationError("Format de pourcentage invalide. Exemple: 25.50")
+    
+    def validate(self, attrs):
+        """Validation globale"""
+        # Normalisation des noms si présents
+        if 'nom' in attrs and attrs['nom'] is not None:
+            attrs['nom'] = attrs['nom'].strip().upper()
+        
+        if 'prenom' in attrs and attrs['prenom'] is not None:
+            attrs['prenom'] = attrs['prenom'].strip().title()
+        
+        return attrs
+
+
 
 
 
@@ -2554,42 +2983,264 @@ class StructureSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GetStructureSerializer(serializers.ModelSerializer):
+class StructureEntrepriseMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les structures d'entreprise"""
+    class Meta:
+        model = StructureEntreprise
+        fields = ['id', 'libelle', 'code']
+
+
+class CouleurCommentaireMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les couleurs"""
+    class Meta:
+        model = CouleurCommentaire
+        fields = ['id', 'couleur', 'code']
+
+
+class StructureListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des filiales"""
+    type_affiliation_ref = StructureEntrepriseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    adresse_complete = serializers.SerializerMethodField()
+    
     class Meta:
         model = Structure
-        fields = "__all__"
+        fields = [
+            'id',
+            'nom',
+            'type_affiliation',
+            'type_affiliation_ref',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'adresse_complete',
+            'couleur_commentaire',
+            'commentaire',
+            'created_at',
+            'created_at_formatted',
+            'updated_at',
+            'updated_at_formatted'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else ''
+    
+    def get_adresse_complete(self, obj):
+        parts = []
+        if obj.numero_adresse:
+            parts.append(obj.numero_adresse)
+        if obj.rue_adresse:
+            parts.append(obj.rue_adresse)
+        if obj.code_postale_adresse:
+            parts.append(obj.code_postale_adresse)
+        return ', '.join(parts) if parts else 'Adresse non spécifiée'
+    
+    def get_commentaire_preview(self, obj):
+        return obj.commentaire[:100] + '...' if obj.commentaire and len(obj.commentaire) > 100 else obj.commentaire or ''
+
+
+class GetStructureSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour une filiale"""
+    type_affiliation_ref = StructureEntrepriseMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    
+    class Meta:
+        model = Structure
+        fields = '__all__'
 
 
 class AddStructureSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'une filiale"""
+    
+    nom = serializers.CharField(
+        max_length=200,
+        required=True,
+        trim_whitespace=True,
+        error_messages={
+            'required': 'Le nom est obligatoire',
+            'blank': 'Le nom ne peut pas être vide',
+            'max_length': 'Le nom ne peut pas dépasser 200 caractères'
+        }
+    )
+    
+    type_affiliation = serializers.ChoiceField(
+        choices=[
+            ('Société - mère', 'Société - mère'),
+            ('Filiale', 'Filiale'),
+            ('Subsidiary', 'Subsidiary'),
+            ('Société Sœur', 'Société Sœur'),
+            ('La holding', 'La holding'),
+            ('Le groupe de sociétés', 'Le groupe de sociétés'),
+            ('Société de gestion', 'Société de gestion'),
+        ],
+        required=True,
+        error_messages={
+            'required': 'Le type d\'affiliation est obligatoire',
+            'invalid_choice': 'Type d\'affiliation invalide'
+        }
+    )
+    
+    type_affiliation_ref = serializers.PrimaryKeyRelatedField(
+        queryset=StructureEntreprise.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = Structure
         fields = [
-            "acheteur",
-            "nom",
-            "type_affiliation",
-            "type_affiliation_ref",
-            "numero_adresse",
-            "rue_adresse",
-            "code_postale_adresse",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'nom',
+            'type_affiliation',
+            'type_affiliation_ref',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate_nom(self, value):
+        """Validation du nom"""
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Le nom est obligatoire")
+        if len(value) < 2:
+            raise serializers.ValidationError("Le nom doit contenir au moins 2 caractères")
+        return value
+    
+    def validate_numero_adresse(self, value):
+        """Validation du numéro d'adresse"""
+        if value and len(value) > 50:
+            raise serializers.ValidationError("Le numéro d'adresse ne peut pas dépasser 50 caractères")
+        return value.strip() if value else value
+    
+    def validate_rue_adresse(self, value):
+        """Validation de la rue"""
+        if value and len(value) > 200:
+            raise serializers.ValidationError("La rue ne peut pas dépasser 200 caractères")
+        return value.strip() if value else value
+    
+    def validate_code_postale_adresse(self, value):
+        """Validation du code postal"""
+        if value and len(value) > 20:
+            raise serializers.ValidationError("Le code postal ne peut pas dépasser 20 caractères")
+        return value.strip() if value else value
+    
+    def validate(self, attrs):
+        """Validation globale"""
+        # Vérification de l'adresse complète
+        if attrs.get('numero_adresse') or attrs.get('rue_adresse'):
+            if not attrs.get('numero_adresse'):
+                raise serializers.ValidationError({
+                    'numero_adresse': 'Le numéro d\'adresse est requis si vous spécifiez une adresse'
+                })
+            if not attrs.get('rue_adresse'):
+                raise serializers.ValidationError({
+                    'rue_adresse': 'La rue est requise si vous spécifiez une adresse'
+                })
+        
+        # Validation de la longueur du commentaire
+        commentaire = attrs.get('commentaire', '')
+        if len(commentaire) > 10000:
+            raise serializers.ValidationError({
+                'commentaire': 'Le commentaire est trop long (max: 10,000 caractères)'
+            })
+        
+        return attrs
 
 
 class EditStructureSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'une filiale"""
+    
+    nom = serializers.CharField(
+        required=False,
+        max_length=200,
+        trim_whitespace=True
+    )
+    
+    type_affiliation = serializers.ChoiceField(
+        choices=[
+            ('Société - mère', 'Société - mère'),
+            ('Filiale', 'Filiale'),
+            ('Subsidiary', 'Subsidiary'),
+            ('Société Sœur', 'Société Sœur'),
+            ('La holding', 'La holding'),
+            ('Le groupe de sociétés', 'Le groupe de sociétés'),
+            ('Société de gestion', 'Société de gestion'),
+        ],
+        required=False
+    )
+    
+    type_affiliation_ref = serializers.PrimaryKeyRelatedField(
+        queryset=StructureEntreprise.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = Structure
         fields = [
-            "acheteur",
-            "nom",
-            "type_affiliation",
-            "type_affiliation_ref",
-            "numero_adresse",
-            "rue_adresse",
-            "code_postale_adresse",
-            "couleur_commentaire",
-            "commentaire",
+            'nom',
+            'type_affiliation',
+            'type_affiliation_ref',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate_nom(self, value):
+        """Validation du nom"""
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise serializers.ValidationError("Le nom ne peut pas être vide")
+            if len(value) < 2:
+                raise serializers.ValidationError("Le nom doit contenir au moins 2 caractères")
+        return value
+    
+    def validate(self, attrs):
+        """Validation globale"""
+        # Validation partielle de l'adresse
+        if attrs.get('numero_adresse') or attrs.get('rue_adresse'):
+            if attrs.get('numero_adresse') and not attrs.get('rue_adresse'):
+                # Si on a un numéro mais pas de rue, c'est OK (mise à jour partielle)
+                pass
+            elif attrs.get('rue_adresse') and not attrs.get('numero_adresse'):
+                # Si on a une rue mais pas de numéro, c'est OK (mise à jour partielle)
+                pass
+        
+        return attrs
+
+
+
+
+
+
+
+
+
+
+
 
 
 class AnalyseSectorielleSerializer(serializers.ModelSerializer):
@@ -2619,44 +3270,80 @@ class EditAnalyseSectorielleSerializer(serializers.ModelSerializer):
         fields = ["acheteur", "couleur_commentaire", "commentaire", "impact_covid_19"]
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class CompteFinancierSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
-    type_bilan_ref = ModeleBilanSerializer()
-    couleur_commentaire = CouleurCommentaireSerializer()
+    acheteur = AcheteurSerializer(read_only=True)
+    couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
 
     class Meta:
         model = CompteFinancier
         fields = "__all__"
+        depth = 1
 
 
 class GetCompteFinancierSerializer(serializers.ModelSerializer):
+    couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
+    
     class Meta:
         model = CompteFinancier
-        fields = "__all__"
+        fields = [
+            "id", 
+            "cabinet", 
+            "requis_pour_deposer", 
+            "credibilite_cabinet", 
+            "source", 
+            "presentation",
+            "date_compte", 
+            "date_fin", 
+            "date_compte_n_moins_un", 
+            "date_fin_n_moins_un",
+            "date_compte_n_moins_deux", 
+            "date_fin_n_moins_deux",
+            "type_compte", 
+            "devise", 
+            "type_bilan",
+            "couleur_commentaire", 
+            "commentaire",
+            "created_at", 
+            "updated_at"
+        ]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class AddCompteFinancierSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancier
         fields = [
-            "acheteur",
-            "cabinet",
-            "requis_pour_deposer",
-            "credibilite_cabinet",
-            "source",
+            "acheteur", 
+            "cabinet", 
+            "requis_pour_deposer", 
+            "credibilite_cabinet", 
+            "source", 
             "presentation",
-            "date_compte",
-            "date_fin",
-            "date_compte_n_moins_un",
+            "date_compte", 
+            "date_fin", 
+            "date_compte_n_moins_un", 
             "date_fin_n_moins_un",
-            "date_compte_n_moins_deux",
+            "date_compte_n_moins_deux", 
             "date_fin_n_moins_deux",
-            "type_compte",
-            "devise",
+            "type_compte", 
+            "devise", 
             "type_bilan",
-            "type_bilan_ref",
-            "couleur_commentaire",
-            "commentaire",
+            "couleur_commentaire", 
+            "commentaire"
         ]
 
 
@@ -2664,33 +3351,83 @@ class EditCompteFinancierSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompteFinancier
         fields = [
-            "acheteur",
-            "cabinet",
-            "requis_pour_deposer",
-            "credibilite_cabinet",
-            "source",
+            "cabinet", 
+            "requis_pour_deposer", 
+            "credibilite_cabinet", 
+            "source", 
             "presentation",
-            "date_compte",
-            "date_fin",
-            "date_compte_n_moins_un",
+            "date_compte", 
+            "date_fin", 
+            "date_compte_n_moins_un", 
             "date_fin_n_moins_un",
-            "date_compte_n_moins_deux",
+            "date_compte_n_moins_deux", 
             "date_fin_n_moins_deux",
-            "type_compte",
-            "devise",
+            "type_compte", 
+            "devise", 
             "type_bilan",
-            "type_bilan_ref",
-            "couleur_commentaire",
-            "commentaire",
+            "couleur_commentaire", 
+            "commentaire"
         ]
 
 
-class OperationEtHistoriqueSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
 
+
+
+
+
+
+
+
+class ListeImportationSerializer(serializers.ModelSerializer):
+    # Ajoutez cette ligne pour inclure libelle
+    libelle = serializers.CharField(read_only=True)
+    
+    class Meta:
+        model = ListeImportation
+        fields = ['id', 'libelle']
+    
+    def to_representation(self, instance):
+        # S'assurer que libelle est toujours présent
+        representation = super().to_representation(instance)
+        representation['libelle'] = representation.get('libelle', '')
+        return representation
+
+
+class OperationEtHistoriqueSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.SerializerMethodField()
+    importation_list = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
     class Meta:
         model = OperationEtHistorique
-        fields = "__all__"
+        fields = [
+            'id',
+            'acheteur',
+            'acheteur_nom',
+            'commentaire_ratios',
+            'description_complete_activite',
+            'importation',
+            'importation_list',
+            'historique',
+            'created_at',
+            'updated_at',
+            'created_at_formatted',
+            'updated_at_formatted'
+        ]
+    
+    def get_acheteur_nom(self, obj):
+        return obj.acheteur.nom if obj.acheteur else None
+    
+    def get_importation_list(self, obj):
+        # Utilisez libelle au lieu de nom
+        return [{'id': imp.id, 'libelle': str(imp)} for imp in obj.importation.all()]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else None
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else None
 
 
 class GetOperationEtHistoriqueSerializer(serializers.ModelSerializer):
@@ -2699,39 +3436,87 @@ class GetOperationEtHistoriqueSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class AddOperationEtHistoriqueSerializer(serializers.ModelSerializer):
+class OperationEtHistoriqueCreateSerializer(serializers.ModelSerializer):
+    importation = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeImportation.objects.all(),
+        required=False
+    )
+    
     class Meta:
         model = OperationEtHistorique
         fields = [
-            "acheteur",
-            "commentaire_ratios",
-            "description_complete_activite",
-            "importation",
-            "historique",
+            'commentaire_ratios',
+            'description_complete_activite',
+            'importation',
+            'historique',
+            'acheteur'
         ]
 
 
-class EditOperationEtHistoriqueSerializer(serializers.ModelSerializer):
+class OperationEtHistoriqueUpdateSerializer(serializers.ModelSerializer):
+    importation = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeImportation.objects.all(),
+        required=False
+    )
+    
     class Meta:
         model = OperationEtHistorique
         fields = [
-            "acheteur",
-            "commentaire_ratios",
-            "description_complete_activite",
-            "importation",
-            "historique",
+            'commentaire_ratios',
+            'description_complete_activite',
+            'importation',
+            'historique'
         ]
+
+
+
+
+
+
+
+
+
+
+class LocauxSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Locaux
+        fields = ['id', 'nom']
 
 
 class ProprieteEtActifSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
-    locaux_ref = (
-        ModeleBailSerializer()
-    )  # Utilisez un sérialiseur imbriqué pour la référence sur les locaux
-
+    acheteur_nom = serializers.SerializerMethodField()
+    locaux_list = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
     class Meta:
         model = ProprieteEtActif
-        fields = "__all__"
+        fields = [
+            'id',
+            'acheteur',
+            'acheteur_nom',
+            'branche',
+            'locaux',
+            'locaux_list',
+            'created_at',
+            'updated_at',
+            'created_at_formatted',
+            'updated_at_formatted'
+        ]
+    
+    def get_acheteur_nom(self, obj):
+        return obj.acheteur.nom if obj.acheteur else None
+    
+    def get_locaux_list(self, obj):
+        return [{'id': local.id, 'nom': local.nom} for local in obj.locaux.all()]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else None
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else None
 
 
 class GetProprieteEtActifSerializer(serializers.ModelSerializer):
@@ -2750,14 +3535,87 @@ class EditProprieteEtActifSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProprieteEtActif
         fields = ["acheteur", "locaux", "locaux_ref", "branche"]
+        
+        
+class ProprieteEtActifCreateSerializer(serializers.ModelSerializer):
+    locaux = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Locaux.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = ProprieteEtActif
+        fields = [
+            'branche',
+            'locaux',
+            'acheteur'
+        ]
+
+
+class ProprieteEtActifUpdateSerializer(serializers.ModelSerializer):
+    locaux = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Locaux.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = ProprieteEtActif
+        fields = [
+            'branche',
+            'locaux'
+        ]
+
+
+
+
+
+
+
+
+
 
 
 class ConditionAchatSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
-
+    acheteur_nom = serializers.SerializerMethodField()
+    local_list = serializers.SerializerMethodField()
+    importation_list = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
     class Meta:
         model = ConditionAchat
-        fields = "__all__"
+        fields = [
+            'id',
+            'acheteur',
+            'acheteur_nom',
+            'local',
+            'local_list',
+            'importation',
+            'importation_list',
+            'les_clients',
+            'fournisseur',
+            'created_at',
+            'updated_at',
+            'created_at_formatted',
+            'updated_at_formatted'
+        ]
+    
+    def get_acheteur_nom(self, obj):
+        return obj.acheteur.nom if obj.acheteur else None
+    
+    def get_local_list(self, obj):
+        return [{'id': item.id, 'nom': item.nom} for item in obj.local.all()]
+    
+    def get_importation_list(self, obj):
+        return [{'id': item.id, 'nom': item.nom} for item in obj.importation.all()]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else None
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else None
 
 
 class GetConditionAchatSerializer(serializers.ModelSerializer):
@@ -2776,16 +3634,101 @@ class EditConditionAchatSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConditionAchat
         fields = ["acheteur", "local", "importation", "les_clients", "fournisseur"]
+        
+
+class ConditionAchatCreateSerializer(serializers.ModelSerializer):
+    local = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeConditionAchat.objects.all(),
+        required=False
+    )
+    importation = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeConditionAchat.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = ConditionAchat
+        fields = [
+            'les_clients',
+            'fournisseur',
+            'local',
+            'importation',
+            'acheteur'
+        ]
+
+
+class ConditionAchatUpdateSerializer(serializers.ModelSerializer):
+    local = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeConditionAchat.objects.all(),
+        required=False
+    )
+    importation = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeConditionAchat.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = ConditionAchat
+        fields = [
+            'les_clients',
+            'fournisseur',
+            'local',
+            'importation'
+        ]
+
+
+class ListeConditionAchatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListeConditionAchat
+        fields = ['id', 'nom']
+
+
+
+
+
+
+
+
+
 
 
 class ConditionDeVenteSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
-    recouvrement_de_dette_jugement_ref = ModeleComportementJugementSerializer()
-    comportement_de_paiement_ref = ModeleComportementPaiementSerializer()
-
+    acheteur_nom = serializers.SerializerMethodField()
+    local_list = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
     class Meta:
         model = ConditionDeVente
-        fields = "__all__"
+        fields = [
+            'id',
+            'acheteur',
+            'acheteur_nom',
+            'local',
+            'local_list',
+            'recouvrement_de_dette_jugement',
+            'comportement_de_paiement',
+            'created_at',
+            'updated_at',
+            'created_at_formatted',
+            'updated_at_formatted'
+        ]
+    
+    def get_acheteur_nom(self, obj):
+        return obj.acheteur.nom if obj.acheteur else None
+    
+    def get_local_list(self, obj):
+        return [{'id': item.id, 'nom': item.nom} for item in obj.local.all()]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else None
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else None
 
 
 class GetConditionDeVenteSerializer(serializers.ModelSerializer):
@@ -2818,21 +3761,77 @@ class EditConditionDeVenteSerializer(serializers.ModelSerializer):
             "comportement_de_paiement",
             "comportement_de_paiement_ref",
         ]
+        
+
+class ConditionDeVenteCreateSerializer(serializers.ModelSerializer):
+    local = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeConditionVente.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = ConditionDeVente
+        fields = [
+            'recouvrement_de_dette_jugement',
+            'comportement_de_paiement',
+            'local',
+            'acheteur'
+        ]
+
+
+class ConditionDeVenteUpdateSerializer(serializers.ModelSerializer):
+    local = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=ListeConditionVente.objects.all(),
+        required=False
+    )
+    
+    class Meta:
+        model = ConditionDeVente
+        fields = [
+            'recouvrement_de_dette_jugement',
+            'comportement_de_paiement',
+            'local'
+        ]
+
+
+class ListeConditionVenteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListeConditionVente
+        fields = ['id', 'nom']
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class SommaireEtAvisSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
-    couleur_commentaire = CouleurCommentaireSerializer()
+    acheteur = AcheteurSerializer(read_only=True)
+    couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
 
     class Meta:
         model = SommaireEtAvis
         fields = "__all__"
+        depth = 1
 
 
 class GetSommaireEtAvisSerializer(serializers.ModelSerializer):
+    couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
+    
     class Meta:
         model = SommaireEtAvis
-        fields = "__all__"
+        fields = ["id", "commentaire", "couleur_commentaire", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class AddSommaireEtAvisSerializer(serializers.ModelSerializer):
@@ -2844,32 +3843,51 @@ class AddSommaireEtAvisSerializer(serializers.ModelSerializer):
 class EditSommaireEtAvisSerializer(serializers.ModelSerializer):
     class Meta:
         model = SommaireEtAvis
-        fields = ["acheteur", "couleur_commentaire", "commentaire"]
+        fields = ["couleur_commentaire", "commentaire"]
+
+
+
+
+
+
+
 
 
 class AdviceSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    acheteur = AcheteurSerializer(read_only=True)
 
     class Meta:
         model = Advice
         fields = "__all__"
+        depth = 1
 
 
 class GetAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
-        fields = "__all__"
+        fields = [
+            "id", 
+            "points_forts", 
+            "points_faibles", 
+            "dynamisme_court_terme", 
+            "dynamisme_long_terme", 
+            "risque_potentiel_court_terme",
+            "created_at", 
+            "updated_at"
+        ]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class AddAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
         fields = [
-            "acheteur",
-            "points_forts",
-            "points_faibles",
-            "dynamisme_court_terme",
-            "dynamisme_long_terme",
+            "acheteur", 
+            "points_forts", 
+            "points_faibles", 
+            "dynamisme_court_terme", 
+            "dynamisme_long_terme", 
+            "risque_potentiel_court_terme"
         ]
 
 
@@ -2877,38 +3895,83 @@ class EditAdviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advice
         fields = [
-            "acheteur",
-            "points_forts",
-            "points_faibles",
-            "dynamisme_court_terme",
-            "dynamisme_long_terme",
+            "points_forts", 
+            "points_faibles", 
+            "dynamisme_court_terme", 
+            "dynamisme_long_terme", 
+            "risque_potentiel_court_terme"
         ]
 
 
+
+
+
+
+
+
+
+
+
+
 class GeopoliticsSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()  # Utilisez un sérialiseur imbriqué pour l'acheteur
+    acheteur = AcheteurSerializer(read_only=True)
 
     class Meta:
         model = Geopolitics
         fields = "__all__"
+        depth = 1
 
 
 class GetGeopoliticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geopolitics
-        fields = "__all__"
+        fields = [
+            "id", 
+            "stabilite_politique", 
+            "etat_droit", 
+            "efficacite", 
+            "qualite", 
+            "liberte_expression",
+            "donnees_politiques", 
+            "donnees_economiques",
+            "created_at", 
+            "updated_at"
+        ]
+        read_only_fields = ["created_at", "updated_at"]
 
 
 class AddGeopoliticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geopolitics
-        fields = ["acheteur", "donnees_politiques", "donnees_economiques"]
+        fields = [
+            "acheteur", 
+            "stabilite_politique", 
+            "etat_droit", 
+            "efficacite", 
+            "qualite", 
+            "liberte_expression",
+            "donnees_politiques", 
+            "donnees_economiques"
+        ]
 
 
 class EditGeopoliticsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Geopolitics
-        fields = ["acheteur", "donnees_politiques", "donnees_economiques"]
+        fields = [
+            "stabilite_politique", 
+            "etat_droit", 
+            "efficacite", 
+            "qualite", 
+            "liberte_expression",
+            "donnees_politiques", 
+            "donnees_economiques"
+        ]
+
+
+
+
+
 
 
 class BanquierSerializer(serializers.ModelSerializer):
@@ -2921,44 +3984,261 @@ class BanquierSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class GetBanquierSerializer(serializers.ModelSerializer):
+class VilleMinimalSerializer(serializers.ModelSerializer):
+    """Serializer minimal pour les villes"""
+    class Meta:
+        model = Ville
+        fields = ['id', 'nom', 'code']
+
+
+class BanquierListSerializer(serializers.ModelSerializer):
+    """Serializer pour la liste des banquiers"""
+    ville = VilleMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    adresse_complete = serializers.SerializerMethodField()
+    commentaire_preview = serializers.SerializerMethodField()  # CORRECTION : commentaire_preview au lieu de commentaire
+    
     class Meta:
         model = Banquier
-        fields = "__all__"
+        fields = [
+            'id',
+            'nom_banque',
+            'numero_compte',
+            'type_relation',
+            'numero',
+            'rue',
+            'ville',
+            'code_postal',
+            'adresse_complete',
+            'couleur_commentaire',
+            'commentaire_preview',  # CORRECTION : commentaire_preview
+            'commentaire',  # Garder le champ original si besoin
+            'created_at',
+            'created_at_formatted',
+            'updated_at',
+            'updated_at_formatted'
+        ]
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else ''
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else ''
+    
+    def get_adresse_complete(self, obj):
+        parts = []
+        if obj.numero:
+            parts.append(obj.numero)
+        if obj.rue:
+            parts.append(obj.rue)
+        if obj.ville:
+            parts.append(f"{obj.ville.nom} ({obj.ville.code})")  # CORRECTION : ville.code
+        elif obj.code_postal:
+            parts.append(obj.code_postal)
+        return ', '.join(parts) if parts else 'Adresse non spécifiée'
+    
+    def get_commentaire_preview(self, obj):  # CORRECTION : get_commentaire_preview
+        return obj.commentaire[:100] + '...' if obj.commentaire and len(obj.commentaire) > 100 else obj.commentaire or ''
+
+
+class GetBanquierSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour un banquier"""
+    ville = VilleMinimalSerializer()
+    couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    
+    class Meta:
+        model = Banquier
+        fields = '__all__'
 
 
 class AddBanquierSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ajout d'un banquier"""
+    
+    nom_banque = serializers.CharField(
+        max_length=200,
+        required=True,
+        trim_whitespace=True,
+        error_messages={
+            'required': 'Le nom de la banque est obligatoire',
+            'blank': 'Le nom de la banque ne peut pas être vide',
+            'max_length': 'Le nom de la banque ne peut pas dépasser 200 caractères'
+        }
+    )
+    
+    ville = serializers.PrimaryKeyRelatedField(
+        queryset=Ville.objects.all(),
+        required=True,
+        error_messages={
+            'required': 'La ville est obligatoire',
+            'does_not_exist': 'La ville sélectionnée n\'existe pas'
+        }
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = Banquier
         fields = [
-            "acheteur",
-            "nom_banque",
-            "numero_compte",
-            "type_relation",
-            "numero",
-            "rue",
-            "ville",
-            "code_postal",
-            "couleur_commentaire",
-            "commentaire",
+            'acheteur',
+            'nom_banque',
+            'numero_compte',
+            'type_relation',
+            'numero',
+            'rue',
+            'ville',
+            'code_postal',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate_nom_banque(self, value):
+        """Validation du nom de la banque"""
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("Le nom de la banque est obligatoire")
+        if len(value) < 2:
+            raise serializers.ValidationError("Le nom de la banque doit contenir au moins 2 caractères")
+        return value
+    
+    def validate_numero_compte(self, value):
+        """Validation du numéro de compte"""
+        if value and len(value) > 500:
+            raise serializers.ValidationError("Le numéro de compte ne peut pas dépasser 500 caractères")
+        return value.strip() if value else value
+    
+    def validate_numero(self, value):
+        """Validation du numéro d'adresse"""
+        if value and len(value) > 50:
+            raise serializers.ValidationError("Le numéro d'adresse ne peut pas dépasser 50 caractères")
+        return value.strip() if value else value
+    
+    def validate_rue(self, value):
+        """Validation de la rue"""
+        if value and len(value) > 200:
+            raise serializers.ValidationError("La rue ne peut pas dépasser 200 caractères")
+        return value.strip() if value else value
+    
+    def validate_code_postal(self, value):
+        """Validation du code postal"""
+        if value and len(value) > 20:
+            raise serializers.ValidationError("Le code postal ne peut pas dépasser 20 caractères")
+        return value.strip() if value else value
+    
+    def validate(self, attrs):
+        """Validation globale"""
+        # Vérification de l'adresse complète
+        if attrs.get('numero') or attrs.get('rue'):
+            if not attrs.get('numero'):
+                raise serializers.ValidationError({
+                    'numero': 'Le numéro est requis si vous spécifiez une adresse'
+                })
+            if not attrs.get('rue'):
+                raise serializers.ValidationError({
+                    'rue': 'La rue est requise si vous spécifiez une adresse'
+                })
+        
+        # Validation de la longueur du commentaire
+        commentaire = attrs.get('commentaire', '')
+        if len(commentaire) > 10000:
+            raise serializers.ValidationError({
+                'commentaire': 'Le commentaire est trop long (max: 10,000 caractères)'
+            })
+        
+        # Si code postal spécifié manuellement, vérifier la cohérence avec la ville
+        ville = attrs.get('ville')
+        code_postal = attrs.get('code_postal')
+        if ville and code_postal:
+            # CORRECTION : Utiliser ville.code au lieu de ville.code_postal
+            if ville.code and code_postal != ville.code:
+                raise serializers.ValidationError({
+                    'code_postal': f'Le code postal doit correspondre à celui de la ville ({ville.code})'
+                })
+        
+        return attrs
 
 
 class EditBanquierSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'un banquier"""
+    
+    nom_banque = serializers.CharField(
+        required=False,
+        max_length=200,
+        trim_whitespace=True
+    )
+    
+    ville = serializers.PrimaryKeyRelatedField(
+        queryset=Ville.objects.all(),
+        required=False
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
         model = Banquier
         fields = [
-            "acheteur",
-            "nom_banque",
-            "numero_compte",
-            "type_relation",
-            "numero",
-            "rue",
-            "ville",
-            "code_postal",
-            "couleur_commentaire",
-            "commentaire",
+            'nom_banque',
+            'numero_compte',
+            'type_relation',
+            'numero',
+            'rue',
+            'ville',
+            'code_postal',
+            'couleur_commentaire',
+            'commentaire'
         ]
+    
+    def validate_nom_banque(self, value):
+        """Validation du nom de la banque"""
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise serializers.ValidationError("Le nom de la banque ne peut pas être vide")
+            if len(value) < 2:
+                raise serializers.ValidationError("Le nom de la banque doit contenir au moins 2 caractères")
+        return value
+    
+    def validate(self, attrs):
+        """Validation globale"""
+        # Validation partielle de l'adresse
+        if attrs.get('numero') or attrs.get('rue'):
+            if attrs.get('numero') and not attrs.get('rue'):
+                pass  # OK pour mise à jour partielle
+            elif attrs.get('rue') and not attrs.get('numero'):
+                pass  # OK pour mise à jour partielle
+        
+        # Si ville ou code postal modifié, vérifier la cohérence
+        ville = attrs.get('ville')
+        code_postal = attrs.get('code_postal')
+        
+        if ville is not None or code_postal is not None:
+            instance = self.instance
+            ville = ville if ville is not None else instance.ville
+            code_postal = code_postal if code_postal is not None else instance.code_postal
+            
+            if ville and code_postal:
+                # CORRECTION : Utiliser ville.code au lieu de ville.code_postal
+                if ville.code and code_postal != ville.code:
+                    raise serializers.ValidationError({
+                        'code_postal': f'Le code postal doit correspondre à celui de la ville ({ville.code})'
+                    })
+        
+        return attrs
+
+
+
+
+
+
 
 
 class ActifASerializer(serializers.ModelSerializer):
@@ -6469,33 +7749,101 @@ class RatiosIFRSSerializer(serializers.ModelSerializer):
 
 
 
-class TelephoneAcheteurSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()
 
+
+class UserSimpleSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
+
+class TelephoneAcheteurSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
+    updated_by = UserSimpleSerializer(read_only=True)
+    
     class Meta:
         model = TelephoneAcheteur
-        fields = "__all__"
+        fields = [
+            "id", 
+            "telephone", 
+            "acheteur",
+            "created_at", 
+            "updated_at",
+            "created_by", 
+            "updated_by"
+        ]
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
+
 
 class GetTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
         fields = "__all__"
 
+
 class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
     class Meta:
         model = TelephoneAcheteur
-        fields = [
-            "telephone",
-            "acheteur",
-        ]
+        fields = ["telephone", "acheteur"]
+    
+    def validate_telephone(self, value):
+        """Validation du numéro de téléphone fixe"""
+        import re
+        
+        cleaned = re.sub(r'\D', '', value)
+        
+        if not cleaned:
+            raise serializers.ValidationError("Le numéro de téléphone est requis.")
+        
+        if len(cleaned) < 6:
+            raise serializers.ValidationError(
+                "Le numéro de téléphone doit contenir au moins 6 chiffres."
+            )
+        
+        if len(cleaned) > 15:
+            raise serializers.ValidationError(
+                "Le numéro de téléphone ne peut pas dépasser 15 chiffres."
+            )
+        
+        return value
+     
 
 class EditTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
-        fields = [
-            "telephone",
-        ]
- 
+        fields = ["telephone", "updated_by"]
+    
+    def validate_telephone(self, value):
+        """Même validation que pour l'ajout"""
+        import re
+        
+        # Nettoyer le numéro
+        cleaned = re.sub(r'\D', '', value)
+        
+        # Validation de base
+        if not cleaned:
+            raise serializers.ValidationError("Le numéro de téléphone est requis.")
+        
+        if len(cleaned) < 6:
+            raise serializers.ValidationError(
+                "Le numéro de téléphone doit contenir au moins 6 chiffres."
+            )
+        
+        if len(cleaned) > 15:
+            raise serializers.ValidationError(
+                "Le numéro de téléphone ne peut pas dépasser 15 chiffres."
+            )
+        
+        return value 
  
  
         
@@ -6512,6 +7860,7 @@ class GetAdresseAcheteurSerializer(serializers.ModelSerializer):
         model = AdresseAcheteur
         fields = "__all__"
 
+
 class AddAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
@@ -6520,12 +7869,74 @@ class AddAdresseAcheteurSerializer(serializers.ModelSerializer):
             "acheteur",
         ]
 
+
 class EditAdresseAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdresseAcheteur
         fields = [
             "adresse",
         ]
+        
+class AdresseAcheteurSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.SerializerMethodField()
+    created_by_nom = serializers.SerializerMethodField()
+    updated_by_nom = serializers.SerializerMethodField()
+    created_at_formatted = serializers.SerializerMethodField()
+    updated_at_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AdresseAcheteur
+        fields = [
+            'id',
+            'adresse',
+            'acheteur',
+            'acheteur_nom',
+            'created_at',
+            'updated_at',
+            'created_at_formatted',
+            'updated_at_formatted',
+            'created_by',
+            'created_by_nom',
+            'updated_by',
+            'updated_by_nom'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+    
+    def get_acheteur_nom(self, obj):
+        return obj.acheteur.nom if obj.acheteur else None
+    
+    def get_created_by_nom(self, obj):
+        return obj.created_by.get_full_name() if obj.created_by else None
+    
+    def get_updated_by_nom(self, obj):
+        return obj.updated_by.get_full_name() if obj.updated_by else None
+    
+    def get_created_at_formatted(self, obj):
+        return obj.created_at.strftime('%d/%m/%Y %H:%M') if obj.created_at else None
+    
+    def get_updated_at_formatted(self, obj):
+        return obj.updated_at.strftime('%d/%m/%Y %H:%M') if obj.updated_at else None
+
+class AdresseAcheteurCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = ['adresse', 'acheteur']
+    
+    def create(self, validated_data):
+        request = self.context.get('request')
+        validated_data['created_by'] = request.user if request else None
+        return super().create(validated_data)
+
+class AdresseAcheteurUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdresseAcheteur
+        fields = ['adresse']
+    
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        if request:
+            instance.updated_by = request.user
+        return super().update(instance, validated_data)
         
         
         
@@ -6544,6 +7955,7 @@ class GetPortableAcheteurSerializer(serializers.ModelSerializer):
         model = PortableAcheteur
         fields = "__all__"
 
+
 class AddPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
@@ -6552,44 +7964,213 @@ class AddPortableAcheteurSerializer(serializers.ModelSerializer):
             "acheteur",
         ]
 
+
 class EditPortableAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortableAcheteur
         fields = [
             "portable",
         ]
+       
+        
+class UserSimpleSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
+
+class PortableAcheteurSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleSerializer(read_only=True)
+    updated_by = UserSimpleSerializer(read_only=True)
+    
+    class Meta:
+        model = PortableAcheteur
+        fields = [
+            "id", 
+            "portable", 
+            "acheteur",
+            "created_at", 
+            "updated_at",
+            "created_by", 
+            "updated_by"
+        ]
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
+
+
+class AddPortableAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = PortableAcheteur
+        fields = ["portable", "acheteur"]  # Enlever created_by
+    
+    def validate_portable(self, value):
+        """Validation du numéro de portable"""
+        import re
+        
+        cleaned = re.sub(r'\D', '', value)
+        
+        if not cleaned:
+            raise serializers.ValidationError("Le numéro de portable est requis.")
+        
+        if len(cleaned) < 8:
+            raise serializers.ValidationError(
+                "Le numéro de portable doit contenir au moins 8 chiffres."
+            )
+        
+        if len(cleaned) > 15:
+            raise serializers.ValidationError(
+                "Le numéro de portable ne peut pas dépasser 15 chiffres."
+            )
+        
+        return value
+     
+
+class EditPortableAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortableAcheteur
+        fields = ["portable", "updated_by"]
+    
+    def validate_portable(self, value):
+        """Même validation que pour l'ajout"""
+        import re
+        
+        # Nettoyer le numéro
+        cleaned = re.sub(r'\D', '', value)
+        
+        # Validation de base
+        if not cleaned:
+            raise serializers.ValidationError("Le numéro de portable est requis.")
+        
+        if len(cleaned) < 8:
+            raise serializers.ValidationError(
+                "Le numéro de portable doit contenir au moins 8 chiffres."
+            )
+        
+        if len(cleaned) > 15:
+            raise serializers.ValidationError(
+                "Le numéro de portable ne peut pas dépasser 15 chiffres."
+            )
+        
+        return value    
+        
+        
+        
+        
+        
+        
         
         
         
         
         
 class EmailAcheteurSerializer(serializers.ModelSerializer):
-    acheteur = AcheteurSerializer()
-
+    created_by = UserSimpleSerializer(read_only=True)
+    updated_by = UserSimpleSerializer(read_only=True)
+    
     class Meta:
         model = EmailAcheteur
-        fields = "__all__"
+        fields = [
+            "id", 
+            "email", 
+            "acheteur",
+            "created_at", 
+            "updated_at",
+            "created_by", 
+            "updated_by"
+        ]
+        read_only_fields = ["created_at", "updated_at", "created_by", "updated_by"]
+
 
 class GetEmailAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailAcheteur
         fields = "__all__"
 
+
 class AddEmailAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
     class Meta:
         model = EmailAcheteur
-        fields = [
-            "email",
-            "acheteur",
-        ]
+        fields = ["email", "acheteur"]
+    
+    def validate_email(self, value):
+        """Validation de l'adresse email"""
+        # Normaliser l'email (minuscules, suppression des espaces)
+        email = value.strip().lower()
+        
+        # Vérifier la longueur
+        if len(email) > 254:
+            raise serializers.ValidationError(
+                "L'adresse email ne peut pas dépasser 254 caractères."
+            )
+        
+        # Vérifier le format avec une regex simple
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, email):
+            raise serializers.ValidationError(
+                "Veuillez saisir une adresse email valide."
+            )
+        
+        # Vérification Django
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            raise serializers.ValidationError(
+                "Adresse email invalide."
+            )
+        
+        return email
+
 
 class EditEmailAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailAcheteur
-        fields = [
-            "email",
-        ]
+        fields = ["email", "updated_by"]
+    
+    def validate_email(self, value):
+        """Même validation que pour l'ajout"""
+        # Normaliser l'email (minuscules, suppression des espaces)
+        email = value.strip().lower()
         
+        # Vérifier la longueur
+        if len(email) > 254:
+            raise serializers.ValidationError(
+                "L'adresse email ne peut pas dépasser 254 caractères."
+            )
+        
+        # Vérifier le format avec une regex simple
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, email):
+            raise serializers.ValidationError(
+                "Veuillez saisir une adresse email valide."
+            )
+        
+        # Vérification Django
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            raise serializers.ValidationError(
+                "Adresse email invalide."
+            )
+        
+        return email
+    
+    
+    
+    
+    
+    
         
         
         

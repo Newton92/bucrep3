@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
 /* ========== VARIABLES ========== */
@@ -592,107 +594,46 @@ body {
     color: #c0392b;
     border: 1px solid rgba(231, 76, 60, 0.3);
 }
-/* ========== MODULES SECTION - AMÉLIORATIONS ========== */
-.modules-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.25rem;
-}
 
-.module-card {
-    background: white;
-    border-radius: 10px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: var(--transition);
-    border: 1px solid #eef2f7;
-    position: relative;
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.module-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-    border-color: var(--secondary-color);
-}
-
-.module-card:hover .module-icon {
-    transform: scale(1.1);
-}
-
-.module-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
-    color: white;
-    font-size: 1.5rem;
-    transition: var(--transition);
-}
-
-.module-title {
+/* ========== FORM STYLES ========== */
+.form-label {
     font-weight: 600;
     color: var(--primary-color);
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-bottom: 0.5rem;
 }
 
-.module-btn {
-    width: 100%;
-    padding: 0.75rem;
-    border: none;
+.form-control, .form-select {
+    border: 1px solid #dee2e6;
     border-radius: 8px;
-    font-weight: 500;
-    font-size: 0.9rem;
+    padding: 0.75rem;
     transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: auto;
 }
 
-.module-btn i {
-    font-size: 0.9rem;
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
 }
 
-.module-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.input-group-text {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
 }
 
-/* ========== CATÉGORIE DE MODULES ========== */
-.modules-category {
-    margin-bottom: 2rem;
+/* ========== ALERT STYLES ========== */
+.alert {
+    border-radius: 8px;
+    border: none;
+    padding: 1rem;
 }
 
-.modules-category-header {
-    border-left: 4px solid var(--secondary-color);
-    padding-left: 1rem;
-    margin-bottom: 1rem;
+.alert-warning {
+    background-color: rgba(243, 156, 18, 0.1);
+    color: #d68910;
 }
 
-.modules-category-header h6 {
-    color: var(--primary-color);
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.modules-category-header p {
-    color: #666;
-    font-size: 0.9rem;
+.alert-danger {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #c0392b;
 }
 </style>
 {% endblock %}
@@ -969,8 +910,6 @@ body {
     </div>
 </div>
 
-
-
 <!-- Reports Section -->
 <div class="card mt-4 fade-in">
     <div class="card-header">
@@ -984,7 +923,11 @@ body {
                 </p>
             </div>
             <div class="col-md-4 text-md-end">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+                <!-- CORRECTION ICI : Ajout de data-acheteur-id -->
+                <button type="button" class="btn btn-primary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#generateReportModal"
+                        data-acheteur-id="{{ id_acheteur }}">
                     <i class="fas fa-cogs me-2"></i>Générer un rapport
                 </button>
             </div>
@@ -1012,7 +955,11 @@ body {
             <div class="report-card">
                 <h6><i class="fas fa-cogs text-warning"></i> Rapports Personnalisés</h6>
                 <p class="text-muted mb-3">Générez des rapports sur mesure</p>
-                <button type="button" class="btn btn-warning-module w-100" data-bs-toggle="modal" data-bs-target="#generateReportModal">
+                <!-- CORRECTION ICI : Ajout de data-acheteur-id -->
+                <button type="button" class="btn btn-warning-module w-100" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#generateReportModal"
+                        data-acheteur-id="{{ id_acheteur }}">
                     <i class="fas fa-cogs me-2"></i>Configurer
                 </button>
             </div>
@@ -1108,7 +1055,8 @@ body {
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Annuler
                 </button>
-                <button type="button" class="btn btn-primary" id="confirmGenerate">
+                <!-- CORRECTION ICI : Ajout de data-acheteur-id -->
+                <button type="button" class="btn btn-primary" id="confirmGenerate" data-acheteur-id="{{ id_acheteur }}">
                     <i class="fas fa-play me-2"></i>Générer le rapport
                 </button>
             </div>
@@ -1119,19 +1067,24 @@ body {
 {% endblock %}
 
 {% block scripts %}
-<!-- Ajoute SweetAlert2 via CDN -->
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Maplibre GL JS -->
 <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
+<!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Validator JS -->
 <script src="https://cdn.jsdelivr.net/npm/validator@13.11.0/validator.min.js"></script>
 <!-- Font Awesome -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 
 <script>
 $(document).ready(function() {
-    console.log("=== DEBUG: Script chargé ===");
+    console.log("=== INITIALISATION DU TEMPLATE ===");
     
-    // Initialize with fade-in effect
+    // Initialiser l'effet fade-in
     $('.fade-in').css('opacity', '0');
     setTimeout(() => {
         $('.fade-in').css({
@@ -1139,52 +1092,42 @@ $(document).ready(function() {
             'transition': 'opacity 0.5s ease'
         });
     }, 100);
-
-    // Fonction utilitaire pour obtenir une valeur imbriquée en toute sécurité
-    function getSafeValue(obj, path, defaultValue = 'Non spécifié') {
-        if (!obj) return defaultValue;
-        
-        const keys = path.split('.');
-        let current = obj;
-        
-        for (let key of keys) {
-            if (current[key] === undefined || current[key] === null) {
-                return defaultValue;
+    
+    // Charger les données de l'acheteur
+    loadAcheteurData();
+    
+    // Gestion du token d'authentification
+    $.ajaxSetup({
+        statusCode: {
+            401: function() {
+                refreshToken();
             }
-            current = current[key];
         }
-        
-        return current || defaultValue;
-    }
-
-    // Load Acheteur Data - VERSION CORRIGÉE
+    });
+    
+    // Fonction pour charger les données de l'acheteur
     function loadAcheteurData() {
         const id = '{{ id_acheteur }}';
-        
-        console.log("=== DEBUG: Chargement des données pour l'acheteur ID:", id);
         
         if (!id) {
             console.error("L'ID de l'acheteur est introuvable.");
             showError('Erreur', 'ID de l\'acheteur manquant');
             return;
         }
-
-        // Show loading state
+        
+        console.log("Chargement des données pour l'acheteur ID:", id);
+        
+        // Afficher l'état de chargement
         $('.company-profile').addClass('loading');
         
-        // Construction de l'URL
-        const apiUrl = `/api/consulter-un-acheteur/${id}/`;
-        console.log("URL de l'API:", apiUrl);
-        
         $.ajax({
-            url: apiUrl,
+            url: `/api/consulter-un-acheteur/${id}/`,
             type: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + '{{ access }}'
             },
             success: function(response) {
-                console.log("=== DEBUG: Réponse API succès ===");
-                console.log("Données complètes:", response);
+                console.log("Données acheteur reçues:", response);
                 
                 if (!response) {
                     console.error("Réponse vide de l'API");
@@ -1192,9 +1135,7 @@ $(document).ready(function() {
                     return;
                 }
                 
-                // Vérifier la structure de la réponse
                 const acheteur = response.acheteur || response;
-                console.log("Données acheteur:", acheteur);
                 
                 if (!acheteur) {
                     console.error("Structure de réponse inattendue:", response);
@@ -1202,108 +1143,19 @@ $(document).ready(function() {
                     return;
                 }
                 
-                // Update company profile avec valeurs sécurisées
-                $('#editNom').text(getSafeValue(acheteur, 'nom', 'Non spécifié'));
-                $('#editSigle').text(getSafeValue(acheteur, 'sigle', 'Non spécifié'));
-                $('#editCode').text(getSafeValue(acheteur, 'code', 'Non spécifié'));
+                // Mettre à jour les champs
+                updateAcheteurFields(acheteur);
                 
-                // Format date
-                const dateCreation = getSafeValue(acheteur, 'date_creation', null);
-                if (dateCreation) {
-                    try {
-                        const date = new Date(dateCreation);
-                        const formattedDate = date.toLocaleDateString('fr-FR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                        });
-                        $('#editDateCreation').text(formattedDate);
-                    } catch (e) {
-                        console.error("Erreur format date:", e);
-                        $('#editDateCreation').text(dateCreation);
-                    }
-                } else {
-                    $('#editDateCreation').text('Non spécifié');
-                }
+                // Générer les modules
+                generateModulesGrid();
                 
-                // Update other fields avec getSafeValue
-                $('#editActivitePrincipale').text(getSafeValue(acheteur, 'activite_principale', 'Non spécifié'));
-                
-                // Pour les objets imbriqués, essayer plusieurs propriétés possibles
-                const statutLibelle = getSafeValue(acheteur, 'statut_entreprise.libelle') || 
-                                      getSafeValue(acheteur, 'statut_entreprise.nom') || 
-                                      getSafeValue(acheteur, 'statut_entreprise');
-                $('#editStatutEntreprise').text(statutLibelle);
-                
-                const categorieLibelle = getSafeValue(acheteur, 'categorie_entreprise.libelle') || 
-                                         getSafeValue(acheteur, 'categorie_entreprise.nom') || 
-                                         getSafeValue(acheteur, 'categorie_entreprise');
-                $('#editCategorieEntreprise').text(categorieLibelle);
-                
-                const formeLibelle = getSafeValue(acheteur, 'forme_juridique.libelle') || 
-                                     getSafeValue(acheteur, 'forme_juridique.nom') || 
-                                     getSafeValue(acheteur, 'forme_juridique');
-                $('#editFormeJuridique').text(formeLibelle);
-                
-                // Description avec fallback
-                const description = getSafeValue(acheteur, 'description', 'Aucune description disponible');
-                $('#editDescription').html(description);
-                
-                // Contacts
-                $('#editEmail').text(getSafeValue(acheteur, 'email', 'Non spécifié'));
-                $('#editFax').text(getSafeValue(acheteur, 'fax', 'Non spécifié'));
-                $('#editBoitePostale').text(getSafeValue(acheteur, 'boite_postale', 'Non spécifié'));
-                $('#editCodePostal').text(getSafeValue(acheteur, 'code_postal', 'Non spécifié'));
-                
-                // Site internet avec lien
-                const siteInternet = getSafeValue(acheteur, 'site_internet', null);
-                if (siteInternet && siteInternet !== 'Non spécifié') {
-                    const siteUrl = siteInternet.startsWith('http') ? 
-                        siteInternet : 
-                        `https://${siteInternet}`;
-                    $('#editSiteInternet').html(`<a href="${siteUrl}" target="_blank">${siteInternet}</a>`);
-                } else {
-                    $('#editSiteInternet').text('Non spécifié');
-                }
-                
-                // Adresse
-                $('#editNumeroAdresse').text(getSafeValue(acheteur, 'numero_adresse', 'Non spécifié'));
-                $('#editRueAdresse').text(getSafeValue(acheteur, 'rue_adresse', 'Non spécifié'));
-                
-                // Localisation
-                const paysNom = getSafeValue(acheteur, 'pays.nom') || 
-                               getSafeValue(acheteur, 'pays.libelle') || 
-                               getSafeValue(acheteur, 'pays');
-                $('#editPays').text(paysNom);
-                
-                const provinceNom = getSafeValue(acheteur, 'province.nom') || 
-                                   getSafeValue(acheteur, 'province.libelle') || 
-                                   getSafeValue(acheteur, 'province');
-                $('#editProvince').text(provinceNom);
-                
-                const villeNom = getSafeValue(acheteur, 'ville.nom') || 
-                                getSafeValue(acheteur, 'ville.libelle') || 
-                                getSafeValue(acheteur, 'ville');
-                $('#editVille').text(villeNom);
-                
-                // Remove loading state
+                // Retirer l'état de chargement
                 $('.company-profile').removeClass('loading');
                 
-                console.log("=== DEBUG: Données mises à jour avec succès ===");
-                console.log("Nom:", getSafeValue(acheteur, 'nom'));
-                console.log("Statut:", statutLibelle);
-                console.log("Catégorie:", categorieLibelle);
-                
-                // Generate modules grid dynamically
-                generateModulesGrid();
+                console.log("Données chargées avec succès");
             },
             error: function(xhr, status, error) {
-                console.error("=== DEBUG: Erreur API ===");
-                console.error("Status:", status);
-                console.error("Error:", error);
-                console.error("Response:", xhr.responseText);
-                console.error("Status code:", xhr.status);
-                
+                console.error("Erreur API:", error);
                 $('.company-profile').removeClass('loading');
                 
                 let errorMessage = 'Erreur lors de la récupération des données';
@@ -1312,8 +1164,6 @@ $(document).ready(function() {
                 } else if (xhr.status === 401) {
                     errorMessage = 'Session expirée, veuillez vous reconnecter';
                     setTimeout(() => window.location.href = '/login/', 2000);
-                } else if (xhr.status === 403) {
-                    errorMessage = 'Accès non autorisé';
                 } else if (xhr.responseText) {
                     try {
                         const errorData = JSON.parse(xhr.responseText);
@@ -1327,113 +1177,113 @@ $(document).ready(function() {
             }
         });
     }
-
-    // Generate modules grid dynamically
-    // Generate modules grid dynamically - VERSION COMPLÈTE
-    // Generate modules grid dynamically - VERSION CORRIGÉE
+    
+    // Fonction pour mettre à jour les champs de l'acheteur
+    function updateAcheteurFields(acheteur) {
+        // Fonction utilitaire pour obtenir une valeur sécurisée
+        function getSafeValue(obj, path, defaultValue = 'Non spécifié') {
+            if (!obj) return defaultValue;
+            const keys = path.split('.');
+            let current = obj;
+            for (let key of keys) {
+                if (current[key] === undefined || current[key] === null) {
+                    return defaultValue;
+                }
+                current = current[key];
+            }
+            return current || defaultValue;
+        }
+        
+        // Mettre à jour les champs
+        $('#editNom').text(getSafeValue(acheteur, 'nom'));
+        $('#editSigle').text(getSafeValue(acheteur, 'sigle'));
+        $('#editCode').text(getSafeValue(acheteur, 'code'));
+        
+        // Date de création
+        const dateCreation = getSafeValue(acheteur, 'date_creation', null);
+        if (dateCreation) {
+            try {
+                const date = new Date(dateCreation);
+                const formattedDate = date.toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+                $('#editDateCreation').text(formattedDate);
+            } catch (e) {
+                $('#editDateCreation').text(dateCreation);
+            }
+        }
+        
+        // Autres champs
+        $('#editActivitePrincipale').text(getSafeValue(acheteur, 'activite_principale'));
+        $('#editDescription').html(getSafeValue(acheteur, 'description'));
+        $('#editEmail').text(getSafeValue(acheteur, 'email'));
+        $('#editFax').text(getSafeValue(acheteur, 'fax'));
+        $('#editBoitePostale').text(getSafeValue(acheteur, 'boite_postale'));
+        $('#editSiteInternet').html(getSafeValue(acheteur, 'site_internet'));
+        $('#editNumeroAdresse').text(getSafeValue(acheteur, 'numero_adresse'));
+        $('#editRueAdresse').text(getSafeValue(acheteur, 'rue_adresse'));
+        $('#editPays').text(getSafeValue(acheteur, 'pays.nom'));
+        $('#editProvince').text(getSafeValue(acheteur, 'province.nom'));
+        $('#editVille').text(getSafeValue(acheteur, 'ville.nom'));
+        $('#editFormeJuridique').text(getSafeValue(acheteur, 'forme_juridique.libelle'));
+        $('#editCategorieEntreprise').text(getSafeValue(acheteur, 'categorie_entreprise.libelle'));
+        $('#editStatutEntreprise').text(getSafeValue(acheteur, 'statut_entreprise.libelle'));
+    }
+    
+    // Fonction pour générer la grille des modules
     function generateModulesGrid() {
-        console.log("=== DEBUG: Génération des modules ===");
+        console.log("Génération des modules...");
         
         const modules = [
-
-            /* =======================
-            MODULES PRINCIPAUX
-            ======================= */
             { title: "Résumé", url: "{% url 'dash_root_manage_acheteur_resume' id_acheteur %}", color: "success", icon: "fas fa-chart-pie" },
             { title: "Évaluation du Risque", url: "{% url 'dash_root_manage_acheteur_risk_rating' id_acheteur %}", color: "success", icon: "fas fa-shield-alt" },
             { title: "Opinion Crédit ACREMAC", url: "{% url 'dash_root_manage_acheteur_opinion_acremac' id_acheteur %}", color: "success", icon: "fas fa-comment-dollar" },
             { title: "Données enregistrées", url: "{% url 'dash_root_manage_acheteur_data_save' id_acheteur %}", color: "success", icon: "fas fa-database" },
             { title: "Tendance", url: "{% url 'dash_root_manage_acheteur_tendance' id_acheteur %}", color: "success", icon: "fas fa-chart-line" },
-
-            /* =======================
-            GOUVERNANCE & RISQUES
-            ======================= */
             { title: "Responsables", url: "{% url 'dash_root_manage_acheteur_responsable' id_acheteur %}", color: "success", icon: "fas fa-users" },
             { title: "Antécédents Juridiques", url: "{% url 'dash_root_manage_acheteur_antecedent' id_acheteur %}", color: "success", icon: "fas fa-balance-scale" },
             { title: "Management du Risque", url: "{% url 'dash_root_manage_acheteur_gestion_risque' id_acheteur %}", color: "success", icon: "fas fa-exclamation-triangle" },
             { title: "Conseil d'administration", url: "{% url 'dash_root_manage_acheteur_membre_conseil' id_acheteur %}", color: "success", icon: "fas fa-user-tie" },
-
-            /* =======================
-            STRUCTURE & CAPITAL
-            ======================= */
             { title: "Capital Social", url: "{% url 'dash_root_manage_acheteur_composition_capital' id_acheteur %}", color: "success", icon: "fas fa-coins" },
             { title: "Actionnaires", url: "{% url 'dash_root_manage_acheteur_actionnaire' id_acheteur %}", color: "success", icon: "fas fa-hand-holding-usd" },
-            { title: "Filiales & Branches", url: "{% url 'dash_root_manage_acheteur_filiale' id_acheteur %}", color: "success", icon: "fas fa-sitemap" },
+            { title: "Filiales & Branches", url: "{% url 'dash_root_manage_acheteur_filiale_optimized' id_acheteur %}", color: "success", icon: "fas fa-sitemap" },
             { title: "Analyse Sectorielle", url: "{% url 'dash_root_manage_acheteur_analyse_sectorielle' id_acheteur %}", color: "success", icon: "fas fa-industry" },
-
-            /* =======================
-            ACTIVITÉS & OPÉRATIONS
-            ======================= */
             { title: "Opérations & Historique", url: "{% url 'dash_root_manage_acheteur_operation_historique' id_acheteur %}", color: "success", icon: "fas fa-history" },
             { title: "Propriétés & Actifs", url: "{% url 'dash_root_manage_acheteur_propriete_actif' id_acheteur %}", color: "success", icon: "fas fa-building" },
             { title: "Conditions d'achat", url: "{% url 'dash_root_manage_acheteur_condition_achat' id_acheteur %}", color: "success", icon: "fas fa-shopping-cart" },
             { title: "Conditions de vente", url: "{% url 'dash_root_manage_acheteur_condition_vente' id_acheteur %}", color: "success", icon: "fas fa-store" },
-
-            /* =======================
-            ANALYSES & AVIS
-            ======================= */
             { title: "Sommaire & Avis", url: "{% url 'dash_root_manage_acheteur_sommaire_avis' id_acheteur %}", color: "success", icon: "fas fa-file-alt" },
             { title: "Conseils", url: "{% url 'dash_root_manage_acheteur_advice' id_acheteur %}", color: "success", icon: "fas fa-lightbulb" },
             { title: "Géopolitiques", url: "{% url 'dash_root_manage_acheteur_geopolitic' id_acheteur %}", color: "success", icon: "fas fa-globe-africa" },
             { title: "Comptes Financiers", url: "{% url 'dash_root_manage_acheteur_compte_financier' id_acheteur %}", color: "success", icon: "fas fa-file-invoice-dollar" },
-            { title: "Données Bancaires", url: "{% url 'dash_root_manage_acheteur_banking' id_acheteur %}", color: "success", icon: "fas fa-university" },
-
-            /* =======================
-            CONTACT & IDENTITÉ
-            ======================= */
-            { title: "Portables", url: "{% url 'dash_root_manage_portable_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-mobile-alt" },
-            { title: "Téléphones", url: "{% url 'dash_root_manage_telephone_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-phone" },
-            { title: "Adresses", url: "{% url 'dash_root_manage_adresse_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-map-marker-alt" },
-            { title: "Emails", url: "{% url 'dash_root_manage_email_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-envelope" },
+            { title: "Données Bancaires", url: "{% url 'dash_root_manage_acheteur_banking_optimized' id_acheteur %}", color: "success", icon: "fas fa-university" },
+            { title: "Portables", url: "{% url 'dash_root_manage_portable_acheteur' id_acheteur %}", color: "success", icon: "fas fa-mobile-alt" },
+            { title: "Téléphones", url: "{% url 'dash_root_manage_telephone_acheteur' id_acheteur %}", color: "success", icon: "fas fa-phone" },
+            { title: "Adresses", url: "{% url 'dash_root_manage_adresse_acheteur' id_acheteur %}", color: "success", icon: "fas fa-map-marker-alt" },
+            { title: "Emails", url: "{% url 'dash_root_manage_email_acheteur' id_acheteur %}", color: "success", icon: "fas fa-envelope" },
             { title: "Codes NACE", url: "{% url 'dash_root_manage_code_nace_acheteur' id_acheteur %}", color: "success", icon: "fas fa-code" },
             { title: "Codes NAF", url: "{% url 'dash_root_manage_code_naf_acheteur' id_acheteur %}", color: "warning", icon: "fas fa-barcode" },
-
-            /* =======================
-            DOCUMENTS & LÉGAL
-            ======================= */
             { title: "Documents", url: "{% url 'dash_root_manage_document_acheteur' id_acheteur %}", color: "info", icon: "fas fa-folder-open" },
             { title: "Procédures Collectives", url: "{% url 'dash_root_manage_procedure_collective_acheteur' id_acheteur %}", color: "info", icon: "fas fa-gavel" },
             { title: "Registres de Commerce", url: "{% url 'dash_root_manage_registre_commerce_acheteur' id_acheteur %}", color: "info", icon: "fas fa-book" },
             { title: "Cotisations Sociales", url: "{% url 'dash_root_manage_cotisation_acheteur' id_acheteur %}", color: "info", icon: "fas fa-file-contract" },
-
-            /* =======================
-            PRODUITS & STRATÉGIE
-            ======================= */
             { title: "Produits & Services", url: "{% url 'dash_root_manage_produit_service_acheteur' id_acheteur %}", color: "info", icon: "fas fa-boxes" },
             { title: "Marques", url: "{% url 'dash_root_manage_marque_acheteur' id_acheteur %}", color: "info", icon: "fas fa-trademark" },
             { title: "SWOT", url: "{% url 'dash_root_manage_swot_acheteur' id_acheteur %}", color: "info", icon: "fas fa-crosshairs" },
-
-            /* =======================
-            PILOTAGE & CONFORMITÉ
-            ======================= */
             { title: "Certifications", url: "{% url 'dash_root_certification_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-certificate" },
             { title: "Innovation & Développement", url: "{% url 'dash_root_innovation_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-lightbulb" },
             { title: "Stratégie & Planification", url: "{% url 'dash_root_strategie_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-chess" },
             { title: "Conformité & Réglementation", url: "{% url 'dash_root_conformite_acheteur' id_acheteur %}", color: "dark", icon: "fas fa-balance-scale-right" },
-
-            /* =======================
-            SCORING
-            ======================= */
             { title: "Scoring sans bilan", url: "{% url 'dash_root_manage_acheteur_scoring' id_acheteur %}", color: "success", icon: "fas fa-calculator" },
             { title: "Scoring avec bilan", url: "{% url 'dash_root_manage_acheteur_scoring_with_bilan' id_acheteur %}", color: "success", icon: "fas fa-chart-bar" }
-
         ];
-
         
-
-        // CORRECTION ICI : Utilisez l'ID modulesGridContainer
         const grid = $('#modulesGridContainer');
-        
-        // Vider le contenu existant
         grid.empty();
         
-        console.log("Nombre de modules à générer:", modules.length);
-        console.log("Élément grid trouvé:", grid.length);
-        
-        // Créer une grille responsive
         modules.forEach((module, index) => {
-            console.log("Création module:", module.title);
-            
             const moduleCard = `
                 <div class="module-card">
                     <div class="module-icon">
@@ -1441,7 +1291,7 @@ $(document).ready(function() {
                     </div>
                     <h6 class="module-title">${module.title}</h6>
                     <a href="${module.url}" target="_blank" 
-                    class="btn btn-${module.color}-module module-btn">
+                       class="btn btn-${module.color}-module module-btn">
                         <i class="fas fa-external-link-alt me-1"></i> Accéder
                     </a>
                 </div>
@@ -1449,10 +1299,602 @@ $(document).ready(function() {
             grid.append(moduleCard);
         });
         
-        console.log("=== DEBUG: Modules générés avec succès ===");
+        console.log("Modules générés:", modules.length);
     }
-
-    // Utility functions
+    
+    // ========== GESTION DU MODAL DE RAPPORT ==========
+    
+    let selectedCommandeId = null;
+    let searchTimeout = null;
+    
+    // Recherche de commande par ID
+    $('#commandeId').on('input', function() {
+        const commandeId = $(this).val().trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (!commandeId) {
+            $('#commandeInfo').hide();
+            selectedCommandeId = null;
+            return;
+        }
+        
+        $('#commandeInfo').html('<div class="text-center p-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Chargement...</span></div> Recherche en cours...</div>').show();
+        
+        searchTimeout = setTimeout(() => {
+            searchCommande(commandeId);
+        }, 500);
+    });
+    
+    // Fonction pour rechercher une commande
+    function searchCommande(commandeId) {
+        if (!/^\d+$/.test(commandeId)) {
+            $('#commandeInfo').html('<div class="alert alert-warning p-2">Veuillez entrer un ID numérique valide</div>').show();
+            return;
+        }
+        
+        $.ajax({
+            url: `/api/commande-details/${commandeId}/`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    $('#commandeInfo').html(`
+                        <div class="card-header bg-light">Informations de la commande #${commandeId}</div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Référence:</strong> <span class="text-primary">${response.data.notre_ref || 'N/A'}</span></p>
+                                    <p><strong>Client:</strong> ${response.data.client ? response.data.client.username : 'N/A'}</p>
+                                    <p><strong>Acheteur:</strong> ${response.data.acheteur ? response.data.acheteur.nom : 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Date réception:</strong> ${response.data.date_recept_commande || 'N/A'}</p>
+                                    <p><strong>Pays:</strong> ${response.data.pays ? response.data.pays.nom : 'N/A'}</p>
+                                    <p><strong>Devise:</strong> <span class="badge bg-secondary">${response.data.devise_credit_demande ? response.data.devise_credit_demande.code : 'N/A'}</span></p>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <small class="text-muted">Commande sélectionnée</small>
+                            </div>
+                        </div>
+                    `).show();
+                    
+                    selectedCommandeId = commandeId;
+                } else {
+                    $('#commandeInfo').html(`<div class="alert alert-danger p-2">${response.message || 'Commande non trouvée'}</div>`).show();
+                    selectedCommandeId = null;
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#commandeInfo').html('<div class="alert alert-danger p-2">Erreur de connexion au serveur</div>').show();
+                selectedCommandeId = null;
+                console.error("Erreur:", error);
+            }
+        });
+    }
+    
+    // Gestion du click sur le bouton Générer
+    $('#confirmGenerate').on('click', function(e) {
+        e.preventDefault();
+        console.log("Génération du rapport...");
+        
+        // Récupérer l'ID de l'acheteur depuis le bouton
+        const acheteurId = $(this).data('acheteur-id') || '{{ id_acheteur }}';
+        const commandeId = $('#commandeId').val() || selectedCommandeId;
+        const language = $('#language').val();
+        const currency = $('#currency').val();
+        const balanceType = $('#balanceType').val();
+        const format = $('#format').val();
+        
+        console.log("Paramètres:", {
+            acheteurId,
+            commandeId,
+            language,
+            currency,
+            balanceType,
+            format
+        });
+        
+        // Validation
+        if (!acheteurId) {
+            showError('Erreur', 'ID de l\'acheteur manquant');
+            return;
+        }
+        
+        // Récupérer le token d'authentification
+        const token = getAuthToken();
+        
+        if (!token) {
+            showError('Erreur d\'authentification', 'Token d\'authentification manquant. Veuillez vous reconnecter.');
+            return;
+        }
+        
+        // Afficher le loading
+        Swal.fire({
+            title: 'Génération en cours...',
+            text: 'Veuillez patienter pendant la génération du rapport.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Construire l'URL
+        const params = new URLSearchParams({
+            id_commande: commandeId || '',
+            language: language,
+            devise: currency,
+            bilan_report: balanceType,
+            format_report: format,
+        });
+        
+        const url = `/api/acheteur/${acheteurId}/generer-report/?${params.toString()}`;
+        console.log("URL de requête:", url);
+        
+        // Requête AJAX
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            xhrFields: {
+                responseType: format.toLowerCase() === 'pdf' ? 'blob' : 
+                            format.toLowerCase() === 'xml' ? 'blob' : 'text'
+            },
+            success: function(response, status, xhr) {
+                console.log("Réponse reçue, format:", format);
+                Swal.close();
+                
+                handleReportResponse(response, format, acheteurId, xhr);
+                $('#generateReportModal').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                Swal.close();
+                handleReportError(xhr);
+            }
+        });
+    });
+    
+    // Fonction pour gérer la réponse du rapport
+    function handleReportResponse(response, format, acheteurId, xhr) {
+        switch(format.toLowerCase()) {
+            case 'pdf':
+                handlePDFResponse(response, acheteurId);
+                break;
+            case 'html':
+                handleHTMLResponse(response, acheteurId);
+                break;
+            case 'xml':
+                handleXMLResponse(response, acheteurId, xhr);
+                break;
+            case 'json':
+                handleJSONResponse(response, acheteurId);
+                break;
+            default:
+                showError('Format non supporté', `Le format ${format} n'est pas supporté.`);
+        }
+    }
+    
+    // Gestion PDF
+    function handlePDFResponse(response, acheteurId) {
+        try {
+            const blob = new Blob([response], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_solvabilite_${acheteurId || 'rapport'}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Message de succès avec options
+            Swal.fire({
+                icon: 'success',
+                title: 'PDF généré avec succès !',
+                html: `
+                    <div class="text-center">
+                        <p>Le rapport PDF a été téléchargé.</p>
+                        <div class="mt-3">
+                            <button id="closeModalBtn" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-1"></i>Fermer seulement
+                            </button>
+                            <button id="reloadPageBtn" class="btn btn-primary">
+                                <i class="fas fa-redo me-1"></i>Fermer et recharger
+                            </button>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: false,
+                didOpen: () => {
+                    $('#closeModalBtn').on('click', function() {
+                        Swal.close();
+                        $('#generateReportModal').modal('hide');
+                    });
+                    
+                    $('#reloadPageBtn').on('click', function() {
+                        Swal.close();
+                        $('#generateReportModal').modal('hide');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 300);
+                    });
+                }
+            });
+        } catch (e) {
+            console.error("Erreur PDF:", e);
+            showError('Erreur', 'Impossible de télécharger le PDF.');
+        }
+    }
+    
+    // Gestion HTML
+    function handleHTMLResponse(response, acheteurId) {
+        const blob = new Blob([response], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        // Message avec fermeture automatique
+        Swal.fire({
+            icon: 'success',
+            title: 'HTML généré !',
+            text: 'Le rapport HTML a été ouvert dans un nouvel onglet.',
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            willClose: () => {
+                $('#generateReportModal').modal('hide');
+            }
+        });
+        
+        // Nettoyer l'URL après 10 secondes
+        setTimeout(() => {
+            if (newWindow && !newWindow.closed) {
+                window.URL.revokeObjectURL(url);
+            }
+        }, 10000);
+    }
+    
+    // Gestion XML
+    function handleXMLResponse(response, acheteurId, xhr) {
+        try {
+            const blob = new Blob([response], { type: 'application/xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_solvabilite_${acheteurId}.xml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès !',
+                text: 'Le rapport XML a été téléchargé.',
+                confirmButtonText: 'OK'
+            });
+        } catch (e) {
+            console.error("Erreur XML:", e);
+            showError('Erreur', 'Impossible de télécharger le XML.');
+        }
+    }
+    
+    // Gestion JSON
+    function handleJSONResponse(response, acheteurId) {
+        try {
+            const jsonData = typeof response === 'string' ? JSON.parse(response) : response;
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            
+            // Télécharger
+            const blob = new Blob([jsonString], { 
+                type: 'application/json; charset=utf-8' 
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rapport_${acheteurId}_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Téléchargement réussi',
+                text: 'Le fichier JSON a été téléchargé.',
+                confirmButtonText: 'OK'
+            });
+        } catch (e) {
+            console.error("Erreur JSON:", e);
+            showError('Erreur JSON', 'Erreur lors du traitement du JSON.');
+        }
+    }
+    
+    // Gestion des erreurs
+    function handleReportError(xhr) {
+        let errorMessage = 'Erreur lors de la génération du rapport';
+        let details = '';
+        
+        if (xhr.status === 400) {
+            errorMessage = 'Requête incorrecte. Vérifiez les paramètres.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                details = xhr.responseJSON.error;
+            }
+        } else if (xhr.status === 403) {
+            errorMessage = 'Accès refusé. Vérifiez vos permissions.';
+        } else if (xhr.status === 404) {
+            errorMessage = 'Endpoint non trouvé. URL incorrecte.';
+        } else if (xhr.status === 500) {
+            errorMessage = 'Erreur interne du serveur.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                details = xhr.responseJSON.error;
+            }
+        } else if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMessage = xhr.responseJSON.error;
+        }
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur ' + xhr.status,
+            text: errorMessage,
+            html: details ? `<div>${errorMessage}<br><small>${details}</small></div>` : errorMessage,
+            confirmButtonText: 'OK'
+        });
+        
+        console.error("Erreur détaillée:", {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseText: xhr.responseText
+        });
+    }
+    
+    // ========== FONCTIONS UTILITAIRES ==========
+    
+    // Fonction pour récupérer le token d'authentification
+    function getAuthToken() {
+        const token = localStorage.getItem('access_token') || 
+                     sessionStorage.getItem('access_token') ||
+                     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                     '{{ access }}';
+        
+        if (!token) {
+            console.warn("Aucun token d'authentification trouvé");
+        }
+        
+        return token;
+    }
+    
+    // ========== GESTION DES TOKENS AMÉLIORÉE ==========
+    
+    // Stocker les tokens dans localStorage
+    const accessTokenFromServer = '{{ access }}';
+    const refreshTokenFromServer = '{{ refresh }}';
+    
+    // Initialiser les tokens dans localStorage si disponibles
+    if (accessTokenFromServer && accessTokenFromServer !== 'None') {
+        localStorage.setItem('access_token', accessTokenFromServer);
+    }
+    if (refreshTokenFromServer && refreshTokenFromServer !== 'None') {
+        localStorage.setItem('refresh_token', refreshTokenFromServer);
+    }
+    
+    // Fonction pour récupérer le token d'accès
+    function getAccessToken() {
+        return localStorage.getItem('access_token') || 
+               sessionStorage.getItem('access_token') ||
+               '{{ access }}';
+    }
+    
+    // Fonction pour récupérer le token de rafraîchissement
+    function getRefreshToken() {
+        return localStorage.getItem('refresh_token') || 
+               sessionStorage.getItem('refresh_token') ||
+               '{{ refresh }}';
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    async function refreshAccessToken() {
+        const refreshToken = getRefreshToken();
+        
+        if (!refreshToken) {
+            console.error("Refresh token manquant");
+            redirectToLogin();
+            return null;
+        }
+        
+        try {
+            const response = await fetch('/api/token/refresh/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh: refreshToken })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const newAccessToken = data.access;
+                
+                // Stocker le nouveau token
+                localStorage.setItem('access_token', newAccessToken);
+                
+                // Mettre à jour le token dans le backend Django si nécessaire
+                if (typeof updateDjangoToken === 'function') {
+                    updateDjangoToken(newAccessToken);
+                }
+                
+                console.log("Token rafraîchi avec succès");
+                return newAccessToken;
+            } else {
+                console.error("Échec du rafraîchissement du token:", response.status);
+                redirectToLogin();
+                return null;
+            }
+        } catch (error) {
+            console.error("Erreur lors du rafraîchissement du token:", error);
+            redirectToLogin();
+            return null;
+        }
+    }
+    
+    // Fonction pour rediriger vers la page de connexion
+    function redirectToLogin() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Vous allez être redirigé vers la page de connexion.',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            willClose: () => {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Fonction pour obtenir les headers d'authentification
+    function getAuthHeaders() {
+        const token = getAccessToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (token && token !== 'None') {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+    
+    // Configuration AJAX globale avec gestion d'erreurs
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            const token = getAccessToken();
+            if (token && token !== 'None') {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            }
+            
+            // Ajouter CSRF token pour les requêtes POST
+            if (settings.type === 'POST' || settings.type === 'PUT' || settings.type === 'DELETE') {
+                const csrftoken = getCookie('csrftoken');
+                if (csrftoken) {
+                    xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                }
+            }
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            // Gérer les erreurs 401 (Unauthorized)
+            if (xhr.status === 401) {
+                console.log("Token expiré, tentative de rafraîchissement...");
+                
+                // Tenter de rafraîchir le token et réessayer la requête
+                refreshAccessToken().then(newToken => {
+                    if (newToken) {
+                        console.log("Token rafraîchi, réessai de la requête...");
+                        
+                        // Recréer la requête originale avec le nouveau token
+                        const originalRequest = this;
+                        originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
+                        
+                        // Réessayer la requête
+                        $.ajax(originalRequest);
+                    }
+                }).catch(error => {
+                    console.error("Impossible de rafraîchir le token:", error);
+                    showSessionExpired();
+                });
+                
+                // Retourner false pour empêcher l'exécution des autres gestionnaires d'erreurs
+                return false;
+            }
+            
+            // Gérer les autres erreurs
+            handleAjaxError(xhr, textStatus, errorThrown);
+        }
+    });
+    
+    // Fonction utilitaire pour récupérer un cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour gérer les erreurs AJAX
+    function handleAjaxError(xhr, textStatus, errorThrown) {
+        let errorMessage = 'Une erreur est survenue';
+        let details = '';
+        
+        switch(xhr.status) {
+            case 400:
+                errorMessage = 'Requête incorrecte';
+                if (xhr.responseJSON) {
+                    details = JSON.stringify(xhr.responseJSON, null, 2);
+                }
+                break;
+            case 403:
+                errorMessage = 'Accès refusé';
+                break;
+            case 404:
+                errorMessage = 'Ressource non trouvée';
+                break;
+            case 500:
+                errorMessage = 'Erreur interne du serveur';
+                break;
+            case 0:
+                errorMessage = 'Connexion au serveur impossible';
+                break;
+            default:
+                if (xhr.responseJSON && xhr.responseJSON.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                }
+        }
+        
+        console.error(`Erreur AJAX [${xhr.status}]:`, errorMessage, details);
+        
+        // Afficher l'erreur à l'utilisateur (sauf pour les erreurs de session)
+        if (xhr.status !== 401 && xhr.status !== 403) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                html: `<div class="text-start">
+                    <p>${errorMessage}</p>
+                    ${details ? `<small class="text-muted">${details.substring(0, 200)}...</small>` : ''}
+                </div>`,
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+    
+    // Fonction pour afficher l'erreur de session expirée
+    function showSessionExpired() {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Veuillez vous reconnecter.',
+            confirmButtonText: 'Se reconnecter',
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/login/';
+            }
+        });
+    }
+    
+    // Fonctions d'affichage des messages
     function showSuccess(title, text) {
         Swal.fire({
             icon: 'success',
@@ -1462,7 +1904,7 @@ $(document).ready(function() {
             timer: 3000
         });
     }
-
+    
     function showError(title, text) {
         Swal.fire({
             icon: 'error',
@@ -1471,7 +1913,7 @@ $(document).ready(function() {
             confirmButtonColor: '#e74c3c'
         });
     }
-
+    
     function showWarning(title, text) {
         Swal.fire({
             icon: 'warning',
@@ -1480,18 +1922,14 @@ $(document).ready(function() {
             confirmButtonColor: '#f39c12'
         });
     }
-
-    // Initialize
-    console.log("=== DEBUG: Initialisation en cours ===");
-    loadAcheteurData();
     
-    // Add hover effects to all cards
+    // Effets de survol
     $('.card').hover(
         function() { $(this).addClass('shadow-lg'); },
         function() { $(this).removeClass('shadow-lg'); }
     );
     
-    console.log("=== DEBUG: Initialisation terminée ===");
+    console.log("=== TEMPLATE INITIALISÉ AVEC SUCCÈS ===");
 });
 </script>
 {% endblock %}
