@@ -8869,6 +8869,182 @@ class EditCodeNaceAcheteurSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
             "acheteur": {"read_only": True}
         }
+        
+        
+from rest_framework import serializers
+from django.core.validators import ValidationError as DjangoValidationError
+from django.core.validators import validate_email
+import re
+from main.models import CodeNaceAcheteur, SubCategoryNaceCode, CategoryNaceCode, Acheteur, CustomUser
+from django.utils.translation import gettext_lazy as _
+
+
+class UserSimpleSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
+
+class CategoryNaceCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNaceCode
+        fields = ["id", "code", "libelle", "active", "poids", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+
+
+class SubCategoryNaceCodeSerializer(serializers.ModelSerializer):
+    category = CategoryNaceCodeSerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=CategoryNaceCode.objects.all(),
+        source="category",
+        write_only=True,
+        required=False
+    )
+    
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = [
+            "id", "code", "libelle", "active", "poids", 
+            "category", "category_id", "created_at", "updated_at"
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+
+class CodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    code_details = SubCategoryNaceCodeSerializer(source='code', read_only=True)
+    acheteur_details = serializers.SerializerMethodField()
+    created_by = UserSimpleSerializer(read_only=True)
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = [
+            "id", 
+            "acheteur", 
+            "acheteur_details",
+            "code", 
+            "code_details",
+            "created_at", 
+            "updated_at",
+            "created_by"
+        ]
+        read_only_fields = ["created_at", "updated_at", "created_by"]
+    
+    def get_acheteur_details(self, obj):
+        if obj.acheteur:
+            return {
+                "id": obj.acheteur.id,
+                "nom": obj.acheteur.nom,
+                "code": obj.acheteur.code,
+                "sigle": obj.acheteur.sigle
+            }
+        return None
+
+
+class GetCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = "__all__"
+
+
+class AddCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    code = serializers.PrimaryKeyRelatedField(
+        queryset=SubCategoryNaceCode.objects.filter(active=True)
+    )
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ["acheteur", "code"]
+    
+    def validate(self, data):
+        """Validation de l'association code NACE - acheteur"""
+        acheteur = data.get('acheteur')
+        code = data.get('code')
+        
+        # Vérifier si cette association existe déjà
+        if CodeNaceAcheteur.objects.filter(acheteur=acheteur, code=code).exists():
+            raise serializers.ValidationError(
+                _("Cet acheteur possède déjà ce code NACE.")
+            )
+        
+        # Vérifier que le code NACE est actif
+        if not code.active:
+            raise serializers.ValidationError(
+                _("Ce code NACE n'est pas actif.")
+            )
+        
+        return data
+
+
+class EditCodeNaceAcheteurSerializer(serializers.ModelSerializer):
+    code = serializers.PrimaryKeyRelatedField(
+        queryset=SubCategoryNaceCode.objects.filter(active=True),
+        required=False
+    )
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ["code"]
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        instance = self.instance
+        new_code = data.get('code')
+        
+        if new_code and new_code != instance.code:
+            # Vérifier si cette association existe déjà pour cet acheteur
+            if CodeNaceAcheteur.objects.filter(
+                acheteur=instance.acheteur, 
+                code=new_code
+            ).exclude(id=instance.id).exists():
+                raise serializers.ValidationError(
+                    _("Cet acheteur possède déjà ce code NACE.")
+                )
+            
+            # Vérifier que le code NACE est actif
+            if not new_code.active:
+                raise serializers.ValidationError(
+                    _("Ce code NACE n'est pas actif.")
+                )
+        
+        return data
+
+
+# Serializers pour la recherche de codes NACE
+class SearchSubCategoryNaceCodeSerializer(serializers.ModelSerializer):
+    category_details = CategoryNaceCodeSerializer(source='category', read_only=True)
+    
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = ["id", "code", "libelle", "category", "category_details", "active", "poids"]
+
+
+class CodeNaceAcheteurWithDetailsSerializer(serializers.ModelSerializer):
+    code_details = SubCategoryNaceCodeSerializer(source='code', read_only=True)
+    category_details = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = [
+            "id", "acheteur", "code", "code_details", 
+            "category_details", "created_at"
+        ]
+    
+    def get_category_details(self, obj):
+        if obj.code and obj.code.category:
+            return {
+                "id": obj.code.category.id,
+                "code": obj.code.category.code,
+                "libelle": obj.code.category.libelle
+            }
+        return None
 
 
 

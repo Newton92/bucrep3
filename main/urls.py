@@ -5002,6 +5002,38 @@ urlpatterns = [
         DeleteAcheteurCodeNaceView.as_view(),
         name="delete-code-nace-acheteur",
     ),
+    # Codes NACE pour acheteurs
+    path('api/acheteur/<int:acheteur_id>/codes-nace/', 
+         AcheteurCodeNaceListView.as_view(), 
+         name='acheteur-codes-nace-list'),
+    
+    path('api/acheteur/<int:acheteur_id>/codes-nace/<int:code_nace_id>/', 
+         AcheteurCodeNaceDetailView.as_view(), 
+         name='acheteur-code-nace-detail'),
+    
+    # Recherche de codes NACE
+    path('api/codes-nace/search/', 
+         SearchSubCategoryNaceCodeView.as_view(), 
+         name='search-subcategory-nace'),
+    
+    # Catégories NACE
+    path('api/codes-nace/categories/', 
+         CategoryNaceCodeListView.as_view(), 
+         name='category-nace-list'),
+    
+    # Codes NACE disponibles pour un acheteur
+    path('api/acheteur/<int:acheteur_id>/codes-nace/available/', 
+         AcheteurAvailableCodesNaceView.as_view(), 
+         name='acheteur-available-codes-nace'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     path(

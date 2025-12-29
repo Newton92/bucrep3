@@ -6387,23 +6387,77 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_code_nace_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
-    context = {
-        "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": acheteur_id,
-    }
-    return render(
-        request,
-        "main/root/acheteur/code_nace/dash_root_code_nace_acheteur.html",
-        context,
-    )
+    """
+    Vue pour la gestion des codes NACE d'un acheteur
+    """
+    try:
+        # Récupérer l'acheteur
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise', 'forme_juridique', 
+                'categorie_entreprise', 'pays', 'province', 'ville'
+            ),
+            id=acheteur_id
+        )
+
+        # IMPORTANT: Vérifier que l'utilisateur est bien connecté
+        if not request.user.is_authenticated:
+            messages.error(request, "Vous devez être connecté.")
+            return redirect('login')
+
+        # Générer les tokens JWT
+        try:
+            from rest_framework_simplejwt.tokens import RefreshToken
+            
+            # Créer le refresh token
+            refresh = RefreshToken.for_user(request.user)
+            
+            # Les noms des variables doivent correspondre au template
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            
+            print(f"DEBUG - Token généré pour l'utilisateur: {request.user.username}")
+            print(f"DEBUG - Access token: {access_token[:50]}...")
+            print(f"DEBUG - Refresh token: {refresh_token[:50]}...")
+            
+        except Exception as e:
+            print(f"DEBUG - Erreur génération token: {e}")
+            logger.error(f"Erreur génération token JWT: {e}")
+            messages.error(request, "Erreur d'authentification.")
+            return redirect('login')
+        
+        # Récupérer les codes NACE
+        codes_nace = CodeNaceAcheteur.objects.filter(
+            acheteur=acheteur
+        ).select_related(
+            'code', 'code__category', 'created_by'
+        ).order_by('-created_at')
+        
+        # Préparer le contexte
+        context = {
+            "acheteurs_active": "active",
+            "user": request.user,
+            "access": access_token,  # IMPORTANT: 'access' (pas 'access_token')
+            "refresh": refresh_token,  # IMPORTANT: 'refresh' (pas 'refresh_token')
+            "acheteur": acheteur,
+            "codes_nace": codes_nace,
+            "codes_nace_count": codes_nace.count(),
+            "id_acheteur": acheteur_id,
+        }
+        
+        return render(
+            request,
+            "main/root/acheteur/code_nace/dash_root_code_nace_acheteur.html",
+            context,
+        )
+        
+    except Acheteur.DoesNotExist:
+        messages.error(request, f"Acheteur non trouvé.")
+        return redirect('dash_root_manage_acheteurs')
+    except Exception as e:
+        logger.error(f"Erreur inattendue: {e}")
+        messages.error(request, "Erreur inattendue.")
+        return redirect('dash_root_manage_acheteurs')
     
     
     

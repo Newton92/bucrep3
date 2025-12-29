@@ -1209,7 +1209,6 @@ class ModeleAgeSociete(Model):
         verbose_name_plural = _("Modèles d'age de société")
              
         
-        
 class ModeleInterpretationScoringSansBilan(Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
@@ -1670,7 +1669,7 @@ class Acheteur(Model):
 
     email = models.EmailField(blank=True, help_text=_("Adresse email de l'entreprise"))
 
-    site_internet = models.URLField(
+    site_internet = models.CharField(
         max_length=300, blank=True, help_text=_("Site internet de l'entreprise")
     )
 
@@ -3347,13 +3346,6 @@ class CompteFinancier(Model):
         default="--------",
         verbose_name=_("Type de bilan"),
     )
-    type_bilan_ref = models.ForeignKey(
-        "ModeleBilan",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence Type de bilan"),
-    )
 
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -3446,13 +3438,6 @@ class ProprieteEtActif(Model):
         verbose_name=_("Acheteur"),
     )
     locaux = models.ManyToManyField("Locaux", related_name=_("Locaux"), blank=True)
-    locaux_ref = models.ForeignKey(
-        "ModeleBail",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
 
     branche = models.CharField(max_length=255, blank=True, verbose_name=_("Branche"))
 
@@ -3586,26 +3571,12 @@ class ConditionDeVente(Model):
         default="--------",
         verbose_name=_("Recouvrement de dette jugement"),
     )
-    recouvrement_de_dette_jugement_ref = models.ForeignKey(
-        "ModeleComportementJugement",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
 
     comportement_de_paiement = models.CharField(
         max_length=255,
         choices=LIEN_COMPORTEMENT_PAIEMENT_CHOICE,
         default="--------",
         verbose_name=_("Comportement de paiement"),
-    )
-    comportement_de_paiement_ref = models.ForeignKey(
-        "ModeleComportementPaiement",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
     )
 
     created_at = models.DateTimeField(
@@ -11630,23 +11601,12 @@ class MailInfo(SafeDeleteModel):
 
     success = models.BooleanField(default=False)
     
-    # Ajouter ces champs
-    subject = models.CharField(_("Sujet"), max_length=500, blank=True, null=True)
-    cc_emails = models.TextField(_("Emails en CC"), blank=True, null=True)
-    formats_generes = models.JSONField(_("Formats générés"), default=list, blank=True)
-    custom_days = models.IntegerField(_("Nombre de jours personnalisé"), null=True, blank=True)
 
     # Historique complet
     history = HistoricalRecords()
 
     def __str__(self):
         return f"Mail envoyé le {self.date_sent} par {self.user}"
-    
-    def get_cc_list(self):
-        """Retourne la liste des emails en CC"""
-        if self.cc_emails:
-            return [email.strip() for email in self.cc_emails.split(';') if email.strip()]
-        return []
 
 
 class MailAttachment(SafeDeleteModel):

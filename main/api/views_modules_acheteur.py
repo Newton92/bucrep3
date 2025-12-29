@@ -14209,6 +14209,272 @@ class DeleteAcheteurCodeNaceView(APIView):
             {"message": f"{count} codes NACE supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+        
+        
+        
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from django.db.models import Q
+from main.models import (
+    CodeNaceAcheteur, SubCategoryNaceCode, 
+    CategoryNaceCode, Acheteur, ActivityLog
+)
+from django.utils.translation import gettext_lazy as _
+
+class AcheteurCodeNaceListView(APIView):
+    """
+    API pour gérer les codes NACE d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des codes NACE de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        codes_nace = CodeNaceAcheteur.objects.filter(
+            acheteur=acheteur
+        ).select_related(
+            'code', 'code__category'
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            codes_nace = codes_nace.filter(
+                Q(code__code__icontains=search) |
+                Q(code__libelle__icontains=search) |
+                Q(code__category__code__icontains=search) |
+                Q(code__category__libelle__icontains=search)
+            )
+        
+        # Filtrer par catégorie si spécifié
+        category_id = request.query_params.get('category_id')
+        if category_id:
+            codes_nace = codes_nace.filter(code__category_id=category_id)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(codes_nace, request)
+        
+        serializer = CodeNaceAcheteurWithDetailsSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Ajoute un nouveau code NACE à l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddCodeNaceAcheteurSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder en passant created_by comme argument supplémentaire
+            code_nace = serializer.save(created_by=request.user)
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='ADD_CODE_NACE',
+                object_id=code_nace.id,
+                object_type='CodeNaceAcheteur',
+                details=f"Code NACE {code_nace.code.code} - {code_nace.code.libelle} ajouté pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Code NACE ajouté avec succès",
+                "data": CodeNaceAcheteurSerializer(code_nace).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AcheteurCodeNaceDetailView(APIView):
+    """
+    API pour gérer un code NACE spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_code_nace(self, acheteur_id, code_nace_id):
+        """Récupère le code NACE ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            CodeNaceAcheteur.objects.select_related('code', 'code__category'),
+            id=code_nace_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, code_nace_id):
+        """Récupère les détails d'un code NACE spécifique"""
+        code_nace = self.get_code_nace(acheteur_id, code_nace_id)
+        serializer = CodeNaceAcheteurSerializer(code_nace)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, code_nace_id):
+        """Modifie un code NACE existant"""
+        code_nace = self.get_code_nace(acheteur_id, code_nace_id)
+        
+        serializer = EditCodeNaceAcheteurSerializer(
+            code_nace, data=request.data, partial=True
+        )
+        
+        if serializer.is_valid():
+            code_nace = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_CODE_NACE',
+                object_id=code_nace.id,
+                object_type='CodeNaceAcheteur',
+                details=f"Code NACE modifié pour l'acheteur {code_nace.acheteur.nom}: {code_nace.code.code} - {code_nace.code.libelle}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Code NACE modifié avec succès",
+                "data": CodeNaceAcheteurSerializer(code_nace).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, code_nace_id):
+        """Supprime un code NACE"""
+        code_nace = self.get_code_nace(acheteur_id, code_nace_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_CODE_NACE',
+            object_id=code_nace.id,
+            object_type='CodeNaceAcheteur',
+            details=f"Code NACE supprimé pour l'acheteur {code_nace.acheteur.nom}: {code_nace.code.code} - {code_nace.code.libelle}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        code_nace.delete()
+        return Response({
+            "message": "Code NACE supprimé avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+class SearchSubCategoryNaceCodeView(APIView):
+    """
+    API pour rechercher des sous-catégories NACE
+    Méthodes: GET (recherche)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get(self, request):
+        """Recherche de sous-catégories NACE"""
+        search = request.query_params.get('search', '')
+        category_id = request.query_params.get('category_id')
+        
+        queryset = SubCategoryNaceCode.objects.filter(active=True)
+        
+        if search:
+            queryset = queryset.filter(
+                Q(code__icontains=search) |
+                Q(libelle__icontains=search) |
+                Q(category__code__icontains=search) |
+                Q(category__libelle__icontains=search)
+            )
+        
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        
+        # Trier par code
+        queryset = queryset.order_by('code')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(queryset, request)
+        
+        serializer = SearchSubCategoryNaceCodeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class CategoryNaceCodeListView(APIView):
+    """
+    API pour récupérer les catégories NACE actives
+    Méthodes: GET (liste)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Récupère toutes les catégories NACE actives"""
+        categories = CategoryNaceCode.objects.filter(active=True).order_by('code')
+        
+        serializer = CategoryNaceCodeSerializer(categories, many=True)
+        return Response(serializer.data)
+
+
+class AcheteurAvailableCodesNaceView(APIView):
+    """
+    API pour récupérer les codes NACE disponibles pour un acheteur
+    (codes NACE non encore associés à l'acheteur)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get(self, request, acheteur_id):
+        """Récupère les codes NACE non encore associés à l'acheteur"""
+        acheteur = get_object_or_404(Acheteur, id=acheteur_id)
+        search = request.query_params.get('search', '')
+        
+        # Récupérer les IDs des codes NACE déjà associés à cet acheteur
+        existing_code_ids = CodeNaceAcheteur.objects.filter(
+            acheteur=acheteur
+        ).values_list('code_id', flat=True)
+        
+        # Chercher les codes NACE non associés
+        queryset = SubCategoryNaceCode.objects.filter(
+            active=True
+        ).exclude(
+            id__in=existing_code_ids
+        )
+        
+        if search:
+            queryset = queryset.filter(
+                Q(code__icontains=search) |
+                Q(libelle__icontains=search) |
+                Q(category__code__icontains=search) |
+                Q(category__libelle__icontains=search)
+            )
+        
+        # Trier par code
+        queryset = queryset.order_by('code')
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(queryset, request)
+        
+        serializer = SearchSubCategoryNaceCodeSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 
