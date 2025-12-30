@@ -5002,6 +5002,27 @@ urlpatterns = [
         DeleteAcheteurCodeNaceView.as_view(),
         name="delete-code-nace-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/codes-nace-oneview/', 
+         AcheteurCodeNaceListOneView.as_view(), 
+         name='acheteur-codes-nace-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/codes-nace-oneview/<int:code_nace_id>/', 
+         AcheteurCodeNaceDetailOneView.as_view(), 
+         name='acheteur-code-nace-detail-oneview'),
+    path('api/subcategories-nace-oneview/', 
+         SubCategoryNaceCodeListOneView.as_view(), 
+         name='subcategories-nace-list-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     # Codes NACE pour acheteurs
     path('api/acheteur/<int:acheteur_id>/codes-nace/', 
          AcheteurCodeNaceListView.as_view(), 
@@ -5025,6 +5046,65 @@ urlpatterns = [
     path('api/acheteur/<int:acheteur_id>/codes-nace/available/', 
          AcheteurAvailableCodesNaceView.as_view(), 
          name='acheteur-available-codes-nace'),
+    
+    
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/",
+        ListAcheteurCodeNaceView.as_view(),
+        name="acheteur-codes-nace-list"
+    ),
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/<int:code_nace_id>/",
+        DetailAcheteurCodeNaceView.as_view(),
+        name="acheteur-code-nace-detail"
+    ),
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/add/",
+        AddAcheteurCodeNaceView.as_view(),
+        name="acheteur-code-nace-add"
+    ),
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/<int:code_nace_id>/edit/",
+        EditAcheteurCodeNaceView.as_view(),
+        name="acheteur-code-nace-edit"
+    ),
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/delete/",
+        DeleteAcheteurCodeNaceView.as_view(),
+        name="acheteur-code-nace-delete"
+    ),
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/search/",
+        SearchAcheteurCodeNaceView.as_view(),
+        name="acheteur-code-nace-search"
+    ),
+    path(
+        "api/acheteurs/<int:acheteur_id>/codes-nace/available/",
+        AvailableCodesNaceForAcheteurView.as_view(),  # À créer
+        name="acheteur-codes-nace-available"
+    ),
+    
+    # URLs pour les codes NACE généraux
+    path(
+        "api/codes-nace/categories/",
+        ListCategoryNaceCodeView.as_view(),
+        name="codes-nace-categories"
+    ),
+    path(
+        "api/codes-nace/subcategories/",
+        ListAllSubCategoriesView.as_view(),
+        name="codes-nace-subcategories"
+    ),
+    path(
+        "api/codes-nace/search/",
+        SearchSubCategoryNaceCodeView.as_view(),  # À créer
+        name="codes-nace-search"
+    ),
+    path(
+        "api/codes-nace/category/<int:category_id>/subcategories/",
+        ListSubCategoryNaceCodeView.as_view(),
+        name="codes-nace-subcategories-by-category"
+    ),
     
     
     

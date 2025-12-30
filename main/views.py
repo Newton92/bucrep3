@@ -1718,8 +1718,6 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
             'avis_commercial_ref': tendance.avis_commercial_ref.id if tendance.avis_commercial_ref else None,
             'presse_media': tendance.presse_media or '',
             'principaux_concurrent': tendance.principaux_concurrent or '',
-            'plus_informations': tendance.plus_informations or '',
-            'alarmes': tendance.alarmes or '',
             'commentaire': tendance.commentaire or '',
         }
         tendance_json = json.dumps(tendance_data, default=str)
@@ -6392,76 +6390,149 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
     """
     Vue pour la gestion des codes NACE d'un acheteur
     """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('code_nace'),
+        id=acheteur_id
+    )
+
+    # Récupérer tous les codes NACE de l'acheteur avec les détails
+    codes_nace_list = CodeNaceAcheteur.objects.filter(
+        acheteur=acheteur
+    ).select_related(
+        'code',
+        'code__category'
+    ).order_by('-created_at')
+    
+    # Calculer le poids total
+    poids_total = 0.0
+    for code_nace in codes_nace_list:
+        if code_nace.code and code_nace.code.poids:
+            try:
+                poids_total += float(code_nace.code.poids)
+            except (ValueError, TypeError):
+                continue
+    
+    # Génération des tokens JWT
     try:
-        # Récupérer l'acheteur
-        acheteur = get_object_or_404(
-            Acheteur.objects.select_related(
-                'statut_entreprise', 'forme_juridique', 
-                'categorie_entreprise', 'pays', 'province', 'ville'
-            ),
-            id=acheteur_id
-        )
-
-        # IMPORTANT: Vérifier que l'utilisateur est bien connecté
-        if not request.user.is_authenticated:
-            messages.error(request, "Vous devez être connecté.")
-            return redirect('login')
-
-        # Générer les tokens JWT
-        try:
-            from rest_framework_simplejwt.tokens import RefreshToken
-            
-            # Créer le refresh token
-            refresh = RefreshToken.for_user(request.user)
-            
-            # Les noms des variables doivent correspondre au template
-            access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
-            
-            print(f"DEBUG - Token généré pour l'utilisateur: {request.user.username}")
-            print(f"DEBUG - Access token: {access_token[:50]}...")
-            print(f"DEBUG - Refresh token: {refresh_token[:50]}...")
-            
-        except Exception as e:
-            print(f"DEBUG - Erreur génération token: {e}")
-            logger.error(f"Erreur génération token JWT: {e}")
-            messages.error(request, "Erreur d'authentification.")
-            return redirect('login')
-        
-        # Récupérer les codes NACE
-        codes_nace = CodeNaceAcheteur.objects.filter(
-            acheteur=acheteur
-        ).select_related(
-            'code', 'code__category', 'created_by'
-        ).order_by('-created_at')
-        
-        # Préparer le contexte
-        context = {
-            "acheteurs_active": "active",
-            "user": request.user,
-            "access": access_token,  # IMPORTANT: 'access' (pas 'access_token')
-            "refresh": refresh_token,  # IMPORTANT: 'refresh' (pas 'refresh_token')
-            "acheteur": acheteur,
-            "codes_nace": codes_nace,
-            "codes_nace_count": codes_nace.count(),
-            "id_acheteur": acheteur_id,
-        }
-        
-        return render(
-            request,
-            "main/root/acheteur/code_nace/dash_root_code_nace_acheteur.html",
-            context,
-        )
-        
-    except Acheteur.DoesNotExist:
-        messages.error(request, f"Acheteur non trouvé.")
-        return redirect('dash_root_manage_acheteurs')
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
     except Exception as e:
-        logger.error(f"Erreur inattendue: {e}")
-        messages.error(request, "Erreur inattendue.")
-        return redirect('dash_root_manage_acheteurs')
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+    
+    # Préparer les données pour le template
+    codes_nace_with_data = []
+    for code_nace in codes_nace_list:
+        if code_nace.code:
+            codes_nace_with_data.append({
+                'code_nace_obj': code_nace,
+                'code': code_nace.code.code or '',
+                'libelle': code_nace.code.libelle or '',
+                'category_code': code_nace.code.category.code if code_nace.code.category else '',
+                'category_libelle': code_nace.code.category.libelle if code_nace.code.category else '',
+                'poids': code_nace.code.poids or 0.0,
+                'active': code_nace.code.active or False,
+                'created_at': code_nace.created_at,
+                'updated_at': code_nace.updated_at
+            })
+
+    # Préparer les données des codes NACE pour le template
+    codes_nace_data = []
+    for code_nace in codes_nace_list:
+        codes_nace_data.append({
+            'id': code_nace.id,
+            'code_id': code_nace.code.id,
+            'code': code_nace.code.code or '',
+            'libelle': code_nace.code.libelle or '',
+            'category': {
+                'id': code_nace.code.category.id,
+                'code': code_nace.code.category.code or '',
+                'libelle': code_nace.code.category.libelle or ''
+            },
+            'poids': float(code_nace.code.poids) if code_nace.code.poids else 0.0,
+            'created_at': code_nace.created_at.isoformat() if code_nace.created_at else None,
+            'updated_at': code_nace.updated_at.isoformat() if code_nace.updated_at else None,
+        })
+    
+    codes_nace_json = json.dumps(codes_nace_data, default=str)
     
     
+    # Dans votre vue, avant le return render()
+    print("=== DEBUG: Informations sur les codes NACE ===")
+    print(f"Nombre total de codes NACE: {codes_nace_list.count()}")
+    print(f"Poids total: {poids_total}")
+
+    for i, code_nace in enumerate(codes_nace_list):
+        print(f"\n--- Code NACE #{i+1} ---")
+        print(f"ID CodeNaceAcheteur: {code_nace.id}")
+        print(f"Acheteur ID: {code_nace.acheteur_id}")
+        print(f"Code ID: {code_nace.code_id}")
+        
+        if code_nace.code:
+            print(f"Code object: {code_nace.code}")
+            print(f"Code code: {code_nace.code.code}")
+            print(f"Code libelle: {code_nace.code.libelle}")
+            print(f"Code poids: {code_nace.code.poids}")
+            
+            if code_nace.code.category:
+                print(f"Category: {code_nace.code.category}")
+                print(f"Category code: {code_nace.code.category.code}")
+                print(f"Category libelle: {code_nace.code.category.libelle}")
+            else:
+                print("Category: None")
+        else:
+            print("Code object: None")
+        
+        print(f"Created at: {code_nace.created_at}")
+        print(f"Updated at: {code_nace.updated_at}")
+
+    print("\n=== Fin DEBUG ===")
+
+    context = {
+        "acheteurs_active": "active",
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "codes_nace": codes_nace_list,  # UNE SEULE FOIS
+        "codes_nace_count": codes_nace_list.count(),
+        "codes_nace_data": codes_nace_with_data,  # Nouvelles données structurées
+        "poids_total": round(poids_total, 2),
+        "codes_nace_json": codes_nace_json or '[]',
+        "acheteur": acheteur,
+        "id_acheteur": acheteur_id,
+    }
+    return render(
+        request,
+        "main/root/acheteur/code_nace/dash_root_code_nace_acheteur.html",
+        context,
+    ) 
     
     
     

@@ -9048,6 +9048,206 @@ class CodeNaceAcheteurWithDetailsSerializer(serializers.ModelSerializer):
                 "libelle": obj.code.category.libelle
             }
         return None
+    
+    
+    
+###########################################################################    
+#    
+# CODE NACE ACHETEUR 
+#    
+###########################################################################   
+    
+class CategoryNaceCodeOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNaceCode
+        fields = ['id', 'code', 'libelle', 'active', 'poids']
+
+class SubCategoryNaceCodeOneSerializer(serializers.ModelSerializer):
+    category = CategoryNaceCodeOneSerializer(read_only=True)
+    
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = ['id', 'category', 'code', 'libelle', 'active', 'poids']
+        read_only_fields = ['category']
+
+class SubCategoryNaceCodeSimpleOneSerializer(serializers.ModelSerializer):
+    category_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SubCategoryNaceCode
+        fields = ['id', 'code', 'libelle', 'category_info', 'active', 'poids']
+        read_only_fields = ['category_info']
+    
+    def get_category_info(self, obj):
+        if obj.category:
+            return {
+                'id': obj.category.id,
+                'code': obj.category.code,
+                'libelle': obj.category.libelle
+            }
+        return None
+    
+    def to_representation(self, instance):
+        """S'assurer que toutes les valeurs sont présentes"""
+        data = super().to_representation(instance)
+        
+        # S'assurer que les valeurs par défaut sont présentes
+        data['code'] = data.get('code', '')
+        data['libelle'] = data.get('libelle', '')
+        data['active'] = data.get('active', False)
+        data['poids'] = data.get('poids', 0.0)
+        
+        return data
+    
+class UserSimpleOneSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
+class CodeNaceAcheteurOneSerializer(serializers.ModelSerializer):
+    subcategory_details = SubCategoryNaceCodeOneSerializer(source='code', read_only=True)
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    acheteur_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'code', 
+            'subcategory_details',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class CodeNaceAcheteurDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ['id', 'acheteur', 'code']
+
+class AddCodeNaceAcheteurOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    code = serializers.PrimaryKeyRelatedField(
+        queryset=SubCategoryNaceCode.objects.filter(active=True)
+    )
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ['code', 'acheteur']
+    
+    def validate(self, data):
+        """Validation globale de l'association code NACE - acheteur"""
+        acheteur = data.get('acheteur')
+        code = data.get('code')
+        
+        # Vérifier si cette association existe déjà
+        existing = CodeNaceAcheteur.objects.filter(
+            acheteur=acheteur,
+            code=code
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'code': 'Ce code NACE est déjà associé à cet acheteur.'
+            })
+        
+        return data
+
+class EditCodeNaceAcheteurOneSerializer(serializers.ModelSerializer):
+    code = serializers.PrimaryKeyRelatedField(
+        queryset=SubCategoryNaceCode.objects.filter(active=True)
+    )
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ['code']
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        code = data.get('code')
+        acheteur = self.instance.acheteur
+        
+        # Vérifier si cette association existe déjà (pour un autre enregistrement)
+        existing = CodeNaceAcheteur.objects.filter(
+            acheteur=acheteur,
+            code=code
+        ).exclude(id=self.instance.id).exists()
+        
+        if existing:
+            raise serializers.ValidationError({
+                'code': 'Ce code NACE est déjà associé à cet acheteur.'
+            })
+        
+        return data
+       
+class CodeNaceAcheteurSearchSerializer(serializers.ModelSerializer):
+    code = serializers.SerializerMethodField()
+    libelle = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+    poids = serializers.SerializerMethodField()
+    active = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CodeNaceAcheteur
+        fields = ['id', 'code', 'libelle', 'category', 'poids', 'active', 'created_at', 'updated_at']
+    
+    def get_code(self, obj):
+        return obj.code.code if obj.code else None
+    
+    def get_libelle(self, obj):
+        return obj.code.libelle if obj.code else None
+    
+    def get_category(self, obj):
+        if obj.code and obj.code.category:
+            return {
+                'code': obj.code.category.code,
+                'libelle': obj.code.category.libelle
+            }
+        return None
+    
+    def get_poids(self, obj):
+        return obj.code.poids if obj.code else None
+    
+    def get_active(self, obj):
+        return obj.code.active if obj.code else False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
