@@ -979,7 +979,6 @@ class AcheteurTendanceView(APIView):
 
 
 
-
 class ListAcheteurResponsableView(APIView):
     permission_classes = [IsAuthenticated]
 

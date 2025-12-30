@@ -2348,6 +2348,17 @@ class Tendance(Model):
         (gettext_lazy("10 Inconnu de nos sources"), gettext_lazy("10 Inconnu de nos sources"))
     )
     
+    LIEN_ALARMES_CHOICE = (
+        (gettext_lazy("Risque d'insolvabilité"), gettext_lazy("Risque d'insolvabilité")),
+        (gettext_lazy("Une procédure préliminaire a été demandée"), gettext_lazy("Demande de composition juridique")),
+        (gettext_lazy("Une procédure prématurée a été suspendue"), gettext_lazy("Une procédure prématurée a été suspendue")),
+        (gettext_lazy("La composition du tribunal à la suite d'un examen préliminaire"),
+        gettext_lazy("La composition du tribunal à la suite d'un examen préliminaire")),
+        (gettext_lazy("Ouverture de la composition judiciaire"), gettext_lazy("Ouverture de la composition judiciaire")),
+        (gettext_lazy("Refus de l'homologation, la corruption est attendue"),
+        gettext_lazy("Refus de l'homologation, la corruption est attendue")),
+    )
+    
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     acheteur = models.ForeignKey(

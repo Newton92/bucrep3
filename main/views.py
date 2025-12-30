@@ -1718,6 +1718,8 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
             'avis_commercial_ref': tendance.avis_commercial_ref.id if tendance.avis_commercial_ref else None,
             'presse_media': tendance.presse_media or '',
             'principaux_concurrent': tendance.principaux_concurrent or '',
+            'plus_informations': tendance.plus_informations or '',
+            'alarmes': tendance.alarmes or '',
             'commentaire': tendance.commentaire or '',
         }
         tendance_json = json.dumps(tendance_data, default=str)

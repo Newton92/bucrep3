@@ -1566,8 +1566,8 @@ class GetTendanceSerializer(serializers.ModelSerializer):
         model = Tendance
         fields = [
             'id', 'acheteur', 'avis_commercial', 'avis_commercial_ref',
-            'presse_media', 'principaux_concurrent', 'commentaire',
-            'created_at', 'updated_at'
+            'presse_media', 'principaux_concurrent', 'plus_informations',
+            'alarmes', 'commentaire', 'created_at', 'updated_at'
         ]
 
 
@@ -1576,12 +1576,13 @@ class AddTendanceSerializer(serializers.ModelSerializer):
         model = Tendance
         fields = [
             'acheteur', 'avis_commercial', 'avis_commercial_ref',
-            'presse_media', 'principaux_concurrent', 'commentaire'
+            'presse_media', 'principaux_concurrent', 'plus_informations',
+            'alarmes', 'commentaire'
         ]
 
 
 class EditTendanceSerializer(serializers.ModelSerializer):
-    avis_commercial = serializers.CharField(required=False)
+    avis_commercial = serializers.CharField(required=False, allow_blank=True)
     avis_commercial_ref = serializers.PrimaryKeyRelatedField(
         queryset=ModeleAvisCommercial.objects.all(),
         required=False,
@@ -1591,12 +1592,15 @@ class EditTendanceSerializer(serializers.ModelSerializer):
             'incorrect_type': 'Veuillez fournir un ID numérique valide pour l\'avis commercial.'
         }
     )
+    plus_informations = serializers.CharField(required=False, allow_blank=True)
+    alarmes = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = Tendance
         fields = [
             'avis_commercial', 'avis_commercial_ref',
-            'presse_media', 'principaux_concurrent', 'commentaire'
+            'presse_media', 'principaux_concurrent', 'plus_informations',
+            'alarmes', 'commentaire'
         ]
 
     def to_internal_value(self, data):
@@ -1609,7 +1613,6 @@ class EditTendanceSerializer(serializers.ModelSerializer):
                     'avis_commercial_ref': 'Veuillez fournir un ID numérique valide.'
                 })
         return super().to_internal_value(data)
-
 
 
 
