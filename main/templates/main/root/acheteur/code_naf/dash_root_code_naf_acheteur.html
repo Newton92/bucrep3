@@ -1,939 +1,1484 @@
 {% extends 'main/root/base.html' %}
-{% load static %}
-{% block css %}
-<style>
-    /* Styles généraux */
-    .naf-card {
-        border-left: 4px solid #0dcaf0; /* Bleu clair pour les codes NAF */
-        border-radius: 0 5px 5px 0;
-        padding: 15px;
-        margin-bottom: 15px;
-        background-color: #f8f9fa;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        position: relative;
-    }
-    .naf-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 10px;
-    }
-    .naf-code {
-        font-weight: 600;
-        color: #0dcaf0;
-        font-size: 1.1rem;
-        margin-bottom: 5px;
-    }
-    .naf-libelle {
-        color: #495057;
-        margin-bottom: 10px;
-        font-weight: 500;
-    }
-    .naf-category {
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin-bottom: 5px;
-    }
-    .naf-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px dashed #dee2e6;
-    }
-    .naf-actions {
-        display: flex;
-        gap: 8px;
-        position: absolute;
-        top: 15px;
-        right: 15px;
-    }
-    #noNafCodesMessage {
-        text-align: center;
-        padding: 40px 20px;
-        color: #6c757d;
-    }
+{% load static humanize %}
 
-    /* Styles pour le sélecteur de codes NAF */
-    .naf-selector {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 10px;
-        background-color: #fff;
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --naf-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+}
+
+/* Carte Code NAF */
+.code-naf-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.code-naf-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.code-naf-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0A95CA, #1c6ea4);
+}
+
+/* En-tête de la carte */
+.code-naf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.code-naf-main {
+    flex: 1;
+}
+
+.code-naf-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0A95CA;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 0.25rem;
+}
+
+.code-naf-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.code-naf-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(10, 149, 202, 0.1);
+    color: #0A95CA;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.code-naf-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Badge de poids */
+.naf-weight-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, #9b5de5 0%, #6f42c1 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.naf-weight-badge i {
+    font-size: 0.75rem;
+}
+
+/* Actions rapides */
+.code-naf-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.btn-naf {
+    background: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-naf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(10, 149, 202, 0.3);
+    color: white;
+}
+
+.btn-naf-outline {
+    background: transparent;
+    border: 2px solid #0A95CA;
+    color: #0A95CA;
+}
+
+.btn-naf-outline:hover {
+    background: #0A95CA;
+    color: white;
+}
+
+/* Informations métadonnées */
+.code-naf-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .select2-selection:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--naf-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des codes NAF */
+.codes-naf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    flex: 1;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0A95CA;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Indicateur NAF */
+.naf-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #0A95CA;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Info bulle */
+.info-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+.info-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* Badge de statut */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.badge-active {
+    background: rgba(10, 149, 202, 0.1);
+    color: #0A95CA;
+    border: 1px solid rgba(10, 149, 202, 0.2);
+}
+
+.badge-inactive {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .codes-naf-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     }
-    .loading-spinner {
-        display: none;
-        text-align: center;
-        padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .codes-naf-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
-    .category-filter {
-        margin-bottom: 15px;
+    
+    .code-naf-header {
+        flex-direction: column;
+        gap: 1rem;
     }
-    .subcategory-item {
-        padding: 8px 12px;
-        margin-bottom: 8px;
-        border-radius: 4px;
-        background-color: #f8f9fa;
-        cursor: pointer;
-        transition: all 0.2s;
+    
+    .code-naf-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
     }
-    .subcategory-item:hover {
-        background-color: #e9ecef;
+    
+    .search-controls {
+        flex-direction: column;
     }
-    .subcategory-item.disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        background-color: #f1f3f5;
+    
+    .empty-state {
+        padding: 2rem 1rem;
     }
-    .subcategory-item .form-check {
-        margin-bottom: 0;
+    
+    .empty-state-icon {
+        font-size: 3rem;
     }
-    .subcategory-info {
-        margin-left: 25px;
+}
+
+@media (max-width: 576px) {
+    .code-naf-title {
+        font-size: 1.1rem;
     }
-    .subcategory-code {
-        font-weight: 600;
-        color: #0dcaf0;
+    
+    .code-naf-actions-quick {
+        flex-direction: column;
     }
-    .subcategory-libelle {
-        color: #495057;
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
     }
-    .subcategory-category {
-        font-size: 0.85rem;
-        color: #6c757d;
+    
+    .naf-indicator {
+        position: static;
+        display: inline-flex;
+        margin-bottom: 0.5rem;
     }
-    .selected-codes-container {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 10px;
-        background-color: #f8f9fa;
-        min-height: 100px;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    .selected-code-item {
-        padding: 5px 10px;
-        margin-bottom: 5px;
-        background-color: #fff;
-        border-radius: 4px;
-        border-left: 3px solid #0dcaf0;
-    }
-    .badge-already-associated {
-        background-color: #6c757d;
-        color: white;
-        font-size: 0.75rem;
-        padding: 2px 6px;
-        border-radius: 10px;
-        margin-left: 10px;
-    }
-    .form-check-input:disabled ~ .form-check-label {
-        opacity: 0.7;
-    }
+}
+
+/* Animation pour validation */
+.code-valid {
+    position: relative;
+}
+
+.code-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Style pour les catégories */
+.category-tree {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid #0A95CA;
+    margin-bottom: 0.5rem;
+}
+
+.category-code {
+    font-weight: 600;
+    color: #0A95CA;
+    min-width: 60px;
+}
+
+.category-label {
+    flex: 1;
+    color: #495057;
+}
 </style>
 {% endblock %}
+
 {% block body %}
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-tag-fill fa-fw me-1"></i> Codes NAF de l'Acheteur</h3>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-bar text-primary me-2"></i>Codes NAF
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des codes NAF (Nomenclature d'Activités Française) de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
     </div>
-</div>
-<!-- Title END -->
-<!-- Counter START -->
-<div class="row g-4">
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h4 id="countNaf">Module de Gestion des Codes NAF</h4>
-                    <span>Dans ce module, vous pouvez consulter, ajouter, modifier ou supprimer les codes NAF associés à l'acheteur. Un acheteur peut avoir plusieurs codes NAF correspondant à ses différents secteurs d'activité.</span>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques simplifiées -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ codes_naf_count }}</div>
+            <div class="stat-label">Codes NAF</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ poids_total|floatformat:1 }}</div>
+            <div class="stat-label">Poids Total</div>
+        </div>
+    </div>
+
+    <!-- Section Codes NAF -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-list-alt me-2"></i>Codes NAF Associés
+                        <span class="badge bg-primary ms-2">{{ codes_naf_count }}</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addCodeNafModal">
+                            <i class="fas fa-plus-circle me-1"></i>Associer un code NAF
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche -->
+                    <div class="search-controls mb-4">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchCodeNafInput" 
+                                       placeholder="Rechercher par code, libellé ou catégorie...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary" id="clearSearchBtn">
+                            <i class="fas fa-times me-1"></i>Effacer
+                        </button>
+                    </div>
+
+                    {% if codes_naf %}
+                        <!-- Grille des codes NAF -->
+                        <div class="codes-naf-grid" id="codesNafContainer">
+                            {% for code_naf in codes_naf %}
+                                {% if code_naf.code %}
+                                    <div class="code-naf-card" data-id="{{ code_naf.id }}">
+                                        <!-- Indicateur -->
+                                        <span class="naf-indicator">
+                                            <i class="fas fa-tag"></i> NAF
+                                        </span>
+                                        <br>
+                                        
+                                        <div class="code-naf-header">
+                                            <div class="code-naf-main">
+                                                <div class="code-naf-title">
+                                                    {{ code_naf.code.code|default:"N/A" }}
+                                                    <span class="naf-weight-badge ms-2">
+                                                        <i class="fas fa-weight-hanging"></i>
+                                                        {{ code_naf.code.poids|default:0.0 }}
+                                                    </span>
+                                                </div>
+                                                <div class="code-naf-subtitle">
+                                                    {{ code_naf.code.libelle|default:"Pas de libellé" }}
+                                                </div>
+                                                <div class="code-naf-category">
+                                                    <i class="fas fa-folder"></i>
+                                                    {% if code_naf.code.category %}
+                                                        {{ code_naf.code.category.code|default:"N/A" }} - {{ code_naf.code.category.libelle|default:"Non catégorisé" }}
+                                                    {% else %}
+                                                        Non catégorisé
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="code-naf-actions">
+                                                <button class="btn btn-sm btn-outline-warning edit-code-naf-btn" 
+                                                        data-id="{{ code_naf.id }}"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger delete-code-naf-btn" 
+                                                        data-id="{{ code_naf.id }}"
+                                                        data-bs-toggle="tooltip" 
+                                                        data-bs-title="Supprimer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Actions rapides -->
+                                        <div class="code-naf-actions-quick">
+                                            {% if code_naf.code.active %}
+                                                <span class="status-badge badge-active">
+                                                    <i class="fas fa-check-circle"></i> Actif
+                                                </span>
+                                            {% else %}
+                                                <span class="status-badge badge-inactive">
+                                                    <i class="fas fa-times-circle"></i> Inactif
+                                                </span>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Métadonnées -->
+                                        <div class="code-naf-meta">
+                                            <div class="meta-item">
+                                                <i class="fas fa-calendar-plus"></i>
+                                                <span>Ajouté le: {{ code_naf.created_at|date:"d/m/Y H:i" }}</span>
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-sync-alt"></i>
+                                                <span>Màj: {{ code_naf.updated_at|date:"d/m/Y H:i" }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <!-- Afficher un message si le code est manquant -->
+                                    <div class="code-naf-card" style="border-color: #dc3545;">
+                                        <span class="naf-indicator" style="background: #dc3545;">
+                                            <i class="fas fa-exclamation-triangle"></i> ERREUR
+                                        </span>
+                                        
+                                        <div class="code-naf-header">
+                                            <div class="code-naf-main">
+                                                <div class="code-naf-title" style="color: #dc3545;">
+                                                    Code NAF manquant
+                                                </div>
+                                                <div class="code-naf-subtitle">
+                                                    L'association #{{ code_naf.id }} ne référence aucun code NAF valide
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide -->
+                        <div class="empty-state">
+                            <i class="fas fa-chart-bar empty-state-icon"></i>
+                            <h4 class="fw-bold mb-2">Aucun code NAF associé</h4>
+                            <p class="text-muted mb-4">
+                                Cet acheteur ne possède pas encore de codes NAF associés.<br>
+                                Les codes NAF permettent de classifier les activités économiques selon la nomenclature française.
+                            </p>
+                            <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCodeNafModal">
+                                <i class="fas fa-plus-circle me-2"></i>Associer le premier code NAF
+                            </button>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
-<!-- Acheteur Info START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border">
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
+
+<!-- Modal Ajout Code NAF -->
+<div class="modal fade" id="addCodeNafModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Associer un Code NAF
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>Code : </strong><span style="color: #0dcaf0;">CN</span><br>
-                                <strong>Libellé : </strong><span style="color: #495057;">LB</span><br>
+            <form id="addCodeNafForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="codeNafSelect" class="form-label">
+                            <i class="fas fa-code text-primary"></i>Sélectionner un code NAF
+                            <span class="info-tooltip" data-tooltip="Nomenclature d'Activités Française">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                        </label>
+                        <select id="codeNafSelect" 
+                                name="code" 
+                                style="width: 100%;"
+                                required>
+                            <option value=""></option>
+                        </select>
+                        <div class="form-text">
+                            Recherchez par code, libellé ou catégorie
+                        </div>
+                    </div>
+                    
+                    <!-- Prévisualisation -->
+                    <div id="codeNafPreview" class="card mt-3 d-none">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">
+                                <i class="fas fa-eye me-2"></i>Prévisualisation
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="category-item">
+                                        <div class="category-code" id="previewCode"></div>
+                                        <div class="category-label" id="previewLibelle"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="category-item">
+                                        <div class="category-code" id="previewCategoryCode"></div>
+                                        <div class="category-label" id="previewCategoryLibelle"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <strong>Catégorie : </strong><span style="color: #6c757d;">CT</span><br>
-                                <strong>Date : </strong><span style="color: #ffc107;">DT</span>
+                            <div class="mt-3">
+                                <span class="naf-weight-badge">
+                                    <i class="fas fa-weight-hanging"></i>
+                                    Poids: <span id="previewPoids">0.0</span>
+                                </span>
+                                <span class="status-badge badge-active ms-2" id="previewStatus"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <br>
-                <div class="d-flex align-items-center">
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion. Les codes NAF sont organisés en catégories et sous-catégories. Vous pouvez sélectionner plusieurs codes NAF pour un acheteur.</span>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Associer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Acheteur Info END -->
-<!-- Codes NAF START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Codes NAF</h5>
-            </div>
-            <div class="card-body">
-                <!-- Search and Add START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <div class="col-md-8">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Rechercher un code NAF..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i>
-                            </button>
-                        </form>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-primary w-100" style="background-color: #0dcaf0; border-color: #0dcaf0;" data-bs-toggle="modal" data-bs-target="#addNafCodeModal">
-                            <i class="bi bi-plus-lg me-1"></i> Ajouter des codes NAF
-                        </button>
-                    </div>
-                </div>
-                <!-- Search and Add END -->
-                <!-- Codes NAF List START -->
-                <div id="nafCodeList">
-                    <div id="nafCodeContainer"></div>
-                    <div class="text-center my-4" id="noNafCodesMessage" style="display: none;">
-                        <i class="bi bi-tag-x-fill fs-3 text-muted mb-2"></i>
-                        <p class="mb-0">Aucun code NAF enregistré pour cet acheteur.</p>
-                    </div>
-                </div>
-                <!-- Codes NAF List END -->
-            </div>
-            <div class="card-footer pt-0">
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Codes NAF END -->
 
-<!-- Add NAF Code Modal START (version optimisée pour sélection multiple) -->
-<div class="modal fade" id="addNafCodeModal" tabindex="-1" aria-labelledby="addNafCodeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+<!-- Modal Modification Code NAF -->
+<div class="modal fade" id="editCodeNafModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addNafCodeModalLabel">Ajouter des Codes NAF</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Association
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addNafCodeForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-
-                    <!-- Filtre par catégorie -->
-                    <div class="category-filter">
-                        <label class="form-label">Filtrer par catégorie</label>
-                        <select class="form-select" id="categoryFilter">
-                            <option value="">Toutes les catégories</option>
-                            <!-- Les catégories seront chargées dynamiquement ici -->
+            <form id="editCodeNafForm" class="enhanced-form">
+                <input type="hidden" id="editCodeNafId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editCodeNafSelect" class="form-label">
+                            <i class="fas fa-code text-primary"></i>Code NAF
+                        </label>
+                        <select id="editCodeNafSelect" 
+                                name="code" 
+                                style="width: 100%;"
+                                required>
                         </select>
                     </div>
-
-                    <!-- Liste des sous-catégories (codes NAF) avec cases à cocher -->
-                    <div class="mb-3">
-                        <label class="form-label">Sélectionnez les codes NAF à ajouter</label>
-                        <div class="loading-spinner" id="subCategoriesLoading">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Chargement...</span>
-                            </div>
+                    <div class="code-naf-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Créé le: <span id="editCreatedAtInfo"></span></span>
                         </div>
-                        <div id="subCategoriesContainer" class="naf-selector">
-                            <!-- Les sous-catégories seront affichées ici -->
+                        <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Dernière Màj: <span id="editUpdatedAtInfo"></span></span>
                         </div>
                     </div>
-
-                    <!-- Résumé des codes sélectionnés -->
-                    <div class="mb-3">
-                        <label class="form-label">Codes NAF sélectionnés</label>
-                        <div class="selected-codes-container" id="selectedCodesContainer">
-                            Aucun code sélectionné
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        <button type="submit" class="btn btn-primary" style="background-color: #0dcaf0; border-color: #0dcaf0;">
-                            <i class="bi bi-plus-lg me-1"></i> Ajouter les codes sélectionnés
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add NAF Code Modal END -->
 
-<!-- Edit NAF Code Modal START -->
-<div class="modal fade" id="editNafCodeModal" tabindex="-1" aria-labelledby="editNafCodeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editNafCodeModalLabel">Modifier un Code NAF</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editNafCodeForm">
-                    <input type="hidden" id="editNafCodeId" name="id" />
-
-                    <div class="mb-3">
-                        <label class="form-label">Code NAF actuel</label>
-                        <div class="card">
-                            <div class="card-body" id="currentCodeContainer" style="min-height: 80px;"></div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Sélectionnez un nouveau code NAF</label>
-                        <div class="loading-spinner" id="editSubCategoriesLoading">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Chargement...</span>
-                            </div>
-                        </div>
-                        <div id="editSubCategoriesContainer" class="naf-selector" style="max-height: 300px;"></div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        <button type="submit" class="btn btn-primary" style="background-color: #0dcaf0; border-color: #0dcaf0;">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Mettre à jour
-                        </button>
-                    </div>
-                </form>
+            <div class="modal-body text-center">
+                <i class="fas fa-unlink fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Dissocier le code NAF</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir dissocier ce code NAF de l'acheteur ? 
+                    Cette action est réversible.
+                </p>
+                <div class="mt-3">
+                    <div class="fw-bold" id="deleteCodeInfo"></div>
+                    <div class="small text-muted" id="deleteCategoryInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-unlink me-1"></i>Dissocier
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit NAF Code Modal END -->
-
-<!-- Delete Confirmation Modal START -->
-<div class="modal fade" id="deleteNafCodeModal" tabindex="-1" aria-labelledby="deleteNafCodeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteNafCodeModalLabel">Supprimer un Code NAF</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Êtes-vous sûr de vouloir supprimer ce code NAF ?</p>
-                <p class="text-danger"><small>Cette action est irréversible.</small></p>
-                <div id="deleteNafCodeInfo" class="fw-bold mt-2"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteNafCode">Supprimer</button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Delete Confirmation Modal END -->
 {% endblock %}
+
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
-    function formatDateTime(dateString) {
-        if (!dateString) return "Non spécifié";
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/codes-naf-oneview/`;
+    const API_SUBCATEGORIES_URL = '/api/subcategories-naf-oneview/';
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentCodeNafId = null;
+
+    // Initialiser Select2
+    function initSelect2() {
+        // Pour le modal d'ajout
+        $('#codeNafSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: "Rechercher un code NAF...",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#addCodeNafModal'),
+            language: {
+                searching: function() {
+                    return "Recherche en cours...";
+                },
+                noResults: function() {
+                    return "Aucun résultat trouvé";
+                }
+            },
+            ajax: {
+                url: API_SUBCATEGORIES_URL,
+                dataType: 'json',
+                delay: 500,
+                data: function (params) {
+                    return {
+                        search: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    if (!data || !Array.isArray(data)) {
+                        return { results: [] };
+                    }
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: `${item.code || ''} - ${item.libelle || ''}`,
+                                data: item
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1
+        }).on('select2:select', function(e) {
+            if (e.params.data && e.params.data.data) {
+                showPreview(e.params.data.data);
+            }
+        }).on('select2:clear', function() {
+            hidePreview();
+        });
+        
+        // Pour le modal d'édition
+        $('#editCodeNafSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: "Rechercher un code NAF...",
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#editCodeNafModal'),
+            ajax: {
+                url: API_SUBCATEGORIES_URL,
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        search: params.term || ''
+                    };
+                },
+                processResults: function (data) {
+                    if (!data || !Array.isArray(data)) {
+                        return { results: [] };
+                    }
+                    return {
+                        results: data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: `${item.code} - ${item.libelle}`,
+                                data: item
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1
+        });
     }
 
-    // Variables globales
-    var nafCodeToDelete = null;
-    var categories = [];
-    var allSubCategories = [];
-    var associatedCodes = [];
+    // Initialiser
+    initSelect2();
 
-    $(document).ready(function() {
-        // Charger les données de l'acheteur
-        function loadAcheteur() {
-            const id = '{{ id_acheteur }}';
-            $.ajax({
-                url: `/api/consulter-un-acheteur/${id}/`,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#editNom').text(response.nom);
-                    $('#editSigle').text(response.sigle);
-                    $('#editCode').text(response.code);
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
-                    });
-                }
-            });
+    function showPreview(data) {
+        $('#previewCode').text(data.code);
+        $('#previewLibelle').text(data.libelle);
+        
+        if (data.category_info) {
+            $('#previewCategoryCode').text(data.category_info.code);
+            $('#previewCategoryLibelle').text(data.category_info.libelle);
+        } else {
+            $('#previewCategoryCode').text('N/A');
+            $('#previewCategoryLibelle').text('Non catégorisé');
         }
-
-        // Charger les catégories pour le filtre
-        function loadCategoriesForFilter() {
-            $.ajax({
-                url: '/api/codes-naf/categories/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    categories = response;
-                    response.forEach(function(category) {
-                        $('#categoryFilter').append(`
-                            <option value="${category.id}">${category.code} - ${category.libelle}</option>
-                        `);
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du chargement des catégories NAF.',
-                    });
-                }
-            });
+        
+        $('#previewPoids').text(data.poids || 0.0);
+        
+        if (data.active) {
+            $('#previewStatus').html('<i class="fas fa-check-circle"></i> Actif');
+            $('#previewStatus').removeClass('badge-inactive').addClass('badge-active');
+        } else {
+            $('#previewStatus').html('<i class="fas fa-times-circle"></i> Inactif');
+            $('#previewStatus').removeClass('badge-active').addClass('badge-inactive');
         }
+        
+        $('#codeNafPreview').removeClass('d-none');
+    }
 
-        // Charger toutes les sous-catégories (codes NAF)
-        function loadAllSubCategories(categoryId = null) {
-            $('#subCategoriesLoading').show();
-            $('#subCategoriesContainer').empty();
+    function hidePreview() {
+        $('#codeNafPreview').addClass('d-none');
+    }
 
-            let url = '/api/codes-naf/subcategories/';
-            if (categoryId) {
-                url = `/api/codes-naf/categories/${categoryId}/subcategories/`;
-            }
+    // Charger les codes NAF
+    function loadCodesNaf(search = '') {
+        if (search) {
+            let url = API_BASE_URL;
+            url += `?search=${encodeURIComponent(search)}`;
 
             $.ajax({
                 url: url,
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
                 },
                 success: function(response) {
-                    allSubCategories = response;
-                    displaySubCategories(response);
-                    $('#subCategoriesLoading').hide();
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du chargement des sous-catégories NAF.',
-                    });
-                    $('#subCategoriesLoading').hide();
-                }
-            });
-        }
-
-        // Afficher les sous-catégories dans le conteneur
-        function displaySubCategories(subCategories) {
-            if (subCategories.length === 0) {
-                $('#subCategoriesContainer').html(`
-                    <div class="alert alert-info">Aucune sous-catégorie trouvée.</div>
-                `);
-                return;
-            }
-
-            subCategories.forEach(function(subCategory) {
-                const isAlreadyAssociated = associatedCodes.includes(subCategory.id);
-                const category = categories.find(c => c.id === subCategory.category);
-
-                $('#subCategoriesContainer').append(`
-                    <div class="subcategory-item ${isAlreadyAssociated ? 'disabled' : ''}">
-                        <div class="form-check">
-                            <input class="form-check-input subcategory-checkbox"
-                                   type="checkbox"
-                                   id="subcategory-${subCategory.id}"
-                                   value="${subCategory.id}"
-                                   ${isAlreadyAssociated ? 'disabled' : ''}>
-                            <label class="form-check-label" for="subcategory-${subCategory.id}">
-                                <span class="subcategory-code">${subCategory.code}</span> -
-                                <span class="subcategory-libelle">${subCategory.libelle}</span>
-                            </label>
-                            ${isAlreadyAssociated ? '<span class="badge-already-associated">Déjà associé</span>' : ''}
-                        </div>
-                        <div class="subcategory-info">
-                            <span class="subcategory-category">
-                                Catégorie: ${category ? `${category.code} - ${category.libelle}` : 'Inconnu'}
-                            </span>
-                        </div>
-                    </div>
-                `);
-            });
-
-            // Ajouter les événements de clic
-            $('.subcategory-checkbox').on('change', function() {
-                updateSelectedCodesDisplay();
-            });
-        }
-
-        // Mettre à jour l'affichage des codes sélectionnés
-        function updateSelectedCodesDisplay() {
-            const selectedCodes = [];
-            $('.subcategory-checkbox:checked').each(function() {
-                const subCategoryId = $(this).val();
-                const subCategory = allSubCategories.find(sc => sc.id == subCategoryId);
-                if (subCategory) {
-                    const category = categories.find(c => c.id === subCategory.category);
-                    selectedCodes.push({
-                        ...subCategory,
-                        category: category
-                    });
-                }
-            });
-
-            if (selectedCodes.length === 0) {
-                $('#selectedCodesContainer').html('Aucun code sélectionné');
-            } else {
-                let html = '<div class="mb-2"><strong>Codes sélectionnés:</strong></div>';
-                selectedCodes.forEach(function(subCategory) {
-                    html += `
-                        <div class="selected-code-item">
-                            <div><strong>${subCategory.code}</strong> - ${subCategory.libelle}</div>
-                            <div class="text-muted small">
-                                Catégorie: ${subCategory.category.code} - ${subCategory.category.libelle}
-                            </div>
-                        </div>
-                    `;
-                });
-                $('#selectedCodesContainer').html(html);
-            }
-        }
-
-        // Charger les codes NAF de l'acheteur
-        function loadNafCodes(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-codes-naf/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    // Mettre à jour les infos de pagination
-                    $('#paginationInfo').text(
-                        'Affichage ' + ((page - 1) * 10 + 1) +
-                        ' à ' + (page * 10 > response.count ? response.count : page * 10) +
-                        ' de ' + response.count + ' codes NAF'
-                    );
-
-                    // Mettre à jour les contrôles de pagination
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append(
-                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Précédent</a></li>'
-                        );
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append(
-                                '<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
-                            );
-                        } else {
-                            $('#paginationControls').append(
-                                '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
-                            );
+                    const container = $('#codesNafContainer');
+                    const emptyState = $('.empty-state');
+                    const statsCards = $('.stats-cards');
+                    
+                    if (response.results && response.results.length > 0) {
+                        if (emptyState.length) {
+                            emptyState.hide();
                         }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append(
-                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Suivant</a></li>'
-                        );
-                    }
-
-                    // Mettre à jour la liste des codes NAF
-                    if (response.results.length === 0) {
-                        $('#nafCodeContainer').html('');
-                        $('#noNafCodesMessage').show();
-                    } else {
-                        $('#noNafCodesMessage').hide();
-                        $('#nafCodeContainer').html('');
+                        
+                        let html = '';
+                        let totalWeight = 0;
+                        
                         response.results.forEach(function(codeNaf) {
-                            $('#nafCodeContainer').append(`
-                                <div class="naf-card" data-id="${codeNaf.id}">
-                                    <div class="naf-actions">
-                                        <button class="btn btn-sm btn-outline-primary edit-naf-btn" data-id="${codeNaf.id}" data-bs-toggle="tooltip" title="Éditer">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger delete-naf-btn" data-id="${codeNaf.id}" data-bs-toggle="tooltip" title="Supprimer">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                    <div class="naf-code">${codeNaf.code.code}</div>
-                                    <div class="naf-libelle">${codeNaf.code.libelle}</div>
-                                    <div class="naf-category">
-                                        <strong>Catégorie:</strong> ${codeNaf.code.category.code} - ${codeNaf.code.category.libelle}
-                                    </div>
-                                    <div class="naf-meta">
-                                        <div>
-                                            <i class="bi bi-clock me-1"></i>
-                                            ${formatDateTime(codeNaf.created_at)}
+                            const subcategory = codeNaf.subcategory_details;
+                            
+                            const code = subcategory?.code || 'N/A';
+                            const libelle = subcategory?.libelle || 'Pas de libellé';
+                            const categoryCode = subcategory?.category?.code || 'N/A';
+                            const categoryLibelle = subcategory?.category?.libelle || 'Non catégorisé';
+                            const poids = parseFloat(subcategory?.poids) || 0.0;
+                            const active = subcategory?.active || false;
+                            
+                            totalWeight += poids;
+                            
+                            const createdAt = new Date(codeNaf.created_at).toLocaleString('fr-FR');
+                            const updatedAt = new Date(codeNaf.updated_at).toLocaleString('fr-FR');
+                            
+                            html += `
+                            <div class="code-naf-card" data-id="${codeNaf.id}">
+                                <span class="naf-indicator">
+                                    <i class="fas fa-tag"></i> NAF
+                                </span>
+                                <br>
+                                
+                                <div class="code-naf-header">
+                                    <div class="code-naf-main">
+                                        <div class="code-naf-title">
+                                            ${code}
+                                            <span class="naf-weight-badge ms-2">
+                                                <i class="fas fa-weight-hanging"></i>
+                                                ${poids}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <i class="bi bi-arrow-clockwise me-1"></i>
-                                            Mis à jour: ${formatDateTime(codeNaf.updated_at)}
+                                        <div class="code-naf-subtitle">
+                                            ${libelle}
                                         </div>
+                                        <div class="code-naf-category">
+                                            <i class="fas fa-folder"></i>
+                                            ${categoryCode} - ${categoryLibelle}
+                                        </div>
+                                    </div>
+                                    <div class="code-naf-actions">
+                                        <button class="btn btn-sm btn-outline-warning edit-code-naf-btn" 
+                                                data-id="${codeNaf.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-code-naf-btn" 
+                                                data-id="${codeNaf.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     </div>
                                 </div>
-                            `);
+
+                                <div class="code-naf-actions-quick">
+                                    ${active ? 
+                                        '<span class="status-badge badge-active"><i class="fas fa-check-circle"></i> Actif</span>' : 
+                                        '<span class="status-badge badge-inactive"><i class="fas fa-times-circle"></i> Inactif</span>'
+                                    }
+                                </div>
+
+                                <div class="code-naf-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span>Ajouté le: ${createdAt}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <span>Màj: ${updatedAt}</span>
+                                    </div>
+                                </div>
+                            </div>`;
                         });
-                    }
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des codes NAF.',
-                    });
-                }
-            });
-        }
-
-        // Charger les codes déjà associés à l'acheteur
-        function loadAssociatedCodes() {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-codes-naf/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    associatedCodes = response.results.map(function(item) {
-                        return item.code.id;
-                    });
-                },
-                error: function(response) {
-                    console.error("Erreur lors du chargement des codes associés");
-                }
-            });
-        }
-
-        // Soumettre le formulaire d'ajout de code NAF (version multiple)
-        $('#addNafCodeForm').on('submit', function(event) {
-            event.preventDefault();
-
-            const selectedCodes = [];
-            $('.subcategory-checkbox:checked').each(function() {
-                selectedCodes.push($(this).val());
-            });
-
-            if (selectedCodes.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Veuillez sélectionner au moins un code NAF.',
-                });
-                return;
-            }
-
-            const acheteurId = '{{ id_acheteur }}';
-            let successCount = 0;
-            let errorCount = 0;
-            const totalCodes = selectedCodes.length;
-
-            // Désactiver le bouton pendant l'envoi
-            const submitBtn = $(this).find('button[type="submit"]');
-            submitBtn.prop('disabled', true).html(`
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                Envoi en cours...
-            `);
-
-            // Envoyer les codes un par un
-            selectedCodes.forEach(function(codeId) {
-                $.ajax({
-                    url: '/api/acheteur/' + acheteurId + '/ajouter-code-naf/',
-                    type: 'POST',
-                    data: {
-                        acheteur: acheteurId,
-                        code: codeId
-                    },
-                    headers: {
-                        'Authorization': 'Bearer ' + '{{ access }}'
-                    },
-                    success: function(response) {
-                        successCount++;
-                        checkCompletion();
-                    },
-                    error: function(response) {
-                        errorCount++;
-                        checkCompletion();
-                    }
-                });
-            });
-
-            function checkCompletion() {
-                if (successCount + errorCount === totalCodes) {
-                    let message = `${successCount} code(s) NAF ajouté(s) avec succès.`;
-                    if (errorCount > 0) {
-                        message += ` ${errorCount} code(s) n'ont pas pu être ajoutés (déjà associés ou erreur).`;
-                    }
-
-                    Swal.fire({
-                        icon: errorCount > 0 ? 'warning' : 'success',
-                        title: 'Résultat',
-                        text: message,
-                    }).then(() => {
-                        $('#addNafCodeModal').modal('hide');
-                        loadNafCodes(); // Recharger la liste
-                    });
-
-                    submitBtn.prop('disabled', false).html(`
-                        <i class="bi bi-plus-lg me-1"></i> Ajouter les codes sélectionnés
-                    `);
-                }
-            }
-        });
-
-        // Ouvrir la modale d'édition de code NAF
-        $(document).on('click', '.edit-naf-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-code-naf/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#editNafCodeId').val(response.id);
-
-                    // Afficher le code actuel
-                    $('#currentCodeContainer').html(`
-                        <div><strong>Code actuel:</strong> ${response.code.code}</div>
-                        <div><strong>Libellé:</strong> ${response.code.libelle}</div>
-                        <div><strong>Catégorie:</strong> ${response.code.category.code} - ${response.code.category.libelle}</div>
-                    `);
-
-                    // Charger les sous-catégories pour la sélection du nouveau code
-                    loadAllSubCategories(response.code.category.id);
-                    $('#editNafCodeModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des détails du code NAF.',
-                    });
-                }
-            });
-        });
-
-        // Soumettre le formulaire d'édition de code NAF
-        $('#editNafCodeForm').on('submit', function(event) {
-            event.preventDefault();
-
-            const codeId = $('#editSelectedCodeId').val();
-            if (!codeId) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Veuillez sélectionner un nouveau code NAF.',
-                });
-                return;
-            }
-
-            var id = $('#editNafCodeId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-code-naf/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Code NAF mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editNafCodeModal').modal('hide');
-                        loadNafCodes();
-                    });
-                },
-                error: function(response) {
-                    let errorMessage = 'Erreur lors de la mise à jour du code NAF.';
-                    if (response.responseJSON && response.responseJSON.detail) {
-                        errorMessage = response.responseJSON.detail;
-                    } else if (response.responseJSON) {
-                        errorMessage = Object.values(response.responseJSON).join(' ');
-                    }
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: errorMessage,
-                    });
-                }
-            });
-        });
-
-        // Ouvrir la modale de confirmation de suppression
-        $(document).on('click', '.delete-naf-btn', function() {
-            var id = $(this).data('id');
-            var codeInfo = $(this).closest('.naf-card').find('.naf-code').text() +
-                          " - " +
-                          $(this).closest('.naf-card').find('.naf-libelle').text();
-
-            nafCodeToDelete = id;
-            $('#deleteNafCodeInfo').text(codeInfo);
-            $('#deleteNafCodeModal').modal('show');
-        });
-
-        // Confirmer la suppression du code NAF
-        $('#confirmDeleteNafCode').on('click', function() {
-            if (nafCodeToDelete) {
-                $.ajax({
-                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-codes-naf/',
-                    type: 'DELETE',
-                    data: JSON.stringify({ ids: [nafCodeToDelete] }),
-                    contentType: 'application/json',
-                    headers: {
-                        'Authorization': 'Bearer ' + '{{ access }}'
-                    },
-                    success: function(response) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Succès',
-                            text: 'Code NAF supprimé avec succès.',
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            $('#deleteNafCodeModal').modal('hide');
-                            loadNafCodes();
+                        
+                        container.html(html);
+                        
+                        // Initialiser les tooltips
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
                         });
-                    },
-                    error: function(response) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Erreur lors de la suppression du code NAF.',
-                        });
-                    }
-                });
-            }
-        });
-
-        // Recherche de codes NAF
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadNafCodes(1, search);
-        });
-
-        // Pagination
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadNafCodes(page, search);
-        });
-
-        // Filtrer par catégorie dans la modale d'ajout
-        $('#categoryFilter').on('change', function() {
-            const categoryId = $(this).val();
-            loadAllSubCategories(categoryId || null);
-        });
-
-        // Charger les données au démarrage de la modale d'ajout
-        $('#addNafCodeModal').on('shown.bs.modal', function() {
-            loadCategoriesForFilter();
-            loadAllSubCategories(); // Charger toutes les sous-catégories
-            loadAssociatedCodes(); // Charger les codes déjà associés
-        });
-
-        // Intercepter les réponses AJAX pour vérifier l'expiration du token
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    refreshToken();
-                }
-            }
-        });
-
-        // Rafraîchir le token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    localStorage.setItem('access_token', response.access);
-                    // Rejouer la requête qui a échoué
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Session expirée',
-                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Annuler',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
+                        
+                        // Mettre à jour les statistiques
+                        if (statsCards.length) {
+                            statsCards.find('.stat-number').first().text(response.count || response.results?.length || 0);
+                            statsCards.find('.stat-number').last().text(totalWeight.toFixed(1));
                         }
+                        
+                    } else {
+                        if (!emptyState.length) {
+                            container.html(`
+                                <div class="empty-state">
+                                    <i class="fas fa-chart-bar empty-state-icon"></i>
+                                    <h4 class="fw-bold mb-2">Aucun code NAF trouvé</h4>
+                                    <p class="text-muted mb-4">
+                                        Aucun code NAF ne correspond à votre recherche.
+                                    </p>
+                                </div>
+                            `);
+                        } else {
+                            emptyState.show();
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur lors du chargement:', xhr);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les codes NAF.'
                     });
                 }
             });
         }
+    }
 
-        // Charger les données au démarrage
-        loadAcheteur();
-        loadNafCodes();
+    // Recherche de codes NAF
+    $('#searchCodeNafInput').on('input', function() {
+        const search = $(this).val();
+        loadCodesNaf(search);
     });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchCodeNafInput').val('');
+        loadCodesNaf();
+    });
+    
+    // Formulaire d'ajout
+    $('#addCodeNafForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const codeId = $('#codeNafSelect').val();
+        if (!codeId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sélection requise',
+                text: 'Veuillez sélectionner un code NAF.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify({ code: codeId, acheteur: ACHETEUR_ID }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addCodeNafModal').modal('hide');
+                $('#addCodeNafForm')[0].reset();
+                $('#codeNafSelect').val(null).trigger('change');
+                hidePreview();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCodesNaf();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'association du code NAF';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.code) {
+                        errorMessage = Array.isArray(xhr.responseJSON.code) ? 
+                            xhr.responseJSON.code.join('\n') : xhr.responseJSON.code;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-code-naf-btn', function() {
+        const codeNafId = $(this).data('id');
+        currentCodeNafId = codeNafId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${codeNafId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editCodeNafId').val(response.id);
+                
+                // Précharger le code NAF actuel dans Select2
+                const option = new Option(
+                    `${response.subcategory_details.code} - ${response.subcategory_details.libelle}`,
+                    response.code,
+                    true,
+                    true
+                );
+                $('#editCodeNafSelect').append(option).trigger('change');
+                
+                $('#editCreatedAtInfo').text(new Date(response.created_at).toLocaleString('fr-FR'));
+                $('#editUpdatedAtInfo').text(new Date(response.updated_at).toLocaleString('fr-FR'));
+                
+                $('#editCodeNafModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails du code NAF.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editCodeNafForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentCodeNafId) return;
+        
+        const codeId = $('#editCodeNafSelect').val();
+        if (!codeId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Sélection requise',
+                text: 'Veuillez sélectionner un code NAF.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCodeNafId}/`,
+            type: 'PUT',
+            data: JSON.stringify({ code: codeId }),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editCodeNafModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCodesNaf();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification du code NAF';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.code) {
+                        errorMessage = Array.isArray(xhr.responseJSON.code) ? 
+                            xhr.responseJSON.code.join('\n') : xhr.responseJSON.code;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-code-naf-btn', function() {
+        const codeNafId = $(this).data('id');
+        const card = $(this).closest('.code-naf-card');
+        const code = card.find('.code-naf-title').text().split(' ')[0];
+        const libelle = card.find('.code-naf-subtitle').text();
+        const category = card.find('.code-naf-category').text().replace('📁 ', '');
+        
+        currentCodeNafId = codeNafId;
+        $('#deleteCodeInfo').text(`${code} - ${libelle}`);
+        $('#deleteCategoryInfo').text(`Catégorie: ${category}`);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentCodeNafId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCodeNafId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCodesNaf();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de dissocier le code NAF'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Charger les codes NAF au démarrage
+    loadCodesNaf();
+});
 </script>
 {% endblock %}

@@ -12208,6 +12208,163 @@ class DeleteAcheteurDocumentView(APIView):
             {"message": f"{count} documents supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+              
+class AcheteurDocumentListOneView(APIView):
+    """
+    API pour gérer les documents d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des documents de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        documents = Document.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            documents = documents.filter(
+                Q(titre__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(documents, request)
+        
+        serializer = DocumentOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée un nouveau document pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddDocumentOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder le document
+            document = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_DOCUMENT',
+                object_id=document.id,
+                object_type='Document',
+                details=f"Document ajouté pour l'acheteur {acheteur.nom} ({acheteur.code}): {document.titre}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Document ajouté avec succès",
+                "data": DocumentOneSerializer(document).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurDocumentDetailOneView(APIView):
+    """
+    API pour gérer un document spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_document(self, acheteur_id, document_id):
+        """Récupère le document ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            Document.objects,
+            id=document_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, document_id):
+        """Récupère les détails d'un document spécifique"""
+        document = self.get_document(acheteur_id, document_id)
+        serializer = DocumentOneSerializer(document)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, document_id):
+        """Modifie un document existant (titre et description seulement)"""
+        document = self.get_document(acheteur_id, document_id)
+        
+        serializer = EditDocumentOneSerializer(
+            document, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            document = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_DOCUMENT',
+                object_id=document.id,
+                object_type='Document',
+                details=f"Document modifié pour l'acheteur {document.acheteur.nom}: {document.titre}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Document modifié avec succès",
+                "data": DocumentOneSerializer(document).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, document_id):
+        """Supprime un document"""
+        document = self.get_document(acheteur_id, document_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_DOCUMENT',
+            object_id=document.id,
+            object_type='Document',
+            details=f"Document supprimé pour l'acheteur {document.acheteur.nom}: {document.titre}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        # Supprimer le fichier physique
+        if document.fichier and hasattr(document.fichier, 'delete'):
+            document.fichier.delete(save=False)
+        
+        document.delete()
+        return Response({
+            "message": "Document supprimé avec succès"
+        }, status=status.HTTP_200_OK)
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -14724,21 +14881,7 @@ class SubCategoryNaceCodeListOneView(APIView):
 
 
 
-# views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.core.paginator import Paginator
-from django.db.models import Q
-from main.models import CodeNafAcheteur, CategoryNafCode, SubCategoryNafCode
-from main.serializers import (
-    ListCodeNafAcheteurSerializer,
-    AddCodeNafAcheteurSerializer,
-    DetailCodeNafAcheteurSerializer,
-    EditCodeNafAcheteurSerializer,
-    CategoryNafCodeSerializer,
-    SubCategoryNafCodeSerializer,
-)
+
 
 class ListCategoryNafCodeView(APIView):
     def get(self, request, *args, **kwargs):
@@ -14863,4 +15006,179 @@ class DeleteAcheteurCodeNafView(APIView):
         return Response(
             {"message": f"{count} codes NAF supprimés avec succès."},
             status=status.HTTP_200_OK,
+        )     
+        
+class AcheteurCodeNafListOneView(APIView):
+    """
+    API pour gérer les codes NAF d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des codes NAF de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        codes_naf = CodeNafAcheteur.objects.filter(
+            acheteur=acheteur
+        ).select_related('code', 'code__category').order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            codes_naf = codes_naf.filter(
+                code__code__icontains=search
+            ) | codes_naf.filter(
+                code__libelle__icontains=search
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(codes_naf, request)
+        
+        serializer = CodeNafAcheteurOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle association code NAF pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddCodeNafAcheteurOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder l'association
+            code_naf = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_CODE_NAF',
+                object_id=code_naf.id,
+                object_type='CodeNafAcheteur',
+                details=f"Code NAF ajouté pour l'acheteur {acheteur.nom} ({acheteur.code}): {code_naf.code.code} - {code_naf.code.libelle}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Code NAF ajouté avec succès",
+                "data": CodeNafAcheteurOneSerializer(code_naf).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurCodeNafDetailOneView(APIView):
+    """
+    API pour gérer un code NAF spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_code_naf(self, acheteur_id, code_naf_id):
+        """Récupère l'association code NAF ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            CodeNafAcheteur.objects.select_related('code', 'code__category'),
+            id=code_naf_id, 
+            acheteur=acheteur
         )
+    
+    def get(self, request, acheteur_id, code_naf_id):
+        """Récupère les détails d'un code NAF spécifique"""
+        code_naf = self.get_code_naf(acheteur_id, code_naf_id)
+        serializer = CodeNafAcheteurOneSerializer(code_naf)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, code_naf_id):
+        """Modifie une association code NAF existante"""
+        code_naf = self.get_code_naf(acheteur_id, code_naf_id)
+        
+        serializer = EditCodeNafAcheteurOneSerializer(
+            code_naf, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            code_naf = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_CODE_NAF',
+                object_id=code_naf.id,
+                object_type='CodeNafAcheteur',
+                details=f"Code NAF modifié pour l'acheteur {code_naf.acheteur.nom}: {code_naf.code.code} - {code_naf.code.libelle}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Code NAF modifié avec succès",
+                "data": CodeNafAcheteurOneSerializer(code_naf).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, code_naf_id):
+        """Supprime une association code NAF"""
+        code_naf = self.get_code_naf(acheteur_id, code_naf_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_CODE_NAF',
+            object_id=code_naf.id,
+            object_type='CodeNafAcheteur',
+            details=f"Code NAF supprimé pour l'acheteur {code_naf.acheteur.nom}: {code_naf.code.code} - {code_naf.code.libelle}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        code_naf.delete()
+        return Response({
+            "message": "Code NAF supprimé avec succès"
+        }, status=status.HTTP_200_OK)
+
+class SubCategoryNafCodeListOneView(APIView):
+    """
+    API pour lister les sous-catégories NAF (pour sélection)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Retourne la liste des sous-catégories NAF actives"""
+        search = request.query_params.get('search', '')
+        
+        queryset = SubCategoryNafCode.objects.filter(
+            active=True
+        ).select_related('category').order_by('code')
+        
+        if search:
+            queryset = queryset.filter(
+                Q(code__icontains=search) |
+                Q(libelle__icontains=search) |
+                Q(category__code__icontains=search) |
+                Q(category__libelle__icontains=search)
+            )
+        
+        # Limiter les résultats pour la recherche
+        queryset = queryset[:100]
+        
+        serializer = SubCategoryNafCodeSimpleOneSerializer(queryset, many=True)
+        
+        return Response(serializer.data)

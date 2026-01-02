@@ -8666,6 +8666,198 @@ class EditDocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = ["id", "acheteur", "titre", "fichier", "description", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
+        
+        
+###########################################################################    
+#    
+# DOCUMENT ACHETEUR 
+#    
+########################################################################### 
+class UserSimpleOneSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+  
+
+class DocumentOneSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    file_name = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    acheteur_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Document
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'titre', 
+            'description',
+            'fichier',
+            'file_url',
+            'file_name',
+            'file_extension',
+            'file_size',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_file_url(self, obj):
+        if obj.fichier and hasattr(obj.fichier, 'url'):
+            return obj.fichier.url
+        return None
+    
+    def get_file_name(self, obj):
+        if obj.fichier and hasattr(obj.fichier, 'name'):
+            return obj.fichier.name.split('/')[-1] if '/' in obj.fichier.name else obj.fichier.name
+        return None
+    
+    def get_file_extension(self, obj):
+        if obj.fichier and hasattr(obj.fichier, 'name'):
+            try:
+                return obj.fichier.name.split('.')[-1].lower()
+            except:
+                return 'unknown'
+        return None
+    
+    def get_file_size(self, obj):
+        if obj.fichier and hasattr(obj.fichier, 'size'):
+            return obj.fichier.size
+        return None
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class DocumentDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = ['id', 'acheteur', 'titre', 'description', 'fichier']
+
+class AddDocumentOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = Document
+        fields = ['titre', 'description', 'fichier', 'acheteur']
+    
+    def validate_fichier(self, value):
+        # Validation de la taille du fichier (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if value.size > max_size:
+            raise serializers.ValidationError(f"La taille du fichier ne doit pas dépasser {max_size/(1024*1024)}MB.")
+        
+        # Validation de l'extension
+        allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in allowed_extensions:
+            raise serializers.ValidationError(f"Type de fichier non supporté. Types acceptés: {', '.join(allowed_extensions)}")
+        
+        return value
+    
+    def validate(self, data):
+        """Validation globale du document"""
+        acheteur = data.get('acheteur')
+        titre = data.get('titre')
+        
+        # Vérifier si un document avec le même titre existe déjà pour cet acheteur
+        existing = Document.objects.filter(
+            acheteur=acheteur,
+            titre=titre
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'titre': 'Un document avec ce titre existe déjà pour cet acheteur.'
+            })
+        
+        return data
+
+class EditDocumentOneSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Document
+        fields = ['titre', 'description']
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        titre = data.get('titre')
+        acheteur = self.instance.acheteur
+        
+        # Vérifier si un autre document avec le même titre existe déjà
+        existing = Document.objects.filter(
+            acheteur=acheteur,
+            titre=titre
+        ).exclude(id=self.instance.id).exists()
+        
+        if existing:
+            raise serializers.ValidationError({
+                'titre': 'Un autre document avec ce titre existe déjà pour cet acheteur.'
+            })
+        
+        return data
+       
+class DocumentSearchSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    file_name = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Document
+        fields = ['id', 'titre', 'description', 'file_url', 'file_name', 'file_extension', 'file_size', 'created_at', 'updated_at']
+    
+    def get_file_url(self, obj):
+        return obj.fichier.url if obj.fichier else None
+    
+    def get_file_name(self, obj):
+        return obj.fichier.name.split('/')[-1] if obj.fichier else None
+    
+    def get_file_extension(self, obj):
+        if obj.fichier:
+            try:
+                return obj.fichier.name.split('.')[-1].lower()
+            except:
+                return 'unknown'
+        return None
+    
+    def get_file_size(self, obj):
+        return obj.fichier.size if obj.fichier else None
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
 
 
@@ -9294,6 +9486,199 @@ class EditCodeNafAcheteurSerializer(serializers.ModelSerializer):
             "created_at": {"read_only": True},
             "acheteur": {"read_only": True}
         }
+        
+###########################################################################    
+#    
+# CODE NAF ACHETEUR 
+#    
+###########################################################################   
+    
+class CategoryNafCodeOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryNafCode  # À adapter selon votre modèle
+        fields = ['id', 'code', 'libelle', 'active', 'poids']
+
+class SubCategoryNafCodeOneSerializer(serializers.ModelSerializer):
+    category = CategoryNafCodeOneSerializer(read_only=True)
+    
+    class Meta:
+        model = SubCategoryNafCode  # À adapter selon votre modèle
+        fields = ['id', 'category', 'code', 'libelle', 'active', 'poids']
+        read_only_fields = ['category']
+
+class SubCategoryNafCodeSimpleOneSerializer(serializers.ModelSerializer):
+    category_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = SubCategoryNafCode
+        fields = ['id', 'code', 'libelle', 'category_info', 'active', 'poids']
+        read_only_fields = ['category_info']
+    
+    def get_category_info(self, obj):
+        if obj.category:
+            return {
+                'id': obj.category.id,
+                'code': obj.category.code,
+                'libelle': obj.category.libelle
+            }
+        return None
+    
+    def to_representation(self, instance):
+        """S'assurer que toutes les valeurs sont présentes"""
+        data = super().to_representation(instance)
+        
+        # S'assurer que les valeurs par défaut sont présentes
+        data['code'] = data.get('code', '')
+        data['libelle'] = data.get('libelle', '')
+        data['active'] = data.get('active', False)
+        data['poids'] = data.get('poids', 0.0)
+        
+        return data
+    
+class CodeNafAcheteurOneSerializer(serializers.ModelSerializer):
+    subcategory_details = SubCategoryNafCodeOneSerializer(source='code', read_only=True)
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    acheteur_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CodeNafAcheteur
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'code', 
+            'subcategory_details',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class CodeNafAcheteurDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ['id', 'acheteur', 'code']
+
+class AddCodeNafAcheteurOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    code = serializers.PrimaryKeyRelatedField(
+        queryset=SubCategoryNafCode.objects.filter(active=True)
+    )
+    
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ['code', 'acheteur']
+    
+    def validate(self, data):
+        """Validation globale de l'association code NAF - acheteur"""
+        acheteur = data.get('acheteur')
+        code = data.get('code')
+        
+        # Vérifier si cette association existe déjà
+        existing = CodeNafAcheteur.objects.filter(
+            acheteur=acheteur,
+            code=code
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'code': 'Ce code NAF est déjà associé à cet acheteur.'
+            })
+        
+        return data
+
+class EditCodeNafAcheteurOneSerializer(serializers.ModelSerializer):
+    code = serializers.PrimaryKeyRelatedField(
+        queryset=SubCategoryNafCode.objects.filter(active=True)
+    )
+    
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ['code']
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        code = data.get('code')
+        acheteur = self.instance.acheteur
+        
+        # Vérifier si cette association existe déjà (pour un autre enregistrement)
+        existing = CodeNafAcheteur.objects.filter(
+            acheteur=acheteur,
+            code=code
+        ).exclude(id=self.instance.id).exists()
+        
+        if existing:
+            raise serializers.ValidationError({
+                'code': 'Ce code NAF est déjà associé à cet acheteur.'
+            })
+        
+        return data
+       
+class CodeNafAcheteurSearchSerializer(serializers.ModelSerializer):
+    code = serializers.SerializerMethodField()
+    libelle = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
+    poids = serializers.SerializerMethodField()
+    active = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CodeNafAcheteur
+        fields = ['id', 'code', 'libelle', 'category', 'poids', 'active', 'created_at', 'updated_at']
+    
+    def get_code(self, obj):
+        return obj.code.code if obj.code else None
+    
+    def get_libelle(self, obj):
+        return obj.code.libelle if obj.code else None
+    
+    def get_category(self, obj):
+        if obj.code and obj.code.category:
+            return {
+                'code': obj.code.category.code,
+                'libelle': obj.code.category.libelle
+            }
+        return None
+    
+    def get_poids(self, obj):
+        return obj.code.poids if obj.code else None
+    
+    def get_active(self, obj):
+        return obj.code.active if obj.code else False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

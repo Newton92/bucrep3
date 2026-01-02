@@ -1,0 +1,724 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .document-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .document-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .document-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .document-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+    .document-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 8px;
+    }
+    .document-description {
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        max-height: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+    .document-actions {
+        display: flex;
+        gap: 8px;
+    }
+    .document-file {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        margin-top: 10px;
+    }
+    .file-icon {
+        font-size: 1.5rem;
+        color: #6c757d;
+    }
+    .file-info {
+        flex-grow: 1;
+    }
+    .file-name {
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+    .file-size {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    .btn-download {
+        background-color: #0A95CA;
+        border-color: #0A95CA;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+    }
+    .btn-download:hover {
+        background-color: #087ca8;
+        border-color: #076a90;
+    }
+    #noDocumentsMessage {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+    }
+    .document-preview {
+        max-width: 100%;
+        max-height: 200px;
+        margin-top: 10px;
+        border-radius: 4px;
+        display: none;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-fill fa-fw me-1"></i> Documents de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countDocument">Module de Gestion des Documents</h4>
+                    <span>Dans ce module, vous pouvez consulter, télécharger, ajouter, modifier ou supprimer les documents associés à l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Titre : </strong><span style="color: #0A95CA;">TR</span><br>
+                                <strong>Fichier : </strong><span style="color: #28a745;">FH</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Description : </strong><span style="color: #6c757d;">DS</span><br>
+                                <strong>Date : </strong><span style="color: #ffc107;">DT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion. Pour télécharger un fichier, cliquez sur le bouton de téléchargement.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Documents START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Documents</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search and Add START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Rechercher un document..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary w-100" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter un document
+                        </button>
+                    </div>
+                </div>
+                <!-- Search and Add END -->
+                <!-- Documents List START -->
+                <div id="documentList">
+                    <div id="documentContainer"></div>
+                    <div class="text-center my-4" id="noDocumentsMessage" style="display: none;">
+                        <i class="bi bi-file-earmark-x-fill fs-3 text-muted mb-2"></i>
+                        <p class="mb-0">Aucun document enregistré pour cet acheteur.</p>
+                    </div>
+                </div>
+                <!-- Documents List END -->
+            </div>
+            <div class="card-footer pt-0">
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Documents END -->
+<!-- Add Document Modal START -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDocumentModalLabel">Ajouter un Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDocumentForm" enctype="multipart/form-data">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="titre" class="form-label">Titre du document <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="titre" name="titre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fichier" class="form-label">Fichier <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="fichier" name="fichier" required>
+                        <div class="form-text">Formats acceptés: PDF, Word, Excel, Images (max 10Mo)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Document Modal END -->
+<!-- Edit Document Modal START -->
+<div class="modal fade" id="editDocumentModal" tabindex="-1" aria-labelledby="editDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editDocumentModalLabel">Éditer un Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editDocumentForm" enctype="multipart/form-data">
+                    <input type="hidden" id="editDocumentId" name="id">
+                    <div class="mb-3">
+                        <label for="editTitre" class="form-label">Titre du document <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editTitre" name="titre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFichier" class="form-label">Fichier</label>
+                        <input type="file" class="form-control" id="editFichier" name="fichier">
+                        <div class="form-text">Laissez vide pour conserver le fichier actuel. Formats acceptés: PDF, Word, Excel, Images (max 10Mo)</div>
+                        <div id="currentFileInfo" class="mt-2"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="4"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Document Modal END -->
+<!-- Delete Confirmation Modal START -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteDocumentModalLabel">Supprimer un Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce document ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+                <div id="deleteDocumentName" class="fw-bold mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteDocument">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal END -->
+{% endblock %}
+{% block scripts %}
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Non spécifié";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    // Fonction pour formater la taille des fichiers
+    function formatFileSize(bytes) {
+        if (!bytes) return "Inconnu";
+        if (bytes < 1024) return bytes + " octets";
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(2) + " Ko";
+        else return (bytes / 1048576).toFixed(2) + " Mo";
+    }
+
+    // Fonction pour obtenir l'icône du fichier en fonction de son extension
+    function getFileIcon(filename) {
+        if (!filename) return "bi bi-file-earmark";
+        const extension = filename.split('.').pop().toLowerCase();
+        const icons = {
+            'pdf': 'bi bi-file-earmark-pdf',
+            'doc': 'bi bi-file-earmark-word',
+            'docx': 'bi bi-file-earmark-word',
+            'xls': 'bi bi-file-earmark-spreadsheet',
+            'xlsx': 'bi bi-file-earmark-spreadsheet',
+            'jpg': 'bi bi-file-earmark-image',
+            'jpeg': 'bi bi-file-earmark-image',
+            'png': 'bi bi-file-earmark-image',
+            'gif': 'bi bi-file-earmark-image',
+            'txt': 'bi bi-file-earmark-text',
+            'zip': 'bi bi-file-earmark-zip',
+            'rar': 'bi bi-file-earmark-zip'
+        };
+        return icons[extension] || "bi bi-file-earmark";
+    }
+
+    // Variable pour stocker l'ID du document à supprimer
+    var documentToDelete = null;
+
+    $(document).ready(function() {
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger les documents
+        function loadDocuments(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-documents/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    // Mettre à jour les infos de pagination
+                    $('#paginationInfo').text(
+                        'Affichage ' + ((page - 1) * 10 + 1) +
+                        ' à ' + (page * 10 > response.count ? response.count : page * 10) +
+                        ' de ' + response.count + ' documents'
+                    );
+
+                    // Mettre à jour les contrôles de pagination
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append(
+                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Précédent</a></li>'
+                        );
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append(
+                                '<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
+                            );
+                        } else {
+                            $('#paginationControls').append(
+                                '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
+                            );
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append(
+                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Suivant</a></li>'
+                        );
+                    }
+
+                    // Mettre à jour la liste des documents
+                    if (response.results.length === 0) {
+                        $('#documentContainer').html('');
+                        $('#noDocumentsMessage').show();
+                    } else {
+                        $('#noDocumentsMessage').hide();
+                        $('#documentContainer').html('');
+                        response.results.forEach(function(document) {
+                            // Extraire le nom du fichier de l'URL
+                            const fileUrl = document.fichier_url;
+                            const fileName = fileUrl ? fileUrl.split('/').pop() : "Fichier non disponible";
+                            const fileIcon = getFileIcon(fileName);
+
+                            // Créer la carte du document
+                            const documentCard = $(`
+                                <div class="document-card" data-id="${document.id}">
+                                    <div class="document-header">
+                                        <div class="flex-grow-1">
+                                            <div class="document-title">${document.titre}</div>
+                                            <div class="document-meta">
+                                                <i class="bi bi-clock me-1"></i> ${formatDateTime(document.updated_at)}
+                                            </div>
+                                        </div>
+                                        <div class="document-actions">
+                                            <button class="btn btn-sm btn-outline-primary edit-document-btn" data-id="${document.id}" data-bs-toggle="tooltip" title="Éditer">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-document-btn" data-id="${document.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    ${document.description ?
+                                        `<div class="document-description">${document.description.length > 300 ?
+                                            document.description.substring(0, 300) + '...' :
+                                            document.description}</div>` :
+                                        `<div class="document-description text-muted"><em>Aucune description</em></div>`
+                                    }
+                                    <div class="document-file">
+                                        <i class="${fileIcon} file-icon"></i>
+                                        <div class="file-info">
+                                            <div class="file-name">${fileName}</div>
+                                            <div class="file-size">Taille: <span id="fileSize-${document.id}">Calcul...</span></div>
+                                        </div>
+                                        <a href="${fileUrl}" class="btn btn-download btn-sm" download>
+                                            <i class="bi bi-download me-1"></i> Télécharger
+                                        </a>
+                                    </div>
+                                </div>
+                            `);
+
+                            $('#documentContainer').append(documentCard);
+
+                            // Calculer la taille du fichier (si possible)
+                            if (fileUrl) {
+                                // Note: En réalité, on ne peut pas obtenir la taille côté client sans télécharger le fichier
+                                // Ici, on simule ou on pourrait ajouter cette info côté serveur dans l'API
+                                $(`#fileSize-${document.id}`).text("Non disponible");
+                            }
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des documents.',
+                    });
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout de document
+        $('#addDocumentForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-document/',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Document ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addDocumentModal').modal('hide');
+                        $('#addDocumentForm')[0].reset();
+                        loadDocuments();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de l\'ajout du document.';
+                    if (response.responseJSON && response.responseJSON.fichier) {
+                        errorMessage = response.responseJSON.fichier[0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale d'édition de document
+        $(document).on('click', '.edit-document-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-document/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editDocumentId').val(response.id);
+                    $('#editTitre').val(response.titre);
+                    $('#editDescription').val(response.description || '');
+
+                    // Afficher les infos du fichier actuel
+                    if (response.fichier_url) {
+                        const fileName = response.fichier_url.split('/').pop();
+                        const fileIcon = getFileIcon(fileName);
+                        $('#currentFileInfo').html(`
+                            <div class="alert alert-info">
+                                <i class="${fileIcon} me-2"></i>
+                                Fichier actuel: <strong>${fileName}</strong>
+                            </div>
+                        `);
+                    } else {
+                        $('#currentFileInfo').html(`
+                            <div class="alert alert-warning">
+                                Aucun fichier associé à ce document.
+                            </div>
+                        `);
+                    }
+
+                    $('#editDocumentModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des détails du document.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition de document
+        $('#editDocumentForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editDocumentId').val();
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-document/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Document mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editDocumentModal').modal('hide');
+                        loadDocuments();
+                    });
+                },
+                error: function(response) {
+                    let errorMessage = 'Erreur lors de la mise à jour du document.';
+                    if (response.responseJSON) {
+                        if (response.responseJSON.fichier) {
+                            errorMessage = response.responseJSON.fichier[0];
+                        } else if (response.responseJSON.titre) {
+                            errorMessage = response.responseJSON.titre[0];
+                        }
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: errorMessage,
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale de confirmation de suppression
+        $(document).on('click', '.delete-document-btn', function() {
+            var id = $(this).data('id');
+            var title = $(this).closest('.document-card').find('.document-title').text();
+
+            documentToDelete = id;
+            $('#deleteDocumentName').text(title);
+            $('#deleteDocumentModal').modal('show');
+        });
+
+        // Confirmer la suppression du document
+        $('#confirmDeleteDocument').on('click', function() {
+            if (documentToDelete) {
+                $.ajax({
+                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-documents/',
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [documentToDelete] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: 'Document supprimé avec succès.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#deleteDocumentModal').modal('hide');
+                            loadDocuments();
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la suppression du document.',
+                        });
+                    }
+                });
+            }
+        });
+
+        // Recherche de documents
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadDocuments(1, search);
+        });
+
+        // Pagination
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadDocuments(page, search);
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadDocuments();
+    });
+</script>
+{% endblock %}

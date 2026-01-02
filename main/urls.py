@@ -3615,6 +3615,10 @@ urlpatterns = [
         "api/supprimer-des-alertes/", DeleteAlerteView.as_view(), name="delete-alerte"
     ),
     path("api/envoyer-warning/", EnvoyerWarningView.as_view(), name="envoyer-warning"),
+    
+    
+    
+    
     path(
         "api/liste-des-documents-alerte/",
         ListDocumentAlerteView.as_view(),
@@ -3640,6 +3644,35 @@ urlpatterns = [
         DeleteDocumentAlerteView.as_view(),
         name="delete-document-alerte",
     ),
+    # Dans votre fichier urls.py API
+    path('api/acheteur/<int:acheteur_id>/documents-oneview/', 
+         AcheteurDocumentListOneView.as_view(), 
+         name='acheteur-documents-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/documents-oneview/<int:document_id>/', 
+         AcheteurDocumentDetailOneView.as_view(), 
+         name='acheteur-document-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path("api/liste-des-clients/", ListClientView.as_view(), name="list-client"),
     path("api/ajouter-un-client/", AddClientView.as_view(), name="add-client"),
     path(
@@ -5162,6 +5195,24 @@ urlpatterns = [
         DeleteAcheteurCodeNafView.as_view(),
         name="delete-code-naf-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/codes-naf-oneview/', 
+         AcheteurCodeNafListOneView.as_view(), 
+         name='acheteur-codes-naf-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/codes-naf-oneview/<int:code_naf_id>/', 
+         AcheteurCodeNafDetailOneView.as_view(), 
+         name='acheteur-code-naf-detail-oneview'),
+    path('api/subcategories-naf-oneview/', 
+         SubCategoryNafCodeListOneView.as_view(), 
+         name='subcategories-naf-list-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/generer-report/",
         GenerateReport.as_view(),

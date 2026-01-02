@@ -6012,23 +6012,166 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_document_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
+    """
+    Vue pour la gestion des documents d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('documents'),
+        id=acheteur_id
+    )
+
+    # Récupérer tous les documents de l'acheteur
+    documents_list = Document.objects.filter(
+        acheteur=acheteur
+    ).order_by('-created_at')
+    
+    # Calculer la taille totale des fichiers
+    taille_totale_bytes = 0
+    for document in documents_list:
+        if document.fichier:
+            try:
+                if hasattr(document.fichier, 'size'):
+                    taille_totale_bytes += document.fichier.size
+            except (ValueError, TypeError, OSError):
+                continue
+    
+    # Convertir en MB
+    taille_totale_mb = taille_totale_bytes / (1024 * 1024) if taille_totale_bytes > 0 else 0
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+    
+    # Préparer les données pour le template
+    documents_with_data = []
+    for document in documents_list:
+        # Obtenir l'extension du fichier
+        extension = None
+        if document.fichier and document.fichier.name:
+            try:
+                extension = document.fichier.name.split('.')[-1].lower()
+            except:
+                extension = 'unknown'
+        
+        # Obtenir la taille du fichier
+        taille = None
+        if document.fichier and hasattr(document.fichier, 'size'):
+            taille_bytes = document.fichier.size
+            if taille_bytes < 1024:
+                taille = f"{taille_bytes} B"
+            elif taille_bytes < 1024 * 1024:
+                taille = f"{taille_bytes/1024:.1f} KB"
+            else:
+                taille = f"{taille_bytes/(1024*1024):.1f} MB"
+        
+        # Obtenir l'icône basée sur l'extension
+        icon_class = get_file_icon(extension)
+        
+        documents_with_data.append({
+            'document_obj': document,
+            'id': document.id,
+            'titre': document.titre or 'Sans titre',
+            'description': document.description or '',
+            'fichier_url': document.fichier.url if document.fichier else '',
+            'fichier_nom': document.fichier.name if document.fichier else '',
+            'extension': extension,
+            'icon_class': icon_class,
+            'taille': taille,
+            'created_at': document.created_at,
+            'updated_at': document.updated_at
+        })
+
+    # Préparer les données JSON pour JavaScript
+    documents_data = []
+    for document in documents_with_data:
+        documents_data.append({
+            'id': document['document_obj'].id,
+            'titre': document['titre'],
+            'description': document['description'],
+            'fichier_url': document['fichier_url'],
+            'fichier_nom': document['fichier_nom'],
+            'extension': document['extension'],
+            'icon_class': document['icon_class'],
+            'taille': document['taille'],
+            'created_at': document['created_at'].isoformat() if document['created_at'] else None,
+            'updated_at': document['updated_at'].isoformat() if document['updated_at'] else None,
+        })
+    
+    documents_json = json.dumps(documents_data, default=str)
+    
     context = {
         "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "documents": documents_list,
+        "documents_count": documents_list.count(),
+        "documents_data": documents_with_data,
+        "taille_totale_mb": round(taille_totale_mb, 2),
+        "documents_json": documents_json or '[]',
+        "acheteur": acheteur,
         "id_acheteur": acheteur_id,
+        "max_file_size": 10 * 1024 * 1024,  # 10MB en bytes
+        "allowed_extensions": "'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png'"
     }
     return render(
         request,
         "main/root/acheteur/document/dash_root_document_acheteur.html",
         context,
     )
+
+def get_file_icon(extension):
+    """
+    Retourne la classe FontAwesome appropriée pour l'extension de fichier
+    """
+    icon_map = {
+        'pdf': 'fas fa-file-pdf',
+        'doc': 'fas fa-file-word',
+        'docx': 'fas fa-file-word',
+        'xls': 'fas fa-file-excel',
+        'xlsx': 'fas fa-file-excel',
+        'jpg': 'fas fa-file-image',
+        'jpeg': 'fas fa-file-image',
+        'png': 'fas fa-file-image',
+        'txt': 'fas fa-file-alt',
+        'zip': 'fas fa-file-archive',
+        'rar': 'fas fa-file-archive',
+        'ppt': 'fas fa-file-powerpoint',
+        'pptx': 'fas fa-file-powerpoint',
+        'csv': 'fas fa-file-csv',
+    }
+    return icon_map.get(extension, 'fas fa-file')
 
 
 
@@ -6540,16 +6683,114 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
 
 @login_required
 def dash_root_manage_code_naf_acheteur(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-    user = request.user
-    refresh = RefreshToken.for_user(user)
+    """
+    Vue pour la gestion des codes NAF d'un acheteur
+    """
+    
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('code_naf'),
+        id=acheteur_id
+    )
+
+    # Récupérer tous les codes NAF de l'acheteur avec les détails
+    codes_naf_list = CodeNafAcheteur.objects.filter(
+        acheteur=acheteur
+    ).select_related(
+        'code',
+        'code__category'
+    ).order_by('-created_at')
+    
+    # Calculer le poids total
+    poids_total = 0.0
+    for code_naf in codes_naf_list:
+        if code_naf.code and code_naf.code.poids:
+            try:
+                poids_total += float(code_naf.code.poids)
+            except (ValueError, TypeError):
+                continue
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+    
+    # Préparer les données pour le template
+    codes_naf_with_data = []
+    for code_naf in codes_naf_list:
+        if code_naf.code:
+            codes_naf_with_data.append({
+                'code_naf_obj': code_naf,
+                'code': code_naf.code.code or '',
+                'libelle': code_naf.code.libelle or '',
+                'category_code': code_naf.code.category.code if code_naf.code.category else '',
+                'category_libelle': code_naf.code.category.libelle if code_naf.code.category else '',
+                'poids': code_naf.code.poids or 0.0,
+                'active': code_naf.code.active or False,
+                'created_at': code_naf.created_at,
+                'updated_at': code_naf.updated_at
+            })
+
+    # Préparer les données des codes NAF pour le template
+    codes_naf_data = []
+    for code_naf in codes_naf_list:
+        if code_naf.code:
+            codes_naf_data.append({
+                'id': code_naf.id,
+                'code_id': code_naf.code.id,
+                'code': code_naf.code.code or '',
+                'libelle': code_naf.code.libelle or '',
+                'category': {
+                    'id': code_naf.code.category.id if code_naf.code.category else None,
+                    'code': code_naf.code.category.code if code_naf.code.category else '',
+                    'libelle': code_naf.code.category.libelle if code_naf.code.category else ''
+                },
+                'poids': float(code_naf.code.poids) if code_naf.code.poids else 0.0,
+                'created_at': code_naf.created_at.isoformat() if code_naf.created_at else None,
+                'updated_at': code_naf.updated_at.isoformat() if code_naf.updated_at else None,
+            })
+    
+    codes_naf_json = json.dumps(codes_naf_data, default=str)
+    
     context = {
         "acheteurs_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,
+        "codes_naf": codes_naf_list,
+        "codes_naf_count": codes_naf_list.count(),
+        "codes_naf_data": codes_naf_with_data,
+        "poids_total": round(poids_total, 2),
+        "codes_naf_json": codes_naf_json or '[]',
+        "acheteur": acheteur,
         "id_acheteur": acheteur_id,
     }
     return render(
