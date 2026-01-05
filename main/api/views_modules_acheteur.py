@@ -10231,7 +10231,6 @@ class ListAcheteurCertificationView(APIView):
             }
         )
 
-
 class SearchAcheteurCertificationView(APIView):
     def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
@@ -10265,7 +10264,6 @@ class SearchAcheteurCertificationView(APIView):
             }
         )
 
-
 class AddAcheteurCertificationView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
@@ -10276,7 +10274,6 @@ class AddAcheteurCertificationView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DetailAcheteurCertificationView(APIView):
     def get(self, request, acheteur_id, certification_id, *args, **kwargs):
@@ -10291,7 +10288,6 @@ class DetailAcheteurCertificationView(APIView):
 
         serializer = DetailCertificationSerializer(certification)
         return Response(serializer.data)
-
 
 class EditAcheteurCertificationView(APIView):
     def put(self, request, acheteur_id, certification_id, *args, **kwargs):
@@ -10311,7 +10307,6 @@ class EditAcheteurCertificationView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DeleteAcheteurCertificationView(APIView):
     def delete(self, request, acheteur_id, *args, **kwargs):
@@ -10336,6 +10331,162 @@ class DeleteAcheteurCertificationView(APIView):
             {"message": f"{count} certifications supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+class AcheteurCertificationListOneView(APIView):
+    """
+    API pour gérer les certifications d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des certifications de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        certifications = Certification.objects.filter(
+            acheteur=acheteur
+        ).order_by('-date_obtention', '-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            certifications = certifications.filter(
+                Q(nom_certification__icontains=search) |
+                Q(type_certification__icontains=search) |
+                Q(organisme_delivreur__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        # Filtrer par type si spécifié
+        type_filter = request.query_params.get('type', '')
+        if type_filter:
+            certifications = certifications.filter(type_certification=type_filter)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(certifications, request)
+        
+        serializer = CertificationOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle certification pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        # Passer le contexte avec la requête au serializer
+        serializer = AddCertificationOneSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant created_by et updated_by
+            certification = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_CERTIFICATION',
+                object_id=certification.id,
+                object_type='Certification',
+                details=f"Certification ajoutée pour l'acheteur {acheteur.nom} ({acheteur.code}): {certification.nom_certification or certification.get_type_certification_display()}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Certification ajoutée avec succès",
+                "data": CertificationOneSerializer(certification).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurCertificationDetailOneView(APIView):
+    """
+    API pour gérer une certification spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_certification(self, acheteur_id, certification_id):
+        """Récupère la certification ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            Certification.objects.select_related('acheteur'),
+            id=certification_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, certification_id):
+        """Récupère les détails d'une certification spécifique"""
+        certification = self.get_certification(acheteur_id, certification_id)
+        serializer = CertificationOneSerializer(certification)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, certification_id):
+        """Modifie une certification existante"""
+        certification = self.get_certification(acheteur_id, certification_id)
+        
+        # Passer le contexte avec la requête pour que le serializer puisse accéder à request.user
+        serializer = EditCertificationOneSerializer(
+            certification, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant updated_by via sa méthode update()
+            certification = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_CERTIFICATION',
+                object_id=certification.id,
+                object_type='Certification',
+                details=f"Certification modifiée pour l'acheteur {certification.acheteur.nom}: {certification.nom_certification or certification.get_type_certification_display()}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Certification modifiée avec succès",
+                "data": CertificationOneSerializer(certification).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, certification_id):
+        """Supprime une certification"""
+        certification = self.get_certification(acheteur_id, certification_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_CERTIFICATION',
+            object_id=certification.id,
+            object_type='Certification',
+            details=f"Certification supprimée pour l'acheteur {certification.acheteur.nom}: {certification.nom_certification or certification.get_type_certification_display()}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        certification.delete()
+        return Response({
+            "message": "Certification supprimée avec succès"
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -10377,7 +10528,6 @@ class ListAcheteurInnovationView(APIView):
             }
         )
 
-
 class SearchAcheteurInnovationView(APIView):
     def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
@@ -10411,7 +10561,6 @@ class SearchAcheteurInnovationView(APIView):
             }
         )
 
-
 class AddAcheteurInnovationView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
@@ -10422,7 +10571,6 @@ class AddAcheteurInnovationView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DetailAcheteurInnovationView(APIView):
     def get(self, request, acheteur_id, innovation_id, *args, **kwargs):
@@ -10436,7 +10584,6 @@ class DetailAcheteurInnovationView(APIView):
 
         serializer = DetailInnovationDeveloppementSerializer(innovation)
         return Response(serializer.data)
-
 
 class EditAcheteurInnovationView(APIView):
     def put(self, request, acheteur_id, innovation_id, *args, **kwargs):
@@ -10455,7 +10602,6 @@ class EditAcheteurInnovationView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DeleteAcheteurInnovationView(APIView):
     def delete(self, request, acheteur_id, *args, **kwargs):
@@ -10480,6 +10626,181 @@ class DeleteAcheteurInnovationView(APIView):
             {"message": f"{count} innovations supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+class AcheteurInnovationDeveloppementListOneView(APIView):
+    """
+    API pour gérer les innovations et développements d'un acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des innovations de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        innovations = InnovationDeveloppement.objects.filter(
+            acheteur=acheteur
+        ).select_related(
+            'created_by', 
+            'updated_by',
+            'acheteur'
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            innovations = innovations.filter(
+                Q(titre__icontains=search) |
+                Q(description__icontains=search) |
+                Q(type_innovation__icontains=search)
+            )
+        
+        # Filtrer par type d'innovation
+        type_innovation = request.query_params.get('type_innovation')
+        if type_innovation:
+            innovations = innovations.filter(type_innovation=type_innovation)
+        
+        # Filtrer par période
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        if date_debut:
+            innovations = innovations.filter(date_debut__gte=date_debut)
+        if date_fin:
+            innovations = innovations.filter(date_fin__lte=date_fin)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(innovations, request)
+        
+        serializer = InnovationDeveloppementOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle innovation pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddInnovationDeveloppementOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Ajouter l'utilisateur courant comme créateur
+            innovation = serializer.save(
+                created_by=request.user,
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_INNOVATION',
+                object_id=innovation.id,
+                object_type='InnovationDeveloppement',
+                details=f"Innovation créée pour l'acheteur {acheteur.nom} ({acheteur.code}): {innovation.titre}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Innovation créée avec succès",
+                "data": InnovationDeveloppementOneSerializer(innovation).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurInnovationDeveloppementDetailOneView(APIView):
+    """
+    API pour gérer une innovation spécifique d'un acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_innovation(self, acheteur_id, innovation_id):
+        """Récupère l'innovation ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            InnovationDeveloppement.objects.select_related(
+                'created_by', 
+                'updated_by',
+                'acheteur'
+            ),
+            id=innovation_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, innovation_id):
+        """Récupère les détails d'une innovation spécifique"""
+        innovation = self.get_innovation(acheteur_id, innovation_id)
+        serializer = InnovationDeveloppementOneSerializer(innovation)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, innovation_id):
+        """Modifie une innovation existante"""
+        innovation = self.get_innovation(acheteur_id, innovation_id)
+        
+        serializer = EditInnovationDeveloppementOneSerializer(
+            innovation, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            innovation = serializer.save(
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_INNOVATION',
+                object_id=innovation.id,
+                object_type='InnovationDeveloppement',
+                details=f"Innovation modifiée pour l'acheteur {innovation.acheteur.nom}: {innovation.titre}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Innovation modifiée avec succès",
+                "data": InnovationDeveloppementOneSerializer(innovation).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, innovation_id):
+        """Supprime une innovation"""
+        innovation = self.get_innovation(acheteur_id, innovation_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_INNOVATION',
+            object_id=innovation.id,
+            object_type='InnovationDeveloppement',
+            details=f"Innovation supprimée pour l'acheteur {innovation.acheteur.nom}: {innovation.titre}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        innovation.delete()
+        return Response({
+            "message": "Innovation supprimée avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
 
 
 from django.core.paginator import Paginator
@@ -10517,7 +10838,6 @@ class ListAcheteurStrategieView(APIView):
             }
         )
 
-
 class SearchAcheteurStrategieView(APIView):
     def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
@@ -10550,7 +10870,6 @@ class SearchAcheteurStrategieView(APIView):
             }
         )
 
-
 class AddAcheteurStrategieView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
@@ -10561,7 +10880,6 @@ class AddAcheteurStrategieView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DetailAcheteurStrategieView(APIView):
     def get(self, request, acheteur_id, strategie_id, *args, **kwargs):
@@ -10575,7 +10893,6 @@ class DetailAcheteurStrategieView(APIView):
 
         serializer = DetailStrategiePlanificationSerializer(strategie)
         return Response(serializer.data)
-
 
 class EditAcheteurStrategieView(APIView):
     def put(self, request, acheteur_id, strategie_id, *args, **kwargs):
@@ -10594,7 +10911,6 @@ class EditAcheteurStrategieView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DeleteAcheteurStrategieView(APIView):
     def delete(self, request, acheteur_id, *args, **kwargs):
@@ -10619,6 +10935,184 @@ class DeleteAcheteurStrategieView(APIView):
             {"message": f"{count} stratégies supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+class AcheteurStrategiePlanificationListOneView(APIView):
+    """
+    API pour gérer les stratégies et planifications d'un acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des stratégies de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        strategies = StrategiePlanification.objects.filter(
+            acheteur=acheteur
+        ).select_related(
+            'created_by', 
+            'updated_by',
+            'acheteur'
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            strategies = strategies.filter(
+                Q(description__icontains=search) |
+                Q(type_strategie__icontains=search)
+            )
+        
+        # Filtrer par type de stratégie
+        type_strategie = request.query_params.get('type_strategie')
+        if type_strategie:
+            strategies = strategies.filter(type_strategie=type_strategie)
+        
+        # Filtrer par période
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        if date_debut:
+            strategies = strategies.filter(date_mise_en_place__gte=date_debut)
+        if date_fin:
+            strategies = strategies.filter(date_mise_en_place__lte=date_fin)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(strategies, request)
+        
+        serializer = StrategiePlanificationOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle stratégie pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddStrategiePlanificationOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Ajouter l'utilisateur courant comme créateur
+            strategie = serializer.save(
+                created_by=request.user,
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_STRATEGIE',
+                object_id=strategie.id,
+                object_type='StrategiePlanification',
+                details=f"Stratégie créée pour l'acheteur {acheteur.nom} ({acheteur.code}): {strategie.get_type_strategie_display()}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Stratégie créée avec succès",
+                "data": StrategiePlanificationOneSerializer(strategie).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurStrategiePlanificationDetailOneView(APIView):
+    """
+    API pour gérer une stratégie spécifique d'un acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_strategie(self, acheteur_id, strategie_id):
+        """Récupère la stratégie ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            StrategiePlanification.objects.select_related(
+                'created_by', 
+                'updated_by',
+                'acheteur'
+            ),
+            id=strategie_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, strategie_id):
+        """Récupère les détails d'une stratégie spécifique"""
+        strategie = self.get_strategie(acheteur_id, strategie_id)
+        serializer = StrategiePlanificationOneSerializer(strategie)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, strategie_id):
+        """Modifie une stratégie existante"""
+        strategie = self.get_strategie(acheteur_id, strategie_id)
+        
+        serializer = EditStrategiePlanificationOneSerializer(
+            strategie, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            strategie = serializer.save(
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_STRATEGIE',
+                object_id=strategie.id,
+                object_type='StrategiePlanification',
+                details=f"Stratégie modifiée pour l'acheteur {strategie.acheteur.nom}: {strategie.get_type_strategie_display()}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Stratégie modifiée avec succès",
+                "data": StrategiePlanificationOneSerializer(strategie).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, strategie_id):
+        """Supprime une stratégie"""
+        strategie = self.get_strategie(acheteur_id, strategie_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_STRATEGIE',
+            object_id=strategie.id,
+            object_type='StrategiePlanification',
+            details=f"Stratégie supprimée pour l'acheteur {strategie.acheteur.nom}: {strategie.get_type_strategie_display()}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        strategie.delete()
+        return Response({
+            "message": "Stratégie supprimée avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
 
 
 from django.core.paginator import Paginator
@@ -10656,7 +11150,6 @@ class ListAcheteurConformiteView(APIView):
             }
         )
 
-
 class SearchAcheteurConformiteView(APIView):
     def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
@@ -10691,7 +11184,6 @@ class SearchAcheteurConformiteView(APIView):
             }
         )
 
-
 class AddAcheteurConformiteView(APIView):
     def post(self, request, acheteur_id, *args, **kwargs):
         data = request.data.copy()
@@ -10702,7 +11194,6 @@ class AddAcheteurConformiteView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DetailAcheteurConformiteView(APIView):
     def get(self, request, acheteur_id, conformite_id, *args, **kwargs):
@@ -10716,7 +11207,6 @@ class DetailAcheteurConformiteView(APIView):
 
         serializer = DetailConformiteReglementationSerializer(conformite)
         return Response(serializer.data)
-
 
 class EditAcheteurConformiteView(APIView):
     def put(self, request, acheteur_id, conformite_id, *args, **kwargs):
@@ -10735,7 +11225,6 @@ class EditAcheteurConformiteView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class DeleteAcheteurConformiteView(APIView):
     def delete(self, request, acheteur_id, *args, **kwargs):
@@ -10760,6 +11249,189 @@ class DeleteAcheteurConformiteView(APIView):
             {"message": f"{count} conformités supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+        
+class AcheteurConformiteReglementationListOneView(APIView):
+    """
+    API pour gérer les conformités et réglementations d'un acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des conformités de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        conformites = ConformiteReglementation.objects.filter(
+            acheteur=acheteur
+        ).select_related(
+            'created_by', 
+            'updated_by',
+            'acheteur'
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            conformites = conformites.filter(
+                Q(type_conformite__icontains=search) |
+                Q(details_non_conformite__icontains=search) |
+                Q(organisme_controle__icontains=search) |
+                Q(commentaires__icontains=search)
+            )
+        
+        # Filtrer par type de conformité
+        type_conformite = request.query_params.get('type_conformite')
+        if type_conformite:
+            conformites = conformites.filter(type_conformite=type_conformite)
+        
+        # Filtrer par statut
+        statut = request.query_params.get('statut')
+        if statut is not None:
+            conformites = conformites.filter(statut=(statut.lower() == 'true'))
+        
+        # Filtrer par période de vérification
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        if date_debut:
+            conformites = conformites.filter(date_verification__gte=date_debut)
+        if date_fin:
+            conformites = conformites.filter(date_verification__lte=date_fin)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(conformites, request)
+        
+        serializer = ConformiteReglementationOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle conformité pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddConformiteReglementationOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Ajouter l'utilisateur courant comme créateur
+            conformite = serializer.save(
+                created_by=request.user,
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_CONFORMITE',
+                object_id=conformite.id,
+                object_type='ConformiteReglementation',
+                details=f"Conformité créée pour l'acheteur {acheteur.nom} ({acheteur.code}): {conformite.get_type_conformite_display()} - {'Conforme' if conformite.statut else 'Non-conforme'}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Conformité créée avec succès",
+                "data": ConformiteReglementationOneSerializer(conformite).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurConformiteReglementationDetailOneView(APIView):
+    """
+    API pour gérer une conformité spécifique d'un acheteur
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_conformite(self, acheteur_id, conformite_id):
+        """Récupère la conformité ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            ConformiteReglementation.objects.select_related(
+                'created_by', 
+                'updated_by',
+                'acheteur'
+            ),
+            id=conformite_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, conformite_id):
+        """Récupère les détails d'une conformité spécifique"""
+        conformite = self.get_conformite(acheteur_id, conformite_id)
+        serializer = ConformiteReglementationOneSerializer(conformite)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, conformite_id):
+        """Modifie une conformité existante"""
+        conformite = self.get_conformite(acheteur_id, conformite_id)
+        
+        serializer = EditConformiteReglementationOneSerializer(
+            conformite, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            conformite = serializer.save(
+                updated_by=request.user
+            )
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_CONFORMITE',
+                object_id=conformite.id,
+                object_type='ConformiteReglementation',
+                details=f"Conformité modifiée pour l'acheteur {conformite.acheteur.nom}: {conformite.get_type_conformite_display()} - {'Conforme' if conformite.statut else 'Non-conforme'}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Conformité modifiée avec succès",
+                "data": ConformiteReglementationOneSerializer(conformite).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, conformite_id):
+        """Supprime une conformité"""
+        conformite = self.get_conformite(acheteur_id, conformite_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_CONFORMITE',
+            object_id=conformite.id,
+            object_type='ConformiteReglementation',
+            details=f"Conformité supprimée pour l'acheteur {conformite.acheteur.nom}: {conformite.get_type_conformite_display()}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        conformite.delete()
+        return Response({
+            "message": "Conformité supprimée avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
 
 
 from django.core.paginator import Paginator
@@ -11691,6 +12363,143 @@ class DeleteAcheteurSwotView(APIView):
             {"message": f"{count} analyses SWOT supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+               
+class AcheteurSwotListOneView(APIView):
+    """
+    API pour gérer l'analyse SWOT d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère l'analyse SWOT de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        swot_analysis = Swot.objects.filter(acheteur=acheteur)
+        
+        serializer = SwotOneSerializer(swot_analysis, many=True)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle analyse SWOT pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddSwotOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder l'analyse SWOT
+            swot = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_SWOT',
+                object_id=swot.id,
+                object_type='Swot',
+                details=f"Analyse SWOT créée pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Analyse SWOT créée avec succès",
+                "data": SwotOneSerializer(swot).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurSwotDetailOneView(APIView):
+    """
+    API pour gérer une analyse SWOT spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_swot(self, acheteur_id, swot_id):
+        """Récupère l'analyse SWOT ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            Swot.objects,
+            id=swot_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, swot_id):
+        """Récupère les détails d'une analyse SWOT spécifique"""
+        swot = self.get_swot(acheteur_id, swot_id)
+        serializer = SwotOneSerializer(swot)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, swot_id):
+        """Modifie une analyse SWOT existante"""
+        swot = self.get_swot(acheteur_id, swot_id)
+        
+        serializer = EditSwotOneSerializer(
+            swot, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            swot = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_SWOT',
+                object_id=swot.id,
+                object_type='Swot',
+                details=f"Analyse SWOT modifiée pour l'acheteur {swot.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Analyse SWOT modifiée avec succès",
+                "data": SwotOneSerializer(swot).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, swot_id):
+        """Supprime une analyse SWOT"""
+        swot = self.get_swot(acheteur_id, swot_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_SWOT',
+            object_id=swot.id,
+            object_type='Swot',
+            details=f"Analyse SWOT supprimée pour l'acheteur {swot.acheteur.nom}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        swot.delete()
+        return Response({
+            "message": "Analyse SWOT supprimée avec succès"
+        }, status=status.HTTP_200_OK)
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -11818,6 +12627,155 @@ class DeleteAcheteurProduitServiceView(APIView):
             {"message": f"{count} Produits/Services supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+              
+class AcheteurProduitServiceListOneView(APIView):
+    """
+    API pour gérer les produits et services d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des produits et services de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        produits_services = ProduitService.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            produits_services = produits_services.filter(
+                Q(produits__icontains=search) |
+                Q(services__icontains=search)
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(produits_services, request)
+        
+        serializer = ProduitServiceOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée un nouvel enregistrement de produits et services pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        # Passer le contexte avec la requête au serializer
+        serializer = AddProduitServiceOneSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant created_by et updated_by
+            produit_service = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_PRODUIT_SERVICE',
+                object_id=produit_service.id,
+                object_type='ProduitService',
+                details=f"Produits et services ajoutés pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Produits et services ajoutés avec succès",
+                "data": ProduitServiceOneSerializer(produit_service).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurProduitServiceDetailOneView(APIView):
+    """
+    API pour gérer un enregistrement spécifique de produits et services d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_produit_service(self, acheteur_id, produit_service_id):
+        """Récupère l'enregistrement de produits et services ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            ProduitService.objects.select_related('acheteur'),
+            id=produit_service_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, produit_service_id):
+        """Récupère les détails d'un enregistrement spécifique"""
+        produit_service = self.get_produit_service(acheteur_id, produit_service_id)
+        serializer = ProduitServiceOneSerializer(produit_service)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, produit_service_id):
+        """Modifie un enregistrement de produits et services existant"""
+        produit_service = self.get_produit_service(acheteur_id, produit_service_id)
+        
+        # Passer le contexte avec la requête pour que le serializer puisse accéder à request.user
+        serializer = EditProduitServiceOneSerializer(
+            produit_service, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant updated_by via sa méthode update()
+            produit_service = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_PRODUIT_SERVICE',
+                object_id=produit_service.id,
+                object_type='ProduitService',
+                details=f"Produits et services modifiés pour l'acheteur {produit_service.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Produits et services modifiés avec succès",
+                "data": ProduitServiceOneSerializer(produit_service).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, produit_service_id):
+        """Supprime un enregistrement de produits et services"""
+        produit_service = self.get_produit_service(acheteur_id, produit_service_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_PRODUIT_SERVICE',
+            object_id=produit_service.id,
+            object_type='ProduitService',
+            details=f"Produits et services supprimés pour l'acheteur {produit_service.acheteur.nom}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        produit_service.delete()
+        return Response({
+            "message": "Produits et services supprimés avec succès"
+        }, status=status.HTTP_200_OK)
         
         
         
@@ -11950,10 +12908,161 @@ class DeleteAcheteurMarqueView(APIView):
             status=status.HTTP_200_OK,
         )
         
+class AcheteurMarqueListOneView(APIView):
+    """
+    API pour gérer les marques d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des marques de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        marques = Marque.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            marques = marques.filter(
+                Q(marques__icontains=search)
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(marques, request)
+        
+        serializer = MarqueOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée un nouvel enregistrement de marques pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        # Passer le contexte avec la requête au serializer
+        serializer = AddMarqueOneSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant created_by et updated_by
+            marque = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_MARQUE',
+                object_id=marque.id,
+                object_type='Marque',
+                details=f"Marques ajoutées pour l'acheteur {acheteur.nom} ({acheteur.code})",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Marques ajoutées avec succès",
+                "data": MarqueOneSerializer(marque).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurMarqueDetailOneView(APIView):
+    """
+    API pour gérer un enregistrement spécifique de marques d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_marque(self, acheteur_id, marque_id):
+        """Récupère l'enregistrement de marques ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            Marque.objects.select_related('acheteur'),
+            id=marque_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, marque_id):
+        """Récupère les détails d'un enregistrement spécifique"""
+        marque = self.get_marque(acheteur_id, marque_id)
+        serializer = MarqueOneSerializer(marque)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, marque_id):
+        """Modifie un enregistrement de marques existant"""
+        marque = self.get_marque(acheteur_id, marque_id)
+        
+        # Passer le contexte avec la requête pour que le serializer puisse accéder à request.user
+        serializer = EditMarqueOneSerializer(
+            marque, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant updated_by via sa méthode update()
+            marque = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_MARQUE',
+                object_id=marque.id,
+                object_type='Marque',
+                details=f"Marques modifiées pour l'acheteur {marque.acheteur.nom}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Marques modifiées avec succès",
+                "data": MarqueOneSerializer(marque).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, marque_id):
+        """Supprime un enregistrement de marques"""
+        marque = self.get_marque(acheteur_id, marque_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_MARQUE',
+            object_id=marque.id,
+            object_type='Marque',
+            details=f"Marques supprimées pour l'acheteur {marque.acheteur.nom}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        marque.delete()
+        return Response({
+            "message": "Marques supprimées avec succès"
+        }, status=status.HTTP_200_OK)
         
         
         
         
+        
+
+
+
 
 
 
@@ -12079,6 +13188,173 @@ class DeleteAcheteurProcedureCollectiveView(APIView):
             {"message": f"{count} procédures collectives supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+              
+class AcheteurProcedureCollectiveListOneView(APIView):
+    """
+    API pour gérer les procédures collectives d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des procédures collectives de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        procedures = ProcedureCollective.objects.filter(
+            acheteur=acheteur
+        ).order_by('-date_ouverture', '-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            procedures = procedures.filter(
+                Q(type_procedure__icontains=search) |
+                Q(description__icontains=search) |
+                Q(tribunal__icontains=search) |
+                Q(numero_dossier__icontains=search) |
+                Q(secteur_activite__icontains=search)
+            )
+        
+        # Filtrer par statut
+        statut = request.query_params.get('statut', '')
+        if statut == 'active':
+            procedures = procedures.filter(date_cloture__isnull=True)
+        elif statut == 'closed':
+            procedures = procedures.filter(date_cloture__isnull=False)
+        
+        # Filtrer par type
+        type_procedure = request.query_params.get('type', '')
+        if type_procedure:
+            procedures = procedures.filter(type_procedure__icontains=type_procedure)
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(procedures, request)
+        
+        serializer = ProcedureCollectiveOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle procédure collective pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        serializer = AddProcedureCollectiveOneSerializer(data=data)
+        
+        if serializer.is_valid():
+            # Sauvegarder la procédure
+            procedure = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_PROCEDURE_COLLECTIVE',
+                object_id=procedure.id,
+                object_type='ProcedureCollective',
+                details=f"Procédure collective créée pour l'acheteur {acheteur.nom} ({acheteur.code}): {procedure.type_procedure}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Procédure collective créée avec succès",
+                "data": ProcedureCollectiveOneSerializer(procedure).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurProcedureCollectiveDetailOneView(APIView):
+    """
+    API pour gérer une procédure collective spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_procedure(self, acheteur_id, procedure_id):
+        """Récupère la procédure collective ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            ProcedureCollective.objects,
+            id=procedure_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, procedure_id):
+        """Récupère les détails d'une procédure collective spécifique"""
+        procedure = self.get_procedure(acheteur_id, procedure_id)
+        serializer = ProcedureCollectiveOneSerializer(procedure)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, procedure_id):
+        """Modifie une procédure collective existante"""
+        procedure = self.get_procedure(acheteur_id, procedure_id)
+        
+        serializer = EditProcedureCollectiveOneSerializer(
+            procedure, 
+            data=request.data, 
+            partial=True
+        )
+        
+        if serializer.is_valid():
+            procedure = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_PROCEDURE_COLLECTIVE',
+                object_id=procedure.id,
+                object_type='ProcedureCollective',
+                details=f"Procédure collective modifiée pour l'acheteur {procedure.acheteur.nom}: {procedure.type_procedure}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Procédure collective modifiée avec succès",
+                "data": ProcedureCollectiveOneSerializer(procedure).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, procedure_id):
+        """Supprime une procédure collective"""
+        procedure = self.get_procedure(acheteur_id, procedure_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_PROCEDURE_COLLECTIVE',
+            object_id=procedure.id,
+            object_type='ProcedureCollective',
+            details=f"Procédure collective supprimée pour l'acheteur {procedure.acheteur.nom}: {procedure.type_procedure}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        procedure.delete()
+        return Response({
+            "message": "Procédure collective supprimée avec succès"
+        }, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
 
 
 
@@ -12910,6 +14186,174 @@ class DeleteAcheteurRegistreCommerceView(APIView):
             status=status.HTTP_200_OK,
         )
         
+class AcheteurRegistreCommerceListOneView(APIView):
+    """
+    API pour gérer les registres de commerce d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des registres de commerce de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        registres = RegistreCommerce.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            registres = registres.filter(
+                Q(numero__icontains=search) |
+                Q(date_inscription__icontains=search)
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(registres, request)
+        
+        serializer = RegistreCommerceOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée un nouveau registre de commerce pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        # Passer le contexte avec la requête au serializer
+        serializer = AddRegistreCommerceOneSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant created_by et updated_by
+            registre = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_REGISTRE_COMMERCE',
+                object_id=registre.id,
+                object_type='RegistreCommerce',
+                details=f"Registre de commerce ajouté pour l'acheteur {acheteur.nom} ({acheteur.code}): {registre.numero}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Registre de commerce ajouté avec succès",
+                "data": RegistreCommerceOneSerializer(registre).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurRegistreCommerceDetailOneView(APIView):
+    """
+    API pour gérer un registre de commerce spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_registre(self, acheteur_id, registre_id):
+        """Récupère le registre de commerce ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            RegistreCommerce.objects.select_related('acheteur'),
+            id=registre_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, registre_id):
+        """Récupère les détails d'un registre de commerce spécifique"""
+        registre = self.get_registre(acheteur_id, registre_id)
+        serializer = RegistreCommerceOneSerializer(registre)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, registre_id):
+        """Modifie un registre de commerce existant"""
+        print(f"DEBUG - Requête PUT reçue")
+        print(f"DEBUG - acheteur_id: {acheteur_id}, registre_id: {registre_id}")
+        print(f"DEBUG - request.data: {request.data}")
+        print(f"DEBUG - request.user: {request.user}")
+        
+        registre = self.get_registre(acheteur_id, registre_id)
+        print(f"DEBUG - registre trouvé: {registre.numero}, date: {registre.date_inscription}")
+        
+        serializer = EditRegistreCommerceOneSerializer(
+            registre, 
+            data=request.data, 
+            partial=True
+        )
+        
+        print(f"DEBUG - Serializer créé")
+        
+        if serializer.is_valid():
+            print(f"DEBUG - Serializer valide")
+            registre = serializer.save()
+            print(f"DEBUG - Registre sauvegardé: {registre.numero}")
+            
+            # Mettre à jour manuellement updated_by
+            registre.updated_by = request.user
+            registre.save()
+            print(f"DEBUG - Registre mis à jour avec updated_by: {registre.updated_by}")
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_REGISTRE_COMMERCE',
+                object_id=registre.id,
+                object_type='RegistreCommerce',
+                details=f"Registre de commerce modifié pour l'acheteur {registre.acheteur.nom}: {registre.numero}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Registre de commerce modifié avec succès",
+                "data": RegistreCommerceOneSerializer(registre).data
+            })
+        else:
+            print(f"DEBUG - Serializer non valide")
+            print(f"DEBUG - Erreurs: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, registre_id):
+        """Supprime un registre de commerce"""
+        registre = self.get_registre(acheteur_id, registre_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_REGISTRE_COMMERCE',
+            object_id=registre.id,
+            object_type='RegistreCommerce',
+            details=f"Registre de commerce supprimé pour l'acheteur {registre.acheteur.nom}: {registre.numero}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        registre.delete()
+        return Response({
+            "message": "Registre de commerce supprimé avec succès"
+        }, status=status.HTTP_200_OK)
+        
+        
+        
+        
+        
+        
         
         
         
@@ -13216,6 +14660,155 @@ class DeleteAcheteurCotisationView(APIView):
             {"message": f"{count} cotisations supprimées avec succès."},
             status=status.HTTP_200_OK,
         )
+               
+class AcheteurCotisationListOneView(APIView):
+    """
+    API pour gérer les cotisations sociales d'un acheteur
+    Méthodes: GET (liste), POST (création)
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get(self, request, acheteur_id):
+        """Récupère la liste des cotisations sociales de l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        cotisations = Cotisation.objects.filter(
+            acheteur=acheteur
+        ).order_by('-created_at')
+        
+        # Recherche si paramètre fourni
+        search = request.query_params.get('search', '')
+        if search:
+            cotisations = cotisations.filter(
+                Q(numero__icontains=search) |
+                Q(date_affiliation__icontains=search)
+            )
+        
+        # Pagination
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(cotisations, request)
+        
+        serializer = CotisationOneSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+    
+    @transaction.atomic
+    def post(self, request, acheteur_id):
+        """Crée une nouvelle cotisation sociale pour l'acheteur"""
+        acheteur = self.get_acheteur(acheteur_id)
+        
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        
+        # Passer le contexte avec la requête au serializer
+        serializer = AddCotisationOneSerializer(data=data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant created_by et updated_by
+            cotisation = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='CREATE_COTISATION',
+                object_id=cotisation.id,
+                object_type='Cotisation',
+                details=f"Cotisation sociale ajoutée pour l'acheteur {acheteur.nom} ({acheteur.code}): {cotisation.numero}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Cotisation sociale ajoutée avec succès",
+                "data": CotisationOneSerializer(cotisation).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AcheteurCotisationDetailOneView(APIView):
+    """
+    API pour gérer une cotisation sociale spécifique d'un acheteur
+    Méthodes: GET (détail), PUT (modification), DELETE (suppression)
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_acheteur(self, acheteur_id):
+        """Récupère l'acheteur ou retourne 404"""
+        return get_object_or_404(Acheteur, id=acheteur_id)
+    
+    def get_cotisation(self, acheteur_id, cotisation_id):
+        """Récupère la cotisation sociale ou retourne 404"""
+        acheteur = self.get_acheteur(acheteur_id)
+        return get_object_or_404(
+            Cotisation.objects.select_related('acheteur'),
+            id=cotisation_id, 
+            acheteur=acheteur
+        )
+    
+    def get(self, request, acheteur_id, cotisation_id):
+        """Récupère les détails d'une cotisation sociale spécifique"""
+        cotisation = self.get_cotisation(acheteur_id, cotisation_id)
+        serializer = CotisationOneSerializer(cotisation)
+        return Response(serializer.data)
+    
+    @transaction.atomic
+    def put(self, request, acheteur_id, cotisation_id):
+        """Modifie une cotisation sociale existante"""
+        cotisation = self.get_cotisation(acheteur_id, cotisation_id)
+        
+        # Passer le contexte avec la requête pour que le serializer puisse accéder à request.user
+        serializer = EditCotisationOneSerializer(
+            cotisation, 
+            data=request.data, 
+            partial=True,
+            context={'request': request}
+        )
+        
+        if serializer.is_valid():
+            # Le serializer gère maintenant updated_by via sa méthode update()
+            cotisation = serializer.save()
+            
+            # Log d'activité
+            ActivityLog.objects.create(
+                user=request.user,
+                action_type='UPDATE_COTISATION',
+                object_id=cotisation.id,
+                object_type='Cotisation',
+                details=f"Cotisation sociale modifiée pour l'acheteur {cotisation.acheteur.nom}: {cotisation.numero}",
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')
+            )
+            
+            return Response({
+                "message": "Cotisation sociale modifiée avec succès",
+                "data": CotisationOneSerializer(cotisation).data
+            })
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @transaction.atomic
+    def delete(self, request, acheteur_id, cotisation_id):
+        """Supprime une cotisation sociale"""
+        cotisation = self.get_cotisation(acheteur_id, cotisation_id)
+        
+        # Log d'activité avant suppression
+        ActivityLog.objects.create(
+            user=request.user,
+            action_type='DELETE_COTISATION',
+            object_id=cotisation.id,
+            object_type='Cotisation',
+            details=f"Cotisation sociale supprimée pour l'acheteur {cotisation.acheteur.nom}: {cotisation.numero}",
+            ip_address=request.META.get('REMOTE_ADDR'),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+        
+        cotisation.delete()
+        return Response({
+            "message": "Cotisation sociale supprimée avec succès"
+        }, status=status.HTTP_200_OK)
 
 
 

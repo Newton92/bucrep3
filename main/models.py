@@ -21,6 +21,7 @@ from simple_history.models import HistoricalRecords
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
+from django.utils import timezone
 
 
 from main.utilitaires.constantes import *
@@ -3416,7 +3417,7 @@ class OperationEtHistorique(Model):
     description_complete_activite = models.TextField(
         blank=True, verbose_name=_("Description complète de l'activité")
     )
-    importation = models.ManyToManyField("ListeImportation", related_name=_("importation"), blank=True, null=True)
+    importation = models.ManyToManyField("ListeImportation", related_name=_("importation"), blank=True)
     historique = models.TextField(blank=True, verbose_name=_("Historique"))
 
     created_at = models.DateTimeField(
@@ -9717,6 +9718,26 @@ class ProduitService(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_produits_services',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_produits_services',
+        verbose_name=_("Mis à jour par")
+    )
+
 
     history = HistoricalRecords()
 
@@ -9751,6 +9772,25 @@ class Marque(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_marques',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_marques',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -9794,47 +9834,47 @@ class ProcedureCollective(Model):
         blank=True,
         help_text=_("Date de clôture de la procédure"),
     )
-    #tribunal = models.CharField(
-        #_("Tribunal compétent"),
-        #max_length=255,
-        #null=True,
-        #blank=True,
-        #help_text=_("Nom du tribunal compétent"),
-    #)
-    #numero_dossier = models.CharField(
-        #_("Numéro de dossier"),
-        #max_length=100,
-        #null=True,
-        #blank=True,
-        #help_text=_("Référence officielle du dossier"),
-    #)
-    #secteur_activite = models.CharField(
-        #_("Secteur d'activité"),
-        #max_length=255,
-        #null=True,
-        #blank=True,
-        #help_text=_("Secteur d'activité de l'entreprise concernée"),
-    #)
+    tribunal = models.CharField(
+        _("Tribunal compétent"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Nom du tribunal compétent"),
+    )
+    numero_dossier = models.CharField(
+        _("Numéro de dossier"),
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text=_("Référence officielle du dossier"),
+    )
+    secteur_activite = models.CharField(
+        _("Secteur d'activité"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Secteur d'activité de l'entreprise concernée"),
+    )
     description = models.TextField(
         _("Description"),
         null=True,
         blank=True,
         help_text=_("Description détaillée de la procédure collective"),
     )
-    #montant_creance = models.DecimalField(
-        #_("Montant total des créances déclarées"),
-        #max_digits=15,
-        #decimal_places=2,
-        #null=True,
-        #blank=True,
-        #help_text=_("Montant en FCFA"),
-    #)
-    #impact_assureur = models.TextField(
-        #_("Impact pour l’assureur crédit"),
-        #null=True,
-        #blank=True,
-        #help_text=_("Résumé de l’impact et des mesures prises par l’assureur crédit"),
-    #)
+    montant_creance = models.DecimalField(
+        _("Montant total des créances déclarées"),
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Montant en FCFA"),
+    )
+    impact_assureur = models.TextField(
+        _("Impact pour l’assureur crédit"),
+        null=True,
+        blank=True,
+        help_text=_("Résumé de l’impact et des mesures prises par l’assureur crédit"),
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -9885,6 +9925,25 @@ class RegistreCommerce(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_registres_commerce',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_registres_commerce',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -9927,6 +9986,25 @@ class Cotisation(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_cotisations_sociales',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_cotisations_sociales',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -10077,6 +10155,32 @@ class Certification(Model):
         blank=True, null=True, verbose_name="Description / Commentaires"
     )
 
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_certifications',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_certifications',
+        verbose_name=_("Mis à jour par")
+    )
+
     history = HistoricalRecords()
 
 
@@ -10201,6 +10305,32 @@ class InnovationDeveloppement(Model):
     date_debut = models.DateField(blank=True, null=True, verbose_name="Date de Début")
     date_fin = models.DateField(
         blank=True, null=True, verbose_name="Date de Fin (si applicable)"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_innovations_developpements',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_innovations_developpements',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -10328,6 +10458,32 @@ class StrategiePlanification(Model):
     )
     date_mise_en_place = models.DateField(
         blank=True, null=True, verbose_name="Date de Mise en Place"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_strategies_planifications',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_strategies_planifications',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -10459,6 +10615,32 @@ class ConformiteReglementation(Model):
         max_length=255, blank=True, null=True, verbose_name="Organisme de Contrôle"
     )
     commentaires = models.TextField(blank=True, null=True, verbose_name="Commentaires")
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_conformites_reglementations',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_conformites_reglementations',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 

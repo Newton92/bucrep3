@@ -1,460 +1,1317 @@
 {% extends 'main/root/base.html' %}
-{% load static %}
-{% block css %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <style>
-    .rc-card {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 20px;
-        background-color: #f8f9fa;
-        margin-bottom: 20px;
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --registre-gradient: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%);
+}
+
+/* Carte Registre de Commerce */
+.registre-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.registre-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #6610f2;
+}
+
+.registre-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--registre-gradient);
+}
+
+/* En-tête de la carte */
+.registre-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.registre-main {
+    flex: 1;
+}
+
+.registre-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #6610f2;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 0.25rem;
+}
+
+.registre-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.registre-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(102, 16, 242, 0.1);
+    color: #6610f2;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.registre-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Badge date */
+.date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, #6f42c1 0%, #9b5de5 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.date-badge i {
+    font-size: 0.75rem;
+}
+
+/* Actions rapides */
+.registre-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.btn-registre {
+    background: var(--registre-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-registre:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 16, 242, 0.3);
+    color: white;
+}
+
+.btn-registre-outline {
+    background: transparent;
+    border: 2px solid #6610f2;
+    color: #6610f2;
+}
+
+.btn-registre-outline:hover {
+    background: #6610f2;
+    color: white;
+}
+
+/* Informations métadonnées */
+.registre-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.enhanced-form .form-control:focus {
+    border-color: #6610f2;
+    box-shadow: 0 0 0 0.25rem rgba(102, 16, 242, 0.15);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--registre-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des registres */
+.registres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    flex: 1;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #6610f2;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Indicateur Registre */
+.registre-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #6610f2;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Info bulle */
+.info-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+.info-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* Date picker personnalisé */
+.flatpickr-input {
+    background-color: white;
+    cursor: pointer;
+}
+
+.flatpickr-calendar {
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .registres-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     }
-    .rc-title {
-        font-weight: bold;
-        margin-bottom: 15px;
-        color: #343a40;
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .registres-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
-    .rc-info {
-        margin-bottom: 10px;
+    
+    .registre-header {
+        flex-direction: column;
+        gap: 1rem;
     }
-    .rc-label {
-        font-weight: 500;
-        color: #6c757d;
+    
+    .registre-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
     }
-    .rc-value {
-        color: #212529;
+    
+    .search-controls {
+        flex-direction: column;
     }
-    .rc-date {
-        color: #6c757d;
-        font-size: 0.9rem;
+    
+    .empty-state {
+        padding: 2rem 1rem;
     }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .registre-title {
+        font-size: 1.1rem;
+    }
+    
+    .registre-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .registre-indicator {
+        position: static;
+        display: inline-flex;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Animation pour validation */
+.input-valid {
+    position: relative;
+}
+
+.input-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Style pour les numéros */
+.number-highlight {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border-left: 3px solid #6610f2;
+}
+
+.number-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    letter-spacing: 1px;
+}
 </style>
 {% endblock %}
+
 {% block body %}
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i> Registre de Commerce de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-<!-- Counter START -->
-<div class="row g-4">
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h4 id="countRegistreCommerce">Module de Gestion du Registre de Commerce</h4>
-                    <span>Dans ce module, vous pouvez consulter, ajouter ou modifier le registre de commerce de l'acheteur.</span>
-                </div>
-            </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-file-contract text-primary me-2"></i>Registres de Commerce
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des registres de commerce de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
         </div>
     </div>
-</div>
-<!-- Counter END -->
-<!-- Acheteur Info START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border">
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si vous souhaitez retourner à la page de gestion de l'acheteur, cliquez sur son nom.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Acheteur Info END -->
-<!-- Registre Commerce START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="card-header-title">Registre de Commerce</h5>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                 <div>
-                    {% if not registre_existe %}
-                    <button type="button" class="btn btn-primary" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addRegistreCommerceModal">
-                        <i class="bi bi-plus-lg me-1"></i> Ajouter un registre
-                    </button>
-                    {% else %}
-                    <button type="button" class="btn btn-primary" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#editRegistreCommerceModal">
-                        <i class="bi bi-pencil-square me-1"></i> Éditer le registre
-                    </button>
-                    <button type="button" class="btn btn-danger" id="deleteRegistreCommerceBtn">
-                        <i class="bi bi-trash me-1"></i> Supprimer
-                    </button>
-                    {% endif %}
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
                 </div>
-            </div>
-            <div class="card-body">
-                <div id="registreCommerceContainer">
-                    {% if not registre_existe %}
-                    <div class="alert alert-info">
-                        Aucun registre de commerce enregistré pour cet acheteur.
-                    </div>
-                    {% else %}
-                    <div class="rc-card">
-                        <div class="rc-title">
-                            <i class="bi bi-file-earmark-text me-2"></i> Registre de Commerce
-                        </div>
-                        <div class="rc-info">
-                            <div class="rc-label">Numéro de registre :</div>
-                            <div class="rc-value" id="rcNumero"></div>
-                        </div>
-                        <div class="rc-info">
-                            <div class="rc-label">Date d'inscription :</div>
-                            <div class="rc-value" id="rcDateInscription"></div>
-                        </div>
-                        <div class="rc-date">
-                            <small>Dernière mise à jour : <span id="rcUpdatedAt"></span></small>
-                        </div>
-                    </div>
-                    {% endif %}
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Registre Commerce END -->
-<!-- Add Registre Commerce Modal START -->
-<div class="modal fade" id="addRegistreCommerceModal" tabindex="-1" aria-labelledby="addRegistreCommerceModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addRegistreCommerceModalLabel">Ajouter un Registre de Commerce</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="addRegistreCommerceForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="numero" class="form-label">Numéro de registre de commerce <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="numero" name="numero" required>
+        </div>
+    </div>
+
+    <!-- Statistiques simplifiées -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ registres_count }}</div>
+            <div class="stat-label">Registres de Commerce</div>
+        </div>
+    </div>
+
+    <!-- Section Registres de Commerce -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Registres de Commerce Associés
+                        <span class="badge bg-primary ms-2">{{ registres_count }}</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addRegistreModal">
+                            <i class="fas fa-plus-circle me-1"></i>Ajouter un registre
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="date_inscription" class="form-label">Date d'inscription</label>
-                        <input type="date" class="form-control" id="date_inscription" name="date_inscription">
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche -->
+                    <div class="search-controls mb-4">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchRegistreInput" 
+                                       placeholder="Rechercher par numéro ou date...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary" id="clearSearchBtn">
+                            <i class="fas fa-times me-1"></i>Effacer
+                        </button>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    </div>
-                </form>
+
+                    {% if registres %}
+                        <!-- Grille des registres -->
+                        <div class="registres-grid" id="registresContainer">
+                            {% for registre in registres %}
+                                <div class="registre-card" data-id="{{ registre.id }}">
+                                    <!-- Indicateur -->
+                                    <span class="registre-indicator">
+                                        <i class="fas fa-file-contract"></i> RC
+                                    </span>
+                                    <br>
+                                    
+                                    <div class="registre-header">
+                                        <div class="registre-main">
+                                            <div class="registre-number">
+                                                <i class="fas fa-hashtag me-2"></i>
+                                                {{ registre.numero|default:"N/A" }}
+                                            </div>
+                                            <div class="registre-subtitle">
+                                                Registre de commerce
+                                            </div>
+                                            {% if registre.date_inscription %}
+                                            <div class="date-badge">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                Inscription: {{ registre.date_inscription|date:"d/m/Y" }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="registre-actions">
+                                            <button class="btn btn-sm btn-outline-warning edit-registre-btn" 
+                                                    data-id="{{ registre.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-registre-btn" 
+                                                    data-id="{{ registre.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Métadonnées -->
+                                    <div class="registre-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <span>Ajouté le: {{ registre.created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-sync-alt"></i>
+                                            <span>Màj: {{ registre.updated_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide -->
+                        <div class="empty-state">
+                            <i class="fas fa-file-contract empty-state-icon"></i>
+                            <h4 class="fw-bold mb-2">Aucun registre de commerce</h4>
+                            <p class="text-muted mb-4">
+                                Cet acheteur ne possède pas encore de registre de commerce associé.<br>
+                                Le registre de commerce est le document officiel d'immatriculation de l'entreprise.
+                            </p>
+                            <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addRegistreModal">
+                                <i class="fas fa-plus-circle me-2"></i>Ajouter le premier registre
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Add Registre Commerce Modal END -->
-<!-- Edit Registre Commerce Modal START -->
-<div class="modal fade" id="editRegistreCommerceModal" tabindex="-1" aria-labelledby="editRegistreCommerceModalLabel" aria-hidden="true">
+
+<!-- Modal Ajout Registre -->
+<div class="modal fade" id="addRegistreModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editRegistreCommerceModalLabel">Éditer le Registre de Commerce</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Registre de Commerce
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editRegistreCommerceForm">
-                    <input type="hidden" id="editRegistreCommerceId" name="id">
-                    <div class="mb-3">
-                        <label for="editNumero" class="form-label">Numéro de registre de commerce <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="editNumero" name="numero" required>
+            <form id="addRegistreForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="numeroRegistre" class="form-label">
+                            <i class="fas fa-hashtag text-primary"></i>Numéro de registre
+                            <span class="info-tooltip" data-tooltip="Numéro officiel d'immatriculation au registre de commerce">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="numeroRegistre" 
+                               name="numero"
+                               placeholder="Ex: RC123456789"
+                               required
+                               maxlength="255">
+                        <div class="form-text">
+                            Saisissez le numéro exact du registre de commerce
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateInscription" class="form-label">Date d'inscription</label>
-                        <input type="date" class="form-control" id="editDateInscription" name="date_inscription">
+                    
+                    <div class="form-group">
+                        <label for="dateInscription" class="form-label">
+                            <i class="fas fa-calendar-alt text-primary"></i>Date d'inscription
+                        </label>
+                        <input type="text" 
+                               class="form-control flatpickr-input" 
+                               id="dateInscription" 
+                               name="date_inscription"
+                               placeholder="Sélectionner une date"
+                               data-date-format="d/m/Y">
+                        <div class="form-text">
+                            Date d'immatriculation au registre de commerce (optionnel)
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Ajouter
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Registre -->
+<div class="modal fade" id="editRegistreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le Registre de Commerce
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRegistreForm" class="enhanced-form">
+                <input type="hidden" id="editRegistreId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNumeroRegistre" class="form-label">
+                            <i class="fas fa-hashtag text-primary"></i>Numéro de registre
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="editNumeroRegistre" 
+                               name="numero"
+                               placeholder="Ex: RC123456789"
+                               required
+                               maxlength="255">
                     </div>
-                </form>
+                    
+                    <div class="form-group">
+                        <label for="editDateInscription" class="form-label">
+                            <i class="fas fa-calendar-alt text-primary"></i>Date d'inscription
+                        </label>
+                        <input type="text" 
+                               class="form-control flatpickr-input" 
+                               id="editDateInscription" 
+                               name="date_inscription"
+                               placeholder="Sélectionner une date"
+                               data-date-format="d/m/Y">
+                    </div>
+                    
+                    <div class="registre-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Créé le: <span id="editCreatedAtInfo"></span></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Dernière Màj: <span id="editUpdatedAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outside-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-file-excel fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer le registre de commerce</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer ce registre de commerce ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="mt-3">
+                    <div class="number-highlight">
+                        <div class="number-display" id="deleteNumeroInfo"></div>
+                    </div>
+                    <div class="small text-muted mt-2" id="deleteDateInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Registre Commerce Modal END -->
 {% endblock %}
+
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+
 <script>
-    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA à HH:MM)
-    function formatDateTime(dateString) {
-        if (!dateString) return "Jamais";
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/registres-commerce-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentRegistreId = null;
+
+    // Initialiser Flatpickr pour les dates
+    flatpickr('.flatpickr-input', {
+        dateFormat: 'Y-m-d',
+        locale: 'fr',
+        allowInput: true,
+        disableMobile: true,
+        altInput: true,
+        altFormat: 'd/m/Y',
+        static: true
+    });
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        if (!dateString) return 'Non spécifiée';
         const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+        return date.toLocaleDateString('fr-FR');
     }
 
-    // Fonction pour formater les dates (date -> JJ.MM.AAAA)
-    function formatSimpleDate(dateString) {
-        if (!dateString) return "Non spécifiée";
-        const parts = dateString.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}.${parts[1]}.${parts[0]}`;
-        }
-        return dateString;
+    // Fonction pour formater la date et heure
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('fr-FR');
     }
 
-    $(document).ready(function() {
-        var registreExiste = false;
+    // Charger les registres de commerce
+    function loadRegistres(search = '') {
+        if (search) {
+            let url = API_BASE_URL;
+            url += `?search=${encodeURIComponent(search)}`;
 
-        // Charger les données de l'acheteur
-        function loadAcheteur() {
-            const id = '{{ id_acheteur }}';
             $.ajax({
-                url: `/api/consulter-un-acheteur/${id}/`,
+                url: url,
                 type: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
                 },
                 success: function(response) {
-                    $('#editNom').text(response.nom);
-                    $('#editSigle').text(response.sigle);
-                    $('#editCode').text(response.code);
+                    const container = $('#registresContainer');
+                    const emptyState = $('.empty-state');
+                    const statsCards = $('.stats-cards');
+                    
+                    if (response.results && response.results.length > 0) {
+                        // Cacher l'état vide
+                        if (emptyState.length) {
+                            emptyState.hide();
+                        }
+                        
+                        // Afficher les registres
+                        let html = '';
+                        
+                        response.results.forEach(function(registre) {
+                            const numero = registre.numero || 'N/A';
+                            const dateInscription = registre.date_inscription ? formatDate(registre.date_inscription) : null;
+                            const createdAt = formatDateTime(registre.created_at);
+                            const updatedAt = formatDateTime(registre.updated_at);
+                            
+                            html += `
+                            <div class="registre-card" data-id="${registre.id}">
+                                <span class="registre-indicator">
+                                    <i class="fas fa-file-contract"></i> RC
+                                </span>
+                                <br>
+                                
+                                <div class="registre-header">
+                                    <div class="registre-main">
+                                        <div class="registre-number">
+                                            <i class="fas fa-hashtag me-2"></i>
+                                            ${numero}
+                                        </div>
+                                        <div class="registre-subtitle">
+                                            Registre de commerce
+                                        </div>
+                                        ${dateInscription ? `
+                                        <div class="date-badge">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            Inscription: ${dateInscription}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="registre-actions">
+                                        <button class="btn btn-sm btn-outline-warning edit-registre-btn" 
+                                                data-id="${registre.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-registre-btn" 
+                                                data-id="${registre.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="registre-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span>Ajouté le: ${createdAt}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <span>Màj: ${updatedAt}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+                        
+                        container.html(html);
+                        
+                        // Initialiser les tooltips
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                        
+                        // Mettre à jour les statistiques
+                        if (statsCards.length) {
+                            statsCards.find('.stat-number').first().text(response.count || response.results?.length || 0);
+                        }
+                        
+                    } else {
+                        // Afficher l'état vide
+                        if (!emptyState.length) {
+                            container.html(`
+                                <div class="empty-state">
+                                    <i class="fas fa-file-contract empty-state-icon"></i>
+                                    <h4 class="fw-bold mb-2">Aucun registre trouvé</h4>
+                                    <p class="text-muted mb-4">
+                                        Aucun registre de commerce ne correspond à votre recherche.
+                                    </p>
+                                </div>
+                            `);
+                        } else {
+                            emptyState.show();
+                        }
+                    }
                 },
                 error: function(xhr) {
+                    console.error('Erreur lors du chargement:', xhr);
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les registres de commerce.'
                     });
                 }
             });
         }
+    }
 
-        // Charger le registre de commerce
-        function loadRegistreCommerce() {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-registre-commerce/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    registreExiste = true;
-                    $('#rcNumero').text(response.numero);
-                    $('#rcDateInscription').text(formatSimpleDate(response.date_inscription));
-                    $('#rcUpdatedAt').text(formatDateTime(response.updated_at));
-
-                    // Pré-remplir le formulaire d'édition
-                    $('#editRegistreCommerceId').val(response.id);
-                    $('#editNumero').val(response.numero);
-                    $('#editDateInscription').val(response.date_inscription);
-
-                    // Mettre à jour l'interface
-                    $('#registreCommerceContainer').html(`
-                        <div class="rc-card">
-                            <div class="rc-title">
-                                <i class="bi bi-file-earmark-text me-2"></i> Registre de Commerce
-                            </div>
-                            <div class="rc-info">
-                                <div class="rc-label">Numéro de registre :</div>
-                                <div class="rc-value">${response.numero}</div>
-                            </div>
-                            <div class="rc-info">
-                                <div class="rc-label">Date d'inscription :</div>
-                                <div class="rc-value">${formatSimpleDate(response.date_inscription)}</div>
-                            </div>
-                            <div class="rc-date">
-                                <small>Dernière mise à jour : ${formatDateTime(response.updated_at)}</small>
-                            </div>
-                        </div>
-                    `);
-                },
-                error: function(response) {
-                    if (response.status === 404) {
-                        registreExiste = false;
-                        $('#registreCommerceContainer').html(`
-                            <div class="alert alert-info">
-                                Aucun registre de commerce enregistré pour cet acheteur.
-                            </div>
-                        `);
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Erreur lors de la récupération du registre de commerce.',
-                        });
+    // Recherche de registres
+    $('#searchRegistreInput').on('input', function() {
+        const search = $(this).val();
+        loadRegistres(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchRegistreInput').val('');
+        loadRegistres();
+    });
+    
+    // Formulaire d'ajout
+    $('#addRegistreForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            numero: $('#numeroRegistre').val(),
+            date_inscription: $('#dateInscription').val() || null,
+            acheteur: ACHETEUR_ID
+        };
+        
+        if (!formData.numero) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champ requis',
+                text: 'Le numéro de registre est obligatoire.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addRegistreModal').modal('hide');
+                $('#addRegistreForm')[0].reset();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadRegistres();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout du registre de commerce';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.numero) {
+                        errorMessage = Array.isArray(xhr.responseJSON.numero) ? 
+                            xhr.responseJSON.numero.join('\n') : xhr.responseJSON.numero;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
                     }
                 }
-            });
-        }
-
-        // Soumettre le formulaire d'ajout
-        $('#addRegistreCommerceForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-registre-commerce/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Registre de commerce ajouté avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addRegistreCommerceModal').modal('hide');
-                        $('#addRegistreCommerceForm')[0].reset();
-                        loadRegistreCommerce();
-                    });
-                },
-                error: function(response) {
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout du registre de commerce.',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
                     });
-                }
-            });
-        });
-
-        // Soumettre le formulaire d'édition
-        $('#editRegistreCommerceForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editRegistreCommerceId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-registre-commerce/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Registre de commerce mis à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editRegistreCommerceModal').modal('hide');
-                        loadRegistreCommerce();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour du registre de commerce.',
-                    });
-                }
-            });
-        });
-
-        // Supprimer le registre de commerce
-        $('#deleteRegistreCommerceBtn').on('click', function() {
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous allez supprimer le registre de commerce de cet acheteur!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Oui, supprimer!',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-registre-commerce/',
-                        type: 'DELETE',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'Le registre de commerce a été supprimé.',
-                                'success'
-                            ).then(() => {
-                                loadRegistreCommerce();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression du registre de commerce.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercepter les réponses AJAX pour vérifier l'expiration du token
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    refreshToken();
                 }
             }
         });
-
-        // Rafraîchir le token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    localStorage.setItem('access_token', response.access);
-                    // Rejouer la requête qui a échoué
-                    $.ajax(this);
-                },
-                error: function(response) {
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-registre-btn', function() {
+        const registreId = $(this).data('id');
+        currentRegistreId = registreId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${registreId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editRegistreId').val(response.id);
+                $('#editNumeroRegistre').val(response.numero);
+                
+                // Définir la date d'inscription au format YYYY-MM-DD
+                if (response.date_inscription) {
+                    // Le serveur retourne déjà YYYY-MM-DD
+                    $('#editDateInscription').flatpickr().setDate(response.date_inscription, false);
+                } else {
+                    $('#editDateInscription').flatpickr().clear();
+                }
+                
+                // Pré-remplir les dates
+                $('#editCreatedAtInfo').text(formatDateTime(response.created_at));
+                $('#editUpdatedAtInfo').text(formatDateTime(response.updated_at));
+                
+                $('#editRegistreModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Session expirée',
-                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Annuler',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        }
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails du registre de commerce.'
                     });
                 }
-            });
-        }
-
-        // Charger les données au démarrage
-        loadAcheteur();
-        loadRegistreCommerce();
+            }
+        });
     });
+    
+    // Formulaire de modification
+    $('#editRegistreForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentRegistreId) return;
+        
+        const formData = {
+            numero: $('#editNumeroRegistre').val(),
+            date_inscription: $('#editDateInscription').val() || null
+        };
+
+        console.log('DEBUG - Données envoyées:', formData);
+        
+        if (!formData.numero) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champ requis',
+                text: 'Le numéro de registre est obligatoire.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentRegistreId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editRegistreModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadRegistres();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification du registre de commerce';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.numero) {
+                        errorMessage = Array.isArray(xhr.responseJSON.numero) ? 
+                            xhr.responseJSON.numero.join('\n') : xhr.responseJSON.numero;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-registre-btn', function() {
+        const registreId = $(this).data('id');
+        const card = $(this).closest('.registre-card');
+        const numero = card.find('.registre-number').text().replace('📋 ', '');
+        const dateBadge = card.find('.date-badge');
+        const date = dateBadge.length ? dateBadge.text().replace('📅 ', '') : 'Date non spécifiée';
+        
+        currentRegistreId = registreId;
+        $('#deleteNumeroInfo').text(numero);
+        $('#deleteDateInfo').text(date);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentRegistreId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentRegistreId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadRegistres();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer le registre de commerce'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialiser les tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 </script>
 {% endblock %}

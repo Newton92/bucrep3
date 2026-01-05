@@ -20,6 +20,27 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 # Vos serializers ici !
+class UserSimpleSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+    
+    
+class UserSimpleOneSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'full_name']
+    
+    def get_full_name(self, obj):
+        return obj.get_full_name()
+
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -6902,7 +6923,6 @@ class ListCertificationSerializer(serializers.ModelSerializer):
             "description",
         ]
 
-
 class AddCertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
@@ -6914,7 +6934,6 @@ class AddCertificationSerializer(serializers.ModelSerializer):
             "organisme_delivreur",
             "description",
         ]
-
 
 class DetailCertificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -6928,7 +6947,6 @@ class DetailCertificationSerializer(serializers.ModelSerializer):
             "organisme_delivreur",
             "description",
         ]
-
 
 class EditCertificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -6946,7 +6964,6 @@ class EditCertificationSerializer(serializers.ModelSerializer):
             "id": {"read_only": True},
         }
 
-
 class SearchCertificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
@@ -6959,6 +6976,186 @@ class SearchCertificationSerializer(serializers.ModelSerializer):
             "organisme_delivreur",
             "description",
         ]
+        
+###########################################################################    
+#    
+# CERTIFICATION ACHETEUR 
+#    
+###########################################################################   
+
+class CertificationOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    type_certification_display = serializers.CharField(source='get_type_certification_display', read_only=True)
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    
+    class Meta:
+        model = Certification
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'type_certification', 
+            'type_certification_display',
+            'nom_certification', 
+            'date_obtention',
+            'organisme_delivreur',
+            'description',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info', 'type_certification_display']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class CertificationDetailOneSerializer(serializers.ModelSerializer):
+    type_certification_display = serializers.CharField(source='get_type_certification_display', read_only=True)
+    
+    class Meta:
+        model = Certification
+        fields = ['id', 'acheteur', 'type_certification', 'type_certification_display', 'nom_certification', 
+                  'date_obtention', 'organisme_delivreur', 'description']
+        read_only_fields = ['type_certification_display']
+
+class AddCertificationOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = Certification
+        fields = ['type_certification', 'nom_certification', 'date_obtention', 
+                  'organisme_delivreur', 'description', 'acheteur']
+    
+    def create(self, validated_data):
+        """Override create method to handle created_by and updated_by"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+            validated_data['updated_by'] = request.user
+        
+        return super().create(validated_data)
+    
+    def validate(self, data):
+        """Validation globale de la certification"""
+        acheteur = data.get('acheteur')
+        type_certification = data.get('type_certification')
+        nom_certification = data.get('nom_certification', '').strip()
+        
+        # Vérifier l'unicité selon la contrainte du modèle
+        existing = Certification.objects.filter(
+            acheteur=acheteur,
+            type_certification=type_certification,
+            nom_certification=nom_certification
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'nom_certification': 'Cette certification existe déjà pour cet acheteur.'
+            })
+        
+        # Si le type est "autre", vérifier que le nom est renseigné
+        if type_certification == 'autre' and not nom_certification:
+            raise serializers.ValidationError({
+                'nom_certification': 'Le nom de la certification est obligatoire pour le type "Autre".'
+            })
+        
+        return data
+    
+    def validate_date_obtention(self, value):
+        """Validation de la date d'obtention"""
+        if value and value > timezone.now().date():
+            raise serializers.ValidationError("La date d'obtention ne peut pas être dans le futur.")
+        return value
+    
+    def validate_nom_certification(self, value):
+        """Validation du nom de certification"""
+        if value:
+            value = value.strip()
+            if len(value) < 2:
+                raise serializers.ValidationError("Le nom de la certification doit contenir au moins 2 caractères.")
+        return value
+
+class EditCertificationOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certification
+        fields = ['type_certification', 'nom_certification', 'date_obtention', 
+                  'organisme_delivreur', 'description']
+    
+    def update(self, instance, validated_data):
+        """Override update method to handle updated_by"""
+        # Mettre à jour les champs
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Mettre à jour updated_by si request est dans le contexte
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            instance.updated_by = request.user
+        
+        instance.save()
+        return instance
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        type_certification = data.get('type_certification', self.instance.type_certification)
+        nom_certification = data.get('nom_certification', self.instance.nom_certification or '')
+        
+        # Vérifier l'unicité
+        if 'type_certification' in data or 'nom_certification' in data:
+            existing = Certification.objects.filter(
+                acheteur=self.instance.acheteur,
+                type_certification=type_certification,
+                nom_certification=nom_certification.strip()
+            ).exclude(id=self.instance.id).exists()
+            
+            if existing:
+                raise serializers.ValidationError({
+                    'nom_certification': 'Cette certification existe déjà pour cet acheteur.'
+                })
+        
+        # Si le type est "autre", vérifier que le nom est renseigné
+        if type_certification == 'autre' and not nom_certification.strip():
+            raise serializers.ValidationError({
+                'nom_certification': 'Le nom de la certification est obligatoire pour le type "Autre".'
+            })
+        
+        return data
+    
+    def validate_date_obtention(self, value):
+        """Validation de la date d'obtention"""
+        if value and value > timezone.now().date():
+            raise serializers.ValidationError("La date d'obtention ne peut pas être dans le futur.")
+        return value
+    
+    def validate_nom_certification(self, value):
+        """Validation du nom de certification"""
+        if value:
+            value = value.strip()
+            if len(value) < 2:
+                raise serializers.ValidationError("Le nom de la certification doit contenir au moins 2 caractères.")
+        return value
+
+class CertificationSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    type_certification_display = serializers.CharField(source='get_type_certification_display', read_only=True)
+    
+    class Meta:
+        model = Certification
+        fields = ['id', 'type_certification', 'type_certification_display', 'nom_certification', 
+                  'date_obtention', 'organisme_delivreur', 'acheteur_nom', 'acheteur_code', 
+                  'created_at', 'updated_at']
 
 
 
@@ -6977,7 +7174,6 @@ class ListInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "date_fin",
         ]
 
-
 class AddInnovationDeveloppementSerializer(serializers.ModelSerializer):
     class Meta:
         model = InnovationDeveloppement
@@ -6989,7 +7185,6 @@ class AddInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "date_debut",
             "date_fin",
         ]
-
 
 class DetailInnovationDeveloppementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7003,7 +7198,6 @@ class DetailInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "date_debut",
             "date_fin",
         ]
-
 
 class EditInnovationDeveloppementSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7021,7 +7215,6 @@ class EditInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "id": {"read_only": True},
         }
 
-
 class SearchInnovationDeveloppementSerializer(serializers.ModelSerializer):
     class Meta:
         model = InnovationDeveloppement
@@ -7034,6 +7227,148 @@ class SearchInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "date_debut",
             "date_fin",
         ]
+        
+###########################################################################    
+#    
+# INNOVATION ET DEVELOPPEMENT 
+#    
+###########################################################################   
+
+class InnovationDeveloppementOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by_info = serializers.SerializerMethodField()
+    updated_by_info = serializers.SerializerMethodField()
+    type_innovation_display = serializers.CharField(source='get_type_innovation_display', read_only=True)
+    
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'type_innovation',
+            'type_innovation_display',
+            'titre', 
+            'description',
+            'date_debut',
+            'date_fin',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'created_by_info',
+            'updated_by',
+            'updated_by_info'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+    
+    def get_created_by_info(self, obj):
+        if obj.created_by:
+            return {
+                'id': obj.created_by.id,
+                'username': obj.created_by.username,
+                'email': obj.created_by.email,
+                'full_name': obj.created_by.get_full_name()
+            }
+        return None
+    
+    def get_updated_by_info(self, obj):
+        if obj.updated_by:
+            return {
+                'id': obj.updated_by.id,
+                'username': obj.updated_by.username,
+                'email': obj.updated_by.email,
+                'full_name': obj.updated_by.get_full_name()
+            }
+        return None
+
+class AddInnovationDeveloppementOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            'acheteur',
+            'type_innovation',
+            'titre',
+            'description',
+            'date_debut',
+            'date_fin'
+        ]
+    
+    def validate(self, data):
+        """Validation globale"""
+        # Vérifier les dates
+        date_debut = data.get('date_debut')
+        date_fin = data.get('date_fin')
+        
+        if date_debut and date_fin and date_fin < date_debut:
+            raise serializers.ValidationError({
+                'date_fin': 'La date de fin doit être postérieure à la date de début.'
+            })
+        
+        return data
+
+class EditInnovationDeveloppementOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            'type_innovation',
+            'titre',
+            'description',
+            'date_debut',
+            'date_fin'
+        ]
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        date_debut = data.get('date_debut', self.instance.date_debut)
+        date_fin = data.get('date_fin', self.instance.date_fin)
+        
+        if date_debut and date_fin and date_fin < date_debut:
+            raise serializers.ValidationError({
+                'date_fin': 'La date de fin doit être postérieure à la date de début.'
+            })
+        
+        return data
+
+class InnovationDeveloppementSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    type_innovation_display = serializers.CharField(source='get_type_innovation_display', read_only=True)
+    
+    class Meta:
+        model = InnovationDeveloppement
+        fields = [
+            'id', 
+            'acheteur_nom',
+            'acheteur_code',
+            'type_innovation',
+            'type_innovation_display',
+            'titre', 
+            'description',
+            'date_debut',
+            'date_fin',
+            'created_at',
+            'updated_at'
+        ]
+
+
+
+
+
+
 
 
 class ListStrategiePlanificationSerializer(serializers.ModelSerializer):
@@ -7047,12 +7382,10 @@ class ListStrategiePlanificationSerializer(serializers.ModelSerializer):
             "date_mise_en_place",
         ]
 
-
 class AddStrategiePlanificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = StrategiePlanification
         fields = ["acheteur", "type_strategie", "description", "date_mise_en_place"]
-
 
 class DetailStrategiePlanificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7064,7 +7397,6 @@ class DetailStrategiePlanificationSerializer(serializers.ModelSerializer):
             "description",
             "date_mise_en_place",
         ]
-
 
 class EditStrategiePlanificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7080,7 +7412,6 @@ class EditStrategiePlanificationSerializer(serializers.ModelSerializer):
             "id": {"read_only": True},
         }
 
-
 class SearchStrategiePlanificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = StrategiePlanification
@@ -7091,6 +7422,129 @@ class SearchStrategiePlanificationSerializer(serializers.ModelSerializer):
             "description",
             "date_mise_en_place",
         ]
+        
+###########################################################################    
+#    
+# STRATEGIE ET PLANIFICATION 
+#    
+###########################################################################   
+
+class StrategiePlanificationOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by_info = serializers.SerializerMethodField()
+    updated_by_info = serializers.SerializerMethodField()
+    type_strategie_display = serializers.CharField(source='get_type_strategie_display', read_only=True)
+    
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'type_strategie',
+            'type_strategie_display',
+            'description',
+            'date_mise_en_place',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'created_by_info',
+            'updated_by',
+            'updated_by_info'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+    
+    def get_created_by_info(self, obj):
+        if obj.created_by:
+            return {
+                'id': obj.created_by.id,
+                'username': obj.created_by.username,
+                'email': obj.created_by.email,
+                'full_name': obj.created_by.get_full_name()
+            }
+        return None
+    
+    def get_updated_by_info(self, obj):
+        if obj.updated_by:
+            return {
+                'id': obj.updated_by.id,
+                'username': obj.updated_by.username,
+                'email': obj.updated_by.email,
+                'full_name': obj.updated_by.get_full_name()
+            }
+        return None
+
+class AddStrategiePlanificationOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            'acheteur',
+            'type_strategie',
+            'description',
+            'date_mise_en_place'
+        ]
+    
+    def validate_date_mise_en_place(self, value):
+        """Validation de la date de mise en place"""
+        if value and value > timezone.now().date():
+            raise serializers.ValidationError("La date de mise en place ne peut pas être dans le futur.")
+        return value
+
+class EditStrategiePlanificationOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            'type_strategie',
+            'description',
+            'date_mise_en_place'
+        ]
+    
+    def validate_date_mise_en_place(self, value):
+        """Validation de la date de mise en place"""
+        if value and value > timezone.now().date():
+            raise serializers.ValidationError("La date de mise en place ne peut pas être dans le futur.")
+        return value
+
+class StrategiePlanificationSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    type_strategie_display = serializers.CharField(source='get_type_strategie_display', read_only=True)
+    
+    class Meta:
+        model = StrategiePlanification
+        fields = [
+            'id', 
+            'acheteur_nom',
+            'acheteur_code',
+            'type_strategie',
+            'type_strategie_display',
+            'description',
+            'date_mise_en_place',
+            'created_at',
+            'updated_at'
+        ]
+
+
+
+
+
+
+
+
 
 
 class ListConformiteReglementationSerializer(serializers.ModelSerializer):
@@ -7107,7 +7561,6 @@ class ListConformiteReglementationSerializer(serializers.ModelSerializer):
             "commentaires",
         ]
 
-
 class AddConformiteReglementationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConformiteReglementation
@@ -7120,7 +7573,6 @@ class AddConformiteReglementationSerializer(serializers.ModelSerializer):
             "organisme_controle",
             "commentaires",
         ]
-
 
 class DetailConformiteReglementationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7135,7 +7587,6 @@ class DetailConformiteReglementationSerializer(serializers.ModelSerializer):
             "organisme_controle",
             "commentaires",
         ]
-
 
 class EditConformiteReglementationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7154,7 +7605,6 @@ class EditConformiteReglementationSerializer(serializers.ModelSerializer):
             "id": {"read_only": True},
         }
 
-
 class SearchConformiteReglementationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConformiteReglementation
@@ -7168,6 +7618,188 @@ class SearchConformiteReglementationSerializer(serializers.ModelSerializer):
             "organisme_controle",
             "commentaires",
         ]
+        
+###########################################################################    
+#    
+# CONFORMITE ET REGLEMENTATION 
+#    
+###########################################################################   
+
+class ConformiteReglementationOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by_info = serializers.SerializerMethodField()
+    updated_by_info = serializers.SerializerMethodField()
+    type_conformite_display = serializers.CharField(source='get_type_conformite_display', read_only=True)
+    statut_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'type_conformite',
+            'type_conformite_display',
+            'statut',
+            'statut_display',
+            'details_non_conformite',
+            'date_verification',
+            'organisme_controle',
+            'commentaires',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'created_by_info',
+            'updated_by',
+            'updated_by_info'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+    
+    def get_created_by_info(self, obj):
+        if obj.created_by:
+            return {
+                'id': obj.created_by.id,
+                'username': obj.created_by.username,
+                'email': obj.created_by.email,
+                'full_name': obj.created_by.get_full_name()
+            }
+        return None
+    
+    def get_updated_by_info(self, obj):
+        if obj.updated_by:
+            return {
+                'id': obj.updated_by.id,
+                'username': obj.updated_by.username,
+                'email': obj.updated_by.email,
+                'full_name': obj.updated_by.get_full_name()
+            }
+        return None
+    
+    def get_statut_display(self, obj):
+        return "Conforme" if obj.statut else "Non-conforme"
+
+class AddConformiteReglementationOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            'acheteur',
+            'type_conformite',
+            'statut',
+            'details_non_conformite',
+            'date_verification',
+            'organisme_controle',
+            'commentaires'
+        ]
+    
+    def validate(self, data):
+        """Validation globale"""
+        statut = data.get('statut', True)
+        details_non_conformite = data.get('details_non_conformite')
+        
+        # Si non-conforme, les détails de non-conformité sont requis
+        if not statut and not details_non_conformite:
+            raise serializers.ValidationError({
+                'details_non_conformite': 'Les détails de la non-conformité sont requis lorsque le statut est "Non-conforme".'
+            })
+        
+        # Si conforme, effacer les détails de non-conformité
+        if statut and details_non_conformite:
+            data['details_non_conformite'] = None
+        
+        # Validation de la date
+        date_verification = data.get('date_verification')
+        if date_verification and date_verification > timezone.now().date():
+            raise serializers.ValidationError({
+                'date_verification': 'La date de vérification ne peut pas être dans le futur.'
+            })
+        
+        return data
+
+class EditConformiteReglementationOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            'type_conformite',
+            'statut',
+            'details_non_conformite',
+            'date_verification',
+            'organisme_controle',
+            'commentaires'
+        ]
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        statut = data.get('statut', self.instance.statut)
+        details_non_conformite = data.get('details_non_conformite', self.instance.details_non_conformite)
+        
+        # Si non-conforme, les détails de non-conformité sont requis
+        if not statut and not details_non_conformite:
+            raise serializers.ValidationError({
+                'details_non_conformite': 'Les détails de la non-conformité sont requis lorsque le statut est "Non-conforme".'
+            })
+        
+        # Si conforme, effacer les détails de non-conformité
+        if statut and details_non_conformite:
+            data['details_non_conformite'] = None
+        
+        # Validation de la date
+        date_verification = data.get('date_verification', self.instance.date_verification)
+        if date_verification and date_verification > timezone.now().date():
+            raise serializers.ValidationError({
+                'date_verification': 'La date de vérification ne peut pas être dans le futur.'
+            })
+        
+        return data
+
+class ConformiteReglementationSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    type_conformite_display = serializers.CharField(source='get_type_conformite_display', read_only=True)
+    statut_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ConformiteReglementation
+        fields = [
+            'id', 
+            'acheteur_nom',
+            'acheteur_code',
+            'type_conformite',
+            'type_conformite_display',
+            'statut',
+            'statut_display',
+            'details_non_conformite',
+            'date_verification',
+            'organisme_controle',
+            'commentaires',
+            'created_at',
+            'updated_at'
+        ]
+    
+    def get_statut_display(self, obj):
+        return "Conforme" if obj.statut else "Non-conforme"
+
+
+
+
+
+
+
+
+
 
 
 from rest_framework import serializers
@@ -8248,7 +8880,145 @@ class EditSwotSerializer(serializers.ModelSerializer):
         ]
         
         
+###########################################################################    
+#    
+# SWOT ACHETEUR 
+#    
+###########################################################################   
+
+class SwotOneSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    acheteur_info = serializers.SerializerMethodField()
+    forces_count = serializers.SerializerMethodField()
+    faiblesses_count = serializers.SerializerMethodField()
+    opportunites_count = serializers.SerializerMethodField()
+    menaces_count = serializers.SerializerMethodField()
+    total_elements = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Swot
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'forces', 
+            'faiblesses',
+            'opportunites',
+            'menaces',
+            'forces_count',
+            'faiblesses_count',
+            'opportunites_count',
+            'menaces_count',
+            'total_elements',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+    
+    def get_forces_count(self, obj):
+        if obj.forces:
+            return len([f for f in obj.forces.split('\n') if f.strip()])
+        return 0
+    
+    def get_faiblesses_count(self, obj):
+        if obj.faiblesses:
+            return len([f for f in obj.faiblesses.split('\n') if f.strip()])
+        return 0
+    
+    def get_opportunites_count(self, obj):
+        if obj.opportunites:
+            return len([o for o in obj.opportunites.split('\n') if o.strip()])
+        return 0
+    
+    def get_menaces_count(self, obj):
+        if obj.menaces:
+            return len([m for m in obj.menaces.split('\n') if m.strip()])
+        return 0
+    
+    def get_total_elements(self, obj):
+        return (self.get_forces_count(obj) + 
+                self.get_faiblesses_count(obj) + 
+                self.get_opportunites_count(obj) + 
+                self.get_menaces_count(obj))
+
+class SwotDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Swot
+        fields = ['id', 'acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces']
+
+class AddSwotOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = Swot
+        fields = ['acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces']
+    
+    def validate(self, data):
+        """Validation globale de l'analyse SWOT"""
+        acheteur = data.get('acheteur')
         
+        # Vérifier si une analyse SWOT existe déjà pour cet acheteur
+        existing = Swot.objects.filter(acheteur=acheteur).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'acheteur': 'Une analyse SWOT existe déjà pour cet acheteur.'
+            })
+        
+        # Validation du contenu (au moins un champ doit être rempli)
+        forces = data.get('forces', '')
+        faiblesses = data.get('faiblesses', '')
+        opportunites = data.get('opportunites', '')
+        menaces = data.get('menaces', '')
+        
+        if not any([forces, faiblesses, opportunites, menaces]):
+            raise serializers.ValidationError({
+                'non_field_errors': 'Au moins un des champs (forces, faiblesses, opportunités, menaces) doit être renseigné.'
+            })
+        
+        return data
+
+class EditSwotOneSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Swot
+        fields = ['forces', 'faiblesses', 'opportunites', 'menaces']
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        # Validation du contenu (au moins un champ doit être rempli)
+        forces = data.get('forces', self.instance.forces if self.instance else '')
+        faiblesses = data.get('faiblesses', self.instance.faiblesses if self.instance else '')
+        opportunites = data.get('opportunites', self.instance.opportunites if self.instance else '')
+        menaces = data.get('menaces', self.instance.menaces if self.instance else '')
+        
+        if not any([forces, faiblesses, opportunites, menaces]):
+            raise serializers.ValidationError({
+                'non_field_errors': 'Au moins un des champs (forces, faiblesses, opportunités, menaces) doit être renseigné.'
+            })
+        
+        return data
+        
+        
+        
+
+
+
         
         
         
@@ -8349,6 +9119,149 @@ class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
             "description",
         ]
         
+###########################################################################    
+#    
+# PROCEDURE COLLECTIVE ACHETEUR 
+#    
+###########################################################################   
+
+class ProcedureCollectiveOneSerializer(serializers.ModelSerializer):
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    acheteur_info = serializers.SerializerMethodField()
+    statut = serializers.SerializerMethodField()
+    duree_jours = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ProcedureCollective
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'type_procedure',
+            'date_ouverture',
+            'date_cloture',
+            'tribunal',
+            'numero_dossier',
+            'secteur_activite',
+            'description',
+            'montant_creance',
+            'impact_assureur',
+            'statut',
+            'duree_jours',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info', 'statut', 'duree_jours']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+    
+    def get_statut(self, obj):
+        if obj.date_cloture:
+            return 'Clôturée'
+        return 'En cours'
+    
+    def get_duree_jours(self, obj):
+        if obj.date_ouverture:
+            if obj.date_cloture:
+                return (obj.date_cloture - obj.date_ouverture).days
+            return (datetime.date.today() - obj.date_ouverture).days
+        return None
+
+class ProcedureCollectiveDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcedureCollective
+        fields = ['id', 'acheteur', 'type_procedure', 'date_ouverture', 'date_cloture', 
+                  'tribunal', 'numero_dossier', 'secteur_activite', 'description', 
+                  'montant_creance', 'impact_assureur']
+
+class AddProcedureCollectiveOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = ProcedureCollective
+        fields = ['acheteur', 'type_procedure', 'date_ouverture', 'date_cloture',
+                  'tribunal', 'numero_dossier', 'secteur_activite', 'description',
+                  'montant_creance', 'impact_assureur']
+    
+    def validate(self, data):
+        """Validation globale de la procédure collective"""
+        date_ouverture = data.get('date_ouverture')
+        date_cloture = data.get('date_cloture')
+        
+        # Validation des dates
+        if date_cloture and date_ouverture and date_cloture < date_ouverture:
+            raise serializers.ValidationError({
+                'date_cloture': 'La date de clôture ne peut pas être antérieure à la date d\'ouverture.'
+            })
+        
+        # Validation du montant
+        montant_creance = data.get('montant_creance')
+        if montant_creance is not None and montant_creance < 0:
+            raise serializers.ValidationError({
+                'montant_creance': 'Le montant des créances ne peut pas être négatif.'
+            })
+        
+        return data
+    
+    def validate_type_procedure(self, value):
+        """Validation du type de procédure"""
+        if not value or value.strip() == '':
+            raise serializers.ValidationError("Le type de procédure est obligatoire.")
+        return value.strip()
+
+class EditProcedureCollectiveOneSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = ProcedureCollective
+        fields = ['type_procedure', 'date_ouverture', 'date_cloture',
+                  'tribunal', 'numero_dossier', 'secteur_activite', 'description',
+                  'montant_creance', 'impact_assureur']
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        date_ouverture = data.get('date_ouverture', self.instance.date_ouverture if self.instance else None)
+        date_cloture = data.get('date_cloture', self.instance.date_cloture if self.instance else None)
+        
+        # Validation des dates
+        if date_cloture and date_ouverture and date_cloture < date_ouverture:
+            raise serializers.ValidationError({
+                'date_cloture': 'La date de clôture ne peut pas être antérieure à la date d\'ouverture.'
+            })
+        
+        # Validation du montant
+        montant_creance = data.get('montant_creance', self.instance.montant_creance if self.instance else None)
+        if montant_creance is not None and montant_creance < 0:
+            raise serializers.ValidationError({
+                'montant_creance': 'Le montant des créances ne peut pas être négatif.'
+            })
+        
+        return data
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -8381,6 +9294,175 @@ class EditRegistreCommerceSerializer(serializers.ModelSerializer):
             "numero",
             "date_inscription",
         ]
+
+###########################################################################    
+#    
+# REGISTRE COMMERCE ACHETEUR 
+#    
+###########################################################################   
+
+class RegistreCommerceOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    
+    class Meta:
+        model = RegistreCommerce
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'numero', 
+            'date_inscription',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class RegistreCommerceDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RegistreCommerce
+        fields = ['id', 'acheteur', 'numero', 'date_inscription']
+
+class AddRegistreCommerceOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = RegistreCommerce
+        fields = ['numero', 'date_inscription', 'acheteur']
+    
+    def create(self, validated_data):
+        """Override create method to handle created_by and updated_by"""
+        # Créer l'instance
+        instance = RegistreCommerce(**validated_data)
+        
+        # Ajouter created_by et updated_by si request est dans le contexte
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            instance.created_by = request.user
+            instance.updated_by = request.user
+        
+        instance.save()
+        return instance
+    
+    def validate(self, data):
+        """Validation globale du registre de commerce"""
+        acheteur = data.get('acheteur')
+        numero = data.get('numero')
+        
+        # Vérifier si ce numéro de registre existe déjà pour cet acheteur
+        existing = RegistreCommerce.objects.filter(
+            acheteur=acheteur,
+            numero=numero
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'numero': 'Ce numéro de registre de commerce est déjà associé à cet acheteur.'
+            })
+        
+        return data
+    
+    def validate_numero(self, value):
+        """Validation du numéro de registre"""
+        if not value:
+            raise serializers.ValidationError("Le numéro de registre est obligatoire.")
+        
+        if len(value) < 3:
+            raise serializers.ValidationError("Le numéro de registre doit contenir au moins 3 caractères.")
+        
+        return value.strip()
+
+class EditRegistreCommerceOneSerializer(serializers.ModelSerializer):
+    date_inscription_input = serializers.CharField(
+        required=False, 
+        allow_null=True, 
+        allow_blank=True,
+        write_only=True
+    )
+    
+    class Meta:
+        model = RegistreCommerce
+        fields = ['numero', 'date_inscription', 'date_inscription_input']
+        extra_kwargs = {
+            'date_inscription': {'read_only': True}  # On gère la date via date_inscription_input
+        }
+    
+    def validate(self, data):
+        """Gérer la conversion de date"""
+        date_input = data.pop('date_inscription_input', None)
+        
+        if date_input is not None:
+            if date_input.strip() == '':
+                data['date_inscription'] = None
+            else:
+                from datetime import datetime
+                
+                # Essayez différents formats
+                for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y']:
+                    try:
+                        data['date_inscription'] = datetime.strptime(date_input.strip(), fmt).date()
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    raise serializers.ValidationError({
+                        'date_inscription': 'Format de date invalide. Utilisez JJ/MM/AAAA ou AAAA-MM-JJ.'
+                    })
+        
+        # Validation du numéro
+        numero = data.get('numero')
+        if self.instance and numero and numero != self.instance.numero:
+            existing = RegistreCommerce.objects.filter(
+                acheteur=self.instance.acheteur,
+                numero=numero
+            ).exclude(id=self.instance.id).exists()
+            
+            if existing:
+                raise serializers.ValidationError({
+                    'numero': 'Ce numéro de registre de commerce est déjà associé à cet acheteur.'
+                })
+        
+        return data
+    
+    def validate_numero(self, value):
+        if not value:
+            raise serializers.ValidationError("Le numéro de registre est obligatoire.")
+        
+        if len(value) < 3:
+            raise serializers.ValidationError("Le numéro de registre doit contenir au moins 3 caractères.")
+        
+        return value.strip()
+
+class RegistreCommerceSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    
+    class Meta:
+        model = RegistreCommerce
+        fields = ['id', 'numero', 'date_inscription', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']   
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -8412,7 +9494,156 @@ class EditCotisationSerializer(serializers.ModelSerializer):
         fields = [
             "numero",
             "date_affiliation",
-        ]    
+        ]   
+        
+###########################################################################    
+#    
+# COTISATION SOCIALE ACHETEUR 
+#    
+###########################################################################   
+
+class CotisationOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    
+    class Meta:
+        model = Cotisation
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'numero', 
+            'date_affiliation',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class CotisationDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ['id', 'acheteur', 'numero', 'date_affiliation']
+
+class AddCotisationOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = Cotisation
+        fields = ['numero', 'date_affiliation', 'acheteur']
+    
+    def create(self, validated_data):
+        """Override create method to handle created_by and updated_by"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+            validated_data['updated_by'] = request.user
+        
+        return super().create(validated_data)
+    
+    def validate(self, data):
+        """Validation globale de la cotisation sociale"""
+        acheteur = data.get('acheteur')
+        numero = data.get('numero')
+        
+        # Vérifier si ce numéro de sécurité sociale existe déjà pour cet acheteur
+        existing = Cotisation.objects.filter(
+            acheteur=acheteur,
+            numero=numero
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'numero': 'Ce numéro de sécurité sociale est déjà associé à cet acheteur.'
+            })
+        
+        return data
+    
+    def validate_numero(self, value):
+        """Validation du numéro de sécurité sociale"""
+        if not value:
+            raise serializers.ValidationError("Le numéro de sécurité sociale est obligatoire.")
+        
+        # Vérifier la longueur minimale
+        if len(value) < 3:
+            raise serializers.ValidationError("Le numéro de sécurité sociale doit contenir au moins 3 caractères.")
+        
+        # Optionnel: validation spécifique pour les numéros de sécurité sociale
+        # Exemple pour la France: 15 chiffres
+        # if not value.isdigit() or len(value) != 15:
+        #     raise serializers.ValidationError("Le numéro de sécurité sociale doit contenir 15 chiffres.")
+        
+        return value.strip()
+
+class EditCotisationOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cotisation
+        fields = ['numero', 'date_affiliation']
+    
+    def update(self, instance, validated_data):
+        """Override update method to handle updated_by"""
+        # Mettre à jour les champs de base d'abord
+        instance.numero = validated_data.get('numero', instance.numero)
+        instance.date_affiliation = validated_data.get('date_affiliation', instance.date_affiliation)
+        
+        # Mettre à jour updated_by si request est dans le contexte
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            instance.updated_by = request.user
+        
+        instance.save()
+        return instance
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        numero = data.get('numero')
+        acheteur = self.instance.acheteur
+        
+        if numero and numero != self.instance.numero:
+            # Vérifier si ce numéro existe déjà pour un autre enregistrement du même acheteur
+            existing = Cotisation.objects.filter(
+                acheteur=acheteur,
+                numero=numero
+            ).exclude(id=self.instance.id).exists()
+            
+            if existing:
+                raise serializers.ValidationError({
+                    'numero': 'Ce numéro de sécurité sociale est déjà associé à cet acheteur.'
+                })
+        
+        return data
+    
+    def validate_numero(self, value):
+        """Validation du numéro de sécurité sociale"""
+        if not value:
+            raise serializers.ValidationError("Le numéro de sécurité sociale est obligatoire.")
+        
+        if len(value) < 3:
+            raise serializers.ValidationError("Le numéro de sécurité sociale doit contenir au moins 3 caractères.")
+        
+        return value.strip()
+
+class CotisationSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    
+    class Meta:
+        model = Cotisation
+        fields = ['id', 'numero', 'date_affiliation', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at'] 
         
 
         
@@ -8450,6 +9681,146 @@ class SearchMarqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
         fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+        
+###########################################################################    
+#    
+# MARQUE ACHETEUR 
+#    
+###########################################################################   
+
+class MarqueOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    
+    class Meta:
+        model = Marque
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'marques', 
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class MarqueDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ['id', 'acheteur', 'marques']
+
+class AddMarqueOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = Marque
+        fields = ['marques', 'acheteur']
+    
+    def create(self, validated_data):
+        """Override create method to handle created_by and updated_by"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+            validated_data['updated_by'] = request.user
+        
+        return super().create(validated_data)
+    
+    def validate(self, data):
+        """Validation globale des marques"""
+        acheteur = data.get('acheteur')
+        marques = data.get('marques', '').strip()
+        
+        # Vérifier si cet acheteur a déjà des marques enregistrées
+        # (On suppose qu'un acheteur ne peut avoir qu'un seul enregistrement Marque)
+        existing = Marque.objects.filter(
+            acheteur=acheteur
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'acheteur': 'Cet acheteur possède déjà des marques enregistrées.'
+            })
+        
+        # Vérifier que le champ marques est rempli
+        if not marques:
+            raise serializers.ValidationError({
+                'marques': 'Le champ marques est obligatoire.'
+            })
+        
+        return data
+    
+    def validate_marques(self, value):
+        """Validation des marques"""
+        if value:
+            value = value.strip()
+            if len(value) < 3:
+                raise serializers.ValidationError("Veuillez fournir une description des marques (au moins 3 caractères).")
+        return value
+
+class EditMarqueOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marque
+        fields = ['marques']
+    
+    def update(self, instance, validated_data):
+        """Override update method to handle updated_by"""
+        # Mettre à jour les champs de base
+        instance.marques = validated_data.get('marques', instance.marques)
+        
+        # Mettre à jour updated_by si request est dans le contexte
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            instance.updated_by = request.user
+        
+        instance.save()
+        return instance
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        marques = data.get('marques')
+        
+        # Si marques n'est pas dans les données, utiliser la valeur actuelle
+        if marques is None:
+            marques = self.instance.marques if self.instance else ''
+        
+        # Vérifier que le champ a du contenu
+        if not marques.strip():
+            raise serializers.ValidationError({
+                'marques': 'Le champ marques est obligatoire.'
+            })
+        
+        return data
+    
+    def validate_marques(self, value):
+        """Validation des marques"""
+        if value:
+            value = value.strip()
+            if len(value) < 3:
+                raise serializers.ValidationError("Veuillez fournir une description des marques (au moins 3 caractères).")
+        return value
+
+class MarqueSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    
+    class Meta:
+        model = Marque
+        fields = ['id', 'marques', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']
 
 
 
@@ -8489,6 +9860,143 @@ class SearchProduitServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
         fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+        
+###########################################################################    
+#    
+# PRODUIT & SERVICE ACHETEUR 
+#    
+###########################################################################   
+
+class ProduitServiceOneSerializer(serializers.ModelSerializer):
+    acheteur_info = serializers.SerializerMethodField()
+    created_by = UserSimpleOneSerializer(read_only=True)
+    updated_by = UserSimpleOneSerializer(read_only=True)
+    
+    class Meta:
+        model = ProduitService
+        fields = [
+            'id', 
+            'acheteur', 
+            'acheteur_info',
+            'produits', 
+            'services',
+            'created_at', 
+            'updated_at',
+            'created_by', 
+            'updated_by'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by', 'acheteur_info']
+    
+    def get_acheteur_info(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'code': obj.acheteur.code,
+                'sigle': obj.acheteur.sigle
+            }
+        return None
+
+class ProduitServiceDetailOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ['id', 'acheteur', 'produits', 'services']
+
+class AddProduitServiceOneSerializer(serializers.ModelSerializer):
+    acheteur = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all()
+    )
+    
+    class Meta:
+        model = ProduitService
+        fields = ['produits', 'services', 'acheteur']
+    
+    def create(self, validated_data):
+        """Override create method to handle created_by and updated_by"""
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['created_by'] = request.user
+            validated_data['updated_by'] = request.user
+        
+        return super().create(validated_data)
+    
+    def validate(self, data):
+        """Validation globale des produits et services"""
+        acheteur = data.get('acheteur')
+        
+        # Vérifier si cet acheteur a déjà des produits/services enregistrés
+        # (On suppose qu'un acheteur ne peut avoir qu'un seul enregistrement ProduitService)
+        existing = ProduitService.objects.filter(
+            acheteur=acheteur
+        ).exists()
+        
+        if existing and self.instance is None:
+            raise serializers.ValidationError({
+                'acheteur': 'Cet acheteur possède déjà des produits et services enregistrés.'
+            })
+        
+        # Vérifier qu'au moins un champ est rempli
+        produits = data.get('produits', '').strip()
+        services = data.get('services', '').strip()
+        
+        if not produits and not services:
+            raise serializers.ValidationError({
+                'non_field_errors': 'Veuillez renseigner au moins un produit ou un service.'
+            })
+        
+        return data
+
+class EditProduitServiceOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProduitService
+        fields = ['produits', 'services']
+    
+    def update(self, instance, validated_data):
+        """Override update method to handle updated_by"""
+        # Mettre à jour les champs de base
+        instance.produits = validated_data.get('produits', instance.produits)
+        instance.services = validated_data.get('services', instance.services)
+        
+        # Mettre à jour updated_by si request est dans le contexte
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            instance.updated_by = request.user
+        
+        instance.save()
+        return instance
+    
+    def validate(self, data):
+        """Validation pour l'édition"""
+        # Vérifier qu'au moins un champ est rempli après modification
+        produits = data.get('produits')
+        services = data.get('services')
+        
+        current_produits = self.instance.produits if self.instance else ''
+        current_services = self.instance.services if self.instance else ''
+        
+        # Si produits n'est pas dans les données, utiliser la valeur actuelle
+        if produits is None:
+            produits = current_produits
+        
+        # Si services n'est pas dans les données, utiliser la valeur actuelle
+        if services is None:
+            services = current_services
+        
+        # Vérifier qu'au moins un champ a du contenu
+        if not produits.strip() and not services.strip():
+            raise serializers.ValidationError({
+                'non_field_errors': 'Veuillez renseigner au moins un produit ou un service.'
+            })
+        
+        return data
+
+class ProduitServiceSearchSerializer(serializers.ModelSerializer):
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_code = serializers.CharField(source='acheteur.code', read_only=True)
+    
+    class Meta:
+        model = ProduitService
+        fields = ['id', 'produits', 'services', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']
 
 
 

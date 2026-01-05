@@ -1,0 +1,620 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .pc-card {
+        border-left: 4px solid #0A95CA;
+        border-radius: 0 5px 5px 0;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .pc-title {
+        font-weight: bold;
+        color: #0A95CA;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+    .pc-dates {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+    .pc-description {
+        color: #212529;
+        margin-top: 10px;
+        white-space: pre-line;
+    }
+    .pc-actions {
+        text-align: right;
+        margin-top: 10px;
+    }
+    .pc-status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .pc-open {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    .pc-closed {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .pc-no-date {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-exclamation-triangle-fill fa-fw me-1"></i> Procédures Collectives de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countProcedureCollective">Module de Gestion des Procédures Collectives</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter, modifier ou supprimer les procédures collectives de l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <strong>Type : </strong><span style="color: #0A95CA;">TP</span><br>
+                        <strong>Ouverture : </strong><span style="color: #28a745;">DO</span><br>
+                        <strong>Clôture : </strong><span style="color: #dc3545;">DC</span><br>
+                        <strong>Description : </strong><span style="color: #6c757d;">DS</span>
+                    </div>
+                </div>
+                <br>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span>Cher agent, cliquez sur le nom de l'acheteur pour retourner à sa page de gestion.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- Procédures Collectives START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Procédures Collectives</h5>
+            </div>
+            <div class="card-body">
+                <!-- Search and Add START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Rechercher une procédure..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-primary w-100" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addProcedureCollectiveModal">
+                            <i class="bi bi-plus-lg me-1"></i> Ajouter une procédure
+                        </button>
+                    </div>
+                </div>
+                <!-- Search and Add END -->
+                <!-- Procedures List START -->
+                <div class="table-responsive border-0" id="procedureCollectiveList">
+                    <div id="procedureContainer"></div>
+                    <div class="text-center my-4" id="noProcedureMessage" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill fs-3 text-warning mb-2"></i>
+                        <p class="mb-0">Aucune procédure collective enregistrée pour cet acheteur.</p>
+                    </div>
+                </div>
+                <!-- Procedures List END -->
+            </div>
+            <div class="card-footer pt-0">
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Procédures Collectives END -->
+<!-- Add Procedure Collective Modal START -->
+<div class="modal fade" id="addProcedureCollectiveModal" tabindex="-1" aria-labelledby="addProcedureCollectiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProcedureCollectiveModalLabel">Ajouter une Procédure Collective</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addProcedureCollectiveForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="type_procedure" class="form-label">Type de procédure <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="type_procedure" name="type_procedure" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="date_ouverture" class="form-label">Date d'ouverture</label>
+                            <input type="date" class="form-control" id="date_ouverture" name="date_ouverture">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="date_cloture" class="form-label">Date de clôture</label>
+                            <input type="date" class="form-control" id="date_cloture" name="date_cloture">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Procedure Collective Modal END -->
+<!-- Edit Procedure Collective Modal START -->
+<div class="modal fade" id="editProcedureCollectiveModal" tabindex="-1" aria-labelledby="editProcedureCollectiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProcedureCollectiveModalLabel">Éditer une Procédure Collective</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProcedureCollectiveForm">
+                    <input type="hidden" id="editProcedureCollectiveId" name="id">
+                    <div class="mb-3">
+                        <label for="editTypeProcedure" class="form-label">Type de procédure <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editTypeProcedure" name="type_procedure" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editDateOuverture" class="form-label">Date d'ouverture</label>
+                            <input type="date" class="form-control" id="editDateOuverture" name="date_ouverture">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editDateCloture" class="form-label">Date de clôture</label>
+                            <input type="date" class="form-control" id="editDateCloture" name="date_cloture">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="4"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Procedure Collective Modal END -->
+<!-- Delete Confirmation Modal START -->
+<div class="modal fade" id="deleteProcedureModal" tabindex="-1" aria-labelledby="deleteProcedureModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProcedureModalLabel">Supprimer une Procédure</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette procédure collective ?</p>
+                <p class="text-danger"><small>Cette action est irréversible.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteProcedure">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delete Confirmation Modal END -->
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA)
+    function formatDate(dateString) {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+    }
+
+    // Fonction pour formater les dates (date -> JJ.MM.AAAA)
+    function formatSimpleDate(dateString) {
+        if (!dateString) return "Non spécifiée";
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+        return dateString;
+    }
+
+    // Fonction pour déterminer le statut de la procédure
+    function getProcedureStatus(dateOuverture, dateCloture) {
+        if (!dateOuverture && !dateCloture) return { text: "Non spécifié", class: "pc-no-date" };
+        if (!dateCloture) return { text: "En cours", class: "pc-open" };
+        return { text: "Clôturée", class: "pc-closed" };
+    }
+
+    // Variable pour stocker l'ID de la procédure à supprimer
+    var procedureToDelete = null;
+
+    $(document).ready(function() {
+        // Initialiser TinyMCE pour les descriptions
+        tinymce.init({
+            selector: '#description, #editDescription',
+            plugins: 'link lists',
+            toolbar: 'undo redo | bold italic | bullist numlist',
+            menubar: false,
+            height: 200
+        });
+
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger les procédures collectives
+        function loadProcedures(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-procedures-collectives/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    // Mettre à jour les infos de pagination
+                    $('#paginationInfo').text(
+                        'Affichage ' + ((page - 1) * 10 + 1) +
+                        ' à ' + (page * 10 > response.count ? response.count : page * 10) +
+                        ' de ' + response.count + ' procédures'
+                    );
+
+                    // Mettre à jour les contrôles de pagination
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append(
+                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Précédent</a></li>'
+                        );
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append(
+                                '<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
+                            );
+                        } else {
+                            $('#paginationControls').append(
+                                '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>'
+                            );
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append(
+                            '<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Suivant</a></li>'
+                        );
+                    }
+
+                    // Mettre à jour la liste des procédures
+                    if (response.results.length === 0) {
+                        $('#procedureContainer').html('');
+                        $('#noProcedureMessage').show();
+                    } else {
+                        $('#noProcedureMessage').hide();
+                        $('#procedureContainer').html('');
+                        response.results.forEach(function(procedure) {
+                            const status = getProcedureStatus(procedure.date_ouverture, procedure.date_cloture);
+
+                            $('#procedureContainer').append(`
+                                <div class="pc-card" data-id="${procedure.id}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="pc-title">${procedure.type_procedure}</div>
+                                            <div class="pc-dates">
+                                                <span class="me-3"><i class="bi bi-calendar-event me-1"></i> Ouverture: ${formatSimpleDate(procedure.date_ouverture)}</span>
+                                                <span><i class="bi bi-calendar-check me-1"></i> Clôture: ${formatSimpleDate(procedure.date_cloture)}</span>
+                                            </div>
+                                            ${procedure.description ?
+                                                `<div class="pc-description">${procedure.description.length > 300 ?
+                                                    procedure.description.substring(0, 300) + '...' :
+                                                    procedure.description}</div>` :
+                                                `<div class="pc-description text-muted"><em>Aucune description</em></div>`
+                                            }
+                                        </div>
+                                        <div class="pc-actions">
+                                            <span class="pc-status ${status.class} mb-2">${status.text}</span><br>
+                                            <button class="btn btn-sm btn-outline-primary edit-procedure-btn" data-id="${procedure.id}" data-bs-toggle="tooltip" title="Éditer">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-procedure-btn" data-id="${procedure.id}" data-bs-toggle="tooltip" title="Supprimer">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="text-end small text-muted mt-2">
+                                        <i class="bi bi-clock me-1"></i> ${formatDate(procedure.updated_at)}
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des procédures collectives.',
+                    });
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'ajout
+        $('#addProcedureCollectiveForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-procedure-collective/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Procédure collective ajoutée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addProcedureCollectiveModal').modal('hide');
+                        $('#addProcedureCollectiveForm')[0].reset();
+                        tinymce.get('description').setContent('');
+                        loadProcedures();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout de la procédure collective.',
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale d'édition
+        $(document).on('click', '.edit-procedure-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-procedure-collective/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editProcedureCollectiveId').val(response.id);
+                    $('#editTypeProcedure').val(response.type_procedure);
+                    $('#editDateOuverture').val(response.date_ouverture);
+                    $('#editDateCloture').val(response.date_cloture);
+                    tinymce.get('editDescription').setContent(response.description || '');
+                    $('#editProcedureCollectiveModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des détails de la procédure.',
+                    });
+                }
+            });
+        });
+
+        // Soumettre le formulaire d'édition
+        $('#editProcedureCollectiveForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editProcedureCollectiveId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-procedure-collective/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Procédure collective mise à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editProcedureCollectiveModal').modal('hide');
+                        loadProcedures();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour de la procédure collective.',
+                    });
+                }
+            });
+        });
+
+        // Ouvrir la modale de confirmation de suppression
+        $(document).on('click', '.delete-procedure-btn', function() {
+            procedureToDelete = $(this).data('id');
+            $('#deleteProcedureModal').modal('show');
+        });
+
+        // Confirmer la suppression
+        $('#confirmDeleteProcedure').on('click', function() {
+            if (procedureToDelete) {
+                $.ajax({
+                    url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-procedures-collectives/',
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [procedureToDelete] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Succès',
+                            text: 'Procédure collective supprimée avec succès.',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#deleteProcedureModal').modal('hide');
+                            loadProcedures();
+                        });
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la suppression de la procédure collective.',
+                        });
+                    }
+                });
+            }
+        });
+
+        // Recherche
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadProcedures(1, search);
+        });
+
+        // Pagination
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadProcedures(page, search);
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadProcedures();
+    });
+</script>
+{% endblock %}

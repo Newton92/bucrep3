@@ -1,0 +1,397 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+{% block css %}
+<style>
+    .swot-quadrant {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        min-height: 200px;
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+    }
+    .swot-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        text-align: center;
+        color: white;
+        padding: 5px;
+        border-radius: 3px;
+    }
+    .forces { background-color: #28a745; }
+    .faiblesses { background-color: #dc3545; }
+    .opportunites { background-color: #007bff; }
+    .menaces { background-color: #ffc107; color: black; }
+    .swot-content {
+        min-height: 150px;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: white;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-diagram-3 fa-fw me-1"></i> Analyse SWOT de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+<!-- Counter START -->
+<div class="row g-4">
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <div class="ms-3">
+                    <h4 id="countSwot">Module d'Analyse SWOT</h4>
+                    <span>Dans ce module, vous pouvez consulter, ajouter ou modifier l'analyse SWOT de l'acheteur.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+<!-- Acheteur Info START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span id="">Cher agent, si vous souhaitez retourner à la page de gestion de l'acheteur, cliquez sur son nom.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info END -->
+<!-- SWOT Analysis START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-header-title">Analyse SWOT</h5>
+                <div>
+                    <button type="button" class="btn btn-primary" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#editSwotModal">
+                        <i class="bi bi-pencil-square me-1"></i> Éditer l'analyse SWOT
+                    </button>
+                    <button type="button" class="btn btn-danger" id="deleteSwotBtn">
+                        <i class="bi bi-trash me-1"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="swot-quadrant">
+                            <div class="swot-title forces">FORCES</div>
+                            <div class="swot-content" id="swotForces"></div>
+                        </div>
+                        <div class="swot-quadrant">
+                            <div class="swot-title faiblesses">FAIBLESSES</div>
+                            <div class="swot-content" id="swotFaiblesses"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="swot-quadrant">
+                            <div class="swot-title opportunites">OPPORTUNITÉS</div>
+                            <div class="swot-content" id="swotOpportunites"></div>
+                        </div>
+                        <div class="swot-quadrant">
+                            <div class="swot-title menaces">MENACES</div>
+                            <div class="swot-content" id="swotMenaces"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small>Dernière mise à jour : <span id="swotUpdatedAt"></span></small>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- SWOT Analysis END -->
+<!-- Edit SWOT Modal START -->
+<div class="modal fade" id="editSwotModal" tabindex="-1" aria-labelledby="editSwotModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSwotModalLabel">Éditer l'analyse SWOT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editSwotForm">
+                    <input type="hidden" id="editSwotId" name="id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editForces" class="form-label">Forces</label>
+                                <textarea class="form-control swot-textarea" id="editForces" name="forces" rows="6"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editFaiblesses" class="form-label">Faiblesses</label>
+                                <textarea class="form-control swot-textarea" id="editFaiblesses" name="faiblesses" rows="6"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editOpportunites" class="form-label">Opportunités</label>
+                                <textarea class="form-control swot-textarea" id="editOpportunites" name="opportunites" rows="6"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editMenaces" class="form-label">Menaces</label>
+                                <textarea class="form-control swot-textarea" id="editMenaces" name="menaces" rows="6"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit SWOT Modal END -->
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script>
+    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA HH:MM)
+    function formatDateTime(dateString) {
+        if (!dateString) return "Jamais";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+    }
+
+    $(document).ready(function() {
+        // Initialiser TinyMCE pour les zones de texte SWOT
+        tinymce.init({
+            selector: '.swot-textarea',
+            plugins: 'link lists',
+            toolbar: 'undo redo | bold italic | bullist numlist',
+            menubar: false,
+            height: 200,
+            setup: function(editor) {
+                editor.on('init', function() {
+                    this.getDoc().body.style.fontSize = '14px';
+                });
+            }
+        });
+
+        // Charger les données de l'acheteur
+        function loadAcheteur() {
+            const id = '{{ id_acheteur }}';
+            $.ajax({
+                url: `/api/consulter-un-acheteur/${id}/`,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#editNom').text(response.nom);
+                    $('#editSigle').text(response.sigle);
+                    $('#editCode').text(response.code);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    });
+                }
+            });
+        }
+
+        // Charger l'analyse SWOT
+        function loadSwot() {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-swot/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    $('#swotForces').html(response.forces || '<p class="text-muted">Aucune force enregistrée.</p>');
+                    $('#swotFaiblesses').html(response.faiblesses || '<p class="text-muted">Aucune faiblesse enregistrée.</p>');
+                    $('#swotOpportunites').html(response.opportunites || '<p class="text-muted">Aucune opportunité enregistrée.</p>');
+                    $('#swotMenaces').html(response.menaces || '<p class="text-muted">Aucune menace enregistrée.</p>');
+                    $('#swotUpdatedAt').text(formatDateTime(response.updated_at));
+
+                    // Pré-remplir le formulaire d'édition
+                    tinymce.get('editForces').setContent(response.forces || '');
+                    tinymce.get('editFaiblesses').setContent(response.faiblesses || '');
+                    tinymce.get('editOpportunites').setContent(response.opportunites || '');
+                    tinymce.get('editMenaces').setContent(response.menaces || '');
+                    $('#editSwotId').val(response.id);
+                },
+                error: function(response) {
+                    if (response.status === 404) {
+                        // Si aucune analyse SWOT n'existe, initialiser avec des valeurs vides
+                        $('#swotForces').html('<p class="text-muted">Aucune force enregistrée.</p>');
+                        $('#swotFaiblesses').html('<p class="text-muted">Aucune faiblesse enregistrée.</p>');
+                        $('#swotOpportunites').html('<p class="text-muted">Aucune opportunité enregistrée.</p>');
+                        $('#swotMenaces').html('<p class="text-muted">Aucune menace enregistrée.</p>');
+                        $('#swotUpdatedAt').text('Jamais');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Erreur lors de la récupération de l\'analyse SWOT.',
+                        });
+                    }
+                }
+            });
+        }
+
+        // Soumettre le formulaire d'édition SWOT
+        $('#editSwotForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            var id = $('#editSwotId').val();
+            var url = id ?
+                '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-swot/' :
+                '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-swot/';
+            var method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                type: method,
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Succès',
+                        text: 'Analyse SWOT enregistrée avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editSwotModal').modal('hide');
+                        loadSwot();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'enregistrement de l\'analyse SWOT.',
+                    });
+                }
+            });
+        });
+
+        // Supprimer l'analyse SWOT
+        $('#deleteSwotBtn').on('click', function() {
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous allez supprimer toute l\'analyse SWOT de cet acheteur!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Oui, supprimer!',
+                cancelButtonText: 'Annuler'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-swot/',
+                        type: 'DELETE',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'L\'analyse SWOT a été supprimée.',
+                                'success'
+                            ).then(() => {
+                                loadSwot();
+                            });
+                        },
+                        error: function(response) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression de l\'analyse SWOT.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercepter les réponses AJAX pour vérifier l'expiration du token
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    refreshToken();
+                }
+            }
+        });
+
+        // Rafraîchir le token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    localStorage.setItem('access_token', response.access);
+                    // Rejouer la requête qui a échoué
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Session expirée',
+                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Annuler',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Charger les données au démarrage
+        loadAcheteur();
+        loadSwot();
+    });
+</script>
+{% endblock %}

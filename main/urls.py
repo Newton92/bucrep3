@@ -3907,6 +3907,16 @@ urlpatterns = [
         DeleteElementSurveillanceView.as_view(),
         name="delete-surveillance",
     ),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-certifications/",
         ListAcheteurCertificationView.as_view(),
@@ -3937,6 +3947,27 @@ urlpatterns = [
         DeleteAcheteurCertificationView.as_view(),
         name="delete-certification-acheteur",
     ),
+    # Certifications
+    path('api/acheteur/<int:acheteur_id>/certifications-oneview/', 
+        AcheteurCertificationListOneView.as_view(), 
+        name='acheteur-certifications-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/certifications-oneview/<int:certification_id>/', 
+        AcheteurCertificationDetailOneView.as_view(), 
+        name='acheteur-certification-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-innovations/",
         ListAcheteurInnovationView.as_view(),
@@ -3967,6 +3998,23 @@ urlpatterns = [
         DeleteAcheteurInnovationView.as_view(),
         name="delete-innovation-acheteur",
     ),
+    # URLs pour les innovations et développements
+    path('api/acheteur/<int:acheteur_id>/innovations-oneview/', 
+        AcheteurInnovationDeveloppementListOneView.as_view(), 
+        name='acheteur-innovations-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/innovations-oneview/<int:innovation_id>/', 
+        AcheteurInnovationDeveloppementDetailOneView.as_view(), 
+        name='acheteur-innovation-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-strategies/",
         ListAcheteurStrategieView.as_view(),
@@ -3997,6 +4045,21 @@ urlpatterns = [
         DeleteAcheteurStrategieView.as_view(),
         name="delete-strategie-acheteur",
     ),
+    # URLs pour les stratégies et planifications
+    path('api/acheteur/<int:acheteur_id>/strategies-oneview/', 
+        AcheteurStrategiePlanificationListOneView.as_view(), 
+        name='acheteur-strategies-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/strategies-oneview/<int:strategie_id>/', 
+        AcheteurStrategiePlanificationDetailOneView.as_view(), 
+        name='acheteur-strategie-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-conformites/",
         ListAcheteurConformiteView.as_view(),
@@ -4027,6 +4090,25 @@ urlpatterns = [
         DeleteAcheteurConformiteView.as_view(),
         name="delete-conformite-acheteur",
     ),
+    # URLs pour les conformités et réglementations
+    path('api/acheteur/<int:acheteur_id>/conformites-oneview/', 
+        AcheteurConformiteReglementationListOneView.as_view(), 
+        name='acheteur-conformites-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/conformites-oneview/<int:conformite_id>/', 
+        AcheteurConformiteReglementationDetailOneView.as_view(), 
+        name='acheteur-conformite-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/alertes/liste-des-alertes/",
         ListAlerteLogView.as_view(),
@@ -4407,6 +4489,24 @@ urlpatterns = [
         DeleteAcheteurSwotView.as_view(),
         name="delete-swot-acheteur",
     ),
+    # Dans votre fichier urls.py API
+    path('api/acheteur/<int:acheteur_id>/swot-oneview/', 
+         AcheteurSwotListOneView.as_view(), 
+         name='acheteur-swot-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/swot-oneview/<int:swot_id>/', 
+         AcheteurSwotDetailOneView.as_view(), 
+         name='acheteur-swot-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-produits-services/",
         ListAcheteurProduitServiceView.as_view(),
@@ -4432,6 +4532,23 @@ urlpatterns = [
         DeleteAcheteurProduitServiceView.as_view(),
         name="delete-produit-service-acheteur",
     ),
+    # Produits et Services
+    path('api/acheteur/<int:acheteur_id>/produits-services-oneview/', 
+        AcheteurProduitServiceListOneView.as_view(), 
+        name='acheteur-produits-services-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/produits-services-oneview/<int:produit_service_id>/', 
+        AcheteurProduitServiceDetailOneView.as_view(), 
+        name='acheteur-produit-service-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-marques/",
         ListAcheteurMarqueView.as_view(),
@@ -4457,6 +4574,26 @@ urlpatterns = [
         DeleteAcheteurMarqueView.as_view(),
         name="delete-marque-acheteur",
     ),
+    # Marques
+    path('api/acheteur/<int:acheteur_id>/marques-oneview/', 
+        AcheteurMarqueListOneView.as_view(), 
+        name='acheteur-marques-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/marques-oneview/<int:marque_id>/', 
+        AcheteurMarqueDetailOneView.as_view(), 
+        name='acheteur-marque-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-procedures-collectives/",
         ListAcheteurProcedureCollectiveView.as_view(),
@@ -4482,6 +4619,28 @@ urlpatterns = [
         DeleteAcheteurProcedureCollectiveView.as_view(),
         name="delete-procedure-collective-acheteur",
     ),
+    # Dans votre fichier urls.py API
+    path('api/acheteur/<int:acheteur_id>/procedures-collectives-oneview/', 
+         AcheteurProcedureCollectiveListOneView.as_view(), 
+         name='acheteur-procedures-collectives-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/procedures-collectives-oneview/<int:procedure_id>/', 
+         AcheteurProcedureCollectiveDetailOneView.as_view(), 
+         name='acheteur-procedure-collective-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-registres-commerce/",
         ListAcheteurRegistreCommerceView.as_view(),
@@ -4507,6 +4666,29 @@ urlpatterns = [
         DeleteAcheteurRegistreCommerceView.as_view(),
         name="delete-registre-commerce-acheteur",
     ),
+    # Registres de commerce
+    path('api/acheteur/<int:acheteur_id>/registres-commerce-oneview/', 
+        AcheteurRegistreCommerceListOneView.as_view(), 
+        name='acheteur-registres-commerce-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/registres-commerce-oneview/<int:registre_id>/', 
+        AcheteurRegistreCommerceDetailOneView.as_view(), 
+        name='acheteur-registre-commerce-detail-oneview'),
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-cotisations/",
         ListAcheteurCotisationView.as_view(),
@@ -4532,6 +4714,18 @@ urlpatterns = [
         DeleteAcheteurCotisationView.as_view(),
         name="delete-cotisation-acheteur",
     ),
+    # Cotisations sociales
+    path('api/acheteur/<int:acheteur_id>/cotisations-oneview/', 
+        AcheteurCotisationListOneView.as_view(), 
+        name='acheteur-cotisations-list-oneview'),
+    path('api/acheteur/<int:acheteur_id>/cotisations-oneview/<int:cotisation_id>/', 
+        AcheteurCotisationDetailOneView.as_view(), 
+        name='acheteur-cotisation-detail-oneview'),
+    
+    
+    
+    
+    
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-documents/",
         ListAcheteurDocumentView.as_view(),

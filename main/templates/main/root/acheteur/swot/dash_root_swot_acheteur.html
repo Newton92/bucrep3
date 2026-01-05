@@ -1,397 +1,1608 @@
 {% extends 'main/root/base.html' %}
-{% load static %}
-{% block css %}
+{% load static humanize %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+
 <style>
-    .swot-quadrant {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 15px;
-        min-height: 200px;
-        margin-bottom: 20px;
-        background-color: #f8f9fa;
+:root {
+    --forces-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --faiblesses-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --opportunites-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --menaces-gradient: linear-gradient(135deg, #6f42c1 0%, #9b5de5 100%);
+    --swot-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+/* Carte SWOT */
+.swot-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    min-height: 300px;
+}
+
+.swot-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.swot-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+}
+
+.swot-card.forces::before {
+    background: linear-gradient(to bottom, #28a745, #20c997);
+    border-color: #28a745;
+}
+
+.swot-card.faiblesses::before {
+    background: linear-gradient(to bottom, #dc3545, #fd7e14);
+    border-color: #dc3545;
+}
+
+.swot-card.opportunites::before {
+    background: linear-gradient(to bottom, #17a2b8, #20c997);
+    border-color: #17a2b8;
+}
+
+.swot-card.menaces::before {
+    background: linear-gradient(to bottom, #6f42c1, #9b5de5);
+    border-color: #6f42c1;
+}
+
+/* En-tête de la carte */
+.swot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.swot-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.swot-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.swot-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Contenu SWOT */
+.swot-content {
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.swot-content .ql-editor {
+    padding: 0;
+    min-height: 200px;
+}
+
+.swot-content .ql-editor p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.swot-content .ql-editor ul,
+.swot-content .ql-editor ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.swot-content .ql-editor li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+.swot-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #6c757d;
+    text-align: center;
+}
+
+.swot-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.swot-empty p {
+    font-size: 1rem;
+    max-width: 300px;
+}
+
+/* Badge SWOT */
+.swot-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+}
+
+.badge-forces {
+    background: var(--forces-gradient);
+}
+
+.badge-faiblesses {
+    background: var(--faiblesses-gradient);
+}
+
+.badge-opportunites {
+    background: var(--opportunites-gradient);
+}
+
+.badge-menaces {
+    background: var(--menaces-gradient);
+}
+
+/* Grille SWOT */
+.swot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .swot-grid {
+        grid-template-columns: 1fr 1fr;
     }
+}
+
+@media (max-width: 992px) {
+    .swot-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Matrix SWOT */
+.swot-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1rem;
+    height: 600px;
+    margin-bottom: 2rem;
+}
+
+.swot-matrix-item {
+    position: relative;
+    border-radius: 12px;
+    padding: 1.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.swot-matrix-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.swot-matrix-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.swot-matrix-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.swot-matrix-content .ql-editor {
+    color: white;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Couleurs matrix */
+.matrix-forces {
+    background: var(--forces-gradient);
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.matrix-faiblesses {
+    background: var(--faiblesses-gradient);
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.matrix-opportunites {
+    background: var(--opportunites-gradient);
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.matrix-menaces {
+    background: var(--menaces-gradient);
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card.forces .stat-number { color: #28a745; }
+.stat-card.faiblesses .stat-number { color: #dc3545; }
+.stat-card.opportunites .stat-number { color: #17a2b8; }
+.stat-card.menaces .stat-number { color: #6f42c1; }
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Éditeur riche */
+.ql-toolbar {
+    border-radius: 8px 8px 0 0 !important;
+    border-color: #e3e6f0 !important;
+}
+
+.ql-container {
+    border-radius: 0 0 8px 8px !important;
+    border-color: #e3e6f0 !important;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 200px;
+}
+
+.ql-editor {
+    min-height: 200px;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* Boutons SWOT */
+.btn-swot {
+    background: var(--swot-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-swot:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    color: white;
+}
+
+.btn-swot-outline {
+    background: transparent;
+    border: 2px solid #ffc107;
+    color: #ffc107;
+}
+
+.btn-swot-outline:hover {
+    background: #ffc107;
+    color: white;
+}
+
+/* Actions rapides */
+.swot-actions-quick {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Card améliorée */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--swot-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Vue toggle */
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.view-toggle-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e3e6f0;
+    background: white;
+    border-radius: 6px;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.view-toggle-btn.active {
+    background: #ffc107;
+    border-color: #ffc107;
+    color: white;
+}
+
+.view-toggle-btn:hover:not(.active) {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+/* Modal SWOT */
+.swot-modal-section {
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    border: 2px solid #e3e6f0;
+    overflow: hidden;
+}
+
+.swot-modal-header {
+    padding: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 2px solid #e3e6f0;
+}
+
+.swot-modal-header.forces {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border-color: rgba(40, 167, 69, 0.2);
+}
+
+.swot-modal-header.faiblesses {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border-color: rgba(220, 53, 69, 0.2);
+}
+
+.swot-modal-header.opportunites {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+    border-color: rgba(23, 162, 184, 0.2);
+}
+
+.swot-modal-header.menaces {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+    border-color: rgba(111, 66, 193, 0.2);
+}
+
+.swot-modal-content {
+    padding: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .swot-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .swot-matrix {
+        height: auto;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, 300px);
+    }
+    
+    .matrix-forces { grid-column: 1; grid-row: 1; }
+    .matrix-faiblesses { grid-column: 1; grid-row: 2; }
+    .matrix-opportunites { grid-column: 1; grid-row: 3; }
+    .matrix-menaces { grid-column: 1; grid-row: 4; }
+    
+    .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .swot-actions-quick {
+        flex-direction: column;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .view-toggle {
+        flex-direction: column;
+    }
+    
     .swot-title {
-        font-weight: bold;
-        margin-bottom: 10px;
-        text-align: center;
-        color: white;
-        padding: 5px;
-        border-radius: 3px;
+        font-size: 1.1rem;
     }
-    .forces { background-color: #28a745; }
-    .faiblesses { background-color: #dc3545; }
-    .opportunites { background-color: #007bff; }
-    .menaces { background-color: #ffc107; color: black; }
-    .swot-content {
-        min-height: 150px;
-        max-height: 300px;
-        overflow-y: auto;
-        padding: 10px;
-        background-color: white;
-        border-radius: 3px;
-    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.swot-card {
+    animation: fadeIn 0.5s ease;
+}
+
+.swot-card:nth-child(1) { animation-delay: 0.1s; }
+.swot-card:nth-child(2) { animation-delay: 0.2s; }
+.swot-card:nth-child(3) { animation-delay: 0.3s; }
+.swot-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Scrollbar personnalisée */
+.swot-content::-webkit-scrollbar,
+.swot-matrix-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.swot-content::-webkit-scrollbar-track,
+.swot-matrix-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.swot-content::-webkit-scrollbar-thumb,
+.swot-matrix-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.swot-content::-webkit-scrollbar-thumb:hover,
+.swot-matrix-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
 </style>
 {% endblock %}
+
 {% block body %}
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-diagram-3 fa-fw me-1"></i> Analyse SWOT de l'Acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-<!-- Counter START -->
-<div class="row g-4">
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h4 id="countSwot">Module d'Analyse SWOT</h4>
-                    <span>Dans ce module, vous pouvez consulter, ajouter ou modifier l'analyse SWOT de l'acheteur.</span>
-                </div>
-            </div>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chart-pie text-warning me-2"></i>Analyse SWOT
+            </h1>
+            <p class="text-muted mb-0">
+                Analyse des Forces, Faiblesses, Opportunités et Menaces de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
         </div>
     </div>
-</div>
-<!-- Counter END -->
-<!-- Acheteur Info START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border">
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si vous souhaitez retourner à la page de gestion de l'acheteur, cliquez sur son nom.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Acheteur Info END -->
-<!-- SWOT Analysis START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="card-header-title">Analyse SWOT</h5>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                 <div>
-                    <button type="button" class="btn btn-primary" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#editSwotModal">
-                        <i class="bi bi-pencil-square me-1"></i> Éditer l'analyse SWOT
-                    </button>
-                    <button type="button" class="btn btn-danger" id="deleteSwotBtn">
-                        <i class="bi bi-trash me-1"></i> Supprimer
-                    </button>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="swot-quadrant">
-                            <div class="swot-title forces">FORCES</div>
-                            <div class="swot-content" id="swotForces"></div>
-                        </div>
-                        <div class="swot-quadrant">
-                            <div class="swot-title faiblesses">FAIBLESSES</div>
-                            <div class="swot-content" id="swotFaiblesses"></div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="swot-quadrant">
-                            <div class="swot-title opportunites">OPPORTUNITÉS</div>
-                            <div class="swot-content" id="swotOpportunites"></div>
-                        </div>
-                        <div class="swot-quadrant">
-                            <div class="swot-title menaces">MENACES</div>
-                            <div class="swot-content" id="swotMenaces"></div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-landmark text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Forme juridique</small>
+                            <span class="fw-medium">{{ acheteur.forme_juridique.libelle|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-footer text-muted">
-                <small>Dernière mise à jour : <span id="swotUpdatedAt"></span></small>
+        </div>
+    </div>
+
+    <!-- Statistiques SWOT -->
+    <div class="stats-cards">
+        <div class="stat-card forces">
+            <div class="stat-number">{{ forces_count }}</div>
+            <div class="stat-label">Forces</div>
+        </div>
+        <div class="stat-card faiblesses">
+            <div class="stat-number">{{ faiblesses_count }}</div>
+            <div class="stat-label">Faiblesses</div>
+        </div>
+        <div class="stat-card opportunites">
+            <div class="stat-number">{{ opportunites_count }}</div>
+            <div class="stat-label">Opportunités</div>
+        </div>
+        <div class="stat-card menaces">
+            <div class="stat-number">{{ menaces_count }}</div>
+            <div class="stat-label">Menaces</div>
+        </div>
+    </div>
+
+    <!-- Toggle de vue -->
+    <div class="view-toggle">
+        <button class="view-toggle-btn active" id="viewGridBtn">
+            <i class="fas fa-th-large"></i> Vue Grille
+        </button>
+        <button class="view-toggle-btn" id="viewMatrixBtn">
+            <i class="fas fa-table"></i> Vue Matrice
+        </button>
+    </div>
+
+    <!-- Section Analyse SWOT -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Analyse SWOT
+                        <span class="badge bg-warning ms-2">{{ total_elements }} éléments</span>
+                    </h5>
+                    <div class="swot-actions-quick">
+                        {% if swot_exists %}
+                            <button class="btn btn-warning btn-action" id="editSwotBtn">
+                                <i class="fas fa-edit me-1"></i>Modifier l'analyse
+                            </button>
+                            <button class="btn btn-outline-danger btn-action" id="deleteSwotBtn">
+                                <i class="fas fa-trash me-1"></i>Supprimer
+                            </button>
+                        {% else %}
+                            <button class="btn btn-warning btn-action" id="createSwotBtn">
+                                <i class="fas fa-plus-circle me-1"></i>Créer une analyse SWOT
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Vue Grille (par défaut) -->
+                    <div id="gridView" class="swot-view">
+                        <div class="swot-grid">
+                            <!-- Forces -->
+                            <div class="swot-card forces">
+                                <div class="swot-header">
+                                    <div class="swot-title">
+                                        <i class="fas fa-check-circle"></i> Forces
+                                        <span class="swot-count">{{ forces_count }}</span>
+                                    </div>
+                                    <div class="swot-actions">
+                                        <button class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content" id="forcesContent">
+                                    {% if swot_data and swot_data.forces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.forces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty">
+                                            <i class="fas fa-check-circle"></i>
+                                            <p>Aucune force identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Faiblesses -->
+                            <div class="swot-card faiblesses">
+                                <div class="swot-header">
+                                    <div class="swot-title">
+                                        <i class="fas fa-exclamation-triangle"></i> Faiblesses
+                                        <span class="swot-count">{{ faiblesses_count }}</span>
+                                    </div>
+                                    <div class="swot-actions">
+                                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content" id="faiblessesContent">
+                                    {% if swot_data and swot_data.faiblesses %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.faiblesses|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <p>Aucune faiblesse identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Opportunités -->
+                            <div class="swot-card opportunites">
+                                <div class="swot-header">
+                                    <div class="swot-title">
+                                        <i class="fas fa-bullseye"></i> Opportunités
+                                        <span class="swot-count">{{ opportunites_count }}</span>
+                                    </div>
+                                    <div class="swot-actions">
+                                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content" id="opportunitesContent">
+                                    {% if swot_data and swot_data.opportunites %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.opportunites|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty">
+                                            <i class="fas fa-bullseye"></i>
+                                            <p>Aucune opportunité identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Menaces -->
+                            <div class="swot-card menaces">
+                                <div class="swot-header">
+                                    <div class="swot-title">
+                                        <i class="fas fa-shield-alt"></i> Menaces
+                                        <span class="swot-count">{{ menaces_count }}</span>
+                                    </div>
+                                    <div class="swot-actions">
+                                        <button class="btn btn-sm btn-outline-purple" data-bs-toggle="tooltip" title="Exporter">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="swot-content" id="menacesContent">
+                                    {% if swot_data and swot_data.menaces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.menaces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <p>Aucune menace identifiée pour le moment</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vue Matrice (cachée par défaut) -->
+                    <div id="matrixView" class="swot-view" style="display: none;">
+                        <div class="swot-matrix">
+                            <!-- Forces -->
+                            <div class="swot-matrix-item matrix-forces">
+                                <div class="swot-matrix-header">
+                                    <div class="swot-matrix-title">
+                                        <i class="fas fa-check-circle"></i> Forces
+                                        <span class="swot-count">{{ forces_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content">
+                                    {% if swot_data and swot_data.forces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.forces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty" style="color: white;">
+                                            <i class="fas fa-check-circle"></i>
+                                            <p>Aucune force identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Faiblesses -->
+                            <div class="swot-matrix-item matrix-faiblesses">
+                                <div class="swot-matrix-header">
+                                    <div class="swot-matrix-title">
+                                        <i class="fas fa-exclamation-triangle"></i> Faiblesses
+                                        <span class="swot-count">{{ faiblesses_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content">
+                                    {% if swot_data and swot_data.faiblesses %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.faiblesses|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty" style="color: white;">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <p>Aucune faiblesse identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Opportunités -->
+                            <div class="swot-matrix-item matrix-opportunites">
+                                <div class="swot-matrix-header">
+                                    <div class="swot-matrix-title">
+                                        <i class="fas fa-bullseye"></i> Opportunités
+                                        <span class="swot-count">{{ opportunites_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content">
+                                    {% if swot_data and swot_data.opportunites %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.opportunites|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty" style="color: white;">
+                                            <i class="fas fa-bullseye"></i>
+                                            <p>Aucune opportunité identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Menaces -->
+                            <div class="swot-matrix-item matrix-menaces">
+                                <div class="swot-matrix-header">
+                                    <div class="swot-matrix-title">
+                                        <i class="fas fa-shield-alt"></i> Menaces
+                                        <span class="swot-count">{{ menaces_count }}</span>
+                                    </div>
+                                </div>
+                                <div class="swot-matrix-content">
+                                    {% if swot_data and swot_data.menaces %}
+                                        <div class="ql-editor ql-snow">
+                                            <div class="ql-editor" style="white-space: pre-wrap;">{{ swot_data.menaces|safe }}</div>
+                                        </div>
+                                    {% else %}
+                                        <div class="swot-empty" style="color: white;">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <p>Aucune menace identifiée</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- État vide (quand aucune analyse n'existe) -->
+                    {% if not swot_exists %}
+                        <div class="empty-state">
+                            <i class="fas fa-chart-pie empty-state-icon"></i>
+                            <h4 class="fw-bold mb-2">Aucune analyse SWOT</h4>
+                            <p class="text-muted mb-4">
+                                Aucune analyse SWOT n'a été créée pour cet acheteur.<br>
+                                L'analyse SWOT vous permet d'identifier les forces, faiblesses, opportunités et menaces de l'entreprise.
+                            </p>
+                            <button class="btn btn-warning btn-lg btn-action" id="createSwotBtn2">
+                                <i class="fas fa-plus-circle me-2"></i>Créer une analyse SWOT
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
-<!-- SWOT Analysis END -->
-<!-- Edit SWOT Modal START -->
-<div class="modal fade" id="editSwotModal" tabindex="-1" aria-labelledby="editSwotModalLabel" aria-hidden="true">
+
+<!-- Modal Création/Modification SWOT -->
+<div class="modal fade" id="swotModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editSwotModalLabel">Éditer l'analyse SWOT</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title" id="swotModalTitle">
+                    <i class="fas fa-plus-circle me-2"></i>Créer une analyse SWOT
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editSwotForm">
-                    <input type="hidden" id="editSwotId" name="id">
+            <form id="swotForm" class="enhanced-form">
+                <input type="hidden" id="swotId" name="id">
+                <input type="hidden" id="acheteurId" name="acheteur" value="{{ acheteur.id }}">
+                
+                <div class="modal-body">
+                    <p class="text-muted mb-4">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Remplissez les quatre catégories de l'analyse SWOT pour évaluer la situation de l'entreprise.
+                        Utilisez l'éditeur pour formater votre texte (listes à puces, gras, etc.).
+                    </p>
+
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="editForces" class="form-label">Forces</label>
-                                <textarea class="form-control swot-textarea" id="editForces" name="forces" rows="6"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="editFaiblesses" class="form-label">Faiblesses</label>
-                                <textarea class="form-control swot-textarea" id="editFaiblesses" name="faiblesses" rows="6"></textarea>
+                        <!-- Forces -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-modal-section">
+                                <div class="swot-modal-header forces">
+                                    <i class="fas fa-check-circle"></i> Forces (Interne)
+                                </div>
+                                <div class="swot-modal-content">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Avantages internes, ressources, compétences
+                                        </label>
+                                        <div id="forcesEditor"></div>
+                                        <textarea id="forcesTextarea" name="forces" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Expertise technique, Marque forte, Équipe compétente
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="editOpportunites" class="form-label">Opportunités</label>
-                                <textarea class="form-control swot-textarea" id="editOpportunites" name="opportunites" rows="6"></textarea>
+
+                        <!-- Faiblesses -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-modal-section">
+                                <div class="swot-modal-header faiblesses">
+                                    <i class="fas fa-exclamation-triangle"></i> Faiblesses (Interne)
+                                </div>
+                                <div class="swot-modal-content">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Défauts internes, lacunes, limitations
+                                        </label>
+                                        <div id="faiblessesEditor"></div>
+                                        <textarea id="faiblessesTextarea" name="faiblesses" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Manque de capitaux, Dépendance à un client, Vieillissement des équipements
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="editMenaces" class="form-label">Menaces</label>
-                                <textarea class="form-control swot-textarea" id="editMenaces" name="menaces" rows="6"></textarea>
+                        </div>
+
+                        <!-- Opportunités -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-modal-section">
+                                <div class="swot-modal-header opportunites">
+                                    <i class="fas fa-bullseye"></i> Opportunités (Externe)
+                                </div>
+                                <div class="swot-modal-content">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Tendances favorables, marchés en croissance
+                                        </label>
+                                        <div id="opportunitesEditor"></div>
+                                        <textarea id="opportunitesTextarea" name="opportunites" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Nouvelle réglementation favorable, Marché émergent, Technologie innovante
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Menaces -->
+                        <div class="col-md-6 mb-4">
+                            <div class="swot-modal-section">
+                                <div class="swot-modal-header menaces">
+                                    <i class="fas fa-shield-alt"></i> Menaces (Externe)
+                                </div>
+                                <div class="swot-modal-content">
+                                    <div class="form-group">
+                                        <label class="form-label small text-muted">
+                                            Risques externes, obstacles, concurrence
+                                        </label>
+                                        <div id="menacesEditor"></div>
+                                        <textarea id="menacesTextarea" name="menaces" style="display: none;"></textarea>
+                                        <div class="form-text">
+                                            Exemples : Concurrence agressive, Changement réglementaire, Récession économique
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-lightbulb me-3 fa-2x"></i>
+                            <div>
+                                <h6 class="mb-1">Conseil pour une bonne analyse SWOT</h6>
+                                <p class="mb-0 small">
+                                    • Soyez précis et concret dans vos énoncés<br>
+                                    • Basez-vous sur des faits et des données<br>
+                                    • Priorisez les éléments les plus importants<br>
+                                    • Utilisez des verbes d'action pour les opportunités<br>
+                                    • Soyez réaliste dans l'évaluation des menaces
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitSwotBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer l'analyse
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'analyse SWOT</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette analyse SWOT ? 
+                    Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit SWOT Modal END -->
+
+<!-- Modal Export SWOT -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-download me-2"></i>Exporter l'analyse
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-file-export fa-3x text-primary mb-3"></i>
+                <h6 class="fw-bold">Choisir le format d'export</h6>
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-outline-primary" id="exportPdfBtn">
+                        <i class="fas fa-file-pdf me-2"></i>PDF
+                    </button>
+                    <button class="btn btn-outline-success" id="exportWordBtn">
+                        <i class="fas fa-file-word me-2"></i>Word
+                    </button>
+                    <button class="btn btn-outline-info" id="exportExcelBtn">
+                        <i class="fas fa-file-excel me-2"></i>Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
+
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    // Fonction pour formater les dates (datetime -> JJ.MM.AAAA HH:MM)
-    function formatDateTime(dateString) {
-        if (!dateString) return "Jamais";
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} à ${hours}:${minutes}`;
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/swot-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let swotEditors = {};
+    let currentSwotId = null;
+    let isEditing = false;
+
+    // Initialiser les éditeurs Quill
+    function initEditors() {
+        // Configuration commune pour tous les éditeurs
+        const quillOptions = {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Saisissez vos éléments...',
+            scrollingContainer: '#swotModal .modal-body'
+        };
+
+        // Initialiser chaque éditeur
+        const editors = [
+            { id: 'forcesEditor', textarea: 'forcesTextarea' },
+            { id: 'faiblessesEditor', textarea: 'faiblessesTextarea' },
+            { id: 'opportunitesEditor', textarea: 'opportunitesTextarea' },
+            { id: 'menacesEditor', textarea: 'menacesTextarea' }
+        ];
+
+        editors.forEach(editor => {
+            const quill = new Quill(`#${editor.id}`, quillOptions);
+            const textarea = document.getElementById(editor.textarea);
+            
+            // Lier l'éditeur au textarea
+            quill.on('text-change', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+            
+            // Stocker l'éditeur
+            swotEditors[editor.id.replace('Editor', '')] = quill;
+        });
     }
 
-    $(document).ready(function() {
-        // Initialiser TinyMCE pour les zones de texte SWOT
-        tinymce.init({
-            selector: '.swot-textarea',
-            plugins: 'link lists',
-            toolbar: 'undo redo | bold italic | bullist numlist',
-            menubar: false,
-            height: 200,
-            setup: function(editor) {
-                editor.on('init', function() {
-                    this.getDoc().body.style.fontSize = '14px';
+    // Gérer le toggle de vue
+    $('#viewGridBtn').click(function() {
+        $('#viewGridBtn').addClass('active');
+        $('#viewMatrixBtn').removeClass('active');
+        $('#gridView').show();
+        $('#matrixView').hide();
+    });
+
+    $('#viewMatrixBtn').click(function() {
+        $('#viewMatrixBtn').addClass('active');
+        $('#viewGridBtn').removeClass('active');
+        $('#matrixView').show();
+        $('#gridView').hide();
+    });
+
+    // Ouvrir le modal de création
+    $('#createSwotBtn, #createSwotBtn2').click(function() {
+        isEditing = false;
+        $('#swotModalTitle').html('<i class="fas fa-plus-circle me-2"></i>Créer une analyse SWOT');
+        resetForm();
+        $('#swotModal').modal('show');
+        
+        // Initialiser les éditeurs si ce n'est pas déjà fait
+        if (Object.keys(swotEditors).length === 0) {
+            setTimeout(initEditors, 100);
+        }
+    });
+
+    // Ouvrir le modal d'édition
+    $('#editSwotBtn').click(function() {
+        isEditing = true;
+        $('#swotModalTitle').html('<i class="fas fa-edit me-2"></i>Modifier l\'analyse SWOT');
+        loadSwotData();
+    });
+
+    // Charger les données SWOT existantes
+    function loadSwotData() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                if (response && response.length > 0) {
+                    const swot = response[0];
+                    currentSwotId = swot.id;
+                    
+                    // Pré-remplir les champs
+                    $('#swotId').val(swot.id);
+                    
+                    // Initialiser les éditeurs si nécessaire
+                    if (Object.keys(swotEditors).length === 0) {
+                        initEditors();
+                    }
+                    
+                    // Remplir les éditeurs après un court délai pour s'assurer qu'ils sont initialisés
+                    setTimeout(() => {
+                        if (swotEditors.forces) swotEditors.forces.root.innerHTML = swot.forces || '';
+                        if (swotEditors.faiblesses) swotEditors.faiblesses.root.innerHTML = swot.faiblesses || '';
+                        if (swotEditors.opportunites) swotEditors.opportunites.root.innerHTML = swot.opportunites || '';
+                        if (swotEditors.menaces) swotEditors.menaces.root.innerHTML = swot.menaces || '';
+                    }, 100);
+                    
+                    $('#swotModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger l\'analyse SWOT.'
+                    });
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadSwotData);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les données.'
+                    });
+                }
+            }
+        });
+    }
+
+    // Réinitialiser le formulaire
+    function resetForm() {
+        currentSwotId = null;
+        $('#swotId').val('');
+        
+        // Réinitialiser les éditeurs
+        Object.values(swotEditors).forEach(editor => {
+            if (editor) {
+                editor.root.innerHTML = '';
+            }
+        });
+        
+        // Réinitialiser les textareas
+        $('#forcesTextarea, #faiblessesTextarea, #opportunitesTextarea, #menacesTextarea').val('');
+    }
+
+    // Formulaire de création/modification
+    $('#swotForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Récupérer les données des éditeurs
+        const formData = {
+            acheteur: ACHETEUR_ID,
+            forces: $('#forcesTextarea').val(),
+            faiblesses: $('#faiblessesTextarea').val(),
+            opportunites: $('#opportunitesTextarea').val(),
+            menaces: $('#menacesTextarea').val()
+        };
+        
+        // Ajouter l'ID si on est en mode édition
+        if (currentSwotId) {
+            formData.id = currentSwotId;
+        }
+        
+        const $btn = $('#submitSwotBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        const method = isEditing ? 'PUT' : 'POST';
+        const url = isEditing ? `${API_BASE_URL}${currentSwotId}/` : API_BASE_URL;
+        
+        $.ajax({
+            url: url,
+            type: method,
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#swotModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Recharger la page pour afficher les nouvelles données
+                    location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = isEditing ? 
+                    'Erreur lors de la modification de l\'analyse SWOT' : 
+                    'Erreur lors de la création de l\'analyse SWOT';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else {
+                        // Afficher les erreurs de validation par champ
+                        const fieldErrors = [];
+                        for (const [field, errors] of Object.entries(xhr.responseJSON)) {
+                            if (Array.isArray(errors)) {
+                                fieldErrors.push(`${field}: ${errors.join(', ')}`);
+                            }
+                        }
+                        if (fieldErrors.length > 0) {
+                            errorMessage = fieldErrors.join('\n');
+                        }
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+
+    // Ouvrir le modal de suppression
+    $('#deleteSwotBtn').click(function() {
+        $('#confirmDeleteModal').modal('show');
+    });
+
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentSwotId) {
+            // Récupérer l'ID de l'analyse SWOT existante
+            $.ajax({
+                url: API_BASE_URL,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    if (response && response.length > 0) {
+                        currentSwotId = response[0].id;
+                        performDelete();
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de récupérer l\'analyse SWOT.'
+                    });
+                }
+            });
+        } else {
+            performDelete();
+        }
+    });
+
+    function performDelete() {
+        $.ajax({
+            url: `${API_BASE_URL}${currentSwotId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Recharger la page
+                    location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer l\'analyse SWOT'
+                    });
+                }
+            }
+        });
+    }
+
+    // Export functions
+    $('#exportPdfBtn').click(function() {
+        exportSwot('pdf');
+    });
+
+    $('#exportWordBtn').click(function() {
+        exportSwot('word');
+    });
+
+    $('#exportExcelBtn').click(function() {
+        exportSwot('excel');
+    });
+
+    function exportSwot(format) {
+        $('#exportModal').modal('hide');
+        
+        Swal.fire({
+            title: 'Export en cours',
+            text: `Génération du fichier ${format.toUpperCase()}...`,
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Simuler l'export (à remplacer par une vraie API d'export)
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Export réussi',
+                text: `Le fichier ${format.toUpperCase()} a été généré.`,
+                showConfirmButton: true
+            });
+        }, 1500);
+    }
+
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
                 });
             }
         });
-
-        // Charger les données de l'acheteur
-        function loadAcheteur() {
-            const id = '{{ id_acheteur }}';
-            $.ajax({
-                url: `/api/consulter-un-acheteur/${id}/`,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#editNom').text(response.nom);
-                    $('#editSigle').text(response.sigle);
-                    $('#editCode').text(response.code);
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de l\'acheteur.',
-                    });
-                }
-            });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
         }
-
-        // Charger l'analyse SWOT
-        function loadSwot() {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-swot/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    $('#swotForces').html(response.forces || '<p class="text-muted">Aucune force enregistrée.</p>');
-                    $('#swotFaiblesses').html(response.faiblesses || '<p class="text-muted">Aucune faiblesse enregistrée.</p>');
-                    $('#swotOpportunites').html(response.opportunites || '<p class="text-muted">Aucune opportunité enregistrée.</p>');
-                    $('#swotMenaces').html(response.menaces || '<p class="text-muted">Aucune menace enregistrée.</p>');
-                    $('#swotUpdatedAt').text(formatDateTime(response.updated_at));
-
-                    // Pré-remplir le formulaire d'édition
-                    tinymce.get('editForces').setContent(response.forces || '');
-                    tinymce.get('editFaiblesses').setContent(response.faiblesses || '');
-                    tinymce.get('editOpportunites').setContent(response.opportunites || '');
-                    tinymce.get('editMenaces').setContent(response.menaces || '');
-                    $('#editSwotId').val(response.id);
-                },
-                error: function(response) {
-                    if (response.status === 404) {
-                        // Si aucune analyse SWOT n'existe, initialiser avec des valeurs vides
-                        $('#swotForces').html('<p class="text-muted">Aucune force enregistrée.</p>');
-                        $('#swotFaiblesses').html('<p class="text-muted">Aucune faiblesse enregistrée.</p>');
-                        $('#swotOpportunites').html('<p class="text-muted">Aucune opportunité enregistrée.</p>');
-                        $('#swotMenaces').html('<p class="text-muted">Aucune menace enregistrée.</p>');
-                        $('#swotUpdatedAt').text('Jamais');
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: 'Erreur lors de la récupération de l\'analyse SWOT.',
-                        });
-                    }
-                }
-            });
-        }
-
-        // Soumettre le formulaire d'édition SWOT
-        $('#editSwotForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            var id = $('#editSwotId').val();
-            var url = id ?
-                '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-swot/' :
-                '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-swot/';
-            var method = id ? 'PUT' : 'POST';
-
-            $.ajax({
-                url: url,
-                type: method,
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Succès',
-                        text: 'Analyse SWOT enregistrée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editSwotModal').modal('hide');
-                        loadSwot();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'enregistrement de l\'analyse SWOT.',
-                    });
-                }
-            });
-        });
-
-        // Supprimer l'analyse SWOT
-        $('#deleteSwotBtn').on('click', function() {
-            Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous allez supprimer toute l\'analyse SWOT de cet acheteur!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Oui, supprimer!',
-                cancelButtonText: 'Annuler'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-swot/',
-                        type: 'DELETE',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'L\'analyse SWOT a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadSwot();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de l\'analyse SWOT.',
-                            });
-                        }
-                    });
-                }
-            });
-        });
-
-        // Intercepter les réponses AJAX pour vérifier l'expiration du token
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    refreshToken();
-                }
-            }
-        });
-
-        // Rafraîchir le token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    localStorage.setItem('access_token', response.access);
-                    // Rejouer la requête qui a échoué
-                    $.ajax(this);
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Session expirée',
-                        text: 'Votre session a expiré. Veuillez vous reconnecter.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Annuler',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        }
-                    });
-                }
-            });
-        }
-
-        // Charger les données au démarrage
-        loadAcheteur();
-        loadSwot();
     });
+});
 </script>
+
+<style>
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+.btn-purple {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+    color: white;
+}
+.btn-purple:hover {
+    background-color: #5a32a3;
+    border-color: #5a32a3;
+    color: white;
+}
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+/* Personnalisation des éditeurs dans le modal */
+#swotModal .ql-toolbar {
+    background: #f8f9fa;
+    border-color: #dee2e6 !important;
+}
+
+#swotModal .ql-container {
+    border-color: #dee2e6 !important;
+    min-height: 150px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#swotModal .ql-editor {
+    min-height: 150px;
+    font-size: 0.95rem;
+}
+</style>
 {% endblock %}

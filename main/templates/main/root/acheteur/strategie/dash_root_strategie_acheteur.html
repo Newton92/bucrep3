@@ -1,570 +1,1701 @@
 {% extends 'main/root/base.html' %}
-{% load static %}
+{% load static humanize %}
 
-{% block css %}
-<!-- Ajoutez ici vos styles CSS spécifiques si nécessaire -->
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+:root {
+    --strategie-gradient: linear-gradient(135deg, #fd7e14 0%, #ff922b 100%);
+    --strategie-color: #fd7e14;
+}
+
+/* Dans votre fichier CSS principal, ajoutez ces styles */
+.btn-orange {
+    background: linear-gradient(135deg, #fd7e14 0%, #ff922b 100%);
+    color: white;
+    border: none;
+}
+
+.btn-orange:hover {
+    background: linear-gradient(135deg, #e96b00 0%, #ff7b00 100%);
+    color: white;
+}
+
+.bg-orange {
+    background-color: #fd7e14 !important;
+}
+
+/* Carte Stratégie */
+.strategie-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.strategie-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--strategie-color);
+}
+
+.strategie-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--strategie-gradient);
+}
+
+/* En-tête de la carte */
+.strategie-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.strategie-main {
+    flex: 1;
+}
+
+.strategie-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--strategie-color);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 0.5rem;
+}
+
+.strategie-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(253, 126, 20, 0.1);
+    color: var(--strategie-color);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.strategie-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Badge de date */
+.strategie-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, #20c997 0%, #198754 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.strategie-date i {
+    font-size: 0.75rem;
+}
+
+/* Description */
+.strategie-description {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 3px solid var(--strategie-color);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #495057;
+}
+
+/* Actions rapides */
+.strategie-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+}
+
+.btn-strategie {
+    background: var(--strategie-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-strategie:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(253, 126, 20, 0.3);
+    color: white;
+}
+
+.btn-strategie-outline {
+    background: transparent;
+    border: 2px solid var(--strategie-color);
+    color: var(--strategie-color);
+}
+
+.btn-strategie-outline:hover {
+    background: var(--strategie-color);
+    color: white;
+}
+
+/* Informations métadonnées */
+.strategie-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .select2-selection:focus {
+    border-color: var(--strategie-color);
+    box-shadow: 0 0 0 0.25rem rgba(253, 126, 20, 0.15);
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Champs date améliorés */
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group .form-control {
+    padding-left: 2.5rem;
+}
+
+.date-input-group i {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    z-index: 3;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--strategie-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des stratégies */
+.strategies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 300px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.filter-select {
+    min-width: 250px;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--strategie-color);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Indicateur Stratégie */
+.strategie-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--strategie-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Info bulle */
+.info-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+.info-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* Badges de type */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.badge-specialisation {
+    background: rgba(253, 126, 20, 0.1);
+    color: var(--strategie-color);
+    border: 1px solid rgba(253, 126, 20, 0.2);
+}
+
+.badge-diversification-liees {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+    border: 1px solid rgba(111, 66, 193, 0.2);
+}
+
+.badge-diversification-non-liees {
+    background: rgba(32, 201, 151, 0.1);
+    color: #20c997;
+    border: 1px solid rgba(32, 201, 151, 0.2);
+}
+
+.badge-integration {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+.badge-externalisation {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.badge-planification-strategique {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.badge-planification-tactique {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    border: 1px solid rgba(108, 117, 125, 0.2);
+}
+
+.badge-planification-operationnelle {
+    background: rgba(102, 16, 242, 0.1);
+    color: #6610f2;
+    border: 1px solid rgba(102, 16, 242, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .strategies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .strategies-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .strategie-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .strategie-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .search-input {
+        min-width: 100%;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-select {
+        flex: 1;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .strategie-title {
+        font-size: 1.1rem;
+    }
+    
+    .strategie-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .strategie-indicator {
+        position: static;
+        display: inline-flex;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Animation pour validation */
+.strategie-valid {
+    position: relative;
+}
+
+.strategie-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Conteneur pour description longue */
+.description-container {
+    max-height: 150px;
+    overflow: hidden;
+    position: relative;
+}
+
+.description-container.expanded {
+    max-height: none;
+}
+
+.description-container::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, #f8f9fa);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.description-container.expanded::after {
+    opacity: 0;
+}
+
+.toggle-description {
+    background: none;
+    border: none;
+    color: var(--strategie-color);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.toggle-description:hover {
+    text-decoration: underline;
+}
+
+/* Catégories de stratégies */
+.strategie-category {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    padding-left: 1rem;
+    border-left: 2px solid #dee2e6;
+}
+
+.strategie-category strong {
+    color: #495057;
+}
+</style>
 {% endblock %}
 
 {% block body %}
-
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-clipboard-check fa-fw me-1"></i> Gestion des Stratégies de l'Acheteur</h3>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-chess-board text-orange me-2"></i>Stratégies & Planifications
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des approches stratégiques et de planification de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
     </div>
-</div>
-<!-- Title END -->
 
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countStrategie">Module de Gestion des Stratégies</h4>
-                    <span>Dans ce module, il vous sera plus facile de gérer l'ensemble des stratégies propres à l'acheteur notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-<!-- Counter END -->
-
-<!-- Acheteurs d'Entreprise START -->
-<div class="row">
-    <div class="col-12">
-        <!-- Card item START -->
-        <div class="card border">
-            <!-- Card header -->
-            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
-                <!-- Icon and Title -->
-                <div class="d-flex align-items-center">
-                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-person-workspace"></i></div>
-                    <!-- Title -->
-                    <div class="ms-2">
-                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
-                            <h6 class="card-title mb-0" id="editNom"></h6>
-                        </a>
-                        <ul class="nav nav-divider small">
-                            <li class="nav-item" id="editSigle"></li>
-                        </ul>
-                    </div>
-                </div>
-                <!-- Button -->
-                <div class="mt-2 mt-md-0">
-                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
-                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
-                </div>
-            </div>
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Légende</u></h6>
-                        <strong>Type de Stratégie : </strong><span style="color: #33FF57;">TS</span><br>
-                        <strong>Date de Mise en Place : </strong><span style="color: #FF5733;">DMP</span><br>
-                    </div>
-                </div>
-                <br>
-
-                <div class="d-flex align-items-center">
-                    <!-- Content -->
-                    <div class="ms-3">
-                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
-                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
-                    </div>
-                </div>
-                <br>
-            </div>
-        </div>
-        <!-- Card item END -->
-    </div>
-</div>
-<!-- Acheteurs d'Entreprise END -->
-
-<!-- Stratégies START -->
-<div class="row">
-    <div class="col-12">
-        <div class="card border rounded-3">
-            <!-- Card header START -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Liste des Stratégies</h5>
-            </div>
-            <!-- Card header END -->
-
-            <!-- Card body START -->
-            <div class="card-body">
-                <!-- Search and select START -->
-                <div class="row g-3 align-items-center justify-content-between mb-3">
-                    <!-- Search -->
-                    <div class="col-md-7">
-                        <form class="rounded position-relative" id="searchForm">
-                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
-                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
-                                <i class="bi bi-search fs-6"></i>
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Select option -->
-                    <div class="col-md-5">
-                        <!-- Short by filter -->
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
                         <div>
-                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addStrategieModal">
-                                Ajouter une Stratégie
-                            </button>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
-                <!-- Search and select END -->
-
-                <!-- Stratégies list START -->
-                <div class="table-responsive border-0" id="strategieList">
-                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
-                        <!-- Table head -->
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="border-0 rounded-start">#</th>
-                                <th scope="col" class="border-0">Type de Stratégie</th>
-                                <th scope="col" class="border-0">Description</th>
-                                <th scope="col" class="border-0">Date de Mise en Place</th>
-                                <th scope="col" class="border-0 rounded-end">Action</th>
-                            </tr>
-                        </thead>
-
-                        <!-- Table body START -->
-                        <tbody class="border-top-0" id="strategieTableBody"></tbody>
-                        <!-- Table body END -->
-                    </table>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Stratégies list END -->
-            </div>
-            <!-- Card body END -->
-
-            <!-- Card footer START -->
-            <div class="card-footer pt-0">
-                <!-- Pagination and content -->
-                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
-                    <!-- Content -->
-                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
-                    <!-- Pagination -->
-                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
-                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
-                    </nav>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <!-- Card footer END -->
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ strategies_count }}</div>
+            <div class="stat-label">Stratégies</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">
+                {% if strategies_stats %}
+                    {{ strategies_stats|length }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="stat-label">Types de Stratégie</div>
+        </div>
+    </div>
+
+    <!-- Section Stratégies -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-chess-board me-2"></i>Stratégies & Planifications
+                        <span class="badge bg-orange ms-2">{{ strategies_count }}</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-orange btn-action" data-bs-toggle="modal" data-bs-target="#addStrategieModal">
+                            <i class="fas fa-plus-circle me-1"></i>Ajouter une Stratégie
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche -->
+                    <div class="search-controls mb-4">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchStrategieInput" 
+                                       placeholder="Rechercher par description ou type...">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <select class="form-select filter-select" id="filterTypeSelect">
+                                <option value="">Tous les types</option>
+                                {% for type_code, type_label in types_strategie %}
+                                    <option value="{{ type_code }}">{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            <button class="btn btn-orange" id="clearFiltersBtn">
+                                <i class="fas fa-times me-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {% if strategies %}
+                        <!-- Grille des stratégies -->
+                        <div class="strategies-grid" id="strategiesContainer">
+                            {% for strategie in strategies %}
+                                <div class="strategie-card" data-id="{{ strategie.id }}">
+                                    <!-- Indicateur -->
+                                    <span class="strategie-indicator">
+                                        <i class="fas fa-chess-board"></i> STRATÉGIE
+                                    </span>
+                                    <br>
+                                    
+                                    <div class="strategie-header">
+                                        <div class="strategie-main">
+                                            <div class="strategie-title">
+                                                {{ strategie.get_type_strategie_display }}
+                                                {% if strategie.date_mise_en_place %}
+                                                <span class="strategie-date ms-2">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    {{ strategie.date_mise_en_place|date:"d/m/Y" }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Catégorie basée sur le type -->
+                                            <div class="strategie-category">
+                                                {% if "specialisation" in strategie.type_strategie or "diversification" in strategie.type_strategie or "integration" in strategie.type_strategie or "externalisation" in strategie.type_strategie %}
+                                                    <strong>Stratégie d'entreprise</strong>
+                                                {% elif "planification" in strategie.type_strategie %}
+                                                    <strong>Stratégie de planification</strong>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="strategie-actions">
+                                            <button class="btn btn-sm btn-outline-warning edit-strategie-btn" 
+                                                    data-id="{{ strategie.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-strategie-btn" 
+                                                    data-id="{{ strategie.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {% if strategie.description %}
+                                    <div class="strategie-description description-container" id="description-{{ strategie.id }}">
+                                        {{ strategie.description|linebreaks }}
+                                    </div>
+                                    {% if strategie.description|length > 200 %}
+                                    <button class="toggle-description" data-target="description-{{ strategie.id }}">
+                                        <i class="fas fa-chevron-down"></i> Voir plus
+                                    </button>
+                                    {% endif %}
+                                    {% endif %}
+
+                                    <!-- Métadonnées -->
+                                    <div class="strategie-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-user-plus"></i>
+                                            <span>Créé par: {{ strategie.created_by.get_full_name|default:"System" }}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <span>Le: {{ strategie.created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide -->
+                        <div class="empty-state">
+                            <i class="fas fa-chess-board empty-state-icon"></i>
+                            <h4 class="fw-bold mb-2">Aucune stratégie enregistrée</h4>
+                            <p class="text-muted mb-4">
+                                Cet acheteur ne possède pas encore de stratégies ou de planifications enregistrées.<br>
+                                Les stratégies représentent les orientations et approches de gestion de l'entreprise.
+                            </p>
+                            <button class="btn btn-orange btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addStrategieModal">
+                                <i class="fas fa-plus-circle me-2"></i>Ajouter la première stratégie
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
-<!-- Stratégies END -->
 
-<!-- Add Stratégie Modal START -->
-<div class="modal fade" id="addStrategieModal" tabindex="-1" aria-labelledby="addStrategieModalLabel" aria-hidden="true">
+<!-- Modal Ajout Stratégie -->
+<div class="modal fade" id="addStrategieModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addStrategieModalLabel">Ajouter une Stratégie</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Stratégie
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="addStrategieForm">
-                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
-                    <div class="mb-3">
-                        <label for="type_strategie" class="form-label">Type de Stratégie</label>
-                        <select class="form-select" id="type_strategie" name="type_strategie">
-                            <option value="" selected>Choisir...</option>
-                            <option value="specialisation">La spécialisation (faire une seule activité)</option>
-                            <option value="diversification_liees">La diversification (activités liées)</option>
-                            <option value="diversification_non_liees">La diversification (activités non liées)</option>
-                            <option value="integration">L'intégration (faire tout, seul)</option>
-                            <option value="externalisation">L'externalisation (faire-faire)</option>
-                            <option value="planification_strategique">Planification stratégique (objectifs long terme)</option>
-                            <option value="planification_tactique">Planification tactique (implémentation stratégies)</option>
-                            <option value="planification_operationnelle">Planification opérationnelle (détails quotidiens)</option>
+            <form id="addStrategieForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="addTypeStrategie" class="form-label">
+                            <i class="fas fa-tag text-orange"></i>Type de Stratégie
+                        </label>
+                        <select id="addTypeStrategie" name="type_strategie" class="form-select" required>
+                            <option value="">Sélectionnez un type</option>
+                            <optgroup label="Stratégies d'entreprise">
+                                <option value="specialisation">La spécialisation (faire une seule activité)</option>
+                                <option value="diversification_liees">La diversification (activités liées)</option>
+                                <option value="diversification_non_liees">La diversification (activités non liées)</option>
+                                <option value="integration">L'intégration (faire tout, seul)</option>
+                                <option value="externalisation">L'externalisation (faire-faire)</option>
+                            </optgroup>
+                            <optgroup label="Stratégies de planification">
+                                <option value="planification_strategique">Planification stratégique (objectifs long terme)</option>
+                                <option value="planification_tactique">Planification tactique (implémentation stratégies)</option>
+                                <option value="planification_operationnelle">Planification opérationnelle (détails quotidiens)</option>
+                            </optgroup>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label for="date_mise_en_place" class="form-label">Date de Mise en Place</label>
-                        <input type="date" class="form-control" id="date_mise_en_place" name="date_mise_en_place">
+                    
+                    <div class="form-group">
+                        <label for="addDateMiseEnPlace" class="form-label">
+                            <i class="fas fa-calendar-check text-orange"></i>Date de Mise en Place
+                        </label>
+                        <div class="date-input-group">
+                            <i class="fas fa-calendar"></i>
+                            <input type="text" id="addDateMiseEnPlace" name="date_mise_en_place" 
+                                   class="form-control datepicker" placeholder="AAAA-MM-JJ">
+                            <div class="form-text">
+                                Format: AAAA-MM-JJ (ex: 2024-01-15)
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                    
+                    <div class="form-group">
+                        <label for="addDescription" class="form-label">
+                            <i class="fas fa-align-left text-orange"></i>Description / Commentaires
+                        </label>
+                        <textarea id="addDescription" name="description" class="form-control" 
+                                  rows="5" placeholder="Décrivez la stratégie, ses objectifs, mise en œuvre..."></textarea>
+                        <div class="form-text">
+                            Décrivez en détail la stratégie adoptée, ses objectifs, sa mise en œuvre et ses résultats attendus.
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Ajouter</button>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-orange" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Add Stratégie Modal END -->
 
-<!-- Edit Stratégie Modal START -->
-<div class="modal fade" id="editStrategieModal" tabindex="-1" aria-labelledby="editStrategieModalLabel" aria-hidden="true">
+<!-- Modal Modification Stratégie -->
+<div class="modal fade" id="editStrategieModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editStrategieModalLabel">Editer une Stratégie</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier la Stratégie
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="editStrategieForm">
-                    <input type="hidden" id="editStrategieId" name="id">
-                    <div class="mb-3">
-                        <label for="editTypeStrategie" class="form-label">Type de Stratégie</label>
-                        <select class="form-select" id="editTypeStrategie" name="type_strategie">
-                            <option value="specialisation">La spécialisation (faire une seule activité)</option>
-                            <option value="diversification_liees">La diversification (activités liées)</option>
-                            <option value="diversification_non_liees">La diversification (activités non liées)</option>
-                            <option value="integration">L'intégration (faire tout, seul)</option>
-                            <option value="externalisation">L'externalisation (faire-faire)</option>
-                            <option value="planification_strategique">Planification stratégique (objectifs long terme)</option>
-                            <option value="planification_tactique">Planification tactique (implémentation stratégies)</option>
-                            <option value="planification_operationnelle">Planification opérationnelle (détails quotidiens)</option>
+            <form id="editStrategieForm" class="enhanced-form">
+                <input type="hidden" id="editStrategieId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editTypeStrategie" class="form-label">
+                            <i class="fas fa-tag text-orange"></i>Type de Stratégie
+                        </label>
+                        <select id="editTypeStrategie" name="type_strategie" class="form-select" required>
+                            <option value="">Sélectionnez un type</option>
+                            <optgroup label="Stratégies d'entreprise">
+                                <option value="specialisation">La spécialisation (faire une seule activité)</option>
+                                <option value="diversification_liees">La diversification (activités liées)</option>
+                                <option value="diversification_non_liees">La diversification (activités non liées)</option>
+                                <option value="integration">L'intégration (faire tout, seul)</option>
+                                <option value="externalisation">L'externalisation (faire-faire)</option>
+                            </optgroup>
+                            <optgroup label="Stratégies de planification">
+                                <option value="planification_strategique">Planification stratégique (objectifs long terme)</option>
+                                <option value="planification_tactique">Planification tactique (implémentation stratégies)</option>
+                                <option value="planification_operationnelle">Planification opérationnelle (détails quotidiens)</option>
+                            </optgroup>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label for="editDateMiseEnPlace" class="form-label">Date de Mise en Place</label>
-                        <input type="date" class="form-control" id="editDateMiseEnPlace" name="date_mise_en_place">
+                    
+                    <div class="form-group">
+                        <label for="editDateMiseEnPlace" class="form-label">
+                            <i class="fas fa-calendar-check text-orange"></i>Date de Mise en Place
+                        </label>
+                        <div class="date-input-group">
+                            <i class="fas fa-calendar"></i>
+                            <input type="text" id="editDateMiseEnPlace" name="date_mise_en_place" 
+                                   class="form-control datepicker">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="editStrategieDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editStrategieDescription" name="description" rows="4"></textarea>
+                    
+                    <div class="form-group">
+                        <label for="editDescription" class="form-label">
+                            <i class="fas fa-align-left text-orange"></i>Description
+                        </label>
+                        <textarea id="editDescription" name="description" class="form-control" rows="5"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                    
+                    <div class="strategie-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Créé le: <span id="editCreatedAtInfo"></span></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Dernière Màj: <span id="editUpdatedAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-chess-board fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer la stratégie</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette stratégie ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="mt-3">
+                    <div class="fw-bold" id="deleteStrategieInfo"></div>
+                    <div class="small text-muted" id="deleteTypeInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!-- Edit Stratégie Modal END -->
-
 {% endblock %}
 
 {% block scripts %}
-<!-- Place the first <script> tag in your HTML's <head> -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#description, #editDescription, #editStrategieDescription',  // Sélecteurs pour les textareas
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 250
-        });
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/strategies-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentStrategieId = null;
+    
+    // Configuration Flatpickr avec format Y-m-d
+    const flatpickrConfig = {
+        locale: 'fr',
+        dateFormat: 'Y-m-d',  // Format pour Django
+        altFormat: 'j F Y',   // Format d'affichage
+        altInput: true,
+        allowInput: true,
+        disableMobile: true,
+        static: true,
+        maxDate: 'today',     // Ne pas permettre les dates futures
+        parseDate: function(dateStr) {
+            const formats = [
+                'Y-m-d',    // 2024-01-15
+                'd/m/Y',    // 15/01/2024
+                'd-m-Y',    // 15-01-2024
+                'Y.m.d'     // 2024.01.15
+            ];
+            
+            for (const format of formats) {
+                const parsed = flatpickr.parseDate(dateStr, format);
+                if (parsed) return parsed;
+            }
+            return null;
+        }
+    };
+    
+    // Initialiser les datepickers
+    flatpickr('.datepicker', flatpickrConfig);
+    
+    // Fonction pour formater la date au format Y-m-d
+    function formatDateForInput(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Erreur de formatage de date:', error);
+            return '';
+        }
+    }
+    
+    // Fonction pour afficher la date au format français
+    function formatDateForDisplay(dateString) {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) {
+                return '';
+            }
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        } catch (error) {
+            console.error('Erreur d\'affichage de date:', error);
+            return '';
+        }
+    }
+    
+    // Fonction pour obtenir la classe CSS du badge selon le type
+    function getTypeBadgeClass(type) {
+        const classMap = {
+            'specialisation': 'badge-specialisation',
+            'diversification_liees': 'badge-diversification-liees',
+            'diversification_non_liees': 'badge-diversification-non-liees',
+            'integration': 'badge-integration',
+            'externalisation': 'badge-externalisation',
+            'planification_strategique': 'badge-planification-strategique',
+            'planification_tactique': 'badge-planification-tactique',
+            'planification_operationnelle': 'badge-planification-operationnelle'
+        };
+        return classMap[type] || 'badge-specialisation';
+    }
+    
+    // Gestionnaire pour afficher/masquer la description
+    $(document).on('click', '.toggle-description', function() {
+        const targetId = $(this).data('target');
+        const $description = $(`#${targetId}`);
+        const $icon = $(this).find('i');
+        const $text = $(this).find('span');
+        
+        $description.toggleClass('expanded');
+        
+        if ($description.hasClass('expanded')) {
+            $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            $text.text(' Voir moins');
+        } else {
+            $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            $text.text(' Voir plus');
+        }
     });
-</script>
-
-<script>
-    // Load Acheteur on load
-    $(document).ready(function() {
-        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
-
-        if (!id) {
-            console.error("L'ID de l'acheteur est introuvable.");
-            return;
+    
+    // Charger les stratégies
+    function loadStrategies(search = '', typeFilter = '') {
+        let url = API_BASE_URL;
+        const params = [];
+        
+        if (search) {
+            params.push(`search=${encodeURIComponent(search)}`);
+        }
+        
+        if (typeFilter) {
+            params.push(`type_strategie=${encodeURIComponent(typeFilter)}`);
+        }
+        
+        if (params.length > 0) {
+            url += `?${params.join('&')}`;
         }
 
         $.ajax({
-            url: `/api/consulter-un-acheteur/${id}/`,
+            url: url,
             type: 'GET',
             headers: {
-                'Authorization': 'Bearer ' + '{{ access }}'
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
-                $('#editAcheteurId').val(response.id);
-                $('#editCode').val(response.code).text(response.code);
-                $('#editNom').val(response.nom).text(response.nom);
-                $('#editSigle').val(response.sigle).text(response.sigle);
-                if (response.date_creation) {
-                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
-                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+                const container = $('#strategiesContainer');
+                const emptyState = $('.empty-state');
+                const statsCards = $('.stats-cards');
+                
+                if (response.results && response.results.length > 0) {
+                    // Cacher l'état vide
+                    if (emptyState.length) {
+                        emptyState.hide();
+                    }
+                    
+                    // Afficher les stratégies
+                    let html = '';
+                    
+                    response.results.forEach(function(strategie) {
+                        const dateMiseEnPlace = strategie.date_mise_en_place ? 
+                            formatDateForDisplay(strategie.date_mise_en_place) : null;
+                        const createdAt = new Date(strategie.created_at).toLocaleString('fr-FR');
+                        const createdBy = strategie.created_by_info ? 
+                            strategie.created_by_info.full_name : 'System';
+                        
+                        const typeClass = getTypeBadgeClass(strategie.type_strategie);
+                        
+                        // Déterminer la catégorie
+                        let category = '';
+                        if (strategie.type_strategie.includes('specialisation') || 
+                            strategie.type_strategie.includes('diversification') || 
+                            strategie.type_strategie.includes('integration') || 
+                            strategie.type_strategie.includes('externalisation')) {
+                            category = '<div class="strategie-category"><strong>Stratégie d\'entreprise</strong></div>';
+                        } else if (strategie.type_strategie.includes('planification')) {
+                            category = '<div class="strategie-category"><strong>Stratégie de planification</strong></div>';
+                        }
+                        
+                        html += `
+                        <div class="strategie-card" data-id="${strategie.id}">
+                            <span class="strategie-indicator">
+                                <i class="fas fa-chess-board"></i> STRATÉGIE
+                            </span>
+                            <br>
+                            
+                            <div class="strategie-header">
+                                <div class="strategie-main">
+                                    <div class="strategie-title">
+                                        ${strategie.type_strategie_display}
+                                        ${dateMiseEnPlace ? `
+                                        <span class="strategie-date ms-2">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            ${dateMiseEnPlace}
+                                        </span>` : ''}
+                                    </div>
+                                    ${category}
+                                </div>
+                                <div class="strategie-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-strategie-btn" 
+                                            data-id="${strategie.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-strategie-btn" 
+                                            data-id="${strategie.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>`;
 
-                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                        if (strategie.description) {
+                            const fullDesc = strategie.description.replace(/\n/g, '<br>');
+                            
+                            html += `
+                            <div class="strategie-description description-container" id="description-${strategie.id}">
+                                ${fullDesc}
+                            </div>`;
+                            
+                            if (strategie.description.length > 200) {
+                                html += `
+                                <button class="toggle-description" data-target="description-${strategie.id}">
+                                    <i class="fas fa-chevron-down"></i> <span>Voir plus</span>
+                                </button>`;
+                            }
+                        }
+
+                        html += `
+                            <div class="strategie-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Créé par: ${createdBy}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>Le: ${createdAt}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    container.html(html);
+                    
+                    // Initialiser les tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                    // Mettre à jour les statistiques
+                    if (statsCards.length) {
+                        statsCards.find('.stat-number').first().text(response.count || response.results?.length || 0);
+                    }
+                    
+                } else {
+                    // Afficher l'état vide
+                    if (!emptyState.length) {
+                        container.html(`
+                            <div class="empty-state">
+                                <i class="fas fa-chess-board empty-state-icon"></i>
+                                <h4 class="fw-bold mb-2">Aucune stratégie trouvée</h4>
+                                <p class="text-muted mb-4">
+                                    Aucune stratégie ne correspond à vos critères de recherche.
+                                </p>
+                            </div>
+                        `);
+                    } else {
+                        emptyState.show();
+                    }
                 }
-
-                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
-                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
-                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
-                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
-                $('#editDescription').html(response.description);
-                $('#editEmail').val(response.email).text(response.email);
-                $('#editFax').val(response.fax).text(response.fax);
-                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
-                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
-                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
-                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
-                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
-                $('#editPays').val(response.pays.nom).text(response.pays.nom);
-                $('#editProvince').val(response.province.nom).text(response.province.nom);
-                $('#editVille').val(response.ville.nom).text(response.ville.nom);
             },
             error: function(xhr) {
+                console.error('Erreur lors du chargement:', xhr);
                 Swal.fire({
                     icon: 'error',
-                    title: 'Oops...',
-                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les stratégies.'
                 });
-                console.error("Erreur AJAX :", xhr.responseText);
             }
         });
+    }
+    
+    // Recherche de stratégies
+    $('#searchStrategieInput').on('input', function() {
+        const search = $(this).val();
+        const typeFilter = $('#filterTypeSelect').val();
+        loadStrategies(search, typeFilter);
     });
-</script>
-
-<script>
-    $(document).ready(function() {
-        // Function to load strategie data
-        function loadStrategie(page = 1, search = '') {
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/liste-des-strategies/?page=' + page + '&search=' + search,
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    // Update pagination info
-                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' + (page * response.count > response.total ? response.total : page * response.count) + ' de items');
-
-                    // Update pagination controls
-                    $('#paginationControls').html('');
-                    if (response.previous) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
-                    }
-                    for (let i = 1; i <= response.total_pages; i++) {
-                        if (i === page) {
-                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        } else {
-                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
-                        }
-                    }
-                    if (response.next) {
-                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
-                    }
-
-                    // Update strategie table body
-                    $('#strategieTableBody').html('');
-                    response.results.forEach(function(strategie, index) {
-                        $('#strategieTableBody').append('<tr>' +
-                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
-                            '<td>' + strategie.type_strategie + '</td>' +
-                            '<td>' + strategie.description + '</td>' +
-                            '<td>' + strategie.date_mise_en_place + '</td>' +
-                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + strategie.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
-                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + strategie.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
-                            '</tr>');
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données.',
-                    });
-                }
-            });
-        }
-
-        // Initial load
-        loadStrategie();
-
-        // Search form submission
-        $('#searchForm').on('submit', function(event) {
-            event.preventDefault();
-            var search = $('#searchInput').val();
-            loadStrategie(1, search);
-        });
-
-        // Pagination controls
-        $(document).on('click', '#paginationControls .page-link', function(event) {
-            event.preventDefault();
-            var page = $(this).data('page');
-            var search = $('#searchInput').val();
-            loadStrategie(page, search);
-        });
-
-        // Add Strategie form submission
-        $('#addStrategieForm').on('submit', function(event) {
-            event.preventDefault();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/ajouter-une-strategie/',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Stratégie ajoutée avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#addStrategieModal').modal('hide');
-                        loadStrategie();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de l\'ajout de la stratégie.',
-                    });
-                }
-            });
-        });
-
-        // Edit Strategie button click
-        $(document).on('click', '.edit-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/detail-strategie/' + id + '/',
-                type: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    $('#editStrategieId').val(response.id);
-                    $('#editTypeStrategie').val(response.type_strategie);
-                    $('#editDateMiseEnPlace').val(response.date_mise_en_place);
-                    $('#editStrategieDescription').val(response.description);
-                    $('#editStrategieModal').modal('show');
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la récupération des données de la stratégie.',
-                    });
-                }
-            });
-        });
-
-        // Edit Strategie form submission
-        $('#editStrategieForm').on('submit', function(event) {
-            event.preventDefault();
-            var id = $('#editStrategieId').val();
-            var formData = $(this).serialize();
-            $.ajax({
-                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/editer-une-strategie/' + id + '/',
-                type: 'PUT',
-                data: formData,
-                headers: {
-                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: 'Stratégie mise à jour avec succès.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        $('#editStrategieModal').modal('hide');
-                        loadStrategie();
-                    });
-                },
-                error: function(response) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors de la mise à jour de la stratégie.',
-                    });
-                }
-            });
-        });
-
-        // Delete Strategie button click
-        $(document).on('click', '.delete-btn', function() {
-            var id = $(this).data('id');
+    
+    // Filtre par type
+    $('#filterTypeSelect').on('change', function() {
+        const search = $('#searchStrategieInput').val();
+        const typeFilter = $(this).val();
+        loadStrategies(search, typeFilter);
+    });
+    
+    $('#clearFiltersBtn').click(function() {
+        $('#searchStrategieInput').val('');
+        $('#filterTypeSelect').val('');
+        loadStrategies();
+    });
+    
+    // Formulaire d'ajout
+    $('#addStrategieForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            type_strategie: $('#addTypeStrategie').val(),
+            description: $('#addDescription').val(),
+            date_mise_en_place: $('#addDateMiseEnPlace').val() || null
+        };
+        
+        // Validation
+        if (!formData.type_strategie) {
             Swal.fire({
-                title: 'Êtes-vous sûr?',
-                text: 'Vous ne pourrez pas revenir en arrière!',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Oui, supprimez-le!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/supprimer-des-strategies/',
-                        type: 'DELETE',
-                        data: JSON.stringify({ ids: [id] }),
-                        contentType: 'application/json',
-                        headers: {
-                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
-                        },
-                        success: function(response) {
-                            Swal.fire(
-                                'Supprimé!',
-                                'La stratégie a été supprimée.',
-                                'success'
-                            ).then(() => {
-                                loadStrategie();
-                            });
-                        },
-                        error: function(response) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Oops...',
-                                text: 'Erreur lors de la suppression de la stratégie.',
-                            });
-                        }
-                    });
-                }
+                icon: 'error',
+                title: 'Champ requis',
+                text: 'Le type de stratégie est obligatoire.'
             });
-        });
-
-        // Intercept AJAX responses to check for token expiration
-        $.ajaxSetup({
-            statusCode: {
-                401: function() {
-                    // Token has expired, refresh the token
-                    refreshToken();
+            return;
+        }
+        
+        // Validation de la date
+        if (formData.date_mise_en_place) {
+            const selectedDate = new Date(formData.date_mise_en_place);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate > today) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Date invalide',
+                    text: 'La date de mise en place ne peut pas être dans le futur.'
+                });
+                return;
+            }
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addStrategieModal').modal('hide');
+                $('#addStrategieForm')[0].reset();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadStrategies();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la création de la stratégie';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
                 }
             }
         });
-
-        // Function to refresh the token
-        function refreshToken() {
-            $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                data: JSON.stringify({ refresh: '{{ refresh }}' }),
-                contentType: 'application/json',
-                success: function(response) {
-                    // Update the access token
-                    localStorage.setItem('access_token', response.access);
-                    // Retry the failed request
-                    $.ajax(this);
-                },
-                error: function(response) {
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-strategie-btn', function() {
+        const strategieId = $(this).data('id');
+        currentStrategieId = strategieId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${strategieId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editStrategieId').val(response.id);
+                $('#editTypeStrategie').val(response.type_strategie);
+                $('#editDescription').val(response.description);
+                
+                // Date - utiliser formatDateForInput pour le format Y-m-d
+                if (response.date_mise_en_place) {
+                    $('#editDateMiseEnPlace').val(formatDateForInput(response.date_mise_en_place));
+                    // Forcer la mise à jour de Flatpickr
+                    const datePicker = $('#editDateMiseEnPlace')[0]._flatpickr;
+                    if (datePicker) {
+                        datePicker.setDate(formatDateForInput(response.date_mise_en_place));
+                    }
+                } else {
+                    $('#editDateMiseEnPlace').val('');
+                }
+                
+                // Métadonnées
+                const createdAt = new Date(response.created_at).toLocaleString('fr-FR');
+                const updatedAt = new Date(response.updated_at).toLocaleString('fr-FR');
+                $('#editCreatedAtInfo').text(createdAt);
+                $('#editUpdatedAtInfo').text(updatedAt);
+                
+                $('#editStrategieModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Oops...',
-                        text: 'Erreur lors du rafraîchissement du token.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Recharger la page',
-                        cancelButtonText: 'Rafraîchir le token',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.reload(true);
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            refreshToken();
-                        }
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de la stratégie.'
                     });
                 }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editStrategieForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentStrategieId) return;
+        
+        const formData = {
+            type_strategie: $('#editTypeStrategie').val(),
+            description: $('#editDescription').val(),
+            date_mise_en_place: $('#editDateMiseEnPlace').val() || null
+        };
+        
+        // Validation
+        if (!formData.type_strategie) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champ requis',
+                text: 'Le type de stratégie est obligatoire.'
             });
+            return;
+        }
+        
+        // Validation de la date
+        if (formData.date_mise_en_place) {
+            const selectedDate = new Date(formData.date_mise_en_place);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate > today) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Date invalide',
+                    text: 'La date de mise en place ne peut pas être dans le futur.'
+                });
+                return;
+            }
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentStrategieId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editStrategieModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadStrategies();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification de la stratégie';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    } else {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-strategie-btn', function() {
+        const strategieId = $(this).data('id');
+        const card = $(this).closest('.strategie-card');
+        const type = card.find('.strategie-title').text().split('(')[0].trim();
+        const date = card.find('.strategie-date').text().replace('📅 ', '') || 'Pas de date';
+        
+        currentStrategieId = strategieId;
+        $('#deleteStrategieInfo').text(type);
+        $('#deleteTypeInfo').text(`Date: ${date}`);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentStrategieId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentStrategieId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadStrategies();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer la stratégie'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
         }
     });
+    
+    // Réinitialiser les datepickers quand les modales sont fermées
+    $('#addStrategieModal').on('hidden.bs.modal', function () {
+        $('#addDateMiseEnPlace').val('');
+        const datePicker = $('#addDateMiseEnPlace')[0]._flatpickr;
+        if (datePicker) datePicker.clear();
+    });
+    
+    $('#editStrategieModal').on('hidden.bs.modal', function () {
+        $('#editDateMiseEnPlace').val('');
+        const datePicker = $('#editDateMiseEnPlace')[0]._flatpickr;
+        if (datePicker) datePicker.clear();
+    });
+    
+    // Charger les stratégies au démarrage
+    loadStrategies();
+});
 </script>
-
 {% endblock %}
