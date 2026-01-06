@@ -4,217 +4,836 @@
 {% block styles %}
 <!-- Bootstrap Select CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- TinyMCE CSS (optionnel) -->
+<link href="https://cdn.jsdelivr.net/npm/tinymce@6.8.2/skins/ui/oxide/skin.min.css" rel="stylesheet">
+
 <style>
+:root {
+    --primary-color: #4361ee;
+    --success-color: #2ecc71;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --info-color: #3498db;
+    --dark-color: #2c3e50;
+    --light-color: #f8f9fa;
+    --border-color: #e3e6f0;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --transition-speed: 0.3s;
+}
+
+/* Styles généraux améliorés */
+.page-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.page-header h3 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    background: white;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    transition: all var(--transition-speed) ease;
+    overflow: hidden;
+}
+
+.enhanced-card:hover {
+    box-shadow: var(--card-shadow);
+    border-color: var(--primary-color);
+}
+
+.card-header-gradient {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1.25rem 1.5rem;
+}
+
+/* Score Display */
+.score-display {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 3px solid transparent;
+    transition: all var(--transition-speed) ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.score-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--danger-color), var(--warning-color), var(--success-color));
+}
+
+.score-display.low-risk {
+    border-color: var(--danger-color);
+    background: linear-gradient(135deg, #fee 0%, #fff5f5 100%);
+}
+
+.score-display.medium-risk {
+    border-color: var(--warning-color);
+    background: linear-gradient(135deg, #fef9e7 0%, #fffde7 100%);
+}
+
+.score-display.high-risk {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #e8f8f5 0%, #f0fdf4 100%);
+}
+
+.score-number {
+    font-size: 4rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--primary-color), #6a11cb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.score-interpretation {
+    font-size: 1.1rem;
+    color: var(--dark-color);
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border-radius: 20px;
+    display: inline-block;
+    border: 2px solid var(--border-color);
+}
+
+.score-image-container {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#score-image {
+    max-height: 180px;
+    border-radius: 8px;
+    transition: transform var(--transition-speed) ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#score-image:hover {
+    transform: scale(1.05);
+}
+
+.score-range {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    background: rgba(67, 97, 238, 0.1);
+    border-radius: 20px;
+    display: inline-block;
+    margin-top: 1rem;
+}
+
+.score-details {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed var(--border-color);
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: block;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .bootstrap-select > .dropdown-toggle {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all var(--transition-speed) ease;
+    background: white;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .bootstrap-select > .dropdown-toggle:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
+    outline: none;
+}
+
+.enhanced-form textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Bootstrap Select personnalisé */
+.bootstrap-select .dropdown-menu {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    margin-top: 5px;
+}
+
+.bootstrap-select .dropdown-menu .dropdown-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.bootstrap-select .dropdown-menu .dropdown-item:hover {
+    background: rgba(67, 97, 238, 0.1);
+    color: var(--primary-color);
+}
+
+.bootstrap-select .dropdown-menu .selected {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all var(--transition-speed) ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(67, 97, 238, 0.3);
+    color: white;
+}
+
+.btn-enhanced:active {
+    transform: translateY(0);
+}
+
+.btn-enhanced:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Timeline des mises à jour */
+.update-timeline {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.timeline-item:last-child {
+    border-bottom: none;
+}
+
+.timeline-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-time {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Indicateurs de statut */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-success {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.status-warning {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.status-danger {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .score-number {
+        font-size: 3.5rem;
+    }
+    
+    .score-details {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .score-number {
+        font-size: 3rem;
+    }
+    
+    .score-image-container {
+        padding: 0.5rem;
+    }
+    
     #score-image {
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
+        max-height: 140px;
     }
     
-    #score-image:hover {
-        transform: scale(1.05);
+    .enhanced-form .form-group {
+        margin-bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .score-number {
+        font-size: 2.5rem;
     }
     
-    #score-range {
-        font-weight: 500;
+    .card-header-gradient h3 {
+        font-size: 1.5rem;
     }
+    
+    .btn-enhanced {
+        width: 100%;
+    }
+}
+
+/* Animation de chargement */
+.spinner-border {
+    width: 1.2rem;
+    height: 1.2rem;
+    border-width: 0.15em;
+}
+
+/* Badge de score */
+.score-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6a11cb 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    z-index: 1;
+}
+
+/* Section d'aide */
+.help-section {
+    background: #f8f9ff;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+.help-section h6 {
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.help-section ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #6c757d;
+}
+
+.help-section li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+/* Alertes stylisées */
+.alert-custom {
+    border-radius: 10px;
+    border: 2px solid;
+    background: white;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-info-custom {
+    border-color: var(--info-color);
+    border-left: 4px solid var(--info-color);
+}
+
+.alert-warning-custom {
+    border-color: var(--warning-color);
+    border-left: 4px solid var(--warning-color);
+}
+
+/* Tooltip personnalisé */
+.custom-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.custom-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark-color);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+.custom-tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--dark-color);
+    margin-bottom: -5px;
+}
 </style>
 {% endblock %}
 
 {% block body %}
-<!-- Title START -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Scoring de défaillance pour l'acheteur</h3>
-    </div>
-</div>
-<!-- Title END -->
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <!-- Content -->
-                <div class="ms-3">
-                    <h4 id="countRiskRatings">Module de Gestion du Scoring sans bilan</h4>
-                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à une évaluation 
-                        du score de l'acheteur notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
-                </div>
-            </div>
+<div class="container-fluid">
+    <!-- Header avec breadcrumb -->
+    <div class="help-section d-flex justify-content-between align-items-center mb-4">
+        <!-- Header amélioré -->
+        <div>
+            <h3 class="mb-2"><i class="bi bi-graph-up-arrow me-2"></i>Scoring de Défaillance</h3>
+            <p class="mb-0 opacity-75">Évaluation du risque financier et opérationnel de l'acheteur</p>
+        </div>
+        <div class="d-flex gap-2 text-end">
+            <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-primary btn-action text-white">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
         </div>
     </div>
-</div>
-<!-- Counter END -->
-<!-- Counter START -->
-<div class="row g-4">
-    <!-- Score actuel -->
-    <!-- Dans votre template, remplacez l'affichage du score -->
-    <div class="col-sm-6 col-xl-6">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h5 class="card-title">Score actuel : 
-                        <span id="current-score" class="fw-bold fs-3">--</span>
-                    </h5>
-                    <p class="card-text" id="current-interpretation">--</p>
-                    <small class="text-muted" id="last-update">
-                        Dernière mise à jour: <span id="update-time">--</span>
-                    </small>
-                    
-                    <!-- Nouvelle section pour l'image du score -->
-                    <div class="mt-3 text-center">
-                        <div id="score-image-container">
-                            <img id="score-image" src="" alt="Niveau de risque" class="img-fluid" style="max-height: 150px; display: none;">
-                        </div>
-                        <div id="score-range" class="mt-2 small text-muted"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    
+
+    <!-- Section d'aide -->
+    <div class="help-section">
+        <h6><i class="fas fa-info-circle"></i>Comment ça marche ?</h6>
+        <ul>
+            <li>Ce module calcule un score de risque basé sur plusieurs critères financiers et opérationnels</li>
+            <li>Le score varie de 0 (risque extrême) à 10 (risque excellent)</li>
+            <li>Mettez à jour les critères ci-dessous pour recalculer automatiquement le score</li>
+            <li>Conservez régulièrement les modifications pour un suivi optimal</li>
+        </ul>
     </div>
 
-    <!-- Formulaire -->
-    <div class="col-sm-6 col-xl-6">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <form id="scoring-form" class="mt-4 col-sm-12">
-                    {% csrf_token %}
-                    <div class="form-group col-sm-12">
-                        <label for="comportement_de_paiement_ref">Comportement de paiement</label>
-                        <select class="form-control" id="comportement_de_paiement_ref" name="comportement_de_paiement_ref">
-                            <option value="">-- Sélectionnez --</option>
-                        </select>
+    <div class="row g-4">
+        <!-- Score actuel -->
+        <div class="col-lg-6">
+            <div class="card border enhanced-card">
+                <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
+                    <h3 class="card-header-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Score Actuel
+                    </h3>
+                    <span class="badge bg-white text-primary fs-6">
+                        <i class="fas fa-sync-alt me-1"></i>En temps réel
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Score principal -->
+                    <div class="score-display" id="scoreDisplay">
+                        <span class="score-badge">
+                            <i class="fas fa-shield-alt"></i> Score
+                        </span>
+                        
+                        <div class="score-number" id="current-score">--</div>
+                        
+                        <div class="score-interpretation" id="current-interpretation">
+                            <i class="fas fa-comment-dots me-2"></i>Chargement...
+                        </div>
+                        
+                        <!-- Image du score -->
+                        <div class="score-image-container">
+                            <img id="score-image" src="" alt="Niveau de risque" class="img-fluid d-block mx-auto">
+                            <div id="score-range" class="score-range mt-2">
+                                <i class="fas fa-chart-pie me-1"></i>Plage: --
+                            </div>
+                        </div>
+                        
+                        <!-- Détails du score -->
+                        <div class="score-details">
+                            <div class="detail-item">
+                                <span class="detail-value" id="last-update-time">--:--</span>
+                                <span class="detail-label">Dernière MAJ</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value" id="risk-level">--</span>
+                                <span class="detail-label">Niveau de risque</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-value" id="score-trend">--</span>
+                                <span class="detail-label">Tendance</span>
+                            </div>
+                        </div>
                     </div>
-                    <br>
-                    <div class="form-group col-sm-12">
-                        <label for="age_company_ref">Âge de la société</label>
-                        <select class="form-control" id="age_company_ref" name="age_company_ref">
-                            <option value="">-- Sélectionnez --</option>
-                        </select>
+                    
+                    <!-- Timeline des mises à jour -->
+                    <div class="update-timeline mt-4">
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="fw-medium">Dernière mise à jour</div>
+                                <div class="timeline-time" id="update-time">
+                                    <i class="far fa-clock me-1"></i>Chargement...
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="fw-medium">Modifié par</div>
+                                <div class="timeline-time" id="modified-by">
+                                    <i class="far fa-user me-1"></i>Système
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <br>
-                    <div class="form-group col-sm-12">
-                        <label for="forme_juridique">Forme juridique</label>
-                        <select class="form-control" id="forme_juridique" name="forme_juridique">
-                            <option value="">-- Sélectionnez --</option>
-                        </select>
-                    </div>
-                    <br>
-                    <div class="form-group col-sm-12">
-                        <label for="avis_commercial_ref">Avis commercial</label>
-                        <select class="form-control" id="avis_commercial_ref" name="avis_commercial_ref">
-                            <option value="">-- Sélectionnez --</option>
-                        </select>
-                    </div>
-                    <br>
-                    <div class="form-group col-sm-12">
-                        <label for="locaux_ref">Locaux</label>
-                        <select class="form-control" id="locaux_ref" name="locaux_ref">
-                            <option value="">-- Sélectionnez --</option>
-                        </select>
-                    </div>
-                    <br>
-                    <div class="form-group col-sm-12">
-                        <label for="categories_nace_ref">Catégories NACE</label>
-                        <label for="categories_nace_ref">Catégories NACE</label>
-                        <select class="form-control selectpicker" id="categories_nace_ref" name="categories_nace_ref" multiple data-live-search="true" data-size="10" title="-- Sélectionnez une ou plusieurs catégories --">
-                            <option value="">-- Sélectionnez --</option>
-                        </select>
-                    </div>
-                    <br>
-                    <div class="form-group col-sm-12">
-                        <label for="commentaire">Commentaire</label>
-                        <textarea class="form-control" id="commentaire" name="commentaire" rows="3"></textarea>
-                    </div>
-                    <br>
-                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
-                </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de scoring -->
+        <div class="col-lg-6">
+            <div class="card border enhanced-card">
+                <div class="card-header card-header-gradient">
+                    <h3 class="card-header-title mb-0">
+                        <i class="fas fa-sliders-h me-2"></i>Paramètres du Scoring
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <form id="scoring-form" class="enhanced-form">
+                        {% csrf_token %}
+                        
+                        <!-- Alert d'information -->
+                        <div class="alert alert-info-custom mb-4">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>À noter :</strong> Toutes les modifications déclenchent un recalcul automatique du score
+                        </div>
+                        
+                        <!-- Grille de champs -->
+                        <div class="row g-3">
+                            <!-- Comportement de paiement -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="comportement_de_paiement_ref" class="form-label">
+                                        <i class="fas fa-money-check-alt"></i>Comportement de paiement
+                                    </label>
+                                    <select class="form-control" id="comportement_de_paiement_ref" name="comportement_de_paiement_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Historique des paiements</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Âge de la société -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="age_company_ref" class="form-label">
+                                        <i class="fas fa-building"></i>Âge de la société
+                                    </label>
+                                    <select class="form-control" id="age_company_ref" name="age_company_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Ancienneté de l'entreprise</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Forme juridique -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="forme_juridique" class="form-label">
+                                        <i class="fas fa-balance-scale"></i>Forme juridique
+                                    </label>
+                                    <select class="form-control" id="forme_juridique" name="forme_juridique">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Structure légale</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Avis commercial -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="avis_commercial_ref" class="form-label">
+                                        <i class="fas fa-comment-dollar"></i>Avis commercial
+                                    </label>
+                                    <select class="form-control" id="avis_commercial_ref" name="avis_commercial_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Réputation commerciale</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Locaux -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="locaux_ref" class="form-label">
+                                        <i class="fas fa-home"></i>Locaux
+                                    </label>
+                                    <select class="form-control" id="locaux_ref" name="locaux_ref">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Situation immobilière</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Catégories NACE -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="categories_nace_ref" class="form-label">
+                                        <i class="fas fa-industry"></i>Activités NACE
+                                    </label>
+                                    <select class="form-control selectpicker" id="categories_nace_ref" name="categories_nace_ref" 
+                                            multiple data-live-search="true" data-size="10" 
+                                            title="-- Sélectionnez une ou plusieurs catégories --">
+                                        <option value="">-- Sélectionnez --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Secteurs d'activité (multiple)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Commentaire -->
+                        <div class="form-group mt-3">
+                            <label for="commentaire" class="form-label">
+                                <i class="fas fa-sticky-note"></i>Commentaires & Observations
+                            </label>
+                            <textarea class="form-control" id="commentaire" name="commentaire" rows="4" 
+                                      placeholder="Ajoutez des observations pertinentes pour ce scoring..."></textarea>
+                            <small class="form-text text-muted">Ces commentaires seront enregistrés avec le score</small>
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                            <button type="submit" class="btn btn-enhanced flex-grow-1" id="submit-btn">
+                                <i class="fas fa-save me-2"></i>
+                                <span class="btn-text">Mettre à jour le Scoring</span>
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                            </button>
+                            
+                            <button type="button" class="btn btn-outline-primary" id="reset-btn">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
+                        </div>
+                        
+                        <!-- Indicateur de statut -->
+                        <div class="mt-3 text-center">
+                            <div class="status-indicator status-success d-none" id="success-indicator">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Score mis à jour avec succès</span>
+                            </div>
+                            <div class="status-indicator status-danger d-none" id="error-indicator">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Erreur lors de la mise à jour</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Counter END -->
 {% endblock %}
 
 {% block scripts %}
+<!-- Bootstrap Select JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
-<!-- Pour la recherche en français (optionnel) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/i18n/defaults-fr_FR.min.js"></script>
 <!-- SweetAlert2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-
-<!-- TinyMCE -->
-<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
-<script>
-    $(document).ready(function() {
-        // Initialiser TinyMCE
-        tinymce.init({
-            selector: '#commentaire',
-            plugins: 'link image code',
-            toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-            height: 200
-        });
-    });
-</script>
-
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
 
 <script>
-
-
 $(document).ready(function() {
     const acheteurId = '{{ id_acheteur }}';
     const accessToken = "{{ access }}";
+    let currentScore = 0;
     
-    console.log("=== DÉBUT DU DEBUG ===");
-    console.log("Acheteur ID:", acheteurId);
-    console.log("Token:", accessToken ? "PRÉSENT" : "MANQUANT");
+    console.log("🎯 Initialisation du module de scoring...");
+    console.log("📌 Acheteur ID:", acheteurId);
+    console.log("🔑 Token:", accessToken ? "PRÉSENT" : "MANQUANT");
 
-    // Fonction pour mettre à jour l'heure de dernière mise à jour
+    // ========================================
+    // FONCTIONS D'AFFICHAGE ET D'INTERFACE
+    // ========================================
+    
+    // Mettre à jour l'heure de dernière mise à jour
     function updateLastUpdateTime() {
         const now = new Date();
-        const timeString = now.toLocaleTimeString('fr-FR');
-        const dateString = now.toLocaleDateString('fr-FR');
-        $('#update-time').text(`${dateString} à ${timeString}`);
+        const timeString = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const dateString = now.toLocaleDateString('fr-FR', { 
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short' 
+        });
+        $('#update-time').html(`<i class="far fa-clock me-1"></i>${dateString} à ${timeString}`);
+        $('#last-update-time').text(timeString);
     }
 
-    // Fonction pour déterminer l'image à afficher en fonction du score
+    // Déterminer l'image du score
     function getScoreImage(score) {
-        // Arrondir le score à l'entier le plus proche
         const roundedScore = Math.round(score);
-        
-        // S'assurer que le score est entre 0 et 10
         const finalScore = Math.max(0, Math.min(10, roundedScore));
-        
-        console.log(`🖼️ Score: ${score} → Arrondi: ${finalScore}`);
-        
-        // Retourner le chemin de l'image
         return `/static/scoring/${finalScore}.png`;
     }
 
-    // Fonction pour obtenir la description de la plage de score
+    // Déterminer la description de la plage
     function getScoreRangeDescription(score) {
         const roundedScore = Math.round(score);
-        
         const ranges = {
-            0: "Procédure d'insolvabilité",
-            1: "Risque extrêmement élevé",
-            2: "Risque très élevé", 
-            3: "Risque élevé",
-            4: "Risque important",
-            5: "Risque moyennement élevé",
-            6: "Risque acceptable",
-            7: "Risque modéré",
-            8: "Risque faible",
-            9: "Risque très faible",
-            10: "Risque excellent"
+            0: "Procédure d'insolvabilité ⚠️",
+            1: "Risque extrêmement élevé 🔴",
+            2: "Risque très élevé 🔴", 
+            3: "Risque élevé 🟠",
+            4: "Risque important 🟠",
+            5: "Risque moyennement élevé 🟡",
+            6: "Risque acceptable 🟡",
+            7: "Risque modéré 🟢",
+            8: "Risque faible 🟢",
+            9: "Risque très faible 💚",
+            10: "Risque excellent ✅"
         };
-        
         return ranges[roundedScore] || "Non défini";
     }
 
-    // Fonction pour mettre à jour l'affichage de l'image du score
+    // Déterminer le niveau de risque
+    function getRiskLevel(score) {
+        if (score >= 7.5) return "Faible";
+        if (score >= 5.0) return "Modéré";
+        return "Élevé";
+    }
+
+    // Déterminer la tendance (simulée pour l'exemple)
+    function getScoreTrend(score) {
+        // Cette fonction pourrait être améliorée avec des données historiques
+        if (score > currentScore) return "↗️ Hausse";
+        if (score < currentScore) return "↘️ Baisse";
+        return "→ Stable";
+    }
+
+    // Mettre à jour l'image du score
     function updateScoreImage(score) {
         const imageElement = $('#score-image');
         const rangeElement = $('#score-range');
@@ -223,22 +842,62 @@ $(document).ready(function() {
             const imagePath = getScoreImage(score);
             const rangeDescription = getScoreRangeDescription(score);
             
-            console.log(`🖼️ Chargement de l'image: ${imagePath}`);
-            
-            // Mettre à jour l'image
-            imageElement.attr('src', imagePath);
-            imageElement.attr('alt', `Niveau de risque: ${rangeDescription}`);
-            imageElement.show();
-            
-            // Mettre à jour la description
-            rangeElement.text(`Plage: ${rangeDescription}`);
-        } else {
-            imageElement.hide();
-            rangeElement.text('');
+            // Précharger l'image
+            const img = new Image();
+            img.onload = function() {
+                imageElement.attr('src', imagePath);
+                imageElement.attr('alt', `Niveau de risque: ${rangeDescription}`);
+                imageElement.show();
+                rangeElement.html(`<i class="fas fa-chart-pie me-1"></i>${rangeDescription}`);
+            };
+            img.src = imagePath;
         }
     }
 
-    // Fonction pour précharger les images (optionnel mais recommandé)
+    // Mettre à jour l'affichage du score
+    function updateScoreDisplay(data) {
+        const score = data.scoring_value !== undefined ? data.scoring_value : 0.0;
+        const interpretation = data.interpretation || 'Aucune interprétation disponible';
+        
+        // Mettre à jour le score
+        currentScore = score;
+        $("#current-score").text(score.toFixed(2));
+        $("#current-interpretation").html(`<i class="fas fa-comment-dots me-2"></i>${interpretation}`);
+        
+        // Mettre à jour l'image et la plage
+        updateScoreImage(score);
+        
+        // Mettre à jour les indicateurs
+        $("#risk-level").text(getRiskLevel(score));
+        $("#score-trend").text(getScoreTrend(score));
+        
+        // Mettre à jour le style en fonction du score
+        updateScoreStyle(score);
+        
+        // Mettre à jour l'heure
+        updateLastUpdateTime();
+        
+        // Mettre à jour l'utilisateur modificateur
+        if (data.updated_by) {
+            $("#modified-by").html(`<i class="far fa-user me-1"></i>${data.updated_by}`);
+        }
+    }
+
+    // Mettre à jour le style en fonction du score
+    function updateScoreStyle(score) {
+        const scoreDisplay = $('#scoreDisplay');
+        scoreDisplay.removeClass('low-risk medium-risk high-risk');
+        
+        if (score >= 7.5) {
+            scoreDisplay.addClass('high-risk');
+        } else if (score >= 5.0) {
+            scoreDisplay.addClass('medium-risk');
+        } else {
+            scoreDisplay.addClass('low-risk');
+        }
+    }
+
+    // Précharger les images
     function preloadScoreImages() {
         const images = [];
         for (let i = 0; i <= 10; i++) {
@@ -246,159 +905,80 @@ $(document).ready(function() {
             img.src = `/static/scoring/${i}.png`;
             images.push(img);
         }
-        console.log("🖼️ Préchargement des images de scoring terminé");
+        console.log("🖼️ Images de scoring préchargées");
     }
 
-
-    // Fonction pour afficher les notifications SweetAlert
-    function showAlert(icon, title, text, timer = 3000) {
-        Swal.fire({
-            icon: icon,
-            title: title,
-            text: text,
-            timer: timer,
-            timerProgressBar: true,
-            showConfirmButton: false
-        });
-    }
-
-    // Fonction pour charger les options avec debug
+    // ========================================
+    // FONCTIONS DE GESTION DES DONNÉES
+    // ========================================
+    
+    // Charger les options d'un select
     function loadOptions(url, selectId) {
-        console.log(`Chargement de ${selectId} depuis ${url}`);
-        
         return $.ajax({
             url: url,
             headers: {"Authorization": "Bearer " + accessToken},
             success: function(response) {
-                console.log(`✅ Réponse ${selectId}:`, response);
-                
-                // EXTRAIRE les données du tableau 'results' de la réponse paginée
                 const data = response.results || response;
-                console.log(`📊 Données ${selectId}:`, data);
-                
                 const select = $(`#${selectId}`);
-                if (select.length === 0) {
-                    console.error(`❌ Élément #${selectId} non trouvé dans le DOM`);
-                    return;
-                }
-                
-                select.empty();
                 
                 if (selectId === "categories_nace_ref") {
-                    // Pour le select multiple avec Bootstrap Select
+                    // Pour le select multiple
                     data.forEach(item => {
                         select.append(new Option(item.libelle, item.id));
                     });
-                    console.log(`📋 ${selectId} rempli avec ${data.length} options`);
-                    
-                    // Initialiser Bootstrap Select après avoir ajouté les options
                     select.selectpicker('refresh');
                 } else {
-                    // Pour les champs simples
-                    select.append(new Option("-- Sélectionnez --", ""));
+                    // Pour les selects simples
+                    select.empty().append(new Option("-- Sélectionnez --", ""));
                     data.forEach(item => {
                         select.append(new Option(item.libelle, item.id));
                     });
-                    console.log(`📋 ${selectId} rempli avec ${data.length} options`);
                 }
+                
+                console.log(`✅ ${selectId} chargé: ${data.length} options`);
             },
-            error: function(xhr, status, error) {
-                console.error(`❌ Erreur ${selectId}:`, {
-                    status: xhr.status,
-                    statusText: xhr.statusText,
-                    responseText: xhr.responseText
-                });
+            error: function(xhr) {
+                console.error(`❌ Erreur ${selectId}:`, xhr);
             }
         });
     }
 
-    // Charger les données du scoring avec debug
+    // Charger les données du scoring
     function loadScoring() {
-        console.log(`Chargement du scoring pour acheteur ${acheteurId}`);
+        console.log(`📊 Chargement du scoring pour l'acheteur ${acheteurId}...`);
         
         $.ajax({
             url: `/api/acheteur/${acheteurId}/scoring/`,
             headers: {"Authorization": "Bearer " + accessToken},
             success: function(data) {
-                console.log("📊 Données du scoring:", data);
+                console.log("✅ Données du scoring chargées:", data);
                 
-                // Mettre à jour l'affichage du score
+                // Mettre à jour l'affichage
                 updateScoreDisplay(data);
-
-                // Dans loadScoring(), après updateScoreDisplay(data);
-                updateLastUpdateTime();
                 
                 // Mettre à jour les champs du formulaire
                 updateFormFields(data);
-
-                console.log("🔄 Application des valeurs aux dropdowns...");
                 
-                // Appliquer les valeurs aux dropdowns
-                applyScoringValues(data);
+                // Afficher l'indicateur de succès
+                showStatusIndicator('success', 'Données chargées avec succès', 2000);
             },
-            error: function(xhr, status, error) {
-                console.error("❌ Erreur chargement scoring:", {
-                    status: xhr.status,
-                    statusText: xhr.statusText,
-                    responseText: xhr.responseText
-                });
-                
-                // Afficher des valeurs par défaut en cas d'erreur
-                $("#current-score").text('0.0');
-                $("#current-interpretation").text('--');
+            error: function(xhr) {
+                console.error("❌ Erreur chargement scoring:", xhr);
+                showStatusIndicator('error', 'Erreur de chargement des données');
             }
         });
     }
 
-    // Fonction pour mettre à jour l'affichage du score
-    // Fonction pour mettre à jour l'affichage du score
-    function updateScoreDisplay(data) {
-        const score = data.scoring_value !== undefined ? data.scoring_value : 0.0;
-        const interpretation = data.interpretation || 'Aucune interprétation disponible';
-        
-        $("#current-score").text(score.toFixed(2));
-        $("#current-interpretation").text(interpretation);
-        
-        // Mettre à jour l'image du score
-        updateScoreImage(score);
-        
-        // Optionnel: Changer la couleur en fonction du score
-        updateScoreColor(score);
-    }
-
-    // Fonction pour mettre à jour la couleur du score
-    function updateScoreColor(score) {
-        const scoreElement = $("#current-score");
-        scoreElement.removeClass('text-success text-warning text-danger');
-        
-        if (score >= 7.5) {
-            scoreElement.addClass('text-success');
-        } else if (score >= 5.0) {
-            scoreElement.addClass('text-warning');
-        } else {
-            scoreElement.addClass('text-danger');
-        }
-    }
-
-    // Fonction pour mettre à jour les champs du formulaire
+    // Mettre à jour les champs du formulaire
     function updateFormFields(data) {
         // Mettre à jour le commentaire
-        if (data.commentaire) {
-            if (typeof tinymce !== 'undefined' && tinymce.get('commentaire')) {
-                tinymce.get('commentaire').setContent(data.commentaire);
-            } else {
-                $("#commentaire").val(data.commentaire);
-            }
-        } else {
-            if (typeof tinymce !== 'undefined' && tinymce.get('commentaire')) {
-                tinymce.get('commentaire').setContent('');
-            } else {
-                $("#commentaire").val('');
-            }
-        }
+        $("#commentaire").val(data.commentaire || '');
+        
+        // Appliquer les valeurs aux selects
+        applyScoringValues(data);
     }
 
-    // Fonction pour appliquer les valeurs du scoring aux dropdowns
+    // Appliquer les valeurs aux selects
     function applyScoringValues(data) {
         const mappings = [
             { selector: "#comportement_de_paiement_ref", value: data.comportement_de_paiement_ref?.id },
@@ -410,65 +990,73 @@ $(document).ready(function() {
 
         mappings.forEach(mapping => {
             if (mapping.value) {
-                const select = $(mapping.selector);
-                if (select.length > 0) {
-                    select.val(mapping.value.toString());
-                    console.log(`✓ ${mapping.selector} = ${mapping.value}`);
-                } else {
-                    console.log(`⚠️ Sélecteur ${mapping.selector} non trouvé`);
-                }
-            } else {
-                // Réinitialiser si aucune valeur
-                $(mapping.selector).val('');
+                $(mapping.selector).val(mapping.value.toString());
             }
         });
 
-        // Gestion des catégories NACE (multiple avec Bootstrap Select)
+        // Gestion des catégories NACE
         if (data.categories_nace_ref && data.categories_nace_ref.length > 0) {
             const naceIds = data.categories_nace_ref.map(cat => cat.id.toString());
             $("#categories_nace_ref").selectpicker('val', naceIds);
-            console.log(`✓ categories_nace_ref =`, naceIds);
-        } else {
-            // Réinitialiser si aucune catégorie
-            $("#categories_nace_ref").selectpicker('val', []);
         }
     }
 
-    // Gestion de la soumission du formulaire
+    // Afficher l'indicateur de statut
+    function showStatusIndicator(type, message, duration = 3000) {
+        const successIndicator = $('#success-indicator');
+        const errorIndicator = $('#error-indicator');
+        
+        // Cacher tous les indicateurs
+        successIndicator.addClass('d-none');
+        errorIndicator.addClass('d-none');
+        
+        // Afficher le bon indicateur
+        if (type === 'success') {
+            successIndicator.find('span').text(message);
+            successIndicator.removeClass('d-none');
+        } else {
+            errorIndicator.find('span').text(message);
+            errorIndicator.removeClass('d-none');
+        }
+        
+        // Cacher après la durée spécifiée
+        if (duration) {
+            setTimeout(() => {
+                successIndicator.addClass('d-none');
+                errorIndicator.addClass('d-none');
+            }, duration);
+        }
+    }
+
+    // ========================================
+    // GESTION DES ÉVÉNEMENTS
+    // ========================================
+    
     // Gestion de la soumission du formulaire
     $("#scoring-form").on("submit", function(e) {
         e.preventDefault();
-        console.log("📤 Soumission du formulaire...");
         
-        // Afficher un indicateur de chargement
-        const submitButton = $(this).find('button[type="submit"]');
-        const originalText = submitButton.text();
-        submitButton.html('<i class="spinner-border spinner-border-sm me-2"></i>Mise à jour...');
-        submitButton.prop('disabled', true);
-        
-        // Récupérer toutes les valeurs avec debug
+        // Préparer les données
         const formData = {
             comportement_de_paiement_ref_id: $("#comportement_de_paiement_ref").val() || null,
             age_company_ref_id: $("#age_company_ref").val() || null,
             forme_juridique_id: $("#forme_juridique").val() || null,
             avis_commercial_ref_id: $("#avis_commercial_ref").val() || null,
             locaux_ref_id: $("#locaux_ref").val() || null,
-            categories_nace_ref_ids: $("#categories_nace_ref").val() || [], // Note: 'categories_nace_ref_ids' au lieu de 'categories_nace_ref'
-            commentaire: (typeof tinymce !== 'undefined' && tinymce.get('commentaire')) 
-                ? tinymce.get('commentaire').getContent() 
-                : $("#commentaire").val(),
+            categories_nace_ref_ids: $("#categories_nace_ref").val() || [],
+            commentaire: $("#commentaire").val() || ''
         };
 
-        console.log("📦 Données envoyées:", formData);
-        console.log("🔍 Vérification des IDs:", {
-            comportement: formData.comportement_de_paiement_ref_id,
-            age: formData.age_company_ref_id,
-            forme: formData.forme_juridique_id,
-            avis: formData.avis_commercial_ref_id,
-            locaux: formData.locaux_ref_id,
-            nace_categories: formData.categories_nace_ref_ids
-        });
+        // Désactiver le bouton et afficher le spinner
+        const submitBtn = $('#submit-btn');
+        const btnText = submitBtn.find('.btn-text');
+        const spinner = submitBtn.find('.spinner-border');
+        
+        submitBtn.prop('disabled', true);
+        btnText.text('Mise à jour en cours...');
+        spinner.removeClass('d-none');
 
+        // Envoyer les données
         $.ajax({
             url: `/api/acheteur/${acheteurId}/scoring/`,
             method: "PATCH",
@@ -482,47 +1070,53 @@ $(document).ready(function() {
                 console.log("✅ Scoring mis à jour:", data);
                 
                 // Réactiver le bouton
-                submitButton.html(originalText);
-                submitButton.prop('disabled', false);
+                submitBtn.prop('disabled', false);
+                btnText.text('Mettre à jour le Scoring');
+                spinner.addClass('d-none');
                 
-                // Afficher le succès avec SweetAlert
+                // Afficher le succès
+                showStatusIndicator('success', 'Score mis à jour avec succès');
+                
+                // Mettre à jour l'affichage
+                updateScoreDisplay(data);
+                
+                // Notification SweetAlert
                 Swal.fire({
                     icon: 'success',
-                    title: 'Succès !',
+                    title: 'Score mis à jour !',
                     html: `
-                        <div class="text-center">
-                            <h5>Score mis à jour !</h5>
-                            <p class="mb-2">Nouveau score: <strong>${data.scoring_value.toFixed(2)}/10</strong></p>
-                            <p class="text-muted small">${data.interpretation}</p>
+                        <div class="text-center py-3">
+                            <div class="display-4 fw-bold text-primary mb-3">${data.scoring_value.toFixed(2)}/10</div>
+                            <p class="mb-2">${data.interpretation}</p>
+                            <p class="small text-muted">Le score a été recalculé et enregistré</p>
                         </div>
                     `,
                     showConfirmButton: true,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#3085d6'
-                }).then((result) => {
-                    // Recharger les données pour afficher les nouvelles valeurs
-                    loadScoring();
+                    confirmButtonText: 'Excellent !',
+                    confirmButtonColor: '#4361ee',
+                    timer: 4000,
+                    timerProgressBar: true
                 });
             },
-            error: function(xhr, status, error) {
-                console.error("❌ Erreur mise à jour:", {
-                    status: xhr.status,
-                    statusText: xhr.statusText,
-                    responseText: xhr.responseText
-                });
+            error: function(xhr) {
+                console.error("❌ Erreur mise à jour:", xhr);
                 
                 // Réactiver le bouton
-                submitButton.html(originalText);
-                submitButton.prop('disabled', false);
+                submitBtn.prop('disabled', false);
+                btnText.text('Mettre à jour le Scoring');
+                spinner.addClass('d-none');
                 
-                // Afficher l'erreur avec SweetAlert
+                // Afficher l'erreur
+                showStatusIndicator('error', 'Erreur lors de la mise à jour');
+                
+                // Notification d'erreur
                 let errorMessage = "Une erreur s'est produite lors de la mise à jour.";
                 if (xhr.responseText) {
                     try {
                         const errorData = JSON.parse(xhr.responseText);
                         errorMessage = errorData.detail || errorData.message || errorMessage;
                     } catch (e) {
-                        errorMessage = xhr.responseText.substring(0, 200) + '...';
+                        errorMessage = "Erreur serveur. Veuillez réessayer.";
                     }
                 }
                 
@@ -530,53 +1124,86 @@ $(document).ready(function() {
                     icon: 'error',
                     title: 'Erreur',
                     text: errorMessage,
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#d33'
+                    confirmButtonText: 'Compris',
+                    confirmButtonColor: '#e74c3c'
                 });
             }
         });
     });
 
-
-    // === DÉMARRAGE ===
-    console.log("🚀 Démarrage du chargement...");
-
-    // Précharger les images de scoring
-    preloadScoreImages();
-    
-    // Initialiser Bootstrap Select pour le champ categories_nace_ref
-    if ($('#categories_nace_ref').length) {
-        $('#categories_nace_ref').selectpicker({
-            liveSearch: true,
-            size: 10,
-            selectedTextFormat: 'count > 3',
-            countSelectedText: '{0} catégories sélectionnées',
-            noneSelectedText: '-- Sélectionnez --'
+    // Réinitialiser le formulaire
+    $("#reset-btn").on("click", function() {
+        Swal.fire({
+            title: 'Réinitialiser le formulaire ?',
+            text: "Toutes les modifications non sauvegardées seront perdues.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4361ee',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Oui, réinitialiser',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Réinitialiser tous les champs
+                $("#scoring-form")[0].reset();
+                $("#categories_nace_ref").selectpicker('val', []);
+                showStatusIndicator('success', 'Formulaire réinitialisé');
+            }
         });
-    }
-    
-    // Charger les options après un court délai
-    setTimeout(() => {
-        console.log("📥 Chargement des options...");
-        
-        // Charger toutes les options séquentiellement
-        loadOptions("/api/comportement-paiement/", "comportement_de_paiement_ref")
-            .then(() => loadOptions("/api/age-societe/", "age_company_ref"))
-            .then(() => loadOptions("/api/forme-juridique/", "forme_juridique"))
-            .then(() => loadOptions("/api/avis-commercial/", "avis_commercial_ref"))
-            .then(() => loadOptions("/api/bail/", "locaux_ref"))
-            .then(() => loadOptions("/api/categorie-nace/", "categories_nace_ref"))
-            .then(() => {
-                console.log("✅ Toutes les options chargées");
-                // Charger le scoring après que les options soient chargées
-                setTimeout(loadScoring, 500);
-            })
-            .catch(error => {
-                console.error("❌ Erreur lors du chargement des options:", error);
-                showAlert('error', 'Erreur', 'Impossible de charger les options');
-            });
-    }, 500);
-});
+    });
 
+    // ========================================
+    // INITIALISATION
+    // ========================================
+    
+    // Initialiser Bootstrap Select
+    $('#categories_nace_ref').selectpicker({
+        liveSearch: true,
+        size: 10,
+        selectedTextFormat: 'count > 3',
+        countSelectedText: '{0} catégories sélectionnées',
+        noneSelectedText: '-- Sélectionnez --',
+        style: 'btn-light',
+        styleBase: 'form-control'
+    });
+
+    // Précharger les images
+    preloadScoreImages();
+
+    // Charger toutes les données
+    console.log("🚀 Démarrage du chargement des données...");
+    
+    // Charger les options séquentiellement
+    const optionsUrls = [
+        { url: "/api/comportement-paiement/", id: "comportement_de_paiement_ref" },
+        { url: "/api/age-societe/", id: "age_company_ref" },
+        { url: "/api/forme-juridique/", id: "forme_juridique" },
+        { url: "/api/avis-commercial/", id: "avis_commercial_ref" },
+        { url: "/api/bail/", id: "locaux_ref" },
+        { url: "/api/categorie-nace/", id: "categories_nace_ref" }
+    ];
+
+    // Fonction pour charger séquentiellement
+    async function loadAllOptions() {
+        for (const option of optionsUrls) {
+            try {
+                await loadOptions(option.url, option.id);
+            } catch (error) {
+                console.error(`❌ Erreur chargement ${option.id}:`, error);
+            }
+        }
+        
+        // Une fois toutes les options chargées, charger le scoring
+        setTimeout(loadScoring, 500);
+    }
+
+    // Démarrer le chargement
+    loadAllOptions();
+    
+    // Mettre à jour l'heure initiale
+    updateLastUpdateTime();
+
+    console.log("✅ Module de scoring initialisé avec succès");
+});
 </script>
 {% endblock %}

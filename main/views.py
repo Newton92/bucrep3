@@ -1498,15 +1498,18 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_scoring(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
     
     # Recupere l'user connecte
     user = request.user
 
     # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
 
     # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
@@ -2066,10 +2069,26 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
     refresh = RefreshToken.for_user(user)
 
     # Récupérer l'acheteur pour avoir ses données
-    try:
-        acheteur = Acheteur.objects.get(pk=acheteur_id)
-    except Acheteur.DoesNotExist:
-        acheteur = None
+    # Récupérer l'acheteur avec relations optimisées
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise'
+        ),
+        id=acheteur_id
+    )
+
+    # Préparer les données pour JavaScript
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
 
     # Récupérer tous les colorations
     coloration_list = CouleurCommentaire.objects.all()
@@ -2079,6 +2098,7 @@ def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur_json": json.dumps(acheteur_data),
         "id_acheteur": acheteur_id,
         "acheteur": acheteur,  # Ajoutez l'objet acheteur
         "coloration_list": coloration_list,
@@ -2102,6 +2122,28 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
     # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
 
+    # Récupérer l'acheteur pour avoir ses données
+    # Récupérer l'acheteur avec relations optimisées
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise'
+        ),
+        id=acheteur_id
+    )
+
+    # Préparer les données pour JavaScript
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+
     # Recuperer l'id de l'acheteur
     id_acheteur = acheteur_id
 
@@ -2113,7 +2155,9 @@ def dash_root_manage_acheteur_emailling(request, acheteur_id):
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur_json": json.dumps(acheteur_data),
         "id_acheteur": id_acheteur,
+        "acheteur": acheteur,  # Ajoutez l'objet acheteur
         "coloration_list": coloration_list,
     }
     

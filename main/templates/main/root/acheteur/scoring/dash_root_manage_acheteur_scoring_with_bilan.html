@@ -2,3875 +2,1126 @@
 {% load static %}
 
 {% block styles %}
-<!-- Bootstrap Select CSS -->
+<!-- Optimisation des imports CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
 <style>
-    .score-card {
-        border-radius: 15px;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-        transition: transform 0.3s ease;
-        border: none;
+    /* Variables CSS pour une meilleure maintenabilité */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #721c24 100%);
+        --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+        --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
+        --shadow-xl: 0 20px 40px rgba(0,0,0,0.2);
+        --border-radius-sm: 8px;
+        --border-radius-md: 12px;
+        --border-radius-lg: 16px;
+        --transition-fast: 0.2s ease;
+        --transition-normal: 0.3s ease;
+        --transition-slow: 0.5s ease;
     }
 
-    .score-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    }
-
-    .progress-score {
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .progress-score .progress-bar {
-        transition: width 0.8s ease-in-out;
-    }
-
-    /* Style pour l'image dans la synthèse */
-    .card-body .img-fluid {
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .card-body .img-fluid:hover {
-        transform: scale(1.05);
-    }
-
-    /* Style pour l'encart d'information */
-    .bg-dark.bg-opacity-25 {
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    /* Styles spécifiques pour le scoring bancaire */
-    .score-main-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* Styles généraux améliorés */
+    .page-header {
+        background: var(--primary-gradient);
         color: white;
-        padding: 2rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-        display: flex;
-        align-items: center;
-        gap: 2rem;
+        padding: 1.5rem;
+        border-radius: var(--border-radius-md);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-md);
     }
 
-    .score-value {
-        font-size: 3rem;
-        font-weight: bold;
-    }
-
-    .score-value.score-excellent { color: #28a745; }
-    .score-value.score-good { color: #20c997; }
-    .score-value.score-moderate { color: #ffc107; }
-    .score-value.score-poor { color: #fd7e14; }
-    .score-value.score-critical { color: #dc3545; }
-
-    .risk-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.875rem;
-    }
-
-    .risk-badge.risk-low { background-color: #d4edda; color: #155724; }
-    .risk-badge.risk-moderate { background-color: #fff3cd; color: #856404; }
-    .risk-badge.risk-high { background-color: #f8d7da; color: #721c24; }
-    .risk-badge.risk-very-high { background-color: #dc3545; color: white; }
-    .risk-badge.risk-critical { background-color: #721c24; color: white; }
-
-    .score-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        text-align: center;
-        padding: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .score-card.current {
-        border: 2px solid #007bff;
-        background-color: #f8f9fa;
-    }
-
-    .score-card.error {
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-
-    .ratios-details table th {
-        background-color: #f8f9fa;
+    .page-header h3 {
+        margin: 0;
         font-weight: 600;
     }
 
-    /* Animation de chargement */
-    .loading-spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
+    /* Cards améliorées */
+    .card {
+        border: none;
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-normal);
+        overflow: hidden;
     }
 
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .card-header {
+        border-bottom: none;
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+    }
+
+    .card-header.bg-primary {
+        background: var(--primary-gradient) !important;
+    }
+
+    .card-header.bg-secondary {
+        background: var(--info-gradient) !important;
+    }
+
+    /* Tabs améliorées */
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+        margin-bottom: -2px;
+        transition: all var(--transition-fast);
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #495057;
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        background-color: white;
+        border-bottom: 3px solid #007bff;
+        font-weight: 600;
+    }
+
+    /* Score Cards améliorées */
+    .score-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: var(--border-radius-md);
+        padding: 1.5rem;
+        transition: all var(--transition-normal);
+        height: 100%;
+    }
+
+    .score-card.score-excellent { border-left: 4px solid #28a745; }
+    .score-card.score-good { border-left: 4px solid #20c997; }
+    .score-card.score-moderate { border-left: 4px solid #ffc107; }
+    .score-card.score-poor { border-left: 4px solid #fd7e14; }
+    .score-card.score-critical { border-left: 4px solid #dc3545; }
+
+    .score-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .score-value {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin: 1rem 0;
+    }
+
+    .score-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    /* Progress bars améliorées */
+    .progress {
+        height: 12px;
+        border-radius: 6px;
+        background-color: #f8f9fa;
+        overflow: hidden;
+        margin: 1.5rem 0;
+    }
+
+    .progress-bar {
+        border-radius: 6px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Badges améliorés */
+    .risk-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        margin: 0.25rem;
+    }
+
+    .risk-badge.risk-low {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+    }
+
+    .risk-badge.risk-moderate {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        color: #856404;
+    }
+
+    .risk-badge.risk-high {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+    }
+
+    .risk-badge.risk-very-high {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+
+    .risk-badge.risk-critical {
+        background: linear-gradient(135deg, #721c24, #5a1a1a);
+        color: white;
+    }
+
+    /* Tableaux améliorés */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        padding: 1rem;
+    }
+
+    .table tbody td {
+        padding: 0.875rem 1rem;
+        border-top: 1px solid #f1f3f4;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0,123,255,0.05);
+    }
+
+    /* Boutons améliorés */
+    .btn {
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        padding: 0.5rem 1.5rem;
+        transition: all var(--transition-fast);
+        border: none;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        border: none;
+    }
+
+    .btn-warning {
+        background: var(--warning-gradient);
+        border: none;
+    }
+
+    .btn-danger {
+        background: var(--danger-gradient);
+        border: none;
+    }
+
+    /* Alertes améliorées */
+    .alert {
+        border: none;
+        border-radius: var(--border-radius-md);
+        padding: 1.25rem 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .alert-primary {
+        background: linear-gradient(135deg, #cfe2ff, #b6d4fe);
+        color: #084298;
+        border-left: 4px solid #0d6efd;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .animate-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Grid amélioré */
+    .grid-gap {
+        gap: 1.5rem;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .score-value {
+            font-size: 2.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        
+        .card-header {
+            padding: 1rem;
+        }
+    }
+
+    /* Score image container */
+    .score-image-container {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: var(--border-radius-md);
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 150px;
+    }
+
+    .score-image {
+        max-height: 120px;
+        transition: transform var(--transition-normal);
+    }
+
+    .score-image:hover {
+        transform: scale(1.1);
+    }
+
+    /* Timeline pour l'évolution */
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 2rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.75rem;
+        top: 0;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background: #667eea;
+        border: 3px solid white;
+        box-shadow: var(--shadow-sm);
     }
 </style>
 {% endblock %}
 
 {% block body %}
-<!-- Title START -->
+<!-- Header amélioré -->
+<header class="page-header animate-fade-in-up">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-2"><i class="bi bi-graph-up-arrow me-2"></i>Scoring ACREMAC Multi-Bilans</h3>
+            <p class="mb-0 opacity-75">Analyse complète de la santé financière sur différents formats de bilans</p>
+        </div>
+        <div class="d-flex gap-2 text-end">
+            <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-primary btn-action text-white">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Onglets améliorés -->
+<div class="card mb-4 border-0 shadow-lg">
+    <div class="card-header bg-white border-bottom">
+        <ul class="nav nav-tabs nav-tabs-custom" id="bilanTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="classique-tab" data-bs-toggle="tab" data-bs-target="#classique" type="button" role="tab">
+                    <i class="bi bi-building me-2"></i>Bilan Classique
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="bancaire-tab" data-bs-toggle="tab" data-bs-target="#bancaire" type="button" role="tab">
+                    <i class="bi bi-bank me-2"></i>Bilan Bancaire
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="syscohada-tab" data-bs-toggle="tab" data-bs-target="#syscohada" type="button" role="tab">
+                    <i class="bi bi-globe-americas me-2"></i>Bilan SYSCOHADA
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="anglais-tab" data-bs-toggle="tab" data-bs-target="#anglais" type="button" role="tab">
+                    <i class="bi bi-translate me-2"></i>Bilan Anglais
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ifrs-tab" data-bs-toggle="tab" data-bs-target="#ifrs" type="button" role="tab">
+                    <i class="bi bi-graph-up me-2"></i>Bilan IFRS COBAC
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-0">
+        <div class="tab-content" id="bilanTabsContent">
+            <!-- ID acheteur caché -->
+            <input type="hidden" id="acheteurId" value="{{ id_acheteur }}">
+            
+            <!-- Onglets -->
+            <div class="tab-pane fade show active" id="classique" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_classique.html' %}
+            </div>
+            <div class="tab-pane fade" id="bancaire" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_bancaire.html' %}
+            </div>
+            <div class="tab-pane fade" id="syscohada" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_syscohada.html' %}
+            </div>
+            <div class="tab-pane fade" id="anglais" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_anglais.html' %}
+            </div>
+            <div class="tab-pane fade" id="ifrs" role="tabpanel">
+                {% include 'main/root/acheteur/scoring/partials/bilan_ifrs.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section des résultats (optimisée) -->
+<div id="globalResultsSection" class="d-none">
+    <div class="card border-0 shadow-lg mb-4 animate-fade-in-up">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-bar-chart-fill me-2"></i>Résultats du Score ACREMAC
+                <span class="badge bg-light text-primary ms-2" id="currentBilanType"></span>
+            </h5>
+            <button class="btn btn-light btn-sm" onclick="$('#globalResultsSection').addClass('d-none')">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="card-body p-4">
+            <div id="globalResultsContent">
+                <!-- Les résultats seront injectés ici -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de comparaison multi-bilans -->
+<div class="card border-0 shadow mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">
+            <i class="bi bi-ui-checks-grid me-2"></i>Comparaison Multi-Bilans
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row" id="comparisonPanel">
+            <!-- Les scores de différents bilans apparaîtront ici -->
+            <div class="col-12 text-center text-muted">
+                <p class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Calculez des scores sur différents types de bilans pour comparer
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations ACREMAC améliorées -->
 <div class="row">
-    <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Scoring ACREMAC avec Bilan</h3>
-    </div>
-</div>
-<!-- Title END -->
-
-<!-- Counter START -->
-<div class="row g-4">
-    <div class="col-sm-12 col-xl-12">
-        <div class="card card-body border">
-            <div class="d-flex align-items-center">
-                <div class="ms-3">
-                    <h4 id="countRiskRatings">Module de Scoring Multi-Bilans</h4>
-                    <span>Sélectionnez le type de bilan et calculez le score ACREMAC sur la base des états financiers des 3 dernières années.</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Counter END -->
-
-<!-- Onglets des types de bilan -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border">
-            <div class="card-header bg-light">
-                <ul class="nav nav-tabs card-header-tabs" id="bilanTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="classique-tab" data-bs-toggle="tab" data-bs-target="#classique" type="button" role="tab">
-                            <i class="fas fa-balance-scale me-2"></i>Bilan Classique
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="bancaire-tab" data-bs-toggle="tab" data-bs-target="#bancaire" type="button" role="tab">
-                            <i class="fas fa-university me-2"></i>Bilan Bancaire
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="syscohada-tab" data-bs-toggle="tab" data-bs-target="#syscohada" type="button" role="tab">
-                            <i class="fas fa-globe-africa me-2"></i>Bilan SYSCOHADA
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="anglais-tab" data-bs-toggle="tab" data-bs-target="#anglais" type="button" role="tab">
-                            <i class="fas fa-flag-usa me-2"></i>Bilan Anglais
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="ifrs-tab" data-bs-toggle="tab" data-bs-target="#ifrs" type="button" role="tab">
-                            <i class="fas fa-chart-line me-2"></i>Bilan IFRS COBAC
-                        </button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <div class="tab-content bilan-tab-content" id="bilanTabsContent">
-
-                    <!-- Ajouter cette ligne cachée pour stocker l'ID de l'acheteur -->
-                    <input type="hidden" id="acheteurId" value="{{ id_acheteur }}">
-                    
-                    <!-- Onglet Bilan Classique -->
-                    <div class="tab-pane fade show active" id="classique" role="tabpanel">
-                        {% include 'main/root/acheteur/scoring/partials/bilan_classique.html' %}
-                    </div>
-
-                    <!-- Onglet Bilan Bancaire -->
-                    <div class="tab-pane fade" id="bancaire" role="tabpanel">
-                        {% include 'main/root/acheteur/scoring/partials/bilan_bancaire.html' %}
-                    </div>
-
-                    <!-- Onglet Bilan SYSCOHADA -->
-                    <div class="tab-pane fade" id="syscohada" role="tabpanel">
-                        {% include 'main/root/acheteur/scoring/partials/bilan_syscohada.html' %}
-                    </div>
-
-                    <!-- Onglet Bilan Anglais -->
-                    <div class="tab-pane fade" id="anglais" role="tabpanel">
-                        {% include 'main/root/acheteur/scoring/partials/bilan_anglais.html' %}
-                    </div>
-
-                    <!-- Onglet Bilan IFRS COBAC -->
-                    <div class="tab-pane fade" id="ifrs" role="tabpanel">
-                        {% include 'main/root/acheteur/scoring/partials/bilan_ifrs.html' %}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Section des résultats (commune à tous les onglets) -->
-<div id="globalResultsSection" style="display: none;">
-    <div class="row">
-        <div class="col-12">
-            <div class="card border">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-line"></i> Résultats du Score ACREMAC
-                        <span class="badge bg-light text-primary ms-2" id="currentBilanType"></span>
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="globalResultsContent">
-                        <!-- Les résultats seront injectés ici -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Section d'information ACREMAC -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100 border-0 shadow">
             <div class="card-header bg-secondary text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle"></i> Informations ACREMAC
+                    <i class="bi bi-info-circle-fill me-2"></i>Guide des Ratios ACREMAC
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>Les 6 Ratios Calculés:</h6>
-                        <div class="small">
-                            <p><strong>R1:</strong> Frais financiers / EBE<br>
-                            <small class="text-muted">Part des frais financiers dans l'excédent brut</small></p>
-                            
-                            <p><strong>R2:</strong> (Créances + disponibilités) / Dettes CT<br>
-                            <small class="text-muted">Couverture des dettes court terme</small></p>
-                            
-                            <p><strong>R3:</strong> Capitaux permanents / Passif<br>
-                            <small class="text-muted">Structure financière</small></p>
-                            
-                            <p><strong>R4:</strong> Valeur ajoutée / Chiffre d'affaires<br>
-                            <small class="text-muted">Performance économique</small></p>
-                            
-                            <p><strong>R5:</strong> Trésorerie / Ventes (jours)<br>
-                            <small class="text-muted">Autonomie financière à court terme</small></p>
-                            
-                            <p><strong>R6:</strong> Fonds de roulement / CA (jours)<br>
-                            <small class="text-muted">Couverture du besoin en fonds de roulement</small></p>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h6><span class="badge bg-primary me-2">R1</span> Frais financiers / EBE</h6>
+                                <p class="text-muted small mb-0">Mesure la part des frais financiers dans l'excédent brut d'exploitation</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h6><span class="badge bg-success me-2">R2</span> (Créances + disponibilités) / Dettes CT</h6>
+                                <p class="text-muted small mb-0">Évalue la couverture des dettes à court terme</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h6><span class="badge bg-info me-2">R3</span> Capitaux permanents / Passif</h6>
+                                <p class="text-muted small mb-0">Analyse la structure financière à long terme</p>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <h6>Échelle des Scores:</h6>
-                        <div class="small">
-                            <span class="badge bg-danger risk-badge">S < -4.01</span> Risque très élevé<br><br>
-                            <span class="badge bg-warning risk-badge">-4.01 ≤ S < -2.57</span> Risque élevé<br><br>
-                            <span class="badge bg-warning risk-badge">-2.57 ≤ S < -1.00</span> Risque important<br><br>
-                            <span class="badge bg-info risk-badge">-1.00 ≤ S < 0.28</span> Risque modéré<br><br>
-                            <span class="badge bg-success risk-badge">0.28 ≤ S < 1.26</span> Risque normal<br><br>
-                            <span class="badge bg-success risk-badge">1.26 ≤ S < 2.10</span> Risque acceptable<br><br>
-                            <span class="badge bg-success risk-badge">S ≥ 2.10</span> Risque faible à excellent
-                        </div>
-                        
-                        <hr>
-                        
-                        <h6>Comparaison Multi-Bilans:</h6>
-                        <div class="small text-muted">
-                            <p>Comparez les scores obtenus avec différents types de bilans pour une analyse complète de la santé financière.</p>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h6><span class="badge bg-warning me-2">R4</span> Valeur ajoutée / Chiffre d'affaires</h6>
+                                <p class="text-muted small mb-0">Mesure la performance économique de l'entreprise</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h6><span class="badge bg-danger me-2">R5</span> Trésorerie / Ventes (jours)</h6>
+                                <p class="text-muted small mb-0">Évalue l'autonomie financière à court terme</p>
+                            </div>
+                            <div class="timeline-item">
+                                <h6><span class="badge bg-dark me-2">R6</span> Fonds de roulement / CA (jours)</h6>
+                                <p class="text-muted small mb-0">Analyse la couverture du besoin en fonds de roulement</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<!-- Ajouter cette div cachée pour stocker le chemin des images -->
-<!-- Ajouter cette div cachée pour stocker le chemin des images -->
-<div id="staticPaths" 
-     data-scoring-images="/static/scoring/"
-     style="display: none;">
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/i18n/defaults-fr_FR.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-
-
-<script>
-// Fonction pour obtenir l'image correspondant au score
-// Fonction pour obtenir l'image correspondant au score
-function getScoreImage(score) {
-    const roundedScore = Math.round(score);
-    const finalScore = Math.max(0, Math.min(10, roundedScore));
     
-    // Récupérer le chemin de base depuis l'élément HTML
-    const basePath = $('#staticPaths').data('scoring-images');
-    
-    return `${basePath}${finalScore}.png`;
-}
-
-// Générer la carte du score principal AVEC IMAGE
-// Version alternative avec image à côté du score
-function generateMainScoreCard(scoreData, bilanType) {
-    const scoreClass = getScoreClass(scoreData.score);
-    const progressWidth = Math.min(Math.max((scoreData.score + 5) * 10, 0), 100);
-    const scoreImage = getScoreImage(scoreData.score);
-    
-    return `
-        <div class="card score-card ${scoreClass}">
-            <div class="card-body py-4">
-                <div class="row align-items-center">
-                    <!-- Image du score -->
-                    <div class="col-md-4 text-center">
-                        <img src="${scoreImage}" alt="Score ${Math.round(scoreData.score)}" 
-                             class="img-fluid" style="max-height: 100px;">
-                        <div class="small text-white-50 mt-2">
-                            Score: ${Math.round(scoreData.score)}/10
-                        </div>
-                    </div>
-                    
-                    <!-- Détails du score -->
-                    <div class="col-md-8">
-                        <h4 class="text-uppercase text-white-50 small">${bilanType}</h4>
-                        <h1 class="display-4 fw-bold">${scoreData.score.toFixed(2)}</h1>
-                        <h5 class="mb-3">${scoreData.classe_risque}</h5>
-                        <div class="progress progress-score bg-white bg-opacity-25 mb-3">
-                            <div class="progress-bar bg-white" style="width: ${progressWidth}%"></div>
-                        </div>
-                        <p class="mb-2"><strong>Probabilité de défaillance:</strong> ${scoreData.probabilite_defaillance}%</p>
-                        <p class="mb-0 small">${scoreData.commentaire}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-</script>
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN CLASSIQUE -->
-<script>
-
-
-// =============================================
-// FONCTION PRINCIPALE POUR LE BILAN CLASSIQUE
-// =============================================
-// Variables globales
-const API_BASE = '/api';
-let accessToken = '{{ access }}';
-let currentBilanType = 'classique';
-let allScores = {}; // Stocke tous les scores calculés
-
-$(document).ready(function() {
-    console.log('🚀 Initialisation du module Scoring Multi-Bilans');
-    
-    // Événement de changement d'onglet
-    $('#bilanTabs button').on('shown.bs.tab', function (e) {
-        currentBilanType = e.target.id.replace('-tab', '');
-        console.log(`📊 Onglet activé: ${currentBilanType}`);
-        loadYearsForBilanType(currentBilanType);
-    });
-    
-    // Charger les années pour le premier onglet
-    loadYearsForBilanType('classique');
-});
-
-
-// Charger les années disponibles selon le type de bilan
-async function loadYearsForBilanType(bilanType) {
-    try {
-        console.log(`📅 Chargement des années pour ${bilanType}...`);
-        
-        const acheteurId = $('#acheteurId').val();
-        const response = await fetch(`/api/scoring/bilan-classique/acheteurs/${acheteurId}/annees/`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            populateYearSelects(bilanType, data.years);
-        } else {
-            // Fallback: générer les 5 dernières années
-            const currentYear = new Date().getFullYear();
-            const years = Array.from({length: 5}, (_, i) => currentYear - i);
-            populateYearSelects(bilanType, years);
-        }
-    } catch (error) {
-        console.error(`Erreur chargement années ${bilanType}:`, error);
-        const currentYear = new Date().getFullYear();
-        const years = Array.from({length: 5}, (_, i) => currentYear - i);
-        populateYearSelects(bilanType, years);
-    }
-}
-
-
-// Remplir les selects d'années pour un type de bilan spécifique
-function populateYearSelects(bilanType, years) {
-    const selects = [`#${bilanType}-anneeN`, `#${bilanType}-anneeN1`, `#${bilanType}-anneeN2`];
-    
-    selects.forEach(select => {
-        if ($(select).length) {
-            $(select).empty().append('<option value="">Sélectionner...</option>');
-            years.forEach(year => {
-                $(select).append(`<option value="${year}">${year}</option>`);
-            });
-            
-            // Remplissage automatique si assez d'années
-            if (years.length >= 3) {
-                $(`#${bilanType}-anneeN`).val(years[0]);
-                $(`#${bilanType}-anneeN1`).val(years[1]);
-                $(`#${bilanType}-anneeN2`).val(years[2]);
-            }
-        }
-    });
-}
-
-
-// Calculer le score pour un type de bilan spécifique
-async function calculateScore(bilanType) {
-    const formData = {
-        acheteur_id: parseInt($('#acheteurId').val()),
-        annee_n: parseInt($(`#${bilanType}-anneeN`).val()),
-        annee_n1: parseInt($(`#${bilanType}-anneeN1`).val()),
-        annee_n2: parseInt($(`#${bilanType}-anneeN2`).val()),
-        bilan_type: bilanType
-    };
-    
-    // Validation
-    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
-        showToast('Veuillez sélectionner les 3 années', 'error');
-        return;
-    }
-    
-    const btnCalculate = $(`#${bilanType}-btnCalculate`);
-    const originalText = btnCalculate.html();
-    
-    try {
-        btnCalculate.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
-        
-        console.log(`🧮 Calcul du score ${bilanType} avec:`, formData);
-        
-        const response = await fetch(`${API_BASE}/calculer-score-acrema-bilan/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log(`✅ Résultat du calcul ${bilanType}:`, result);
-        
-        // Stocker le résultat
-        allScores[bilanType] = result;
-        
-        // Afficher les résultats
-        displayResults(bilanType, result);
-        $('#globalResultsSection').show();
-        $('#currentBilanType').text(bilanType.toUpperCase());
-        
-        showToast(`Score ${bilanType} calculé avec succès`, 'success');
-        
-    } catch (error) {
-        console.error(`❌ Erreur calcul score ${bilanType}:`, error);
-        showToast(`Erreur lors du calcul du score ${bilanType}: ${error.message}`, 'error');
-    } finally {
-        btnCalculate.prop('disabled', false).html(originalText);
-    }
-}
-
-
-// Afficher les résultats pour un type de bilan
-function displayResults(bilanType, data) {
-    const resultsHtml = `
-        <div class="row">
-            <!-- Score Principal -->
-            <div class="col-md-6">
-                ${generateMainScoreCard(data.scores.n, bilanType)}
-            </div>
-            
-            <!-- Détails des Ratios -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt"></i> Détail des Ratios
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ratio</th>
-                                        <th>Valeur</th>
-                                        <th>Contribution</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${generateRatiosTable(data.scores.n)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENCART SYNTHESE EN DESSOUS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(data.scores.n, bilanType, data.annees)}
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar"></i> Évolution sur 3 Ans
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-3">
-            <div class="col-12 text-end">
-                <button class="btn btn-outline-primary btn-sm" onclick="generateReport('${bilanType}')">
-                    <i class="fas fa-download"></i> Rapport Détaillé
-                </button>
-                <button class="btn btn-outline-secondary btn-sm" onclick="compareWithOtherBilans()">
-                    <i class="fas fa-balance-scale"></i> Comparer avec autres bilans
-                </button>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(resultsHtml);
-}
-
-
-// Générer la carte de synthèse (encart en dessous)
-// Générer la carte de synthèse avec IMAGE GRANDE et visible
-function generateSummaryCard(scoreData, bilanType, annees) {
-    const scoreImage = getScoreImage(scoreData.score);
-    const currentDate = new Date().toLocaleDateString('fr-FR');
-    const currentTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    
-    return `
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-primary text-white">
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100 border-0 shadow">
+            <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-file-alt me-2"></i>Synthèse du Score ACREMAC - Bilan ${bilanType.charAt(0).toUpperCase() + bilanType.slice(1)}
+                    <i class="bi bi-speedometer2 me-2"></i>Échelle des Scores
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row align-items-center">
-                    <!-- Image du score - PLUS GRANDE ET CENTRALE -->
-                    <div class="col-md-12 text-center">
-                        <div class="border rounded p-3 bg-light">
-                            <img src="${scoreImage}" alt="Score ${Math.round(scoreData.score)}" 
-                                 class="img-fluid" style="max-height: 120px;">
-                            <div class="mt-2">
-                                <span class="badge bg-primary fs-6">${Math.round(scoreData.score)}/10</span>
-                            </div>
-                            <div class="small text-muted mt-1">
-                                Niveau de risque
-                            </div>
-                        </div>
-                        <br><br>
+                <div class="d-grid gap-2">
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-danger bg-opacity-10 rounded">
+                        <span class="risk-badge risk-critical">S < -4.01</span>
+                        <small class="text-muted">Risque très élevé</small>
                     </div>
-
-                    
-                    
-                    <!-- Informations principales -->
-                    <div class="col-md-6">
-                        <div class="row">
-                            <div class="col-12 mb-3">
-                                <h3 class="text-primary mb-1">${scoreData.score.toFixed(2)}</h3>
-                                <p class="mb-2">
-                                    <span class="badge ${getRiskBadgeClass(scoreData.score)} fs-6">${scoreData.classe_risque}</span>
-                                </p>
-                            </div>
-                            <div class="col-12">
-                                <div class="border-start border-primary ps-3">
-                                    <p class="mb-1">
-                                        <strong>Probabilité de défaillance:</strong>
-                                    </p>
-                                    <h4 class="text-danger">${scoreData.probabilite_defaillance}%</h4>
-                                    <p class="text-muted small mb-0">
-                                        <i class="fas fa-calendar me-1"></i>
-                                        Données: ${annees.n}, ${annees.n1}, ${annees.n2}
-                                    </p>
-                                    <p class="text-muted small mb-0">
-                                        <i class="fas fa-clock me-1"></i>
-                                        Calcul: ${currentDate} à ${currentTime}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-warning bg-opacity-10 rounded">
+                        <span class="risk-badge risk-high">-4.01 ≤ S < -2.57</span>
+                        <small class="text-muted">Risque élevé</small>
                     </div>
-                    
-                    <!-- Actions rapides -->
-                    <div class="col-md-6">
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary btn-sm" onclick="showDetailedAnalysis('${bilanType}')">
-                                <i class="fas fa-chart-bar me-1"></i>Analyse Détaillée
-                            </button>
-                            <button class="btn btn-outline-success btn-sm" onclick="generateReport('${bilanType}')">
-                                <i class="fas fa-download me-1"></i>Télécharger Rapport
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="compareWithOtherBilans()">
-                                <i class="fas fa-balance-scale me-1"></i>Comparer Bilans
-                            </button>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-warning bg-opacity-10 rounded">
+                        <span class="risk-badge risk-high">-2.57 ≤ S < -1.00</span>
+                        <small class="text-muted">Risque important</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-info bg-opacity-10 rounded">
+                        <span class="risk-badge risk-moderate">-1.00 ≤ S < 0.28</span>
+                        <small class="text-muted">Risque modéré</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-success bg-opacity-10 rounded">
+                        <span class="risk-badge risk-low">0.28 ≤ S < 1.26</span>
+                        <small class="text-muted">Risque normal</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-success bg-opacity-10 rounded">
+                        <span class="risk-badge risk-low">1.26 ≤ S < 2.10</span>
+                        <small class="text-muted">Risque acceptable</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-2 bg-success bg-opacity-10 rounded">
+                        <span class="risk-badge risk-low">S ≥ 2.10</span>
+                        <small class="text-muted">Risque faible à excellent</small>
                     </div>
                 </div>
             </div>
         </div>
-    `;
-}
+    </div>
+</div>
 
-// Fonctions utilitaires pour les classes de style
-function getRiskBadgeClass(score) {
-    if (score < -2.57) return 'bg-danger';
-    if (score < 0.28) return 'bg-warning';
-    if (score < 1.26) return 'bg-info';
-    if (score < 2.10) return 'bg-success';
-    return 'bg-primary';
-}
+<!-- Chemins statiques -->
+<div id="staticPaths" data-scoring-images="/static/scoring/" style="display: none;"></div>
+{% endblock %}
 
+{% block scripts %}
+<!-- Optimisation des imports JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/i18n/defaults-fr_FR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
 
-function getAlertClass(score) {
-    if (score < -2.57) return 'alert-danger';
-    if (score < 0.28) return 'alert-warning';
-    if (score < 1.26) return 'alert-info';
-    if (score < 2.10) return 'alert-success';
-    return 'alert-primary';
-}
+<script>
+// =============================================
+// GESTIONNAIRE PRINCIPAL OPTIMISÉ
+// =============================================
 
-// Version simplifiée de la carte principale (sans l'encart détaillé)
-function generateMainScoreCardTwo(scoreData, bilanType) {
-    const scoreClass = getScoreClass(scoreData.score);
-    const progressWidth = Math.min(Math.max((scoreData.score + 5) * 10, 0), 100);
+const SCORING_MANAGER = {
+    // Configuration
+    API_BASE: '/api',
+    accessToken: '{{ access }}',
+    currentBilanType: 'classique',
+    allScores: {},
+    calculationHistory: [],
     
-    return `
-        <div class="card score-card ${scoreClass}" style="background-color: green;">
-            <div class="card-body text-center py-4">
-                <h4 class="text-uppercase text-white-50 small mb-3">${bilanType}</h4>
-                <h1 class="display-4 fw-bold mb-2">${scoreData.score.toFixed(2)}</h1>
-                <h5 class="mb-3">${scoreData.classe_risque}</h5>
-                
-                <div class="progress progress-score bg-white bg-opacity-25 mb-3">
-                    <div class="progress-bar bg-white" style="width: ${progressWidth}%"></div>
-                </div>
-                
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="border border-white border-opacity-50 rounded p-2 mb-2">
-                            <small class="text-white-50">Probabilité</small>
-                            <div class="fw-bold ${scoreData.probabilite_defaillance > 50 ? 'text-warning' : 'text-success'}">
-                                ${scoreData.probabilite_defaillance}%
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="border border-white border-opacity-50 rounded p-2 mb-2">
-                            <small class="text-white-50">Niveau</small>
-                            <div class="fw-bold">${Math.round(scoreData.score)}/10</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-
-// Fonction pour obtenir l'image correspondant au score
-// Fonction pour obtenir l'image correspondant au score
-function getScoreImage(score) {
-    const roundedScore = Math.round(score);
-    const finalScore = Math.max(0, Math.min(10, roundedScore));
-    
-    return `/static/scoring/${finalScore}.png`;
-}
-
-
-// Générer la carte du score principal AVEC ENCART STYLE DEMANDÉ
-// Générer la carte du score principal SANS IMAGE dans l'encart vert
-function generateMainScoreCard(scoreData, bilanType) {
-    const scoreClass = getScoreClass(scoreData.score);
-    const progressWidth = Math.min(Math.max((scoreData.score + 5) * 10, 0), 100);
-    const currentDate = new Date().toLocaleDateString('fr-FR');
-    const currentTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    
-    return `
-        <div class="card score-card ${scoreClass}" style="background-color: green;">
-            <div class="card-body py-4">
-                <div class="row align-items-center">
-                    <!-- Partie gauche - Score principal -->
-                    <div class="col-md-8">
-                        <div class="text-center">
-                            <h4 class="text-uppercase text-white-50 small mb-3">${bilanType}</h4>
-                            <h1 class="display-3 fw-bold mb-2 text-white">${scoreData.score.toFixed(2)}</h1>
-                            <h4 class="mb-4 text-white">${scoreData.classe_risque}</h4>
-                            
-                            <!-- Barre de progression -->
-                            <div class="progress progress-score bg-white bg-opacity-25 mb-4" style="height: 25px;">
-                                <div class="progress-bar bg-white text-white fw-bold" 
-                                     style="width: ${progressWidth}%"
-                                     role="progressbar">
-                                    Niveau ${Math.round(scoreData.score)}/10
-                                </div>
-                            </div>
-                            
-                            <!-- Indicateurs -->
-                            <div class="row text-center mb-3">
-                                <div class="col-6">
-                                    <div class="border border-white border-opacity-50 rounded p-2">
-                                        <small class="text-white-50">Probabilité Défaillance</small>
-                                        <div class="fw-bold text-white fs-5 ${scoreData.probabilite_defaillance > 50 ? 'text-warning' : 'text-success'}">
-                                            ${scoreData.probabilite_defaillance}%
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="border border-white border-opacity-50 rounded p-2">
-                                        <small class="text-white-50">Niveau Risque</small>
-                                        <div class="fw-bold fs-5 text-white">${Math.round(scoreData.score)}/10</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Partie droite - Encart information -->
-                    <div class="col-md-4">
-                        <!-- Encart d'information style demandé -->
-                        <div class="bg-dark bg-opacity-25 p-3 rounded" style="border-left: 4px solid #fff;">
-                            <h6 class="text-white mb-2">
-                                <i class="fas fa-chart-line me-2"></i>Score ACREMAC
-                            </h6>
-                            <p class="text-white-50 text-white small mb-2">
-                                <strong>${scoreData.classe_risque}</strong><br>
-                                Probabilité: ${scoreData.probabilite_defaillance}%
-                            </p>
-                            <p class="text-white-50 small mb-0">
-                                <i class="fas fa-clock me-1 text-white"></i>Mise à jour: ${currentDate} ${currentTime}
-                            </p>
-                        </div>
-                        
-                        <!-- Commentaire -->
-                        <div class="mt-3 p-2 bg-white bg-opacity-10 rounded">
-                            <p class="mb-0 small text-white">
-                                <i class="fas fa-info-circle me-1"></i>
-                                ${scoreData.commentaire}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Générer le tableau des ratios
-function generateRatiosTable(scoreData) {
-    let html = '';
-    const coefficients = scoreData.coefficients;
-    const ratios_bornees = scoreData.ratios_bornees;
-    
-    Object.keys(ratios_bornees).forEach(ratioKey => {
-        const ratioBornee = ratios_bornees[ratioKey] || 0;
-        const coefficient = coefficients[ratioKey] || 0;
-        const contribution = coefficient * ratioBornee;
+    // Initialisation
+    init() {
+        console.log('🚀 Initialisation du module Scoring Multi-Bilans');
         
-        html += `
-            <tr>
-                <td><strong>${ratioKey.toUpperCase()}</strong></td>
-                <td class="ratio-value">${ratioBornee.toFixed(2)}</td>
-                <td class="ratio-value ${contribution >= 0 ? 'text-success' : 'text-danger'}">
-                    ${contribution.toFixed(4)}
-                </td>
-            </tr>
+        // Gestion des onglets
+        $('#bilanTabs button').on('shown.bs.tab', (e) => {
+            this.currentBilanType = e.target.id.replace('-tab', '');
+            console.log(`📊 Onglet activé: ${this.currentBilanType}`);
+            this.loadYearsForBilanType(this.currentBilanType);
+            this.updateComparisonPanel();
+        });
+        
+        // Chargement initial
+        this.loadYearsForBilanType('classique');
+        this.initEventListeners();
+    },
+    
+    // Écouteurs d'événements
+    initEventListeners() {
+        // Boutons de calcul globaux
+        $(document).on('click', '[id$="-btnCalculate"]', (e) => {
+            const type = e.target.id.replace('-btnCalculate', '');
+            this.calculateScore(type);
+        });
+        
+        // Auto-remplissage
+        $(document).on('click', '[id$="-btnAutoFill"]', (e) => {
+            const type = e.target.id.replace('-btnAutoFill', '');
+            this.autoFillYears(type);
+        });
+    },
+    
+    // Chargement des années
+    async loadYearsForBilanType(bilanType) {
+        try {
+            const acheteurId = $('#acheteurId').val();
+            const endpoint = `/api/scoring/${bilanType.replace('classique', 'bilan-classique')}/acheteurs/${acheteurId}/annees/`;
+            
+            const response = await fetch(endpoint, {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.populateYearSelects(bilanType, data.years || data.annees);
+            } else {
+                this.populateYearSelects(bilanType, this.generateDefaultYears());
+            }
+        } catch (error) {
+            console.error(`Erreur chargement années ${bilanType}:`, error);
+            this.populateYearSelects(bilanType, this.generateDefaultYears());
+        }
+    },
+    
+    // Génération d'années par défaut
+    generateDefaultYears() {
+        const currentYear = new Date().getFullYear();
+        return Array.from({length: 5}, (_, i) => currentYear - i);
+    },
+    
+    // Remplissage des selects
+    populateYearSelects(bilanType, years) {
+        const selects = [`#${bilanType}-anneeN`, `#${bilanType}-anneeN1`, `#${bilanType}-anneeN2`];
+        
+        selects.forEach((select, index) => {
+            if ($(select).length) {
+                $(select).empty().append('<option value="">Sélectionner...</option>');
+                years.forEach(year => {
+                    $(select).append(`<option value="${year}">${year}</option>`);
+                });
+                
+                // Auto-remplissage si disponible
+                if (years.length > index) {
+                    $(select).val(years[index]);
+                }
+            }
+        });
+    },
+    
+    // Calcul du score
+    async calculateScore(bilanType) {
+        const formData = this.prepareFormData(bilanType);
+        
+        if (!this.validateFormData(formData)) {
+            this.showToast('Veuillez sélectionner les 3 années', 'error');
+            return;
+        }
+        
+        const btnCalculate = $(`#${bilanType}-btnCalculate`);
+        const originalText = btnCalculate.html();
+        
+        try {
+            btnCalculate.prop('disabled', true)
+                       .html('<i class="fas fa-spinner fa-spin me-2"></i>Calcul en cours...');
+            
+            const response = await fetch(`${this.API_BASE}/calculer-score-acrema-bilan/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'X-CSRFToken': this.getCsrfToken()
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+            
+            const result = await response.json();
+            this.handleCalculationResult(bilanType, result);
+            
+        } catch (error) {
+            console.error(`❌ Erreur calcul score ${bilanType}:`, error);
+            this.showToast(`Erreur lors du calcul: ${error.message}`, 'error');
+        } finally {
+            btnCalculate.prop('disabled', false).html(originalText);
+        }
+    },
+    
+    // Préparation des données du formulaire
+    prepareFormData(bilanType) {
+        return {
+            acheteur_id: parseInt($('#acheteurId').val()),
+            annee_n: parseInt($(`#${bilanType}-anneeN`).val()),
+            annee_n1: parseInt($(`#${bilanType}-anneeN1`).val()),
+            annee_n2: parseInt($(`#${bilanType}-anneeN2`).val()),
+            bilan_type: bilanType
+        };
+    },
+    
+    // Validation
+    validateFormData(formData) {
+        return formData.annee_n && formData.annee_n1 && formData.annee_n2;
+    },
+    
+    // Gestion du résultat
+    handleCalculationResult(bilanType, result) {
+        // Stockage
+        this.allScores[bilanType] = result;
+        this.calculationHistory.unshift({
+            type: bilanType,
+            score: result.scores.n.score,
+            date: new Date().toISOString()
+        });
+        
+        // Affichage
+        this.displayResults(bilanType, result);
+        $('#globalResultsSection').removeClass('d-none').addClass('animate-fade-in-up');
+        $('#currentBilanType').text(this.formatBilanType(bilanType));
+        
+        // Mise à jour du panel de comparaison
+        this.updateComparisonPanel();
+        
+        this.showToast(`Score ${bilanType} calculé avec succès`, 'success');
+    },
+    
+    // Affichage des résultats
+    displayResults(bilanType, data) {
+        const resultsHtml = this.generateResultsHtml(bilanType, data);
+        $('#globalResultsContent').html(resultsHtml);
+    },
+    
+    // Génération du HTML des résultats
+    generateResultsHtml(bilanType, data) {
+        const scoreData = data.scores.n;
+        const annees = data.annees;
+        
+        return `
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="alert alert-primary">
+                        <h5 class="alert-heading">
+                            <i class="bi ${this.getBilanIcon(bilanType)} me-2"></i>
+                            Score ACREMAC - ${this.formatBilanType(bilanType)}
+                        </h5>
+                        <p class="mb-0">Analyse basée sur les années ${annees.n}, ${annees.n1}, ${annees.n2}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    ${this.generateMainScoreCard(scoreData, bilanType)}
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-speedometer me-2"></i>Indicateurs Clés
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${this.generateKeyIndicators(scoreData)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-12">
+                    ${this.generateSummaryCard(scoreData, bilanType, annees)}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-table me-2"></i>Détail des Ratios
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${this.generateRatiosTable(scoreData)}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-clock-history me-2"></i>Évolution
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            ${this.generateEvolutionChart(data.scores)}
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
-    });
+    },
     
-    return html;
-}
-
-
-// Générer les cartes d'évolution AVEC IMAGES
-function generateEvolutionCards(scores) {
-    let html = '';
+    // Carte de score principale
+    generateMainScoreCard(scoreData, bilanType) {
+        const scoreClass = this.getScoreClass(scoreData.score);
+        const progressWidth = Math.min(Math.max((scoreData.score + 5) * 10, 0), 100);
+        const scoreImage = this.getScoreImage(scoreData.score);
+        
+        return `
+            <div class="card score-card ${scoreClass}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="score-image-container">
+                                <img src="${scoreImage}" alt="Score ${Math.round(scoreData.score)}" 
+                                     class="score-image">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="score-label">SCORE ${this.formatBilanType(bilanType)}</div>
+                            <div class="score-value">${scoreData.score.toFixed(2)}</div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge ${this.getRiskBadgeClass(scoreData.score)} fs-6">
+                                    ${scoreData.classe_risque}
+                                </span>
+                                <span class="text-muted">${Math.round(scoreData.score)}/10</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: ${progressWidth}%"></div>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <span class="badge bg-danger">${scoreData.probabilite_defaillance}% risque</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
     
-    Object.keys(scores).forEach(yearKey => {
-        const yearData = scores[yearKey];
-        if (yearData.score !== undefined) {
-            const yearLabel = yearKey.toUpperCase();
-            const scoreClass = getScoreClass(yearData.score);
-            const scoreImage = getScoreImage(yearData.score);
+    // Indicateurs clés
+    generateKeyIndicators(scoreData) {
+        return `
+            <div class="d-grid gap-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Niveau de risque</span>
+                    <span class="badge ${this.getRiskBadgeClass(scoreData.score)}">
+                        ${scoreData.classe_risque}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Probabilité défaillance</span>
+                    <span class="fw-bold text-danger">${scoreData.probabilite_defaillance}%</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Score brut</span>
+                    <span class="fw-bold">${scoreData.score.toFixed(2)}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Date calcul</span>
+                    <small class="text-muted">${new Date().toLocaleDateString('fr-FR')}</small>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Carte de synthèse
+    generateSummaryCard(scoreData, bilanType, annees) {
+        return `
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="mb-2">${scoreData.classe_risque}</h5>
+                            <p class="text-muted mb-3">${scoreData.commentaire}</p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="SCORING_MANAGER.downloadReport('${bilanType}')">
+                                    <i class="bi bi-download me-1"></i>Rapport
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="SCORING_MANAGER.shareAnalysis('${bilanType}')">
+                                    <i class="bi bi-share me-1"></i>Partager
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="bg-white p-3 rounded shadow-sm">
+                                <small class="text-muted d-block">Période analysée</small>
+                                <div class="fw-bold">${annees.n}, ${annees.n1}, ${annees.n2}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+    
+    // Tableau des ratios
+    generateRatiosTable(scoreData) {
+        let html = '<div class="table-responsive"><table class="table table-hover">';
+        html += `
+            <thead>
+                <tr>
+                    <th>Ratio</th>
+                    <th>Valeur</th>
+                    <th>Bornée</th>
+                    <th>Contribution</th>
+                    <th>Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        const coefficients = scoreData.coefficients || {};
+        const ratios_bornees = scoreData.ratios_bornees || {};
+        
+        Object.keys(ratios_bornees).forEach(ratioKey => {
+            const ratioBornee = ratios_bornees[ratioKey] || 0;
+            const coefficient = coefficients[ratioKey] || 0;
+            const contribution = coefficient * ratioBornee;
             
             html += `
-                <div class="col-md-4">
-                    <div class="card score-card ${scoreClass}">
-                        <div class="card-body text-center">
-                            <h6>Année ${yearLabel}</h6>
-                            
-                            <!-- Image du score -->
-                            <div class="mb-2">
-                                <img src="${scoreImage}" alt="Score ${Math.round(yearData.score)}" 
-                                     class="img-fluid" style="max-height: 60px;">
+                <tr>
+                    <td><strong>${ratioKey.toUpperCase()}</strong></td>
+                    <td>${ratioBornee.toFixed(3)}</td>
+                    <td>${coefficient.toFixed(3)}</td>
+                    <td class="${contribution >= 0 ? 'text-success' : 'text-danger'}">
+                        ${contribution.toFixed(3)}
+                    </td>
+                    <td>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar ${contribution >= 0 ? 'bg-success' : 'bg-danger'}" 
+                                 style="width: ${Math.min(Math.abs(contribution) * 100, 100)}%">
                             </div>
-                            
-                            <h4 class="fw-bold">${yearData.score.toFixed(2)}</h4>
-                            <span class="badge bg-white text-dark risk-badge">
-                                ${yearData.classe_risque}
-                            </span>
-                            <p class="small mt-2 mb-0">
-                                Probabilité: ${yearData.probabilite_defaillance}%
-                            </p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table></div>';
+        return html;
+    },
+    
+    // Graphique d'évolution
+    generateEvolutionChart(scores) {
+        let html = '<div class="d-grid gap-2">';
+        
+        Object.keys(scores).forEach(yearKey => {
+            const yearData = scores[yearKey];
+            if (yearData.score !== undefined) {
+                const progress = Math.min(Math.max((yearData.score + 5) * 10, 0), 100);
+                
+                html += `
+                    <div class="border rounded p-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="fw-bold">Année ${yearKey.toUpperCase()}</small>
+                            <small class="text-muted">${yearData.score.toFixed(2)}</small>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar ${this.getScoreClass(yearData.score)}" 
+                                 style="width: ${progress}%">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        html += '</div>';
+        return html;
+    },
+    
+    // Mise à jour du panel de comparaison
+    updateComparisonPanel() {
+        if (Object.keys(this.allScores).length === 0) {
+            $('#comparisonPanel').html(`
+                <div class="col-12 text-center text-muted py-4">
+                    <i class="bi bi-bar-chart display-4 mb-3 d-block"></i>
+                    <p class="mb-0">Calculez des scores pour comparer les bilans</p>
+                </div>
+            `);
+            return;
+        }
+        
+        let html = '';
+        Object.keys(this.allScores).forEach(bilanType => {
+            const score = this.allScores[bilanType].scores.n.score;
+            const scoreClass = this.getScoreClass(score);
+            
+            html += `
+                <div class="col-md-4 mb-3">
+                    <div class="card score-card ${scoreClass} h-100">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">
+                                <i class="bi ${this.getBilanIcon(bilanType)} me-2"></i>
+                                ${this.formatBilanType(bilanType)}
+                            </h6>
+                            <div class="display-6 fw-bold my-3">${score.toFixed(2)}</div>
+                            <div class="badge ${this.getRiskBadgeClass(score)}">
+                                ${this.allScores[bilanType].scores.n.classe_risque}
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="SCORING_MANAGER.viewDetails('${bilanType}')">
+                                    <i class="bi bi-eye me-1"></i>Voir
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
-        }
-    });
+        });
+        
+        $('#comparisonPanel').html(html);
+    },
     
-    return html;
-}
-
-// Remplissage automatique des années
-function autoFillYears(bilanType) {
-    const years = Array.from($(`#${bilanType}-anneeN option`)).map(opt => opt.value).filter(val => val);
-    if (years.length >= 3) {
+    // Utilitaires
+    getScoreImage(score) {
+        const roundedScore = Math.round(score);
+        const finalScore = Math.max(0, Math.min(10, roundedScore));
+        const basePath = $('#staticPaths').data('scoring-images');
+        return `${basePath}${finalScore}.png`;
+    },
+    
+    getScoreClass(score) {
+        if (score < -4.01) return 'score-critical';
+        if (score < -2.57) return 'score-poor';
+        if (score < -1.00) return 'score-moderate';
+        if (score < 0.28) return 'score-moderate';
+        if (score < 1.26) return 'score-good';
+        if (score < 2.10) return 'score-good';
+        return 'score-excellent';
+    },
+    
+    getRiskBadgeClass(score) {
+        if (score < -2.57) return 'bg-danger';
+        if (score < 0.28) return 'bg-warning';
+        if (score < 1.26) return 'bg-info';
+        if (score < 2.10) return 'bg-success';
+        return 'bg-primary';
+    },
+    
+    getBilanIcon(type) {
+        const icons = {
+            'classique': 'bi-building',
+            'bancaire': 'bi-bank',
+            'syscohada': 'bi-globe-americas',
+            'anglais': 'bi-translate',
+            'ifrs': 'bi-graph-up'
+        };
+        return icons[type] || 'bi-file-earmark-text';
+    },
+    
+    formatBilanType(type) {
+        return type.toUpperCase().replace('IFRS', 'IFRS COBAC');
+    },
+    
+    // Fonctions d'action
+    downloadReport(bilanType) {
+        this.showToast(`Génération du rapport ${bilanType}...`, 'info');
+    },
+    
+    shareAnalysis(bilanType) {
+        this.showToast(`Partage de l'analyse ${bilanType}...`, 'info');
+    },
+    
+    viewDetails(bilanType) {
+        if (this.allScores[bilanType]) {
+            this.displayResults(bilanType, this.allScores[bilanType]);
+            $('#globalResultsSection').removeClass('d-none');
+            $('#currentBilanType').text(this.formatBilanType(bilanType));
+        }
+    },
+    
+    // Auto-remplissage
+    autoFillYears(bilanType) {
+        const years = this.generateDefaultYears();
         $(`#${bilanType}-anneeN`).val(years[0]);
         $(`#${bilanType}-anneeN1`).val(years[1]);
         $(`#${bilanType}-anneeN2`).val(years[2]);
-        showToast(`Années ${bilanType} remplies automatiquement`, 'success');
-    }
-}
-
-// Comparer avec d'autres bilans
-function compareWithOtherBilans() {
-    if (Object.keys(allScores).length === 0) {
-        showToast('Aucun score à comparer', 'warning');
-        return;
-    }
+        this.showToast(`Années ${bilanType} remplies automatiquement`, 'success');
+    },
     
-    let comparisonHtml = '<h6>Comparaison Multi-Bilans</h6><div class="row">';
+    // Utilitaires généraux
+    getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    },
     
-    Object.keys(allScores).forEach(bilanType => {
-        const score = allScores[bilanType].scores.n.score;
-        const scoreClass = getScoreClass(score);
-        
-        comparisonHtml += `
-            <div class="col-md-3 mb-3">
-                <div class="card ${scoreClass} text-white">
-                    <div class="card-body text-center p-3">
-                        <h6 class="text-uppercase small">${bilanType}</h6>
-                        <h4 class="fw-bold">${score.toFixed(2)}</h4>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    comparisonHtml += '</div>';
-    
-    // Afficher dans une modal ou dans la section résultats
-    $('#globalResultsContent').prepend(`
-        <div class="alert alert-info">
-            ${comparisonHtml}
-        </div>
-    `);
-}
-
-// Utilitaires (garder les mêmes fonctions)
-function getScoreClass(score) {
-    if (score < -4.01) return 'score-poor';
-    if (score < -2.57) return 'score-poor';
-    if (score < -1.00) return 'score-moderate';
-    if (score < 0.28) return 'score-moderate';
-    if (score < 1.26) return 'score-good';
-    if (score < 2.10) return 'score-good';
-    return 'score-excellent';
-}
-
-
-function getCsrfToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
-}
-
-
-function showToast(message, type = 'info') {
-    // Utiliser SweetAlert2 pour les notifications
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-    });
-    
-    Toast.fire({
-        icon: type,
-        title: message
-    });
-}
-
-
-function generateReport(bilanType) {
-    showToast(`Génération du rapport ${bilanType} en cours...`, 'info');
-}
-
-</script>
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN CLASSIQUE -->
-<script>
-// =============================================
-// FONCTION PRINCIPALE POUR LE BILAN CLASSIQUE
-// =============================================
-// Fonction spécifique pour le bilan classique
-async function calculateScoreClassique() {
-    const formData = {
-        acheteur_id: parseInt($('#acheteurId').val()),
-        annee_n: parseInt($('#classique-anneeN').val()),
-        annee_n1: parseInt($('#classique-anneeN1').val()),
-        annee_n2: parseInt($('#classique-anneeN2').val()),
-        bilan_type: 'classique'
-    };
-    
-    // Validation
-    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
-        showToast('Veuillez sélectionner les 3 années', 'error');
-        return;
-    }
-    
-    const btnCalculate = $('#classique-btnCalculate');
-    const originalText = btnCalculate.html();
-    
-    try {
-        btnCalculate.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
-        
-        console.log('🧮 Calcul du score bilan classique avec:', formData);
-        
-        const response = await fetch('/api/scoring/bilan-classique/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify(formData)
+    showToast(message, type = 'info') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: type,
+            title: message,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
         });
-        
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Résultat du calcul bilan classique:', result);
-        
-        displayResultsClassique(result);
-        $('#globalResultsSection').show();
-        $('#currentBilanType').text('BILAN CLASSIQUE');
-        
-        showToast('Score bilan classique calculé avec succès', 'success');
-        
-    } catch (error) {
-        console.error('❌ Erreur calcul score classique:', error);
-        showToast('Erreur lors du calcul du score: ' + error.message, 'error');
-    } finally {
-        btnCalculate.prop('disabled', false).html(originalText);
     }
-}
-
-// Affichage des résultats pour le bilan classique
-// Affichage des résultats pour le bilan classique
-function displayResultsClassique(data) {
-    const resultsHtml = `
-        <div class="row">
-            <!-- En-tête avec type de bilan -->
-            <div class="col-12 mb-4">
-                <div class="alert alert-primary">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-balance-scale me-2"></i>
-                        Résultats du Score ACREMAC - Bilan Classique
-                    </h5>
-                    <p class="mb-0">Analyse basée sur les données financières des années 
-                    ${data.annees.n}, ${data.annees.n1}, ${data.annees.n2}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <!-- Score Principal -->
-            <div class="col-md-6">
-                ${generateMainScoreCard(data.scores.n, 'classique')}
-            </div>
-            
-            <!-- Indicateurs de risque -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Indicateurs de Risque
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateRiskIndicators(data.scores.n)}
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDetailedAnalysis('classique')">
-                                <i class="fas fa-search me-1"></i>Analyse Détaillée
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENCART SYNTHESE EN DESSOUS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(data.scores.n, 'classique', data.annees)}
-            </div>
-        </div>
-        
-        <!-- Détails des Ratios -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt me-2"></i>Détail des Ratios ACREMAC
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ratio</th>
-                                        <th>Formule</th>
-                                        <th>Valeur Calculée</th>
-                                        <th>Valeur Bornée</th>
-                                        <th>Coefficient</th>
-                                        <th>Contribution</th>
-                                        <th>Interprétation</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${generateDetailedRatiosTable(data.scores.n)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Évolution sur 3 Ans
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                        <div class="mt-3">
-                            <div class="alert alert-secondary">
-                                <small>
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Tendance:</strong> 
-                                    ${calculateTrend(data.scores)}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <button class="btn btn-outline-primary" onclick="generateReportClassique()">
-                            <i class="fas fa-download me-1"></i>Rapport PDF
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportDataClassique()">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-info" onclick="compareWithOtherBilans()">
-                            <i class="fas fa-balance-scale me-1"></i>Comparer avec autres bilans
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(resultsHtml);
-}
-
-// Génération des indicateurs de risque
-function generateRiskIndicators(scoreData) {
-    const riskLevel = getRiskLevel(scoreData.score);
-    
-    return `
-        <div class="risk-indicators">
-            <div class="mb-3">
-                <label class="form-label"><strong>Niveau de Risque:</strong></label>
-                <div class="progress" style="height: 25px;">
-                    <div class="progress-bar ${riskLevel.color}" role="progressbar" 
-                         style="width: ${riskLevel.percentage}%" 
-                         aria-valuenow="${riskLevel.percentage}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                        ${scoreData.classe_risque}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row text-center">
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Probabilité Défaillance</small>
-                        <div class="fw-bold text-danger">${scoreData.probabilite_defaillance}%</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Score Final</small>
-                        <div class="fw-bold ${getScoreColor(scoreData.score)}">${scoreData.score.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-3">
-                <p class="small text-muted mb-0">
-                    <i class="fas fa-comment me-1"></i>
-                    ${scoreData.commentaire}
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-// Niveau de risque avec couleurs
-function getRiskLevel(score) {
-    if (score < -2.57) return { color: 'bg-danger', percentage: 90 };
-    if (score < 0.28) return { color: 'bg-warning', percentage: 60 };
-    if (score < 1.26) return { color: 'bg-info', percentage: 40 };
-    if (score < 2.10) return { color: 'bg-success', percentage: 20 };
-    return { color: 'bg-primary', percentage: 10 };
-}
-
-// Couleur du score
-function getScoreColor(score) {
-    if (score < -2.57) return 'text-danger';
-    if (score < 0.28) return 'text-warning';
-    if (score < 1.26) return 'text-info';
-    if (score < 2.10) return 'text-success';
-    return 'text-primary';
-}
-</script>
-
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN CLASSIQUE -->
-<script>
-// =============================================
-// FONCTION PRINCIPALE POUR LE BILAN CLASSIQUE
-// =============================================
-// =============================================
-// FONCTIONS MANQUANTES - À AJOUTER
-// =============================================
-
-// Fonction pour générer le tableau détaillé des ratios
-function generateDetailedRatiosTable(scoreData) {
-    let html = '';
-    const coefficients = scoreData.coefficients || {};
-    const ratios = scoreData.ratios || {};
-    const ratios_bornees = scoreData.ratios_bornees || {};
-    
-    const ratioDefinitions = {
-        'r1': { formule: 'Frais financiers / EBE', interpretation: 'Part des frais financiers dans l\'EBE' },
-        'r2': { formule: '(Créances + Disponibilités) / Dettes CT', interpretation: 'Couverture des dettes court terme' },
-        'r3': { formule: 'Capitaux permanents / Passif', interpretation: 'Structure financière' },
-        'r4': { formule: 'Valeur ajoutée / CA', interpretation: 'Performance économique' },
-        'r5': { formule: 'Trésorerie / CA (jours)', interpretation: 'Autonomie financière court terme' },
-        'r6': { formule: 'Fonds de roulement / CA (jours)', interpretation: 'Couverture du BFR' }
-    };
-    
-    Object.keys(ratioDefinitions).forEach(ratioKey => {
-        const ratioValue = ratios[ratioKey] || 0;
-        const ratioBornee = ratios_bornees[ratioKey] || 0;
-        const coefficient = coefficients[ratioKey] || 0;
-        const contribution = coefficient * ratioBornee;
-        const definition = ratioDefinitions[ratioKey];
-        
-        html += `
-            <tr>
-                <td><strong>${ratioKey.toUpperCase()}</strong></td>
-                <td>${definition.formule}</td>
-                <td class="ratio-value">${ratioValue.toFixed(4)}</td>
-                <td class="ratio-value">${ratioBornee.toFixed(4)}</td>
-                <td>${coefficient.toFixed(4)}</td>
-                <td class="ratio-value ${contribution >= 0 ? 'text-success' : 'text-danger'}">
-                    ${contribution.toFixed(4)}
-                </td>
-                <td><small>${definition.interpretation}</small></td>
-            </tr>
-        `;
-    });
-    
-    return html;
-}
-
-// Fonction pour calculer la tendance
-function calculateTrend(scores) {
-    const years = ['n', 'n1', 'n2'].filter(year => scores[year] && scores[year].score !== undefined);
-    if (years.length < 2) return 'Données insuffisantes pour analyser la tendance';
-    
-    const currentScore = scores.n?.score || 0;
-    const previousScore = scores.n1?.score || 0;
-    
-    if (currentScore > previousScore) return '🟢 Tendance positive';
-    if (currentScore < previousScore) return '🔴 Tendance négative';
-    return '🟡 Tendance stable';
-}
-
-// Fonctions manquantes pour le bilan classique
-function showDetailedAnalysis(bilanType) {
-    showToast(`Analyse détaillée ${bilanType} en cours de développement`, 'info');
-}
-
-function generateReportClassique() {
-    showToast('Génération du rapport PDF en cours...', 'info');
-}
-
-function exportDataClassique() {
-    showToast('Export Excel en cours...', 'info');
-}
-
-// =============================================
-// FONCTION PRINCIPALE POUR LE BILAN CLASSIQUE
-// =============================================
-async function calculateScoreClassique() {
-    const formData = {
-        acheteur_id: parseInt($('#acheteurId').val()),
-        annee_n: parseInt($('#classique-anneeN').val()),
-        annee_n1: parseInt($('#classique-anneeN1').val()),
-        annee_n2: parseInt($('#classique-anneeN2').val()),
-        bilan_type: 'classique'
-    };
-    
-    // Validation
-    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
-        showToast('Veuillez sélectionner les 3 années', 'error');
-        return;
-    }
-    
-    const btnCalculate = $('#classique-btnCalculate');
-    const originalText = btnCalculate.html();
-    
-    try {
-        btnCalculate.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
-        
-        console.log('🧮 Calcul du score bilan classique avec:', formData);
-        
-        const response = await fetch('/api/scoring/bilan-classique/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Résultat du calcul bilan classique:', result);
-        
-        // Stocker le résultat
-        allScores['classique'] = result;
-        
-        // Afficher les résultats
-        displayResultsClassique(result);
-        $('#globalResultsSection').show();
-        $('#currentBilanType').text('BILAN CLASSIQUE');
-        
-        showToast('Score bilan classique calculé avec succès', 'success');
-        
-    } catch (error) {
-        console.error('❌ Erreur calcul score classique:', error);
-        showToast('Erreur lors du calcul du score: ' + error.message, 'error');
-    } finally {
-        btnCalculate.prop('disabled', false).html(originalText);
-    }
-}
-
-// Chargement des années pour le bilan classique
-async function loadYearsForBilanType(bilanType) {
-    try {
-        console.log(`📅 Chargement des années pour ${bilanType}...`);
-        
-        const acheteurId = $('#acheteurId').val();
-        
-        // URL corrigée selon vos urls.py
-        const response = await fetch(`/api/scoring/bilan-classique/acheteurs/${acheteurId}/annees/`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            populateYearSelects(bilanType, data.years || data.annees);
-        } else {
-            // Fallback: générer les 5 dernières années
-            console.warn('Utilisation du fallback pour les années');
-            const currentYear = new Date().getFullYear();
-            const years = Array.from({length: 5}, (_, i) => currentYear - i);
-            populateYearSelects(bilanType, years);
-        }
-    } catch (error) {
-        console.error(`Erreur chargement années ${bilanType}:`, error);
-        const currentYear = new Date().getFullYear();
-        const years = Array.from({length: 5}, (_, i) => currentYear - i);
-        populateYearSelects(bilanType, years);
-    }
-}
-</script>
-
-
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN ANGLAIS -->
-<script>
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN ANGLAIS
-// =============================================
-// Fonction spécifique pour le bilan anglais
-async function calculateScoringAnglais() {
-    const formData = {
-        acheteur_id: parseInt($('#acheteurId').val()),
-        annee_n: parseInt($('#anglais-anneeN').val()),
-        annee_n1: parseInt($('#anglais-anneeN1').val()),
-        annee_n2: parseInt($('#anglais-anneeN2').val()),
-        bilan_type: 'anglais'
-    };
-    
-    // Validation
-    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
-        showToast('Veuillez sélectionner les 3 années', 'error');
-        return;
-    }
-    
-    const btnCalculate = $('#anglais-btnCalculate');
-    const originalText = btnCalculate.html();
-    
-    try {
-        btnCalculate.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
-        
-        console.log('🧮 Calcul du score bilan anglais avec:', formData);
-        
-        const response = await fetch('/api/scoring/bilan-anglais/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Résultat du calcul bilan anglais:', result);
-        
-        // Stocker le résultat
-        allScores['anglais'] = result;
-        
-        // Afficher les résultats
-        displayResultsAnglais(result);
-        $('#globalResultsSection').show();
-        $('#currentBilanType').text('BILAN ANGLAIS');
-        
-        showToast('Score bilan anglais calculé avec succès', 'success');
-        
-    } catch (error) {
-        console.error('❌ Erreur calcul score anglais:', error);
-        showToast('Erreur lors du calcul du score: ' + error.message, 'error');
-    } finally {
-        btnCalculate.prop('disabled', false).html(originalText);
-    }
-}
-
-// Affichage des résultats pour le bilan anglais
-function displayResultsAnglais(data) {
-    const resultsHtml = `
-        <div class="row">
-            <!-- En-tête avec type de bilan -->
-            <div class="col-12 mb-4">
-                <div class="alert alert-primary">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-flag-usa me-2"></i>
-                        Résultats du Score ACREMAC - Bilan Anglais
-                    </h5>
-                    <p class="mb-0">Analyse basée sur les données financières des années 
-                    ${data.annees.n}, ${data.annees.n1}, ${data.annees.n2}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <!-- Score Principal -->
-            <div class="col-md-6">
-                ${generateMainScoreCard(data.scores.n, 'anglais')}
-            </div>
-            
-            <!-- Indicateurs de risque -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Indicateurs de Risque
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateRiskIndicators(data.scores.n)}
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDetailedAnalysisAnglais()">
-                                <i class="fas fa-search me-1"></i>Analyse Détaillée
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENCART SYNTHESE EN DESSOUS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(data.scores.n, 'anglais', data.annees)}
-            </div>
-        </div>
-        
-        <!-- Détails des Ratios -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt me-2"></i>Détail des Ratios ACREMAC
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ratio</th>
-                                        <th>Formule</th>
-                                        <th>Valeur Calculée</th>
-                                        <th>Valeur Bornée</th>
-                                        <th>Coefficient</th>
-                                        <th>Contribution</th>
-                                        <th>Interprétation</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${generateDetailedRatiosTable(data.scores.n)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Évolution sur 3 Ans
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                        <div class="mt-3">
-                            <div class="alert alert-secondary">
-                                <small>
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Tendance:</strong> 
-                                    ${calculateTrend(data.scores)}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <button class="btn btn-outline-primary" onclick="generateReportAnglais()">
-                            <i class="fas fa-download me-1"></i>Rapport PDF
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportDataAnglais()">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-info" onclick="compareWithOtherBilans()">
-                            <i class="fas fa-balance-scale me-1"></i>Comparer avec autres bilans
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(resultsHtml);
-}
-
-// Fonctions spécifiques au bilan anglais
-function showDetailedAnalysisAnglais() {
-    showToast('Analyse détaillée bilan anglais en cours de développement', 'info');
-}
-
-function generateReportAnglais() {
-    showToast('Génération du rapport PDF anglais en cours...', 'info');
-}
-
-function exportDataAnglais() {
-    showToast('Export Excel anglais en cours...', 'info');
-}
-</script>
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN ANGLAIS -->
-<script>
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN ANGLAIS
-// =============================================
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN ANGLAIS
-// =============================================
-
-// Charger les années disponibles selon le type de bilan
-async function loadYearsForBilanTypeAnglais(bilanType) {
-    try {
-        console.log(`📅 Chargement des années pour ${bilanType}...`);
-        
-        const acheteurId = $('#acheteurId').val();
-        
-        // URL différente selon le type de bilan
-        let apiUrl = '';
-        switch(bilanType) {
-            case 'classique':
-                apiUrl = `/api/scoring/bilan-classique/acheteurs/${acheteurId}/annees/`;
-                break;
-            case 'anglais':
-                apiUrl = `/api/scoring/bilan-anglais/acheteurs/${acheteurId}/annees/`;
-                break;
-            case 'bancaire':
-                apiUrl = `/api/scoring/bilan-bancaire/acheteurs/${acheteurId}/annees/`;
-                break;
-            case 'syscohada':
-                apiUrl = `/api/scoring/bilan-syscohada/acheteurs/${acheteurId}/annees/`;
-                break;
-            case 'ifrs':
-                apiUrl = `/api/scoring/bilan-ifrs/acheteurs/${acheteurId}/annees/`;
-                break;
-            default:
-                apiUrl = `/api/scoring/bilan-classique/acheteurs/${acheteurId}/annees/`;
-        }
-        
-        const response = await fetch(apiUrl, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            populateYearSelects(bilanType, data.years || data.annees);
-        } else {
-            // Fallback: générer les 5 dernières années
-            console.warn(`Fallback pour les années ${bilanType}`);
-            const currentYear = new Date().getFullYear();
-            const years = Array.from({length: 5}, (_, i) => currentYear - i);
-            populateYearSelects(bilanType, years);
-        }
-    } catch (error) {
-        console.error(`Erreur chargement années ${bilanType}:`, error);
-        const currentYear = new Date().getFullYear();
-        const years = Array.from({length: 5}, (_, i) => currentYear - i);
-        populateYearSelects(bilanType, years);
-    }
-}
-
-/**
- * Initialisation du module scoring bilan anglais
- */
-function initScoringAnglais() {
-    console.log('🇬🇧 Initialisation du module Scoring Bilan Anglais');
-    
-    // Chargement initial des années
-    loadYearsForBilanTypeAnglais('anglais');
-    
-    // Événements spécifiques au bilan anglais
-    $('#anglais-anneeN, #anglais-anneeN1, #anglais-anneeN2').on('change', function() {
-        validateAnglaisYears();
-    });
-    
-    // Initialisation des tooltips
-    initAnglaisTooltips();
-}
-
-/**
- * Validation des années sélectionnées pour le bilan anglais
- */
-function validateAnglaisYears() {
-    const anneeN = $('#anglais-anneeN').val();
-    const anneeN1 = $('#anglais-anneeN1').val();
-    const anneeN2 = $('#anglais-anneeN2').val();
-    
-    if (anneeN && anneeN1 && anneeN2) {
-        const years = [parseInt(anneeN), parseInt(anneeN1), parseInt(anneeN2)];
-        const sortedYears = [...years].sort((a, b) => b - a);
-        
-        // Vérifier si les années sont consécutives et dans le bon ordre
-        if (JSON.stringify(years) !== JSON.stringify(sortedYears)) {
-            console.warn('⚠️ Années non consécutives pour le bilan anglais:', years);
-        }
-    }
-}
-
-/**
- * Initialisation des tooltips pour le bilan anglais
- */
-function initAnglaisTooltips() {
-    // Tooltip pour le bouton de calcul
-    $('#anglais-btnCalculate').tooltip({
-        title: 'Calculer le score ACREMAC basé sur le bilan anglais',
-        placement: 'top'
-    });
-    
-    // Tooltips pour les sélecteurs d'années
-    $('#anglais-anneeN').tooltip({
-        title: 'Année la plus récente (exercice en cours)',
-        placement: 'top'
-    });
-    
-    $('#anglais-anneeN1').tooltip({
-        title: 'Année précédente (N-1)',
-        placement: 'top'
-    });
-    
-    $('#anglais-anneeN2').tooltip({
-        title: 'Année antérieure (N-2)',
-        placement: 'top'
-    });
-}
-
-/**
- * Fonction principale de calcul du score pour le bilan anglais
- */
-async function calculateScoreAnglais() {
-    const formData = {
-        acheteur_id: parseInt($('#acheteurId').val()),
-        annee_n: parseInt($('#anglais-anneeN').val()),
-        annee_n1: parseInt($('#anglais-anneeN1').val()),
-        annee_n2: parseInt($('#anglais-anneeN2').val()),
-        bilan_type: 'anglais'
-    };
-    
-    // Validation avancée
-    if (!validateAnglaisFormData(formData)) {
-        return;
-    }
-    
-    const btnCalculate = $('#anglais-btnCalculate');
-    const originalText = btnCalculate.html();
-    const originalState = btnCalculate.prop('disabled');
-    
-    try {
-        // Désactiver le bouton et afficher le loader
-        btnCalculate.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
-        
-        console.log('🧮 Calcul du score bilan anglais avec:', formData);
-        
-        // Afficher une notification de démarrage
-        showToast('Début du calcul du score bilan anglais...', 'info');
-        
-        const response = await fetch('/api/scoring/bilan-anglais/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = `Erreur HTTP: ${response.status}`;
-            
-            try {
-                const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.erreur || errorJson.detail || errorMessage;
-            } catch (e) {
-                errorMessage = errorText || errorMessage;
-            }
-            
-            throw new Error(errorMessage);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Résultat du calcul bilan anglais:', result);
-        
-        // Stocker le résultat globalement
-        allScores['anglais'] = result;
-        
-        // Afficher les résultats
-        displayResultsAnglais(result);
-        
-        // Mettre à jour l'interface
-        $('#globalResultsSection').show();
-        $('#currentBilanType').text('BILAN ANGLAIS');
-        
-        // Historique des calculs
-        addToCalculationHistory('anglais', result);
-        
-        showToast('Score bilan anglais calculé avec succès!', 'success');
-        
-    } catch (error) {
-        console.error('❌ Erreur calcul score anglais:', error);
-        
-        // Notification d'erreur détaillée
-        let errorMessage = 'Erreur lors du calcul du score';
-        if (error.message.includes('Données bilan anglais non disponibles')) {
-            errorMessage = 'Données manquantes pour le bilan anglais sur les années sélectionnées';
-        } else if (error.message.includes('401')) {
-            errorMessage = 'Session expirée, veuillez vous reconnecter';
-        } else if (error.message.includes('500')) {
-            errorMessage = 'Erreur serveur, veuillez réessayer';
-        } else {
-            errorMessage = error.message;
-        }
-        
-        showToast(errorMessage, 'error');
-        
-        // Afficher les erreurs dans l'interface
-        displayAnglaisError(error);
-        
-    } finally {
-        // Restaurer l'état du bouton
-        btnCalculate.prop('disabled', originalState).html(originalText);
-    }
-}
-
-/**
- * Validation des données du formulaire anglais
- */
-function validateAnglaisFormData(formData) {
-    const errors = [];
-    
-    // Vérification des années
-    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
-        errors.push('Veuillez sélectionner les 3 années');
-    }
-    
-    // Vérification de la consécution des années
-    if (formData.annee_n && formData.annee_n1 && formData.annee_n2) {
-        const years = [formData.annee_n, formData.annee_n1, formData.annee_n2];
-        const sortedYears = [...years].sort((a, b) => b - a);
-        
-        if (JSON.stringify(years) !== JSON.stringify(sortedYears)) {
-            errors.push('Les années doivent être dans l\'ordre décroissant (N, N-1, N-2)');
-        }
-        
-        // Vérifier que les années sont différentes
-        const uniqueYears = new Set(years);
-        if (uniqueYears.size !== years.length) {
-            errors.push('Les années doivent être différentes');
-        }
-    }
-    
-    // Afficher les erreurs
-    if (errors.length > 0) {
-        showToast(errors.join(', '), 'error');
-        return false;
-    }
-    
-    return true;
-}
-
-/**
- * Affichage des résultats pour le bilan anglais
- */
-function displayResultsAnglais(data) {
-    // Vérifier si des données sont disponibles
-    if (!data || !data.scores || !data.scores.n) {
-        displayAnglaisNoData();
-        return;
-    }
-    
-    const resultsHtml = generateAnglaisResultsHtml(data);
-    $('#globalResultsContent').html(resultsHtml);
-    
-    // Animation d'apparition
-    $('#globalResultsContent').hide().fadeIn(500);
-    
-    // Initialiser les composants interactifs
-    initAnglaisResultsInteractions();
-}
-
-/**
- * Génération du HTML des résultats pour le bilan anglais
- */
-function generateAnglaisResultsHtml(data) {
-    const scorePrincipal = data.scores.n;
-    const annees = data.annees;
-    
-    return `
-        <div class="row">
-            <!-- En-tête avec type de bilan -->
-            <div class="col-12 mb-4">
-                <div class="alert alert-primary">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-flag-usa me-2"></i>
-                        Résultats du Score ACREMAC - Bilan Anglais
-                    </h5>
-                    <p class="mb-0">
-                        <i class="fas fa-building me-1"></i>Entreprise: <strong>${data.acheteur}</strong> | 
-                        <i class="fas fa-calendar me-1"></i>Période: <strong>${annees.n}, ${annees.n1}, ${annees.n2}</strong> |
-                        <i class="fas fa-clock me-1"></i>Calcul: <strong>${new Date().toLocaleString('fr-FR')}</strong>
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Score Principal et Indicateurs -->
-        <div class="row">
-            <div class="col-md-6">
-                ${generateMainScoreCard(scorePrincipal, 'anglais')}
-            </div>
-            
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Indicateurs de Risque - Bilan Anglais
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateAnglaisRiskIndicators(scorePrincipal)}
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDetailedAnalysisAnglais()">
-                                <i class="fas fa-search me-1"></i>Analyse Détaillée
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="showAnglaisRawData()">
-                                <i class="fas fa-database me-1"></i>Données Brutes
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Synthèse -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(scorePrincipal, 'anglais', annees)}
-            </div>
-        </div>
-        
-        <!-- Détails des Ratios -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt me-2"></i>Détail des Ratios ACREMAC - Bilan Anglais
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateAnglaisRatiosDetails(scorePrincipal)}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Évolution sur 3 Ans - Bilan Anglais
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                        <div class="mt-3">
-                            ${generateAnglaisTrendAnalysis(data.scores)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Analyse Comparative -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateAnglaisComparativeAnalysis(data)}
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="btn-group">
-                        <button class="btn btn-outline-primary" onclick="generateReportAnglais()">
-                            <i class="fas fa-download me-1"></i>Rapport PDF
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportDataAnglais()">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </button>
-                        <button class="btn btn-outline-info" onclick="saveAnglaisAnalysis()">
-                            <i class="fas fa-save me-1"></i>Sauvegarder
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-info" onclick="compareWithOtherBilans()">
-                            <i class="fas fa-balance-scale me-1"></i>Comparer Bilans
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="recalculateAnglais()">
-                            <i class="fas fa-redo me-1"></i>Recalculer
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Génération des indicateurs de risque spécifiques au bilan anglais
- */
-function generateAnglaisRiskIndicators(scoreData) {
-    const riskLevel = getRiskLevel(scoreData.score);
-    const trend = getAnglaisTrendIndicator(scoreData);
-    
-    return `
-        <div class="risk-indicators">
-            <div class="mb-3">
-                <label class="form-label"><strong>Niveau de Risque:</strong></label>
-                <div class="progress" style="height: 25px;">
-                    <div class="progress-bar ${riskLevel.color}" role="progressbar" 
-                         style="width: ${riskLevel.percentage}%" 
-                         aria-valuenow="${riskLevel.percentage}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                        ${scoreData.classe_risque}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row text-center mb-3">
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Probabilité Défaillance</small>
-                        <div class="fw-bold text-danger fs-5">${scoreData.probabilite_defaillance}%</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Score Final</small>
-                        <div class="fw-bold ${getScoreColor(scoreData.score)} fs-5">${scoreData.score.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-            
-            ${trend}
-            
-            <div class="mt-3">
-                <p class="small text-muted mb-0">
-                    <i class="fas fa-comment me-1"></i>
-                    ${scoreData.commentaire}
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Génération des détails des ratios pour le bilan anglais
- */
-function generateAnglaisRatiosDetails(scoreData) {
-    return `
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Ratio</th>
-                        <th>Formule</th>
-                        <th>Valeur Calculée</th>
-                        <th>Valeur Bornée</th>
-                        <th>Coefficient</th>
-                        <th>Contribution</th>
-                        <th>Interprétation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${generateDetailedRatiosTable(scoreData)}
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Légende des ratios anglais -->
-        <div class="mt-3">
-            <div class="alert alert-secondary small">
-                <strong><i class="fas fa-info-circle me-1"></i>Note:</strong> 
-                Les ratios sont calculés selon la méthodologie ACREMAC adaptée au format de bilan anglais.
-                Les formules utilisent les équivalents anglais des postes comptables.
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Analyse de tendance pour le bilan anglais
- */
-function generateAnglaisTrendAnalysis(scores) {
-    const trend = calculateTrend(scores);
-    const trendIcon = trend.includes('positive') ? '🟢' : trend.includes('négative') ? '🔴' : '🟡';
-    
-    return `
-        <div class="alert alert-secondary">
-            <div class="row">
-                <div class="col-md-6">
-                    <small>
-                        <i class="fas fa-info-circle me-1"></i>
-                        <strong>Tendance:</strong> ${trendIcon} ${trend}
-                    </small>
-                </div>
-                <div class="col-md-6 text-end">
-                    <small>
-                        <strong>Volatilité:</strong> ${calculateAnglaisVolatility(scores)}
-                    </small>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Analyse comparative pour le bilan anglais
- */
-function generateAnglaisComparativeAnalysis(data) {
-    const score = data.scores.n.score;
-    
-    return `
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>Analyse Comparative - Bilan Anglais
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Positionnement:</h6>
-                        <div class="progress mb-2" style="height: 20px;">
-                            <div class="progress-bar bg-danger" style="width: 15%">Très Risqué</div>
-                            <div class="progress-bar bg-warning" style="width: 25%">Risqué</div>
-                            <div class="progress-bar bg-info" style="width: 20%">Modéré</div>
-                            <div class="progress-bar bg-success" style="width: 40%">Bon</div>
-                        </div>
-                        <div class="text-center">
-                            <span class="badge ${getRiskBadgeClass(score)} fs-6">
-                                Position: ${getAnglaisPercentile(score)}%
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Recommandations:</h6>
-                        <ul class="small mb-0">
-                            ${generateAnglaisRecommendations(score)}
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Calcul de la volatilité des scores
- */
-function calculateAnglaisVolatility(scores) {
-    const validScores = Object.values(scores)
-        .filter(s => s && s.score !== undefined)
-        .map(s => s.score);
-    
-    if (validScores.length < 2) return 'N/A';
-    
-    const mean = validScores.reduce((a, b) => a + b, 0) / validScores.length;
-    const variance = validScores.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / validScores.length;
-    const volatility = Math.sqrt(variance);
-    
-    if (volatility < 0.5) return 'Faible';
-    if (volatility < 1.0) return 'Modérée';
-    return 'Élevée';
-}
-
-/**
- * Obtention du percentile pour le score anglais
- */
-function getAnglaisPercentile(score) {
-    // Logique simplifiée - à adapter avec vos données historiques
-    if (score < -2.57) return 10;
-    if (score < 0.28) return 30;
-    if (score < 1.26) return 50;
-    if (score < 2.10) return 75;
-    return 90;
-}
-
-/**
- * Génération des recommandations pour le bilan anglais
- */
-function generateAnglaisRecommendations(score) {
-    let recommendations = [];
-    
-    if (score < -1.00) {
-        recommendations = [
-            'Renforcer les fonds propres',
-            'Améliorer la trésorerie',
-            'Réduire l\'endettement à court terme'
-        ];
-    } else if (score < 1.26) {
-        recommendations = [
-            'Maintenir la structure actuelle',
-            'Surveiller le fonds de roulement',
-            'Diversifier les sources de financement'
-        ];
-    } else {
-        recommendations = [
-            'Poursuivre la stratégie actuelle',
-            'Optimiser la gestion de trésorerie',
-            'Envisager des investissements'
-        ];
-    }
-    
-    return recommendations.map(rec => `<li>${rec}</li>`).join('');
-}
-
-/**
- * Indicateur de tendance pour le bilan anglais
- */
-function getAnglaisTrendIndicator(scoreData) {
-    // Logique simplifiée - à adapter avec l'analyse des ratios
-    const r2 = scoreData.ratios_bornees?.r2 || 0;
-    const r3 = scoreData.ratios_bornees?.r3 || 0;
-    
-    let trendText = '';
-    if (r2 > 100 && r3 > 50) {
-        trendText = 'Structure financière solide';
-    } else if (r2 < 50 || r3 < 25) {
-        trendText = 'Vigilance sur la liquidité';
-    } else {
-        trendText = 'Situation équilibrée';
-    }
-    
-    return `
-        <div class="alert alert-light border">
-            <small class="text-muted">
-                <i class="fas fa-chart-line me-1"></i>
-                <strong>Analyse:</strong> ${trendText}
-            </small>
-        </div>
-    `;
-}
-
-/**
- * Affichage d'erreur pour le bilan anglais
- */
-function displayAnglaisError(error) {
-    const errorHtml = `
-        <div class="row">
-            <div class="col-12">
-                <div class="alert alert-danger">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Erreur lors du calcul du score
-                    </h5>
-                    <p class="mb-2">${error.message}</p>
-                    <hr>
-                    <p class="mb-0 small">
-                        <strong>Solutions possibles:</strong><br>
-                        • Vérifier la disponibilité des données bilan anglais<br>
-                        • Contacter l'administrateur système<br>
-                        • Réessayer ultérieurement
-                    </p>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(errorHtml);
-    $('#globalResultsSection').show();
-}
-
-/**
- * Affichage quand aucune donnée n'est disponible
- */
-function displayAnglaisNoData() {
-    const noDataHtml = `
-        <div class="row">
-            <div class="col-12">
-                <div class="alert alert-warning text-center">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-database me-2"></i>
-                        Données non disponibles
-                    </h5>
-                    <p class="mb-0">
-                        Aucune donnée de bilan anglais disponible pour les années sélectionnées.
-                    </p>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(noDataHtml);
-    $('#globalResultsSection').show();
-}
-
-/**
- * Initialisation des interactions pour les résultats anglais
- */
-function initAnglaisResultsInteractions() {
-    // Tooltips pour les tableaux de ratios
-    $('.ratio-value').tooltip({
-        title: 'Valeur calculée du ratio',
-        placement: 'top'
-    });
-    
-    // Animation des progress bars
-    $('.progress-bar').each(function() {
-        const width = $(this).css('width');
-        $(this).css('width', '0').animate({ width: width }, 800);
-    });
-}
-
-/**
- * Fonctions d'action pour le bilan anglais
- */
-function showDetailedAnalysisAnglais() {
-    showToast('Ouverture de l\'analyse détaillée du bilan anglais...', 'info');
-    // Implémentation à compléter
-}
-
-function showAnglaisRawData() {
-    showToast('Affichage des données brutes du bilan anglais...', 'info');
-    // Implémentation à compléter
-}
-
-function generateReportAnglais() {
-    showToast('Génération du rapport PDF pour le bilan anglais...', 'info');
-    // Implémentation à compléter
-}
-
-function exportDataAnglais() {
-    showToast('Export des données Excel pour le bilan anglais...', 'info');
-    // Implémentation à compléter
-}
-
-function saveAnglaisAnalysis() {
-    showToast('Sauvegarde de l\'analyse du bilan anglais...', 'info');
-    // Implémentation à compléter
-}
-
-function recalculateAnglais() {
-    calculateScoreAnglais();
-}
-
-/**
- * Ajout à l'historique des calculs
- */
-function addToCalculationHistory(bilanType, result) {
-    if (!window.calculationHistory) {
-        window.calculationHistory = [];
-    }
-    
-    const calculation = {
-        type: bilanType,
-        score: result.score_principal,
-        date: new Date().toISOString(),
-        annees: result.annees,
-        acheteur: result.acheteur
-    };
-    
-    window.calculationHistory.unshift(calculation);
-    
-    // Garder seulement les 10 derniers calculs
-    if (window.calculationHistory.length > 10) {
-        window.calculationHistory.pop();
-    }
-    
-    console.log('📊 Historique mis à jour:', window.calculationHistory);
-}
-
-// =============================================
-// INITIALISATION AUTOMATIQUE
-// =============================================
-
-$(document).ready(function() {
-    // Initialisation quand l'onglet anglais est activé
-    $(document).on('shown.bs.tab', '#anglais-tab', function() {
-        initScoringAnglais();
-    });
-    
-    // Initialisation directe si on est déjà sur l'onglet anglais
-    if ($('#anglais-tab').hasClass('active')) {
-        initScoringAnglais();
-    }
-});
-
-console.log('✅ Module scoring bilan anglais chargé'); 
-</script>
-
-
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN BANCAIRE -->
-<script>
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN BANCAIRE
-// =============================================
-// Configuration de la plage d'années
-const PLAGE_ANNEES = {
-    min: 1990,
-    max: 2025
 };
 
-// Fonctions globales pour l'unification des affichages
-
-// Fonction pour obtenir l'image correspondant au score
-function getScoreImage(score) {
-    const roundedScore = Math.round(score);
-    const finalScore = Math.max(0, Math.min(10, roundedScore));
-    
-    // Récupérer le chemin de base depuis l'élément HTML
-    const basePath = $('#staticPaths').data('scoring-images');
-    
-    return `${basePath}${finalScore}.png`;
-}
-
-// Niveau de risque avec couleurs
-function getRiskLevel(score) {
-    if (score < -2.57) return { color: 'bg-danger', percentage: 90 };
-    if (score < 0.28) return { color: 'bg-warning', percentage: 60 };
-    if (score < 1.26) return { color: 'bg-info', percentage: 40 };
-    if (score < 2.10) return { color: 'bg-success', percentage: 20 };
-    return { color: 'bg-primary', percentage: 10 };
-}
-
-// Couleur du score
-function getScoreColor(score) {
-    if (score < -2.57) return 'text-danger';
-    if (score < 0.28) return 'text-warning';
-    if (score < 1.26) return 'text-info';
-    if (score < 2.10) return 'text-success';
-    return 'text-primary';
-}
-
-// Fonction pour calculer la tendance
-function calculateTrend(scores) {
-    const years = ['n', 'n1', 'n2'].filter(year => scores[year] && scores[year].score !== undefined);
-    if (years.length < 2) return 'Données insuffisantes pour analyser la tendance';
-    
-    const currentScore = scores.n?.score || 0;
-    const previousScore = scores.n1?.score || 0;
-    
-    if (currentScore > previousScore) return '🟢 Tendance positive';
-    if (currentScore < previousScore) return '🔴 Tendance négative';
-    return '🟡 Tendance stable';
-}
-
-// Générer la liste des années
-function genererAnneesPlage() {
-    const annees = [];
-    for (let annee = PLAGE_ANNEES.max; annee >= PLAGE_ANNEES.min; annee--) {
-        annees.push(annee);
-    }
-    return annees;
-}
-
-// Peupler les selects d'années avec la plage fixe
-function peuplerSelectsAnneesBancaire() {
-    const annees = genererAnneesPlage();
-    const selects = [
-        document.getElementById('select-annee-bancaire-n'),
-        document.getElementById('select-annee-bancaire-n1'),
-        document.getElementById('select-annee-bancaire-n2')
-    ];
-    
-    selects.forEach(select => {
-        if (select) {
-            // Sauvegarder la valeur sélectionnée actuelle
-            const currentValue = select.value;
-            
-            // Vider et remplir avec la plage d'années
-            select.innerHTML = '<option value="">Sélectionner...</option>';
-            annees.forEach(annee => {
-                const option = document.createElement('option');
-                option.value = annee;
-                option.textContent = annee;
-                select.appendChild(option);
-            });
-            
-            // Restaurer la valeur précédente si elle existe dans la plage
-            if (currentValue && annees.includes(parseInt(currentValue))) {
-                select.value = currentValue;
-            }
-        }
-    });
-}
-
-// Gestion de l'onglet Bilan Bancaire
-function initBilanBancaireTab() {
-    console.log('Initialisation onglet bilan bancaire');
-    
-    // Peupler avec la plage fixe
-    peuplerSelectsAnneesBancaire();
-    
-    // Auto-remplissage
-    autoFillYearsBancaire();
-    
-    // Événements
-    const btnCalculBancaire = document.getElementById('btn-calcul-score-bancaire');
-    if (btnCalculBancaire) {
-        btnCalculBancaire.addEventListener('click', calculerScoreBancaire);
-    }
-    
-    // Gestion du type de bilan
-    const selectTypeBilan = document.getElementById('select-type-bilan-bancaire');
-    if (selectTypeBilan) {
-        selectTypeBilan.addEventListener('change', function() {
-            const semestreSelect = document.getElementById('select-semestre-bancaire');
-            if (this.value === 'semestriel') {
-                semestreSelect.style.display = 'block';
-                semestreSelect.required = true;
-            } else {
-                semestreSelect.style.display = 'none';
-                semestreSelect.required = false;
-            }
-        });
-    }
-    
-    // Validation en temps réel des années
-    const yearSelects = [
-        'select-annee-bancaire-n',
-        'select-annee-bancaire-n1',
-        'select-annee-bancaire-n2'
-    ];
-    
-    yearSelects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) {
-            select.addEventListener('change', function() {
-                const validation = validerAnneesSelectionneesBancaire();
-                if (!validation.valide && 
-                    document.getElementById('select-annee-bancaire-n').value && 
-                    document.getElementById('select-annee-bancaire-n1').value && 
-                    document.getElementById('select-annee-bancaire-n2').value) {
-                    showAlert(validation.message, 'warning', 'bancaire');
-                }
-            });
-        }
-    });
-}
-
-// Vérification de la validité des années sélectionnées
-function validerAnneesSelectionneesBancaire() {
-    const anneeN = parseInt(document.getElementById('select-annee-bancaire-n').value);
-    const anneeN1 = parseInt(document.getElementById('select-annee-bancaire-n1').value);
-    const anneeN2 = parseInt(document.getElementById('select-annee-bancaire-n2').value);
-    
-    if (!anneeN || !anneeN1 || !anneeN2) {
-        return { valide: false, message: 'Veuillez sélectionner les trois années' };
-    }
-    
-    // Vérifier que N > N1 > N2
-    if (anneeN <= anneeN1 || anneeN1 <= anneeN2) {
-        return { 
-            valide: false, 
-            message: 'Les années doivent être dans l\'ordre décroissant : N > N-1 > N-2' 
-        };
-    }
-    
-    // Vérifier que les années sont dans la plage
-    if (anneeN < PLAGE_ANNEES.min || anneeN > PLAGE_ANNEES.max ||
-        anneeN1 < PLAGE_ANNEES.min || anneeN1 > PLAGE_ANNEES.max ||
-        anneeN2 < PLAGE_ANNEES.min || anneeN2 > PLAGE_ANNEES.max) {
-        return { 
-            valide: false, 
-            message: `Les années doivent être comprises entre ${PLAGE_ANNEES.min} et ${PLAGE_ANNEES.max}` 
-        };
-    }
-    
-    return { valide: true };
-}
-
-// Fonction de remplissage automatique pour bancaire
-function autoFillYearsBancaire() {
-    const currentYear = new Date().getFullYear();
-    
-    // S'assurer que l'année courante est dans la plage
-    const anneeN = Math.min(currentYear, PLAGE_ANNEES.max);
-    const anneeN1 = anneeN - 1;
-    const anneeN2 = anneeN - 2;
-    
-    // Vérifier que les années sont dans la plage
-    if (anneeN2 >= PLAGE_ANNEES.min) {
-        document.getElementById('select-annee-bancaire-n').value = anneeN;
-        document.getElementById('select-annee-bancaire-n1').value = anneeN1;
-        document.getElementById('select-annee-bancaire-n2').value = anneeN2;
-        
-        showAlert(`Années remplies automatiquement : ${anneeN}, ${anneeN1}, ${anneeN2}`, 'success', 'bancaire');
-    } else {
-        showAlert(`La plage d'années disponible est de ${PLAGE_ANNEES.min} à ${PLAGE_ANNEES.max}`, 'warning', 'bancaire');
-    }
-}
-
-// Fonction de réinitialisation pour bancaire
-function resetBancaireForm() {
-    document.getElementById('bancaireForm').reset();
-    document.getElementById('select-semestre-bancaire').style.display = 'none';
-    document.getElementById('resultats-score-bancaire').style.display = 'none';
-    document.getElementById('alert-container-bancaire').innerHTML = '';
-    
-    // Réinitialiser les selects d'années
-    peuplerSelectsAnneesBancaire();
-    autoFillYearsBancaire();
-    
-    showAlert('Formulaire réinitialisé', 'info', 'bancaire');
-}
-
-// Fonction pour afficher les alertes
-function showAlert(message, type, context = 'bancaire') {
-    const alertContainer = document.getElementById(`alert-container-${context}`) || document.body;
-    const alertId = `alert-${Date.now()}`;
-    
-    const alertHtml = `
-        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `;
-    
-    alertContainer.innerHTML = alertHtml;
-    
-    // Auto-dismiss après 5 secondes
-    setTimeout(() => {
-        const alert = document.getElementById(alertId);
-        if (alert) {
-            alert.remove();
-        }
-    }, 5000);
-}
-
-// Fonction pour obtenir l'image correspondant au score
-function getScoreImage(score) {
-    const roundedScore = Math.round(score);
-    const finalScore = Math.max(0, Math.min(10, roundedScore));
-    
-    // Récupérer le chemin de base depuis l'élément HTML
-    const basePath = $('#staticPaths').data('scoring-images');
-    
-    return `${basePath}${finalScore}.png`;
-}
-
-// Calculer le score pour bilan bancaire - VERSION UNIFIÉE
-async function calculerScoreBancaire() {
-    const acheteurId = document.getElementById('acheteur-id')?.value || document.getElementById('acheteurId')?.value;
-    const anneeN = document.getElementById('select-annee-bancaire-n').value;
-    const anneeN1 = document.getElementById('select-annee-bancaire-n1').value;
-    const anneeN2 = document.getElementById('select-annee-bancaire-n2').value;
-    const typeBilan = document.getElementById('select-type-bilan-bancaire').value;
-    const semestre = document.getElementById('select-semestre-bancaire').value;
-    
-    const btnCalcul = document.getElementById('btn-calcul-score-bancaire');
-    
-    // Validation
-    const validation = validerAnneesSelectionneesBancaire();
-    if (!validation.valide) {
-        showAlert(validation.message, 'error', 'bancaire');
-        return;
-    }
-    
-    if (!acheteurId) {
-        showAlert('ID acheteur non trouvé', 'error', 'bancaire');
-        return;
-    }
-    
-    // Récupérer le token CSRF
-    const csrfToken = getCsrfToken();
-    
-    if (!csrfToken) {
-        showAlert('Erreur de sécurité: Token CSRF manquant. Rechargez la page.', 'error', 'bancaire');
-        return;
-    }
-    
-    btnCalcul.disabled = true;
-    btnCalcul.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calcul en cours...';
-    
-    try {
-        const requestData = {
-            acheteur_id: parseInt(acheteurId),
-            annee_n: parseInt(anneeN),
-            annee_n1: parseInt(anneeN1),
-            annee_n2: parseInt(anneeN2),
-            bilan_type: typeBilan,
-            semestre: semestre ? parseInt(semestre) : null
-        };
-        
-        console.log('📤 Données envoyées bilan bancaire:', requestData);
-        
-        const response = await fetch('/api/scoring/bilan-bancaire/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(requestData),
-            credentials: 'include'
-        });
-
-        console.log('📥 Statut réponse bancaire:', response.status);
-        
-        // Vérifier si la réponse est du JSON valide
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('❌ Réponse non-JSON:', text.substring(0, 200));
-            throw new Error(`Réponse non-JSON: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('📊 Données reçues bancaire:', data);
-        
-        if (response.ok) {
-            // Stocker le résultat globalement
-            allScores['bancaire'] = data;
-            
-            // Afficher les résultats dans la section globale
-            displayResultsBancaire(data);
-            $('#globalResultsSection').show();
-            $('#currentBilanType').text('BILAN BANCAIRE');
-            
-            showAlert('Score bancaire calculé avec succès!', 'success', 'bancaire');
-        } else {
-            const errorMsg = data.detail || data.erreur || 'Erreur inconnue';
-            showAlert('Erreur lors du calcul: ' + errorMsg, 'error', 'bancaire');
-            console.error('❌ Erreur calcul score bancaire:', data);
-        }
-    } catch (error) {
-        console.error('💥 Erreur calcul score bancaire:', error);
-        if (error.message.includes('CSRF')) {
-            showAlert('Erreur de sécurité CSRF. Essayez de recharger la page.', 'error', 'bancaire');
-        } else if (error.message.includes('JSON')) {
-            showAlert('Erreur serveur - Réponse invalide', 'error', 'bancaire');
-        } else {
-            showAlert('Erreur de connexion: ' + error.message, 'error', 'bancaire');
-        }
-    } finally {
-        btnCalcul.disabled = false;
-        btnCalcul.innerHTML = '<i class="fas fa-calculator"></i> Calculer le Score';
-    }
-}
-
-// Affichage des résultats pour le bilan bancaire dans la section globale
-function displayResultsBancaire(data) {
-    const resultsHtml = `
-        <div class="row">
-            <!-- En-tête avec type de bilan -->
-            <div class="col-12 mb-4">
-                <div class="alert alert-primary">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-university me-2"></i>
-                        Résultats du Score ACREMAC - Bilan Bancaire
-                    </h5>
-                    <p class="mb-0">Analyse basée sur les données financières des années 
-                    ${data.annees.n}, ${data.annees.n1}, ${data.annees.n2}
-                    ${data.semestre ? ` - Semestre ${data.semestre}` : ''}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <!-- Score Principal -->
-            <div class="col-md-6">
-                ${generateMainScoreCard(data.scores.n, 'bancaire')}
-            </div>
-            
-            <!-- Indicateurs de risque -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Indicateurs de Risque - Bilan Bancaire
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateRiskIndicatorsBancaire(data.scores.n)}
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDetailedAnalysisBancaire()">
-                                <i class="fas fa-search me-1"></i>Analyse Détaillée
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENCART SYNTHESE EN DESSOUS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(data.scores.n, 'bancaire', data.annees)}
-            </div>
-        </div>
-        
-        <!-- Détails des Ratios -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt me-2"></i>Détail des Ratios ACREMAC - Bilan Bancaire
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ratio</th>
-                                        <th>Formule</th>
-                                        <th>Valeur Calculée</th>
-                                        <th>Valeur Bornée</th>
-                                        <th>Coefficient</th>
-                                        <th>Contribution</th>
-                                        <th>Interprétation</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${generateDetailedRatiosTableBancaire(data.scores.n)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Évolution sur 3 Ans - Bilan Bancaire
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                        <div class="mt-3">
-                            <div class="alert alert-secondary">
-                                <small>
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Tendance:</strong> 
-                                    ${calculateTrend(data.scores)}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <button class="btn btn-outline-primary" onclick="generateReportBancaire()">
-                            <i class="fas fa-download me-1"></i>Rapport PDF
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportDataBancaire()">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-info" onclick="compareWithOtherBilans()">
-                            <i class="fas fa-balance-scale me-1"></i>Comparer avec autres bilans
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(resultsHtml);
-}
-
-// Génération des indicateurs de risque spécifiques au bilan bancaire
-function generateRiskIndicatorsBancaire(scoreData) {
-    const riskLevel = getRiskLevel(scoreData.score);
-    
-    return `
-        <div class="risk-indicators">
-            <div class="mb-3">
-                <label class="form-label"><strong>Niveau de Risque:</strong></label>
-                <div class="progress" style="height: 25px;">
-                    <div class="progress-bar ${riskLevel.color}" role="progressbar" 
-                         style="width: ${riskLevel.percentage}%" 
-                         aria-valuenow="${riskLevel.percentage}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                        ${scoreData.classe_risque}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row text-center mb-3">
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Probabilité Défaillance</small>
-                        <div class="fw-bold text-danger fs-5">${scoreData.probabilite_defaillance}%</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Score Final</small>
-                        <div class="fw-bold ${getScoreColor(scoreData.score)} fs-5">${scoreData.score.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-3">
-                <p class="small text-muted mb-0">
-                    <i class="fas fa-comment me-1"></i>
-                    ${scoreData.commentaire}
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-// Génération du tableau détaillé des ratios pour le bilan bancaire
-function generateDetailedRatiosTableBancaire(scoreData) {
-    let html = '';
-    const coefficients = scoreData.coefficients || {};
-    const ratios = scoreData.ratios || {};
-    const ratios_bornees = scoreData.ratios_bornees || {};
-    
-    const ratioDefinitions = {
-        'r1': { formule: 'Capitaux propres / Total actif', interpretation: 'Ratio de solvabilité' },
-        'r2': { formule: 'Actifs liquides / Dettes à court terme', interpretation: 'Ratio de liquidité' },
-        'r3': { formule: 'Résultat net / Total actif', interpretation: 'Ratio de rentabilité' },
-        'r4': { formule: 'Créances clientèle / Total actif', interpretation: 'Ratio de qualité des actifs' },
-        'r5': { formule: 'Charges / Produits', interpretation: 'Ratio d\'efficience' },
-        'r6': { formule: 'Produits hors intérêts / Total produits', interpretation: 'Ratio de diversification' }
-    };
-    
-    Object.keys(ratioDefinitions).forEach(ratioKey => {
-        const ratioValue = ratios[ratioKey] || 0;
-        const ratioBornee = ratios_bornees[ratioKey] || 0;
-        const coefficient = coefficients[ratioKey] || 0;
-        const contribution = coefficient * ratioBornee;
-        const definition = ratioDefinitions[ratioKey];
-        
-        html += `
-            <tr>
-                <td><strong>${ratioKey.toUpperCase()}</strong></td>
-                <td>${definition.formule}</td>
-                <td class="ratio-value">${ratioValue.toFixed(4)}%</td>
-                <td class="ratio-value">${ratioBornee.toFixed(4)}%</td>
-                <td>${coefficient.toFixed(4)}</td>
-                <td class="ratio-value ${contribution >= 0 ? 'text-success' : 'text-danger'}">
-                    ${contribution.toFixed(4)}
-                </td>
-                <td><small>${definition.interpretation}</small></td>
-            </tr>
-        `;
-    });
-    
-    return html;
-}
-
-// Fonctions spécifiques au bilan bancaire
-function showDetailedAnalysisBancaire() {
-    showToast('Analyse détaillée bilan bancaire en cours de développement', 'info');
-}
-
-function generateReportBancaire() {
-    showToast('Génération du rapport PDF bancaire en cours...', 'info');
-}
-
-function exportDataBancaire() {
-    showToast('Export Excel bancaire en cours...', 'info');
-}
-
-// Fonction utilitaire pour récupérer le token CSRF
-function getCsrfToken() {
-    // Méthode 1: Depuis les cookies
-    let cookieValue = null;
-    const cookies = document.cookie.split(';');
-    
-    for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith('csrftoken=')) {
-            cookieValue = decodeURIComponent(cookie.substring('csrftoken='.length));
-            break;
-        }
-    }
-    
-    // Méthode 2: Depuis le formulaire (fallback)
-    if (!cookieValue) {
-        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (csrfInput) {
-            cookieValue = csrfInput.value;
-        }
-    }
-    
-    // Méthode 3: Depuis les meta tags (fallback)
-    if (!cookieValue) {
-        const metaToken = document.querySelector('meta[name="csrf-token"]');
-        if (metaToken) {
-            cookieValue = metaToken.getAttribute('content');
-        }
-    }
-    
-    return cookieValue || '';
-}
-
-// Classes CSS pour les scores bancaires
-function getScoreClassBancaire(score) {
-    if (score >= 4.0) return 'score-excellent';
-    if (score >= 3.0) return 'score-good';
-    if (score >= 2.0) return 'score-moderate';
-    if (score >= 1.0) return 'score-poor';
-    return 'score-critical';
-}
-
-function getRiskClassBancaire(risque) {
-    if (risque.includes('Très faible')) return 'risk-low';
-    if (risque.includes('Faible')) return 'risk-low';
-    if (risque.includes('modéré')) return 'risk-moderate';
-    if (risque.includes('élevé')) return 'risk-high';
-    if (risque.includes('très élevé')) return 'risk-very-high';
-    return 'risk-critical';
-}
-
-// Initialiser quand la page est chargée
-document.addEventListener('DOMContentLoaded', function() {
-    initBilanBancaireTab();
-});
-
-// Initialisation de l'onglet bancaire
-$(document).on('shown.bs.tab', '#bancaire-tab', function() {
-    console.log('🏦 Initialisation onglet BANCAIRE');
-    initBilanBancaireTab();
+// Initialisation
+$(document).ready(() => {
+    SCORING_MANAGER.init();
 });
 </script>
-
-
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN SYSCOHADA -->
-<script>
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN SYSCOHADA
-// =============================================
-// Fonction pour obtenir l'image correspondant au score
-function getScoreImage(score) {
-    const roundedScore = Math.round(score);
-    const finalScore = Math.max(0, Math.min(10, roundedScore));
-    
-    // Récupérer le chemin de base depuis l'élément HTML
-    const basePath = $('#staticPaths').data('scoring-images');
-    
-    return `${basePath}${finalScore}.png`;
-}
-
-// Fonction spécifique pour le bilan SYSCOHADA
-async function calculateScoreSyscohada() {
-    const formData = {
-        acheteur_id: parseInt($('#acheteurId').val()),
-        annee_n: parseInt($('#syscohada-anneeN').val()),
-        annee_n1: parseInt($('#syscohada-anneeN1').val()),
-        annee_n2: parseInt($('#syscohada-anneeN2').val()),
-        bilan_type: 'syscohada'
-    };
-    
-    // Validation
-    if (!formData.annee_n || !formData.annee_n1 || !formData.annee_n2) {
-        showToast('Veuillez sélectionner les 3 années', 'error');
-        return;
-    }
-    
-    const btnCalculate = $('#syscohada-btnCalculate');
-    const originalText = btnCalculate.html();
-    
-    try {
-        btnCalculate.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin"></i> Calcul en cours...');
-        
-        console.log('🧮 Calcul du score bilan SYSCOHADA avec:', formData);
-        
-        const response = await fetch('/api/scoring/bilan-syscohada/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify(formData)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('✅ Résultat du calcul bilan SYSCOHADA:', result);
-        
-        // Stocker le résultat
-        allScores['syscohada'] = result;
-        
-        // Afficher les résultats
-        displayResultsSyscohada(result);
-        $('#globalResultsSection').show();
-        $('#currentBilanType').text('BILAN SYSCOHADA');
-        
-        showToast('Score bilan SYSCOHADA calculé avec succès', 'success');
-        
-    } catch (error) {
-        console.error('❌ Erreur calcul score SYSCOHADA:', error);
-        showToast('Erreur lors du calcul du score: ' + error.message, 'error');
-    } finally {
-        btnCalculate.prop('disabled', false).html(originalText);
-    }
-}
-
-// Affichage des résultats pour le bilan SYSCOHADA
-function displayResultsSyscohada(data) {
-    const resultsHtml = `
-        <div class="row">
-            <!-- En-tête avec type de bilan -->
-            <div class="col-12 mb-4">
-                <div class="alert alert-primary">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-globe-africa me-2"></i>
-                        Résultats du Score ACREMAC - Bilan SYSCOHADA
-                    </h5>
-                    <p class="mb-0">Analyse basée sur les données financières des années 
-                    ${data.annees.n}, ${data.annees.n1}, ${data.annees.n2}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <!-- Score Principal -->
-            <div class="col-md-6">
-                ${generateMainScoreCard(data.scores.n, 'syscohada')}
-            </div>
-            
-            <!-- Indicateurs de risque -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Indicateurs de Risque - SYSCOHADA
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateRiskIndicators(data.scores.n)}
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDetailedAnalysisSyscohada()">
-                                <i class="fas fa-search me-1"></i>Analyse Détaillée
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENCART SYNTHESE EN DESSOUS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(data.scores.n, 'syscohada', data.annees)}
-            </div>
-        </div>
-        
-        <!-- Détails des Ratios -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt me-2"></i>Détail des Ratios ACREMAC - SYSCOHADA
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ratio</th>
-                                        <th>Formule</th>
-                                        <th>Valeur Calculée</th>
-                                        <th>Valeur Bornée</th>
-                                        <th>Coefficient</th>
-                                        <th>Contribution</th>
-                                        <th>Interprétation</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${generateDetailedRatiosTable(data.scores.n)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Évolution sur 3 Ans - SYSCOHADA
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                        <div class="mt-3">
-                            <div class="alert alert-secondary">
-                                <small>
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Tendance:</strong> 
-                                    ${calculateTrend(data.scores)}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <button class="btn btn-outline-primary" onclick="generateReportSyscohada()">
-                            <i class="fas fa-download me-1"></i>Rapport PDF
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportDataSyscohada()">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-info" onclick="compareWithOtherBilans()">
-                            <i class="fas fa-balance-scale me-1"></i>Comparer avec autres bilans
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(resultsHtml);
-}
-
-// Fonctions spécifiques au bilan SYSCOHADA
-function showDetailedAnalysisSyscohada() {
-    showToast('Analyse détaillée bilan SYSCOHADA en cours de développement', 'info');
-}
-
-function generateReportSyscohada() {
-    showToast('Génération du rapport PDF SYSCOHADA en cours...', 'info');
-}
-
-function exportDataSyscohada() {
-    showToast('Export Excel SYSCOHADA en cours...', 'info');
-}
-
-function resetSyscohadaForm() {
-    $('#syscohadaForm')[0].reset();
-    showToast('Formulaire SYSCOHADA réinitialisé', 'info');
-}
-
-// Chargement des années pour SYSCOHADA
-async function loadYearsForBilanTypeSyscohada() {
-    try {
-        console.log('📅 Chargement des années pour syscohada...');
-        
-        const acheteurId = $('#acheteurId').val();
-        const response = await fetch(`/api/scoring/bilan-syscohada/acheteurs/${acheteurId}/annees/`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            populateYearSelects('syscohada', data.years || data.annees);
-        } else {
-            // Fallback: générer les 5 dernières années
-            const currentYear = new Date().getFullYear();
-            const years = Array.from({length: 5}, (_, i) => currentYear - i);
-            populateYearSelects('syscohada', years);
-        }
-    } catch (error) {
-        console.error('Erreur chargement années syscohada:', error);
-        const currentYear = new Date().getFullYear();
-        const years = Array.from({length: 5}, (_, i) => currentYear - i);
-        populateYearSelects('syscohada', years);
-    }
-}
-
-// Initialisation de l'onglet SYSCOHADA
-$(document).on('shown.bs.tab', '#syscohada-tab', function() {
-    console.log('🌍 Initialisation onglet SYSCOHADA');
-    loadYearsForBilanTypeSyscohada();
-});
-</script>
-
-
-<!-- FONCTIONS SPÉCIFIQUES AU SCORING BILAN IFRS COBAC -->
-<script>
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN IFRS COBAC
-// =============================================
-// =============================================
-// FONCTIONS SPÉCIFIQUES AU SCORING BILAN IFRS COBAC
-// =============================================
-
-// Configuration de la plage d'années (identique au bancaire)
-const PLAGES_ANNEES = {
-    min: 1990,
-    max: 2025
-};
-
-// Peupler les selects d'années avec la plage fixe
-function peuplerSelectsAnneesIFRS() {
-    const annees = genererAnneesPlage();
-    const selects = [
-        document.getElementById('select-annee-ifrs-n'),
-        document.getElementById('select-annee-ifrs-n1'),
-        document.getElementById('select-annee-ifrs-n2')
-    ];
-    
-    selects.forEach(select => {
-        if (select) {
-            // Sauvegarder la valeur sélectionnée actuelle
-            const currentValue = select.value;
-            
-            // Vider et remplir avec la plage d'années
-            select.innerHTML = '<option value="">Sélectionner...</option>';
-            annees.forEach(annee => {
-                const option = document.createElement('option');
-                option.value = annee;
-                option.textContent = annee;
-                select.appendChild(option);
-            });
-            
-            // Restaurer la valeur précédente si elle existe dans la plage
-            if (currentValue && annees.includes(parseInt(currentValue))) {
-                select.value = currentValue;
-            }
-        }
-    });
-}
-
-// Gestion de l'onglet Bilan IFRS
-function initBilanIFRSTab() {
-    console.log('Initialisation onglet bilan IFRS');
-    
-    // Peupler avec la plage fixe
-    peuplerSelectsAnneesIFRS();
-    
-    // Auto-remplissage
-    autoFillYearsIFRS();
-    
-    // Événements
-    const btnCalculIFRS = document.getElementById('btn-calcul-score-ifrs');
-    if (btnCalculIFRS) {
-        btnCalculIFRS.addEventListener('click', calculerScoreIFRS);
-    }
-    
-    // Validation en temps réel des années
-    const yearSelects = [
-        'select-annee-ifrs-n',
-        'select-annee-ifrs-n1',
-        'select-annee-ifrs-n2'
-    ];
-    
-    yearSelects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (select) {
-            select.addEventListener('change', function() {
-                const validation = validerAnneesSelectionneesIFRS();
-                if (!validation.valide && 
-                    document.getElementById('select-annee-ifrs-n').value && 
-                    document.getElementById('select-annee-ifrs-n1').value && 
-                    document.getElementById('select-annee-ifrs-n2').value) {
-                    showAlertIFRS(validation.message, 'warning');
-                }
-            });
-        }
-    });
-}
-
-// Vérification de la validité des années sélectionnées
-function validerAnneesSelectionneesIFRS() {
-    const anneeN = parseInt(document.getElementById('select-annee-ifrs-n').value);
-    const anneeN1 = parseInt(document.getElementById('select-annee-ifrs-n1').value);
-    const anneeN2 = parseInt(document.getElementById('select-annee-ifrs-n2').value);
-    
-    if (!anneeN || !anneeN1 || !anneeN2) {
-        return { valide: false, message: 'Veuillez sélectionner les trois années' };
-    }
-    
-    // Vérifier que N > N1 > N2
-    if (anneeN <= anneeN1 || anneeN1 <= anneeN2) {
-        return { 
-            valide: false, 
-            message: 'Les années doivent être dans l\'ordre décroissant : N > N-1 > N-2' 
-        };
-    }
-    
-    // Vérifier que les années sont dans la plage
-    if (anneeN < PLAGES_ANNEES.min || anneeN > PLAGES_ANNEES.max ||
-        anneeN1 < PLAGES_ANNEES.min || anneeN1 > PLAGES_ANNEES.max ||
-        anneeN2 < PLAGES_ANNEES.min || anneeN2 > PLAGES_ANNEES.max) {
-        return { 
-            valide: false, 
-            message: `Les années doivent être comprises entre ${PLAGES_ANNEES.min} et ${PLAGES_ANNEES.max}` 
-        };
-    }
-    
-    return { valide: true };
-}
-
-// Fonction de remplissage automatique pour IFRS
-function autoFillYearsIFRS() {
-    const currentYear = new Date().getFullYear();
-    
-    // S'assurer que l'année courante est dans la plage
-    const anneeN = Math.min(currentYear, PLAGES_ANNEES.max);
-    const anneeN1 = anneeN - 1;
-    const anneeN2 = anneeN - 2;
-    
-    // Vérifier que les années sont dans la plage
-    if (anneeN2 >= PLAGES_ANNEES.min) {
-        document.getElementById('select-annee-ifrs-n').value = anneeN;
-        document.getElementById('select-annee-ifrs-n1').value = anneeN1;
-        document.getElementById('select-annee-ifrs-n2').value = anneeN2;
-        
-        showAlertIFRS(`Années remplies automatiquement : ${anneeN}, ${anneeN1}, ${anneeN2}`, 'success');
-    } else {
-        showAlertIFRS(`La plage d'années disponible est de ${PLAGES_ANNEES.min} à ${PLAGES_ANNEES.max}`, 'warning');
-    }
-}
-
-// Fonction de réinitialisation pour IFRS
-function resetIFRSForm() {
-    document.getElementById('ifrsForm').reset();
-    document.getElementById('alert-container-ifrs').innerHTML = '';
-    
-    // Réinitialiser les selects d'années
-    peuplerSelectsAnneesIFRS();
-    autoFillYearsIFRS();
-    
-    showAlertIFRS('Formulaire IFRS réinitialisé', 'info');
-}
-
-// Fonction pour afficher les alertes spécifiques à IFRS
-function showAlertIFRS(message, type) {
-    const alertContainer = document.getElementById('alert-container-ifrs');
-    const alertId = `alert-ifrs-${Date.now()}`;
-    
-    const alertHtml = `
-        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `;
-    
-    alertContainer.innerHTML = alertHtml;
-    
-    // Auto-dismiss après 5 secondes
-    setTimeout(() => {
-        const alert = document.getElementById(alertId);
-        if (alert) {
-            alert.remove();
-        }
-    }, 5000);
-}
-
-// Calculer le score pour bilan IFRS - VERSION AVEC SELECTION D'ANNÉES
-async function calculerScoreIFRS() {
-    const acheteurId = document.getElementById('acheteurId')?.value;
-    const anneeN = document.getElementById('select-annee-ifrs-n').value;
-    const anneeN1 = document.getElementById('select-annee-ifrs-n1').value;
-    const anneeN2 = document.getElementById('select-annee-ifrs-n2').value;
-    
-    const btnCalcul = document.getElementById('btn-calcul-score-ifrs');
-    
-    // Validation
-    const validation = validerAnneesSelectionneesIFRS();
-    if (!validation.valide) {
-        showAlertIFRS(validation.message, 'error');
-        return;
-    }
-    
-    if (!acheteurId) {
-        showAlertIFRS('ID acheteur non trouvé', 'error');
-        return;
-    }
-    
-    // Récupérer le token CSRF
-    const csrfToken = getCsrfToken();
-    
-    if (!csrfToken) {
-        showAlertIFRS('Erreur de sécurité: Token CSRF manquant. Rechargez la page.', 'error');
-        return;
-    }
-    
-    btnCalcul.disabled = true;
-    btnCalcul.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calcul en cours...';
-    
-    try {
-        const requestData = {
-            acheteur_id: parseInt(acheteurId),
-            annee_n: parseInt(anneeN),
-            annee_n1: parseInt(anneeN1),
-            annee_n2: parseInt(anneeN2),
-            bilan_type: 'ifrs'
-        };
-        
-        console.log('📤 Données envoyées bilan IFRS:', requestData);
-        
-        const response = await fetch('/api/scoring/bilan-ifrs/calculer-score/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(requestData),
-            credentials: 'include'
-        });
-
-        console.log('📥 Statut réponse IFRS:', response.status);
-        
-        // Vérifier si la réponse est du JSON valide
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('❌ Réponse non-JSON:', text.substring(0, 200));
-            throw new Error(`Réponse non-JSON: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('📊 Données reçues IFRS:', data);
-        
-        if (response.ok) {
-            // Stocker le résultat globalement
-            allScores['ifrs'] = data;
-            
-            // Afficher les résultats dans la section globale
-            displayResultsIFRS(data);
-            $('#globalResultsSection').show();
-            $('#currentBilanType').text('BILAN IFRS COBAC');
-            
-            showAlertIFRS('Score IFRS calculé avec succès!', 'success');
-        } else {
-            const errorMsg = data.detail || data.erreur || 'Erreur inconnue';
-            showAlertIFRS('Erreur lors du calcul: ' + errorMsg, 'error');
-            console.error('❌ Erreur calcul score IFRS:', data);
-        }
-    } catch (error) {
-        console.error('💥 Erreur calcul score IFRS:', error);
-        if (error.message.includes('CSRF')) {
-            showAlertIFRS('Erreur de sécurité CSRF. Essayez de recharger la page.', 'error');
-        } else if (error.message.includes('JSON')) {
-            showAlertIFRS('Erreur serveur - Réponse invalide', 'error');
-        } else {
-            showAlertIFRS('Erreur de connexion: ' + error.message, 'error');
-        }
-    } finally {
-        btnCalcul.disabled = false;
-        btnCalcul.innerHTML = '<i class="fas fa-calculator"></i> Calculer le Score';
-    }
-}
-
-// Affichage des résultats pour le bilan IFRS dans la section globale
-function displayResultsIFRS(data) {
-    const resultsHtml = `
-        <div class="row">
-            <!-- En-tête avec type de bilan -->
-            <div class="col-12 mb-4">
-                <div class="alert alert-primary">
-                    <h5 class="alert-heading">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Résultats du Score ACREMAC - Bilan IFRS COBAC
-                    </h5>
-                    <p class="mb-0">Analyse basée sur les données financières IFRS des années 
-                    ${data.annees.n}, ${data.annees.n1}, ${data.annees.n2}</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <!-- Score Principal -->
-            <div class="col-md-6">
-                ${generateMainScoreCard(data.scores.n, 'ifrs')}
-            </div>
-            
-            <!-- Indicateurs de risque -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-info text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Indicateurs de Risque - IFRS COBAC
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        ${generateRiskIndicatorsIFRS(data.scores.n)}
-                        <div class="mt-3">
-                            <button class="btn btn-sm btn-outline-primary" onclick="showDetailedAnalysisIFRS()">
-                                <i class="fas fa-search me-1"></i>Analyse Détaillée
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ENCART SYNTHESE EN DESSOUS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                ${generateSummaryCard(data.scores.n, 'ifrs', data.annees)}
-            </div>
-        </div>
-        
-        <!-- Détails des Ratios -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-list-alt me-2"></i>Détail des Ratios ACREMAC - IFRS COBAC
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ratio</th>
-                                        <th>Formule</th>
-                                        <th>Valeur Calculée</th>
-                                        <th>Valeur Bornée</th>
-                                        <th>Coefficient</th>
-                                        <th>Contribution</th>
-                                        <th>Interprétation</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${generateDetailedRatiosTableIFRS(data.scores.n)}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Évolution sur 3 ans -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-warning text-dark">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Évolution sur 3 Ans - IFRS COBAC
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            ${generateEvolutionCards(data.scores)}
-                        </div>
-                        <div class="mt-3">
-                            <div class="alert alert-secondary">
-                                <small>
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Tendance:</strong> 
-                                    ${calculateTrend(data.scores)}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Spécificités IFRS -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header bg-dark text-white">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-star me-2"></i>Spécificités IFRS COBAC
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Avantages IFRS :</h6>
-                                <ul class="small">
-                                    <li>Évaluation à la juste valeur</li>
-                                    <li>Transparence accrue</li>
-                                    <li>Comparabilité internationale</li>
-                                    <li>Reconnaissance du goodwill</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Considérations COBAC :</h6>
-                                <ul class="small">
-                                    <li>Adaptation au contexte CEMAC</li>
-                                    <li>Respect des réglementations locales</li>
-                                    <li>Prudence dans l'évaluation</li>
-                                    <li>Provisions spécifiques</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <button class="btn btn-outline-primary" onclick="generateReportIFRS()">
-                            <i class="fas fa-download me-1"></i>Rapport PDF
-                        </button>
-                        <button class="btn btn-outline-success" onclick="exportDataIFRS()">
-                            <i class="fas fa-file-excel me-1"></i>Export Excel
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-info" onclick="compareWithOtherBilans()">
-                            <i class="fas fa-balance-scale me-1"></i>Comparer avec autres bilans
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    $('#globalResultsContent').html(resultsHtml);
-}
-
-// Génération des indicateurs de risque spécifiques au bilan IFRS
-function generateRiskIndicatorsIFRS(scoreData) {
-    const riskLevel = getRiskLevel(scoreData.score);
-    
-    return `
-        <div class="risk-indicators">
-            <div class="mb-3">
-                <label class="form-label"><strong>Niveau de Risque:</strong></label>
-                <div class="progress" style="height: 25px;">
-                    <div class="progress-bar ${riskLevel.color}" role="progressbar" 
-                         style="width: ${riskLevel.percentage}%" 
-                         aria-valuenow="${riskLevel.percentage}" 
-                         aria-valuemin="0" 
-                         aria-valuemax="100">
-                        ${scoreData.classe_risque}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row text-center mb-3">
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Probabilité Défaillance</small>
-                        <div class="fw-bold text-danger fs-5">${scoreData.probabilite_defaillance}%</div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="border rounded p-2 bg-light">
-                        <small class="text-muted">Score Final</small>
-                        <div class="fw-bold ${getScoreColor(scoreData.score)} fs-5">${scoreData.score.toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-3">
-                <p class="small text-muted mb-0">
-                    <i class="fas fa-comment me-1"></i>
-                    ${scoreData.commentaire}
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-// Génération du tableau détaillé des ratios pour le bilan IFRS
-function generateDetailedRatiosTableIFRS(scoreData) {
-    let html = '';
-    const coefficients = scoreData.coefficients || {};
-    const ratios = scoreData.ratios || {};
-    const ratios_bornees = scoreData.ratios_bornees || {};
-    
-    const ratioDefinitions = {
-        'r1': { formule: 'Frais financiers / EBE', interpretation: 'Part des frais financiers dans l\'EBE' },
-        'r2': { formule: '(Créances + Disponibilités) / Dettes CT', interpretation: 'Couverture des dettes court terme' },
-        'r3': { formule: 'Capitaux permanents / Passif', interpretation: 'Structure financière' },
-        'r4': { formule: 'Valeur ajoutée / CA', interpretation: 'Performance économique' },
-        'r5': { formule: 'Trésorerie / CA (jours)', interpretation: 'Autonomie financière court terme' },
-        'r6': { formule: 'Fonds de roulement / CA (jours)', interpretation: 'Couverture du BFR' }
-    };
-    
-    Object.keys(ratioDefinitions).forEach(ratioKey => {
-        const ratioValue = ratios[ratioKey] || 0;
-        const ratioBornee = ratios_bornees[ratioKey] || 0;
-        const coefficient = coefficients[ratioKey] || 0;
-        const contribution = coefficient * ratioBornee;
-        const definition = ratioDefinitions[ratioKey];
-        
-        html += `
-            <tr>
-                <td><strong>${ratioKey.toUpperCase()}</strong></td>
-                <td>${definition.formule}</td>
-                <td class="ratio-value">${ratioValue.toFixed(4)}</td>
-                <td class="ratio-value">${ratioBornee.toFixed(4)}</td>
-                <td>${coefficient.toFixed(4)}</td>
-                <td class="ratio-value ${contribution >= 0 ? 'text-success' : 'text-danger'}">
-                    ${contribution.toFixed(4)}
-                </td>
-                <td><small>${definition.interpretation}</small></td>
-            </tr>
-        `;
-    });
-    
-    return html;
-}
-
-// Fonctions spécifiques au bilan IFRS
-function showDetailedAnalysisIFRS() {
-    showToast('Analyse détaillée bilan IFRS en cours de développement', 'info');
-}
-
-function generateReportIFRS() {
-    showToast('Génération du rapport PDF IFRS en cours...', 'info');
-}
-
-function exportDataIFRS() {
-    showToast('Export Excel IFRS en cours...', 'info');
-}
-
-// Initialisation de l'onglet IFRS
-$(document).on('shown.bs.tab', '#ifrs-tab', function() {
-    console.log('🌐 Initialisation onglet IFRS COBAC');
-    initBilanIFRSTab();
-});
-
-// Initialiser quand la page est chargée
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialiser l'onglet IFRS si actif au chargement
-    if ($('#ifrs-tab').hasClass('active')) {
-        initBilanIFRSTab();
-    }
-});
-</script>
-
 {% endblock %}
