@@ -1772,7 +1772,7 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
     # === AUTHENTIFICATION SYSTEME === #
-    path("api/login/", CustomLoginView.as_view(), name="login"),
+    path("api/login/", CustomLoginView.as_view(), name="api_login"),
     path(
         "api/double-factor-auth/",
         CustomDoubleFactorAuthView.as_view(),

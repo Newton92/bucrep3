@@ -8,8 +8,8 @@ from main.models import *
 # Register your models here.
 
 
-class CustomUserAdmin(UserAdmin):
-    model = CustomUser
+class UserAdmin(UserAdmin):
+    model = User
     list_display = (
         "username",
         "email",
@@ -114,7 +114,7 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("username",)
 
 
-admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(User, UserAdmin)
 
 
 @admin.register(Pays)

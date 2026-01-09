@@ -35,7 +35,7 @@ class UserSimpleOneSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = ['id', 'username', 'email', 'full_name']
     
     def get_full_name(self, obj):
@@ -43,9 +43,9 @@ class UserSimpleOneSerializer(serializers.ModelSerializer):
 
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id",
             "username",
@@ -73,7 +73,7 @@ class ProfileUserSerializer(serializers.ModelSerializer):
     date_joined_formatted = serializers.SerializerMethodField()
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id", "username", "email", "first_name", "last_name", 
             "full_name", "avatar", "avatar_url", "telephone", 
@@ -115,7 +115,7 @@ class ProfileUserSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         # Vérifier que l'email n'est pas déjà utilisé par un autre utilisateur
         user = self.instance
-        if user and CustomUser.objects.filter(email=value).exclude(id=user.id).exists():
+        if user and User.objects.filter(email=value).exclude(id=user.id).exists():
             raise serializers.ValidationError("Cet email est déjà utilisé.")
         return value
     
@@ -4268,8 +4268,8 @@ class EditBanquierSerializer(serializers.ModelSerializer):
 class ActifASerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = ActifA
@@ -4321,8 +4321,8 @@ class AddActifASerializer(serializers.ModelSerializer):
 class GetActifASerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
     # annee = AnneeSerializer()
-    # created_by = CustomUserSerializer()
-    # updated_by = CustomUserSerializer()
+    # created_by = UserSerializer()
+    # updated_by = UserSerializer()
 
     class Meta:
         model = ActifA
@@ -4349,8 +4349,8 @@ class EditActifASerializer(serializers.ModelSerializer):
 class PassifASerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = PassifA
@@ -4420,8 +4420,8 @@ class AddPassifASerializer(serializers.ModelSerializer):
 class GetPassifASerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
     # annee = AnneeSerializer()
-    # created_by = CustomUserSerializer()
-    # updated_by = CustomUserSerializer()
+    # created_by = UserSerializer()
+    # updated_by = UserSerializer()
 
     class Meta:
         model = PassifA
@@ -4451,8 +4451,8 @@ class EditPassifASerializer(serializers.ModelSerializer):
 class ResultatASerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = ResultatA
@@ -4522,8 +4522,8 @@ class AddResultatASerializer(serializers.ModelSerializer):
 class GetResultatASerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
     # annee = AnneeSerializer()
-    # created_by = CustomUserSerializer()
-    # updated_by = CustomUserSerializer()
+    # created_by = UserSerializer()
+    # updated_by = UserSerializer()
 
     class Meta:
         model = ResultatA
@@ -4553,8 +4553,8 @@ class EditResultatASerializer(serializers.ModelSerializer):
 class ActifCSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = ActifC
@@ -4792,8 +4792,8 @@ class AddActifCSerializer(serializers.ModelSerializer):
 class GetActifCSerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
     # annee = AnneeSerializer()
-    # created_by = CustomUserSerializer()
-    # updated_by = CustomUserSerializer()
+    # created_by = UserSerializer()
+    # updated_by = UserSerializer()
 
     class Meta:
         model = ActifC
@@ -4851,8 +4851,8 @@ class EditActifCSerializer(serializers.ModelSerializer):
 class PassifCSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = PassifC
@@ -5000,8 +5000,8 @@ class AddPassifCSerializer(serializers.ModelSerializer):
 class GetPassifCSerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
     # annee = AnneeSerializer()
-    # created_by = CustomUserSerializer()
-    # updated_by = CustomUserSerializer()
+    # created_by = UserSerializer()
+    # updated_by = UserSerializer()
 
     class Meta:
         model = PassifC
@@ -5044,8 +5044,8 @@ class EditPassifCSerializer(serializers.ModelSerializer):
 class ResultatCSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = ResultatC
@@ -5309,8 +5309,8 @@ class AddResultatCSerializer(serializers.ModelSerializer):
 class GetResultatCSerializer(serializers.ModelSerializer):
     # acheteur = AcheteurSerializer()
     # annee = AnneeSerializer()
-    # created_by = CustomUserSerializer()
-    # updated_by = CustomUserSerializer()
+    # created_by = UserSerializer()
+    # updated_by = UserSerializer()
 
     class Meta:
         model = ResultatC
@@ -5374,8 +5374,8 @@ class EditResultatCSerializer(serializers.ModelSerializer):
 class ActifSysCohadaSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = ActifS
@@ -5470,8 +5470,8 @@ class EditActifSysCohadaSerializer(serializers.ModelSerializer):
 class PassifSysSCohadaSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = PassifS
@@ -5566,8 +5566,8 @@ class EditPassifSysCohadaSerializer(serializers.ModelSerializer):
 class ResultatSysCohadaSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     annee = AnneeSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = ResultatS
@@ -5682,8 +5682,8 @@ class EditResultatSysCohadaSerializer(serializers.ModelSerializer):
 class AssetsSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer()
     acheteur = AcheteurSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = Assets
@@ -5772,8 +5772,8 @@ class EditAssetsSerializer(serializers.ModelSerializer):
 class LiabilitiesSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer()
     acheteur = AcheteurSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = Liabilities
@@ -5866,8 +5866,8 @@ class EditLiabilitiesSerializer(serializers.ModelSerializer):
 class OffBalanceSheetSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer()
     acheteur = AcheteurSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = OffBalanceSheet
@@ -5936,8 +5936,8 @@ class EditOffBalanceSheetSerializer(serializers.ModelSerializer):
 class ExpensesSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer()
     acheteur = AcheteurSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = Expenses
@@ -6034,8 +6034,8 @@ class EditExpensesSerializer(serializers.ModelSerializer):
 class ProductsSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer()
     acheteur = AcheteurSerializer()
-    created_by = CustomUserSerializer()
-    updated_by = CustomUserSerializer()
+    created_by = UserSerializer()
+    updated_by = UserSerializer()
 
     class Meta:
         model = Products
@@ -6128,7 +6128,7 @@ class EditProductsSerializer(serializers.ModelSerializer):
 
 
 class CommandesSerializer(serializers.ModelSerializer):
-    client = CustomUserSerializer()
+    client = UserSerializer()
     acheteur = AcheteurSerializer()
     pays = PaysSerializer()
     ville = VilleSerializer()
@@ -6189,7 +6189,7 @@ class GetCommandeSerializer(serializers.ModelSerializer):
 
 
 class CheckCommandeSerializer(serializers.ModelSerializer):
-    client = CustomUserSerializer()
+    client = UserSerializer()
     acheteur = AcheteurSerializer()
     ville = VilleSerializer()
     ref_type_rapport = ModeleRapportSerializer()
@@ -6626,17 +6626,17 @@ class EditValeurRatioIrfsSerializer(serializers.ModelSerializer):
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 # serializers.py
-class NewCustomUserSerializer(serializers.ModelSerializer):
+class NewUserSerializer(serializers.ModelSerializer):
     pays = serializers.SerializerMethodField()
     date_joined_formatted = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
             'role', 'telephone', 'activation', 'pays', 
@@ -6675,12 +6675,12 @@ class NewCustomUserSerializer(serializers.ModelSerializer):
             return obj.avatar.url
         return None
 
-class GetCustomUserSerializerTwo(serializers.ModelSerializer):
+class GetUserSerializerTwo(serializers.ModelSerializer):
     # pays = PaysSerializer()
     date_joined_formatted = serializers.SerializerMethodField()
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = "__all__"
 
     def get_date_joined_formatted(self, obj):
@@ -6688,9 +6688,9 @@ class GetCustomUserSerializerTwo(serializers.ModelSerializer):
         return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
 
 
-class AddCustomUserSerializerTwo(serializers.ModelSerializer):
+class AddUserSerializerTwo(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "username",
             "first_name",
@@ -6706,7 +6706,7 @@ class AddCustomUserSerializerTwo(serializers.ModelSerializer):
         ]
         
         
-class AddCustomUserSerializer(serializers.ModelSerializer):
+class AddUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     activation = serializers.BooleanField(default=True)
     pays = serializers.PrimaryKeyRelatedField(
@@ -6719,7 +6719,7 @@ class AddCustomUserSerializer(serializers.ModelSerializer):
     )
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "username", "first_name", "last_name", "email",
             "email_cc", "address", "activation", "telephone",
@@ -6734,13 +6734,13 @@ class AddCustomUserSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         # Validation de l'email
-        if CustomUser.objects.filter(email=data.get('email')).exists():
+        if User.objects.filter(email=data.get('email')).exists():
             raise serializers.ValidationError({
                 "email": "Cet email est déjà utilisé par un autre utilisateur."
             })
         
         # Validation du username
-        if CustomUser.objects.filter(username=data.get('username')).exists():
+        if User.objects.filter(username=data.get('username')).exists():
             raise serializers.ValidationError({
                 "username": "Ce nom d'utilisateur est déjà pris."
             })
@@ -6758,7 +6758,7 @@ class AddCustomUserSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password', None)
         
         # Créer l'utilisateur
-        user = CustomUser(**validated_data)
+        user = User(**validated_data)
         
         # Définir le mot de passe
         if password:
@@ -6775,13 +6775,13 @@ class AddCustomUserSerializer(serializers.ModelSerializer):
 
 
 # serializers.py
-class GetCustomUserSerializer(serializers.ModelSerializer):
+class GetUserSerializer(serializers.ModelSerializer):
     pays_id = serializers.IntegerField(source='pays.id', read_only=True)
     pays_nom = serializers.CharField(source='pays.nom', read_only=True)
     date_joined_formatted = serializers.SerializerMethodField()
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id", "username", "first_name", "last_name", "email",
             "email_cc", "address", "activation", "telephone", "profession",
@@ -6794,7 +6794,7 @@ class GetCustomUserSerializer(serializers.ModelSerializer):
         return None
 
 
-class EditCustomUserSerializer(serializers.ModelSerializer):
+class EditUserSerializer(serializers.ModelSerializer):
     pays = serializers.PrimaryKeyRelatedField(
         queryset=Pays.objects.all(),
         required=False,
@@ -6802,7 +6802,7 @@ class EditCustomUserSerializer(serializers.ModelSerializer):
     )
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "username", "first_name", "last_name", "email",
             "email_cc", "address", "activation", "telephone",
@@ -6812,24 +6812,24 @@ class EditCustomUserSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         # Exclure l'utilisateur actuel de la vérification d'unicité
         instance = self.instance
-        if instance and CustomUser.objects.filter(email=value).exclude(id=instance.id).exists():
+        if instance and User.objects.filter(email=value).exclude(id=instance.id).exists():
             raise serializers.ValidationError("Cet email est déjà utilisé.")
-        elif not instance and CustomUser.objects.filter(email=value).exists():
+        elif not instance and User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Cet email est déjà utilisé.")
         return value
     
     def validate_username(self, value):
         instance = self.instance
-        if instance and CustomUser.objects.filter(username=value).exclude(id=instance.id).exists():
+        if instance and User.objects.filter(username=value).exclude(id=instance.id).exists():
             raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
-        elif not instance and CustomUser.objects.filter(username=value).exists():
+        elif not instance and User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
         return value
 
 
-class EditCustomUserAvatarSerializer(serializers.ModelSerializer):
+class EditUserAvatarSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
+        model = User
         fields = ["id", "avatar"]
 
 
@@ -7897,8 +7897,8 @@ class AssetsSerializer(serializers.ModelSerializer):
 
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     class Meta:
         model = Assets
@@ -7924,8 +7924,8 @@ class DetailAssetsSerializer(serializers.ModelSerializer):
 
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     class Meta:
         model = Assets
@@ -7955,8 +7955,8 @@ class LiabilitiesSerializer(serializers.ModelSerializer):
     # Relations avec d'autres modèles (en lecture seule)
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Propriétés calculées du modèle
     a_vue = serializers.ReadOnlyField()
@@ -8017,8 +8017,8 @@ class ExpensesSerializer(serializers.ModelSerializer):
     # Relations avec d'autres modèles (en lecture seule pour l'affichage)
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Propriétés calculées du modèle exposées en lecture seule
     interet_charges_assimilee = serializers.ReadOnlyField()
@@ -8085,8 +8085,8 @@ class ProductSerializer(serializers.ModelSerializer):
     # Nested serializers pour afficher les détails des objets liés
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Exposition des propriétés du modèle comme des champs en lecture seule
     interet_produit_assimile = serializers.ReadOnlyField()
@@ -8137,8 +8137,8 @@ class OffBalanceSheetSerializer(serializers.ModelSerializer):
     # Nested serializers pour afficher les détails des objets liés
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Exposition des propriétés du modèle comme des champs en lecture seule
     total_engagement_financement_donne = serializers.ReadOnlyField()
@@ -8197,7 +8197,7 @@ from rest_framework import serializers
 from .models import ActifIFRS, PassifIFRS, RatiosIFRS, ResultatIFRS
 
 # Assurez-vous d'importer vos autres serializers (AnneeSerializer, etc.)
-# from .serializers import AnneeSerializer, AcheteurSerializer, CustomUserSerializer
+# from .serializers import AnneeSerializer, AcheteurSerializer, UserSerializer
 
 
 class ActifIFRSSerializer(serializers.ModelSerializer):
@@ -8208,8 +8208,8 @@ class ActifIFRSSerializer(serializers.ModelSerializer):
 
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Propriété calculée du modèle
     total_actif_non_courant = serializers.ReadOnlyField()
@@ -8252,8 +8252,8 @@ class PassifIFRSSerializer(serializers.ModelSerializer):
 
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Propriétés calculées
     total_capitaux_propres = serializers.ReadOnlyField()
@@ -8294,8 +8294,8 @@ class ResultatIFRSSerializer(serializers.ModelSerializer):
 
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Exposition des soldes intermédiaires de gestion
     # --- DÉBUT DE LA MODIFICATION ---
@@ -10185,7 +10185,7 @@ class UserSimpleOneSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = ['id', 'username', 'email', 'full_name']
     
     def get_full_name(self, obj):
@@ -10578,7 +10578,7 @@ from rest_framework import serializers
 from django.core.validators import ValidationError as DjangoValidationError
 from django.core.validators import validate_email
 import re
-from main.models import CodeNaceAcheteur, SubCategoryNaceCode, CategoryNaceCode, Acheteur, CustomUser
+from main.models import CodeNaceAcheteur, SubCategoryNaceCode, CategoryNaceCode, Acheteur, User
 from django.utils.translation import gettext_lazy as _
 
 
@@ -10803,7 +10803,7 @@ class UserSimpleOneSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     
     class Meta:
-        model = CustomUser
+        model = User
         fields = ['id', 'username', 'email', 'full_name']
     
     def get_full_name(self, obj):
@@ -11211,21 +11211,21 @@ class CommandeSerializer(serializers.ModelSerializer):
         read_only_fields = ['validateur', 'date_envoi_client', 'email_envoye']
 
 class AffectationAnalysteSerializer(serializers.ModelSerializer):
-    analyste = CustomUserSerializer(read_only=True)
+    analyste = UserSerializer(read_only=True)
     
     class Meta:
         model = AffectationAnalyste
         fields = ['id', 'commande', 'analyste', 'date_affectation']
 
 class ValidationRapportSerializer(serializers.ModelSerializer):
-    validateur = CustomUserSerializer(read_only=True)
+    validateur = UserSerializer(read_only=True)
 
     class Meta:
         model = ValidationRapport
         fields = ['id', 'rapport', 'validateur', 'status', 'commentaire', 'date_validation']
 
 class RapportSerializer(serializers.ModelSerializer):
-    analyste = CustomUserSerializer(read_only=True)
+    analyste = UserSerializer(read_only=True)
     validation = ValidationRapportSerializer(source='validationrapport', read_only=True)
     
     class Meta:
@@ -11233,14 +11233,14 @@ class RapportSerializer(serializers.ModelSerializer):
         fields = ['id', 'commande', 'analyste', 'fichier', 'date_soumission', 'validation']
 
 class SuiviCommandeSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     
     class Meta:
         model = SuiviCommande
         fields = ['id', 'commande', 'user', 'action', 'type', 'commentaire', 'date_action']
 
 class NotificationSerializer(serializers.ModelSerializer):
-    user = CustomUserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     
     class Meta:
         model = Notification
@@ -11261,8 +11261,8 @@ class NotificationSerializer(serializers.ModelSerializer):
 class ActifClassiqueSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul en lecture seule
     elements_incorporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11320,8 +11320,8 @@ class EditActifClassiqueSerializer(serializers.ModelSerializer):
 class PassifClassiqueSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul
     total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11366,8 +11366,8 @@ class EditPassifClassiqueSerializer(serializers.ModelSerializer):
 class ResultatClassiqueSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul
     ca = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11454,8 +11454,8 @@ class EditResultatClassiqueSerializer(serializers.ModelSerializer):
 class ActifSysOhadaSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul en lecture seule
     immobilisations_incorporelles = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11509,8 +11509,8 @@ class EditActifSysOhadaSerializer(serializers.ModelSerializer):
 class PassifSysOhadaSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul
     total_capitaux_propres_ressources_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11566,8 +11566,8 @@ class EditPassifSysOhadaSerializer(serializers.ModelSerializer):
 class ResultatSysOhadaSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul
     marge_commerciale = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11652,8 +11652,8 @@ class EditResultatSysOhadaSerializer(serializers.ModelSerializer):
 class ActifAnglaisSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul en lecture seule
     total_actifs_non_courants = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11687,8 +11687,8 @@ class EditActifAnglaisSerializer(serializers.ModelSerializer):
 class PassifAnglaisSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul
     total_fonds_propres = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -11727,8 +11727,8 @@ class EditPassifAnglaisSerializer(serializers.ModelSerializer):
 class ResultatAnglaisSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul
     marge_brute = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12052,8 +12052,8 @@ class BilanAnglaisScoreResponseSerializer(serializers.Serializer):
 class AssetsBancaireSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     a_vue = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12084,8 +12084,8 @@ class AddAssetsBancaireSerializer(serializers.ModelSerializer):
 class LiabilitiesBancaireSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     a_vue = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12115,8 +12115,8 @@ class AddLiabilitiesBancaireSerializer(serializers.ModelSerializer):
 class ExpensesBancaireSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     interet_charges_assimilee = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12153,8 +12153,8 @@ class AddExpensesBancaireSerializer(serializers.ModelSerializer):
 class ProductsBancaireSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     interet_produit_assimile = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12190,8 +12190,8 @@ class AddProductsBancaireSerializer(serializers.ModelSerializer):
 class OffBalanceSheetBancaireSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     total_engagement_financement_donne = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12254,8 +12254,8 @@ class BilanSyscohadaScoreSerializer(serializers.Serializer):
 class ActifSSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     immobilisations_incorporelles = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12274,8 +12274,8 @@ class ActifSSerializer(serializers.ModelSerializer):
 class PassifSSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     total_capitaux_propres_ressources_similaires = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12292,8 +12292,8 @@ class PassifSSerializer(serializers.ModelSerializer):
 class ResultatSSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     marge_commerciale = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12349,8 +12349,8 @@ class BilanIFRSScoreSerializer(serializers.Serializer):
 class ActifIFRSSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     total_actif_non_courant = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
@@ -12364,8 +12364,8 @@ class ActifIFRSSerializer(serializers.ModelSerializer):
 class PassifIFRSSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     total_capitaux_propres = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)
@@ -12380,8 +12380,8 @@ class PassifIFRSSerializer(serializers.ModelSerializer):
 class ResultatIFRSSerializer(serializers.ModelSerializer):
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
-    created_by = CustomUserSerializer(read_only=True)
-    updated_by = CustomUserSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
     
     # Propriétés calculées
     chiffre_affaires = serializers.DecimalField(max_digits=18, decimal_places=2, read_only=True)

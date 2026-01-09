@@ -8,120 +8,633 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <style>
+    /* Variables CSS harmonisées avec le template principal */
+    :root {
+        /* Palette bleue principale */
+        --primary-light: #fcfefe;    /* Blanc bleuté très clair */
+        --primary-blue: #0a95ca;     /* Bleu principal clair */
+        --primary-medium: #0d80be;   /* Bleu principal moyen */
+        --primary-accent: #25add6;   /* Bleu accentuation */
+        --primary-dark: #106cb2;     /* Bleu foncé */
+        
+        --primary-color: #0d80be;    /* Couleur principale */
+        --primary-dark-color: #106cb2; /* Version foncée */
+        --secondary-color: #25add6;  /* Couleur secondaire */
+        --accent-color: #0a95ca;     /* Couleur d'accent */
+        --light-color: #fcfefe;      /* Fond clair */
+        
+        /* Dégradés harmonisés */
+        --primary-gradient: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+        --secondary-gradient: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+        --light-gradient: linear-gradient(135deg, var(--light-color) 0%, #e6f4ff 100%);
+        --success-gradient: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        --warning-gradient: linear-gradient(135deg, #ffc107 0%, #ffda6a 100%);
+        --danger-gradient: linear-gradient(135deg, #dc3545 0%, #e35d6a 100%);
+        
+        /* Variables UI */
+        --shadow-light: 0 4px 20px rgba(10, 149, 202, 0.08);
+        --shadow-medium: 0 8px 30px rgba(13, 128, 190, 0.12);
+        --shadow-heavy: 0 12px 40px rgba(16, 108, 178, 0.15);
+        --border-radius-card: 16px;
+        --border-radius-element: 12px;
+        --border-radius-sm: 8px;
+        --transition: all 0.3s ease;
+    }
+
+    /* Améliorations globales */
+    .dashboard-card {
+        border: none;
+        border-radius: var(--border-radius-card);
+        box-shadow: var(--shadow-light);
+        transition: var(--transition);
+        background: white;
+        overflow: hidden;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+        border-color: rgba(13, 128, 190, 0.2);
+    }
+
+    .card-header {
+        background: linear-gradient(90deg, var(--light-color) 0%, #ffffff 100%);
+        border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+        padding: 1.25rem 1.5rem;
+        border-radius: var(--border-radius-card) var(--border-radius-card) 0 0 !important;
+    }
+
+    .card-header-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 1.1rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card-header-title i {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+    }
+
+    /* Counter cards améliorées */
+    .counter-card {
+        position: relative;
+        overflow: hidden;
+        border: none !important;
+        background: white;
+        border-radius: var(--border-radius-card);
+        box-shadow: var(--shadow-light);
+        transition: var(--transition);
+        border: 1px solid rgba(13, 128, 190, 0.1) !important;
+    }
+
+    .counter-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    .counter-card:hover::before {
+        opacity: 1;
+    }
+
+    .counter-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-medium);
+        border-color: rgba(13, 128, 190, 0.2) !important;
+    }
+
+    .counter-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(13, 128, 190, 0.2);
+        transition: var(--transition);
+    }
+
+    .counter-card:hover .counter-icon {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(13, 128, 190, 0.3);
+    }
+
+    .counter-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 0.25rem;
+        line-height: 1;
+    }
+
+    .counter-label {
+        font-size: 0.9rem;
+        color: var(--primary-medium);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Badges harmonisés */
+    .badge {
+        border: none;
+        font-weight: 600;
+    }
+
+    .badge.bg-light {
+        background: linear-gradient(135deg, var(--light-color), #e6f4ff) !important;
+        color: var(--primary-dark) !important;
+        border: 1px solid rgba(13, 128, 190, 0.2) !important;
+    }
+
+    .badge.bg-success {
+        background: var(--success-gradient) !important;
+        color: white !important;
+    }
+
+    .badge.bg-primary {
+        background: var(--primary-gradient) !important;
+        color: white !important;
+    }
+
+    /* Carte améliorée */
     #map { 
-        height: 450px; 
+        height: 500px; 
         width: 100%;
-        border-radius: 8px;
+        border-radius: var(--border-radius-element);
         z-index: 1;
+        box-shadow: var(--shadow-light);
+        border: 1px solid rgba(13, 128, 190, 0.1);
     }
     
     .leaflet-popup-content {
         font-family: 'DM Sans', sans-serif;
+        min-width: 250px;
+        padding: 0.75rem;
+    }
+    
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--border-radius-sm) !important;
+        box-shadow: var(--shadow-medium) !important;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+    
+    .leaflet-popup-tip {
+        background: white !important;
+        border: 1px solid rgba(13, 128, 190, 0.1);
     }
     
     .country-active {
-        font-weight: bold;
-        color: #198754;
+        font-weight: 700;
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
     .country-inactive {
-        color: #6c757d;
+        color: rgba(13, 128, 190, 0.5);
     }
     
     .map-legend {
         background: white;
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        font-size: 12px;
-        line-height: 18px;
+        padding: 1rem;
+        border-radius: var(--border-radius-element);
+        box-shadow: var(--shadow-light);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        border: 1px solid rgba(13, 128, 190, 0.1);
     }
     
     .map-legend i {
-        width: 18px;
-        height: 18px;
-        margin-right: 5px;
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
         display: inline-block;
+        border-radius: 3px;
+        vertical-align: middle;
     }
     
     .country-stats {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
+        background: var(--light-gradient);
+        border-radius: var(--border-radius-element);
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(13, 128, 190, 0.1);
     }
     
     .country-stat-item {
         display: flex;
         justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #dee2e6;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+        align-items: center;
     }
     
     .country-stat-item:last-child {
         border-bottom: none;
+    }
+
+    .country-stat-item span:first-child {
+        color: var(--primary-medium);
+        font-weight: 500;
+    }
+
+    .country-stat-item span:last-child {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--primary-dark);
+    }
+
+    /* Graphiques harmonisés */
+    .chart-container {
+        position: relative;
+        height: 280px;
+        padding: 1rem;
+    }
+
+    .chart-card {
+        border: none;
+        border-radius: var(--border-radius-card);
+        box-shadow: var(--shadow-light);
+        overflow: hidden;
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+
+    .chart-card .card-header {
+        background: white;
+    }
+
+    /* Boutons harmonisés */
+    .btn {
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        transition: var(--transition);
+        border: 2px solid transparent;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(13, 128, 190, 0.3);
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        border: none;
+    }
+
+    .btn-danger {
+        background: var(--danger-gradient);
+        border: none;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        background: transparent;
+        font-weight: 500;
+        padding: 0.375rem 1rem;
+        border-radius: var(--border-radius-sm);
+        transition: var(--transition);
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(13, 128, 190, 0.2);
+    }
+
+    .btn-outline-success {
+        border: 2px solid #198754;
+        color: #198754;
+        background: transparent;
+    }
+
+    .btn-outline-success:hover {
+        background: #198754;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid rgba(13, 128, 190, 0.3);
+        color: var(--primary-medium);
+    }
+
+    .btn-outline-secondary:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: rgba(13, 128, 190, 0.05);
+    }
+
+    /* En-tête de page */
+    .page-header {
+        background: linear-gradient(90deg, white 0%, var(--light-color) 100%);
+        padding: 1.5rem;
+        border-radius: var(--border-radius-element);
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--primary-color);
+        box-shadow: var(--shadow-light);
+        border: 1px solid rgba(13, 128, 190, 0.1);
+    }
+
+    .page-title {
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .page-title i {
+        color: var(--primary-color);
+        font-size: 1.5rem;
+    }
+
+    /* Alertes harmonisées */
+    .alert-info {
+        background: linear-gradient(135deg, rgba(13, 128, 190, 0.1) 0%, rgba(37, 173, 214, 0.1) 100%) !important;
+        border: 1px solid rgba(13, 128, 190, 0.2) !important;
+        color: var(--primary-dark) !important;
+    }
+
+    .alert-info .alert-heading {
+        color: var(--primary-dark) !important;
+    }
+
+    .alert-info i {
+        color: var(--primary-color) !important;
+    }
+
+    /* Grille responsive améliorée */
+    @media (max-width: 768px) {
+        .counter-card {
+            margin-bottom: 1rem;
+        }
+        
+        .counter-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.25rem;
+        }
+        
+        .counter-value {
+            font-size: 1.5rem;
+        }
+        
+        #map {
+            height: 400px;
+        }
+        
+        .page-header {
+            padding: 1rem;
+        }
+        
+        .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* Animation de chargement */
+    .loading-placeholder {
+        background: linear-gradient(90deg, rgba(13, 128, 190, 0.1) 25%, rgba(37, 173, 214, 0.1) 50%, rgba(13, 128, 190, 0.1) 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: var(--border-radius-sm);
+        min-height: 20px;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Tooltip personnalisé */
+    .custom-tooltip {
+        position: relative;
+        cursor: help;
+    }
+
+    .custom-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--primary-dark);
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.85rem;
+        white-space: nowrap;
+        z-index: 1000;
+        margin-bottom: 5px;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* Scrollbar personnalisée */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(13, 128, 190, 0.1);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary-gradient);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    }
+
+    /* Séparateurs améliorés */
+    .divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(13, 128, 190, 0.2), transparent);
+        margin: 1.5rem 0;
+    }
+
+    .vr {
+        background-color: rgba(13, 128, 190, 0.2);
+    }
+
+    /* Dropdown amélioré */
+    .dropdown-menu {
+        border: 1px solid rgba(13, 128, 190, 0.1);
+        box-shadow: var(--shadow-medium);
+        border-radius: var(--border-radius-sm);
+    }
+
+    .dropdown-item {
+        border-radius: var(--border-radius-sm);
+        margin: 2px 8px;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(13, 128, 190, 0.1);
+    }
+
+    /* Icônes colorées */
+    .bi-arrow-up-circle.text-success {
+        color: #198754 !important;
+    }
+
+    .bi-arrow-down-circle.text-danger {
+        color: #dc3545 !important;
+    }
+
+    /* Text colors harmonisés */
+    .text-muted {
+        color: rgba(13, 128, 190, 0.7) !important;
+    }
+
+    .text-success {
+        color: #198754 !important;
+    }
+
+    .text-dark {
+        color: var(--primary-dark) !important;
+    }
+
+    .fw-bold.text-success {
+        background: var(--success-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .fw-bold.text-dark {
+        color: var(--primary-dark) !important;
+    }
+
+    /* Card footer */
+    .card-footer {
+        background: var(--light-color) !important;
+        border-top: 1px solid rgba(13, 128, 190, 0.1) !important;
+    }
+
+    /* Small text improvements */
+    .small {
+        font-size: 0.875rem;
     }
 </style>
 {% endblock %}
 
 {% block body %}
 
-<!-- Title START -->
-<div class="row">
+<!-- Header START -->
+<div class="row mb-4">
     <div class="col-12">
-        <h3 class="fs-4 mb-0"><i class="bi bi-house fa-fw me-1"></i>Dashboard Root</h3>
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="page-title">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </h1>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light">
+                        <i class="bi bi-calendar me-1"></i>
+                        {{ current_date|date:"d/m/Y" }}
+                    </span>
+                    <span class="badge bg-light">
+                        <i class="bi bi-clock me-1"></i>
+                        {{ current_time|time:"H:i" }}
+                    </span>
+                </div>
+            </div>
+            <p class="text-muted mb-0 mt-2">
+                Vue d'ensemble de votre plateforme - Données en temps réel
+            </p>
+        </div>
     </div>
 </div>
-<!-- Title END -->
+<!-- Header END -->
 
 <!-- Counter START -->
-<div class="row g-4">
-    <!-- Counter item -->
+<div class="row g-4 mb-5">
+    <!-- Commandes -->
     <div class="col-sm-6 col-xl-4">
-        <div class="card card-body border">
+        <div class="counter-card card card-body">
             <div class="d-flex align-items-center">
                 <!-- Icon -->
-                <div class="icon-xl bg-success rounded-3 text-white">
-                    <i class="bi bi-bag"></i>
+                <div class="counter-icon" style="background: var(--primary-gradient);">
+                    <i class="bi bi-cart-check"></i>
                 </div>
                 <!-- Content -->
-                <div class="ms-3">
-                    <h4>0</h4>
-                    <span>Commandes</span>
+                <div class="ms-4">
+                    <div class="counter-value" id="ordersCount">0</div>
+                    <div class="counter-label">Commandes</div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-arrow-up-circle text-success me-1"></i>
+                        <span id="ordersTrend">0%</span> ce mois
+                    </small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Counter item -->
+    <!-- Acheteurs -->
     <div class="col-sm-6 col-xl-4">
-        <div class="card card-body border">
+        <div class="counter-card card card-body">
             <div class="d-flex align-items-center">
                 <!-- Icon -->
-                <div class="icon-xl bg-info rounded-3 text-white">
-                    <i class="bi bi-handbag"></i>
+                <div class="counter-icon" style="background: var(--secondary-gradient);">
+                    <i class="bi bi-people"></i>
                 </div>
                 <!-- Content -->
-                <div class="ms-3">
-                    <h4>0</h4>
-                    <span>Acheteurs</span>
+                <div class="ms-4">
+                    <div class="counter-value" id="buyersCount">0</div>
+                    <div class="counter-label">Acheteurs</div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-arrow-up-circle text-success me-1"></i>
+                        <span id="buyersTrend">0%</span> ce mois
+                    </small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Counter item -->
+    <!-- Alertes -->
     <div class="col-sm-6 col-xl-4">
-        <div class="card card-body border">
+        <div class="counter-card card card-body">
             <div class="d-flex align-items-center">
                 <!-- Icon -->
-                <div class="icon-xl bg-warning rounded-3 text-white">
-                    <i class="bi bi-incognito"></i>
+                <div class="counter-icon" style="background: var(--danger-gradient);">
+                    <i class="bi bi-bell"></i>
                 </div>
                 <!-- Content -->
-                <div class="ms-3">
-                    <h4>0</h4>
-                    <span>Alertes</span>
+                <div class="ms-4">
+                    <div class="counter-value" id="alertsCount">0</div>
+                    <div class="counter-label">Alertes</div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="bi bi-arrow-down-circle text-danger me-1"></i>
+                        <span id="alertsTrend">0%</span> ce mois
+                    </small>
                 </div>
             </div>
         </div>
@@ -130,135 +643,216 @@
 <!-- Counter END -->
 
 <!-- Graph START -->
-<div class="row g-4">
-    <!-- Booking Chart START -->
+<div class="row g-4 mb-5">
+    <!-- Monitoring Chart -->
     <div class="col-lg-6">
-        <!-- Chart START -->
-        <div class="card border h-100">
+        <div class="chart-card card h-100">
             <!-- Card header -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Monitoring </h5>
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-header-title">
+                    <i class="bi bi-graph-up"></i>
+                    Monitoring
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown">
+                        <i class="bi bi-calendar"></i> Mois
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Jour</a></li>
+                        <li><a class="dropdown-item" href="#">Semaine</a></li>
+                        <li><a class="dropdown-item" href="#">Mois</a></li>
+                        <li><a class="dropdown-item" href="#">Année</a></li>
+                    </ul>
+                </div>
             </div>
             <!-- Card body -->
-            <div class="card-body">
-                <!-- Chart -->
-                <canvas id="alertelogsChart" width="400" height="200"></canvas>
+            <div class="card-body p-0">
+                <div class="chart-container">
+                    <canvas id="alertelogsChart" width="400" height="280"></canvas>
+                </div>
             </div>
         </div>
-        <!-- Chart END -->
     </div>
-    <!-- Booking Chart END -->
 
-    <!-- Booking graph START -->
+    <!-- Commandes Chart -->
     <div class="col-lg-6">
-        <div class="card border h-100">
-            <!-- Card header -->
+        <div class="chart-card card h-100">
             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="card-header-title">Commandes</h5>
+                <h5 class="card-header-title">
+                    <i class="bi bi-cart"></i>
+                    Commandes
+                </h5>
+                <a href="#" class="btn btn-sm btn-success">
+                    <i class="bi bi-lamp-fill me-1"></i> En temps réel
+                </a>
             </div>
-            <!-- Card body START -->
-            <div class="card-body p-3">
-                <!-- Chart -->
-                <canvas id="commandesChart" width="400" height="200"></canvas>
+            <div class="card-body p-0">
+                <div class="chart-container">
+                    <canvas id="commandesChart" width="400" height="280"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    <!-- Booking graph END -->
 
-    <!-- Booking graph START -->
+    <!-- Acheteurs Chart -->
     <div class="col-lg-6">
-        <div class="card border h-100">
-
-            <!-- Card header -->
+        <div class="chart-card card h-100">
             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="card-header-title">Acheteurs</h5>
-                <a href="#" class="btn btn-link p-0 mb-0"></a>
+                <h5 class="card-header-title">
+                    <i class="bi bi-person-plus"></i>
+                    Acheteurs
+                </h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i> Détails
+                </a>
             </div>
-
-            <!-- Card body START -->
-            <div class="card-body p-3">
-                <!-- Chart -->
-                <canvas id="acheteursChart" width="400" height="200"></canvas>
+            <div class="card-body p-0">
+                <div class="chart-container">
+                    <canvas id="acheteursChart" width="400" height="280"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    <!-- Booking graph END -->
 
-    <!-- Booking graph START -->
+    <!-- Alertes Chart -->
     <div class="col-lg-6">
-        <div class="card shadow h-100">
-            <!-- Card header -->
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Alertes</h5>
+        <div class="chart-card card h-100">
+            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-header-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Alertes
+                </h5>
+                <a href="#" class="btn btn-sm btn-danger">
+                    <i class="bi bi-shield me-1"></i> En temps réel
+                </a>
             </div>
-
-            <!-- Card body START -->
-            <div class="card-body p-3">
-                <!-- Chart -->
-                <canvas id="alertesChart" width="400" height="200"></canvas>
+            <div class="card-body p-0">
+                <div class="chart-container">
+                    <canvas id="alertesChart" width="400" height="280"></canvas>
+                </div>
             </div>
         </div>
     </div>
-    <!-- Booking graph END -->
-
 </div>
 <!-- Graph END -->
 
-<div class="row g-4 mt-4">
+<!-- Carte Interactive -->
+<div class="row g-4">
     <div class="col-12">
-        <div class="card border h-100">
-            <div class="card-header border-bottom">
-                <h5 class="card-header-title">Pays disponibles</h5>
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-success me-2" id="activeCountriesCount">0</span>
-                    <span>pays actifs</span>
+        <div class="dashboard-card card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-header-title">
+                        <i class="bi bi-globe-americas"></i>
+                        Couverture Géographique
+                    </h5>
+                    <p class="text-muted mb-0 mt-1">
+                        Visualisez votre présence à travers l'Afrique
+                    </p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                        <div class="fs-4 fw-bold text-success" id="activeCountriesCount">0</div>
+                        <small class="text-muted">Pays actifs</small>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-end">
+                        <div class="fs-4 fw-bold text-dark" id="totalCountries">0</div>
+                        <small class="text-muted">Total pays</small>
+                    </div>
                 </div>
             </div>
+            
             <div class="card-body">
-                <!-- Statistiques des pays -->
-                <div class="country-stats mb-4">
-                    <h6 class="mb-3"><i class="bi bi-info-circle me-2"></i>Statistiques des pays</h6>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="country-stat-item">
-                                <span>Total pays</span>
-                                <span class="fw-bold" id="totalCountries">0</span>
-                            </div>
+                <!-- Statistiques -->
+                <div class="country-stats">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">
+                                <i class="bi bi-bar-chart me-2"></i>
+                                Statistiques des pays
+                            </h6>
+                            <p class="text-muted mb-0 small">
+                                Analyse de votre couverture géographique actuelle
+                            </p>
                         </div>
                         <div class="col-md-4">
-                            <div class="country-stat-item">
-                                <span>Pays actifs</span>
-                                <span class="fw-bold text-success" id="activeCountries">0</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="country-stat-item">
-                                <span>Pays inactifs</span>
-                                <span class="fw-bold text-secondary" id="inactiveCountries">0</span>
+                            <div class="d-grid gap-2">
+                                <div class="country-stat-item">
+                                    <span>Pays actifs</span>
+                                    <span class="fw-bold text-success" id="activeCountries">0</span>
+                                </div>
+                                <div class="country-stat-item">
+                                    <span>Pays inactifs</span>
+                                    <span class="fw-bold text-secondary" id="inactiveCountries">0</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Carte interactive -->
-                <div id="map"></div>
-                
-                <!-- Légende -->
-                <div class="mt-3 d-flex justify-content-between align-items-center">
-                    <div class="map-legend">
-                        <div>
-                            <i class="bi bi-square-fill text-success"></i>
-                            <span>Pays actif dans votre base</span>
+                <!-- Carte -->
+                <div class="mt-4 position-relative">
+                    <div id="map"></div>
+                    
+                    <!-- Contrôles carte -->
+                    <div class="mt-4 d-flex justify-content-between align-items-center">
+                        <div class="map-legend">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-square-fill" style="color: #198754;"></i>
+                                <span class="ms-2">Pays actif dans votre base</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-square-fill" style="color: rgba(13, 128, 190, 0.3);"></i>
+                                <span class="ms-2">Pays non configuré</span>
+                            </div>
                         </div>
-                        <div>
-                            <i class="bi bi-square-fill text-secondary"></i>
-                            <span>Pays non configuré</span>
+                        
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary" id="resetMapView">
+                                <i class="bi bi-geo-alt me-1"></i> Vue initiale
+                            </button>
+                            <button class="btn btn-outline-success" id="exportCountries">
+                                <i class="bi bi-download me-1"></i> Exporter
+                            </button>
                         </div>
                     </div>
-                    
-                    <button class="btn btn-sm btn-outline-primary" id="resetMapView">
-                        <i class="bi bi-geo-alt"></i> Vue initiale
-                    </button>
+                </div>
+            </div>
+            
+            <!-- Footer carte -->
+            <div class="card-footer bg-transparent border-top">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Cliquez sur un pays pour plus de détails
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            Dernière mise à jour : <span id="lastUpdate">Chargement...</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section d'information -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info border-0">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                <div>
+                    <h6 class="alert-heading mb-1">Dashboard Informations</h6>
+                    <p class="mb-0 small">
+                        Toutes les données sont mises à jour en temps réel. Les graphiques montrent les tendances mensuelles.
+                        Utilisez la carte interactive pour explorer votre couverture géographique.
+                    </p>
                 </div>
             </div>
         </div>
@@ -271,6 +865,30 @@
 <script>
     const ACCESS_TOKEN = "{{ access }}";
     console.log("JWT ACCESS TOKEN :", ACCESS_TOKEN);
+    
+    // Mettre à jour l'heure
+    function updateDateTime() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('fr-FR');
+        const timeStr = now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+        
+        // Mettre à jour l'heure dans le header si les éléments existent
+        const dateElement = document.querySelector('[data-date]');
+        const timeElement = document.querySelector('[data-time]');
+        
+        if (dateElement) dateElement.textContent = dateStr;
+        if (timeElement) timeElement.textContent = timeStr;
+        
+        // Mettre à jour la dernière mise à jour
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        if (lastUpdateElement) {
+            lastUpdateElement.textContent = timeStr;
+        }
+    }
+    
+    // Mettre à jour l'heure toutes les minutes
+    setInterval(updateDateTime, 60000);
+    updateDateTime(); // Initial call
 </script>
 
 <script>
@@ -309,30 +927,134 @@ function fetchWithAuth(url, options = {}) {
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Configuration globale de Chart.js harmonisée
+    Chart.defaults.font.family = "'DM Sans', sans-serif";
+    Chart.defaults.color = 'rgba(13, 128, 190, 0.7)';
+    Chart.defaults.borderColor = 'rgba(13, 128, 190, 0.1)';
+    
+    // Options communes pour tous les graphiques
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: 'rgba(13, 128, 190, 0.9)',
+                titleFont: {
+                    size: 14,
+                    family: "'DM Sans', sans-serif"
+                },
+                bodyFont: {
+                    size: 13,
+                    family: "'DM Sans', sans-serif"
+                },
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 1,
+                cornerRadius: 8,
+                padding: 12
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(13, 128, 190, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    font: {
+                        size: 12
+                    },
+                    padding: 10
+                }
+            },
+            x: {
+                grid: {
+                    color: 'rgba(13, 128, 190, 0.05)',
+                    drawBorder: false
+                },
+                ticks: {
+                    font: {
+                        size: 12
+                    },
+                    padding: 10
+                }
+            }
+        }
+    };
+
+    // Palette de couleurs harmonisée
+    const chartColors = {
+        primary: {
+            bg: 'rgba(13, 128, 190, 0.2)',
+            border: 'rgba(13, 128, 190, 1)',
+            gradient: ['rgba(13, 128, 190, 0.4)', 'rgba(13, 128, 190, 0.1)']
+        },
+        secondary: {
+            bg: 'rgba(37, 173, 214, 0.2)',
+            border: 'rgba(37, 173, 214, 1)',
+            gradient: ['rgba(37, 173, 214, 0.4)', 'rgba(37, 173, 214, 0.1)']
+        },
+        accent: {
+            bg: 'rgba(10, 149, 202, 0.2)',
+            border: 'rgba(10, 149, 202, 1)',
+            gradient: ['rgba(10, 149, 202, 0.4)', 'rgba(10, 149, 202, 0.1)']
+        },
+        success: {
+            bg: 'rgba(25, 135, 84, 0.2)',
+            border: 'rgba(25, 135, 84, 1)',
+            gradient: ['rgba(25, 135, 84, 0.4)', 'rgba(25, 135, 84, 0.1)']
+        },
+        warning: {
+            bg: 'rgba(255, 193, 7, 0.2)',
+            border: 'rgba(255, 193, 7, 1)',
+            gradient: ['rgba(255, 193, 7, 0.4)', 'rgba(255, 193, 7, 0.1)']
+        },
+        danger: {
+            bg: 'rgba(220, 53, 69, 0.2)',
+            border: 'rgba(220, 53, 69, 1)',
+            gradient: ['rgba(220, 53, 69, 0.4)', 'rgba(220, 53, 69, 0.1)']
+        }
+    };
+
+    // Fonction pour créer un dégradé de couleur
+    function createChartGradient(ctx, colorType) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, chartColors[colorType].gradient[0]);
+        gradient.addColorStop(1, chartColors[colorType].gradient[1]);
+        return gradient;
+    }
+
     // Récupérer les données des acheteurs
     fetch('/api/acheteurs-par-mois/')
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('acheteursChart').getContext('2d');
+            
             const acheteursChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [{
-                        label: 'Nombre d\'acheteurs créés par mois',
+                        label: 'Acheteurs créés',
                         data: data.data,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
+                        backgroundColor: createChartGradient(ctx, 'secondary'),
+                        borderColor: chartColors.secondary.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.secondary.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+                options: chartOptions
             });
         });
 
@@ -341,25 +1063,27 @@ function fetchWithAuth(url, options = {}) {
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('alertelogsChart').getContext('2d');
+            
             const alertelogsChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [{
-                        label: 'Nombre d\'AlerteLogs créées par mois',
+                        label: 'AlerteLogs créées',
                         data: data.data,
-                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        borderWidth: 1
+                        backgroundColor: createChartGradient(ctx, 'accent'),
+                        borderColor: chartColors.accent.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.accent.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+                options: chartOptions
             });
         });
 
@@ -368,25 +1092,27 @@ function fetchWithAuth(url, options = {}) {
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('commandesChart').getContext('2d');
+            
             const commandesChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [{
-                        label: 'Nombre de commandes créées par mois',
+                        label: 'Commandes créées',
                         data: data.data,
-                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                        borderColor: 'rgba(255, 159, 64, 1)',
-                        borderWidth: 1
+                        backgroundColor: createChartGradient(ctx, 'success'),
+                        borderColor: chartColors.success.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.success.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+                options: chartOptions
             });
         });
 
@@ -395,40 +1121,37 @@ function fetchWithAuth(url, options = {}) {
         .then(response => response.json())
         .then(data => {
             const ctx = document.getElementById('alertesChart').getContext('2d');
+            
             const alertesChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [{
-                        label: 'Nombre d\'alertes créées par mois',
+                        label: 'Alertes créées',
                         data: data.data,
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        borderColor: 'rgba(255, 99, 132, 1)',
-                        borderWidth: 1
+                        backgroundColor: createChartGradient(ctx, 'danger'),
+                        borderColor: chartColors.danger.border,
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: chartColors.danger.border,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+                options: chartOptions
             });
         });
 </script>
 
+<!-- ... (le reste du code JavaScript reste identique) ... -->
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-<!-- Dans votre base.html ou dans le bloc scripts -->
-<script>
-    // Déclarer jQuery en global pour éviter les conflits
-    if (typeof jQuery === 'undefined') {
-        console.warn('jQuery n\'est pas chargé');
-    }
-</script>
-
+<!-- SCRIPT DE LA CARTE COMPLET -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     console.log("🗺️ Initialisation de la carte interactive");
@@ -444,73 +1167,29 @@ document.addEventListener("DOMContentLoaded", function () {
         // Initialiser la carte centrée sur l'Afrique
         const map = L.map('map').setView([2, 20], 3);
         
-        // Ajouter la couche OpenStreetMap
+        // Ajouter la couche OpenStreetMap avec un style plus doux
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
             maxZoom: 18,
             minZoom: 2
         }).addTo(map);
         
-        // Mapping des codes ISO - CORRECTION IMPORTANTE - COMPLÉTÉ
-        // Votre GeoJSON utilise 'id' avec codes ISO A3 (ex: "BEN", "CMR")
-        // Mais vous avez besoin de mapper vers ISO A2 pour le style
+        // Mapping des codes ISO
         const codeMappingToA2 = {
-            // Pays déjà présents
-            "BEN": "BJ",    // Bénin
-            "CMR": "CM",    // Cameroun
-            "CIV": "CI",    // Côte d'Ivoire
-            "GAB": "GA",    // Gabon
-            "GHA": "GH",    // Ghana
-            "MLI": "ML",    // Mali (attention: GeoJSON utilise "MLI")
-            "MAR": "MA",    // Maroc (GeoJSON utilise "MAR")
-            "SEN": "SN",    // Sénégal
-            
-            // Nouveaux pays africains
-            "AGO": "AO",    // Angola
-            "BDI": "BI",    // Burundi
-            "BFA": "BF",    // Burkina Faso
-            "CAF": "CF",    // République centrafricaine
-            "COD": "CD",    // République démocratique du Congo
-            "COG": "CG",    // République du Congo
-            "DJI": "DJ",    // Djibouti
-            "DZA": "DZ",    // Algérie
-            "EGY": "EG",    // Égypte
-            "ERI": "ER",    // Érythrée
-            "ETH": "ET",    // Éthiopie
-            "GIN": "GN",    // Guinée
-            "GMB": "GM",    // Gambie
-            "GNB": "GW",    // Guinée-Bissau
-            "GNQ": "GQ",    // Guinée équatoriale
-            "KEN": "KE",    // Kenya
-            "LBR": "LR",    // Liberia
-            "LBY": "LY",    // Libye
-            "LSO": "LS",    // Lesotho
-            "MDG": "MG",    // Madagascar
-            "MOZ": "MZ",    // Mozambique
-            "MRT": "MR",    // Mauritanie
-            "MWI": "MW",    // Malawi
-            "NAM": "NA",    // Namibie
-            "NER": "NE",    // Niger
-            "NGA": "NG",    // Nigeria
-            "RWA": "RW",    // Rwanda
-            "SDN": "SD",    // Soudan
-            "SLE": "SL",    // Sierra Leone
-            "SOM": "SO",    // Somalie
-            "SSD": "SS",    // Soudan du Sud
-            "SWZ": "SZ",    // Eswatini (Swaziland)
-            "TCD": "TD",    // Tchad
-            "TGO": "TG",    // Togo
-            "TZA": "TZ",    // Tanzanie
-            "UGA": "UG",    // Ouganda
-            "ZAF": "ZA",    // Afrique du Sud
-            "ZMB": "ZM",    // Zambie
-            "ZWE": "ZW",    // Zimbabwe
-            "TUN": "TN",    // Tunisie
+            "BEN": "BJ", "CMR": "CM", "CIV": "CI", "GAB": "GA", "GHA": "GH", 
+            "MLI": "ML", "MAR": "MA", "SEN": "SN", "AGO": "AO", "BDI": "BI",
+            "BFA": "BF", "CAF": "CF", "COD": "CD", "COG": "CG", "DJI": "DJ",
+            "DZA": "DZ", "EGY": "EG", "ERI": "ER", "ETH": "ET", "GIN": "GN",
+            "GMB": "GM", "GNB": "GW", "GNQ": "GQ", "KEN": "KE", "LBR": "LR",
+            "LBY": "LY", "LSO": "LS", "MDG": "MG", "MOZ": "MZ", "MRT": "MR",
+            "MWI": "MW", "NAM": "NA", "NER": "NE", "NGA": "NG", "RWA": "RW",
+            "SDN": "SD", "SLE": "SL", "SOM": "SO", "SSD": "SS", "SWZ": "SZ",
+            "TCD": "TD", "TGO": "TG", "TZA": "TZ", "UGA": "UG", "ZAF": "ZA",
+            "ZMB": "ZM", "ZWE": "ZW", "TUN": "TN",
         };
 
-        // Coordonnées des capitales africaines (utilisation ISO A2) - COMPLÉTÉ
+        // Coordonnées des capitales africaines
         const capitales = {
-            // Capitales déjà présentes
             "BJ": { lat: 6.3725, lng: 2.3914, capitale: "Porto-Novo" },
             "CM": { lat: 3.8480, lng: 11.5021, capitale: "Yaoundé" },
             "CI": { lat: 5.3594, lng: -4.0083, capitale: "Abidjan" },
@@ -519,8 +1198,6 @@ document.addEventListener("DOMContentLoaded", function () {
             "ML": { lat: 12.6392, lng: -8.0029, capitale: "Bamako" },
             "MA": { lat: 33.9716, lng: -6.8498, capitale: "Rabat" },
             "SN": { lat: 14.6928, lng: -17.4467, capitale: "Dakar" },
-            
-            // Nouvelles capitales africaines
             "AO": { lat: -8.8383, lng: 13.2344, capitale: "Luanda" },
             "BI": { lat: -3.3614, lng: 29.3599, capitale: "Gitega" },
             "BF": { lat: 12.3714, lng: -1.5197, capitale: "Ouagadougou" },
@@ -566,7 +1243,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Variables globales
         window.paysData = [];
         window.activeCountries = new Set();
-        window.countryNames = {}; // Pour stocker les noms des pays
+        window.countryNames = {};
         
         // Fonction pour charger les données
         function loadCountriesData() {
@@ -580,15 +1257,11 @@ document.addEventListener("DOMContentLoaded", function () {
                         return;
                     }
                     
-                    // Stocker les données brutes
                     window.paysData = Array.isArray(paysDB) ? paysDB : [];
-                    
-                    // Créer un Set des codes ISO A3 actifs (pour correspondre au GeoJSON)
                     window.activeCountries = new Set();
                     
                     window.paysData.forEach(p => {
                         if (p.is_active !== false) {
-                            // Trouver le code ISO A3 correspondant
                             const isoA3 = Object.keys(codeMappingToA2).find(
                                 key => codeMappingToA2[key] === p.iso_code
                             );
@@ -600,11 +1273,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                     
                     console.log("🎯 Pays actifs (ISO A3):", Array.from(window.activeCountries));
-                    
-                    // Mettre à jour les statistiques
                     updateStatistics();
-                    
-                    // Charger la carte
                     loadMap();
                 })
                 .catch(err => {
@@ -628,11 +1297,18 @@ document.addEventListener("DOMContentLoaded", function () {
             if (activeEl) activeEl.textContent = active;
             if (inactiveEl) inactiveEl.textContent = inactive;
             if (activeCountEl) activeCountEl.textContent = active;
+            
+            const ordersCountEl = document.getElementById('ordersCount');
+            const buyersCountEl = document.getElementById('buyersCount');
+            const alertsCountEl = document.getElementById('alertsCount');
+            
+            if (ordersCountEl) ordersCountEl.textContent = "0";
+            if (buyersCountEl) buyersCountEl.textContent = "0";
+            if (alertsCountEl) alertsCountEl.textContent = "0";
         }
         
         // Fonction pour charger la carte
         function loadMap() {
-            // Charger le GeoJSON
             fetch("{% static 'geo/countries.geo.json' %}")
                 .then(res => {
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -641,27 +1317,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(geojson => {
                     console.log("🧭 GeoJSON chargé avec", geojson.features.length, "pays");
                     
-                    // Récupérer les noms des pays depuis le GeoJSON
                     geojson.features.forEach(feature => {
                         if (feature.id) {
                             window.countryNames[feature.id] = feature.properties.name;
                         }
                     });
                     
-                    // Créer la couche GeoJSON
+                    // Style harmonisé avec la palette bleue
                     L.geoJSON(geojson, {
                         style: function(feature) {
-                            const isoA3 = feature.id; // Le GeoJSON utilise 'id' avec ISO A3
+                            const isoA3 = feature.id;
                             const isActive = window.activeCountries.has(isoA3);
                             
-                            console.log(`🎨 Style pour ${isoA3} (${feature.properties.name}): ${isActive ? 'ACTIF' : 'INACTIF'}`);
-                            
                             return {
-                                fillColor: isActive ? '#198754' : '#dee2e6',
+                                fillColor: isActive ? '#198754' : 'rgba(13, 128, 190, 0.3)',
                                 weight: isActive ? 2 : 1,
                                 opacity: 1,
-                                color: isActive ? '#0d6efd' : '#adb5bd',
-                                fillOpacity: isActive ? 0.7 : 0.3
+                                color: isActive ? '#0d6efd' : 'rgba(13, 128, 190, 0.5)',
+                                fillOpacity: isActive ? 0.7 : 0.3,
+                                dashArray: isActive ? null : '5, 5'
                             };
                         },
                         onEachFeature: function(feature, layer) {
@@ -669,59 +1343,49 @@ document.addEventListener("DOMContentLoaded", function () {
                             const isoA2 = codeMappingToA2[isoA3] || isoA3;
                             const countryName = feature.properties.name || "Pays";
                             
-                            // Trouver le pays correspondant dans nos données
-                            const pays = window.paysData.find(p => {
-                                // Vérifier par code ISO A2
-                                return p.iso_code === isoA2;
-                            });
+                            const pays = window.paysData.find(p => p.iso_code === isoA2);
                             
                             let popupContent = `<div style="min-width: 200px;">`;
-                            popupContent += `<h6><strong>${countryName}</strong></h6>`;
-                            popupContent += `<hr style="margin: 5px 0;">`;
+                            popupContent += `<h6 style="color: var(--primary-dark);"><strong>${countryName}</strong></h6>`;
+                            popupContent += `<hr style="margin: 5px 0; border-color: rgba(13, 128, 190, 0.1);">`;
                             
                             if (pays) {
                                 const statusIcon = pays.is_active !== false 
                                     ? '<i class="bi bi-check-circle-fill text-success me-1"></i>'
-                                    : '<i class="bi bi-x-circle-fill text-secondary me-1"></i>';
+                                    : '<i class="bi bi-x-circle-fill" style="color: rgba(13, 128, 190, 0.5);" me-1></i>';
                                     
                                 const statusText = pays.is_active !== false 
                                     ? 'Actif dans votre base'
                                     : 'Inactif dans votre base';
                                     
                                 popupContent += `<p class="mb-1">${statusIcon}${statusText}</p>`;
-                                popupContent += `<p class="mb-1"><small>Code: ${pays.code}</small></p>`;
-                                popupContent += `<p class="mb-1"><small>Nom: ${pays.nom}</small></p>`;
+                                popupContent += `<p class="mb-1"><small style="color: rgba(13, 128, 190, 0.7);">Code: ${pays.code}</small></p>`;
+                                popupContent += `<p class="mb-1"><small style="color: rgba(13, 128, 190, 0.7);">Nom: ${pays.nom}</small></p>`;
                             } else {
-                                popupContent += `<p class="mb-1">`;
-                                popupContent += `<i class="bi bi-x-circle-fill text-secondary me-1"></i>`;
+                                popupContent += `<p class="mb-1" style="color: rgba(13, 128, 190, 0.7);">`;
+                                popupContent += `<i class="bi bi-x-circle-fill me-1" style="color: rgba(13, 128, 190, 0.5);"></i>`;
                                 popupContent += `Non configuré dans votre base`;
                                 popupContent += `</p>`;
                             }
                             
-                            popupContent += `<p class="mb-0"><small>ISO A3: ${isoA3}</small></p>`;
-                            popupContent += `<p class="mb-0"><small>ISO A2: ${isoA2}</small></p>`;
+                            popupContent += `<p class="mb-0"><small style="color: rgba(13, 128, 190, 0.7);">ISO A3: ${isoA3}</small></p>`;
+                            popupContent += `<p class="mb-0"><small style="color: rgba(13, 128, 190, 0.7);">ISO A2: ${isoA2}</small></p>`;
                             
-                            // Ajouter les coordonnées de la capitale si disponibles
                             const capitaleInfo = capitales[isoA2];
                             if (capitaleInfo) {
-                                popupContent += `<p class="mt-2 mb-0"><small><i class="bi bi-geo-alt"></i> ${capitaleInfo.capitale}</small></p>`;
+                                popupContent += `<p class="mt-2 mb-0"><small style="color: rgba(13, 128, 190, 0.7);"><i class="bi bi-geo-alt"></i> ${capitaleInfo.capitale}</small></p>`;
                             }
                             
                             popupContent += `</div>`;
                             
                             layer.bindPopup(popupContent);
                             
-                            // Ajouter un événement au clic
                             layer.on('click', function(e) {
                                 console.log(`Clic sur ${countryName} (${isoA3})`);
-                                if (pays) {
-                                    // Vous pouvez ajouter une logique pour afficher plus de détails
-                                }
                             });
                         }
                     }).addTo(map);
                     
-                    // Ajouter des marqueurs pour les capitales des pays actifs
                     window.paysData.forEach(pays => {
                         if (pays.is_active !== false && pays.latitude && pays.longitude) {
                             const isoA2 = pays.iso_code;
@@ -732,9 +1396,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                     .addTo(map)
                                     .bindPopup(`
                                         <div style="min-width: 150px;">
-                                            <h6><strong>${capitaleInfo.capitale}</strong></h6>
-                                            <p class="mb-1"><small>Capitale de ${pays.nom}</small></p>
-                                            <p class="mb-0"><small>${capitaleInfo.lat.toFixed(4)}, ${capitaleInfo.lng.toFixed(4)}</small></p>
+                                            <h6 style="color: var(--primary-dark);"><strong>${capitaleInfo.capitale}</strong></h6>
+                                            <p class="mb-1"><small style="color: rgba(13, 128, 190, 0.7);">Capitale de ${pays.nom}</small></p>
+                                            <p class="mb-0"><small style="color: rgba(13, 128, 190, 0.7);">${capitaleInfo.lat.toFixed(4)}, ${capitaleInfo.lng.toFixed(4)}</small></p>
                                         </div>
                                     `);
                             }
@@ -742,8 +1406,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     });
                     
                     console.log("✅ Carte chargée avec succès");
-                    console.log("🔍 Pays dans la base:", window.paysData.map(p => p.nom));
-                    console.log("🔍 Pays actifs sur la carte:", Array.from(window.activeCountries));
                     
                 })
                 .catch(err => {
@@ -773,20 +1435,20 @@ document.addEventListener("DOMContentLoaded", function () {
             map.setView([2, 20], 3);
         });
         
-        // Ajouter un contrôle pour afficher les pays actifs
+        // Contrôle de légende harmonisé
         const infoControl = L.control({position: 'bottomleft'});
         infoControl.onAdd = function(map) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
-                <div class="bg-white p-2 rounded shadow-sm">
-                    <h6>Légende</h6>
-                    <div class="d-flex align-items-center mb-1">
-                        <div style="width: 20px; height: 15px; background-color: #198754; margin-right: 5px; border: 1px solid #0d6efd;"></div>
-                        <span>Pays actif</span>
+                <div class="bg-white p-2 rounded shadow-sm" style="border: 1px solid rgba(13, 128, 190, 0.1);">
+                    <h6 style="color: var(--primary-dark); margin-bottom: 8px;">Légende</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <div style="width: 20px; height: 15px; background-color: #198754; margin-right: 8px; border: 1px solid #0d6efd;"></div>
+                        <span style="color: rgba(13, 128, 190, 0.8); font-size: 0.85rem;">Pays actif</span>
                     </div>
                     <div class="d-flex align-items-center">
-                        <div style="width: 20px; height: 15px; background-color: #dee2e6; margin-right: 5px; border: 1px solid #adb5bd;"></div>
-                        <span>Pays inactif/non configuré</span>
+                        <div style="width: 20px; height: 15px; background-color: rgba(13, 128, 190, 0.3); margin-right: 8px; border: 1px solid rgba(13, 128, 190, 0.5);"></div>
+                        <span style="color: rgba(13, 128, 190, 0.8); font-size: 0.85rem;">Pays inactif/non configuré</span>
                     </div>
                 </div>
             `;
@@ -810,29 +1472,51 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 
-<!-- Optionnel: Ajouter des contrôles supplémentaires -->
 <script>
-// Vous pouvez ajouter ce script pour des fonctionnalités supplémentaires
+// Bouton d'export harmonisé
 document.addEventListener("DOMContentLoaded", function() {
-    // Exporter la liste des pays
-    const exportBtn = document.createElement('button');
-    exportBtn.className = 'btn btn-sm btn-outline-success ms-2';
-    exportBtn.innerHTML = '<i class="bi bi-download"></i> Exporter';
-    exportBtn.addEventListener('click', function() {
-        const dataStr = JSON.stringify(paysData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = 'pays-actifs.json';
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-    });
-    
-    // Ajouter le bouton d'export à côté du titre
-    const cardHeader = document.querySelector('.card-header');
-    if (cardHeader) {
-        cardHeader.querySelector('.d-flex').appendChild(exportBtn);
+    const exportBtn = document.getElementById('exportCountries');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            if (window.paysData && window.paysData.length > 0) {
+                const dataStr = JSON.stringify(window.paysData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = 'pays-actifs-' + new Date().toISOString().slice(0,10) + '.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                // Notification visuelle harmonisée
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+                alert.style.zIndex = '9999';
+                alert.style.border = '1px solid rgba(25, 135, 84, 0.2)';
+                alert.style.boxShadow = 'var(--shadow-light)';
+                alert.innerHTML = `
+                    <i class="bi bi-check-circle me-2"></i>
+                    Données exportées avec succès
+                `;
+                document.body.appendChild(alert);
+                
+                setTimeout(() => alert.remove(), 3000);
+            } else {
+                // Notification d'erreur harmonisée
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger position-fixed top-0 end-0 m-3';
+                alert.style.zIndex = '9999';
+                alert.style.border = '1px solid rgba(220, 53, 69, 0.2)';
+                alert.style.boxShadow = 'var(--shadow-light)';
+                alert.innerHTML = `
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    Aucune donnée disponible pour l'export
+                `;
+                document.body.appendChild(alert);
+                
+                setTimeout(() => alert.remove(), 3000);
+            }
+        });
     }
 });
 </script>

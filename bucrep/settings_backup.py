@@ -58,7 +58,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # User autorisé
-AUTH_USER_MODEL = "main.CustomUser"
+AUTH_USER_MODEL = "main.User"
 
 # Email Configuration using SMTP for sending emails
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

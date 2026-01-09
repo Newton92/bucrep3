@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 def hash_string(input_string):
@@ -23,7 +23,7 @@ def generate_secure_token():
 class AuthenticationTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = CustomUser.objects.create_user(
+        self.user = User.objects.create_user(
             username="testuser",
             email="test@example.com",
             password=hash_string("testpass123"),  # Hashed password

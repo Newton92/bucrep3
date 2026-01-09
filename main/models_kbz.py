@@ -39,7 +39,7 @@ print(unique_code)
 
 
 
-# === Models CustomUser === #
+# === Models User === #
 
 ROLES_USERS = [
     ('Root', 'Root'),
@@ -48,7 +48,7 @@ ROLES_USERS = [
     ('Client', 'Client'),
 ]
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     # Attributs par défaut de AbstractUser (masqués)
     # username = models.CharField(
     #     _('username'),
@@ -1881,8 +1881,8 @@ class TelephoneAcheteur(models.Model):
     acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='telephone_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='telephone_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 # ----Gestions des différents emails des acheteurs V3
 """
@@ -1912,8 +1912,8 @@ class PortableAcheteur(models.Model): #V2
     acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='portable_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='portable_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     #history = HistoricalRecords()
@@ -1924,8 +1924,8 @@ class EmailAcheteur(models.Model):
     acheteur = models.ForeignKey('Acheteur', null=True, blank=True, on_delete=models.DO_NOTHING)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='email_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='email_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     #history = HistoricalRecords()
@@ -2466,8 +2466,8 @@ class ActifC(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='actif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='actif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Actif bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2624,8 +2624,8 @@ class PassifC(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='passif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='passif_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Passif bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -2776,8 +2776,8 @@ class ResultatC(models.Model):
         verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='resultat_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='resultat_classique_user_update', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     def __str__(self):
         return _("Résultat bilan classique : ") + str(self.id) + ". " + str(self.acheteur) + " (" + str(self.annee) + ")"
@@ -3167,8 +3167,8 @@ class ActifA(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='actifa_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='actifa_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     def total_actifs_non_courants(self):
@@ -3231,8 +3231,8 @@ class PassifA(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='passifa_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='passifa_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
     def total_fonds_propres(self):
         o = Decimal(0.0)
@@ -3289,8 +3289,8 @@ class ResultatA(models.Model):
                                                           verbose_name='Autres éléments du résultat global')
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='resultata_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='resultata_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     def marge_brut(self):
@@ -3633,8 +3633,8 @@ class ActifS(models.Model):
     ecart_conversion_actif = models.DecimalField(max_digits=100, decimal_places=5, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='actifs_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='actifs_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     def immobilisation_incorporelles(self):
@@ -3738,8 +3738,8 @@ class PassifS(models.Model):
     ecart_conversion_passif = models.DecimalField(max_digits=100, decimal_places=5, null=True, blank=True, verbose_name="Ecarts de conversion - Passif")
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='passifs_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='passifs_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     def total_capitaux_propres_ressources_similaires(self):
@@ -3863,8 +3863,8 @@ class ResultatS(models.Model):
     #Resultat net (XG + XH + RQ +RS)
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='resultats_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='resultats_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
 
     def marge_commerciale(self):
@@ -4323,8 +4323,8 @@ class Scoring(models.Model):
     commentaire = models.TextField(blank=True, max_length=10000000, null=True, verbose_name=_("Commentaire"))
     updated_at = models.DateTimeField(auto_now=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    created_by = models.ForeignKey('CustomUser', on_delete=models.DO_NOTHING, null=True)
-    updated_by = models.ForeignKey('CustomUser', related_name='scoring_user_update', null=True, blank=True,
+    created_by = models.ForeignKey('User', on_delete=models.DO_NOTHING, null=True)
+    updated_by = models.ForeignKey('User', related_name='scoring_user_update', null=True, blank=True,
                                    on_delete=models.DO_NOTHING)
     # history = HistoricalRecords()
 

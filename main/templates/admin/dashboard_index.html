@@ -1,0 +1,207 @@
+<!-- templates/admin/dashboard_index.html -->
+{% extends "admin/index.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <h2>📊 Tableau de bord système</h2>
+    
+    <div class="dashboard-grid">
+        <div class="dashboard-section">
+            <h3>📧 Emailing</h3>
+            <div class="section-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Emails envoyés</span>
+                    <span class="stat-value">{{ mail_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Succès</span>
+                    <span class="stat-value">{{ mail_success_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Pièces jointes</span>
+                    <span class="stat-value">{{ attachment_count }}</span>
+                </div>
+            </div>
+            <a href="{% url 'admin:app_mailinfo_changelist' %}" class="dashboard-link">
+                Gérer les emails →
+            </a>
+        </div>
+        
+        <div class="dashboard-section">
+            <h3>📥 Téléchargements</h3>
+            <div class="section-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Total téléchargements</span>
+                    <span class="stat-value">{{ download_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Aujourd'hui</span>
+                    <span class="stat-value">{{ download_today_count }}</span>
+                </div>
+            </div>
+            <a href="{% url 'admin:app_docdownload_changelist' %}" class="dashboard-link">
+                Voir les téléchargements →
+            </a>
+        </div>
+        
+        <div class="dashboard-section">
+            <h3>📋 Références Pelba</h3>
+            <div class="section-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Locaux</span>
+                    <span class="stat-value">{{ locaux_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Conditions</span>
+                    <span class="stat-value">{{ conditions_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Comportements</span>
+                    <span class="stat-value">{{ comportements_count }}</span>
+                </div>
+            </div>
+            <a href="{% url 'admin:app_listecomportementspaiement_changelist' %}" class="dashboard-link">
+                Gérer les références →
+            </a>
+        </div>
+        
+        <div class="dashboard-section">
+            <h3>📝 Journal d'activité</h3>
+            <div class="section-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Logs aujourd'hui</span>
+                    <span class="stat-value">{{ logs_today_count }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total logs</span>
+                    <span class="stat-value">{{ logs_total_count }}</span>
+                </div>
+            </div>
+            <a href="{% url 'admin:app_activitylog_changelist' %}" class="dashboard-link">
+                Consulter les logs →
+            </a>
+        </div>
+    </div>
+    
+    <div class="quick-actions">
+        <h3>Actions rapides</h3>
+        <div class="action-buttons">
+            <a href="{% url 'admin:app_mailinfo_add' %}" class="button">
+                📧 Nouvel email
+            </a>
+            <a href="{% url 'admin:app_listeimportation_add' %}" class="button">
+                📋 Nouvelle référence
+            </a>
+            <a href="{% url 'admin:app_activitylog_changelist' %}?type_activite=aujourdhui" class="button">
+                📊 Activité du jour
+            </a>
+        </div>
+    </div>
+    
+    {{ block.super }}
+</div>
+
+<style>
+.dashboard {
+    margin-bottom: 30px;
+}
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.dashboard-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.dashboard-section h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+.section-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.stat-item {
+    text-align: center;
+}
+.stat-label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #3498db;
+}
+.dashboard-link {
+    display: inline-block;
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 10px;
+}
+.dashboard-link:hover {
+    text-decoration: underline;
+}
+
+.quick-actions {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+.action-buttons .button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+.action-buttons .button:hover {
+    background: #2980b9;
+}
+</style>
+
+{% block javascript %}
+<script>
+// Script pour rafraîchir les statistiques toutes les 60 secondes
+document.addEventListener('DOMContentLoaded', function() {
+    function refreshStats() {
+        fetch('/admin/dashboard-stats/')
+            .then(response => response.json())
+            .then(data => {
+                // Mettre à jour les statistiques
+                // À adapter selon votre implémentation
+                console.log('Stats rafraîchies', data);
+            })
+            .catch(error => console.error('Erreur:', error));
+    }
+    
+    // Rafraîchir toutes les 60 secondes
+    setInterval(refreshStats, 60000);
+});
+</script>
+{% endblock %}
+{% endblock %}

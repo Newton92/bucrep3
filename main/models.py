@@ -14,6 +14,9 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_model_changes import ChangesMixin
+# from changes import ChangesMixin
+
 
 from safedelete.models import SafeDeleteModel as Model, SOFT_DELETE_CASCADE
 from simple_history.models import HistoricalRecords
@@ -22,9 +25,10 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from django.utils import timezone
+from django.utils.text import slugify
 
 
-from main.utilitaires.constantes import *
+from main.constantes import *
 
 # from main.tasks import log_responsable_acheteur_changes
 
@@ -57,7 +61,7 @@ unique_code = generate_unique_code()
 print(unique_code)
 
 
-# === Models CustomUser === #
+# === Models User === #
 
 ROLES_USERS = [
     ("Root", "Root"),
@@ -73,7 +77,7 @@ from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
 from simple_history.models import HistoricalRecords
 
 
-class Referer(SafeDeleteModel):
+class Referer(Model):
     safedelete_policy = SOFT_DELETE_CASCADE
 
     source = models.ForeignKey(
@@ -103,7 +107,7 @@ class Referer(SafeDeleteModel):
         return f"{self.source} notifies {self.target}"
 
 
-class AdminMails(SafeDeleteModel):
+class AdminMails(Model):
     safedelete_policy = SOFT_DELETE_CASCADE
     
     email = models.EmailField(max_length=255, unique=True)
@@ -119,7 +123,7 @@ class AdminMails(SafeDeleteModel):
 
 
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     # Attributs par défaut de AbstractUser (masqués)
     # username = models.CharField(
     #     _('username'),
@@ -153,6 +157,7 @@ class CustomUser(AbstractUser):
     avatar = models.ImageField(
         _("avatar"),
         upload_to="avatars/",
+        default="avatars/avatar.png",
         null=True,
         blank=True,
         help_text=_("Upload an image for your avatar."),
@@ -270,7 +275,7 @@ class CustomUser(AbstractUser):
     def save(self, *args, **kwargs):
         # Détecter si le mot de passe a changé
         if self.pk:
-            old_user = CustomUser.objects.get(pk=self.pk)
+            old_user = User.objects.get(pk=self.pk)
             if self.password != old_user.password:
                 self.password_changed_at = timezone.now()
         elif self.password:
@@ -289,13 +294,11 @@ class Pays(Model):
     
     nom = models.CharField(
         max_length=50,
-        unique=True,
         verbose_name=_("Nom du pays"),
         help_text=_("Nom complet du pays, par exemple 'France' ou 'Cameroun'."),
     )
     code = models.CharField(
         max_length=10,
-        unique=True,
         verbose_name=_("Code du pays"),
         help_text=_(
             "Code unique du pays, par exemple 'FR' pour la France ou 'CM' pour le Cameroun."
@@ -341,7 +344,6 @@ class Province(Model):
     
     nom = models.CharField(
         max_length=50,
-        unique=True,
         verbose_name=_("Nom de la province"),
         help_text=_(
             "Nom complet de la province, par exemple 'Île-de-France' ou 'Ouest'."
@@ -349,7 +351,6 @@ class Province(Model):
     )
     code = models.CharField(
         max_length=10,
-        unique=True,
         verbose_name=_("Code de la province"),
         help_text=_(
             "Code unique de la province, par exemple 'IDF' pour l'Île-de-France ou 'OUEST' pour l'Ouest."
@@ -357,6 +358,7 @@ class Province(Model):
     )
     pays = models.ForeignKey(
         "Pays",
+        blank=True,
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Pays"),
@@ -385,6 +387,7 @@ class Province(Model):
         verbose_name = _("Province")
         verbose_name_plural = _("Provinces")
         ordering = ["nom"]  # Trie les provinces par nom dans l'ordre alphabétique.
+        unique_together = ("nom", "pays")
 
     def __str__(self):
         return f"{self.nom} ({self.code})"
@@ -396,20 +399,27 @@ class Ville(Model):
     
     nom = models.CharField(
         max_length=50,
-        unique=True,
         verbose_name=_("Nom de la ville"),
         help_text=_("Nom complet de la ville, par exemple 'Paris' ou 'Douala'."),
     )
     code = models.CharField(
         max_length=10,
-        unique=True,
         verbose_name=_("Code de la ville"),
         help_text=_(
             "Code unique de la ville, par exemple 'PAR' pour Paris ou 'DOU' pour Douala."
         ),
     )
+    pays = models.ForeignKey(
+        "Pays",
+        blank=True,
+        null=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Pays"),
+        help_text=_("Pays auquel appartient la ville."),
+    )
     province = models.ForeignKey(
         "Province",
+        blank=True,
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Province"),
@@ -438,6 +448,7 @@ class Ville(Model):
         verbose_name = _("Ville")
         verbose_name_plural = _("Villes")
         ordering = ["nom"]  # Trie les villes par nom dans l'ordre alphabétique.
+        unique_together = ("nom", "province")
 
     def __str__(self):
         return f"{self.nom} ({self.code})"
@@ -1208,8 +1219,7 @@ class ModeleAgeSociete(Model):
     class Meta:
         verbose_name = _("Modèle d'age de société")
         verbose_name_plural = _("Modèles d'age de société")
-             
-        
+                 
         
 class ModeleInterpretationScoringSansBilan(Model):
     
@@ -1585,7 +1595,40 @@ class AlerteLog(Model):
 ##########################################################
 
 
-class Acheteur(Model):
+class UpdatedObjects(models.Model):
+    acheteur = models.OneToOneField(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        related_name="updated_object",
+        verbose_name=_("Acheteur"),
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour"),
+        db_index=True,
+    )
+
+    updated_model = models.CharField(
+        max_length=255,
+        verbose_name=_("Modèle mis à jour"),
+        db_index=True,
+    )
+
+    class Meta:
+        verbose_name = _("Objet mis à jour")
+        verbose_name_plural = _("Objets mis à jour")
+        ordering = ("-updated_at",)
+        indexes = [
+            models.Index(fields=["updated_model"]),
+            models.Index(fields=["updated_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.acheteur} → {self.updated_model}"
+
+
+class Acheteur(ChangesMixin, Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1614,6 +1657,8 @@ class Acheteur(Model):
         verbose_name=_("Forme Juridique"),
         help_text=_("Forme juridique de l'entreprise"),
     )
+    
+    code_nace = models.CharField(_("Code Nace"), max_length=100, choices=LISTE_NOUVEAUX_CODE_NACE, blank=True)
 
     activite_principale = models.CharField(
         _("Activité Principale"),
@@ -1733,6 +1778,25 @@ class Acheteur(Model):
         _("Date de Mise à Jour"),
         auto_now=True,
         help_text=_("Date de la dernière mise à jour de l'enregistrement"),
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_created',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_update',
+        verbose_name=_("Mis à jour par")
     )
     
     history = HistoricalRecords()
@@ -1906,9 +1970,155 @@ class Acheteur(Model):
         timestamp = int(time.time())
         unique_code = f"{current_year}-{timestamp}"
         return unique_code
+    
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        print(self.nom, self.ville.pays)
+        if Acheteur.objects.filter(
+                nom__iexact=self.nom,
+                ville__pays=self.ville.pays
+        ).count() != 0:
+            raise ValidationError("L'acheteur spécifié existe déjà")
 
     def __str__(self):
         return self.nom
+    
+    
+def acheteur_upload_path(instance, filename):
+    """
+    Chemin d’upload des fichiers liés à un acheteur
+    """
+    acheteur_nom = slugify(instance.acheteur.nom) if instance.acheteur else "inconnu"
+    filename = os.path.basename(filename)
+
+    return f"uploads/acheteurs/{acheteur_nom}/{filename}"
+    
+    
+class AcheteurUpload(Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
+    acheteur = models.ForeignKey(
+        Acheteur,
+        on_delete=models.DO_NOTHING,
+        related_name="uploads",
+        verbose_name=_("Acheteur"),
+    )
+
+    upload = models.FileField(
+        upload_to=acheteur_upload_path,
+        verbose_name=_("Veuillez choisir le fichier"),
+        max_length=500,
+    )
+
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de téléversement"),
+        db_index=True,
+    )
+
+    class Meta:
+        verbose_name = _("Fichier Acheteur")
+        verbose_name_plural = _("Fichiers Acheteur")
+        ordering = ("-uploaded_at",)
+
+    def __str__(self):
+        return self.filename()
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Supprime le fichier physique avant la suppression DB
+        """
+        if self.upload:
+            self.upload.delete(save=False)
+        return super().delete(using=using, keep_parents=keep_parents)
+
+    @property
+    def filename(self):
+        """
+        Retourne le nom du fichier sans le chemin
+        """
+        if self.upload and hasattr(self.upload, "name"):
+            return os.path.basename(self.upload.name)
+        return _("Fichier introuvable")
+
+
+
+class RapportTelecharger(Model):
+
+    downloaded_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        related_name="rapports_telecharges",
+        verbose_name=_("Téléchargé par"),
+    )
+
+    download_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de téléchargement"),
+        db_index=True,
+    )
+
+    acheteur = models.ForeignKey(
+        Acheteur,
+        on_delete=models.CASCADE,
+        related_name="rapports_telecharges",
+        verbose_name=_("Acheteur"),
+    )
+
+    type_rapport = models.CharField(
+        max_length=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Type de rapport"),
+        db_index=True,
+    )
+
+    ref_commande_client = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("Référence commande client"),
+        db_index=True,
+    )
+
+    ref_commande_acremac = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("Référence commande ACREMAC"),
+        db_index=True,
+    )
+
+    pays_acheteur = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=_("Pays de l’acheteur"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("Date de création"),
+        db_index=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("Date de mise à jour"),
+    )
+
+    class Meta:
+        verbose_name = _("Rapport téléchargé")
+        verbose_name_plural = _("Rapports téléchargés")
+        ordering = ("-download_at",)
+        indexes = [
+            models.Index(fields=["type_rapport"]),
+            models.Index(fields=["ref_commande_client"]),
+            models.Index(fields=["ref_commande_acremac"]),
+        ]
+
+    def __str__(self):
+        return f"{self.type_rapport or 'Rapport'} – {self.acheteur}"
 
 
 # Prevoir la gestion d'adresse multiple pour un acheteur
@@ -2006,6 +2216,25 @@ class Resume(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Dernière mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resume_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resume_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -2017,9 +2246,6 @@ class Resume(Model):
     def __str__(self):
         return f"Résumé {self.pk} - {self.acheteur}"
 
-
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 # Définition des choix pour la cotation du risque
 RISK_RATING_CHOICES = [
@@ -2101,6 +2327,25 @@ class RiskRating(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='risk_rating_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='risk_rating_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -2275,19 +2520,19 @@ class DonneesEnregistrement(Model):
     # Ancien attribut avec choices
     forme_juridique = models.CharField(
         max_length=4000,
-        choices=FORMEJURIDIQUE_CHOICES,
+        choices=NOUVEAU_LEGAL_FORM,
         default="Veuillez choisir la forme juridique",
         verbose_name=_("Forme Juridique"),
     )
 
     # Nouvel attribut avec ForeignKey
-    forme_juridique_ref = models.ForeignKey(
-        "FormeJuridique",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_("Référence Forme Juridique"),
-    )
+    # forme_juridique_ref = models.ForeignKey(
+    #     "FormeJuridique",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name=_("Référence Forme Juridique"),
+    # )
 
     numero_registre_commerce = models.CharField(
         max_length=50, blank=True, verbose_name=_("Numéro de registre du commerce")
@@ -2305,13 +2550,13 @@ class DonneesEnregistrement(Model):
     )
 
     # Nouvel attribut avec ForeignKey
-    statut_registre_ref = models.ForeignKey(
-        "StatutEntreprise",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_("Référence Statut au Registre"),
-    )
+    # statut_registre_ref = models.ForeignKey(
+    #     "StatutEntreprise",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name=_("Référence Statut au Registre"),
+    # )
 
     commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
     couleur_commentaire = models.ForeignKey("CouleurCommentaire", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur Commentaire"))
@@ -2321,6 +2566,25 @@ class DonneesEnregistrement(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='donnees_enregistrement_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='donnees_enregistrement_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -2367,23 +2631,23 @@ class Tendance(Model):
     )
 
     # Ancien attribut avec choices
-    avis_commercial = models.CharField(
-        max_length=100,
-        choices=LIEN_AVIS_COMMERCIAL_CHOICE,
-        blank=True,
-        verbose_name=_("Avis commercial"),
-    )
+    # avis_commercial = models.CharField(
+    #     max_length=100,
+    #     choices=LIEN_AVIS_COMMERCIAL_CHOICE,
+    #     blank=True,
+    #     verbose_name=_("Avis commercial"),
+    # )
+    avis_commercial = models.ForeignKey("ListeInformationsAvisCommercial", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Avis commercial"))
+
 
     # Nouvel attribut avec ForeignKey
-    avis_commercial_ref = models.ForeignKey(
-        "ModeleAvisCommercial",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_("Référence Avis Commercial"),
-    )
-    # avis_commercial = models.ForeignKey(ListeInformationsAvisCommercial, null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Avis commercial"))
-
+    # avis_commercial_ref = models.ForeignKey(
+    #     "ModeleAvisCommercial",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name=_("Référence Avis Commercial"),
+    # )
     presse_media = models.CharField(
         max_length=100, blank=True, verbose_name=_("Presse et Médias")
     )
@@ -2401,6 +2665,25 @@ class Tendance(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Dernière mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tendance_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tendance_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -2441,15 +2724,15 @@ class ResponsableAcheteur(Model):
     )
 
     poste = models.CharField(
-        _("Poste"), max_length=100, choices=BON_POST_CHOICES_CHOICES, blank=True
+        _("Poste"), max_length=100, choices=LISTE_NOUVELLE_FONCTION, blank=True
     )
-    poste_ref = models.ForeignKey(
-        "PosteEntreprise",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_("Référence Poste"),
-    )
+    # poste_ref = models.ForeignKey(
+    #     "PosteEntreprise",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name=_("Référence Poste"),
+    # )
 
     nationalite = models.CharField(_("Nationalité"), max_length=100, blank=True)
     couleur_commentaire = models.ForeignKey(
@@ -2463,6 +2746,25 @@ class ResponsableAcheteur(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='responsable_acheteur_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='responsable_acheteur_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -2630,7 +2932,7 @@ class AntecedantsJuridique(Model):
     antecedant_redressement = models.CharField(
         _("Antécédent de Redressement"), max_length=100, blank=True
     )
-    autre = models.CharField(_("Autre"), max_length=100, blank=True)
+    Autre = models.CharField(_("Autre"), max_length=100, blank=True)
 
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -2645,6 +2947,25 @@ class AntecedantsJuridique(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='antecedants_juridique_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='antecedants_juridique_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -2746,6 +3067,25 @@ class RiskManagment(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='risk_management_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='risk_management_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -2862,16 +3202,16 @@ class ConseilAdministration(Model):
     fonction_dans_le_conseil = models.CharField(
         _("Fonction dans le Conseil"),
         max_length=100,
-        choices=BON_POST_CHOICES_CHOICES,
+        choices=LISTE_NOUVELLE_FONCTION,
         blank=True,
     )
-    fonction_dans_le_conseil_ref = models.ForeignKey(
-        "PosteEntreprise",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        verbose_name=_("Référence Fonction Conseil"),
-    )
+    # fonction_dans_le_conseil_ref = models.ForeignKey(
+    #     "PosteEntreprise",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.SET_NULL,
+    #     verbose_name=_("Référence Fonction Conseil"),
+    # )
 
     numero_adresse = models.CharField(_("Numéro Adresse"), max_length=200, blank=True)
     rue_adresse = models.CharField(_("Rue Adresse"), max_length=200, blank=True)
@@ -2890,6 +3230,25 @@ class ConseilAdministration(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conseil_administration_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conseil_administration_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -2917,6 +3276,7 @@ class CompositionCapitalSocial(Model):
         "Devise",
         null=True,
         blank=True,
+        default="",
         on_delete=models.DO_NOTHING,
         verbose_name=_("Dévise capital libéré"),
     )
@@ -2955,6 +3315,25 @@ class CompositionCapitalSocial(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='composition_capital_sociale_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='composition_capital_sociale_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3007,6 +3386,25 @@ class CompositionAction(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='composition_action_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='composition_action_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3110,6 +3508,25 @@ class OpinionCreditAcremac(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='opinion_acremac_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='opinion_acremac_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3176,6 +3593,25 @@ class Structure(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='structure_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='structure_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3213,6 +3649,25 @@ class AnalyseSectorielle(Model):
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='analyse_sectorielle_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='analyse_sectorielle_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3359,13 +3814,13 @@ class CompteFinancier(Model):
         default="--------",
         verbose_name=_("Type de bilan"),
     )
-    type_bilan_ref = models.ForeignKey(
-        "ModeleBilan",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence Type de bilan"),
-    )
+    # type_bilan_ref = models.ForeignKey(
+    #     "ModeleBilan",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.DO_NOTHING,
+    #     verbose_name=_("Référence Type de bilan"),
+    # )
 
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -3384,6 +3839,25 @@ class CompteFinancier(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='comptefinancier_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='comptefinancier_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3394,6 +3868,26 @@ class CompteFinancier(Model):
             if self.acheteur
             else _("Compte Financier")
         )
+        
+    def est_rempli(self):
+        champs_significatifs = [
+            self.cabinet,
+            self.requis_pour_deposer,
+            self.credibilite_cabinet,
+            self.source,
+            self.presentation,
+            self.type_compte,
+            self.devise,
+            self.acheteur,
+            self.type_bilan,
+            self.commentaire
+        ]
+        rempli = any(bool(champ) for champ in champs_significatifs)
+
+        couple_n = self.date_compte and self.date_fin
+        couple_n1 = self.date_compte_n_moins_un and self.date_fin_n_moins_un
+        couple_n2 = self.date_compte_n_moins_deux and self.date_fin_n_moins_deux
+        return rempli and (couple_n or couple_n1 or couple_n2)
 
     class Meta:
         verbose_name = _("Compte Financier")
@@ -3425,6 +3919,25 @@ class OperationEtHistorique(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='operation_historique_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='operation_historique_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -3458,13 +3971,13 @@ class ProprieteEtActif(Model):
         verbose_name=_("Acheteur"),
     )
     locaux = models.ManyToManyField("Locaux", related_name=_("Locaux"), blank=True)
-    locaux_ref = models.ForeignKey(
-        "ModeleBail",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
+    # locaux_ref = models.ForeignKey(
+    #     "ModeleBail",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.DO_NOTHING,
+    #     verbose_name=_("Référence sur les locaux"),
+    # )
 
     branche = models.CharField(max_length=255, blank=True, verbose_name=_("Branche"))
 
@@ -3473,6 +3986,25 @@ class ProprieteEtActif(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='propriete_action_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='propriete_action_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -3515,6 +4047,25 @@ class ConditionAchat(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='condition_achat_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='condition_achat_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -3598,13 +4149,13 @@ class ConditionDeVente(Model):
         default="--------",
         verbose_name=_("Recouvrement de dette jugement"),
     )
-    recouvrement_de_dette_jugement_ref = models.ForeignKey(
-        "ModeleComportementJugement",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
+    # recouvrement_de_dette_jugement_ref = models.ForeignKey(
+    #     "ModeleComportementJugement",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.DO_NOTHING,
+    #     verbose_name=_("Référence sur les locaux"),
+    # )
 
     comportement_de_paiement = models.CharField(
         max_length=255,
@@ -3612,19 +4163,38 @@ class ConditionDeVente(Model):
         default="--------",
         verbose_name=_("Comportement de paiement"),
     )
-    comportement_de_paiement_ref = models.ForeignKey(
-        "ModeleComportementPaiement",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence sur les locaux"),
-    )
+    # comportement_de_paiement_ref = models.ForeignKey(
+    #     "ModeleComportementPaiement",
+    #     null=True,
+    #     blank=True,
+    #    on_delete=models.DO_NOTHING,
+    #     verbose_name=_("Référence sur les locaux"),
+    # )
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='condition_vente_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='condition_vente_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -3669,6 +4239,25 @@ class SommaireEtAvis(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sommaire_avis_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sommaire_avis_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3709,6 +4298,25 @@ class Advice(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='advice_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='advice_user_update',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -3782,6 +4390,25 @@ class Geopolitics(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='geopolitique_user_create',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='geopolitique_user_update',
+        verbose_name=_("Mis à jour par")
+    )
 
     history = HistoricalRecords()
 
@@ -3811,6 +4438,86 @@ class Geopolitics(Model):
     class Meta:
         verbose_name = _("Geopolitique")
         verbose_name_plural = _("Géopolitiques")
+        
+
+class Scoring(Model):
+    _safedelete_policy = SOFT_DELETE_CASCADE
+
+    annee = models.ForeignKey(
+        "Annee",
+        on_delete=models.DO_NOTHING,
+        related_name="scorings",
+        verbose_name=_("Année"),
+    )
+
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        related_name="scorings",
+        verbose_name=_("Acheteur"),
+    )
+
+    score = models.CharField(
+        max_length=4,
+        blank=True,
+        null=True,
+        verbose_name=_("Score"),
+        db_index=True,
+    )
+
+    commentaire = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Commentaire"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        blank=True,
+        null=True,
+        verbose_name=_("Date de création"),
+        db_index=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        null=True,
+        verbose_name=_("Date de mise à jour"),
+    )
+
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="scorings_crees",
+        verbose_name=_("Créé par"),
+    )
+
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="scorings_modifies",
+        verbose_name=_("Mis à jour par"),
+    )
+
+    history = HistoricalRecords()
+
+    class Meta:
+        verbose_name = _("Scoring")
+        verbose_name_plural = _("Scorings")
+        ordering = ("-created_at",)
+        unique_together = ("annee", "acheteur")
+        indexes = [
+            models.Index(fields=["annee", "acheteur"]),
+            models.Index(fields=["score"]),
+        ]
+
+    def __str__(self):
+        return f"{self.acheteur} - {self.annee} : {self.score or 'N/A'}"
+
 
 
 class Banquier(Model):
@@ -3859,6 +4566,25 @@ class Banquier(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_create_banquier',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='user_update_banquier',
+        verbose_name=_("Mis à jour par")
     )
 
     history = HistoricalRecords()
@@ -3947,9 +4673,9 @@ class ActifA(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="actifa_user_update",
         null=True,
         blank=True,
@@ -4077,9 +4803,9 @@ class PassifA(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="passifa_user_update",
         null=True,
         blank=True,
@@ -4204,9 +4930,9 @@ class ResultatA(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="resultata_user_update",
         null=True,
         blank=True,
@@ -4694,9 +5420,9 @@ class ActifC(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="actif_classique_user_update",
         null=True,
         blank=True,
@@ -4981,9 +5707,9 @@ class PassifC(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="passif_classique_user_update",
         null=True,
         blank=True,
@@ -5380,9 +6106,9 @@ class ResultatC(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="resultat_classique_user_update",
         null=True,
         blank=True,
@@ -6004,9 +6730,9 @@ class Assets(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="assets_user_update",
         null=True,
         blank=True,
@@ -6314,9 +7040,9 @@ class Liabilities(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="liabilities_user_update",
         null=True,
         blank=True,
@@ -6627,9 +7353,9 @@ class Expenses(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="expenses_user_update",
         null=True,
         blank=True,
@@ -6953,9 +7679,9 @@ class Products(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="product_user_update",
         null=True,
         blank=True,
@@ -7228,9 +7954,9 @@ class OffBalanceSheet(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="offbalance_user_update",
         null=True,
         blank=True,
@@ -7545,9 +8271,9 @@ class ActifS(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="actifs_user_update",
         null=True,
         blank=True,
@@ -7804,9 +8530,9 @@ class PassifS(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="passifs_user_update",
         null=True,
         blank=True,
@@ -8126,9 +8852,9 @@ class ResultatS(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="resultats_user_update",
         null=True,
         blank=True,
@@ -8532,13 +9258,13 @@ class BilanIFRSBase(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="%(class)s_created",
         on_delete=models.SET_NULL,
         null=True,
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="%(class)s_updated",
         null=True,
         blank=True,
@@ -9226,14 +9952,14 @@ class TelephoneAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name="telephones_created",
+        related_name="telephone_user_create",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
-        related_name="telephones_updated",
+        "User",
+        related_name="telephone_user_update",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -9331,13 +10057,13 @@ class AdresseAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
         related_name="adresses_created",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="adresses_updated",
         null=True,
         blank=True,
@@ -9377,14 +10103,14 @@ class PortableAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name="portables_created",
+        related_name="portable_user_create",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
-        related_name="portables_updated",
+        "User",
+        related_name="portable_user_update",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -9534,14 +10260,14 @@ class EmailAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
-        related_name="emails_created",
+        related_name="email_user_create",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
-        related_name="emails_updated",
+        "User",
+        related_name="email_user_update",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -9630,6 +10356,19 @@ class Document(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="documents_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="documents_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     history = HistoricalRecords()
 
@@ -9680,6 +10419,19 @@ class Swot(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="swots_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="swots_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     history = HistoricalRecords()
 
@@ -9721,7 +10473,7 @@ class ProduitService(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9730,7 +10482,7 @@ class ProduitService(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9776,7 +10528,7 @@ class Marque(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9785,7 +10537,7 @@ class Marque(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9882,6 +10634,19 @@ class ProcedureCollective(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="procedures_collectives_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="procedures_collectives_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     history = HistoricalRecords()
 
@@ -9928,7 +10693,7 @@ class RegistreCommerce(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9937,7 +10702,7 @@ class RegistreCommerce(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9990,7 +10755,7 @@ class Cotisation(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -9999,7 +10764,7 @@ class Cotisation(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10027,7 +10792,7 @@ class CodeNaceAcheteur(Model):
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name="code_nace",
+        related_name="codes_nace",
         verbose_name=_("Acheteur"),
         help_text=_("Acheteur associé au code NACE"),
     )
@@ -10046,6 +10811,19 @@ class CodeNaceAcheteur(Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="codes_naces_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="codes_naces_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
     )
 
     history = HistoricalRecords()
@@ -10069,7 +10847,7 @@ class CodeNafAcheteur(Model):
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
-        related_name="code_naf",
+        related_name="codes_naf",
         verbose_name=_("Acheteur"),
         help_text=_("Acheteur associé au code NAF"),
     )
@@ -10089,16 +10867,29 @@ class CodeNafAcheteur(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="codes_nafs_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="codes_nafs_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
 
     history = HistoricalRecords()
+
+    def __str__(self):
+        return f"Code NAF de {self.acheteur.nom}"
 
 
     class Meta:
         verbose_name = _("Code NAF Acheteur")
         verbose_name_plural = _("Codes NAF Acheteur")
-
-    def __str__(self):
-        return f"Code NAF de {self.acheteur.nom}"
 
 
 # Tables supplementaires
@@ -10109,9 +10900,6 @@ class CodeNafAcheteur(Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
-#     nom = models.CharField(max_length=255)
-#     # ... other fields for the buyer
-
 
 class Certification(Model):
     
@@ -10164,7 +10952,7 @@ class Certification(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10173,7 +10961,7 @@ class Certification(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10316,7 +11104,7 @@ class InnovationDeveloppement(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10325,7 +11113,7 @@ class InnovationDeveloppement(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10469,7 +11257,7 @@ class StrategiePlanification(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10478,7 +11266,7 @@ class StrategiePlanification(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10625,7 +11413,7 @@ class ConformiteReglementation(Model):
     
     # Champs d'audit
     created_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10634,7 +11422,7 @@ class ConformiteReglementation(Model):
     )
     
     updated_by = models.ForeignKey(
-        CustomUser,
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10772,9 +11560,9 @@ class Notification(Model):
     ]
 
     user = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
-        related_name="notifications",
+        related_name="custom_notifications",
         verbose_name=_("Utilisateur concerné"),
     )
     # commande = models.ForeignKey('Commande', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Commande associée"))
@@ -10876,14 +11664,14 @@ class Commande(Model):
         verbose_name=_("Type de rapport"),
         help_text=_("Type de rapport demandé par le client."),
     )
-    ref_type_rapport = models.ForeignKey(
-        "ModeleRapport",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence du modèle de rapport"),
-        help_text=_("Modèle de rapport utilisé pour cette commande."),
-    )
+    # ref_type_rapport = models.ForeignKey(
+    #     "ModeleRapport",
+    #     null=True,
+    #     blank=True,
+    #     on_delete=models.DO_NOTHING,
+    #     verbose_name=_("Référence du modèle de rapport"),
+    #     help_text=_("Modèle de rapport utilisé pour cette commande."),
+    # )
 
     credit_demande = models.DecimalField(
         max_digits=100,
@@ -10975,7 +11763,7 @@ class Commande(Model):
         help_text=_("Ville où se trouve l'entreprise ou le client."),
     )
     client = models.ForeignKey(
-        "CustomUser",
+        "User",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -11000,7 +11788,7 @@ class Commande(Model):
     
     # Champ pour tracer le validateur responsable
     validateur = models.ForeignKey(
-        "CustomUser",
+        "User",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -11078,7 +11866,7 @@ class SuiviCommande(Model):
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
     user = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -11116,7 +11904,7 @@ class AffectationAnalyste(Model):
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
     analyste = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         verbose_name=_("Analyste"),
         related_name="analystes",
@@ -11144,7 +11932,7 @@ class Rapport(Model):
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
     analyste = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         verbose_name=_("Analyste"),
         related_name="rapports",
@@ -11173,7 +11961,7 @@ class ValidationRapport(Model):
         "Rapport", on_delete=models.CASCADE, verbose_name=_("Rapport")
     )
     validateur = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         verbose_name=_("Analyste validateur"),
         related_name="validations",
@@ -11226,7 +12014,7 @@ class ReportRequest(Model):
     buyer_fax_number = models.CharField(max_length=255,verbose_name=_("Buyer's Fax Number"), null=True, blank=True)
     comment = models.CharField(max_length=255, null=True, blank=True)
 
-    created_by = models.ForeignKey("CustomUser", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Created By"))
+    created_by = models.ForeignKey("User", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Created By"))
     created_at = models.DateTimeField(editable=False)
     updated_at = models.DateTimeField()
 
@@ -11350,7 +12138,7 @@ class Warning(Model):
     titre = models.CharField(max_length=500,verbose_name=_("Titre"), null=False, blank=False)
     description = models.TextField()
     acheteurs = models.ManyToManyField(Acheteur)
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -11387,7 +12175,7 @@ class WarningAttachment(Model):
 class NotifClient(Model):
     _safedelete_policy = SOFT_DELETE_CASCADE
     acheteurs = models.ManyToManyField(Acheteur)
-    client = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    client = models.ForeignKey("User", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.client.username
@@ -11886,7 +12674,7 @@ class MailAttachment(SafeDeleteModel):
 
 class DocDownload(models.Model):
     acheteur = models.ForeignKey(Acheteur, on_delete=models.CASCADE)
-    client = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    client = models.ForeignKey("User", on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -11916,6 +12704,7 @@ class Locaux(models.Model):
     def __str__(self):
         return self.nom
 
+
 class ListeConditionAchat(models.Model):
     _safedelete_policy = SOFT_DELETE_CASCADE
     nom = models.CharField(_("nom"), max_length=100)
@@ -11932,7 +12721,6 @@ class ListeConditionVente(models.Model):
         return self.nom
     
     
-
 class ListeImportation(models.Model):
     _safedelete_policy = SOFT_DELETE_CASCADE
     libelle = models.TextField(_("nom"), max_length=2000)
@@ -11980,7 +12768,7 @@ class ListeInformationsAvisCommercial(models.Model):
 
 class ActivityLog(models.Model):
     """Journal d'activité pour suivre les actions"""
-    user = models.ForeignKey("CustomUser", on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey("User", on_delete=models.SET_NULL, null=True)
     action_type = models.CharField(max_length=50)
     object_id = models.IntegerField(null=True, blank=True)
     object_type = models.CharField(max_length=50)

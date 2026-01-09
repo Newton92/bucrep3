@@ -14,7 +14,7 @@ from PIL import Image
 import io
 
 from main.serializers import *
-from main.models import CustomUser
+from main.models import User
 
 
 def str_to_bool(value):
@@ -82,46 +82,45 @@ class UserAvatarView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     
     def validate_avatar(self, file):
-        """Valide le fichier avatar"""
-        # Vérifier le type de fichier
         valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
         valid_mimetypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        
+
         ext = os.path.splitext(file.name)[1].lower()
         if ext not in valid_extensions:
-            return False, "Format de fichier non supporté. Utilisez JPG, PNG, GIF ou WEBP."
-        
+            return False, "Format de fichier non supporté."
+
         if file.content_type not in valid_mimetypes:
             return False, "Type MIME non supporté."
-        
-        # Vérifier la taille (max 5MB)
-        max_size = 5 * 1024 * 1024  # 5MB
-        if file.size > max_size:
-            return False, "Le fichier est trop volumineux. Taille maximale: 5MB"
-        
-        # Vérifier les dimensions avec PIL
+
+        if file.size > 5 * 1024 * 1024:
+            return False, "Le fichier dépasse 5MB."
+
         try:
-            img = Image.open(file)
+            file.seek(0)
+            image_bytes = io.BytesIO(file.read())
+            image_bytes.seek(0)
+
+            img = Image.open(image_bytes)
             img.verify()
-            
-            # Réouvrir pour les vérifications
-            img = Image.open(file)
-            
-            # Vérifier la taille minimale (100x100)
+
+            image_bytes.seek(0)
+            img = Image.open(image_bytes)
+
             if img.width < 100 or img.height < 100:
-                return False, "L'image est trop petite. Dimensions minimales: 100x100 pixels."
-            
-            # Vérifier le ratio d'aspect (max 2:1)
-            aspect_ratio = max(img.width, img.height) / min(img.width, img.height)
-            if aspect_ratio > 2:
-                return False, "L'image a un ratio d'aspect trop extrême."
-            
-            img.close()
-            
+                return False, "Image trop petite (min 100x100)."
+
+            ratio = max(img.width, img.height) / min(img.width, img.height)
+            if ratio > 2:
+                return False, "Ratio d'image trop extrême."
+
         except Exception as e:
-            return False, f"Fichier image invalide: {str(e)}"
-        
-        return True, "Fichier valide"
+            return False, f"Image invalide: {e}"
+
+        finally:
+            file.seek(0)
+
+        return True, "OK"
+
     
     def process_avatar(self, file, user_id):
         """Traite et optimise l'image avatar"""
@@ -190,7 +189,7 @@ class UserAvatarView(APIView):
             old_avatar = user.avatar
             
             # Sauvegarder le nouveau fichier
-            avatar_path = default_storage.save(f"avatars/{filename}", ContentFile(processed_file.read()))
+            avatar_path = default_storage.save(f"avatars/{filename}", ContentFile(processed_file.getvalue()))
             
             # Mettre à jour l'utilisateur
             user.avatar = avatar_path

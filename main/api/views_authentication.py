@@ -13,10 +13,17 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
-from main.models import CustomUser, Pays
+from main.models import User, Pays
 from main.serializers import PaysSerializer
 import requests
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 # Create your views here.
 
@@ -72,7 +79,7 @@ def send_email(subject, recipient_list, template_name, context):
 
 # === Vues Authentification === #
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -111,8 +118,8 @@ class CustomRefreshTokenView(APIView):
 
         try:
             # Récupérer l'utilisateur
-            user = CustomUser.objects.get(pk=user_id)
-        except CustomUser.DoesNotExist:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
             return Response(
                 {"detail": _("Utilisateur non trouvé.")},
                 status=status.HTTP_404_NOT_FOUND,
@@ -239,65 +246,105 @@ class CustomLoginViewCopy(APIView):
 
 
 
+# @method_decorator(csrf_exempt, name='dispatch')
 class CustomLoginView(APIView):
+    # authentication_classes = []   # IMPORTANT
+    # permission_classes = []       # IMPORTANT
+
     def post(self, request, *args, **kwargs):
+        logger.info("Tentative de connexion reçue")
+
         username = request.data.get("username")
         password = request.data.get("password")
+
+        if not username or not password:
+            logger.warning("Login échoué : username ou password manquant")
+            return Response(
+                {"detail": _("Nom d'utilisateur ou mot de passe manquant.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        logger.debug(f"Tentative d'authentification pour l'utilisateur: {username}")
+
         user = authenticate(username=username, password=password)
 
         if user:
-            # Authentification et création de la session Django
+            logger.info(f"Authentification réussie pour l'utilisateur: {username}")
+
+            # Création de la session Django
             login(request, user)
+            logger.debug(f"Session Django créée pour user_id={user.id}")
 
-            # Générer les tokens JWT
+            # Génération des tokens JWT
             refresh = RefreshToken.for_user(user)
+            logger.debug(f"JWT généré pour user_id={user.id}")
 
-            # Génération et enregistrement du code de connexion
+            # Génération des codes de sécurité
             code_connexion = generate_token(6)
             reset_token = generate_token()
 
             user.code_connexion = code_connexion
             user.reset_token = reset_token
-            user.save()
-            
-            # Récupérer le pays sélectionné depuis la session (ou utiliser celui de l'utilisateur par défaut)
-            # selected_pays_id = request.session.get('selected_pays_id', user.pays.id)
-            # selected_pays = Pays.objects.get(id=selected_pays_id)
-            
+            user.save(update_fields=["code_connexion", "reset_token"])
+
+            logger.info(
+                f"Codes de sécurité mis à jour pour user_id={user.id}"
+            )
+
+            selected_pays = None
+            selected_pays_id = None
+
             # Détection du pays selon le rôle
             if user.role == "Root":
+                logger.debug("Utilisateur ROOT détecté, géolocalisation via IP")
 
-                # 1) IP du client
                 client_ip = request.META.get("REMOTE_ADDR")
+                logger.debug(f"IP client détectée : {client_ip}")
 
-                # 2) Géolocalisation
                 selected_pays = get_country_from_ip(client_ip)
 
-                # 3) Si la géolocalisation échoue → pays par défaut
                 if not selected_pays:
+                    logger.warning(
+                        "Géolocalisation échouée, utilisation du pays par défaut"
+                    )
                     selected_pays = Pays.objects.filter(is_active=True).first()
-                    # Pays.objects.get(code=settings.DEFAULT_COUNTRY_CODE)
-
 
                 selected_pays_id = selected_pays.id if selected_pays else None
 
             else:
-                # Pour les utilisateurs normaux
+                logger.debug(
+                    f"Utilisateur standard ({user.role}), récupération du pays"
+                )
+
                 selected_pays_id = request.session.get("selected_pays_id")
 
                 if selected_pays_id:
                     selected_pays = Pays.objects.get(id=selected_pays_id)
+                    logger.debug(
+                        f"Pays récupéré depuis la session : {selected_pays_id}"
+                    )
+
                 elif user.pays:
                     selected_pays = user.pays
                     selected_pays_id = user.pays.id
+                    logger.debug(
+                        f"Pays récupéré depuis le profil utilisateur : {selected_pays_id}"
+                    )
+
                 else:
-                    # Pays.objects.get(code=settings.DEFAULT_COUNTRY_CODE)
+                    logger.warning(
+                        "Aucun pays trouvé (session/profil), pays par défaut appliqué"
+                    )
                     selected_pays = Pays.objects.filter(is_active=True).first()
                     selected_pays_id = selected_pays.id if selected_pays else None
 
+            logger.info(
+                f"Pays sélectionné pour user_id={user.id} : {selected_pays_id}"
+            )
 
-            # Réponse avec cookies sécurisés
-            response = Response({"message": "Authentification réussie."})
+            # Cookies sécurisés
+            response = Response({"message": _("Authentification réussie.")})
+
             response.set_cookie(
                 "access_token",
                 str(refresh.access_token),
@@ -313,7 +360,7 @@ class CustomLoginView(APIView):
                 samesite="Strict",
             )
 
-            # Redirection en fonction du rôle de l'utilisateur
+            # Redirection selon le rôle
             role_redirects = {
                 "Root": reverse("dash_root"),
                 "Validateur": reverse("dash_validateur"),
@@ -324,10 +371,17 @@ class CustomLoginView(APIView):
             redirect_url = role_redirects.get(user.role)
 
             if not redirect_url:
+                logger.error(
+                    f"Rôle inconnu pour user_id={user.id} : {user.role}"
+                )
                 return Response(
                     {"detail": _("Rôle utilisateur inconnu.")},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            logger.info(
+                f"Redirection utilisateur user_id={user.id} vers {redirect_url}"
+            )
 
             return Response(
                 {
@@ -336,10 +390,13 @@ class CustomLoginView(APIView):
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                     "selected_pays_id": selected_pays_id,
-                    # "selected_pays_nom": selected_pays.nom,  # Optionnel : ajouter le nom si nécessaire
                 },
                 status=status.HTTP_200_OK,
             )
+
+        logger.warning(
+            f"Échec d'authentification pour username={username}"
+        )
 
         return Response(
             {"detail": _("Vos identifiants sont invalides.")},
@@ -417,7 +474,7 @@ class CustomDoubleFactorAuthViewOld(APIView):
 
         try:
             # Recherche de l'utilisateur correspondant au code_connexion et au token
-            user = CustomUser.objects.get(
+            user = User.objects.get(
                 code_connexion=code_connexion, reset_token=token
             )
 
@@ -473,7 +530,7 @@ class CustomDoubleFactorAuthViewOld(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             return Response(
                 {"detail": _("Code de connexion ou token invalide.")},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -495,7 +552,7 @@ class CustomDoubleFactorAuthView(APIView):
             )
 
         try:
-            user = CustomUser.objects.get(
+            user = User.objects.get(
                 code_connexion=code_connexion, reset_token=token
             )
             
@@ -510,7 +567,7 @@ class CustomDoubleFactorAuthView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             return Response(
                 {"detail": _("Code de connexion ou token invalide.")},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -529,17 +586,18 @@ class SessionInitView(APIView):
             return Response({"detail": "User ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = CustomUser.objects.get(pk=user_id)
+            user = User.objects.get(pk=user_id)
             # L'appel à login() crée la session Django et le cookie
             login(request, user)
             return Response({"message": "Session initialized successfully."})
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 
 
 class CustomForgotPasswordView(APIView):
+
     def post(self, request, *args, **kwargs):
         email = request.data.get("email")
 
@@ -549,36 +607,38 @@ class CustomForgotPasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            user = CustomUser.objects.filter(email=email).first()
-            code_secret = generate_token(6)
-            reset_token = generate_token()
+        user = User.objects.filter(email=email, is_active=True).first()
 
-            user.code_secret = code_secret
-            user.reset_token = reset_token
-            user.save()
-
-            # Envoi du code secret par email
-            send_email(
-                _("Votre code secret"),
-                [user.email],
-                "main/emails/email_with_secret_code.html",
-                {"code_secret": code_secret},
-            )
-
-            reset_url = reverse("reset_auth") + f"?token={reset_token}"
-            return Response(
-                {
-                    "detail": _("Courriel de réinitialisation du mot de passe envoyé."),
-                    "reset_url": reset_url,
-                }
-            )
-
-        except CustomUser.DoesNotExist:
+        if not user:
             return Response(
                 {"detail": _("Aucun utilisateur trouvé avec cet email.")},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+        code_secret = generate_token(6)
+        reset_token = generate_token()
+
+        user.code_secret = code_secret
+        user.reset_token = reset_token
+        user.save(update_fields=["code_secret", "reset_token"])
+
+        # Envoi du code secret par email
+        send_email(
+            _("Votre code secret"),
+            [user.email],
+            "main/emails/email_with_secret_code.html",
+            {"code_secret": code_secret},
+        )
+
+        reset_url = reverse("reset_auth") + f"?token={reset_token}"
+
+        return Response(
+            {
+                "detail": _("Courriel de réinitialisation du mot de passe envoyé."),
+                "reset_url": reset_url,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 
@@ -596,7 +656,7 @@ class CustomResetPasswordView(APIView):
             )
 
         try:
-            user = CustomUser.objects.get(reset_token=token, code_secret=code_secret)
+            user = User.objects.get(reset_token=token, code_secret=code_secret)
             user.set_password(new_password)
             user.reset_token = None
             user.code_secret = None
@@ -612,7 +672,7 @@ class CustomResetPasswordView(APIView):
 
             return Response({"detail": _("Mot de passe réinitialisé avec succès.")})
 
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             # Envoi d'un email au webmaster pour signaler une tentative non autorisée
             send_email(
                 _("Tentative non autorisée de réinitialisation du mot de passe"),

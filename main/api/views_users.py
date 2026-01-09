@@ -14,13 +14,13 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 
-from main.models import CustomUser
+from main.models import User
 from main.serializers import *
 
 # === Vues Acheteur === #
 
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 
@@ -30,7 +30,7 @@ class ListUtilisateurView(APIView):
     
     def get_queryset(self, search_query=''):
         """Retourne le queryset filtré selon la recherche"""
-        queryset = CustomUser.objects.select_related('pays')
+        queryset = User.objects.select_related('pays')
         
         if search_query:
             queryset = queryset.filter(
@@ -69,7 +69,7 @@ class ListUtilisateurView(APIView):
             page_number = paginator.num_pages
         
         # Sérialiser avec le contexte de la requête
-        serializer = NewCustomUserSerializer(user_page, many=True, context={'request': request})
+        serializer = NewUserSerializer(user_page, many=True, context={'request': request})
         
         # Calculer les indices
         start_index = (page_number - 1) * paginator.per_page + 1
@@ -105,7 +105,7 @@ class SearchUtilisateurView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        users_list = CustomUser.objects.filter(
+        users_list = User.objects.filter(
             Q(username__icontains=search_term)
             | Q(pays__nom__icontains=search_term)
             | Q(email__icontains=search_term)
@@ -117,7 +117,7 @@ class SearchUtilisateurView(APIView):
         paginator = Paginator(users_list, 10)  # 10 éléments par page
         page_number = request.query_params.get("page", 1)
         user_page = paginator.get_page(page_number)
-        serializer = NewCustomUserSerializer(user_page, many=True)
+        serializer = NewUserSerializer(user_page, many=True)
 
         return Response(
             {
@@ -134,7 +134,7 @@ class AddUtilisateurViewTwo(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = AddCustomUserSerializer(data=request.data)
+        serializer = AddUserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -266,7 +266,7 @@ class AddUtilisateurView(APIView):
             print(f"Mot de passe généré: {plain_password}")
             
             # 5. Valider les données avec le serializer
-            serializer = AddCustomUserSerializer(data=data)
+            serializer = AddUserSerializer(data=data)
             
             if not serializer.is_valid():
                 print(f"❌ Erreurs de validation: {serializer.errors}")
@@ -288,7 +288,7 @@ class AddUtilisateurView(APIView):
             pays = validated_data.pop('pays') if 'pays' in validated_data else None
             
             # Créer l'instance utilisateur
-            user = CustomUser(
+            user = User(
                 username=validated_data['username'],
                 email=validated_data['email'],
                 first_name=validated_data.get('first_name', ''),
@@ -359,8 +359,8 @@ class EditUtilisateurView(APIView):
     def get_object(self, id):
         """Récupère l'utilisateur ou retourne 404"""
         try:
-            return CustomUser.objects.select_related('pays').get(id=id)
-        except CustomUser.DoesNotExist:
+            return User.objects.select_related('pays').get(id=id)
+        except User.DoesNotExist:
             return None
     
     def get(self, request, id, *args, **kwargs):
@@ -371,7 +371,7 @@ class EditUtilisateurView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         
-        serializer = GetCustomUserSerializer(utilisateur)
+        serializer = GetUserSerializer(utilisateur)
         return Response(serializer.data)
     
     def put(self, request, id, *args, **kwargs):
@@ -402,7 +402,7 @@ class EditUtilisateurView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        serializer = EditCustomUserSerializer(
+        serializer = EditUserSerializer(
             utilisateur, 
             data=data, 
             partial=True,
@@ -414,7 +414,7 @@ class EditUtilisateurView(APIView):
             
             # Retourner les données complètes de l'utilisateur
             updated_user = self.get_object(id)
-            response_serializer = GetCustomUserSerializer(updated_user)
+            response_serializer = GetUserSerializer(updated_user)
             
             return Response({
                 "success": True,
@@ -435,14 +435,14 @@ class EditUtilisateurAvatarView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     def put(self, request, id, *args, **kwargs):
-        utilisateur = CustomUser.objects.filter(id=id).first()
+        utilisateur = User.objects.filter(id=id).first()
         if not utilisateur:
             return Response(
                 {"detail": "Cet utilisateur ne figure pas dans la base."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = EditCustomUserAvatarSerializer(
+        serializer = EditUserAvatarSerializer(
             utilisateur, data=request.data, partial=True
         )
         if serializer.is_valid():
@@ -457,7 +457,7 @@ class DeleteUtilisateurView(APIView):
     def delete(self, request, id=None, *args, **kwargs):
         # Si un ID est fourni dans l'URL
         if id:
-            utilisateur = CustomUser.objects.filter(id=id).first()
+            utilisateur = User.objects.filter(id=id).first()
             if not utilisateur:
                 return Response(
                     {"error": "Utilisateur non trouvé."},
@@ -488,7 +488,7 @@ class DeleteUtilisateurView(APIView):
         # Exclure l'utilisateur courant de la suppression
         ids = [i for i in ids if i != request.user.id]
         
-        utilisateurs = CustomUser.objects.filter(id__in=ids)
+        utilisateurs = User.objects.filter(id__in=ids)
         if not utilisateurs.exists():
             return Response(
                 {"error": "Aucun utilisateur trouvé pour les IDs fournis."},

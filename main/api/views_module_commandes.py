@@ -18,7 +18,7 @@ from main.models import Commande, AffectationAnalyste, Rapport, ValidationRappor
 from main.serializers import CommandeSerializer, RapportSerializer
 from rest_framework.permissions import IsAuthenticated
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 # Utility function for notifications and tracking
 def create_notification_and_suivi(commande, user, action_type, message, status=None):

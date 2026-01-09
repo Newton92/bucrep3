@@ -56,7 +56,7 @@ unique_code = generate_unique_code()
 print(unique_code)
 
 
-# === Models CustomUser === #
+# === Models User === #
 
 ROLES_USERS = [
     ("Root", "Root"),
@@ -118,7 +118,7 @@ class AdminMails(SafeDeleteModel):
 
 
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     # Attributs par défaut de AbstractUser (masqués)
     # username = models.CharField(
     #     _('username'),
@@ -269,7 +269,7 @@ class CustomUser(AbstractUser):
     def save(self, *args, **kwargs):
         # Détecter si le mot de passe a changé
         if self.pk:
-            old_user = CustomUser.objects.get(pk=self.pk)
+            old_user = User.objects.get(pk=self.pk)
             if self.password != old_user.password:
                 self.password_changed_at = timezone.now()
         elif self.password:
@@ -3906,9 +3906,9 @@ class ActifA(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="actifa_user_update",
         null=True,
         blank=True,
@@ -4036,9 +4036,9 @@ class PassifA(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="passifa_user_update",
         null=True,
         blank=True,
@@ -4163,9 +4163,9 @@ class ResultatA(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="resultata_user_update",
         null=True,
         blank=True,
@@ -4653,9 +4653,9 @@ class ActifC(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="actif_classique_user_update",
         null=True,
         blank=True,
@@ -4940,9 +4940,9 @@ class PassifC(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="passif_classique_user_update",
         null=True,
         blank=True,
@@ -5339,9 +5339,9 @@ class ResultatC(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="resultat_classique_user_update",
         null=True,
         blank=True,
@@ -5963,9 +5963,9 @@ class Assets(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="assets_user_update",
         null=True,
         blank=True,
@@ -6273,9 +6273,9 @@ class Liabilities(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="liabilities_user_update",
         null=True,
         blank=True,
@@ -6586,9 +6586,9 @@ class Expenses(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="expenses_user_update",
         null=True,
         blank=True,
@@ -6912,9 +6912,9 @@ class Products(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="product_user_update",
         null=True,
         blank=True,
@@ -7187,9 +7187,9 @@ class OffBalanceSheet(Model):
     updated_at = models.DateTimeField(
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="offbalance_user_update",
         null=True,
         blank=True,
@@ -7504,9 +7504,9 @@ class ActifS(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="actifs_user_update",
         null=True,
         blank=True,
@@ -7763,9 +7763,9 @@ class PassifS(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="passifs_user_update",
         null=True,
         blank=True,
@@ -8085,9 +8085,9 @@ class ResultatS(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
 
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING, null=True)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING, null=True)
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="resultats_user_update",
         null=True,
         blank=True,
@@ -8491,13 +8491,13 @@ class BilanIFRSBase(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="%(class)s_created",
         on_delete=models.SET_NULL,
         null=True,
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="%(class)s_updated",
         null=True,
         blank=True,
@@ -9185,13 +9185,13 @@ class TelephoneAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
         related_name="telephones_created",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="telephones_updated",
         null=True,
         blank=True,
@@ -9290,13 +9290,13 @@ class AdresseAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
         related_name="adresses_created",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="adresses_updated",
         null=True,
         blank=True,
@@ -9336,13 +9336,13 @@ class PortableAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
         related_name="portables_created",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="portables_updated",
         null=True,
         blank=True,
@@ -9493,13 +9493,13 @@ class EmailAcheteur(Model):
         auto_now=True, verbose_name=_("Date de mise à jour")
     )
     created_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.DO_NOTHING,
         null=True,
         related_name="emails_created",
     )
     updated_by = models.ForeignKey(
-        "CustomUser",
+        "User",
         related_name="emails_updated",
         null=True,
         blank=True,
@@ -10550,7 +10550,7 @@ class Notification(Model):
     ]
 
     user = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         related_name="notifications",
         verbose_name=_("Utilisateur concerné"),
@@ -10753,7 +10753,7 @@ class Commande(Model):
         help_text=_("Ville où se trouve l'entreprise ou le client."),
     )
     client = models.ForeignKey(
-        "CustomUser",
+        "User",
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
@@ -10778,7 +10778,7 @@ class Commande(Model):
     
     # Champ pour tracer le validateur responsable
     validateur = models.ForeignKey(
-        "CustomUser",
+        "User",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -10856,7 +10856,7 @@ class SuiviCommande(Model):
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
     user = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -10894,7 +10894,7 @@ class AffectationAnalyste(Model):
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
     analyste = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         verbose_name=_("Analyste"),
         related_name="analystes",
@@ -10922,7 +10922,7 @@ class Rapport(Model):
         "Commande", on_delete=models.CASCADE, verbose_name=_("Commande")
     )
     analyste = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         verbose_name=_("Analyste"),
         related_name="rapports",
@@ -10951,7 +10951,7 @@ class ValidationRapport(Model):
         "Rapport", on_delete=models.CASCADE, verbose_name=_("Rapport")
     )
     validateur = models.ForeignKey(
-        "CustomUser",
+        "User",
         on_delete=models.CASCADE,
         verbose_name=_("Analyste validateur"),
         related_name="validations",
@@ -11004,7 +11004,7 @@ class ReportRequest(Model):
     buyer_fax_number = models.CharField(max_length=255,verbose_name=_("Buyer's Fax Number"), null=True, blank=True)
     comment = models.CharField(max_length=255, null=True, blank=True)
 
-    created_by = models.ForeignKey("CustomUser", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Created By"))
+    created_by = models.ForeignKey("User", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Created By"))
     created_at = models.DateTimeField(editable=False)
     updated_at = models.DateTimeField()
 
@@ -11128,7 +11128,7 @@ class Warning(Model):
     titre = models.CharField(max_length=500,verbose_name=_("Titre"), null=False, blank=False)
     description = models.TextField()
     acheteurs = models.ManyToManyField(Acheteur)
-    created_by = models.ForeignKey("CustomUser", on_delete=models.DO_NOTHING)
+    created_by = models.ForeignKey("User", on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -11165,7 +11165,7 @@ class WarningAttachment(Model):
 class NotifClient(Model):
     _safedelete_policy = SOFT_DELETE_CASCADE
     acheteurs = models.ManyToManyField(Acheteur)
-    client = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    client = models.ForeignKey("User", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.client.username
@@ -11653,7 +11653,7 @@ class MailAttachment(SafeDeleteModel):
 
 class DocDownload(models.Model):
     acheteur = models.ForeignKey(Acheteur, on_delete=models.CASCADE)
-    client = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+    client = models.ForeignKey("User", on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -11747,7 +11747,7 @@ class ListeInformationsAvisCommercial(models.Model):
 
 class ActivityLog(models.Model):
     """Journal d'activité pour suivre les actions"""
-    user = models.ForeignKey("CustomUser", on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey("User", on_delete=models.SET_NULL, null=True)
     action_type = models.CharField(max_length=50)
     object_id = models.IntegerField(null=True, blank=True)
     object_type = models.CharField(max_length=50)

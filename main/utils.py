@@ -233,14 +233,14 @@ from django.utils import timezone
 from faker import Faker
 import random
 from django.db.models import Q
-from .models import Acheteur, CustomUser, Ville, Pays, Devise, ModeleRapport, Commande, Province
+from .models import Acheteur, User, Ville, Pays, Devise, ModeleRapport, Commande, Province
 
 def create_fake_commands(count=15):
     fake = Faker('fr_FR')
 
     # Récupérer les objets de la base de données une seule fois avant la boucle
     acheteurs = list(Acheteur.objects.all())
-    clients = list(CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")))
+    clients = list(User.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")))
     villes = list(Ville.objects.all())
     pays_list = list(Pays.objects.all()) # ✅ Liste des pays récupérée en une seule fois
     devises = list(Devise.objects.all())
@@ -5001,7 +5001,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 # utils/generate_test_data.py
 def generate_test_commandes(nombre=15):
@@ -5013,7 +5013,7 @@ def generate_test_commandes(nombre=15):
     # Récupérer ou créer les données de base
     clients = Client.objects.all()[:5]
     acheteurs = Acheteur.objects.all()[:5] 
-    analysts = CustomUser.objects.filter(role='analyste')[:3]
+    analysts = User.objects.filter(role='analyste')[:3]
     pays = Pays.objects.first() or Pays.objects.create(nom='Gabon')
     ville = Ville.objects.first() or Ville.objects.create(nom='Libreville', pays=pays)
     devise = Devise.objects.first() or Devise.objects.create(code='XAF', nom='Franc CFA', symbole='FCFA')
@@ -5041,7 +5041,7 @@ def generate_test_commandes(nombre=15):
     
     if not analysts:
         analysts = [
-            CustomUser.objects.create_user(
+            User.objects.create_user(
                 username=f"analyste{i}",
                 email=f"analyste{i}@acremac.fr",
                 password="password123",

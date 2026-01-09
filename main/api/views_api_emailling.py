@@ -23,7 +23,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
 # main.models.py
-from main.models import Client, Commande, CustomUser, MailInfo, MailAttachment, SuiviCommande, Notification, Acheteur, Document
+from main.models import Client, Commande, User, MailInfo, MailAttachment, SuiviCommande, Notification, Acheteur, Document
 
 # main.serializers_mailing.py
 from main.serializers_mailing import EmailSendDetailedSerializer, CommandeDetailSerializer, MailInfoSerializer, MailHistorySerializer, DocumentSerializer
@@ -53,7 +53,7 @@ from xhtml2pdf import pisa
 import xml.etree.ElementTree as ET
 
 # Import des modèles
-from main.models import Client, Commande, CustomUser, MailInfo, MailAttachment, SuiviCommande, Notification, Rapport, Document
+from main.models import Client, Commande, User, MailInfo, MailAttachment, SuiviCommande, Notification, Rapport, Document
 
 # Import des serializers
 from main.serializers_mailing import EmailSendSerializer, DocumentSerializer, CommandeDetailSerializer, MailInfoSerializer

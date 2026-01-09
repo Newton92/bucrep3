@@ -13,19 +13,19 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
-from main.models import CustomUser
+from main.models import User
 from main.serializers import *
 
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 
-from main.models import CustomUser  # assurez-vous d'importer correctement votre modèle
+from main.models import User  # assurez-vous d'importer correctement votre modèle
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import login
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 elements = [
     {
@@ -217,8 +217,8 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Ensure CustomUser is correctly imported or defined
-CustomUser = get_user_model()
+# Ensure User is correctly imported or defined
+User = get_user_model()
 
 #@login_required
 def dash_validateur_2(request):
@@ -235,14 +235,14 @@ def dash_validateur_2(request):
         user_id = access_token['user_id']
         logger.debug(f"User ID extracted from token: {user_id}")
 
-        user = CustomUser.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id)
         login(request, user)  # Manually authenticate the user
         logger.debug(f"User {user.username} logged in successfully.")
     except TokenError as e:
         logger.error(f"Token error: {e}")
         # Handle the case where the token is invalid
         return render(request, "main/index.html", {"error": _("Token invalide.")})
-    except CustomUser.DoesNotExist as e:
+    except User.DoesNotExist as e:
         logger.error(f"User not found: {e}")
         # Handle the case where the user does not exist
         return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
@@ -2599,7 +2599,7 @@ def dash_validateur_commande(request):
     acheteur_list = Acheteur.objects.all()
 
     # Récupérer tous les clients
-    client_list = CustomUser.objects.filter(
+    client_list = User.objects.filter(
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 
@@ -2829,7 +2829,7 @@ def dash_validateur_edit_alerte(request, alerte_id):
     # document_list = DocumentAlerte.objects.fliter(alerte__pk=id_alerte)
 
     # Récupérer tous les clients
-    # client_list = CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
+    # client_list = User.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
 
     context = {
         "alerts_active": "active",
@@ -2864,7 +2864,7 @@ def dash_validateur_manage_alerte(request, alerte_id):
     document_list = DocumentAlerte.objects.filter(alerte__pk=id_alerte)
 
     # Récupérer tous les clients
-    client_list = CustomUser.objects.filter(
+    client_list = User.objects.filter(
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 

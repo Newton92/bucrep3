@@ -296,7 +296,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.conf import settings
-from main.models import CredendoCommande, CustomUser
+from main.models import CredendoCommande, User
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -323,10 +323,10 @@ def envoyer_email_aux_analystes_et_validateurs(sender, instance, created, **kwar
         pays_commande = instance.pays  # Récupère le pays de la commande
 
         # Rechercher les utilisateurs Analyste et Validateur avec le même pays
-        utilisateurs_cibles = CustomUser.objects.filter(
+        utilisateurs_cibles = User.objects.filter(
             role__in=['Analyste', 'Validateur'],
             pays__code=pays_commande  # Si "pays" est une ForeignKey
-        ) | CustomUser.objects.filter(
+        ) | User.objects.filter(
             role__in=['Analyste', 'Validateur'],
             pays=pays_commande  # Si "pays" est stocké en texte
         )

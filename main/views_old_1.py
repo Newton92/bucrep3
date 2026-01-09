@@ -13,20 +13,20 @@ from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 
 from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
-from main.models import CustomUser
+from main.models import User
 from main.serializers import *
 
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
 
-from main.models import CustomUser  # assurez-vous d'importer correctement votre modèle
+from main.models import User  # assurez-vous d'importer correctement votre modèle
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import login
 from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from main.utils import populate_database
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 elements = [
     {
@@ -257,7 +257,7 @@ def new_admin():
     role = "Root"
 
     try:
-        user, created = CustomUser.objects.get_or_create(username=username)
+        user, created = User.objects.get_or_create(username=username)
 
         user.email = email
         user.role = role
@@ -308,7 +308,7 @@ def new_admins_from_list(request):
             with transaction.atomic():
                 for email in emails:
                     username = email.split('@')[0]
-                    user, created = CustomUser.objects.get_or_create(
+                    user, created = User.objects.get_or_create(
                         username=username,
                         defaults={
                             'email': email,
@@ -379,8 +379,8 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Ensure CustomUser is correctly imported or defined
-CustomUser = get_user_model()
+# Ensure User is correctly imported or defined
+User = get_user_model()
 
 # @login_required
 def dash_root_2(request):
@@ -397,14 +397,14 @@ def dash_root_2(request):
         user_id = access_token['user_id']
         logger.debug(f"User ID extracted from token: {user_id}")
 
-        user = CustomUser.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id)
         login(request, user)  # Manually authenticate the user
         logger.debug(f"User {user.username} logged in successfully.")
     except TokenError as e:
         logger.error(f"Token error: {e}")
         # Handle the case where the token is invalid
         return render(request, "main/index.html", {"error": _("Token invalide.")})
-    except CustomUser.DoesNotExist as e:
+    except User.DoesNotExist as e:
         logger.error(f"User not found: {e}")
         # Handle the case where the user does not exist
         return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
@@ -454,7 +454,7 @@ def dash_root(request):
         # refresh = RefreshToken.for_user(user)
         
         # 2. Authentifier l'utilisateur à partir du token
-        # user = CustomUser.objects.get(reset_token=token)
+        # user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         # login(request, user) # Permet de créer la session Django standard
@@ -474,7 +474,7 @@ def dash_root(request):
         }
         return render(request, "main/root/dash_root.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         # return redirect('index')
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -488,7 +488,7 @@ def dash_root_user(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -508,7 +508,7 @@ def dash_root_user(request):
         }
         return render(request, "main/root/utilisateur/dash_root_user.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         # return redirect('index')
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -522,7 +522,7 @@ def dash_root_pays(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -539,7 +539,7 @@ def dash_root_pays(request):
         }
         return render(request, "main/root/pays/dash_root_pays.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         # return redirect('index')
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -553,7 +553,7 @@ def dash_root_province(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -573,7 +573,7 @@ def dash_root_province(request):
         }
         return render(request, "main/root/province/dash_root_province.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         # return redirect('index')
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -587,7 +587,7 @@ def dash_root_ville(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -611,7 +611,7 @@ def dash_root_ville(request):
         }
         return render(request, "main/root/ville/dash_root_ville.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         # return redirect('index')
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -625,7 +625,7 @@ def dash_root_devise(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -650,7 +650,7 @@ def dash_root_devise(request):
         }
         return render(request, "main/root/devise/dash_root_devise.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         # return redirect('index')
         return render(request, "main/index.html", {"error": _("Token manquant.")})
@@ -664,7 +664,7 @@ def dash_root_annee(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -689,7 +689,7 @@ def dash_root_annee(request):
         }
         return render(request, "main/root/annee/dash_root_annee.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -703,7 +703,7 @@ def dash_root_coloration(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -720,7 +720,7 @@ def dash_root_coloration(request):
         }
         return render(request, "main/root/coloration/dash_root_coloration.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -734,7 +734,7 @@ def dash_root_category_nace(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -751,7 +751,7 @@ def dash_root_category_nace(request):
         }
         return render(request, "main/root/nace/dash_root_category_nace.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -765,7 +765,7 @@ def dash_root_category_naf(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -782,7 +782,7 @@ def dash_root_category_naf(request):
         }
         return render(request, "main/root/naf/dash_root_category_naf.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -796,7 +796,7 @@ def dash_root_code_nace(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -817,7 +817,7 @@ def dash_root_code_nace(request):
         }
         return render(request, "main/root/nace/dash_root_code_nace.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -831,7 +831,7 @@ def dash_root_code_naf(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -852,7 +852,7 @@ def dash_root_code_naf(request):
         }
         return render(request, "main/root/naf/dash_root_code_naf.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -866,7 +866,7 @@ def dash_root_forme_juridique(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -885,7 +885,7 @@ def dash_root_forme_juridique(request):
             request, "main/root/juridique/dash_root_forme_juridique.html", context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -899,7 +899,7 @@ def dash_root_domaine(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -916,7 +916,7 @@ def dash_root_domaine(request):
         }
         return render(request, "main/root/domaine/dash_root_domaine.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -930,7 +930,7 @@ def dash_root_modele_bail(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -947,7 +947,7 @@ def dash_root_modele_bail(request):
         }
         return render(request, "main/root/modele/dash_root_modele_bail.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -961,7 +961,7 @@ def dash_root_modele_bilan(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -978,7 +978,7 @@ def dash_root_modele_bilan(request):
         }
         return render(request, "main/root/modele/dash_root_modele_bilan.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -992,7 +992,7 @@ def dash_root_modele_alarme(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1009,7 +1009,7 @@ def dash_root_modele_alarme(request):
         }
         return render(request, "main/root/modele/dash_root_modele_alarme.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1023,7 +1023,7 @@ def dash_root_modele_rapport(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1040,7 +1040,7 @@ def dash_root_modele_rapport(request):
         }
         return render(request, "main/root/modele/dash_root_modele_rapport.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1054,7 +1054,7 @@ def dash_root_modele_avis_commercial(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1073,7 +1073,7 @@ def dash_root_modele_avis_commercial(request):
             request, "main/root/modele/dash_root_modele_avis_commercial.html", context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1087,7 +1087,7 @@ def dash_root_modele_relation_entreprise(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1108,7 +1108,7 @@ def dash_root_modele_relation_entreprise(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1122,7 +1122,7 @@ def dash_root_modele_notation(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1141,7 +1141,7 @@ def dash_root_modele_notation(request):
             request, "main/root/modele/dash_root_modele_notation.html", context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1155,7 +1155,7 @@ def dash_root_modele_comportement_paiement(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1176,7 +1176,7 @@ def dash_root_modele_comportement_paiement(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1190,7 +1190,7 @@ def dash_root_modele_comportement_jugement(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1211,7 +1211,7 @@ def dash_root_modele_comportement_jugement(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1225,7 +1225,7 @@ def dash_root_modele_information_notation_entreprise(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1246,7 +1246,7 @@ def dash_root_modele_information_notation_entreprise(request):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1260,7 +1260,7 @@ def dash_root_poste(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1281,7 +1281,7 @@ def dash_root_poste(request):
         }
         return render(request, "main/root/poste/dash_root_poste.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1295,7 +1295,7 @@ def dash_root_category_entreprise(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1316,7 +1316,7 @@ def dash_root_category_entreprise(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1330,7 +1330,7 @@ def dash_root_structure_entreprise(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1351,7 +1351,7 @@ def dash_root_structure_entreprise(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1365,7 +1365,7 @@ def dash_root_statut_entreprise(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1386,7 +1386,7 @@ def dash_root_statut_entreprise(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1400,7 +1400,7 @@ def dash_root_acheteur(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1420,7 +1420,7 @@ def dash_root_acheteur(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1434,7 +1434,7 @@ def dash_root_add_acheteur(request):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1470,7 +1470,7 @@ def dash_root_add_acheteur(request):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1483,7 +1483,7 @@ def dash_root_edit_acheteur(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1520,7 +1520,7 @@ def dash_root_edit_acheteur(request, acheteur_id):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1534,7 +1534,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1571,7 +1571,7 @@ def dash_root_manage_acheteur(request, acheteur_id):
             context
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1587,7 +1587,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1616,7 +1616,7 @@ def dash_root_manage_acheteur_resume(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1631,7 +1631,7 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1652,7 +1652,7 @@ def dash_root_manage_acheteur_risk_rating(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1668,7 +1668,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1695,7 +1695,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1711,7 +1711,7 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1736,7 +1736,7 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1752,7 +1752,7 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1779,7 +1779,7 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1795,7 +1795,7 @@ def dash_root_manage_acheteur_antecedent(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1820,7 +1820,7 @@ def dash_root_manage_acheteur_antecedent(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1836,7 +1836,7 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
     
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user)  # Crée la session Django standard
@@ -1861,7 +1861,7 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -1877,7 +1877,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     
     try:
         # Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # Mettre à jour la session Django
         login(request, user)
@@ -1904,7 +1904,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
 
@@ -1919,7 +1919,7 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
     
     try:
         # Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # Mettre à jour la session Django
         login(request, user)
@@ -1946,7 +1946,7 @@ def dash_root_manage_acheteur_composition_capital(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
     
@@ -1962,7 +1962,7 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
     
     try:
         # Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # Mettre à jour la session Django
         login(request, user)
@@ -1987,7 +1987,7 @@ def dash_root_manage_acheteur_actionnaire(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
     
@@ -2003,7 +2003,7 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
     
     try:
         # Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # Mettre à jour la session Django
         login(request, user)
@@ -2028,7 +2028,7 @@ def dash_root_manage_acheteur_opinion_acremac(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
     
@@ -2043,7 +2043,7 @@ def dash_root_manage_acheteur_filiale(request, acheteur_id):
     
     try:
         # Authentifier l'utilisateur via le token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # Mettre à jour la session Django
         login(request, user)
@@ -2073,7 +2073,7 @@ def dash_root_manage_acheteur_filiale(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
     
@@ -2088,7 +2088,7 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
 
     try:
         # Authentifier l'utilisateur via le token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # Mettre à jour la session Django
         login(request, user)
@@ -2118,7 +2118,7 @@ def dash_root_manage_acheteur_analyse_sectorielle(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
     
@@ -2134,7 +2134,7 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2164,7 +2164,7 @@ def dash_root_manage_acheteur_compte_financier(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -2183,7 +2183,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2211,7 +2211,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2227,7 +2227,7 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2255,7 +2255,7 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2271,7 +2271,7 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2295,7 +2295,7 @@ def dash_root_manage_acheteur_condition_achat(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2348,7 +2348,7 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2376,7 +2376,7 @@ def dash_root_manage_acheteur_sommaire_avis(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2394,7 +2394,7 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2418,7 +2418,7 @@ def dash_root_manage_acheteur_advice(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2434,7 +2434,7 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2458,7 +2458,7 @@ def dash_root_manage_acheteur_geopolitic(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2473,7 +2473,7 @@ def dash_root_manage_acheteur_banking(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2505,7 +2505,7 @@ def dash_root_manage_acheteur_banking(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2520,7 +2520,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2548,7 +2548,7 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2563,7 +2563,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2591,7 +2591,7 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2606,7 +2606,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2634,7 +2634,7 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2649,7 +2649,7 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2677,7 +2677,7 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2692,7 +2692,7 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2720,7 +2720,7 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2735,7 +2735,7 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2763,7 +2763,7 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2778,7 +2778,7 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2806,7 +2806,7 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2821,7 +2821,7 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2849,7 +2849,7 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2864,7 +2864,7 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2892,7 +2892,7 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2907,7 +2907,7 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2935,7 +2935,7 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2950,7 +2950,7 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -2978,7 +2978,7 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -2993,7 +2993,7 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3021,7 +3021,7 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3036,7 +3036,7 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3064,7 +3064,7 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3079,7 +3079,7 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3107,7 +3107,7 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3122,7 +3122,7 @@ def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3146,7 +3146,7 @@ def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3161,7 +3161,7 @@ def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3185,7 +3185,7 @@ def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3200,7 +3200,7 @@ def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3238,7 +3238,7 @@ def dash_root_manage_acheteur_actif_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3254,7 +3254,7 @@ def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3292,7 +3292,7 @@ def dash_root_manage_acheteur_passif_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3307,7 +3307,7 @@ def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3345,7 +3345,7 @@ def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3361,7 +3361,7 @@ def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3405,7 +3405,7 @@ def dash_root_manage_acheteur_add_actif_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3421,7 +3421,7 @@ def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3473,7 +3473,7 @@ def dash_root_manage_acheteur_add_passif_irfs(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
@@ -3488,7 +3488,7 @@ def dash_root_manage_acheteur_report_web(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3520,7 +3520,7 @@ def dash_root_manage_acheteur_report_web(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3535,7 +3535,7 @@ def dash_root_commande(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3553,7 +3553,7 @@ def dash_root_commande(request):
         acheteur_list = Acheteur.objects.all()
 
         # Récupérer tous les clients
-        client_list = CustomUser.objects.filter(
+        client_list = User.objects.filter(
             Q(role__icontains="Client") | Q(role__icontains="client")
         ).order_by("id")
 
@@ -3585,7 +3585,7 @@ def dash_root_commande(request):
         }
         return render(request, "main/root/orders/dash_root_commande.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3600,7 +3600,7 @@ def dash_root_manage_commande(request, commande_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3628,7 +3628,7 @@ def dash_root_manage_commande(request, commande_id):
         }
         return render(request, "main/root/orders/dash_root_manage_commande.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3644,7 +3644,7 @@ def dash_root_alerte(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3668,7 +3668,7 @@ def dash_root_alerte(request):
         }
         return render(request, "main/root/warning/dash_root_alerte.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3684,7 +3684,7 @@ def dash_root_add_alerte(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3714,7 +3714,7 @@ def dash_root_add_alerte(request):
         }
         return render(request, "main/root/warning/dash_root_add_alerte.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3729,7 +3729,7 @@ def dash_root_edit_new_alerte(request, reference):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3762,7 +3762,7 @@ def dash_root_edit_new_alerte(request, reference):
         }
         return render(request, "main/root/warning/dash_root_edit_new_alerte.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3777,7 +3777,7 @@ def dash_root_document_alerte(request, reference):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3812,7 +3812,7 @@ def dash_root_document_alerte(request, reference):
             request, "main/root/warning/dash_root_add_document_alerte.html", context
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3827,7 +3827,7 @@ def dash_root_client_alerte(request, reference):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3864,7 +3864,7 @@ def dash_root_client_alerte(request, reference):
         }
         return render(request, "main/root/warning/dash_root_client_alerte.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3879,7 +3879,7 @@ def dash_root_edit_alerte(request, alerte_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3894,7 +3894,7 @@ def dash_root_edit_alerte(request, alerte_id):
         document_list = DocumentAlerte.objects.filter(alerte__pk=id_alerte)
 
         # Récupérer tous les clients
-        client_list = CustomUser.objects.filter(
+        client_list = User.objects.filter(
             Q(role__icontains="Client") | Q(role__icontains="client")
         ).order_by('id')
 
@@ -3917,7 +3917,7 @@ def dash_root_edit_alerte(request, alerte_id):
         }
         return render(request, "main/root/warning/dash_root_edit_alerte.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3932,7 +3932,7 @@ def dash_root_manage_alerte(request, alerte_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -3950,7 +3950,7 @@ def dash_root_manage_alerte(request, alerte_id):
         document_list = DocumentAlerte.objects.filter(alerte__pk=id_alerte)
 
         # Récupérer tous les clients
-        client_list = CustomUser.objects.filter(
+        client_list = User.objects.filter(
             Q(role__icontains="Client") | Q(role__icontains="client")
         ).order_by("id")
 
@@ -3974,7 +3974,7 @@ def dash_root_manage_alerte(request, alerte_id):
         }
         return render(request, "main/root/warning/dash_root_manage_alerte.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -3989,7 +3989,7 @@ def dash_root_client(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4013,7 +4013,7 @@ def dash_root_client(request):
         }
         return render(request, "main/root/monitoring/dash_root_client.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4028,7 +4028,7 @@ def dash_root_carnet(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4052,7 +4052,7 @@ def dash_root_carnet(request):
         }
         return render(request, "main/root/monitoring/dash_root_carnet.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4066,7 +4066,7 @@ def dash_root_portefeuille(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4098,7 +4098,7 @@ def dash_root_portefeuille(request):
         }
         return render(request, "main/root/monitoring/dash_root_portefeuille.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4112,7 +4112,7 @@ def dash_root_add_portefeuille(request, portefeuille_id=None):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4168,7 +4168,7 @@ def dash_root_add_portefeuille(request, portefeuille_id=None):
         }
         return render(request, "main/root/monitoring/dash_root_add_portefeuille.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4184,7 +4184,7 @@ def dash_root_edit_portefeuille(request, portefeuille_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4249,7 +4249,7 @@ def dash_root_edit_portefeuille(request, portefeuille_id):
         }
         return render(request, "main/root/monitoring/dash_root_edit_portefeuille.html", context)
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4264,7 +4264,7 @@ def dash_root_simulateur_scoring_sb(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4298,7 +4298,7 @@ def dash_root_simulateur_scoring_sb(request):
             request, "main/root/simulateur/dash_root_simulateur_scoring_sb.html", context
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4312,7 +4312,7 @@ def dash_root_element_surveillance(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
 
         # 3. Mettre à jour la session
         login(request, user)  # Permet de créer la session Django standard
@@ -4359,7 +4359,7 @@ def dash_root_element_surveillance(request):
             request, "main/root/surveillance/dash_root_element_surveillance.html", context
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
@@ -4370,7 +4370,7 @@ def dash_root_element_surveillance(request):
 from django.shortcuts import render
 from django.contrib.auth import login
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, AlerteLog, Portefeuille, Acheteur, ElementSurveillance
+from .models import User, AlerteLog, Portefeuille, Acheteur, ElementSurveillance
 from django.utils.translation import gettext as _
 
 def dash_root_alerte_log(request):
@@ -4380,7 +4380,7 @@ def dash_root_alerte_log(request):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4406,7 +4406,7 @@ def dash_root_alerte_log(request):
         }
         return render(request, "main/root/monitoring/dash_root_alerte_log.html", context)
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4416,7 +4416,7 @@ def dash_root_alerte_log(request):
 from django.shortcuts import render
 from django.contrib.auth import login
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, Certification
+from .models import User, Certification
 from django.utils.translation import gettext as _
 
 def dash_root_certification_acheteur(request, acheteur_id):
@@ -4426,7 +4426,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4452,7 +4452,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4462,7 +4462,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
 from django.shortcuts import render
 from django.contrib.auth import login
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, InnovationDeveloppement
+from .models import User, InnovationDeveloppement
 from django.utils.translation import gettext as _
 
 def dash_root_innovation_acheteur(request, acheteur_id):
@@ -4472,7 +4472,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4498,7 +4498,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4512,7 +4512,7 @@ def dash_root_strategie_acheteur(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4538,7 +4538,7 @@ def dash_root_strategie_acheteur(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4552,7 +4552,7 @@ def dash_root_conformite_acheteur(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4578,7 +4578,7 @@ def dash_root_conformite_acheteur(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4588,7 +4588,7 @@ def dash_root_conformite_acheteur(request, acheteur_id):
 from django.shortcuts import render
 from django.contrib.auth import login
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser, Acheteur, Annee, Assets, Liabilities, Expenses, Products, OffBalanceSheet
+from .models import User, Acheteur, Annee, Assets, Liabilities, Expenses, Products, OffBalanceSheet
 from django.utils.translation import gettext as _
 
 def dash_root_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
@@ -4598,7 +4598,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4654,7 +4654,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire_0(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
     except Acheteur.DoesNotExist:
@@ -4675,7 +4675,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4759,7 +4759,7 @@ def dash_root_manage_acheteur_bilan_actif_bancaire(request, acheteur_id):
             context,
         )
 
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4782,7 +4782,7 @@ def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4858,7 +4858,7 @@ def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
             context,
         )
     
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4872,7 +4872,7 @@ def dash_root_manage_acheteur_portable(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4904,7 +4904,7 @@ def dash_root_manage_acheteur_portable(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4918,7 +4918,7 @@ def dash_root_manage_acheteur_telephone(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4950,7 +4950,7 @@ def dash_root_manage_acheteur_telephone(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
@@ -4963,7 +4963,7 @@ def dash_root_manage_acheteur_swot(request, acheteur_id):
 
     try:
         # 2. Authentifier l'utilisateur à partir du token
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         
         # 3. Mettre à jour la session
         login(request, user) # Permet de créer la session Django standard
@@ -4995,7 +4995,7 @@ def dash_root_manage_acheteur_swot(request, acheteur_id):
             context,
         )
         
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         # Si le token est invalide, renvoyer à la page d'accueil avec un message d'erreur
         return render(request, "main/index.html", {"error": _("Token invalide.")})    
     
@@ -5010,7 +5010,7 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5030,7 +5030,7 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
             "main/root/acheteur/marque/dash_root_marque_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})  
     
     
@@ -5043,7 +5043,7 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5063,7 +5063,7 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
             "main/root/acheteur/produit_service/dash_root_produit_service_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})    
     
 
@@ -5075,7 +5075,7 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5095,7 +5095,7 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
             "main/root/acheteur/cotisation/dash_root_cotisation_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})    
     
     
@@ -5110,7 +5110,7 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
 
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5128,7 +5128,7 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
             "main/root/acheteur/swot/dash_root_swot_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})    
     
     
@@ -5142,7 +5142,7 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5160,7 +5160,7 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
             "main/root/acheteur/registre_commerce/dash_root_registre_commerce_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")}) 
     
     
@@ -5175,7 +5175,7 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5193,7 +5193,7 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
             "main/root/acheteur/procedure_collective/dash_root_procedure_collective_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})    
     
     
@@ -5207,7 +5207,7 @@ def dash_root_manage_document_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5225,7 +5225,7 @@ def dash_root_manage_document_acheteur(request, acheteur_id):
             "main/root/acheteur/document/dash_root_document_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
 
@@ -5240,7 +5240,7 @@ def dash_root_manage_adresse_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5258,7 +5258,7 @@ def dash_root_manage_adresse_acheteur(request, acheteur_id):
             "main/root/acheteur/adresse/dash_root_adresse_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})    
     
     
@@ -5274,7 +5274,7 @@ def dash_root_manage_portable_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5292,7 +5292,7 @@ def dash_root_manage_portable_acheteur(request, acheteur_id):
             "main/root/acheteur/portable/dash_root_portable_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
     
     
@@ -5308,7 +5308,7 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5326,7 +5326,7 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
             "main/root/acheteur/telephone/dash_root_telephone_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")}) 
     
     
@@ -5342,7 +5342,7 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5360,7 +5360,7 @@ def dash_root_manage_email_acheteur(request, acheteur_id):
             "main/root/acheteur/email/dash_root_email_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
 
@@ -5377,7 +5377,7 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5395,7 +5395,7 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
             "main/root/acheteur/code_nace/dash_root_code_nace_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})  
     
     
@@ -5410,7 +5410,7 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
         return render(request, "main/index.html", {"error": _("Token manquant.")})
     
     try:
-        user = CustomUser.objects.get(reset_token=token)
+        user = User.objects.get(reset_token=token)
         login(request, user)
         
         refresh = RefreshToken.for_user(user)
@@ -5428,7 +5428,7 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
             "main/root/acheteur/code_naf/dash_root_code_naf_acheteur.html",
             context,
         )
-    except CustomUser.DoesNotExist:
+    except User.DoesNotExist:
         return render(request, "main/index.html", {"error": _("Token invalide.")})
 
 
@@ -5481,8 +5481,8 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Ensure CustomUser is correctly imported or defined
-CustomUser = get_user_model()
+# Ensure User is correctly imported or defined
+User = get_user_model()
 
 ## @login_required
 def dash_validateur_2(request):
@@ -5499,14 +5499,14 @@ def dash_validateur_2(request):
         user_id = access_token['user_id']
         logger.debug(f"User ID extracted from token: {user_id}")
 
-        user = CustomUser.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id)
         login(request, user)  # Manually authenticate the user
         logger.debug(f"User {user.username} logged in successfully.")
     except TokenError as e:
         logger.error(f"Token error: {e}")
         # Handle the case where the token is invalid
         return render(request, "main/index.html", {"error": _("Token invalide.")})
-    except CustomUser.DoesNotExist as e:
+    except User.DoesNotExist as e:
         logger.error(f"User not found: {e}")
         # Handle the case where the user does not exist
         return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
@@ -7863,7 +7863,7 @@ def dash_validateur_commande(request):
     acheteur_list = Acheteur.objects.all()
 
     # Récupérer tous les clients
-    client_list = CustomUser.objects.filter(
+    client_list = User.objects.filter(
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 
@@ -8093,7 +8093,7 @@ def dash_validateur_edit_alerte(request, alerte_id):
     # document_list = DocumentAlerte.objects.fliter(alerte__pk=id_alerte)
 
     # Récupérer tous les clients
-    # client_list = CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
+    # client_list = User.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
 
     context = {
         "alerts_active": "active",
@@ -8128,7 +8128,7 @@ def dash_validateur_manage_alerte(request, alerte_id):
     document_list = DocumentAlerte.objects.filter(alerte__pk=id_alerte)
 
     # Récupérer tous les clients
-    client_list = CustomUser.objects.filter(
+    client_list = User.objects.filter(
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 
@@ -8840,8 +8840,8 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Ensure CustomUser is correctly imported or defined
-CustomUser = get_user_model()
+# Ensure User is correctly imported or defined
+User = get_user_model()
 
 ## @login_required
 def dash_analyste_2(request):
@@ -8858,14 +8858,14 @@ def dash_analyste_2(request):
         user_id = access_token['user_id']
         logger.debug(f"User ID extracted from token: {user_id}")
 
-        user = CustomUser.objects.get(pk=user_id)
+        user = User.objects.get(pk=user_id)
         login(request, user)  # Manually authenticate the user
         logger.debug(f"User {user.username} logged in successfully.")
     except TokenError as e:
         logger.error(f"Token error: {e}")
         # Handle the case where the token is invalid
         return render(request, "main/index.html", {"error": _("Token invalide.")})
-    except CustomUser.DoesNotExist as e:
+    except User.DoesNotExist as e:
         logger.error(f"User not found: {e}")
         # Handle the case where the user does not exist
         return render(request, "main/index.html", {"error": _("Utilisateur non trouvé.")})
@@ -11222,7 +11222,7 @@ def dash_analyste_commande(request):
     acheteur_list = Acheteur.objects.all()
 
     # Récupérer tous les clients
-    client_list = CustomUser.objects.filter(
+    client_list = User.objects.filter(
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 
@@ -11452,7 +11452,7 @@ def dash_analyste_edit_alerte(request, alerte_id):
     # document_list = DocumentAlerte.objects.fliter(alerte__pk=id_alerte)
 
     # Récupérer tous les clients
-    # client_list = CustomUser.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
+    # client_list = User.objects.filter(Q(role__icontains="Client") | Q(role__icontains="client")).order_by('id')
 
     context = {
         "alerts_active": "active",
@@ -11487,7 +11487,7 @@ def dash_analyste_manage_alerte(request, alerte_id):
     document_list = DocumentAlerte.objects.filter(alerte__pk=id_alerte)
 
     # Récupérer tous les clients
-    client_list = CustomUser.objects.filter(
+    client_list = User.objects.filter(
         Q(role__icontains="Client") | Q(role__icontains="client")
     ).order_by("id")
 

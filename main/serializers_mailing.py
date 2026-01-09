@@ -1,7 +1,7 @@
 # main/serializers_mailing.py
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from .models import Client, Commande, CustomUser, MailInfo, MailAttachment
+from .models import Client, Commande, User, MailInfo, MailAttachment
 from rest_framework import serializers
 from main.models import Client, Commande, Document, MailInfo, MailAttachment
 from django.core.validators import validate_email
@@ -131,9 +131,9 @@ class CommandeDetailSerializer(serializers.ModelSerializer):
 
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomUser
+        model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
 
 class MailAttachmentSerializer(serializers.ModelSerializer):

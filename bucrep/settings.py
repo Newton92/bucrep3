@@ -58,7 +58,11 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # User autorisé
-AUTH_USER_MODEL = "main.CustomUser"
+AUTH_USER_MODEL = "main.User"
+
+# GEOCODE
+GEONAMES_USERNAME = "yannick1987"
+
 
 # Email Configuration using SMTP for sending emails
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -131,6 +135,13 @@ INSTALLED_APPS = [
     "django_extensions",
     "safedelete",
     "simple_history",
+    "django_model_changes",
+    "formtools",
+    "django_filters",
+    "qr_code",
+    "import_export",
+    "notifications",
+    "knox",
     
     # Django librairies
     "django.contrib.admin",

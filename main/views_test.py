@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import CustomUser
+from .models import User
 from .serializers import *
 
 # Create your views here.
@@ -46,7 +46,7 @@ def send_email(subject, recipient_list, template_name, context):
 
 # === Vues Authentification === #
 
-CustomUser = get_user_model()
+User = get_user_model()
 
 
 class CustomRefreshTokenView(APIView):
@@ -61,8 +61,8 @@ class CustomRefreshTokenView(APIView):
 
         try:
             # Récupérer l'utilisateur
-            user = CustomUser.objects.get(pk=user_id)
-        except CustomUser.DoesNotExist:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
             return Response(
                 {"detail": _("Utilisateur non trouvé.")},
                 status=status.HTTP_404_NOT_FOUND,
@@ -156,7 +156,7 @@ class CustomDoubleFactorAuthView(APIView):
 
         try:
             # Recherche de l'utilisateur correspondant au code_connexion et au token
-            user = CustomUser.objects.get(
+            user = User.objects.get(
                 code_connexion=code_connexion, reset_token=token
             )
 
@@ -183,7 +183,7 @@ class CustomDoubleFactorAuthView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             return Response(
                 {"detail": _("Code de connexion ou token invalide.")},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -201,7 +201,7 @@ class CustomForgotPasswordView(APIView):
             )
 
         try:
-            user = CustomUser.objects.get(email=email)
+            user = User.objects.get(email=email)
             code_secret = generate_token(6)
             reset_token = generate_token()
 
@@ -225,7 +225,7 @@ class CustomForgotPasswordView(APIView):
                 }
             )
 
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             return Response(
                 {"detail": _("Aucun utilisateur trouvé avec cet email.")},
                 status=status.HTTP_404_NOT_FOUND,
@@ -245,7 +245,7 @@ class CustomResetPasswordView(APIView):
             )
 
         try:
-            user = CustomUser.objects.get(reset_token=token, code_secret=code_secret)
+            user = User.objects.get(reset_token=token, code_secret=code_secret)
             user.set_password(new_password)
             user.reset_token = None
             user.code_secret = None
@@ -261,7 +261,7 @@ class CustomResetPasswordView(APIView):
 
             return Response({"detail": _("Mot de passe réinitialisé avec succès.")})
 
-        except CustomUser.DoesNotExist:
+        except User.DoesNotExist:
             # Envoi d'un email au webmaster pour signaler une tentative non autorisée
             send_email(
                 _("Tentative non autorisée de réinitialisation du mot de passe"),
@@ -399,8 +399,8 @@ class ListPaysView(APIView):
 
         token = token.split(" ")[1]
         try:
-            user = CustomUser.objects.get(reset_token=token)
-        except CustomUser.DoesNotExist:
+            user = User.objects.get(reset_token=token)
+        except User.DoesNotExist:
             return Response(
                 {"detail": "Token invalide."}, status=status.HTTP_401_UNAUTHORIZED
             )
@@ -463,8 +463,8 @@ class AddPaysView(APIView):
 
         token = token.split(" ")[1]
         try:
-            user = CustomUser.objects.get(reset_token=token)
-        except CustomUser.DoesNotExist:
+            user = User.objects.get(reset_token=token)
+        except User.DoesNotExist:
             return Response(
                 {"detail": "Token invalide."}, status=status.HTTP_401_UNAUTHORIZED
             )
