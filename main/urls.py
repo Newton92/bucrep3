@@ -2377,6 +2377,7 @@ urlpatterns = [
         DeleteAcheteurView.as_view(),
         name="delete-acheteur",
     ),
+    path('api/choices-codes-nace/', ListNaceCodesView.as_view(), name='list_nace_codes'),
     # === MODULES LIAISONS ACHETEUR === #
     path(
         "api/acheteur/<int:acheteur_id>/liste-des-resumes/",

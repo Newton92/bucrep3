@@ -24,6 +24,7 @@ Mot de passe : ******
 ### 1. Mise à jour du code source
 
 Se positionner dans le répertoire du projet et récupérer les dernières modifications depuis le dépôt Git :
+- cd /var/www/html/bucrepapi
 
 ```bash
 git pull

@@ -16,6 +16,47 @@ import traceback
 import logging
 logger = logging.getLogger(__name__)
 
+# === Vue pour les codes NACE === #
+
+class ListNaceCodesView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        search_query = request.query_params.get("search", "").strip()
+        
+        # Query de base
+        queryset = SubCategoryNaceCode.objects.filter(
+            active=True
+        ).select_related('category')
+        
+        # Filtre par recherche
+        if search_query:
+            queryset = queryset.filter(
+                Q(code__icontains=search_query) |
+                Q(libelle__icontains=search_query) |
+                Q(category__libelle__icontains=search_query)
+            )
+        
+        # Limiter les résultats
+        queryset = queryset.order_by('code')[:50]
+        
+        # Sérialiser
+        data = []
+        for subcat in queryset:
+            data.append({
+                'id': subcat.id,
+                'code': subcat.code,
+                'libelle': subcat.libelle,
+                'categorie': subcat.category.libelle if subcat.category else '',
+                'poids': subcat.poids
+            })
+        
+        return Response({
+            "success": True,
+            "results": data,
+            "count": len(data)
+        })
+
 # === Vues Acheteur === #
 
 class AcheteursParMois(APIView):
@@ -220,9 +261,27 @@ class AddAcheteurView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, *args, **kwargs):
+        print("Données reçues:", request.data)  # Debug
+        print("=== DEBUG COMPLET CODE NACE ===")
+        print("Valeur reçue:", request.data.get('code_nace'))
+        
+        from main.constantes import LISTE_NOUVEAUX_CODE_NACE
+        
+        print("=== TOUTES LES VALEURS DE LISTE_NOUVEAUX_CODE_NACE ===")
+        for i, (value, label) in enumerate(LISTE_NOUVEAUX_CODE_NACE):
+            print(f"{i+1:3}. {value} -> {label}")
+            if value == '5000 VENTE' or str(value) == '5000 VENTE':
+                print(f"   *** TROUVÉ: {value} ***")
+        
+        # Vérifier spécifiquement '5000 VENTE'
+        valid_values = [str(code[0]) for code in LISTE_NOUVEAUX_CODE_NACE]
+        print(f"'5000 VENTE' dans valid_values? {'5000 VENTE' in valid_values}")
+        print(f"valid_values contient '5000 VENTE'? {any('5000 VENTE' in str(v) for v in valid_values)}")
+            
         try:
             # Préparer les données
             data = request.data.copy()
+            
             
             # Nettoyer les URLs
             # Nettoyer et formater le site_internet
@@ -234,7 +293,7 @@ class AddAcheteurView(APIView):
                 data['site_internet'] = f'https://{site}' if site else ''
             
             # Validation des données requises
-            required_fields = ['nom', 'date_creation', 'activite_principale', 
+            required_fields = ['nom', 'date_creation', 'activite_principale',  
                               'statut_entreprise', 'forme_juridique', 'pays',
                               'province', 'ville', 'couleur_commentaire', 'commentaire']
             
@@ -314,6 +373,13 @@ class AddAcheteurView(APIView):
                         }, status=status.HTTP_201_CREATED)
                         
                 except Exception as e:
+                    import traceback
+                    error_details = traceback.format_exc()
+                    print(f"=== ERREUR LORS DE LA SAUVEGARDE ===")
+                    print(f"Type: {type(e)}")
+                    print(f"Message: {str(e)}")
+                    print(f"Traceback:\n{error_details}")
+                    
                     return Response({
                         "success": False,
                         "message": "Erreur lors de la création",
@@ -333,6 +399,13 @@ class AddAcheteurView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
             
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"=== ERREUR GLOBALE ===")
+            print(f"Type: {type(e)}")
+            print(f"Message: {str(e)}")
+            print(f"Traceback:\n{error_details}")
+            
             return Response({
                 "success": False,
                 "message": "Erreur interne du serveur",

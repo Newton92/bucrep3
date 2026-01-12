@@ -15,6 +15,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from main.commandes.fetch_bucrep_mails import fetch_and_save_emails
 from main.models import User
 from main.serializers import *
+from main.constantes import *  # IMPORTANT: importer depuis constantes.py
 
 from django.http import HttpResponse
 from django.contrib.auth import get_user_model
@@ -1139,6 +1140,18 @@ def dash_root_add_acheteur(request):
     categorie_list = CategorieEntreprise.objects.all()
     juridique_list = FormeJuridique.objects.all()
     statut_list = StatutEntreprise.objects.all()
+    
+    # Convertir LISTE_NOUVEAUX_CODE_NACE en format utilisable par le template
+    code_nace_list = []
+    for value, label in LISTE_NOUVEAUX_CODE_NACE:
+        # Pour garder la compatibilité avec votre template actuel
+        # On crée un objet similaire à SubCategoryNaceCode
+        code_nace_list.append({
+            'id': value,  # La valeur du tuple (ex: "3161 FAB. MAT. ELEC. POUR MOTEURS ET VEHIC.")
+            'code': value.split(' ')[0] if ' ' in value else value,  # Extraire le code numérique
+            'libelle': str(label)  # Le libellé
+        })
+    
     coloration_list = CouleurCommentaire.objects.all()
     pays_list = Pays.objects.all()
     province_list = Province.objects.all()
@@ -1152,6 +1165,7 @@ def dash_root_add_acheteur(request):
         "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
+        "code_nace_list": code_nace_list,
         "coloration_list": coloration_list,
         "pays_list": pays_list,
         "province_list": province_list,
@@ -1187,6 +1201,18 @@ def dash_root_edit_acheteur(request, acheteur_id):
     categorie_list = CategorieEntreprise.objects.all()
     juridique_list = FormeJuridique.objects.all()
     statut_list = StatutEntreprise.objects.all()
+    
+    # Convertir LISTE_NOUVEAUX_CODE_NACE en format utilisable par le template
+    code_nace_list = []
+    for value, label in LISTE_NOUVEAUX_CODE_NACE:
+        # Pour garder la compatibilité avec votre template actuel
+        # On crée un objet similaire à SubCategoryNaceCode
+        code_nace_list.append({
+            'id': value,  # La valeur du tuple (ex: "3161 FAB. MAT. ELEC. POUR MOTEURS ET VEHIC.")
+            'code': value.split(' ')[0] if ' ' in value else value,  # Extraire le code numérique
+            'libelle': str(label)  # Le libellé
+        })
+        
     coloration_list = CouleurCommentaire.objects.all()
     pays_list = Pays.objects.all()
     province_list = Province.objects.all()
@@ -1201,6 +1227,7 @@ def dash_root_edit_acheteur(request, acheteur_id):
         "categorie_list": categorie_list,
         "juridique_list": juridique_list,
         "statut_list": statut_list,
+        "code_nace_list": code_nace_list,
         "coloration_list": coloration_list,
         "pays_list": pays_list,
         "province_list": province_list,

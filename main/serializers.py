@@ -12,7 +12,10 @@ from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from main.models import ScoringSansBilanAcheteur
-
+from django.db import transaction
+from rest_framework import serializers
+import re
+from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth import get_user_model
@@ -821,7 +824,7 @@ class StatutEntrepriseSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
 
-class AcheteurSerializer(serializers.ModelSerializer):
+class AcheteurSerializerTwo(serializers.ModelSerializer):
     categorie_entreprise = CategorieEntrepriseSerializer()
     forme_juridique = FormeJuridiqueSerializer()
     statut_entreprise = StatutEntrepriseSerializer()
@@ -859,12 +862,43 @@ class AcheteurSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["created_at", "updated_at"]
+        
+class AcheteurSerializer(serializers.ModelSerializer):
+    categorie_entreprise = CategorieEntrepriseSerializer()
+    forme_juridique = FormeJuridiqueSerializer()
+    statut_entreprise = StatutEntrepriseSerializer()
+    pays = PaysSerializer()
+    province = ProvinceSerializer()
+    ville = VilleSerializer()
+    
+    # Ajouter pour le code NACE
+    code_nace_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "code", "categorie_entreprise", "forme_juridique",
+            "code_nace", "code_nace_display", "activite_principale",
+            "nom", "sigle", "description", "date_creation",
+            "statut_entreprise", "code_postal", "fax", "boite_postale",
+            "email", "site_internet", "numero_adresse", "rue_adresse",
+            "ville", "province", "pays", "couleur_commentaire",
+            "commentaire", "created_at", "updated_at",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+    
+    def get_code_nace_display(self, obj):
+        """Retourne l'affichage complet du code NACE"""
+        if obj.code_nace:
+            try:
+                # Récupérer la sous-catégorie correspondante
+                subcat = SubCategoryNaceCode.objects.get(code=obj.code_nace, active=True)
+                return f"{subcat.code} - {subcat.libelle}"
+            except SubCategoryNaceCode.DoesNotExist:
+                return obj.code_nace
+        return None
 
 
-# Ajoutez cette importation en haut du fichier
-from django.db import transaction
-from django.utils import timezone
-import re
 class DomainNameField(serializers.CharField):
     """Champ personnalisé pour les noms de domaine"""
     
@@ -890,7 +924,7 @@ class DomainNameField(serializers.CharField):
             return f"https://{value}"
         return value
 
-class AddAcheteurSerializer(serializers.ModelSerializer):
+class AddAcheteurSerializerTwo(serializers.ModelSerializer):
     # Utiliser notre champ personnalisé
     site_internet = DomainNameField()
     
@@ -1038,15 +1072,208 @@ class AddAcheteurSerializer(serializers.ModelSerializer):
                 "non_field_errors": f"Erreur lors de la création: {str(e)}"
             })    
             
+class AddAcheteurSerializer(serializers.ModelSerializer):
+    site_internet = DomainNameField()
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "categorie_entreprise", "forme_juridique", 
+            "code_nace", "activite_principale", "nom", "sigle", 
+            "description", "date_creation", "statut_entreprise", 
+            "code_postal", "fax", "boite_postale", "email", 
+            "site_internet", "numero_adresse", "rue_adresse", 
+            "ville", "province", "pays", "couleur_commentaire", 
+            "commentaire", "code", "created_by"  # Ajoutez created_by
+        ]
+        read_only_fields = ["created_at", "updated_at", "code"]
+    
+    # ... garder les autres validateurs existants
+    def validate_code_nace(self, value):
+        """Validation du code NACE depuis LISTE_NOUVEAUX_CODE_NACE"""
+        if not value or value == "":
+            return ""
+            
+        # Importer la liste
+        from main.constantes import LISTE_NOUVEAUX_CODE_NACE
+        
+        # Convertir en string pour la comparaison
+        value_str = str(value).strip()
+        
+        print(f"=== VALIDATION code_nace ===")
+        print(f"Valeur à valider: '{value_str}'")
+        
+        # Vérifier si c'est une valeur exacte
+        valid_values = []
+        for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
+            str_value = str(code_value)
+            str_label = str(code_label)
+            valid_values.append(str_value)
+            
+            if value_str == str_value or value_str == str_label:
+                print(f"  ✓ Correspondance exacte trouvée: {str_value}")
+                return str_value
+        
+        print(f"  ✗ Aucune correspondance exacte")
+        print(f"  Valeurs valides: {valid_values[:10]}...")  # Afficher les 10 premières
+        
+        # Si pas de correspondance exacte, chercher par code numérique
+        if ' ' in value_str:
+            code_part = value_str.split(' ')[0]  # '5000' de '5000 VENTE'
+            print(f"  Recherche par code numérique: '{code_part}'")
+            
+            for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
+                str_value = str(code_value)
+                if str_value.startswith(code_part):
+                    print(f"  ✓ Correspondance partielle trouvée: {str_value}")
+                    return str_value
+        
+        print(f"  ✗ Aucune correspondance trouvée")
+        
+        # Si aucune correspondance, retourner la valeur telle quelle
+        # (ou lever une erreur selon vos besoins)
+        return value_str
+    
+    def validate_site_internet(self, value):
+        """Validation simple du site internet"""
+        if value:
+            value = value.strip()
+            # Supprimer https:// si présent
+            value = re.sub(r'^https?://', '', value)
+            # Supprimer le slash final
+            value = value.rstrip('/')
+        return value
+    
+    def validate_email(self, value):
+        """Validation de l'email"""
+        if value:
+            if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', value):
+                raise serializers.ValidationError("Format d'email invalide")
+        return value
+    
+    def validate_nom(self, value):
+        """Validation du nom"""
+        if len(value.strip()) < 2:
+            raise serializers.ValidationError("Le nom doit contenir au moins 2 caractères")
+        return value.strip()
+    
+    def validate_activite_principale(self, value):
+        """Validation de l'activité principale"""
+        if value and len(value.strip()) < 3:
+            raise serializers.ValidationError("L'activité principale doit contenir au moins 3 caractères")
+        return value.strip() if value else value
+    
+    def validate_commentaire(self, value):
+        """Validation du commentaire"""
+        if value and len(value.strip()) < 10:
+            raise serializers.ValidationError("Le commentaire doit contenir au moins 10 caractères")
+        return value.strip() if value else value
+    
+    def validate(self, data):
+        """Validation globale"""
+        # Vérifier la cohérence des dates
+        date_creation = data.get('date_creation')
+        if date_creation and date_creation > timezone.now().date():
+            raise serializers.ValidationError({
+                "date_creation": "La date de création ne peut pas être dans le futur"
+            })
+        
+        # Vérifier la cohérence géographique
+        ville = data.get('ville')
+        province = data.get('province')
+        pays = data.get('pays')
+        
+        if ville and province:
+            if ville.province_id != province.id:
+                raise serializers.ValidationError({
+                    "ville": "La ville doit appartenir à la province sélectionnée"
+                })
+        
+        if province and pays:
+            if province.pays_id != pays.id:
+                raise serializers.ValidationError({
+                    "province": "La province doit appartenir au pays sélectionné"
+                })
+        
+        # Générer un code automatique si non fourni
+        if not data.get('code'):
+            data['code'] = self.generate_code(data.get('nom'), data.get('pays'))
+        
+        return data
+    
+    def generate_code(self, nom, pays):
+        """Génère un code unique pour l'acheteur"""
+        from django.db.models import Max
+        
+        if not nom or not pays:
+            return ""
+        
+        # Prendre les 3 premières lettres du nom
+        prefix = nom[:3].upper()
+        
+        # Prendre le code du pays
+        pays_code = pays.code if hasattr(pays, 'code') else 'GA'
+        
+        # Chercher le dernier numéro pour ce préfixe/pays
+        last_code = Acheteur.objects.filter(
+            code__startswith=f"ACH-{pays_code}-{prefix}"
+        ).aggregate(max_num=Max('code'))
+        
+        if last_code['max_num']:
+            try:
+                last_num = int(last_code['max_num'].split('-')[-1])
+                next_num = last_num + 1
+            except:
+                next_num = 1
+        else:
+            next_num = 1
+        
+        return f"ACH-{pays_code}-{prefix}{next_num:04d}"
+    
+    @transaction.atomic
+    def create(self, validated_data):
+        """Création avec gestion des transactions et journalisation"""
+        try:
+            # Créer l'acheteur
+            acheteur = super().create(validated_data)
+            
+            # Journaliser la création (ne pas bloquer en cas d'échec)
+            try:
+                request = self.context.get('request')
+                if request and request.user:
+                    from main.models import ActivityLog
+                    
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        action_type='CREATE',  # ou 'ACHETEUR_CREATED'
+                        object_id=acheteur.id,
+                        object_type='Acheteur',
+                        details=f"Création de l'acheteur '{acheteur.nom}' (ID: {acheteur.id})",
+                        ip_address=request.META.get('REMOTE_ADDR', ''),
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]  # Limiter la taille
+                    )
+            except Exception as log_error:
+                # Log l'erreur mais ne pas bloquer la création
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Échec de journalisation: {str(log_error)}")
+            
+            return acheteur
+            
+        except Exception as e:
+            import traceback
+            print(f"=== ERREUR create() ===")
+            print(f"Message: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
+            print(f"Validated data: {validated_data}")
+            
+            raise serializers.ValidationError({
+                "non_field_errors": f"Erreur lors de la création: {str(e)}"
+            })    
+    
             
 
-
-
-from django.db import transaction
-from rest_framework import serializers
-import re
-
-class EditAcheteurSerializer(serializers.ModelSerializer):
+class EditAcheteurSerializerTwo(serializers.ModelSerializer):
     site_internet = serializers.CharField(
         required=False,
         allow_blank=True,
@@ -1133,9 +1360,145 @@ class EditAcheteurSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'non_field_errors': [f'Erreur lors de la mise à jour: {str(e)}']
             })
+                     
+class EditAcheteurSerializer(serializers.ModelSerializer):
+    site_internet = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=300,
+        validators=[]
+    )
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "categorie_entreprise", "forme_juridique", 
+            "code_nace", "activite_principale", "nom", "sigle", 
+            "description", "date_creation", "statut_entreprise", 
+            "code_postal", "fax", "boite_postale", "email", 
+            "site_internet", "numero_adresse", "rue_adresse", 
+            "ville", "province", "pays", "couleur_commentaire", 
+            "commentaire"
+        ]
+    
+    def validate_code_nace(self, value):
+        """Validation du code NACE depuis LISTE_NOUVEAUX_CODE_NACE"""
+        if not value or value == "":
+            return ""
+            
+        # Importer la liste
+        from main.constantes import LISTE_NOUVEAUX_CODE_NACE
+        
+        # Convertir en string pour la comparaison
+        value_str = str(value).strip()
+        
+        print(f"=== VALIDATION code_nace ===")
+        print(f"Valeur à valider: '{value_str}'")
+        
+        # Vérifier si c'est une valeur exacte
+        valid_values = []
+        for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
+            str_value = str(code_value)
+            str_label = str(code_label)
+            valid_values.append(str_value)
+            
+            if value_str == str_value or value_str == str_label:
+                print(f"  ✓ Correspondance exacte trouvée: {str_value}")
+                return str_value
+        
+        print(f"  ✗ Aucune correspondance exacte")
+        print(f"  Valeurs valides: {valid_values[:10]}...")  # Afficher les 10 premières
+        
+        # Si pas de correspondance exacte, chercher par code numérique
+        if ' ' in value_str:
+            code_part = value_str.split(' ')[0]  # '5000' de '5000 VENTE'
+            print(f"  Recherche par code numérique: '{code_part}'")
+            
+            for code_value, code_label in LISTE_NOUVEAUX_CODE_NACE:
+                str_value = str(code_value)
+                if str_value.startswith(code_part):
+                    print(f"  ✓ Correspondance partielle trouvée: {str_value}")
+                    return str_value
+        
+        print(f"  ✗ Aucune correspondance trouvée")
+        
+        # Si aucune correspondance, retourner la valeur telle quelle
+        # (ou lever une erreur selon vos besoins)
+        return value_str
+    
+    # ... garder les autres validateurs et méthodes
+    def validate_site_internet(self, value):
+        """Validation et nettoyage"""
+        if not value:
+            return ''
+        
+        value = str(value).strip()
+        
+        # Si c'est vide
+        if not value:
+            return ''
+        
+        # Supprimer les protocoles s'ils sont présents
+        value = re.sub(r'^https?://', '', value)
+        
+        # Supprimer slash final
+        value = value.rstrip('/')
+        
+        # Supprimer www. si présent
+        value = re.sub(r'^www\.', '', value)
+        
+        # Retourner tel quel (Django URLField ajoutera https:// si nécessaire)
+        return value.lower()
+    
+    def validate(self, data):
+        """Validation globale"""
+        # Nettoyer site_internet avant toutes les autres validations
+        if 'site_internet' in data:
+            data['site_internet'] = self.validate_site_internet(data['site_internet'])
+        
+        return data
+    
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        """Mise à jour avec transactions - UNE SEULE MÉTHODE UPDATE"""
+        try:
+            # Journalisation optionnelle
+            request = self.context.get('request')
+            
+            # Mettre à jour
+            for field, value in validated_data.items():
+                setattr(instance, field, value)
+            
+            # Nettoyer site_internet si nécessaire
+            if hasattr(instance, 'site_internet') and instance.site_internet:
+                # Si le site internet ne commence pas par http/https, ajouter https://
+                if not instance.site_internet.startswith(('http://', 'https://')):
+                    instance.site_internet = f'https://{instance.site_internet}'
+            
+            instance.save()
+            
+            # Log d'activité
+            if request and request.user:
+                from main.models import ActivityLog
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action_type='UPDATE',
+                    object_id=instance.id,
+                    object_type='Acheteur',
+                    details=f"Mise à jour de l'acheteur {instance.nom}",
+                    ip_address=request.META.get('REMOTE_ADDR', '')
+                )
+            
+            return instance
+            
+        except Exception as e:
+            raise serializers.ValidationError({
+                'non_field_errors': [f'Erreur lors de la mise à jour: {str(e)}']
+            })
+  
 
 
-class GetAcheteurSerializer(serializers.ModelSerializer):
+class GetAcheteurSerializerTwo(serializers.ModelSerializer):
     categorie_entreprise = CategorieEntrepriseSerializer(read_only=True)
     forme_juridique = FormeJuridiqueSerializer(read_only=True)
     statut_entreprise = StatutEntrepriseSerializer(read_only=True)
@@ -1164,6 +1527,55 @@ class GetAcheteurSerializer(serializers.ModelSerializer):
         """Retourne l'URL formatée avec https://"""
         if obj.site_internet:
             return f"https://{obj.site_internet}"
+        return None
+    
+class GetAcheteurSerializer(serializers.ModelSerializer):
+    categorie_entreprise = CategorieEntrepriseSerializer(read_only=True)
+    forme_juridique = FormeJuridiqueSerializer(read_only=True)
+    statut_entreprise = StatutEntrepriseSerializer(read_only=True)
+    pays = PaysSerializer(read_only=True)
+    province = ProvinceSerializer(read_only=True)
+    ville = VilleSerializer(read_only=True)
+    couleur_commentaire = CouleurCommentaireSerializer(read_only=True)
+    
+    site_internet_formatted = serializers.SerializerMethodField()
+    code_nace_info = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Acheteur
+        fields = [
+            "id", "code", "categorie_entreprise", "forme_juridique",
+            "code_nace", "code_nace_info", "activite_principale", "nom", 
+            "sigle", "description", "date_creation", "statut_entreprise",
+            "code_postal", "fax", "boite_postale", "email", "site_internet",
+            "site_internet_formatted", "numero_adresse", "rue_adresse",
+            "ville", "province", "pays", "couleur_commentaire",
+            "commentaire", "created_at", "updated_at"
+        ]
+        read_only_fields = fields
+    
+    def get_site_internet_formatted(self, obj):
+        """Retourne l'URL formatée avec https://"""
+        if obj.site_internet:
+            return f"https://{obj.site_internet}"
+        return None
+    
+    def get_code_nace_info(self, obj):
+        """Retourne les informations détaillées du code NACE"""
+        if obj.code_nace:
+            try:
+                subcat = SubCategoryNaceCode.objects.select_related('category').get(
+                    code=obj.code_nace, 
+                    active=True
+                )
+                return {
+                    'code': subcat.code,
+                    'libelle': subcat.libelle,
+                    'categorie': subcat.category.libelle if subcat.category else '',
+                    'poids': subcat.poids
+                }
+            except SubCategoryNaceCode.DoesNotExist:
+                return None
         return None
 
 
