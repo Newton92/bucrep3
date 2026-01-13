@@ -8,29 +8,74 @@
 
 <style>
 :root {
-    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
-    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
-    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --primary-color: #0d80be;
+    --secondary-color: #25add6;
+    --accent-color: #0a95ca;
+    --light-color: #fcfefe;
+    --dark-color: #106cb2;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --card-shadow: 0 4px 12px rgba(12, 128, 190, 0.08);
+    --card-shadow-hover: 0 10px 30px rgba(12, 128, 190, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Carte de statistiques améliorée */
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid #e3e6f0;
-    transition: all 0.3s ease;
-    height: 100%;
+body {
+    background-color: var(--light-color);
+    color: #333;
+}
+
+/* Header amélioré */
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    color: white;
     position: relative;
     overflow: hidden;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    border-color: #0A95CA;
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+/* Cartes de statistiques premium */
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid rgba(37, 173, 214, 0.1);
+    transition: var(--transition);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .stat-card::before {
@@ -38,119 +83,283 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
-    height: 100%;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    z-index: 1;
 }
 
-.stat-card.capital::before { background: linear-gradient(to bottom, #0A95CA, #1c6ea4); }
-.stat-card.ca::before { background: linear-gradient(to bottom, #28a745, #20c997); }
-.stat-card.resultat::before { background: linear-gradient(to bottom, #6f42c1, #e83e8c); }
-.stat-card.employes::before { background: linear-gradient(to bottom, #fd7e14, #ffc107); }
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--card-shadow-hover);
+    border-color: var(--secondary-color);
+}
+
+.stat-card.capital {
+    border-left: 5px solid var(--primary-color);
+    background: linear-gradient(135deg, white 0%, rgba(13, 128, 190, 0.03) 100%);
+}
+
+.stat-card.ca {
+    border-left: 5px solid var(--accent-color);
+    background: linear-gradient(135deg, white 0%, rgba(10, 149, 202, 0.03) 100%);
+}
+
+.stat-card.resultat {
+    border-left: 5px solid var(--secondary-color);
+    background: linear-gradient(135deg, white 0%, rgba(37, 173, 214, 0.03) 100%);
+}
+
+.stat-card.employes {
+    border-left: 5px solid var(--dark-color);
+    background: linear-gradient(135deg, white 0%, rgba(16, 108, 178, 0.03) 100%);
+}
 
 .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
 }
 
-.stat-card.capital .stat-icon { background: rgba(10, 149, 202, 0.1); color: #0A95CA; }
-.stat-card.ca .stat-icon { background: rgba(40, 167, 69, 0.1); color: #28a745; }
-.stat-card.resultat .stat-icon { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
-.stat-card.employes .stat-icon { background: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+.stat-card.capital .stat-icon {
+    background: linear-gradient(135deg, var(--primary-color), #1c6ea4);
+    color: white;
+}
+
+.stat-card.ca .stat-icon {
+    background: linear-gradient(135deg, var(--accent-color), #25add6);
+    color: white;
+}
+
+.stat-card.resultat .stat-icon {
+    background: linear-gradient(135deg, var(--secondary-color), #4fbbdd);
+    color: white;
+}
+
+.stat-card.employes .stat-icon {
+    background: linear-gradient(135deg, var(--dark-color), #1c7ac0);
+    color: white;
+}
 
 .stat-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
     color: #2c3e50;
+    position: relative;
+    z-index: 2;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 .stat-label {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #6c757d;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
 }
 
 .stat-devise {
-    font-size: 0.75rem;
-    color: #0A95CA;
-    font-weight: 600;
-    background: rgba(10, 149, 202, 0.1);
-    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    color: white;
+    font-weight: 700;
+    background: rgba(13, 128, 190, 0.8);
+    padding: 0.4rem 1rem;
     border-radius: 20px;
     display: inline-block;
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Boutons améliorés */
+/* Boutons premium */
 .btn-action {
-    border-radius: 8px;
-    padding: 0.5rem 1.25rem;
+    border-radius: 10px;
+    padding: 0.75rem 1.75rem;
     font-weight: 600;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.btn-action:hover::before {
+    left: 100%;
 }
 
 .btn-action:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+}
+
+.btn-outline-primary:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--success-color), #2ecc71);
 }
 
 /* Cartes améliorées */
 .enhanced-card {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    overflow: hidden;
+    background: white;
 }
 
 .enhanced-card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--card-shadow-hover);
 }
 
 .card-header-gradient {
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
     color: white;
-    border-radius: 12px 12px 0 0 !important;
-    padding: 1.25rem 1.5rem;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 1.5rem 2rem;
+    position: relative;
+    overflow: hidden;
 }
 
-/* Formulaire amélioré */
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+/* Carte acheteur premium */
+.acheteur-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(13, 128, 190, 0.1);
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    transition: var(--transition);
+}
+
+.acheteur-info-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(5px);
+}
+
+.acheteur-info-item i {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+/* Badge premium */
+.badge-premium {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color));
+    color: white;
+    padding: 0.5rem 1.25rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(10, 149, 202, 0.2);
+}
+
+/* Formulaire premium */
 .enhanced-form .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
     position: relative;
 }
 
 .enhanced-form .form-label {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    font-size: 0.95rem;
 }
 
 .enhanced-form .form-control,
 .enhanced-form .form-select {
-    border: 2px solid #e3e6f0;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
+    border: 2px solid rgba(37, 173, 214, 0.2);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
 }
 
 .enhanced-form .form-control:focus,
 .enhanced-form .form-select:focus {
-    border-color: #0A95CA;
-    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.25rem rgba(37, 173, 214, 0.25);
+    background: white;
+    transform: translateY(-2px);
 }
 
 .enhanced-form .input-with-icon {
@@ -159,163 +368,516 @@
 
 .enhanced-form .input-icon {
     position: absolute;
-    left: 1rem;
+    left: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #6c757d;
-    font-size: 1rem;
+    color: var(--accent-color);
+    font-size: 1.1rem;
+    z-index: 10;
 }
 
 .enhanced-form .form-control.with-icon {
-    padding-left: 3rem;
+    padding-left: 3.5rem;
 }
 
-/* Commentaire coloré */
+/* Commentaire premium */
 .colored-comment {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 1.5rem;
-    border-left: 4px solid;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    border-radius: 16px;
+    padding: 2rem;
+    border-left: 5px solid;
     position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
 }
 
 .colored-comment::before {
     content: '"';
     position: absolute;
-    top: -10px;
+    top: -20px;
     left: 20px;
-    font-size: 4rem;
-    color: rgba(0, 0, 0, 0.1);
+    font-size: 8rem;
+    color: rgba(13, 128, 190, 0.05);
     font-family: Georgia, serif;
+    font-weight: bold;
 }
 
-/* État vide amélioré */
+.colored-comment h6 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.colored-comment p {
+    line-height: 1.8;
+    color: #495057;
+    font-size: 1.05rem;
+}
+
+/* État vide premium */
 .empty-state {
-    padding: 4rem 2rem;
+    padding: 5rem 2rem;
     text-align: center;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 2px dashed #dee2e6;
+    background: linear-gradient(135deg, rgba(252, 254, 254, 0.8), rgba(240, 248, 255, 0.8));
+    border-radius: 20px;
+    border: 2px dashed rgba(37, 173, 214, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.empty-state::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(37, 173, 214, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: float 20s linear infinite;
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(30px, 30px) rotate(360deg); }
 }
 
 .empty-state-icon {
-    font-size: 4rem;
-    color: #ced4da;
-    margin-bottom: 1.5rem;
-    opacity: 0.7;
+    font-size: 5rem;
+    color: var(--secondary-color);
+    margin-bottom: 2rem;
+    opacity: 0.8;
+    position: relative;
+    z-index: 2;
 }
 
-/* Badge de couleur */
+.empty-state h4 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 400px;
+    margin: 0 auto 2rem;
+    position: relative;
+    z-index: 2;
+    line-height: 1.6;
+}
+
+/* Badge de couleur premium */
 .color-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .color-badge::before {
     content: '';
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: currentColor;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Modales premium */
+.modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--dark-color));
+    color: white;
+    border-bottom: none;
+    padding: 1.75rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+.modal-title {
+    font-weight: 700;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+    transition: var(--transition);
+    position: relative;
+    z-index: 2;
+}
+
+.btn-close-white:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* Modal de suppression */
+.modal-danger .modal-header {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.8rem;
+    }
+    
     .stat-card {
-        padding: 1rem;
+        padding: 1.5rem;
     }
     
     .stat-value {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
     
     .stat-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1.25rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
     }
+    
+    .btn-action {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        padding: 1.25rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card {
+        padding: 1.25rem;
+    }
+    
+    .stat-value {
+        font-size: 1.6rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Transition pour les cartes */
+.stat-card, .enhanced-card, .acheteur-card {
+    animation: fadeInUp 0.6s ease forwards;
+    animation-delay: calc(var(--order, 0) * 0.1s);
+}
+</style>
+
+<style>
+/* Styles spécifiques pour Select2 dans les modales */
+.select2-dropdown-modal {
+    z-index: 999999 !important;
+    position: fixed !important;
+    width: 100% !important;
+    min-width: 100%;
+}
+
+.select2-container-modal {
+    z-index: 9999 !important;
+}
+
+.select2-container--open .select2-dropdown--below {
+    margin-top: 5px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(37, 173, 214, 0.2);
+    overflow: hidden;
+}
+
+.select2-container--open .select2-dropdown--above {
+    margin-bottom: 5px;
+    border-radius: 10px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(37, 173, 214, 0.2);
+    overflow: hidden;
+}
+
+.select2-results__option {
+    padding: 10px 15px;
+    transition: all 0.2s ease;
+}
+
+.select2-results__option--highlighted {
+    background: linear-gradient(135deg, var(--accent-color), var(--secondary-color)) !important;
+    color: white !important;
+}
+
+.select2-search--dropdown {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(37, 173, 214, 0.1);
+}
+
+.select2-search__field {
+    border: 2px solid rgba(37, 173, 214, 0.2) !important;
+    border-radius: 8px !important;
+    padding: 10px 15px !important;
+    width: 100% !important;
+}
+
+.select2-search__field:focus {
+    border-color: var(--secondary-color) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 0.25rem rgba(37, 173, 214, 0.25) !important;
+}
+
+/* Assurer que le modal a un z-index élevé */
+.modal {
+    z-index: 99999 !important;
+}
+
+.modal-backdrop {
+    z-index: 99998 !important;
+}
+
+/* Ajuster la hauteur des dropdowns dans les modales */
+.modal-body .select2-container {
+    margin-bottom: 10px;
+}
+
+/* Prévenir les problèmes de superposition */
+.modal-body > .row {
+    position: relative;
+    z-index: 1;
+}
+/* Styles pour centrer les dropdowns Select2 */
+.select2-dropdown-centered {
+    width: auto !important;
+    min-width: 200px !important;
+    max-width: 400px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    position: fixed !important;
+    border-radius: 12px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(37, 173, 214, 0.3) !important;
+    overflow: hidden !important;
+    animation: dropdownSlideDown 0.3s ease !important;
+}
+
+@keyframes dropdownSlideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Ajustement pour les dropdowns au-dessus */
+.select2-container--open .select2-dropdown--above.select2-dropdown-centered {
+    animation: dropdownSlideUp 0.3s ease !important;
+}
+
+@keyframes dropdownSlideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Ajuster la largeur du dropdown pour qu'elle corresponde au select */
+.select2-container .select2-dropdown {
+    width: inherit !important;
+}
+
+/* S'assurer que le contenu du dropdown s'adapte */
+.select2-results__options {
+    max-height: 250px !important;
+    overflow-y: auto !important;
+}
+
+/* Personnaliser la barre de défilement */
+.select2-results__options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.select2-results__options::-webkit-scrollbar-track {
+    background: rgba(37, 173, 214, 0.1);
+    border-radius: 3px;
+}
+
+.select2-results__options::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 3px;
+}
+
+.select2-results__options::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-color);
+}
+
+/* Ajuster la position pour les modales */
+.modal-body .select2-container {
+    position: relative;
+}
+
+/* S'assurer que le select a une largeur définie */
+.modal-body .form-select.select2-with-search,
+.modal-body .form-select.select2-with-color {
+    width: 100% !important;
+}
+
+/* Correction pour le positionnement sur mobile */
+@media (max-width: 768px) {
+    .select2-dropdown-centered {
+        min-width: 90% !important;
+        max-width: 90% !important;
+        left: 5% !important;
+        transform: none !important;
+    }
+}
+
+/* Ajouter un overlay pour mieux voir le dropdown */
+.select2-dropdown-centered::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: -1;
+    pointer-events: none;
 }
 </style>
 {% endblock %}
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="fas fa-file-contract text-primary me-2"></i>Résumé Financier
-            </h1>
-            <p class="text-muted mb-0">
-                Gestion du résumé financier pour l'acheteur
-            </p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
-                <i class="fas fa-arrow-left me-1"></i>Retour
-            </a>
-            {% if resume %}
-            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editResumeModal">
-                <i class="fas fa-edit me-1"></i>Modifier
-            </button>
-            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                <i class="fas fa-trash me-1"></i>Supprimer
-            </button>
-            {% else %}
-            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
-                <i class="fas fa-plus-circle me-1"></i>Ajouter un résumé
-            </button>
-            {% endif %}
+    <!-- Header Premium -->
+    <div class="page-header fade-in-up" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-file-contract me-3"></i>Résumé Financier
+                </h1>
+                <p class="page-subtitle">
+                    Analyse détaillée et gestion du résumé financier pour l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>Retour
+                </a>
+                {% if resume %}
+                <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editResumeModal">
+                    <i class="fas fa-edit me-1"></i>Modifier
+                </button>
+                <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                    <i class="fas fa-trash-alt me-1"></i>Supprimer
+                </button>
+                {% else %}
+                <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un résumé
+                </button>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <!-- Carte Acheteur -->
-    <div class="card enhanced-card mb-4">
+    <!-- Carte Acheteur Premium -->
+    <div class="card enhanced-card mb-5 fade-in-up" style="--order: 1;">
         <div class="card-header card-header-gradient">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
                 <div>
-                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
-                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                    <h5 class="mb-1 fw-bold text-white display-9">{{ acheteur.nom }}</h5>
+                    <p class="mb-0 opacity-90 fs-5">{{ acheteur.sigle|default:"" }}</p>
                 </div>
                 <div class="text-md-end">
-                    <span class="badge bg-light text-dark fs-6 p-2">
-                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    <span class="badge-premium fs-6">
+                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code }}
                     </span>
-                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                    <p class="mb-0 mt-2 small opacity-75">Code ACREMAC</p>
                 </div>
             </div>
         </div>
         <div class="card-body">
-            <div class="row g-3">
+            <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-briefcase"></i>
                         <div>
                             <small class="text-muted d-block">Activité principale</small>
-                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                            <span class="fw-bold fs-6">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-calendar-alt"></i>
                         <div>
                             <small class="text-muted d-block">Date de création</small>
-                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                            <span class="fw-bold fs-6">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-check-circle"></i>
                         <div>
                             <small class="text-muted d-block">Statut</small>
-                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                            <span class="fw-bold fs-6 text-warning">
+                                {{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -325,12 +887,12 @@
 
     <!-- Résumé Financier -->
     {% if resume %}
-    <div class="card enhanced-card mb-4">
-        <div class="card-body">
-            <!-- Statistiques -->
-            <div class="row g-4 mb-4">
+    <div class="card enhanced-card mb-5 fade-in-up" style="--order: 2;">
+        <div class="card-body p-4">
+            <!-- Statistiques Premium -->
+            <div class="row g-4 mb-5">
                 <div class="col-md-3">
-                    <div class="stat-card capital">
+                    <div class="stat-card capital" style="--order: 0;">
                         <div class="stat-icon">
                             <i class="fas fa-money-bill-wave"></i>
                         </div>
@@ -342,7 +904,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card ca">
+                    <div class="stat-card ca" style="--order: 1;">
                         <div class="stat-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
@@ -354,7 +916,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card resultat">
+                    <div class="stat-card resultat" style="--order: 2;">
                         <div class="stat-icon">
                             <i class="fas fa-calculator"></i>
                         </div>
@@ -368,7 +930,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card employes">
+                    <div class="stat-card employes" style="--order: 3;">
                         <div class="stat-icon">
                             <i class="fas fa-users"></i>
                         </div>
@@ -382,18 +944,18 @@
             <!-- Informations supplémentaires -->
             <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="card border-0 bg-light h-100">
+                    <div class="card enhanced-card h-100">
                         <div class="card-body">
-                            <h6 class="fw-bold mb-3">
-                                <i class="fas fa-calendar me-2 text-primary"></i>Informations temporelles
+                            <h6 class="fw-bold mb-4 text-primary">
+                                <i class="fas fa-calendar me-2"></i>Informations temporelles
                             </h6>
-                            <div class="mb-3">
-                                <small class="text-muted d-block">Date de création de l'entreprise</small>
-                                <span class="fw-medium">{{ resume.date_creation|date:"d/m/Y"|default:"-" }}</span>
+                            <div class="mb-4">
+                                <small class="text-muted d-block mb-2">Date de création de l'entreprise</small>
+                                <span class="fw-bold fs-5">{{ resume.date_creation|date:"d/m/Y"|default:"-" }}</span>
                             </div>
                             <div>
-                                <small class="text-muted d-block">Dernière mise à jour</small>
-                                <span class="fw-medium">{{ resume.updated_at|date:"d/m/Y H:i"|default:"-" }}</span>
+                                <small class="text-muted d-block mb-2">Dernière mise à jour</small>
+                                <span class="fw-bold fs-5">{{ resume.updated_at|date:"d/m/Y H:i"|default:"-" }}</span>
                             </div>
                         </div>
                     </div>
@@ -401,22 +963,23 @@
                 <div class="col-md-6">
                     {% if resume.commentaire %}
                     <div class="colored-comment" style="border-left-color: {{ resume.couleur_commentaire.code|default:'#6c757d' }};">
-                        <h6 class="fw-bold mb-2">
-                            <i class="fas fa-comment-dots me-2"></i>Commentaire
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-comment-dots me-2"></i>Commentaire analytique
                         </h6>
                         <p class="mb-0">{{ resume.commentaire }}</p>
                         {% if resume.couleur_commentaire %}
-                        <div class="mt-3">
-                            <span class="color-badge" style="color: {{ resume.couleur_commentaire.code }}; background: {{ resume.couleur_commentaire.code }}20;">
+                        <div class="mt-4">
+                            <span class="color-badge" style="color: {{ resume.couleur_commentaire.code }};">
                                 {{ resume.couleur_commentaire.couleur }}
                             </span>
                         </div>
                         {% endif %}
                     </div>
                     {% else %}
-                    <div class="text-center py-5 border rounded bg-light">
-                        <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
-                        <p class="text-muted mb-0">Aucun commentaire</p>
+                    <div class="empty-state">
+                        <i class="fas fa-comment-slash empty-state-icon"></i>
+                        <h4 class="fw-bold mb-3">Aucun commentaire</h4>
+                        <p class="text-muted mb-0">Ajoutez un commentaire pour documenter cette analyse financière</p>
                     </div>
                     {% endif %}
                 </div>
@@ -424,17 +987,17 @@
         </div>
     </div>
     {% else %}
-    <!-- État vide -->
-    <div class="card enhanced-card">
+    <!-- État vide Premium -->
+    <div class="card enhanced-card fade-in-up" style="--order: 2;">
         <div class="card-body">
             <div class="empty-state">
                 <i class="fas fa-file-contract empty-state-icon"></i>
-                <h4 class="fw-bold mb-2">Aucun résumé financier</h4>
+                <h4 class="fw-bold mb-3">Aucun résumé financier disponible</h4>
                 <p class="text-muted mb-4">
                     Cet acheteur ne possède pas encore de résumé financier.<br>
-                    Créez-en un pour commencer à suivre ses performances.
+                    Créez-en un pour suivre et analyser ses performances financières.
                 </p>
-                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+                <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addResumeModal">
                     <i class="fas fa-plus-circle me-2"></i>Créer le premier résumé
                 </button>
             </div>
@@ -443,12 +1006,12 @@
     {% endif %}
 </div>
 
-<!-- Modal Ajout de Résumé -->
+<!-- Modal Ajout de Résumé Premium -->
 <div class="modal fade" id="addResumeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
-                <h5 class="modal-title">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
                     <i class="fas fa-plus-circle me-2"></i>Ajouter un Résumé Financier
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -459,7 +1022,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="capital_social" class="form-label">
-                                    <i class="fas fa-money-bill-wave text-primary"></i>Capital Social
+                                    <i class="fas fa-money-bill-wave"></i>Capital Social
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-money-bill-wave"></i>
@@ -473,7 +1036,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="chiffre_affaire" class="form-label">
-                                    <i class="fas fa-chart-line text-success"></i>Chiffre d'Affaires
+                                    <i class="fas fa-chart-line"></i>Chiffre d'Affaires
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-chart-line"></i>
@@ -490,7 +1053,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="resultat_net" class="form-label">
-                                    <i class="fas fa-calculator text-warning"></i>Résultat Net
+                                    <i class="fas fa-calculator"></i>Résultat Net
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-calculator"></i>
@@ -504,7 +1067,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="capitaux_propre" class="form-label">
-                                    <i class="fas fa-hand-holding-usd text-info"></i>Capitaux Propres
+                                    <i class="fas fa-hand-holding-usd"></i>Capitaux Propres
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-hand-holding-usd"></i>
@@ -521,7 +1084,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="nombre_employe" class="form-label">
-                                    <i class="fas fa-users text-danger"></i>Nombre d'Employés
+                                    <i class="fas fa-users"></i>Nombre d'Employés
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-users"></i>
@@ -535,7 +1098,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="date_creation" class="form-label">
-                                    <i class="fas fa-calendar-alt text-primary"></i>Date de Création
+                                    <i class="fas fa-calendar-alt"></i>Date de Création
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-calendar-alt"></i>
@@ -551,7 +1114,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="devise" class="form-label">
-                                    <i class="fas fa-globe text-info"></i>Devise
+                                    <i class="fas fa-globe"></i>Devise
                                 </label>
                                 <select class="form-select select2-with-search" id="devise" name="devise" required>
                                     <option value="">Sélectionnez une devise</option>
@@ -567,7 +1130,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="couleur_commentaire" class="form-label">
-                                    <i class="fas fa-palette text-warning"></i>Couleur du Commentaire
+                                    <i class="fas fa-palette"></i>Couleur du Commentaire
                                 </label>
                                 <select class="form-select select2-with-color" id="couleur_commentaire" name="couleur_commentaire" required>
                                     <option value="">Sélectionnez une couleur</option>
@@ -584,7 +1147,7 @@
 
                     <div class="form-group">
                         <label for="commentaire" class="form-label">
-                            <i class="fas fa-comment text-success"></i>Commentaire
+                            <i class="fas fa-comment"></i>Commentaire
                         </label>
                         <textarea class="form-control" id="commentaire" name="commentaire" 
                                   rows="4" placeholder="Ajoutez un commentaire décrivant la situation financière..."></textarea>
@@ -592,10 +1155,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Annuler
                     </button>
-                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                    <button type="submit" class="btn btn-success btn-action" id="submitAddBtn">
                         <span class="btn-text">
                             <i class="fas fa-check me-1"></i>Créer le résumé
                         </span>
@@ -607,12 +1170,12 @@
     </div>
 </div>
 
-<!-- Modal Modification de Résumé -->
+<!-- Modal Modification de Résumé Premium -->
 <div class="modal fade" id="editResumeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header card-header-gradient">
-                <h5 class="modal-title">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
                     <i class="fas fa-edit me-2"></i>Modifier le Résumé Financier
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -624,7 +1187,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_capital_social" class="form-label">
-                                    <i class="fas fa-money-bill-wave text-primary"></i>Capital Social
+                                    <i class="fas fa-money-bill-wave"></i>Capital Social
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-money-bill-wave"></i>
@@ -637,7 +1200,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_chiffre_affaire" class="form-label">
-                                    <i class="fas fa-chart-line text-success"></i>Chiffre d'Affaires
+                                    <i class="fas fa-chart-line"></i>Chiffre d'Affaires
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-chart-line"></i>
@@ -653,7 +1216,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_resultat_net" class="form-label">
-                                    <i class="fas fa-calculator text-warning"></i>Résultat Net
+                                    <i class="fas fa-calculator"></i>Résultat Net
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-calculator"></i>
@@ -666,7 +1229,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_capitaux_propre" class="form-label">
-                                    <i class="fas fa-hand-holding-usd text-info"></i>Capitaux Propres
+                                    <i class="fas fa-hand-holding-usd"></i>Capitaux Propres
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-hand-holding-usd"></i>
@@ -682,7 +1245,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_nombre_employe" class="form-label">
-                                    <i class="fas fa-users text-danger"></i>Nombre d'Employés
+                                    <i class="fas fa-users"></i>Nombre d'Employés
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-users"></i>
@@ -695,7 +1258,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_date_creation" class="form-label">
-                                    <i class="fas fa-calendar-alt text-primary"></i>Date de Création
+                                    <i class="fas fa-calendar-alt"></i>Date de Création
                                 </label>
                                 <div class="input-with-icon">
                                     <i class="input-icon fas fa-calendar-alt"></i>
@@ -710,7 +1273,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_devise" class="form-label">
-                                    <i class="fas fa-globe text-info"></i>Devise
+                                    <i class="fas fa-globe"></i>Devise
                                 </label>
                                 <select class="form-select select2-with-search" id="edit_devise" name="devise" required>
                                     <option value="">Sélectionnez une devise</option>
@@ -725,7 +1288,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="edit_couleur_commentaire" class="form-label">
-                                    <i class="fas fa-palette text-warning"></i>Couleur du Commentaire
+                                    <i class="fas fa-palette"></i>Couleur du Commentaire
                                 </label>
                                 <select class="form-select select2-with-color" id="edit_couleur_commentaire" name="couleur_commentaire" required>
                                     <option value="">Sélectionnez une couleur</option>
@@ -741,17 +1304,17 @@
 
                     <div class="form-group">
                         <label for="edit_commentaire" class="form-label">
-                            <i class="fas fa-comment text-success"></i>Commentaire
+                            <i class="fas fa-comment"></i>Commentaire
                         </label>
                         <textarea class="form-control" id="edit_commentaire" name="commentaire" 
                                   rows="4"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Annuler
                     </button>
-                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                    <button type="submit" class="btn btn-warning btn-action" id="submitEditBtn">
                         <span class="btn-text">
                             <i class="fas fa-save me-1"></i>Mettre à jour
                         </span>
@@ -763,27 +1326,32 @@
     </div>
 </div>
 
-<!-- Modal de confirmation de suppression -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+<!-- Modal de confirmation de suppression Premium -->
+<div class="modal fade modal-danger" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation de suppression
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
-                <h6 class="fw-bold">Supprimer le résumé financier</h6>
-                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer ce résumé ? Cette action est irréversible.</p>
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-trash-alt fa-4x text-danger opacity-75"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-3">Supprimer le résumé financier</h6>
+                <p class="text-dark opacity-90 mb-0">
+                    Êtes-vous sûr de vouloir supprimer ce résumé ?<br>
+                    Cette action est irréversible et supprimera toutes les données associées.
+                </p>
             </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <div class="modal-footer justify-content-center border-top-0 pt-0">
+                <button type="button" class="btn btn-light btn-action" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Annuler
                 </button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="fas fa-trash me-1"></i>Supprimer
+                <button type="button" class="btn btn-light btn-action text-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer définitivement
                 </button>
             </div>
         </div>
@@ -800,49 +1368,190 @@ $(document).ready(function() {
     const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/resume/`;
     const ACCESS_TOKEN = '{{ access_token }}';
     let currentResume = null;
+    let select2Instances = {};
 
     // Fonction pour formater les options (devise, couleur, etc.)
     function formatOption(option) {
         if (!option.id) return option.text;
+        
         const $option = $(`
-            <span>
-                ${option.element.dataset.color ? `<span style="color: ${option.element.dataset.color}; margin-right: 8px;">●</span>` : ''}
-                ${option.element.dataset.code ? `<span class="float-end text-muted">${option.element.dataset.code}</span>` : ''}
-                ${option.text}
-            </span>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    ${option.element.dataset.color ? `<span style="color: ${option.element.dataset.color}; margin-right: 8px; font-size: 1.2em;">●</span>` : ''}
+                    ${option.text}
+                </div>
+                ${option.element.dataset.code ? `<span class="text-muted small">${option.element.dataset.code}</span>` : ''}
+            </div>
         `);
         return $option;
     }
 
-    // Fonction pour formater la sélection
     function formatOptionSelection(option) {
         if (!option.id) return option.text;
+        
+        if (option.element && option.element.dataset.color) {
+            return $(`
+                <span>
+                    <span style="color: ${option.element.dataset.color}; margin-right: 6px;">●</span>
+                    ${option.text.replace(/<[^>]*>/g, '')}
+                </span>
+            `);
+        }
         return option.text.replace(/<[^>]*>/g, '');
     }
 
-    // Initialisation de Select2
+    // Initialisation de Select2 corrigée
+    // Initialisation de Select2 corrigée avec centrage
     function initSelect2() {
-        $('.select2-with-search, .select2-with-color').select2({
-            theme: 'bootstrap-5',
-            width: '100%',
-            placeholder: 'Sélectionnez une option',
-            language: 'fr',
-            allowClear: true,
-            minimumResultsForSearch: 10, // Active la recherche dès 10 résultats
-            dropdownParent: $('body'), // Pour les modales
-            templateResult: formatOption,
-            templateSelection: formatOptionSelection,
-            escapeMarkup: function(m) { return m; }
+        // Détruire les instances existantes
+        $('.select2-with-search, .select2-with-color').each(function() {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('destroy');
+            }
+        });
+
+        // Initialiser les sélecteurs de devise
+        $('.select2-with-search').each(function() {
+            const $select = $(this);
+            const selectId = $select.attr('id');
+            const $container = $select.closest('.modal-content');
+            
+            // Calculer la largeur du conteneur parent
+            const containerWidth = $container.width();
+            
+            select2Instances[selectId] = $select.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Sélectionnez une option',
+                language: 'fr',
+                allowClear: true,
+                minimumResultsForSearch: 0,
+                dropdownParent: $container,
+                templateResult: formatOption,
+                templateSelection: formatOptionSelection,
+                escapeMarkup: function(m) { return m; },
+                dropdownCssClass: 'select2-dropdown-modal select2-dropdown-centered',
+                containerCssClass: 'select2-container-modal',
+                dropdownAutoWidth: true
+            }).on('select2:open', function(e) {
+                // Ajuster le z-index
+                $('.select2-dropdown').css('z-index', '999999');
+                
+                // Calculer et appliquer la largeur centrée
+                setTimeout(() => {
+                    const $dropdown = $('.select2-dropdown');
+                    const selectWidth = $select.outerWidth();
+                    const dropdownWidth = selectWidth; // Même largeur que le select
+                    
+                    $dropdown.css({
+                        'width': dropdownWidth + 'px',
+                        'left': '50%',
+                        'transform': 'translateX(-50%)',
+                        'position': 'fixed',
+                        'top': $select.offset().top + $select.outerHeight() + 5 + 'px'
+                    });
+                }, 10);
+                
+                // Fermer les autres dropdowns
+                $('.select2-with-search, .select2-with-color').not(this).select2('close');
+            });
+        });
+
+        // Initialiser les sélecteurs de couleur
+        $('.select2-with-color').each(function() {
+            const $select = $(this);
+            const selectId = $select.attr('id');
+            const $container = $select.closest('.modal-content');
+            
+            select2Instances[selectId] = $select.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Sélectionnez une couleur',
+                language: 'fr',
+                allowClear: true,
+                minimumResultsForSearch: 0,
+                dropdownParent: $container,
+                templateResult: formatOption,
+                templateSelection: formatOptionSelection,
+                escapeMarkup: function(m) { return m; },
+                dropdownCssClass: 'select2-dropdown-modal select2-dropdown-centered',
+                containerCssClass: 'select2-container-modal',
+                dropdownAutoWidth: true
+            }).on('select2:open', function(e) {
+                $('.select2-dropdown').css('z-index', '999999');
+                
+                // Calculer et appliquer la largeur centrée
+                setTimeout(() => {
+                    const $dropdown = $('.select2-dropdown');
+                    const selectWidth = $select.outerWidth();
+                    const dropdownWidth = selectWidth;
+                    
+                    $dropdown.css({
+                        'width': dropdownWidth + 'px',
+                        'left': '50%',
+                        'transform': 'translateX(-50%)',
+                        'position': 'fixed',
+                        'top': $select.offset().top + $select.outerHeight() + 5 + 'px'
+                    });
+                }, 10);
+                
+                $('.select2-with-search, .select2-with-color').not(this).select2('close');
+            });
         });
     }
 
-    // Initialisation au chargement de la page
-    initSelect2();
+    // Détruire Select2 avant la fermeture du modal
+    function destroySelect2BeforeModalClose() {
+        $('#addResumeModal, #editResumeModal').on('hide.bs.modal', function() {
+            $(this).find('.select2-with-search, .select2-with-color').each(function() {
+                if ($(this).hasClass('select2-hidden-accessible')) {
+                    $(this).select2('destroy');
+                }
+            });
+            
+            // Réinitialiser les formulaires
+            $(this).find('form')[0]?.reset();
+            
+            // Nettoyer les instances
+            Object.keys(select2Instances).forEach(key => {
+                delete select2Instances[key];
+            });
+        });
+    }
 
-    // Réinitialisation pour les modales
+    // Réinitialisation pour les modales - version corrigée
     $('#addResumeModal, #editResumeModal').on('shown.bs.modal', function() {
-        initSelect2();
+        // Attendre que le modal soit complètement affiché
+        setTimeout(() => {
+            initSelect2();
+            
+            // Forcer le recalcul des positions
+            $(this).find('.select2-with-search, .select2-with-color').each(function() {
+                const instance = $(this).data('select2');
+                if (instance) {
+                    instance.dropdown._positionDropdown();
+                    instance.dropdown._resizeDropdown();
+                }
+            });
+        }, 50);
     });
+
+    // Gérer les clics en dehors des dropdowns pour les fermer
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.select2-container').length && 
+            !$(e.target).closest('.modal').length) {
+            $('.select2-with-search, .select2-with-color').select2('close');
+        }
+    });
+
+    // Prévenir la fermeture du modal quand on clique dans le dropdown
+    $(document).on('click', '.select2-dropdown', function(e) {
+        e.stopPropagation();
+    });
+
+    // Initialiser au chargement de la page (pour les éventuels sélecteurs hors modales)
+    initSelect2();
+    destroySelect2BeforeModalClose();
 
     // Charger les données du résumé
     function loadResumeData() {
@@ -866,7 +1575,7 @@ $(document).ready(function() {
         });
     }
 
-    // Remplir le formulaire d'édition
+    // Remplir le formulaire d'édition - version corrigée
     function populateEditForm(resume) {
         if (!resume) return;
 
@@ -878,31 +1587,41 @@ $(document).ready(function() {
         $('#edit_nombre_employe').val(resume.nombre_employe || '');
         $('#edit_date_creation').val(resume.date_creation || '');
 
-        // Sélectionner la devise et la couleur dans les Select2
-        if (resume.devise) {
-            $('#edit_devise').val(resume.devise.id).trigger('change');
-        }
-        if (resume.couleur_commentaire) {
-            $('#edit_couleur_commentaire').val(resume.couleur_commentaire.id).trigger('change');
-        }
+        // Attendre que Select2 soit initialisé
+        setTimeout(() => {
+            if (resume.devise && $('#edit_devise').length) {
+                $('#edit_devise').val(resume.devise.id).trigger('change');
+            }
+            if (resume.couleur_commentaire && $('#edit_couleur_commentaire').length) {
+                $('#edit_couleur_commentaire').val(resume.couleur_commentaire.id).trigger('change');
+            }
+        }, 100);
 
         $('#edit_commentaire').val(resume.commentaire || '');
     }
 
-    // Formulaire d'ajout
+    // Formulaire d'ajout avec gestion améliorée
     $('#addResumeForm').on('submit', function(e) {
         e.preventDefault();
+        
+        // Fermer tous les dropdowns Select2 avant soumission
+        $('.select2-with-search, .select2-with-color').select2('close');
+        
         submitResumeForm('POST', $(this).serialize(), '#submitAddBtn', 'addResumeModal');
     });
 
-    // Formulaire de modification
+    // Formulaire de modification avec gestion améliorée
     $('#editResumeForm').on('submit', function(e) {
         e.preventDefault();
+        
+        // Fermer tous les dropdowns Select2 avant soumission
+        $('.select2-with-search, .select2-with-color').select2('close');
+        
         const formData = $(this).serialize();
         submitResumeForm('POST', formData, '#submitEditBtn', 'editResumeModal');
     });
 
-    // Soumission du formulaire
+    // Soumission du formulaire améliorée
     function submitResumeForm(method, formData, submitBtn, modalId) {
         const $btn = $(submitBtn);
         const $btnText = $btn.find('.btn-text');
@@ -932,7 +1651,10 @@ $(document).ready(function() {
                     title: 'Succès',
                     text: method === 'POST' ? 'Résumé créé avec succès' : 'Résumé modifié avec succès',
                     timer: 2000,
-                    showConfirmButton: false
+                    showConfirmButton: false,
+                    background: 'linear-gradient(135deg, var(--primary-color), var(--dark-color))',
+                    color: 'white',
+                    iconColor: 'white'
                 }).then(() => {
                     window.location.reload();
                 });
@@ -942,7 +1664,7 @@ $(document).ready(function() {
                 $btnText.show();
                 $btn.prop('disabled', false);
 
-                let errorMessage = 'Une erreur est survenue';
+                let errorMessage = 'Une erreur est survenue lors de l\'enregistrement';
                 if (xhr.responseJSON) {
                     errorMessage = Object.values(xhr.responseJSON).join('\n');
                 }
@@ -950,14 +1672,21 @@ $(document).ready(function() {
                 Swal.fire({
                     icon: 'error',
                     title: 'Erreur',
-                    text: errorMessage
+                    text: errorMessage,
+                    confirmButtonColor: 'var(--primary-color)'
                 });
             }
         });
     }
 
-    // Suppression du résumé
+    // Suppression du résumé avec confirmation améliorée
     $('#confirmDeleteBtn').on('click', function() {
+        const $btn = $(this);
+        const originalText = $btn.html();
+        
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Suppression...');
+        $btn.prop('disabled', true);
+
         $.ajax({
             url: API_BASE_URL,
             type: 'DELETE',
@@ -969,19 +1698,26 @@ $(document).ready(function() {
                 $('#confirmDeleteModal').modal('hide');
                 Swal.fire({
                     icon: 'success',
-                    title: 'Succès',
-                    text: 'Résumé supprimé avec succès',
+                    title: 'Supprimé !',
+                    text: 'Le résumé financier a été supprimé avec succès',
                     timer: 2000,
-                    showConfirmButton: false
+                    showConfirmButton: false,
+                    background: 'linear-gradient(135deg, var(--primary-color), var(--dark-color))',
+                    color: 'white',
+                    iconColor: 'white'
                 }).then(() => {
                     window.location.reload();
                 });
             },
             error: function(xhr) {
+                $btn.html(originalText);
+                $btn.prop('disabled', false);
+                
                 Swal.fire({
                     icon: 'error',
                     title: 'Erreur',
-                    text: 'Impossible de supprimer le résumé'
+                    text: 'Impossible de supprimer le résumé',
+                    confirmButtonColor: 'var(--primary-color)'
                 });
             }
         });
@@ -1003,9 +1739,35 @@ $(document).ready(function() {
         return cookieValue;
     }
 
+    // Fonctions utilitaires d'affichage
+    function showError(title, text) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: text,
+            confirmButtonColor: 'var(--primary-color)'
+        });
+    }
+
     // Charger les données au démarrage
     loadResumeData();
-});
 
+    // Animation des cartes au scroll
+    function animateCardsOnScroll() {
+        $('.stat-card, .enhanced-card').each(function() {
+            const elementTop = $(this).offset().top;
+            const elementBottom = elementTop + $(this).outerHeight();
+            const viewportTop = $(window).scrollTop();
+            const viewportBottom = viewportTop + $(window).height();
+            
+            if (elementBottom > viewportTop && elementTop < viewportBottom) {
+                $(this).addClass('animate');
+            }
+        });
+    }
+
+    $(window).on('scroll', animateCardsOnScroll);
+    animateCardsOnScroll();
+});
 </script>
 {% endblock %}

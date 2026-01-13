@@ -1732,7 +1732,10 @@ class AddResumeSerializer(serializers.ModelSerializer):
             "date_creation",
             "couleur_commentaire",
             "commentaire",
+            "created_by",  # Ajouter pour affichage
+            "updated_by",  # Ajouter pour affichage
         ]
+        read_only_fields = ["created_by", "updated_by"]  # Rendre en lecture seule
 
 
 class GetResumeSerializer(serializers.ModelSerializer):
@@ -1761,7 +1764,9 @@ class EditResumeSerializer(serializers.ModelSerializer):
             "date_creation",
             "couleur_commentaire",
             "commentaire",
+            "updated_by",  # Ajouter pour affichage
         ]
+        read_only_fields = ["updated_by"]  # Rendre en lecture seule
 
 
 class ResumeSerializer(serializers.ModelSerializer):
@@ -8838,6 +8843,13 @@ class AddTelephoneAcheteurSerializer(serializers.ModelSerializer):
         queryset=Acheteur.objects.all()
     )
     
+    def create(self, validated_data):
+        # Récupérer l'utilisateur du contexte (passé par la vue)
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+        validated_data['updated_by'] = user
+        return super().create(validated_data)
+    
     class Meta:
         model = TelephoneAcheteur
         fields = ["telephone", "acheteur"]
@@ -8868,6 +8880,12 @@ class EditTelephoneAcheteurSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelephoneAcheteur
         fields = ["telephone", "updated_by"]
+        
+    def update(self, instance, validated_data):
+        # Récupérer l'utilisateur du contexte (passé par la vue)
+        user = self.context['request'].user
+        validated_data['updated_by'] = user
+        return super().update(instance, validated_data)
     
     def validate_telephone(self, value):
         """Même validation que pour l'ajout"""

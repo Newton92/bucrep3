@@ -16,6 +16,10 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_model_changes import ChangesMixin
 # from changes import ChangesMixin
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.exceptions import ValidationError
+
 
 
 from safedelete.models import SafeDeleteModel as Model, SOFT_DELETE_CASCADE
@@ -2156,7 +2160,7 @@ class Resume(Model):
         blank=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Devise du capital social"),
-        related_name="devise_resume",
+        related_name="devise_capital_social",
     )
     capital_social = models.DecimalField(
         max_digits=100,
@@ -2208,7 +2212,12 @@ class Resume(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur du commentaire"),
     )
-    commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
+    commentaire = models.TextField(
+        blank=True, 
+        null=True,  # Ajouter null=True comme dans V2
+        max_length=10000000,  # Ajouter limite de longueur comme dans V2
+        verbose_name=_("Commentaire")
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -2272,6 +2281,7 @@ class RiskRating(Model):
     
     acheteur = models.ForeignKey(
         "Acheteur",
+        blank=True,  # Ajouté pour correspondre à V2
         null=True,
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
@@ -2319,8 +2329,18 @@ class RiskRating(Model):
         verbose_name=_("Indice du risque"),
     )
 
-    interpretation = models.TextField(blank=True, verbose_name=_("Interprétation"))
-    analyse = models.TextField(blank=True, verbose_name=_("Analyse détaillée"))
+    interpretation = models.TextField(
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        max_length=10000000,  # Ajouté pour correspondre à V2
+        verbose_name=_("Interprétation")
+    )
+    analyse = models.TextField(
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        max_length=10000000,  # Ajouté pour correspondre à V2
+        verbose_name=_("Analyse")
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -2332,7 +2352,7 @@ class RiskRating(Model):
     # Champs d'audit
     created_by = models.ForeignKey(
         'User',
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='risk_rating_user_create',
@@ -2341,7 +2361,7 @@ class RiskRating(Model):
     
     updated_by = models.ForeignKey(
         'User',
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='risk_rating_user_update',
@@ -3542,6 +3562,1661 @@ class OpinionCreditAcremac(Model):
 ##########################################################
 ##########################################################
 # Fin Modules Yannick
+##########################################################
+##########################################################
+
+
+##########################################################
+##########################################################
+# Debut Modules Additifs
+##########################################################
+##########################################################
+class Logo(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="logo",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au logo"),
+    )
+    image = models.ImageField(
+        _("Image"),
+        upload_to="logos/",
+        null=True,
+        blank=True,
+        help_text=_("Image du logo de l'entreprise"),
+    )
+    description = models.TextField(
+        _("Description"), null=True, blank=True, help_text=_("Description du logo")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Logo")
+        verbose_name_plural = _("Logos")
+
+    def __str__(self):
+        return f"Logo de {self.acheteur.nom}"
+
+
+class TelephoneAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    telephone = models.TextField(max_length=100, verbose_name=_("Téléphone"))
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="telephones",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au téléphone"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="telephone_user_create",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="telephone_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Téléphone")
+        verbose_name_plural = _("Téléphones")
+
+    def __str__(self):
+        return f"Numéro de téléphone de {self.acheteur.nom}"
+    
+    def get_formatted_number(self):
+        """Retourne le numéro formaté pour l'affichage"""
+        if not self.telephone:
+            return ""
+        
+        # Nettoyer le numéro
+        cleaned = re.sub(r'\D', '', str(self.telephone))
+        
+        # Format par préfixe de pays
+        format_rules = {
+            '241': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:11]}" if len(num) == 11 else self.telephone,
+            '225': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:12]}" if len(num) == 12 else self.telephone,
+            '223': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:11]}" if len(num) == 11 else self.telephone,
+        }
+        
+        # Chercher le format correspondant
+        for prefix in format_rules:
+            if cleaned.startswith(prefix):
+                return format_rules[prefix](cleaned)
+        
+        # Format général pour les numéros locaux
+        if len(cleaned) == 8 and cleaned.startswith('0'):
+            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]}"
+        elif len(cleaned) == 9 and cleaned.startswith('0'):
+            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:9]}"
+        elif len(cleaned) == 10:
+            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:10]}"
+        
+        return self.telephone
+    
+    def get_call_link(self):
+        """Retourne le lien pour appeler le numéro"""
+        if not self.telephone:
+            return ""
+        
+        # Nettoyer le numéro de tous les caractères non numériques
+        cleaned_number = re.sub(r'\D', '', str(self.telephone))
+        
+        # Si le numéro ne commence pas par +, l'ajouter
+        if cleaned_number and not cleaned_number.startswith('+'):
+            # Vérifier s'il s'agit d'un numéro local (commence par 0)
+            if cleaned_number.startswith('0'):
+                cleaned_number = cleaned_number[1:]
+            
+            # Ajouter l'indicatif par défaut si nécessaire
+            cleaned_number = '+' + cleaned_number
+        
+        return f"tel:{cleaned_number}"
+    
+    def clean(self):
+        """Validation du modèle"""
+        super().clean()
+        if self.telephone:
+            # S'assurer que le téléphone contient au moins quelques chiffres
+            digits = re.sub(r'\D', '', self.telephone)
+            if len(digits) < 6:
+                raise ValidationError({
+                    'telephone': _("Le numéro de téléphone doit contenir au moins 6 chiffres.")
+                })
+
+
+class AdresseAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    adresse = models.TextField(max_length=100, verbose_name=_("Adresse"))
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="adresses",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au téléphone"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="adresses_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="adresses_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Adresse")
+        verbose_name_plural = _("Adresses")
+
+    def __str__(self):
+        return f"Adresse de {self.acheteur.nom}"
+
+
+class PortableAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"), help_text=_("Format: +241 XX XX XX XX ou 0X XX XX XX"))
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="portables",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au portable"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="portable_user_create",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="portable_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    def clean(self):
+        """Validation du numéro de portable - VERSION AVEC DEBUG"""
+        super().clean()
+        
+        import re
+        
+        print(f"DEBUG clean() - portable: {self.portable}")
+        print(f"DEBUG clean() - acheteur: {self.acheteur}")
+        print(f"DEBUG clean() - created_by: {self.created_by}")
+        print(f"DEBUG clean() - type created_by: {type(self.created_by)}")
+        
+        if not self.portable:
+            raise ValidationError({'portable': _("Le numéro de portable est requis.")})
+        
+        # Nettoyer le numéro
+        cleaned = re.sub(r'\D', '', self.portable)
+        
+        # Validation de base
+        if len(cleaned) < 8:
+            raise ValidationError({
+                'portable': _("Le numéro de portable doit contenir au moins 8 chiffres.")
+            })
+        
+        if len(cleaned) > 15:
+            raise ValidationError({
+                'portable': _("Le numéro de portable ne peut pas dépasser 15 chiffres.")
+            })
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Valider avant de sauvegarder
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.portable} - {self.acheteur.nom}"
+    
+    def get_formatted_number(self):
+        """Retourne le numéro formaté pour l'affichage - VERSION AMÉLIORÉE"""
+        import re
+        
+        cleaned = re.sub(r'\D', '', self.portable)
+        
+        # Format selon la longueur et le préfixe
+        if cleaned.startswith(('241', '225', '223')) and len(cleaned) == 11:
+            # Format international: +XXX XX XX XX XX
+            return f"+{cleaned[:3]} {cleaned[3:5]} {cleaned[5:7]} {cleaned[7:9]} {cleaned[9:11]}"
+        elif cleaned.startswith('0') and len(cleaned) == 9:
+            # Format local: 0X XX XX XX
+            return f"{cleaned[0:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:9]}"
+        elif len(cleaned) >= 10:
+            # Format générique pour les longs numéros
+            if cleaned.startswith('1') and len(cleaned) == 11:  # USA/Canada
+                return f"+{cleaned[0]} ({cleaned[1:4]}) {cleaned[4:7]}-{cleaned[7:11]}"
+            else:
+                # Groupement par 2 ou 3 chiffres
+                formatted = ''
+                if cleaned.startswith('+'):
+                    formatted = '+'
+                    cleaned = cleaned[1:]
+                
+                while len(cleaned) > 0:
+                    if len(cleaned) >= 3:
+                        formatted += cleaned[:3] + ' '
+                        cleaned = cleaned[3:]
+                    else:
+                        formatted += cleaned + ' '
+                        cleaned = ''
+                
+                return formatted.strip()
+        
+        # Retourner le numéro original si aucun format ne correspond
+        return self.portable
+    
+    def get_call_link(self):
+        """Retourne le lien pour appeler le numéro"""
+        if not self.portable:
+            return ""
+        
+        # Nettoyer le numéro de tous les caractères non numériques
+        cleaned_number = re.sub(r'\D', '', str(self.portable))
+        
+        # Si le numéro ne commence pas par +, l'ajouter
+        if cleaned_number and not cleaned_number.startswith('+'):
+            # Vérifier s'il s'agit d'un numéro local (commence par 0)
+            if cleaned_number.startswith('0'):
+                # Supprimer le 0 initial pour certains pays
+                cleaned_number = cleaned_number[1:]
+            
+            # Ajouter l'indicatif par défaut si nécessaire
+            # (ajuster selon vos besoins)
+            cleaned_number = '+' + cleaned_number
+        
+        return f"tel:{cleaned_number}"
+    
+    def get_whatsapp_link(self):
+        """Retourne le lien WhatsApp"""
+        if not self.portable:
+            return ""
+        
+        # Nettoyer le numéro de tous les caractères non numériques
+        cleaned_number = re.sub(r'\D', '', str(self.portable))
+        
+        # WhatsApp nécessite un format international sans le +
+        return f"https://wa.me/{cleaned_number}"
+
+    class Meta:
+        verbose_name = _("Portable d'Acheteur")
+        verbose_name_plural = _("Portables d'Acheteurs")
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['acheteur']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['portable']),
+        ]
+        unique_together = [['acheteur', 'portable']]  # Empêche les doublons pour le même acheteur
+
+
+class EmailAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    email = models.TextField(
+        max_length=254,  # Limite la taille à celle d'une adresse email standard
+        verbose_name=_("Adresse email"),
+    )
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="emails",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à l'email"),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="email_user_create",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="email_user_update",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Email")
+        verbose_name_plural = _("Emails")
+
+    def __str__(self):
+        return f"Email de {self.acheteur.nom}"
+    
+    def get_mailto_link(self):
+        """Retourne le lien mailto: pour l'email"""
+        if not self.email:
+            return ""
+        return f"mailto:{self.email}"
+    
+    def get_display_email(self):
+        """Retourne l'email formaté pour l'affichage"""
+        if not self.email:
+            return ""
+        
+        # Pour les longs emails, on peut tronquer l'affichage
+        email = self.email.strip().lower()
+        if len(email) > 30:
+            # Garder le début et la fin pour l'affichage
+            local_part, domain = email.split('@')
+            if len(local_part) > 15:
+                local_part = local_part[:12] + '...'
+            return f"{local_part}@{domain}"
+        return email
+    
+    def clean(self):
+        """Validation du modèle"""
+        super().clean()
+        
+        if self.email:
+            # Normaliser l'email
+            self.email = self.email.strip().lower()
+            
+            # Vérifier la longueur
+            if len(self.email) > 254:
+                raise ValidationError({
+                    'email': _("L'adresse email ne peut pas dépasser 254 caractères.")
+                })
+            
+            # Vérifier le format
+            try:
+                validate_email(self.email)
+            except DjangoValidationError:
+                raise ValidationError({
+                    'email': _("Adresse email invalide.")
+                })
+
+
+class Document(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="documents",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au document"),
+    )
+    titre = models.CharField(
+        _("Titre"), max_length=255, help_text=_("Titre du document")
+    )
+    fichier = models.FileField(
+        _("Fichier"), upload_to="documents/", help_text=_("Fichier du document")
+    )
+    description = models.TextField(
+        _("Description"), null=True, blank=True, help_text=_("Description du document")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="documents_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="documents_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Document")
+        verbose_name_plural = _("Documents")
+
+    def __str__(self):
+        return f"{self.titre} - {self.acheteur.nom}"
+
+
+class Swot(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="swot",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à l'analyse SWOT"),
+    )
+    forces = models.TextField(
+        _("Forces"), null=True, blank=True, help_text=_("Forces de l'entreprise")
+    )
+    faiblesses = models.TextField(
+        _("Faiblesses"),
+        null=True,
+        blank=True,
+        help_text=_("Faiblesses de l'entreprise"),
+    )
+    opportunites = models.TextField(
+        _("Opportunités"),
+        null=True,
+        blank=True,
+        help_text=_("Opportunités de l'entreprise"),
+    )
+    menaces = models.TextField(
+        _("Menaces"), null=True, blank=True, help_text=_("Menaces de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="swots_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="swots_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("SWOT")
+        verbose_name_plural = _("SWOT")
+
+    def __str__(self):
+        return f"SWOT de {self.acheteur.nom}"
+
+
+class ProduitService(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="produits_services",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé"),
+    )
+    produits = models.TextField(
+        _("Produits"), null=True, blank=True, help_text=_("Produits de l'entreprise")
+    )
+    services = models.TextField(
+        _("Services"), null=True, blank=True, help_text=_("Services de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_produits_services',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_produits_services',
+        verbose_name=_("Mis à jour par")
+    )
+
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Produit & Service")
+        verbose_name_plural = _("Produits & Services")
+
+    def __str__(self):
+        return f"Produits & Services de {self.acheteur.nom}"
+
+
+class Marque(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="marques",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé"),
+    )
+    marques = models.TextField(
+        _("Marques"), null=True, blank=True, help_text=_("Marques de l'entreprise")
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_marques',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_marques',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Marque")
+        verbose_name_plural = _("Marques")
+
+    def __str__(self):
+        return f"Marque de {self.acheteur.nom}"
+
+
+class ProcedureCollective(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="procedures_collectives",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé à la procédure collective"),
+    )
+    type_procedure = models.CharField(
+        _("Type de procédure"),
+        max_length=255,
+        help_text=_("Type de procédure collective (ex: Redressement judiciaire, Liquidation...)"),
+    )
+    date_ouverture = models.DateField(
+        _("Date d'ouverture"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'ouverture de la procédure"),
+    )
+    date_cloture = models.DateField(
+        _("Date de clôture"),
+        null=True,
+        blank=True,
+        help_text=_("Date de clôture de la procédure"),
+    )
+    tribunal = models.CharField(
+        _("Tribunal compétent"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Nom du tribunal compétent"),
+    )
+    numero_dossier = models.CharField(
+        _("Numéro de dossier"),
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text=_("Référence officielle du dossier"),
+    )
+    secteur_activite = models.CharField(
+        _("Secteur d'activité"),
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_("Secteur d'activité de l'entreprise concernée"),
+    )
+    description = models.TextField(
+        _("Description"),
+        null=True,
+        blank=True,
+        help_text=_("Description détaillée de la procédure collective"),
+    )
+    montant_creance = models.DecimalField(
+        _("Montant total des créances déclarées"),
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Montant en FCFA"),
+    )
+    impact_assureur = models.TextField(
+        _("Impact pour l’assureur crédit"),
+        null=True,
+        blank=True,
+        help_text=_("Résumé de l’impact et des mesures prises par l’assureur crédit"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="procedures_collectives_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="procedures_collectives_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Procédure Collective")
+        verbose_name_plural = _("Procédures Collectives")
+
+    def __str__(self):
+        return f"{self.type_procedure} - {self.acheteur.nom if self.acheteur else ''}"
+
+
+class RegistreCommerce(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="registre_commerce",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au registre de commerce"),
+    )
+    numero = models.CharField(
+        _("Numéro de registre de commerce"),
+        max_length=255,
+        help_text=_("Numéro de registre de commerce de l'entreprise"),
+    )
+    date_inscription = models.DateField(
+        _("Date d'inscription"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'inscription au registre de commerce"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_registres_commerce',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_registres_commerce',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Registre de Commerce")
+        verbose_name_plural = _("Registres de Commerce")
+
+    def __str__(self):
+        return f"Registre de commerce de {self.acheteur.nom}"
+
+
+class Cotisation(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="cotisations",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au numéro de sécurité sociale"),
+    )
+    numero = models.CharField(
+        _("Numéro de sécurité sociale"),
+        max_length=255,
+        help_text=_("Numéro de sécurité sociale de l'entreprise"),
+    )
+    date_affiliation = models.DateField(
+        _("Date d'affiliation"),
+        null=True,
+        blank=True,
+        help_text=_("Date d'affiliation à la sécurité sociale"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_cotisations_sociales',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_cotisations_sociales',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Cotisation Sociale")
+        verbose_name_plural = _("Cotisations Sociales")
+
+    def __str__(self):
+        return f"Cotisations Sociales de {self.acheteur.nom}"
+
+
+class CodeNaceAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="codes_nace",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au code NACE"),
+    )
+    code = models.ForeignKey(
+        "SubCategoryNaceCode",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="code_nace_acheteur",
+        verbose_name=_("Acheteur"),
+        help_text=_("Code associé au code NACE"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="codes_naces_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="codes_naces_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = _("Code NACE Acheteur")
+        verbose_name_plural = _("Codes NACE Acheteur")
+
+    def __str__(self):
+        return f"Code NACE de {self.acheteur.nom}"
+
+
+
+class CodeNafAcheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="codes_naf",
+        verbose_name=_("Acheteur"),
+        help_text=_("Acheteur associé au code NAF"),
+    )
+    code = models.ForeignKey(
+        "SubCategoryNafCode",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="code_naf_acheteur",
+        verbose_name=_("Acheteur"),
+        help_text=_("Code associé au code NAF"),
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        related_name="codes_nafs_created",
+    )
+    updated_by = models.ForeignKey(
+        "User",
+        related_name="codes_nafs_updated",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+
+    history = HistoricalRecords()
+
+    def __str__(self):
+        return f"Code NAF de {self.acheteur.nom}"
+
+
+    class Meta:
+        verbose_name = _("Code NAF Acheteur")
+        verbose_name_plural = _("Codes NAF Acheteur")
+
+
+# Tables supplementaires
+
+# Assuming you already have an Acheteur model defined elsewhere
+# For example:
+# class Acheteur(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+
+class Certification(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    """
+    Represents certifications obtained by an Acheteur.
+    """
+
+    TYPES = [
+        ("management_risque", "Management du risque"),
+        ("securite_information", "Management de la sécurité de l'information"),
+        ("risk_manager", "Risk Manager & Méthodes d'Appréciation du Risque"),
+        ("continuite_activite", "Management de la continuité d'activité (SMCA)"),
+        ("anti_corruption", "Management Anti–Corruption"),
+        ("cybersecurity_manager", "Lead Cybersecurity Manager"),
+        ("qualite", "Management de la Qualité"),
+        ("dpo_rgpd", "DPO : RGPD, Certified Data Protection Officer"),
+        ("bon_payeur", "Certificat de Bon payeur"),
+        ("autre", "Autre certification"),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="certifications"
+    )
+    type_certification = models.CharField(
+        max_length=50, choices=TYPES, verbose_name="Type de Certification"
+    )
+    nom_certification = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Nom Spécifique de la Certification",
+    )
+    date_obtention = models.DateField(
+        blank=True, null=True, verbose_name="Date d'Obtention"
+    )
+    organisme_delivreur = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="Organisme Délivreur"
+    )
+    description = models.TextField(
+        blank=True, null=True, verbose_name="Description / Commentaires"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_certifications',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_certifications',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = "Certification"
+        verbose_name_plural = "Certifications"
+        unique_together = ("acheteur", "type_certification", "nom_certification")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_certification": self.type_certification,
+            "nom_certification": self.nom_certification,
+            "date_obtention": self.date_obtention,
+            "organisme_delivreur": self.organisme_delivreur,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_certification": self.type_certification,
+            "nom_certification": self.nom_certification,
+            "date_obtention": self.date_obtention,
+            "organisme_delivreur": self.organisme_delivreur,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        # Mappage des champs aux codes internes des ElementSurveillance
+        field_to_element_code = {
+            "type_certification": "CERTIFICATION_CHANGE",  # Un changement de type est un changement de certification
+            "nom_certification": "CERTIFICATION_CHANGE",  # Idem
+            "date_obtention": "CERTIFICATION_CHANGE",  # Idem
+            "organisme_delivreur": "CERTIFICATION_CHANGE",  # Idem
+        }
+
+        changes_detected = {}
+
+        # Pour NEW_CERTIFICATION: Si c'est un nouvel enregistrement
+        if self.pk is None:  # Si l'objet est nouveau
+            changes_detected.setdefault("NEW_CERTIFICATION", []).append(
+                f"Une nouvelle certification a été ajoutée : '{self.nom_certification or self.get_type_certification_display()}'."
+            )
+
+        # Pour CERTIFICATION_LOSS: Si une certification est supprimée, cela est plus complexe à gérer avec save()
+        # car save() est appelé sur l'instance qui est modifiée/créée.
+        # Pour une suppression, vous devriez utiliser un signal `post_delete` ou un Manager personnalisé.
+        # Pour l'instant, nous nous concentrons sur les modifications via save().
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                changes_detected.setdefault(element_code, []).append(
+                    f"La certification '{self.nom_certification or self.get_type_certification_display()}' "
+                    f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                    f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_type_certification_display()}"
+
+
+class InnovationDeveloppement(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    """
+    Represents innovation and development activities of an Acheteur.
+    """
+
+    TYPES_INNOVATION = [
+        ("nouveau_produit_service", "Développement de Nouveau produit ou service"),
+        ("nouveaux_outils_production", "Acquisition de nouveaux outils de production"),
+        ("innovation_produit", "L'innovation de produit"),
+        ("innovation_procede", "L'innovation de procédé"),
+        ("innovation_commercialisation", "L'innovation de commercialisation"),
+        ("innovation_organisation", "L'innovation d'organisation"),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="innovations"
+    )
+    type_innovation = models.CharField(
+        max_length=50, choices=TYPES_INNOVATION, verbose_name="Type d'Innovation"
+    )
+    titre = models.CharField(
+        max_length=255, verbose_name="Titre de l'Innovation", blank=True, null=True
+    )
+    description = models.TextField(
+        blank=True, null=True, verbose_name="Description / Commentaires"
+    )
+    date_debut = models.DateField(blank=True, null=True, verbose_name="Date de Début")
+    date_fin = models.DateField(
+        blank=True, null=True, verbose_name="Date de Fin (si applicable)"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_innovations_developpements',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_innovations_developpements',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = "Innovation et Développement"
+        verbose_name_plural = "Innovations et Développements"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_innovation": self.type_innovation,
+            "titre": self.titre,
+            "date_debut": self.date_debut,
+            "date_fin": self.date_fin,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_innovation": self.type_innovation,
+            "titre": self.titre,
+            "date_debut": self.date_debut,
+            "date_fin": self.date_fin,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        field_to_element_code = {
+            "type_innovation": "NEW_PRODUCT_SERVICE",  # Si le type d'innovation est "nouveau produit/service"
+            "titre": "INNOVATION_CHANGE",  # Générique pour toute autre modification
+            "date_debut": "INNOVATION_CHANGE",
+            "date_fin": "INNOVATION_CHANGE",
+        }
+
+        changes_detected = {}
+
+        if self.pk is None and self.type_innovation == "nouveau_produit_service":
+            changes_detected.setdefault("NEW_PRODUCT_SERVICE", []).append(
+                f"Un nouveau produit ou service a été ajouté : '{self.titre or 'Non spécifié'}'."
+            )
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                # Éviter de dupliquer si déjà capturé par 'NEW_PRODUCT_SERVICE' lors de la création
+                if not (self.pk is None and element_code == "NEW_PRODUCT_SERVICE"):
+                    changes_detected.setdefault(element_code, []).append(
+                        f"L'innovation '{self.titre or self.get_type_innovation_display()}' "
+                        f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                    )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_type_innovation_display()}"
+
+
+class StrategiePlanification(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    """
+    Represents strategic and planning approaches of an Acheteur.
+    """
+
+    TYPES_STRATEGIE = [
+        ("specialisation", "La spécialisation (faire une seule activité)"),
+        ("diversification_liees", "La diversification (activités liées)"),
+        ("diversification_non_liees", "La diversification (activités non liées)"),
+        ("integration", "L'intégration (faire tout, seul)"),
+        ("externalisation", "L'externalisation (faire-faire)"),
+        (
+            "planification_strategique",
+            "Planification stratégique (objectifs long terme)",
+        ),
+        (
+            "planification_tactique",
+            "Planification tactique (implémentation stratégies)",
+        ),
+        (
+            "planification_operationnelle",
+            "Planification opérationnelle (détails quotidiens)",
+        ),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="strategies"
+    )
+    type_strategie = models.CharField(
+        max_length=50, choices=TYPES_STRATEGIE, verbose_name="Type de Stratégie"
+    )
+    description = models.TextField(
+        blank=True, null=True, verbose_name="Description / Commentaires"
+    )
+    date_mise_en_place = models.DateField(
+        blank=True, null=True, verbose_name="Date de Mise en Place"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_strategies_planifications',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_strategies_planifications',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = "Stratégie et Planification"
+        verbose_name_plural = "Stratégies et Planifications"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_strategie": self.type_strategie,
+            "date_mise_en_place": self.date_mise_en_place,
+            # Pour la détection de "Nouveau partenariat stratégique" ou "Changement de politique de prix"
+            # Il faudrait des champs spécifiques pour ces éléments, ou analyser 'description'
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_strategie": self.type_strategie,
+            "date_mise_en_place": self.date_mise_en_place,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        field_to_element_code = {
+            "type_strategie": "STRATEGY_CHANGE",  # Générique pour tout changement de stratégie
+            "date_mise_en_place": "STRATEGY_CHANGE",
+            
+        }
+
+        # Logique pour les éléments spécifiques comme NEW_STRATEGIC_PARTNERSHIP ou PRICING_POLICY_CHANGE
+        # Si ces éléments ne sont pas gérés par des champs dédiés,
+        # vous devrez soit:
+        # 1. Ajouter des champs spécifiques (ex: is_strategic_partnership_change = BooleanField)
+        # 2. Faire une analyse textuelle du champ 'description', ce qui est moins fiable et plus coûteux.
+        # Pour l'instant, je vais les ajouter comme des codes génériques si le type_strategie correspond.
+
+        changes_detected = {}
+
+        if self.pk is None:  # Si c'est une nouvelle stratégie/planification
+            if self.type_strategie == "planification_strategique":
+                changes_detected.setdefault("STRATEGIC_PLANNING_ADDED", []).append(
+                    f"Une nouvelle planification stratégique a été ajoutée pour l'acheteur : '{self.titre or 'Non spécifié'}'."
+                )
+            # Vous pouvez ajouter d'autres conditions ici pour NEW_STRATEGIC_PARTNERSHIP si votre logique le permet
+            # Par exemple, si vous avez un champ 'partenariat_strategique_recent' ou si le 'description' contient des mots clés
+            # Pour 'COMMERCIAL_STRATEGY_CHANGE' et 'PRICING_POLICY_CHANGE', il faudrait soit un champ dédié, soit une détection dans 'description'
+            # Je vais assumer un code générique pour les modifications si un champ spécifique n'est pas présent.
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                changes_detected.setdefault(element_code, []).append(
+                    f"La stratégie '{self.get_type_strategie_display()}' "
+                    f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                    f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        return f"{self.acheteur.nom} - {self.get_type_strategie_display()}"
+
+
+class ConformiteReglementation(Model):
+    
+    safedelete_policy  = SOFT_DELETE_CASCADE
+    
+    """
+    Represents compliance and regulatory status of an Acheteur.
+    """
+
+    TYPES_CONFORMITE = [
+        ("reglementaire", "La conformité réglementaire"),
+        ("sectorielle", "La conformité sectorielle"),
+        ("donnees", "La conformité des données"),
+        ("non_conformite", "Non-conformité aux principes établis"),
+    ]
+    acheteur = models.ForeignKey(
+        "Acheteur", on_delete=models.CASCADE, related_name="conformites"
+    )
+    type_conformite = models.CharField(
+        max_length=50, choices=TYPES_CONFORMITE, verbose_name="Type de Conformité"
+    )
+    statut = models.BooleanField(
+        default=True, verbose_name="Est Conforme ?"
+    )  # True for conform, False for non-conformité
+    details_non_conformite = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Détails de la Non-conformité (si applicable)",
+    )
+    date_verification = models.DateField(
+        blank=True, null=True, verbose_name="Date de la dernière vérification"
+    )
+    organisme_controle = models.CharField(
+        max_length=255, blank=True, null=True, verbose_name="Organisme de Contrôle"
+    )
+    commentaires = models.TextField(blank=True, null=True, verbose_name="Commentaires")
+
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name=_("Date de création")
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, verbose_name=_("Date de mise à jour")
+    )
+    
+    # Champs d'audit
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_conformites_reglementations',
+        verbose_name=_("Créé par")
+    )
+    
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_conformites_reglementations',
+        verbose_name=_("Mis à jour par")
+    )
+
+    history = HistoricalRecords()
+
+
+    class Meta:
+        verbose_name = "Conformité et Réglementation"
+        verbose_name_plural = "Conformités et Réglementations"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_data = {
+            "type_conformite": self.type_conformite,
+            "statut": self.statut,
+            "date_verification": self.date_verification,
+        }
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if not is_new:
+            self._check_for_changes_and_log_alerts()
+        super().save(*args, **kwargs)
+        self.__original_data = {
+            "type_conformite": self.type_conformite,
+            "statut": self.statut,
+            "date_verification": self.date_verification,
+        }
+
+    def _check_for_changes_and_log_alerts(self):
+        field_to_element_code = {
+            "type_conformite": "COMPLIANCE_CHANGE",  # Générique
+            "date_verification": "COMPLIANCE_CHANGE",
+        }
+
+        changes_detected = {}
+
+        # Spécifique pour les alertes de non-conformité
+        original_statut = self.__original_data.get("statut")
+        current_statut = self.statut
+        self.__original_data.get("type_conformite")
+        current_type = self.type_conformite
+
+        # Alerte si le statut passe à NON-CONFORME
+        if original_statut is True and current_statut is False:
+            changes_detected.setdefault("NON_COMPLIANCE_ALERT", []).append(
+                f"L'acheteur est maintenant en non-conformité pour le type '{self.get_type_conformite_display()}'."
+                f" Détails: {self.details_non_conformite or 'Aucun'}"
+            )
+        # Alerte si une nouvelle réglementation applicable est ajoutée (si le type correspond à 'reglementaire' et que c'est une création)
+        if self.pk is None and current_type == "reglementaire":
+            changes_detected.setdefault("NEW_REGULATION", []).append(
+                f"Une nouvelle réglementation applicable a été ajoutée : '{self.description or 'Non spécifié'}'."
+            )
+
+        for field_name, element_code in field_to_element_code.items():
+            original_value = self.__original_data.get(field_name)
+            current_value = getattr(self, field_name)
+
+            if str(original_value or "") != str(current_value or ""):
+                # Éviter de dupliquer si déjà capturé par des règles spécifiques (NON_COMPLIANCE_ALERT, NEW_REGULATION)
+                if not (
+                    (field_name == "statut" and element_code == "NON_COMPLIANCE_ALERT")
+                    or (
+                        self.pk is None
+                        and field_name == "type_conformite"
+                        and element_code == "NEW_REGULATION"
+                    )
+                ):
+                    changes_detected.setdefault(element_code, []).append(
+                        f"La conformité '{self.get_type_conformite_display()}' "
+                        f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
+                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
+                    )
+
+        if changes_detected:
+            portefeuilles_concernés = Portefeuille.objects.filter(
+                portefeuilleclient__acheteur=self.acheteur
+            ).distinct()
+
+            for portefeuille in portefeuilles_concernés:
+                for element_code, messages in changes_detected.items():
+                    try:
+                        element_surveillance = ElementSurveillance.objects.get(
+                            code_interne=element_code
+                        )
+                        if portefeuille.elements_surveillance_actifs.filter(
+                            pk=element_surveillance.pk
+                        ).exists():
+                            for message in messages:
+                                AlerteLog.objects.create(
+                                    portefeuille=portefeuille,
+                                    acheteur=self.acheteur,
+                                    element_surveille=element_surveillance,
+                                    message=message,
+                                    content_object=self,
+                                )
+                    except ElementSurveillance.DoesNotExist:
+                        print(
+                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
+                        )
+
+    def __str__(self):
+        status = "Conforme" if self.statut else "Non-conforme"
+        return f"{self.acheteur.nom} - {self.get_type_conformite_display()} ({status})"
+
+
+##########################################################
+##########################################################
+# Fin Modules Additifs
 ##########################################################
 ##########################################################
 
@@ -9884,1661 +11559,7 @@ class RatiosIFRS(Model):
 ##########################################################
 
 
-##########################################################
-##########################################################
-# Debut Modules Additifs
-##########################################################
-##########################################################
-class Logo(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="logo",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au logo"),
-    )
-    image = models.ImageField(
-        _("Image"),
-        upload_to="logos/",
-        null=True,
-        blank=True,
-        help_text=_("Image du logo de l'entreprise"),
-    )
-    description = models.TextField(
-        _("Description"), null=True, blank=True, help_text=_("Description du logo")
-    )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Logo")
-        verbose_name_plural = _("Logos")
-
-    def __str__(self):
-        return f"Logo de {self.acheteur.nom}"
-
-
-class TelephoneAcheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    telephone = models.TextField(max_length=100, verbose_name=_("Téléphone"))
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="telephones",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au téléphone"),
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="telephone_user_create",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="telephone_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Téléphone")
-        verbose_name_plural = _("Téléphones")
-
-    def __str__(self):
-        return f"Numéro de téléphone de {self.acheteur.nom}"
-    
-    def get_formatted_number(self):
-        """Retourne le numéro formaté pour l'affichage"""
-        if not self.telephone:
-            return ""
-        
-        # Nettoyer le numéro
-        cleaned = re.sub(r'\D', '', str(self.telephone))
-        
-        # Format par préfixe de pays
-        format_rules = {
-            '241': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:11]}" if len(num) == 11 else self.telephone,
-            '225': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:12]}" if len(num) == 12 else self.telephone,
-            '223': lambda num: f"+{num[:3]} {num[3:5]} {num[5:7]} {num[7:9]} {num[9:11]}" if len(num) == 11 else self.telephone,
-        }
-        
-        # Chercher le format correspondant
-        for prefix in format_rules:
-            if cleaned.startswith(prefix):
-                return format_rules[prefix](cleaned)
-        
-        # Format général pour les numéros locaux
-        if len(cleaned) == 8 and cleaned.startswith('0'):
-            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]}"
-        elif len(cleaned) == 9 and cleaned.startswith('0'):
-            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:9]}"
-        elif len(cleaned) == 10:
-            return f"{cleaned[:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:10]}"
-        
-        return self.telephone
-    
-    def get_call_link(self):
-        """Retourne le lien pour appeler le numéro"""
-        if not self.telephone:
-            return ""
-        
-        # Nettoyer le numéro de tous les caractères non numériques
-        cleaned_number = re.sub(r'\D', '', str(self.telephone))
-        
-        # Si le numéro ne commence pas par +, l'ajouter
-        if cleaned_number and not cleaned_number.startswith('+'):
-            # Vérifier s'il s'agit d'un numéro local (commence par 0)
-            if cleaned_number.startswith('0'):
-                cleaned_number = cleaned_number[1:]
-            
-            # Ajouter l'indicatif par défaut si nécessaire
-            cleaned_number = '+' + cleaned_number
-        
-        return f"tel:{cleaned_number}"
-    
-    def clean(self):
-        """Validation du modèle"""
-        super().clean()
-        if self.telephone:
-            # S'assurer que le téléphone contient au moins quelques chiffres
-            digits = re.sub(r'\D', '', self.telephone)
-            if len(digits) < 6:
-                raise ValidationError({
-                    'telephone': _("Le numéro de téléphone doit contenir au moins 6 chiffres.")
-                })
-
-
-class AdresseAcheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    adresse = models.TextField(max_length=100, verbose_name=_("Adresse"))
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="adresses",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au téléphone"),
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="adresses_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="adresses_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Adresse")
-        verbose_name_plural = _("Adresses")
-
-    def __str__(self):
-        return f"Adresse de {self.acheteur.nom}"
-
-
-
-class PortableAcheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    portable = models.TextField(max_length=100, verbose_name=_("Numéro portable"), help_text=_("Format: +241 XX XX XX XX ou 0X XX XX XX"))
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="portables",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au portable"),
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="portable_user_create",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="portable_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    def clean(self):
-        """Validation du numéro de portable - VERSION AVEC DEBUG"""
-        super().clean()
-        
-        import re
-        
-        print(f"DEBUG clean() - portable: {self.portable}")
-        print(f"DEBUG clean() - acheteur: {self.acheteur}")
-        print(f"DEBUG clean() - created_by: {self.created_by}")
-        print(f"DEBUG clean() - type created_by: {type(self.created_by)}")
-        
-        if not self.portable:
-            raise ValidationError({'portable': _("Le numéro de portable est requis.")})
-        
-        # Nettoyer le numéro
-        cleaned = re.sub(r'\D', '', self.portable)
-        
-        # Validation de base
-        if len(cleaned) < 8:
-            raise ValidationError({
-                'portable': _("Le numéro de portable doit contenir au moins 8 chiffres.")
-            })
-        
-        if len(cleaned) > 15:
-            raise ValidationError({
-                'portable': _("Le numéro de portable ne peut pas dépasser 15 chiffres.")
-            })
-    
-    def save(self, *args, **kwargs):
-        self.full_clean()  # Valider avant de sauvegarder
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.portable} - {self.acheteur.nom}"
-    
-    def get_formatted_number(self):
-        """Retourne le numéro formaté pour l'affichage - VERSION AMÉLIORÉE"""
-        import re
-        
-        cleaned = re.sub(r'\D', '', self.portable)
-        
-        # Format selon la longueur et le préfixe
-        if cleaned.startswith(('241', '225', '223')) and len(cleaned) == 11:
-            # Format international: +XXX XX XX XX XX
-            return f"+{cleaned[:3]} {cleaned[3:5]} {cleaned[5:7]} {cleaned[7:9]} {cleaned[9:11]}"
-        elif cleaned.startswith('0') and len(cleaned) == 9:
-            # Format local: 0X XX XX XX
-            return f"{cleaned[0:2]} {cleaned[2:4]} {cleaned[4:6]} {cleaned[6:8]} {cleaned[8:9]}"
-        elif len(cleaned) >= 10:
-            # Format générique pour les longs numéros
-            if cleaned.startswith('1') and len(cleaned) == 11:  # USA/Canada
-                return f"+{cleaned[0]} ({cleaned[1:4]}) {cleaned[4:7]}-{cleaned[7:11]}"
-            else:
-                # Groupement par 2 ou 3 chiffres
-                formatted = ''
-                if cleaned.startswith('+'):
-                    formatted = '+'
-                    cleaned = cleaned[1:]
-                
-                while len(cleaned) > 0:
-                    if len(cleaned) >= 3:
-                        formatted += cleaned[:3] + ' '
-                        cleaned = cleaned[3:]
-                    else:
-                        formatted += cleaned + ' '
-                        cleaned = ''
-                
-                return formatted.strip()
-        
-        # Retourner le numéro original si aucun format ne correspond
-        return self.portable
-    
-    def get_call_link(self):
-        """Retourne le lien pour appeler le numéro"""
-        if not self.portable:
-            return ""
-        
-        # Nettoyer le numéro de tous les caractères non numériques
-        cleaned_number = re.sub(r'\D', '', str(self.portable))
-        
-        # Si le numéro ne commence pas par +, l'ajouter
-        if cleaned_number and not cleaned_number.startswith('+'):
-            # Vérifier s'il s'agit d'un numéro local (commence par 0)
-            if cleaned_number.startswith('0'):
-                # Supprimer le 0 initial pour certains pays
-                cleaned_number = cleaned_number[1:]
-            
-            # Ajouter l'indicatif par défaut si nécessaire
-            # (ajuster selon vos besoins)
-            cleaned_number = '+' + cleaned_number
-        
-        return f"tel:{cleaned_number}"
-    
-    def get_whatsapp_link(self):
-        """Retourne le lien WhatsApp"""
-        if not self.portable:
-            return ""
-        
-        # Nettoyer le numéro de tous les caractères non numériques
-        cleaned_number = re.sub(r'\D', '', str(self.portable))
-        
-        # WhatsApp nécessite un format international sans le +
-        return f"https://wa.me/{cleaned_number}"
-
-    class Meta:
-        verbose_name = _("Portable d'Acheteur")
-        verbose_name_plural = _("Portables d'Acheteurs")
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['acheteur']),
-            models.Index(fields=['created_at']),
-            models.Index(fields=['portable']),
-        ]
-        unique_together = [['acheteur', 'portable']]  # Empêche les doublons pour le même acheteur
-
-
-
-class EmailAcheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    email = models.TextField(
-        max_length=254,  # Limite la taille à celle d'une adresse email standard
-        verbose_name=_("Adresse email"),
-    )
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="emails",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à l'email"),
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="email_user_create",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="email_user_update",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Email")
-        verbose_name_plural = _("Emails")
-
-    def __str__(self):
-        return f"Email de {self.acheteur.nom}"
-    
-    def get_mailto_link(self):
-        """Retourne le lien mailto: pour l'email"""
-        if not self.email:
-            return ""
-        return f"mailto:{self.email}"
-    
-    def get_display_email(self):
-        """Retourne l'email formaté pour l'affichage"""
-        if not self.email:
-            return ""
-        
-        # Pour les longs emails, on peut tronquer l'affichage
-        email = self.email.strip().lower()
-        if len(email) > 30:
-            # Garder le début et la fin pour l'affichage
-            local_part, domain = email.split('@')
-            if len(local_part) > 15:
-                local_part = local_part[:12] + '...'
-            return f"{local_part}@{domain}"
-        return email
-    
-    def clean(self):
-        """Validation du modèle"""
-        super().clean()
-        
-        if self.email:
-            # Normaliser l'email
-            self.email = self.email.strip().lower()
-            
-            # Vérifier la longueur
-            if len(self.email) > 254:
-                raise ValidationError({
-                    'email': _("L'adresse email ne peut pas dépasser 254 caractères.")
-                })
-            
-            # Vérifier le format
-            try:
-                validate_email(self.email)
-            except DjangoValidationError:
-                raise ValidationError({
-                    'email': _("Adresse email invalide.")
-                })
-
-
-class Document(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="documents",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au document"),
-    )
-    titre = models.CharField(
-        _("Titre"), max_length=255, help_text=_("Titre du document")
-    )
-    fichier = models.FileField(
-        _("Fichier"), upload_to="documents/", help_text=_("Fichier du document")
-    )
-    description = models.TextField(
-        _("Description"), null=True, blank=True, help_text=_("Description du document")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="documents_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="documents_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Document")
-        verbose_name_plural = _("Documents")
-
-    def __str__(self):
-        return f"{self.titre} - {self.acheteur.nom}"
-
-
-class Swot(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="swot",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à l'analyse SWOT"),
-    )
-    forces = models.TextField(
-        _("Forces"), null=True, blank=True, help_text=_("Forces de l'entreprise")
-    )
-    faiblesses = models.TextField(
-        _("Faiblesses"),
-        null=True,
-        blank=True,
-        help_text=_("Faiblesses de l'entreprise"),
-    )
-    opportunites = models.TextField(
-        _("Opportunités"),
-        null=True,
-        blank=True,
-        help_text=_("Opportunités de l'entreprise"),
-    )
-    menaces = models.TextField(
-        _("Menaces"), null=True, blank=True, help_text=_("Menaces de l'entreprise")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="swots_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="swots_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("SWOT")
-        verbose_name_plural = _("SWOT")
-
-    def __str__(self):
-        return f"SWOT de {self.acheteur.nom}"
-
-
-class ProduitService(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="produits_services",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé"),
-    )
-    produits = models.TextField(
-        _("Produits"), null=True, blank=True, help_text=_("Produits de l'entreprise")
-    )
-    services = models.TextField(
-        _("Services"), null=True, blank=True, help_text=_("Services de l'entreprise")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_produits_services',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_produits_services',
-        verbose_name=_("Mis à jour par")
-    )
-
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Produit & Service")
-        verbose_name_plural = _("Produits & Services")
-
-    def __str__(self):
-        return f"Produits & Services de {self.acheteur.nom}"
-
-
-class Marque(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="marques",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé"),
-    )
-    marques = models.TextField(
-        _("Marques"), null=True, blank=True, help_text=_("Marques de l'entreprise")
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_marques',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_marques',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Marque")
-        verbose_name_plural = _("Marques")
-
-    def __str__(self):
-        return f"Marque de {self.acheteur.nom}"
-
-
-class ProcedureCollective(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="procedures_collectives",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé à la procédure collective"),
-    )
-    type_procedure = models.CharField(
-        _("Type de procédure"),
-        max_length=255,
-        help_text=_("Type de procédure collective (ex: Redressement judiciaire, Liquidation...)"),
-    )
-    date_ouverture = models.DateField(
-        _("Date d'ouverture"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'ouverture de la procédure"),
-    )
-    date_cloture = models.DateField(
-        _("Date de clôture"),
-        null=True,
-        blank=True,
-        help_text=_("Date de clôture de la procédure"),
-    )
-    tribunal = models.CharField(
-        _("Tribunal compétent"),
-        max_length=255,
-        null=True,
-        blank=True,
-        help_text=_("Nom du tribunal compétent"),
-    )
-    numero_dossier = models.CharField(
-        _("Numéro de dossier"),
-        max_length=100,
-        null=True,
-        blank=True,
-        help_text=_("Référence officielle du dossier"),
-    )
-    secteur_activite = models.CharField(
-        _("Secteur d'activité"),
-        max_length=255,
-        null=True,
-        blank=True,
-        help_text=_("Secteur d'activité de l'entreprise concernée"),
-    )
-    description = models.TextField(
-        _("Description"),
-        null=True,
-        blank=True,
-        help_text=_("Description détaillée de la procédure collective"),
-    )
-    montant_creance = models.DecimalField(
-        _("Montant total des créances déclarées"),
-        max_digits=15,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text=_("Montant en FCFA"),
-    )
-    impact_assureur = models.TextField(
-        _("Impact pour l’assureur crédit"),
-        null=True,
-        blank=True,
-        help_text=_("Résumé de l’impact et des mesures prises par l’assureur crédit"),
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="procedures_collectives_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="procedures_collectives_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Procédure Collective")
-        verbose_name_plural = _("Procédures Collectives")
-
-    def __str__(self):
-        return f"{self.type_procedure} - {self.acheteur.nom if self.acheteur else ''}"
-
-
-class RegistreCommerce(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="registre_commerce",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au registre de commerce"),
-    )
-    numero = models.CharField(
-        _("Numéro de registre de commerce"),
-        max_length=255,
-        help_text=_("Numéro de registre de commerce de l'entreprise"),
-    )
-    date_inscription = models.DateField(
-        _("Date d'inscription"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'inscription au registre de commerce"),
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_registres_commerce',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_registres_commerce',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Registre de Commerce")
-        verbose_name_plural = _("Registres de Commerce")
-
-    def __str__(self):
-        return f"Registre de commerce de {self.acheteur.nom}"
-
-
-class Cotisation(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="cotisations",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au numéro de sécurité sociale"),
-    )
-    numero = models.CharField(
-        _("Numéro de sécurité sociale"),
-        max_length=255,
-        help_text=_("Numéro de sécurité sociale de l'entreprise"),
-    )
-    date_affiliation = models.DateField(
-        _("Date d'affiliation"),
-        null=True,
-        blank=True,
-        help_text=_("Date d'affiliation à la sécurité sociale"),
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_cotisations_sociales',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_cotisations_sociales',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Cotisation Sociale")
-        verbose_name_plural = _("Cotisations Sociales")
-
-    def __str__(self):
-        return f"Cotisations Sociales de {self.acheteur.nom}"
-
-
-class CodeNaceAcheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="codes_nace",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au code NACE"),
-    )
-    code = models.ForeignKey(
-        "SubCategoryNaceCode",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="code_nace_acheteur",
-        verbose_name=_("Acheteur"),
-        help_text=_("Code associé au code NACE"),
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="codes_naces_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="codes_naces_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = _("Code NACE Acheteur")
-        verbose_name_plural = _("Codes NACE Acheteur")
-
-    def __str__(self):
-        return f"Code NACE de {self.acheteur.nom}"
-
-
-
-class CodeNafAcheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    acheteur = models.ForeignKey(
-        "Acheteur",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="codes_naf",
-        verbose_name=_("Acheteur"),
-        help_text=_("Acheteur associé au code NAF"),
-    )
-    code = models.ForeignKey(
-        "SubCategoryNafCode",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name="code_naf_acheteur",
-        verbose_name=_("Acheteur"),
-        help_text=_("Code associé au code NAF"),
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.DO_NOTHING,
-        null=True,
-        related_name="codes_nafs_created",
-    )
-    updated_by = models.ForeignKey(
-        "User",
-        related_name="codes_nafs_updated",
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-    )
-
-    history = HistoricalRecords()
-
-    def __str__(self):
-        return f"Code NAF de {self.acheteur.nom}"
-
-
-    class Meta:
-        verbose_name = _("Code NAF Acheteur")
-        verbose_name_plural = _("Codes NAF Acheteur")
-
-
-# Tables supplementaires
-
-# Assuming you already have an Acheteur model defined elsewhere
-# For example:
-# class Acheteur(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-
-class Certification(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    """
-    Represents certifications obtained by an Acheteur.
-    """
-
-    TYPES = [
-        ("management_risque", "Management du risque"),
-        ("securite_information", "Management de la sécurité de l'information"),
-        ("risk_manager", "Risk Manager & Méthodes d'Appréciation du Risque"),
-        ("continuite_activite", "Management de la continuité d'activité (SMCA)"),
-        ("anti_corruption", "Management Anti–Corruption"),
-        ("cybersecurity_manager", "Lead Cybersecurity Manager"),
-        ("qualite", "Management de la Qualité"),
-        ("dpo_rgpd", "DPO : RGPD, Certified Data Protection Officer"),
-        ("bon_payeur", "Certificat de Bon payeur"),
-        ("autre", "Autre certification"),
-    ]
-    acheteur = models.ForeignKey(
-        "Acheteur", on_delete=models.CASCADE, related_name="certifications"
-    )
-    type_certification = models.CharField(
-        max_length=50, choices=TYPES, verbose_name="Type de Certification"
-    )
-    nom_certification = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-        verbose_name="Nom Spécifique de la Certification",
-    )
-    date_obtention = models.DateField(
-        blank=True, null=True, verbose_name="Date d'Obtention"
-    )
-    organisme_delivreur = models.CharField(
-        max_length=255, blank=True, null=True, verbose_name="Organisme Délivreur"
-    )
-    description = models.TextField(
-        blank=True, null=True, verbose_name="Description / Commentaires"
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_certifications',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_certifications',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = "Certification"
-        verbose_name_plural = "Certifications"
-        unique_together = ("acheteur", "type_certification", "nom_certification")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__original_data = {
-            "type_certification": self.type_certification,
-            "nom_certification": self.nom_certification,
-            "date_obtention": self.date_obtention,
-            "organisme_delivreur": self.organisme_delivreur,
-        }
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if not is_new:
-            self._check_for_changes_and_log_alerts()
-        super().save(*args, **kwargs)
-        self.__original_data = {
-            "type_certification": self.type_certification,
-            "nom_certification": self.nom_certification,
-            "date_obtention": self.date_obtention,
-            "organisme_delivreur": self.organisme_delivreur,
-        }
-
-    def _check_for_changes_and_log_alerts(self):
-        # Mappage des champs aux codes internes des ElementSurveillance
-        field_to_element_code = {
-            "type_certification": "CERTIFICATION_CHANGE",  # Un changement de type est un changement de certification
-            "nom_certification": "CERTIFICATION_CHANGE",  # Idem
-            "date_obtention": "CERTIFICATION_CHANGE",  # Idem
-            "organisme_delivreur": "CERTIFICATION_CHANGE",  # Idem
-        }
-
-        changes_detected = {}
-
-        # Pour NEW_CERTIFICATION: Si c'est un nouvel enregistrement
-        if self.pk is None:  # Si l'objet est nouveau
-            changes_detected.setdefault("NEW_CERTIFICATION", []).append(
-                f"Une nouvelle certification a été ajoutée : '{self.nom_certification or self.get_type_certification_display()}'."
-            )
-
-        # Pour CERTIFICATION_LOSS: Si une certification est supprimée, cela est plus complexe à gérer avec save()
-        # car save() est appelé sur l'instance qui est modifiée/créée.
-        # Pour une suppression, vous devriez utiliser un signal `post_delete` ou un Manager personnalisé.
-        # Pour l'instant, nous nous concentrons sur les modifications via save().
-
-        for field_name, element_code in field_to_element_code.items():
-            original_value = self.__original_data.get(field_name)
-            current_value = getattr(self, field_name)
-
-            if str(original_value or "") != str(current_value or ""):
-                changes_detected.setdefault(element_code, []).append(
-                    f"La certification '{self.nom_certification or self.get_type_certification_display()}' "
-                    f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
-                    f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
-                )
-
-        if changes_detected:
-            portefeuilles_concernés = Portefeuille.objects.filter(
-                portefeuilleclient__acheteur=self.acheteur
-            ).distinct()
-
-            for portefeuille in portefeuilles_concernés:
-                for element_code, messages in changes_detected.items():
-                    try:
-                        element_surveillance = ElementSurveillance.objects.get(
-                            code_interne=element_code
-                        )
-                        if portefeuille.elements_surveillance_actifs.filter(
-                            pk=element_surveillance.pk
-                        ).exists():
-                            for message in messages:
-                                AlerteLog.objects.create(
-                                    portefeuille=portefeuille,
-                                    acheteur=self.acheteur,
-                                    element_surveille=element_surveillance,
-                                    message=message,
-                                    content_object=self,
-                                )
-                    except ElementSurveillance.DoesNotExist:
-                        print(
-                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
-                        )
-
-    def __str__(self):
-        return f"{self.acheteur.nom} - {self.get_type_certification_display()}"
-
-
-class InnovationDeveloppement(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    """
-    Represents innovation and development activities of an Acheteur.
-    """
-
-    TYPES_INNOVATION = [
-        ("nouveau_produit_service", "Développement de Nouveau produit ou service"),
-        ("nouveaux_outils_production", "Acquisition de nouveaux outils de production"),
-        ("innovation_produit", "L'innovation de produit"),
-        ("innovation_procede", "L'innovation de procédé"),
-        ("innovation_commercialisation", "L'innovation de commercialisation"),
-        ("innovation_organisation", "L'innovation d'organisation"),
-    ]
-    acheteur = models.ForeignKey(
-        "Acheteur", on_delete=models.CASCADE, related_name="innovations"
-    )
-    type_innovation = models.CharField(
-        max_length=50, choices=TYPES_INNOVATION, verbose_name="Type d'Innovation"
-    )
-    titre = models.CharField(
-        max_length=255, verbose_name="Titre de l'Innovation", blank=True, null=True
-    )
-    description = models.TextField(
-        blank=True, null=True, verbose_name="Description / Commentaires"
-    )
-    date_debut = models.DateField(blank=True, null=True, verbose_name="Date de Début")
-    date_fin = models.DateField(
-        blank=True, null=True, verbose_name="Date de Fin (si applicable)"
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_innovations_developpements',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_innovations_developpements',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = "Innovation et Développement"
-        verbose_name_plural = "Innovations et Développements"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__original_data = {
-            "type_innovation": self.type_innovation,
-            "titre": self.titre,
-            "date_debut": self.date_debut,
-            "date_fin": self.date_fin,
-        }
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if not is_new:
-            self._check_for_changes_and_log_alerts()
-        super().save(*args, **kwargs)
-        self.__original_data = {
-            "type_innovation": self.type_innovation,
-            "titre": self.titre,
-            "date_debut": self.date_debut,
-            "date_fin": self.date_fin,
-        }
-
-    def _check_for_changes_and_log_alerts(self):
-        field_to_element_code = {
-            "type_innovation": "NEW_PRODUCT_SERVICE",  # Si le type d'innovation est "nouveau produit/service"
-            "titre": "INNOVATION_CHANGE",  # Générique pour toute autre modification
-            "date_debut": "INNOVATION_CHANGE",
-            "date_fin": "INNOVATION_CHANGE",
-        }
-
-        changes_detected = {}
-
-        if self.pk is None and self.type_innovation == "nouveau_produit_service":
-            changes_detected.setdefault("NEW_PRODUCT_SERVICE", []).append(
-                f"Un nouveau produit ou service a été ajouté : '{self.titre or 'Non spécifié'}'."
-            )
-
-        for field_name, element_code in field_to_element_code.items():
-            original_value = self.__original_data.get(field_name)
-            current_value = getattr(self, field_name)
-
-            if str(original_value or "") != str(current_value or ""):
-                # Éviter de dupliquer si déjà capturé par 'NEW_PRODUCT_SERVICE' lors de la création
-                if not (self.pk is None and element_code == "NEW_PRODUCT_SERVICE"):
-                    changes_detected.setdefault(element_code, []).append(
-                        f"L'innovation '{self.titre or self.get_type_innovation_display()}' "
-                        f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
-                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
-                    )
-
-        if changes_detected:
-            portefeuilles_concernés = Portefeuille.objects.filter(
-                portefeuilleclient__acheteur=self.acheteur
-            ).distinct()
-
-            for portefeuille in portefeuilles_concernés:
-                for element_code, messages in changes_detected.items():
-                    try:
-                        element_surveillance = ElementSurveillance.objects.get(
-                            code_interne=element_code
-                        )
-                        if portefeuille.elements_surveillance_actifs.filter(
-                            pk=element_surveillance.pk
-                        ).exists():
-                            for message in messages:
-                                AlerteLog.objects.create(
-                                    portefeuille=portefeuille,
-                                    acheteur=self.acheteur,
-                                    element_surveille=element_surveillance,
-                                    message=message,
-                                    content_object=self,
-                                )
-                    except ElementSurveillance.DoesNotExist:
-                        print(
-                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
-                        )
-
-    def __str__(self):
-        return f"{self.acheteur.nom} - {self.get_type_innovation_display()}"
-
-
-class StrategiePlanification(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    """
-    Represents strategic and planning approaches of an Acheteur.
-    """
-
-    TYPES_STRATEGIE = [
-        ("specialisation", "La spécialisation (faire une seule activité)"),
-        ("diversification_liees", "La diversification (activités liées)"),
-        ("diversification_non_liees", "La diversification (activités non liées)"),
-        ("integration", "L'intégration (faire tout, seul)"),
-        ("externalisation", "L'externalisation (faire-faire)"),
-        (
-            "planification_strategique",
-            "Planification stratégique (objectifs long terme)",
-        ),
-        (
-            "planification_tactique",
-            "Planification tactique (implémentation stratégies)",
-        ),
-        (
-            "planification_operationnelle",
-            "Planification opérationnelle (détails quotidiens)",
-        ),
-    ]
-    acheteur = models.ForeignKey(
-        "Acheteur", on_delete=models.CASCADE, related_name="strategies"
-    )
-    type_strategie = models.CharField(
-        max_length=50, choices=TYPES_STRATEGIE, verbose_name="Type de Stratégie"
-    )
-    description = models.TextField(
-        blank=True, null=True, verbose_name="Description / Commentaires"
-    )
-    date_mise_en_place = models.DateField(
-        blank=True, null=True, verbose_name="Date de Mise en Place"
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_strategies_planifications',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_strategies_planifications',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = "Stratégie et Planification"
-        verbose_name_plural = "Stratégies et Planifications"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__original_data = {
-            "type_strategie": self.type_strategie,
-            "date_mise_en_place": self.date_mise_en_place,
-            # Pour la détection de "Nouveau partenariat stratégique" ou "Changement de politique de prix"
-            # Il faudrait des champs spécifiques pour ces éléments, ou analyser 'description'
-        }
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if not is_new:
-            self._check_for_changes_and_log_alerts()
-        super().save(*args, **kwargs)
-        self.__original_data = {
-            "type_strategie": self.type_strategie,
-            "date_mise_en_place": self.date_mise_en_place,
-        }
-
-    def _check_for_changes_and_log_alerts(self):
-        field_to_element_code = {
-            "type_strategie": "STRATEGY_CHANGE",  # Générique pour tout changement de stratégie
-            "date_mise_en_place": "STRATEGY_CHANGE",
-            
-        }
-
-        # Logique pour les éléments spécifiques comme NEW_STRATEGIC_PARTNERSHIP ou PRICING_POLICY_CHANGE
-        # Si ces éléments ne sont pas gérés par des champs dédiés,
-        # vous devrez soit:
-        # 1. Ajouter des champs spécifiques (ex: is_strategic_partnership_change = BooleanField)
-        # 2. Faire une analyse textuelle du champ 'description', ce qui est moins fiable et plus coûteux.
-        # Pour l'instant, je vais les ajouter comme des codes génériques si le type_strategie correspond.
-
-        changes_detected = {}
-
-        if self.pk is None:  # Si c'est une nouvelle stratégie/planification
-            if self.type_strategie == "planification_strategique":
-                changes_detected.setdefault("STRATEGIC_PLANNING_ADDED", []).append(
-                    f"Une nouvelle planification stratégique a été ajoutée pour l'acheteur : '{self.titre or 'Non spécifié'}'."
-                )
-            # Vous pouvez ajouter d'autres conditions ici pour NEW_STRATEGIC_PARTNERSHIP si votre logique le permet
-            # Par exemple, si vous avez un champ 'partenariat_strategique_recent' ou si le 'description' contient des mots clés
-            # Pour 'COMMERCIAL_STRATEGY_CHANGE' et 'PRICING_POLICY_CHANGE', il faudrait soit un champ dédié, soit une détection dans 'description'
-            # Je vais assumer un code générique pour les modifications si un champ spécifique n'est pas présent.
-
-        for field_name, element_code in field_to_element_code.items():
-            original_value = self.__original_data.get(field_name)
-            current_value = getattr(self, field_name)
-
-            if str(original_value or "") != str(current_value or ""):
-                changes_detected.setdefault(element_code, []).append(
-                    f"La stratégie '{self.get_type_strategie_display()}' "
-                    f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
-                    f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
-                )
-
-        if changes_detected:
-            portefeuilles_concernés = Portefeuille.objects.filter(
-                portefeuilleclient__acheteur=self.acheteur
-            ).distinct()
-
-            for portefeuille in portefeuilles_concernés:
-                for element_code, messages in changes_detected.items():
-                    try:
-                        element_surveillance = ElementSurveillance.objects.get(
-                            code_interne=element_code
-                        )
-                        if portefeuille.elements_surveillance_actifs.filter(
-                            pk=element_surveillance.pk
-                        ).exists():
-                            for message in messages:
-                                AlerteLog.objects.create(
-                                    portefeuille=portefeuille,
-                                    acheteur=self.acheteur,
-                                    element_surveille=element_surveillance,
-                                    message=message,
-                                    content_object=self,
-                                )
-                    except ElementSurveillance.DoesNotExist:
-                        print(
-                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
-                        )
-
-    def __str__(self):
-        return f"{self.acheteur.nom} - {self.get_type_strategie_display()}"
-
-
-class ConformiteReglementation(Model):
-    
-    safedelete_policy  = SOFT_DELETE_CASCADE
-    
-    """
-    Represents compliance and regulatory status of an Acheteur.
-    """
-
-    TYPES_CONFORMITE = [
-        ("reglementaire", "La conformité réglementaire"),
-        ("sectorielle", "La conformité sectorielle"),
-        ("donnees", "La conformité des données"),
-        ("non_conformite", "Non-conformité aux principes établis"),
-    ]
-    acheteur = models.ForeignKey(
-        "Acheteur", on_delete=models.CASCADE, related_name="conformites"
-    )
-    type_conformite = models.CharField(
-        max_length=50, choices=TYPES_CONFORMITE, verbose_name="Type de Conformité"
-    )
-    statut = models.BooleanField(
-        default=True, verbose_name="Est Conforme ?"
-    )  # True for conform, False for non-conformité
-    details_non_conformite = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="Détails de la Non-conformité (si applicable)",
-    )
-    date_verification = models.DateField(
-        blank=True, null=True, verbose_name="Date de la dernière vérification"
-    )
-    organisme_controle = models.CharField(
-        max_length=255, blank=True, null=True, verbose_name="Organisme de Contrôle"
-    )
-    commentaires = models.TextField(blank=True, null=True, verbose_name="Commentaires")
-
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Date de mise à jour")
-    )
-    
-    # Champs d'audit
-    created_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='created_conformites_reglementations',
-        verbose_name=_("Créé par")
-    )
-    
-    updated_by = models.ForeignKey(
-        "User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='updated_conformites_reglementations',
-        verbose_name=_("Mis à jour par")
-    )
-
-    history = HistoricalRecords()
-
-
-    class Meta:
-        verbose_name = "Conformité et Réglementation"
-        verbose_name_plural = "Conformités et Réglementations"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__original_data = {
-            "type_conformite": self.type_conformite,
-            "statut": self.statut,
-            "date_verification": self.date_verification,
-        }
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        if not is_new:
-            self._check_for_changes_and_log_alerts()
-        super().save(*args, **kwargs)
-        self.__original_data = {
-            "type_conformite": self.type_conformite,
-            "statut": self.statut,
-            "date_verification": self.date_verification,
-        }
-
-    def _check_for_changes_and_log_alerts(self):
-        field_to_element_code = {
-            "type_conformite": "COMPLIANCE_CHANGE",  # Générique
-            "date_verification": "COMPLIANCE_CHANGE",
-        }
-
-        changes_detected = {}
-
-        # Spécifique pour les alertes de non-conformité
-        original_statut = self.__original_data.get("statut")
-        current_statut = self.statut
-        self.__original_data.get("type_conformite")
-        current_type = self.type_conformite
-
-        # Alerte si le statut passe à NON-CONFORME
-        if original_statut is True and current_statut is False:
-            changes_detected.setdefault("NON_COMPLIANCE_ALERT", []).append(
-                f"L'acheteur est maintenant en non-conformité pour le type '{self.get_type_conformite_display()}'."
-                f" Détails: {self.details_non_conformite or 'Aucun'}"
-            )
-        # Alerte si une nouvelle réglementation applicable est ajoutée (si le type correspond à 'reglementaire' et que c'est une création)
-        if self.pk is None and current_type == "reglementaire":
-            changes_detected.setdefault("NEW_REGULATION", []).append(
-                f"Une nouvelle réglementation applicable a été ajoutée : '{self.description or 'Non spécifié'}'."
-            )
-
-        for field_name, element_code in field_to_element_code.items():
-            original_value = self.__original_data.get(field_name)
-            current_value = getattr(self, field_name)
-
-            if str(original_value or "") != str(current_value or ""):
-                # Éviter de dupliquer si déjà capturé par des règles spécifiques (NON_COMPLIANCE_ALERT, NEW_REGULATION)
-                if not (
-                    (field_name == "statut" and element_code == "NON_COMPLIANCE_ALERT")
-                    or (
-                        self.pk is None
-                        and field_name == "type_conformite"
-                        and element_code == "NEW_REGULATION"
-                    )
-                ):
-                    changes_detected.setdefault(element_code, []).append(
-                        f"La conformité '{self.get_type_conformite_display()}' "
-                        f": le champ '{self._meta.get_field(field_name).verbose_name}' est passé de "
-                        f"'{original_value or 'vide'}' à '{current_value or 'vide'}'."
-                    )
-
-        if changes_detected:
-            portefeuilles_concernés = Portefeuille.objects.filter(
-                portefeuilleclient__acheteur=self.acheteur
-            ).distinct()
-
-            for portefeuille in portefeuilles_concernés:
-                for element_code, messages in changes_detected.items():
-                    try:
-                        element_surveillance = ElementSurveillance.objects.get(
-                            code_interne=element_code
-                        )
-                        if portefeuille.elements_surveillance_actifs.filter(
-                            pk=element_surveillance.pk
-                        ).exists():
-                            for message in messages:
-                                AlerteLog.objects.create(
-                                    portefeuille=portefeuille,
-                                    acheteur=self.acheteur,
-                                    element_surveille=element_surveillance,
-                                    message=message,
-                                    content_object=self,
-                                )
-                    except ElementSurveillance.DoesNotExist:
-                        print(
-                            f"ATTENTION: Élément de surveillance avec code_interne '{element_code}' non trouvé. Veuillez l'ajouter à la liste des ElementSurveillance."
-                        )
-
-    def __str__(self):
-        status = "Conforme" if self.statut else "Non-conforme"
-        return f"{self.acheteur.nom} - {self.get_type_conformite_display()} ({status})"
-
-
-##########################################################
-##########################################################
-# Fin Modules Additifs
-##########################################################
-##########################################################
 
 
 ##########################################################

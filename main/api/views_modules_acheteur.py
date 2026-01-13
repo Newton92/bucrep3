@@ -157,6 +157,10 @@ class AddAcheteurResumeView(APIView):
         # Créez une copie modifiable de request.data
         data = request.data.copy()
         data["acheteur"] = acheteur_id
+        
+        # Ajouter l'utilisateur connecté comme créateur
+        data["created_by"] = request.user.id
+        data["updated_by"] = request.user.id
 
         serializer = AddResumeSerializer(data=data)
         if serializer.is_valid():
@@ -185,7 +189,11 @@ class EditAcheteurResumeView(APIView):
                 {"detail": "Résumé non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditResumeSerializer(resume, data=request.data, partial=True)
+        # Ajouter l'utilisateur connecté comme modificateur
+        data = request.data.copy()
+        data["updated_by"] = request.user.id
+
+        serializer = EditResumeSerializer(resume, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

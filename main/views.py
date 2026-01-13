@@ -7264,7 +7264,7 @@ def dash_root_manage_telephone_acheteur(request, acheteur_id):
     telephones_json = json.dumps(telephones_data, default=str)
 
     context = {
-        "acheteurs_active": "active",
+        "acheteur_active": "active",
         "user": request.user,
         "access_token": access_token,
         "refresh_token": refresh_token,
