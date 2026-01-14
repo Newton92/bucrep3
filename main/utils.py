@@ -6,7 +6,59 @@ from email.mime.text import MIMEText
 from django.conf import settings
 from django.template.loader import render_to_string
 
-from main.models import *
+import requests
+import requests
+from django.db import transaction
+
+        
+from django.utils import timezone
+from faker import Faker
+
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Important pour Django
+import io
+import base64
+import numpy as np
+
+from decimal import Decimal
+from django.db.models import QuerySet
+
+from django.utils import timezone
+from faker import Faker
+from django.db.models import Q
+
+from django.db.models import Model
+from django.db.models.fields.related import ForeignKey
+from decimal import Decimal
+from datetime import datetime
+
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+from django.conf import settings
+
+# utils/fix_commandes_emails.py
+from django.utils import timezone
+import random
+
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+
+# Importez vos classes de Ratios pour chaque type de bilan
+
+# from main.models import *
+# from main.models import User
+# https://www.geonames.org/activate/rKbZUmb9/yannick1987/
+
+# User = get_user_model()
+from django.contrib.auth import get_user_model
+
+def get_user_queryset():
+    User = get_user_model()
+    return User.objects.all()
 
 
 def send_email_with_secret_code(
@@ -133,12 +185,7 @@ def handle_acheteur_raison_sociale_changed(
 
 
 
-import requests
-from main.models import Pays, Province, Ville
-# https://www.geonames.org/activate/rKbZUmb9/yannick1987/
-import requests
-from django.db import transaction
-from main.models import Pays, Province, Ville
+
 
 # 1. Récupérer et insérer les pays
 def fetch_and_insert_countries():
@@ -229,11 +276,7 @@ def populate_database():
 #    populate_database()
 
 
-from django.utils import timezone
-from faker import Faker
-import random
-from django.db.models import Q
-from .models import Acheteur, User, Ville, Pays, Devise, ModeleRapport, Commande, Province
+
 
 def create_fake_commands(count=15):
     fake = Faker('fr_FR')
@@ -291,11 +334,7 @@ def create_fake_commands(count=15):
         
         
         
-        
-from django.utils import timezone
-from faker import Faker
-import random
-from .models import Acheteur, CategorieEntreprise, FormeJuridique, StatutEntreprise, Pays, Province, Ville, CouleurCommentaire
+
 
 def create_fake_buyers(count=15):
     """
@@ -371,12 +410,7 @@ def create_fake_buyers(count=15):
 
 
 
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')  # Important pour Django
-import io
-import base64
-import numpy as np
+
 
 def generate_chart_image(charts_data):  # charts_data au lieu de chart_data
     """Génère une image PNG à partir des données du chart"""
@@ -410,25 +444,7 @@ def generate_chart_image(charts_data):  # charts_data au lieu de chart_data
     
 # utils/financial_report_generator.py
 
-from django.db.models import Model
-from django.db.models.fields.related import ForeignKey
-from decimal import Decimal
-from datetime import datetime
 
-# Import de tous vos modèles et classes de ratios
-from .models import (
-    ActifA, PassifA, ResultatA,
-    ActifC, PassifC, ResultatC,
-    Assets, Liabilities, Expenses, Products, OffBalanceSheet,
-    ActifS, PassifS, ResultatS,
-    ActifIFRS, PassifIFRS, ResultatIFRS
-)
-
-from main.models import (
-    RatiosAnglais, RatiosClassique, RatiosSyscohada, RatiosIFRS,
-    # Il faudra créer une classe de ratios pour le bilan bancaire
-    # RatiosBancaire,
-)
 
 # Fonction utilitaire pour calculer les variations
 def calculate_variation(n, n_minus_1):
@@ -649,11 +665,7 @@ class FinancialReportGenerator:
     
 
 
-from decimal import Decimal
-from django.db.models import QuerySet
 
-# Importez vos classes de Ratios pour chaque type de bilan
-from main.models import RatiosAnglais, RatiosSyscohada, RatiosClassique, RatiosIFRS
 
 
 class AcremacScoring:
@@ -1436,7 +1448,6 @@ def get_structured_resultat_data(acheteur, years):
 
 
 # ... (les importations et autres fonctions existantes) ...
-from main.models import RatiosClassique
 
 def get_structured_ratios_data_v1(acheteur, years):
     """
@@ -1513,8 +1524,6 @@ def get_structured_ratios_data_v1(acheteur, years):
     return structured_data
 
 
-# ... (les importations et autres fonctions existantes) ...
-from main.models import RatiosClassique
 
 def get_structured_ratios_data(acheteur, years):
     """
@@ -2194,10 +2203,7 @@ def get_charts_delais_data(acheteur, years):
 
 
 
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-from django.conf import settings
+
 
 def generate_risk_gauge(score, max_score=9, filename="risk_gauge.png"):
     fig, ax = plt.subplots(figsize=(6, 3), subplot_kw={'projection': 'polar'})
@@ -4831,10 +4837,7 @@ def get_charts_ratios_bancaire_data(acheteur, years):
 
 
 
-# utils/fix_commandes_emails.py
-from django.utils import timezone
-from main.models import Client, Commande
-import random
+
 
 def fix_commandes_emails():
     """
@@ -4933,9 +4936,6 @@ def quick_fix_for_testing():
 
 
 
-from django.utils import timezone
-from django.db import transaction
-from main.models import Commande, MailInfo, MailAttachment, SuiviCommande
 
 def cleanup_test_data(keep_today=False):
     """
@@ -4994,14 +4994,9 @@ def cleanup_for_mailing_test():
 
 
 
-# utils/generate_test_data.py
-import random
-from datetime import datetime, timedelta
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport
 
-User = get_user_model()
+
+
 
 # utils/generate_test_data.py
 def generate_test_commandes(nombre=15):

@@ -8,6 +8,7 @@ import os
 
 from django.contrib.auth.models import AbstractUser, Group
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.db.models import ForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -2287,30 +2288,54 @@ class RiskRating(Model):
         verbose_name=_("Acheteur"),
         help_text=_("Acheteur concerné par l'évaluation du risque."),
     )
+    # Champs BooleanField avec blank=True, null=True comme dans V2
     remboursabilite = models.BooleanField(
-        default=False, verbose_name=_("Remboursabilité")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Remboursabilité")
     )
-    # ... (tous vos autres champsBooleanField existants) ...
     situation_liquidite = models.BooleanField(
-        default=False, verbose_name=_("Situation de liquidité")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Situation de liquidité")
     )
     performance_rentabilite = models.BooleanField(
-        default=False, verbose_name=_("Performance et rentabilité")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Performance de rentabilité")  # Retour au nom de V2
     )
     perspective_secteur = models.BooleanField(
-        default=False, verbose_name=_("Perspective du secteur")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Perspective secteur")  # Retour au nom de V2
     )
     qualite_information_analyse = models.BooleanField(
-        default=False, verbose_name=_("Qualité de l'information analysée")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Qualité information analyse")  # Retour au nom de V2
     )
     existence_garantie = models.BooleanField(
-        default=False, verbose_name=_("Existence de garantie")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Existence garantie")  # Retour au nom de V2
     )
     terme_financier_duree_pret = models.BooleanField(
-        default=False, verbose_name=_("Terme financier et durée du prêt")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Terme financier durée prêt")  # Retour au nom de V2
     )
     mesure_propre_soutenir_credit = models.BooleanField(
-        default=False, verbose_name=_("Mesure propre à soutenir le crédit")
+        default=False, 
+        blank=True, 
+        null=True,
+        verbose_name=_("Mesure propre à soutenir le crédit")
     )
 
     # Nouveaux champs pour la cotation et l'indice du risque
@@ -2377,6 +2402,20 @@ class RiskRating(Model):
 
     def __str__(self):
         return f"RiskRating {self.pk} - {self.acheteur}"
+    
+    # Méthodes de V2 à conserver
+    def val(self):
+        """Méthode de V2 - Retourne la valeur du score"""
+        return self.calculate_risk_score()
+    
+    def img(self):
+        """Méthode de V2 - Retourne le chemin de l'image"""
+        return 'management_ang3.png'  # Ou utilisez la nouvelle méthode
+    
+    @staticmethod
+    def valStr():
+        """Méthode statique de V2"""
+        return 'Bien'
 
     def _get_fallback_svg(self, score):
         """Génère un SVG de secours"""
@@ -2534,7 +2573,7 @@ class DonneesEnregistrement(Model):
         null=True, blank=True, verbose_name=_("Date de création")
     )
     date_registre = models.DateField(
-        null=True, blank=True, verbose_name=_("Date d'enregistrement")
+        null=True, blank=True, verbose_name=_("Date registre")
     )
 
     # Ancien attribut avec choices
@@ -2542,43 +2581,42 @@ class DonneesEnregistrement(Model):
         max_length=4000,
         choices=NOUVEAU_LEGAL_FORM,
         default="Veuillez choisir la forme juridique",
-        verbose_name=_("Forme Juridique"),
+        null=True,  # Ajouté pour correspondre à V2
+        blank=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Forme juridique"),  # Nom de V2 pour la cohérence
     )
-
-    # Nouvel attribut avec ForeignKey
-    # forme_juridique_ref = models.ForeignKey(
-    #     "FormeJuridique",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     verbose_name=_("Référence Forme Juridique"),
-    # )
 
     numero_registre_commerce = models.CharField(
-        max_length=50, blank=True, verbose_name=_("Numéro de registre du commerce")
+        max_length=50, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Numéro registre commerce")  # Nom de V2 pour la cohérence
     )
     numero_fiscale = models.CharField(
-        max_length=100, blank=True, verbose_name=_("Numéro fiscal")
+        max_length=100, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Numéro fiscal")  # Nom de V2 pour la cohérence
     )
 
     # Ancien champ avec choices
     statut_registre = models.CharField(
         max_length=4000,
-        choices=LIEN_STATUT_CHOICE,
+        choices=LIEN_STATUT_CHOICE,  # Assurez-vous que cette variable est définie
         default="--------",
-        verbose_name=_("Statut au registre du commerce"),
+        null=True,  # Ajouté pour correspondre à V2
+        blank=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Statut registre"),  # Nom de V2 pour la cohérence
     )
 
-    # Nouvel attribut avec ForeignKey
-    # statut_registre_ref = models.ForeignKey(
-    #     "StatutEntreprise",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     verbose_name=_("Référence Statut au Registre"),
-    # )
+    
 
-    commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
+    commentaire = models.TextField(
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        max_length=10000000,  # Ajouté pour correspondre à V2
+        verbose_name=_("Commentaire")
+    )
     couleur_commentaire = models.ForeignKey("CouleurCommentaire", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Couleur Commentaire"))
 
     created_at = models.DateTimeField(
@@ -2591,7 +2629,7 @@ class DonneesEnregistrement(Model):
     # Champs d'audit
     created_by = models.ForeignKey(
         'User',
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='donnees_enregistrement_user_create',
@@ -2600,7 +2638,7 @@ class DonneesEnregistrement(Model):
     
     updated_by = models.ForeignKey(
         'User',
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='donnees_enregistrement_user_update',
@@ -2616,81 +2654,130 @@ class DonneesEnregistrement(Model):
 
     def __str__(self):
         return f"Données Enregistrement {self.pk} - {self.acheteur}"
+    
+    # Méthodes utilitaires optionnelles
+    def get_forme_juridique_display(self):
+        """Retourne l'affichage de la forme juridique"""
+        if self.forme_juridique:
+            # Appelle la méthode de Django, pas elle-même
+            return dict(NOUVEAU_LEGAL_FORM).get(self.forme_juridique, self.forme_juridique)
+        return ""
+
+    def get_statut_registre_display(self):
+        """Retourne l'affichage du statut registre"""
+        if self.statut_registre:
+            return dict(LIEN_STATUT_CHOICE).get(self.statut_registre, self.statut_registre)
+        return ""
+    
+    def is_registre_valide(self):
+        """Vérifie si le registre est valide (a un numéro et une date)"""
+        return bool(self.numero_registre_commerce and self.date_registre)
+    
+    def get_anciens_noms(self):
+        """Retourne une liste des anciens noms (peut être étendu)"""
+        noms = []
+        if self.nom_anterieur:
+            noms.append(self.nom_anterieur)
+        return noms
+    
+    def clean(self):
+        """Validation des données"""
+        from django.core.exceptions import ValidationError
+        
+        super().clean()
+        
+        # Validation: date_registre ne peut pas être antérieure à date_creation
+        if self.date_registre and self.date_creation:
+            if self.date_registre < self.date_creation:
+                raise ValidationError({
+                    'date_registre': _("La date d'enregistrement ne peut pas être antérieure à la date de création.")
+                })
+        
+        # Validation: vérifier le format du numéro fiscal si présent
+        if self.numero_fiscale:
+            # Exemple: nettoyer les espaces et vérifier la longueur
+            cleaned_num = ''.join(self.numero_fiscale.split())
+            if len(cleaned_num) < 5:
+                raise ValidationError({
+                    'numero_fiscale': _("Le numéro fiscal semble trop court.")
+                })
+    
+    def save(self, *args, **kwargs):
+        """Sauvegarde avec validation optionnelle"""
+        # Décommentez pour valider automatiquement avant la sauvegarde
+        # self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class Tendance(Model):
     
-    LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE = (
-        (gettext_lazy("40 Cette société est une filiale d'un groupe"),
-        gettext_lazy("40 Cette société est une filiale d'un groupe")),
-        (gettext_lazy("35 Cette société est une société autonome"),
-        gettext_lazy("35 Cette société est une société autonome")),
-        (gettext_lazy("30 En raison de ses liens avec le groupe, elle est considérée comme une filiale indépendante"),
-        gettext_lazy("30 En raison de ses liens avec le groupe, elle est considérée comme une filiale indépendante")),
-        (gettext_lazy("25 Cette entreprise est considérée comme une grande entreprise"), gettext_lazy("25 Cette entreprise est considérée comme une grande entreprise")),
-        (gettext_lazy("20 Cette entreprise est considérée comme une entreprise de taille moyenne"), gettext_lazy("20 Cette entreprise est considérée comme une entreprise de taille moyenne")),
-        (gettext_lazy("15 Cette entreprise est considérée comme une petite entreprise"), gettext_lazy("15 Cette entreprise est considérée comme une petite entreprise")),
-        (gettext_lazy("10 Inconnu de nos sources"), gettext_lazy("10 Inconnu de nos sources"))
-    )
-    
-    LIEN_ALARMES_CHOICE = (
-        (gettext_lazy("Risque d'insolvabilité"), gettext_lazy("Risque d'insolvabilité")),
-        (gettext_lazy("Une procédure préliminaire a été demandée"), gettext_lazy("Demande de composition juridique")),
-        (gettext_lazy("Une procédure prématurée a été suspendue"), gettext_lazy("Une procédure prématurée a été suspendue")),
-        (gettext_lazy("La composition du tribunal à la suite d'un examen préliminaire"),
-        gettext_lazy("La composition du tribunal à la suite d'un examen préliminaire")),
-        (gettext_lazy("Ouverture de la composition judiciaire"), gettext_lazy("Ouverture de la composition judiciaire")),
-        (gettext_lazy("Refus de l'homologation, la corruption est attendue"),
-        gettext_lazy("Refus de l'homologation, la corruption est attendue")),
-    )
-    
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     acheteur = models.ForeignKey(
-        "Acheteur", null=True, on_delete=models.DO_NOTHING, verbose_name=_("Acheteur")
+        "Acheteur", 
+        null=True, 
+        blank=True,  # Ajouté pour correspondre à V2
+        on_delete=models.DO_NOTHING, 
+        verbose_name=_("Acheteur")
     )
 
-    # Ancien attribut avec choices
-    # avis_commercial = models.CharField(
-    #     max_length=100,
-    #     choices=LIEN_AVIS_COMMERCIAL_CHOICE,
-    #     blank=True,
-    #     verbose_name=_("Avis commercial"),
-    # )
-    avis_commercial = models.ForeignKey("ListeInformationsAvisCommercial", null=True, blank=True, on_delete=models.DO_NOTHING, verbose_name=_("Avis commercial"))
+    avis_commercial = models.ForeignKey(
+        "ListeInformationsAvisCommercial", 
+        null=True, 
+        blank=True, 
+        on_delete=models.DO_NOTHING, 
+        verbose_name=_("Avis commercial")
+    )
 
-
-    # Nouvel attribut avec ForeignKey
-    # avis_commercial_ref = models.ForeignKey(
-    #     "ModeleAvisCommercial",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     verbose_name=_("Référence Avis Commercial"),
-    # )
+    plus_informations = models.CharField(
+        max_length=100, 
+        choices=LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE,  # Assurez-vous que cette variable est définie
+        blank=True,
+        verbose_name=_("Plus d'informations sur la notation")
+    )
+    
     presse_media = models.CharField(
-        max_length=100, blank=True, verbose_name=_("Presse et Médias")
+        max_length=100, 
+        blank=True, 
+        verbose_name=_("Presse/Medias")  # Nom de V2 pour la cohérence
     )
+    
+    alarmes = models.CharField(
+        max_length=100, 
+        choices=LIEN_ALARMES_CHOICE,  # Assurez-vous que cette variable est définie
+        blank=True, 
+        verbose_name=_("Alarmes")
+    )
+    
     principaux_concurrent = models.TextField(
-        blank=True, verbose_name=_("Principaux concurrents")
+        blank=True, 
+        max_length=10000000,  # Ajouté pour correspondre à V2
+        verbose_name=_("Principaux concurrents")
     )
     
-    plus_informations = models.CharField(max_length=100, choices=LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE, blank=True, verbose_name=_("Plus d'informations sur la notation"))
-    alarmes = models.CharField(max_length=100, choices=LIEN_ALARMES_CHOICE, blank=True, verbose_name=_("Alarmes"))
-    
-    commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
+    commentaire = models.TextField(
+        blank=True, 
+        max_length=10000000,  # Ajouté pour correspondre à V2
+        verbose_name=_("Commentaire")
+    )
 
     created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("Date de création")
+        auto_now_add=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        blank=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Date de création")
     )
+    
     updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("Dernière mise à jour")
+        auto_now=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Dernière mise à jour")
     )
     
     # Champs d'audit
     created_by = models.ForeignKey(
         "User",
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='tendance_user_create',
@@ -2699,7 +2786,7 @@ class Tendance(Model):
     
     updated_by = models.ForeignKey(
         "User",
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='tendance_user_update',
@@ -2715,6 +2802,105 @@ class Tendance(Model):
 
     def __str__(self):
         return f"Tendance {self.pk} - {self.acheteur}"
+    
+    # Méthodes utilitaires optionnelles
+    @property
+    def plus_informations_label(self):
+        """Retourne le label lisible de 'Plus d'informations'"""
+        if self.plus_informations:
+            return dict(LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE).get(self.plus_informations, self.plus_informations)
+        return ""
+    
+    @property
+    def alarmes_label(self):
+        """Retourne le label lisible des alarmes"""
+        if self.alarmes:
+            return dict(LIEN_ALARMES_CHOICE).get(self.alarmes, self.alarmes)
+        return ""
+    
+    @property
+    def has_alarmes(self):
+        """Vérifie s'il y a des alarmes"""
+        return bool(self.alarmes and self.alarmes.strip() and self.alarmes != "--------")
+    
+    @property
+    def has_plus_informations(self):
+        """Vérifie s'il y a des informations supplémentaires"""
+        return bool(self.plus_informations and self.plus_informations.strip() and self.plus_informations != "--------")
+    
+    def get_presse_media_list(self):
+        """Retourne une liste des presse/médias (séparés par des virgules)"""
+        if not self.presse_media:
+            return []
+        # Supposer que les médias sont séparés par des virgules
+        return [media.strip() for media in self.presse_media.split(',') if media.strip()]
+    
+    def get_concurrents_list(self):
+        """Retourne une liste des concurrents (format texte)"""
+        if not self.principaux_concurrent:
+            return []
+        # Diviser par lignes ou points
+        import re
+        # Diviser par lignes ou points-virgules
+        concurrents = re.split(r'[\n;]', self.principaux_concurrent)
+        return [conc.strip() for conc in concurrents if conc.strip()]
+    
+    def get_avis_commercial_info(self):
+        """Retourne les informations de l'avis commercial"""
+        if self.avis_commercial:
+            return {
+                'id': self.avis_commercial.id,
+                'nom': str(self.avis_commercial),
+                # Ajouter d'autres champs si nécessaire
+            }
+        return None
+    
+    def get_summary(self):
+        """Retourne un résumé des tendances"""
+        summary = []
+        
+        if self.avis_commercial:
+            summary.append(f"Avis commercial: {self.avis_commercial}")
+        
+        if self.has_plus_informations():
+            summary.append(f"Plus d'infos: {self.get_plus_informations_display()}")
+        
+        if self.presse_media:
+            summary.append(f"Presse/Médias: {self.presse_media}")
+        
+        if self.has_alarmes():
+            summary.append(f"Alarmes: {self.get_alarmes_display()}")
+        
+        return ", ".join(summary) if summary else "Aucune information"
+    
+    def clean(self):
+        """Validation des données"""
+        from django.core.exceptions import ValidationError
+        
+        super().clean()
+        
+        # Validation: vérifier la longueur des champs si nécessaire
+        if self.presse_media and len(self.presse_media) > 100:
+            raise ValidationError({
+                'presse_media': _("Le champ Presse/Médias ne peut pas dépasser 100 caractères.")
+            })
+        
+        # Validation: vérifier que les choix sont valides
+        if self.plus_informations and self.plus_informations not in dict(LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE):
+            raise ValidationError({
+                'plus_informations': _("Valeur invalide pour 'Plus d'informations'.")
+            })
+        
+        if self.alarmes and self.alarmes not in dict(LIEN_ALARMES_CHOICE):
+            raise ValidationError({
+                'alarmes': _("Valeur invalide pour 'Alarmes'.")
+            })
+    
+    def save(self, *args, **kwargs):
+        """Sauvegarde avec validation optionnelle"""
+        # Décommentez pour valider automatiquement avant la sauvegarde
+        # self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class ResponsableAcheteur(Model):
@@ -2734,7 +2920,7 @@ class ResponsableAcheteur(Model):
     )
     nom = models.CharField(_("Nom"), max_length=50, blank=True, null=True)
     prenom = models.CharField(_("Prénom"), max_length=50, blank=True, null=True)
-    sexe = models.CharField(
+    Sexe = models.CharField(
         _("Sexe"),
         max_length=20,
         default=STATUS_MASCULIN,
@@ -2744,17 +2930,20 @@ class ResponsableAcheteur(Model):
     )
 
     poste = models.CharField(
-        _("Poste"), max_length=100, choices=LISTE_NOUVELLE_FONCTION, blank=True
+        _("Poste"), 
+        max_length=255, 
+        choices=LISTE_NOUVELLE_FONCTION,  # Assurez-vous que cette variable est définie
+        blank=True,
+        null=True,  # Ajouté pour correspondre à V2
     )
-    # poste_ref = models.ForeignKey(
-    #     "PosteEntreprise",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     verbose_name=_("Référence Poste"),
-    # )
+    
 
-    nationalite = models.CharField(_("Nationalité"), max_length=100, blank=True)
+    nationalite = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Nationalité")
+    )
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
         null=True,
@@ -2762,10 +2951,26 @@ class ResponsableAcheteur(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur Commentaire"),
     )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+    commentaire = models.TextField(
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        max_length=10000000, 
+        verbose_name=_("Commentaire")
+    )
 
-    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    # Timestamps
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        blank=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Date de création")
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Dernière mise à jour")
+    )
     
     # Champs d'audit
     created_by = models.ForeignKey(
@@ -2795,58 +3000,109 @@ class ResponsableAcheteur(Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Initialiser les données originales pour le suivi des changements
         self.__original_data = {
             "nom": self.nom,
             "prenom": self.prenom,
-            "sexe": self.sexe,
-            "poste_ref_id": self.poste_ref_id,  # Utilisez l'ID pour les FK
+            "Sexe": self.Sexe,
+            "poste": self.poste,  # Corrigé: utiliser poste au lieu de poste_ref_id
             "nationalite": self.nationalite,
-            # Pour la détection de "Commentaires sur dirigeants"
             "commentaire": self.commentaire,
         }
-        
+    
     def get_initials(self):
         """Retourne les initiales du responsable"""
-        return f"{self.nom[0] if self.nom else ''}{self.prenom[0] if self.prenom else ''}".upper()
+        initials = ""
+        if self.nom:
+            initials += self.nom[0].upper()
+        if self.prenom:
+            initials += self.prenom[0].upper()
+        return initials
     
     @property
     def commentaire_preview(self):
-        """Retourne un aperçu du commentaire"""
+        """Retourne un aperçu du commentaire (100 premiers caractères)"""
         if self.commentaire:
-            return self.commentaire[:100] + ('...' if len(self.commentaire) > 100 else '')
+            if len(self.commentaire) > 100:
+                return self.commentaire[:100] + '...'
+            return self.commentaire
         return ''
     
     @property
     def full_name(self):
         """Retourne le nom complet"""
-        return f"{self.nom} {self.prenom}"
+        name_parts = []
+        if self.nom:
+            name_parts.append(self.nom)
+        if self.prenom:
+            name_parts.append(self.prenom)
+        return " ".join(name_parts) if name_parts else "Non nommé"
     
-    class Meta:
-        verbose_name = _("Responsable Acheteur")
-        verbose_name_plural = _("Responsables Acheteurs")
-        indexes = [
-            models.Index(fields=['acheteur', 'nom', 'prenom']),
-            models.Index(fields=['poste']),
-            models.Index(fields=['sexe']),
-        ]
-        ordering = ['nom', 'prenom']
-
+    @property
+    def nom_complet_inverse(self):
+        """Retourne le nom complet au format "Prénom Nom" """
+        name_parts = []
+        if self.prenom:
+            name_parts.append(self.prenom)
+        if self.nom:
+            name_parts.append(self.nom)
+        return " ".join(name_parts) if name_parts else ""
+    
+    def is_masculin(self):
+        """Vérifie si le responsable est masculin"""
+        return self.sexe == self.STATUS_MASCULIN
+    
+    def is_feminin(self):
+        """Vérifie si le responsable est féminin"""
+        return self.sexe == self.STATUS_FEMININ
+    
+    def clean(self):
+        """Validation des données"""
+        from django.core.exceptions import ValidationError
+        
+        super().clean()
+        
+        # Validation: nom et prénom ne peuvent pas être vides tous les deux
+        if not self.nom and not self.prenom:
+            raise ValidationError(
+                _("Au moins un des champs Nom ou Prénom doit être renseigné.")
+            )
+        
+        # Validation: vérifier que le poste est valide si renseigné
+        if self.poste and self.poste not in dict(LISTE_NOUVELLE_FONCTION):
+            raise ValidationError({
+                'poste': _("Valeur invalide pour le poste.")
+            })
+        
+        # Validation: longueur du commentaire
+        if self.commentaire and len(self.commentaire) > 10000000:
+            raise ValidationError({
+                'commentaire': _("Le commentaire ne peut pas dépasser 10,000,000 caractères.")
+            })
+    
     def save(self, *args, **kwargs):
+        """Sauvegarde avec validation et suivi des changements"""
         is_new = self.pk is None
-        if not is_new:
-            self._check_for_changes_and_log_alerts()
-            # Récupérez les données nécessaires et passez-les à la tâche Celery
-            # Vous devrez affiner `changes_detected` pour qu'il soit sérialisable (ex: dict simple)
-            # log_responsable_acheteur_changes.delay(self.pk, changes_detected)
+        
+        # Valider avant de sauvegarder
+        self.full_clean()
+        
+        # Sauvegarder
         super().save(*args, **kwargs)
+        
+        # Mettre à jour les données originales
         self.__original_data = {
             "nom": self.nom,
             "prenom": self.prenom,
-            "sexe": self.sexe,
-            "poste_ref_id": self.poste_ref_id,
+            "Sexe": self.Sexe,
+            "poste": self.poste,
             "nationalite": self.nationalite,
             "commentaire": self.commentaire,
         }
+        
+        # Logique de surveillance des changements (optionnelle)
+        if not is_new and self.acheteur:
+            self._check_for_changes_and_log_alerts()
 
     def _check_for_changes_and_log_alerts(self):
         # Mappage des champs aux codes internes des ElementSurveillance
@@ -2854,7 +3110,7 @@ class ResponsableAcheteur(Model):
             "nom": "EXECUTIVE_CHANGE",
             "prenom": "EXECUTIVE_CHANGE",
             "sexe": "EXECUTIVE_CHANGE",
-            "poste_ref_id": "EXECUTIVE_CHANGE",
+            "poste": "EXECUTIVE_CHANGE",
             "nationalite": "EXECUTIVE_CHANGE",
             "commentaire": "EXECUTIVE_REPUTATION",  # Alerte spécifique pour les commentaires
         }
@@ -2865,7 +3121,8 @@ class ResponsableAcheteur(Model):
             original_value = self.__original_data.get(field_name)
             current_value = getattr(self, field_name)
 
-            if field_name.endswith("_id"):  # Pour les ForeignKey
+            field = self._meta.get_field(field_name)
+            if isinstance(field, ForeignKey):
                 if original_value != current_value:
                     original_obj_display = "vide"
                     current_obj_display = "vide"
@@ -2946,13 +3203,29 @@ class AntecedantsJuridique(Model):
         verbose_name=_("Acheteur"),
     )
     dossier_faillite = models.CharField(
-        _("Dossier de Faillite"), max_length=100, blank=True
+        max_length=100, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Dossier faillite")  # Nom de V2 pour la cohérence
     )
-    jugement_cour = models.CharField(_("Jugement de Cour"), max_length=100, blank=True)
+    jugement_cour = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Jugement cour")  # Nom de V2 pour la cohérence
+    )
     antecedant_redressement = models.CharField(
-        _("Antécédent de Redressement"), max_length=100, blank=True
+        max_length=100, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Antécédent de redressement")
     )
-    Autre = models.CharField(_("Autre"), max_length=100, blank=True)
+    Autre = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Autre")
+    )
 
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -2965,13 +3238,23 @@ class AntecedantsJuridique(Model):
         _("Commentaire"), max_length=10000000, blank=True, null=True
     )
 
-    created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
-    updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        blank=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Date de création")  # Nom de V2 pour la cohérence
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True, 
+        null=True,  # Ajouté pour correspondre à V2
+        verbose_name=_("Dernière mise à jour")  # Plus clair que "Date de Mise à Jour"
+    )
     
     # Champs d'audit
     created_by = models.ForeignKey(
         "User",
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='antecedants_juridique_user_create',
@@ -2980,7 +3263,7 @@ class AntecedantsJuridique(Model):
     
     updated_by = models.ForeignKey(
         "User",
-        on_delete=models.SET_NULL,
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='antecedants_juridique_user_update',
@@ -2998,9 +3281,9 @@ class AntecedantsJuridique(Model):
             return 'jugement'
         elif self.antecedant_redressement and self.antecedant_redressement.strip():
             return 'redressement'
-        elif self.autre and self.autre.strip():
+        elif self.Autre and self.Autre.strip():  # Correction: Autre avec majuscule
             return 'autre'
-        return 'autre'
+        return 'aucun'
     
     @property
     def has_content(self):
@@ -3009,15 +3292,84 @@ class AntecedantsJuridique(Model):
             self.dossier_faillite and self.dossier_faillite.strip(),
             self.jugement_cour and self.jugement_cour.strip(),
             self.antecedant_redressement and self.antecedant_redressement.strip(),
-            self.autre and self.autre.strip()
+            self.Autre and self.Autre.strip()  # Correction: Autre avec majuscule
         ])
     
     @property
+    def has_commentaire(self):
+        """Vérifie si l'antécédent a un commentaire"""
+        return bool(self.commentaire and self.commentaire.strip())
+    
+    @property
     def commentaire_preview(self):
-        """Retourne un aperçu du commentaire"""
+        """Retourne un aperçu du commentaire (100 premiers caractères)"""
         if self.commentaire:
-            return self.commentaire[:100] + ('...' if len(self.commentaire) > 100 else '')
+            if len(self.commentaire) > 100:
+                return self.commentaire[:100] + '...'
+            return self.commentaire
         return ''
+    
+    def get_antecedent_summary(self):
+        """Retourne un résumé de l'antécédent"""
+        antecedents = []
+        
+        if self.dossier_faillite and self.dossier_faillite.strip():
+            antecedents.append(f"Faillite: {self.dossier_faillite}")
+        
+        if self.jugement_cour and self.jugement_cour.strip():
+            antecedents.append(f"Jugement: {self.jugement_cour}")
+        
+        if self.antecedant_redressement and self.antecedant_redressement.strip():
+            antecedents.append(f"Redressement: {self.antecedant_redressement}")
+        
+        if self.Autre and self.Autre.strip():  # Correction: Autre avec majuscule
+            antecedents.append(f"Autre: {self.Autre}")
+        
+        return "; ".join(antecedents) if antecedents else "Aucun antécédent spécifié"
+    
+    def get_severity_level(self):
+        """Retourne le niveau de sévérité de l'antécédent"""
+        if self.dossier_faillite and self.dossier_faillite.strip():
+            return 'élevé'
+        elif self.jugement_cour and self.jugement_cour.strip():
+            return 'moyen'
+        elif self.antecedant_redressement and self.antecedant_redressement.strip():
+            return 'modéré'
+        elif self.Autre and self.Autre.strip():  # Correction: Autre avec majuscule
+            return 'faible'
+        return 'aucun'
+    
+    def clean(self):
+        """Validation des données"""
+        from django.core.exceptions import ValidationError
+        
+        super().clean()
+        
+        # Validation: au moins un champ d'antécédent doit être rempli
+        if not self.has_content and not self.commentaire:
+            raise ValidationError(
+                _("Au moins un champ d'antécédent ou un commentaire doit être renseigné.")
+            )
+        
+        # Validation: longueur des champs
+        for field_name in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre']:
+            value = getattr(self, field_name)
+            if value and len(value) > 100:
+                field_verbose = self._meta.get_field(field_name).verbose_name
+                raise ValidationError({
+                    field_name: _(f"Le champ '{field_verbose}' ne peut pas dépasser 100 caractères.")
+                })
+        
+        # Validation: longueur du commentaire
+        if self.commentaire and len(self.commentaire) > 10000000:
+            raise ValidationError({
+                'commentaire': _("Le commentaire ne peut pas dépasser 10,000,000 caractères.")
+            })
+    
+    def save(self, *args, **kwargs):
+        """Sauvegarde avec validation"""
+        self.full_clean()
+        super().save(*args, **kwargs)
     
     class Meta:
         verbose_name = _("Antécédent Juridique")

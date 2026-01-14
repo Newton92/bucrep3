@@ -73,11 +73,9 @@ import io
 import base64
 import json
 from main.models import ActifC, PassifC, ResultatC
-from main.utils import RatiosClassique
 # from datetime import datetime
 from django.conf import settings
 # import datetime
-from main.utils import *
 from main.models import (
     ActifC, PassifC, ResultatC,  # Classique
     ActifA, PassifA, ResultatA,  # Anglais

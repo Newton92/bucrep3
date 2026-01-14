@@ -694,7 +694,6 @@ class DeleteAcheteurDataSaveView(APIView):
         )
 
 
-
 class AcheteurDonneesEnregistrementView(APIView):
     """
     API pour gérer les données d'enregistrement unique d'un acheteur
@@ -713,7 +712,6 @@ class AcheteurDonneesEnregistrementView(APIView):
         try:
             data_save = DonneesEnregistrement.objects.get(acheteur=acheteur)
             serializer = GetDonneesEnregistrementSerializer(data_save)
-            print(serializer.data)
             return Response(serializer.data)
         except DonneesEnregistrement.DoesNotExist:
             return Response({
@@ -728,26 +726,36 @@ class AcheteurDonneesEnregistrementView(APIView):
         
         # Vérifier si des données existent déjà
         try:
-            print(request.data)
             data_save = DonneesEnregistrement.objects.get(acheteur=acheteur)
             serializer = EditDonneesEnregistrementSerializer(
-                data_save, data=request.data, partial=True
+                data_save, 
+                data=request.data, 
+                partial=True,
+                context={'request': request}
             )
-            print(serializer)
             action = "mis à jour"
         except DonneesEnregistrement.DoesNotExist:
             data = request.data.copy()
             data["acheteur"] = acheteur_id
-            print(data)
-
-            serializer = AddDonneesEnregistrementSerializer(data=data)
+            # ⭐ AJOUT : Enregistrer l'utilisateur qui crée
+            data["created_by"] = request.user.id
+            
+            serializer = AddDonneesEnregistrementSerializer(
+                data=data,
+                context={'request': request}
+            )
             action = "créé"
         
         if serializer.is_valid():
-            serializer.save()
+            # ⭐ AJOUT : Enregistrer qui a modifié
+            instance = serializer.save()
+            if action == "mis à jour":
+                instance.updated_by = request.user
+                instance.save()
+            
             return Response({
                 "message": f"Données d'enregistrement {action} avec succès",
-                "data": serializer.data
+                "data": GetDonneesEnregistrementSerializer(instance).data
             }, status=status.HTTP_200_OK if action == "mis à jour" else status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -766,7 +774,6 @@ class AcheteurDonneesEnregistrementView(APIView):
             return Response({
                 "message": "Aucune donnée d'enregistrement à supprimer"
             }, status=status.HTTP_404_NOT_FOUND)
-
 
 
 
@@ -947,20 +954,34 @@ class AcheteurTendanceView(APIView):
         try:
             tendance = Tendance.objects.get(acheteur=acheteur)
             serializer = EditTendanceSerializer(
-                tendance, data=request.data, partial=True
+                tendance, 
+                data=request.data, 
+                partial=True,
+                context={'request': request}
             )
             action = "mise à jour"
         except Tendance.DoesNotExist:
             data = request.data.copy()
             data["acheteur"] = acheteur_id
-            serializer = AddTendanceSerializer(data=data)
+            # ⭐ AJOUT : Enregistrer l'utilisateur qui crée
+            data["created_by"] = request.user.id
+            
+            serializer = AddTendanceSerializer(
+                data=data,
+                context={'request': request}
+            )
             action = "créée"
         
         if serializer.is_valid():
-            serializer.save()
+            # ⭐ AJOUT : Enregistrer qui a modifié
+            instance = serializer.save()
+            if action == "mise à jour":
+                instance.updated_by = request.user
+                instance.save()
+            
             return Response({
                 "message": f"Tendance {action} avec succès",
-                "data": serializer.data
+                "data": GetTendanceSerializer(instance).data
             }, status=status.HTTP_200_OK if action == "mise à jour" else status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -979,7 +1000,6 @@ class AcheteurTendanceView(APIView):
             return Response({
                 "message": "Aucune tendance à supprimer"
             }, status=status.HTTP_404_NOT_FOUND)
-
 
 
 
@@ -1186,11 +1206,11 @@ class AcheteurResponsableListView(APIView):
         # Construction de la requête
         responsables = ResponsableAcheteur.objects.filter(
             acheteur=acheteur
-        ).select_related('poste_ref', 'couleur_commentaire')
+        ).select_related('couleur_commentaire')
         
         # Filtres
         if sexe:
-            responsables = responsables.filter(sexe=sexe)
+            responsables = responsables.filter(Sexe=sexe)
         if poste:
             responsables = responsables.filter(poste=poste)
         
@@ -1396,7 +1416,7 @@ class AcheteurResponsableDetailView(APIView):
             'nom': responsable.nom,
             'prenom': responsable.prenom,
             'poste': responsable.poste,
-            'sexe': responsable.sexe,
+            'sexe': responsable.Sexe,
             'nationalite': responsable.nationalite,
             'commentaire': responsable.commentaire
         }
@@ -1414,7 +1434,7 @@ class AcheteurResponsableDetailView(APIView):
             changes = []
             new_values = serializer.validated_data
             
-            for field in ['nom', 'prenom', 'poste', 'sexe', 'nationalite', 'commentaire']:
+            for field in ['nom', 'prenom', 'poste', 'Sexe', 'nationalite', 'commentaire']:
                 if field in new_values and new_values[field] != old_values[field]:
                     old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
                     new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
@@ -1660,7 +1680,7 @@ class AcheteurAntecedentListView(APIView):
             elif type_filter == 'redressement':
                 antecedents = antecedents.exclude(antecedant_redressement='')
             elif type_filter == 'autre':
-                antecedents = antecedents.exclude(autre='')
+                antecedents = antecedents.exclude(Autre='')
             elif type_filter == 'avec_commentaire':
                 antecedents = antecedents.exclude(commentaire='')
         
@@ -1670,13 +1690,13 @@ class AcheteurAntecedentListView(APIView):
                 Q(dossier_faillite__icontains=search_term) |
                 Q(jugement_cour__icontains=search_term) |
                 Q(antecedant_redressement__icontains=search_term) |
-                Q(autre__icontains=search_term) |
+                Q(Autre__icontains=search_term) |
                 Q(commentaire__icontains=search_term)
             )
         
         # Tri
         sort_by = request.query_params.get('sort_by', '-created_at')
-        if sort_by in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'autre', 'created_at']:
+        if sort_by in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre', 'created_at']:
             antecedents = antecedents.order_by(sort_by)
         else:
             antecedents = antecedents.order_by('-created_at')
@@ -1843,7 +1863,7 @@ class AcheteurAntecedentDetailView(APIView):
             'dossier_faillite': antecedent.dossier_faillite,
             'jugement_cour': antecedent.jugement_cour,
             'antecedant_redressement': antecedent.antecedant_redressement,
-            'autre': antecedent.autre,
+            'autre': antecedent.Autre,
             'commentaire': antecedent.commentaire
         }
         
@@ -1860,7 +1880,7 @@ class AcheteurAntecedentDetailView(APIView):
             changes = []
             new_values = serializer.validated_data
             
-            for field in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'autre', 'commentaire']:
+            for field in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre', 'commentaire']:
                 if field in new_values and new_values[field] != old_values[field]:
                     old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
                     new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')

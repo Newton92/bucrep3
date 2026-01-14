@@ -1593,7 +1593,7 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     Un acheteur ne peut avoir qu'un seul résumé
     """
     
-    # Récupérer l'acheteur avec préfetch pour optimiser
+    # ⭐ CORRECTION : Supprimer la duplication
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(
             'statut_entreprise',
@@ -1605,15 +1605,10 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
         ),
         id=acheteur_id
     )
-
-    # Récupérer l'acheteur
-    acheteur = get_object_or_404(Acheteur, id=acheteur_id)
     
-    # ⭐ AJOUTER : Récupérer les donnees existantes ⭐
+    # Récupérer les données existantes
     data_save = DonneesEnregistrement.objects.filter(acheteur=acheteur).first()
     
-    # Vérifier les permissions
-    # Vérifier si l'utilisateur a les permissions nécessaires
     # Vérifier si l'utilisateur est authentifié
     if not request.user.is_authenticated:
         return redirect('login')
@@ -1651,38 +1646,26 @@ def dash_root_manage_acheteur_data_save(request, acheteur_id):
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    # Récupérer tous les statuts d'entreprise
-    statut_list = StatutEntreprise.objects.all()
-    statut_list_two = StatutEntreprise.objects.all()
-    statut_list_tree = StatutEntreprise.objects.all()
-    statut_list_four = StatutEntreprise.objects.all()
-
-    # Récupérer tous les formes juridiques
-    juridique_list = FormeJuridique.objects.all()
-    juridique_list_two = FormeJuridique.objects.all()
-    juridique_list_tree = FormeJuridique.objects.all()
-    juridique_list_four = FormeJuridique.objects.all()
+    # ⭐ AJOUT : Préparer les choix pour le template
+    forme_juridique_choices = NOUVEAU_LEGAL_FORM
+    statut_registre_choices = LIEN_STATUT_CHOICE
+    
+    # CORRECTION ICI : Retirer 'description' qui n'existe pas
+    coloration_list = CouleurCommentaire.objects.all().values('id', 'couleur', 'code')
 
     context = {
         "acheteur_active": "active",
         "user": request.user,
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "acheteur_json": acheteur_json,  # JSON pour JavaScript
-        "acheteur": acheteur,  # ⭐ AJOUTER
-        "data_save": data_save,  # ⭐ AJOUTER
-        "id_acheteur": id_acheteur,
-        "statut_list": statut_list,
-        "statut_list_two": statut_list_two,
-        "statut_list_tree": statut_list_tree,
-        "statut_list_four": statut_list_four,
-        "juridique_list": juridique_list,
-        "juridique_list_two": juridique_list_two,
-        "juridique_list_tree": juridique_list_tree,
-        "juridique_list_four": juridique_list_four,
+        "acheteur_json": acheteur_json,
+        "acheteur": acheteur,
+        "data_save": data_save,
+        "id_acheteur": acheteur_id,
+        "forme_juridique_choices": forme_juridique_choices,
+        "statut_registre_choices": statut_registre_choices,
+        # ⭐ AJOUT : Conserver les listes existantes pour compatibilité
+        "coloration_list": coloration_list,
     }
     return render(
         request,
@@ -1715,7 +1698,11 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
     tendance = Tendance.objects.filter(acheteur=acheteur).first()
     
     # Récupérer tous les avis commerciaux pour les listes déroulantes
-    commercial_list = ModeleAvisCommercial.objects.all()
+    commercial_list = ListeInformationsAvisCommercial.objects.all()
+    
+    # ⭐ AJOUT : Préparer les choix pour le template
+    plus_informations_choices = LIEN_PLUS_INFORMATIONS_NOTATION_CHOICE
+    alarmes_choices = LIEN_ALARMES_CHOICE
     
     # Génération des tokens JWT
     try:
@@ -1741,30 +1728,19 @@ def dash_root_manage_acheteur_tendance(request, acheteur_id):
     # Convertir en JSON sécurisé pour JavaScript
     acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Si une tendance existe, préparer ses données
-    tendance_json = None
-    if tendance:
-        tendance_data = {
-            'id': tendance.id,
-            'avis_commercial': tendance.avis_commercial or '',
-            'avis_commercial_ref': tendance.avis_commercial_ref.id if tendance.avis_commercial_ref else None,
-            'presse_media': tendance.presse_media or '',
-            'principaux_concurrent': tendance.principaux_concurrent or '',
-            'commentaire': tendance.commentaire or '',
-        }
-        tendance_json = json.dumps(tendance_data, default=str)
-
     context = {
         "acheteur_active": "active",
         "user": request.user,
         "access_token": access_token,
         "refresh_token": refresh_token,
         "acheteur_json": acheteur_json,
-        "tendance_json": tendance_json or 'null',
         "acheteur": acheteur,
         "tendance": tendance,
         "id_acheteur": acheteur_id,
         "commercial_list": commercial_list,
+        # ⭐ AJOUT : Ajouter les choix pour le template
+        "plus_informations_choices": plus_informations_choices,
+        "alarmes_choices": alarmes_choices,
     }
     return render(
         request,
@@ -1791,22 +1767,23 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
         )
 
         # Récupérer les listes pour les formulaires
-        poste_list = PosteEntreprise.objects.all().order_by('libelle')
         coloration_list = CouleurCommentaire.objects.all().order_by('couleur')
 
         # Récupérer les responsables existants (limité à 5 pour les statistiques)
         responsables = ResponsableAcheteur.objects.filter(
             acheteur=acheteur
         ).select_related(
-            'poste_ref',
-            'couleur_commentaire'
+            'couleur_commentaire',
+            'created_by',
+            'updated_by'
         ).order_by('-created_at')[:5]
+
 
         # Statistiques
         stats = {
             'total': ResponsableAcheteur.objects.filter(acheteur=acheteur).count(),
-            'masculin': ResponsableAcheteur.objects.filter(acheteur=acheteur, sexe='Masculin').count(),
-            'feminin': ResponsableAcheteur.objects.filter(acheteur=acheteur, sexe='Feminin').count(),
+            'masculin': ResponsableAcheteur.objects.filter(acheteur=acheteur, Sexe='Masculin').count(),
+            'feminin': ResponsableAcheteur.objects.filter(acheteur=acheteur, Sexe='Feminin').count(),
             'avec_commentaire': ResponsableAcheteur.objects.filter(
                 acheteur=acheteur,
                 commentaire__isnull=False
@@ -1828,6 +1805,9 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
             'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
             'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
         }
+    
+        # ⭐ AJOUT : Préparer les choix pour le template
+        poste_choices = LISTE_NOUVELLE_FONCTION
 
         context = {
             "acheteur_active": "active",
@@ -1837,11 +1817,10 @@ def dash_root_manage_acheteur_responsable(request, acheteur_id):
             "acheteur_json": json.dumps(acheteur_data),
             "id_acheteur": acheteur_id,
             "acheteur": acheteur,
-            "poste_list": poste_list,
             "coloration_list": coloration_list,
             "responsables_recent": responsables,
             "stats": stats,
-            "BON_POST_CHOICES_CHOICES": ResponsableAcheteur._meta.get_field('poste').choices,
+            "poste_choices": poste_choices,
         }
         
         return render(

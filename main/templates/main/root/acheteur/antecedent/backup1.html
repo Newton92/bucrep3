@@ -453,7 +453,7 @@
                         {% if antecedent.antecedant_redressement %}
                         <span class="badge-redressement">ANTR</span>
                         {% endif %}
-                        {% if antecedent.Autre %}
+                        {% if antecedent.autre %}
                         <span class="badge-autre">AUTR</span>
                         {% endif %}
                     </div>
@@ -468,8 +468,8 @@
                         {% if antecedent.antecedant_redressement %}
                         <strong>Redressement:</strong> {{ antecedent.antecedant_redressement|truncatechars:100 }}<br>
                         {% endif %}
-                        {% if antecedent.Autre %}
-                        <strong>Autre:</strong> {{ antecedent.Autre|truncatechars:100 }}
+                        {% if antecedent.autre %}
+                        <strong>Autre:</strong> {{ antecedent.autre|truncatechars:100 }}
                         {% endif %}
                     </div>
                     
@@ -656,7 +656,7 @@
                                 <select class="form-select select2-with-search" id="couleur_commentaire" name="couleur_commentaire">
                                     <option value="">Sélectionnez une couleur</option>
                                     {% for coloration in coloration_list %}
-                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
                                         {{ coloration.couleur }}
                                     </option>
                                     {% endfor %}
@@ -763,7 +763,7 @@
                                 <select class="form-select select2-with-search" id="editCouleurCommentaire" name="couleur_commentaire">
                                     <option value="">Sélectionnez une couleur</option>
                                     {% for coloration in coloration_list %}
-                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code|default:'#6c757d' }}">
+                                    <option value="{{ coloration.id }}" data-color="{{ coloration.code_couleur|default:'#6c757d' }}">
                                         {{ coloration.couleur }}
                                     </option>
                                     {% endfor %}
@@ -872,7 +872,8 @@ $(document).ready(function() {
             placeholder: 'Sélectionnez une option',
             language: 'fr',
             allowClear: true,
-            minimumResultsForSearch: 0,
+            minimumResultsForSearch: 10,
+            dropdownParent: $('body')
         });
         
         // Gérer l'aperçu des couleurs
@@ -903,7 +904,7 @@ $(document).ready(function() {
         if (antecedent.dossier_faillite && antecedent.dossier_faillite.trim()) return 'faillite';
         if (antecedent.jugement_cour && antecedent.jugement_cour.trim()) return 'jugement';
         if (antecedent.antecedant_redressement && antecedent.antecedant_redressement.trim()) return 'redressement';
-        if (antecedent.Autre && antecedent.Autre.trim()) return 'autre';
+        if (antecedent.autre && antecedent.autre.trim()) return 'autre';
         return 'autre';
     }
     
@@ -943,7 +944,6 @@ $(document).ready(function() {
     
     // Mettre à jour la table
     function updateTable(antecedents) {
-        console.log(antecedents);
         const tbody = $('#antecedentTableBody');
         tbody.empty();
         
@@ -974,7 +974,7 @@ $(document).ready(function() {
             if (antecedent.antecedant_redressement && antecedent.antecedant_redressement.trim()) {
                 badges.push(`<span class="badge-redressement">ANTR</span>`);
             }
-            if (antecedent.Autre && antecedent.Autre.trim()) {
+            if (antecedent.autre && antecedent.autre.trim()) {
                 badges.push(`<span class="badge-autre">AUTR</span>`);
             }
             
@@ -994,7 +994,7 @@ $(document).ready(function() {
                     <td>${antecedent.dossier_faillite || '-'}</td>
                     <td>${antecedent.jugement_cour || '-'}</td>
                     <td>${antecedent.antecedant_redressement || '-'}</td>
-                    <td>${antecedent.Autre || '-'}</td>
+                    <td>${antecedent.autre || '-'}</td>
                     <td>
                         ${antecedent.couleur_commentaire ? `
                         <span class="badge" style="background-color: ${antecedent.couleur_commentaire_code || '#6c757d'}">
@@ -1116,7 +1116,6 @@ $(document).ready(function() {
         formData.forEach((value, key) => {
             data[key] = value;
         });
-        console.log(formData);
         
         const antecedentId = $('#editAntecedentId').val();
         submitAntecedentForm('PUT', data, '#submitEditBtn', 'editAntecedentModal', antecedentId);
@@ -1210,21 +1209,20 @@ $(document).ready(function() {
                 'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
-                console.log(response);
                 // Remplir le formulaire
                 $('#editAntecedentId').val(response.id);
                 $('#editDossierFaillite').val(response.dossier_faillite || '');
                 $('#editJugementCour').val(response.jugement_cour || '');
                 $('#editAntecedantRedressement').val(response.antecedant_redressement || '');
-                $('#editAutre').val(response.Autre || '');
+                $('#editAutre').val(response.autre || '');
                 $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
                 $('#editCommentaire').val(response.commentaire || '');
                 
                 // Aperçu de la couleur
-                if (response.couleur_commentaire?.code) {
+                if (response.couleur_commentaire?.code_couleur) {
                     $('#editColorPreview').css({
-                        'background': response.couleur_commentaire.code,
-                        'border-color': response.couleur_commentaire.code
+                        'background': response.couleur_commentaire.code_couleur,
+                        'border-color': response.couleur_commentaire.code_couleur
                     });
                 }
                 
