@@ -35,6 +35,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Initialiser environ
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, "localenv", ".env"))
+# environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -47,12 +48,13 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "3.236.213.114", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "107.172.88.238", "3.236.213.114", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
     "http://10.0.57.47",
     "http://3.236.213.114",
+    "http://107.172.88.238",
     "http://localhost",
     "http://127.0.0.1",
     "http://preprod.bucrep3.bucrep.net",
@@ -136,7 +138,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "safedelete",
     "simple_history",
-    "django_model_changes",
+    # "django_model_changes",
     "formtools",
     "django_filters",
     "qr_code",
@@ -320,6 +322,7 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:8004",
     "http://10.0.57.47",
     "http://3.236.213.114:26354",
+    "http://107.172.88.238",
     "http://preprod.bucrep3.bucrep.net",
 ]
 CORS_ALLOW_HEADERS = [

@@ -424,6 +424,11 @@ def dash_root(request):
     except Exception:
         messages.error(request, "Erreur lors de la génération des tokens.")
         return redirect('index')
+    
+    # Recuperer les donnees
+    commandes = Commande.objects.all()
+    acheteurs = Acheteur.objects.all()
+    alertes = Warning.objects.all()
 
     context = {
         "dash_active": "active",
@@ -431,6 +436,9 @@ def dash_root(request):
         "refresh": refresh_token,
         "access": access_token,
         "access_token": access_token,  # Ajoutez cette ligne
+        "commandes": commandes,
+        "acheteurs": acheteurs,
+        "alertes": alertes,
         "current_date": timezone.now().date(),
         "current_time": timezone.now().time(),
     }

@@ -3,7 +3,7 @@
 Ce document décri la procedure standard à suivre pour mettre à jour, migrer et redémarrer l’application Django **BUCREP V3** sur le serveur de preproduction.
 
 # Acces
-Serveur IP : 93.127.202.151
+Serveur IP : 107.172.88.238 
 Port : 8014
 Login : yannick
 Mot de passe : ****** 
@@ -80,7 +80,7 @@ gunicorn --workers 4 --bind 0.0.0.0:8014 bucrep.wsgi:application --daemon
 
 Si aucune erreur n’est retournée par les commandes précédentes, l’application est opérationnelle et accessible à l’adresse suivante :
 
-👉 **http://93.127.202.151:8014/**
+👉 **http://107.172.88.238/**
 
 ---
 
@@ -97,3 +97,4 @@ Si aucune erreur n’est retournée par les commandes précédentes, l’applica
 Documentation technique – **PELBA**
 
 [ #fcfefe, #0a95ca, #0d80be, #25add6, #106cb2 ]
+[ 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 ]

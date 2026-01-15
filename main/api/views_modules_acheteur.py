@@ -1717,8 +1717,22 @@ class AcheteurAntecedentListView(APIView):
         """Ajoute un nouvel antécédent juridique"""
         acheteur = self.get_acheteur(acheteur_id)
         
+        # DEBUG
+        print("=== POST Données brutes ===")
+        print(request.data)
+        print("==========================")
+        
+        # Vérifier s'il existe déjà un antécédent avec les mêmes données
+        data = request.data.copy()
+        
         # Vérifier s'il existe déjà un antécédent avec les mêmes données
         data = request.data
+        
+        """Ajoute un nouvel antécédent juridique"""
+        # Normaliser les données : convertir 'autre' en 'Autre'
+        data = request.data.copy()
+        if 'autre' in data:
+            data['Autre'] = data.pop('autre')
         
         # Vérifier les doublons basés sur les champs principaux
         if data.get('dossier_faillite') and data.get('jugement_cour'):
@@ -1753,8 +1767,13 @@ class AcheteurAntecedentListView(APIView):
                 'message': 'Antécédent juridique ajouté avec succès',
                 'data': GetAntecedantsJuridiqueSerializer(antecedent).data
             }, status=status.HTTP_201_CREATED)
-        
+            
+        print("=== Erreurs de validation ===")
+        print(serializer.errors)
+        print("=============================")
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
     
     @transaction.atomic
     def delete(self, request, acheteur_id):
@@ -1858,18 +1877,24 @@ class AcheteurAntecedentDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Normaliser les données
+        data = request.data.copy()
+        # Convertir 'autre' en 'Autre' si présent
+        if 'autre' in data:
+            data['Autre'] = data.pop('autre')
+        
         # Sauvegarder les anciennes valeurs pour le log
         old_values = {
             'dossier_faillite': antecedent.dossier_faillite,
             'jugement_cour': antecedent.jugement_cour,
             'antecedant_redressement': antecedent.antecedant_redressement,
-            'autre': antecedent.Autre,
+            'Autre': antecedent.Autre,  # Utiliser 'Autre' ici
             'commentaire': antecedent.commentaire
         }
         
         serializer = EditAntecedantsJuridiqueSerializer(
             antecedent,
-            data=request.data,
+            data=data,  # Utiliser data normalisé
             partial=True
         )
         
@@ -1880,11 +1905,21 @@ class AcheteurAntecedentDetailView(APIView):
             changes = []
             new_values = serializer.validated_data
             
-            for field in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre', 'commentaire']:
-                if field in new_values and new_values[field] != old_values[field]:
-                    old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
-                    new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
-                    changes.append(f"{field}: '{old_val}' → '{new_val}'")
+            # Note: maintenant 'autre' dans serializer.validated_data est lié à 'Autre' via source='Autre'
+            for field_name in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre', 'commentaire']:
+                # Vérifier si le champ a été modifié
+                # Pour 'Autre', on utilise 'autre' dans le serializer
+                if field_name == 'Autre' and 'autre' in new_values:
+                    field_value = new_values['autre']
+                elif field_name in new_values:
+                    field_value = new_values[field_name]
+                else:
+                    continue
+                    
+                if field_value != old_values[field_name]:
+                    old_val = str(old_values[field_name])[:50] + ('...' if len(str(old_values[field_name])) > 50 else '')
+                    new_val = str(field_value)[:50] + ('...' if len(str(field_value)) > 50 else '')
+                    changes.append(f"{field_name}: '{old_val}' → '{new_val}'")
             
             # Log d'activité
             details = f"Mise à jour d'un antécédent juridique pour l'acheteur {acheteur.nom}"

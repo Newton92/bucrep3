@@ -15,7 +15,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_model_changes import ChangesMixin
+# from django_model_changes import ChangesMixin
 # from changes import ChangesMixin
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -1633,7 +1633,7 @@ class UpdatedObjects(models.Model):
         return f"{self.acheteur} → {self.updated_model}"
 
 
-class Acheteur(ChangesMixin, Model):
+class Acheteur(Model):
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     

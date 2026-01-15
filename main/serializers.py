@@ -2470,28 +2470,38 @@ class AntecedantJuridiqueListSerializer(serializers.ModelSerializer):
         return bool(obj.Autre and obj.Autre.strip())
 
 
-
 class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     """Serializer détaillé pour un antécédent"""
-    acheteur = AcheteurMinimalSerializer(read_only=True)
-    couleur_commentaire = serializers.StringRelatedField(source='couleur_commentaire.couleur', read_only=True)
+    # Exposer 'Autre' comme 'autre' pour l'API
+    autre = serializers.CharField(source='Autre', allow_null=True)
+    
+    # Ajoutez le champ couleur_commentaire_id pour la lecture
     couleur_commentaire_id = serializers.PrimaryKeyRelatedField(
-        queryset=CouleurCommentaire.objects.all(),
         source='couleur_commentaire',
-        write_only=True,
-        required=False,
-        allow_null=True
+        read_only=True
     )
     
     class Meta:
         model = AntecedantsJuridique
-        fields = '__all__'
-        extra_fields = ['couleur_commentaire_id']
-
+        fields = [
+            'id',
+            'acheteur',
+            'dossier_faillite',
+            'jugement_cour',
+            'antecedant_redressement',
+            'autre',  # Utiliser 'autre' au lieu de 'Autre'
+            'couleur_commentaire',
+            'couleur_commentaire_id',
+            'commentaire',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'updated_by',
+        ]
+        
 
 class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
-    """Serializer pour l'ajout d'un antécédent"""
-    
+    """Serializer pour l'ajout d'un antécédent - SIMPLIFIÉ"""
     class Meta:
         model = AntecedantsJuridique
         fields = [
@@ -2499,57 +2509,32 @@ class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'Autre',
+            'Autre',  # Utiliser 'Autre' directement
             'couleur_commentaire',
             'commentaire'
         ]
     
     def validate(self, data):
-        # Vérifier qu'au moins un champ est rempli
         fields_to_check = ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre']
         if not any(data.get(field) for field in fields_to_check):
             raise serializers.ValidationError({
                 'non_field_errors': 'Au moins un champ (dossier de faillite, jugement, redressement ou autre) doit être rempli.'
             })
-        
         return data
-
+    
 
 class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
-    """Serializer pour la modification d'un antécédent"""
-    couleur_commentaire = serializers.PrimaryKeyRelatedField(
-        queryset=CouleurCommentaire.objects.all(),
-        required=False,
-        allow_null=True
-    )
-    
+    """Serializer pour la modification d'un antécédent - SIMPLIFIÉ"""
     class Meta:
         model = AntecedantsJuridique
         fields = [
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'Autre',
+            'Autre',  # Utiliser 'Autre' directement
             'couleur_commentaire',
             'commentaire'
         ]
-    
-    def to_internal_value(self, data):
-        # Gérer les IDs pour les relations
-        if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
-            if data['couleur_commentaire']:
-                try:
-                    data['couleur_commentaire'] = int(data['couleur_commentaire'])
-                except (ValueError, TypeError):
-                    raise serializers.ValidationError({
-                        'couleur_commentaire': 'ID invalide'
-                    })
-            else:
-                data['couleur_commentaire'] = None
-        
-        return super().to_internal_value(data)
-
-
 
 
 
@@ -2588,20 +2573,31 @@ class AddRiskManagmentSerializer(serializers.ModelSerializer):
         ]
 
 
-class EditRiskManagmentSerializer(serializers.ModelSerializer):
+class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
+    """Serializer pour la modification d'un antécédent"""
+    # Ajouter un champ 'autre' qui pointe vers 'Autre'
+    autre = serializers.CharField(
+        source='Autre',
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    
     class Meta:
-        model = RiskManagment
+        model = AntecedantsJuridique
         fields = [
-            "id",
-            "acheteur",
-            "professionalisme",
-            "organisation",
-            "turn_over",
-            "greve",
-            "degradation_qualite",
-            "non_respect_condition",
-            "couleur_commentaire",
-            "commentaire",
+            'dossier_faillite',
+            'jugement_cour',
+            'antecedant_redressement',
+            'autre',  # Utiliser 'autre' ici
+            'couleur_commentaire',
+            'commentaire'
         ]
 
 
