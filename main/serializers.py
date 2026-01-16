@@ -2574,9 +2574,20 @@ class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     
 
 class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
-    """Serializer pour la modification d'un antécédent - SIMPLIFIÉ"""
-    # Ajouter ce champ pour traiter 'Autre' correctement
-    autre = serializers.CharField(source='Autre', required=False, allow_null=True, allow_blank=True)
+    """Serializer pour la modification d'un antécédent"""
+    # Ajouter un champ 'autre' qui pointe vers 'Autre'
+    autre = serializers.CharField(
+        source='Autre',
+        required=False,
+        allow_blank=True,
+        allow_null=True
+    )
+    
+    couleur_commentaire = serializers.PrimaryKeyRelatedField(
+        queryset=CouleurCommentaire.objects.all(),
+        required=False,
+        allow_null=True
+    )
     
     class Meta:
         model = AntecedantsJuridique
@@ -2584,41 +2595,10 @@ class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'autre',  # Utiliser 'autre' dans l'API
+            'autre',  # Utiliser 'autre' ici
             'couleur_commentaire',
             'commentaire'
         ]
-    
-    def validate(self, data):
-        """Validation personnalisée"""
-        # S'assurer qu'au moins un champ est rempli
-        fields_to_check = ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre']
-        has_data = False
-        
-        for field in fields_to_check:
-            # 'Autre' est maintenant accessible via 'autre' dans validated_data
-            if field == 'Autre' and 'autre' in data:
-                if data['autre'] and data['autre'].strip():
-                    has_data = True
-                    break
-            elif field in data and data[field] and data[field].strip():
-                has_data = True
-                break
-        
-        if not has_data and not data.get('commentaire'):
-            raise serializers.ValidationError({
-                'non_field_errors': 'Au moins un champ (dossier de faillite, jugement, redressement ou autre) doit être rempli.'
-            })
-        
-        return data
-    
-    def update(self, instance, validated_data):
-        """Surcharge de la mise à jour pour gérer correctement 'Autre'"""
-        # Gérer le champ 'autre' qui correspond à 'Autre' dans le modèle
-        if 'autre' in validated_data:
-            validated_data['Autre'] = validated_data.pop('autre')
-        
-        return super().update(instance, validated_data)
 
 
 
@@ -2654,33 +2634,22 @@ class AddRiskManagmentSerializer(serializers.ModelSerializer):
             "couleur_commentaire",
             "commentaire",
         ]
-
-
-class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
-    """Serializer pour la modification d'un antécédent"""
-    # Ajouter un champ 'autre' qui pointe vers 'Autre'
-    autre = serializers.CharField(
-        source='Autre',
-        required=False,
-        allow_blank=True,
-        allow_null=True
-    )
-    
-    couleur_commentaire = serializers.PrimaryKeyRelatedField(
-        queryset=CouleurCommentaire.objects.all(),
-        required=False,
-        allow_null=True
-    )
-    
+        
+        
+class EditRiskManagmentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AntecedantsJuridique
+        model = RiskManagment
         fields = [
-            'dossier_faillite',
-            'jugement_cour',
-            'antecedant_redressement',
-            'autre',  # Utiliser 'autre' ici
-            'couleur_commentaire',
-            'commentaire'
+            "id",
+            "acheteur",
+            "professionalisme",
+            "organisation",
+            "turn_over",
+            "greve",
+            "degradation_qualite",
+            "non_respect_condition",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 
@@ -2688,10 +2657,15 @@ class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
 
 
 
+# serializers.py
+class FonctionDansLeConseilSerializer(serializers.Serializer):
+    """Serializer pour les fonctions dans le conseil"""
+    valeur = serializers.CharField()
+    libelle = serializers.CharField()
+
 
 class ConseilAdministrationSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
-    fonction_dans_le_conseil_ref = PosteEntrepriseSerializer()
     couleur_commentaire = CouleurCommentaireSerializer()
 
     class Meta:
@@ -2701,10 +2675,10 @@ class ConseilAdministrationSerializer(serializers.ModelSerializer):
 
 class ConseilAdministrationListSerializer(serializers.ModelSerializer):
     """Serializer pour la liste des membres du conseil"""
-    fonction_dans_le_conseil_ref = PosteEntrepriseMinimalSerializer()
     couleur_commentaire = CouleurCommentaireMinimalSerializer()
     created_at_formatted = serializers.SerializerMethodField()
     adresse_complete = serializers.SerializerMethodField()
+    fonction_display = serializers.SerializerMethodField()  # Ajoutez ce champ
     
     class Meta:
         model = ConseilAdministration
@@ -2712,7 +2686,7 @@ class ConseilAdministrationListSerializer(serializers.ModelSerializer):
             'id',
             'nom',
             'fonction_dans_le_conseil',
-            'fonction_dans_le_conseil_ref',
+            'fonction_display',  # Ajoutez ce champ
             'numero_adresse',
             'rue_adresse',
             'code_postale_adresse',
@@ -2735,17 +2709,46 @@ class ConseilAdministrationListSerializer(serializers.ModelSerializer):
         if obj.code_postale_adresse:
             parts.append(obj.code_postale_adresse)
         return ', '.join(parts) if parts else 'Non spécifiée'
+    
+    def get_fonction_display(self, obj):
+        """Retourne le libellé de la fonction"""
+        # Utilisez la méthode intégrée de Django
+        return obj.get_fonction_dans_le_conseil_display()
 
 
 class GetConseilAdministrationSerializer(serializers.ModelSerializer):
     """Serializer détaillé pour un membre du conseil"""
     acheteur = AcheteurMinimalSerializer()
-    fonction_dans_le_conseil_ref = PosteEntrepriseMinimalSerializer()
     couleur_commentaire = CouleurCommentaireMinimalSerializer()
+    fonction_display = serializers.SerializerMethodField()  # Ajoutez ce champ
     
     class Meta:
         model = ConseilAdministration
-        fields = '__all__'
+        fields = [
+            'id',
+            'acheteur',
+            'nom',
+            'fonction_dans_le_conseil',
+            'fonction_display',
+            'numero_adresse',
+            'rue_adresse',
+            'code_postale_adresse',
+            'couleur_commentaire',
+            'commentaire',
+            'created_at',
+            'updated_at',
+            'created_by',
+            'updated_by',
+        ]
+    
+    def get_fonction_display(self, obj):
+        """Retourne le libellé de la fonction"""
+        if obj.fonction_dans_le_conseil:
+            from main.constantes import LISTE_NOUVELLE_FONCTION
+            for valeur, libelle in LISTE_NOUVELLE_FONCTION:
+                if valeur == obj.fonction_dans_le_conseil:
+                    return str(libelle)
+        return obj.fonction_dans_le_conseil
 
 
 class AddConseilAdministrationSerializer(serializers.ModelSerializer):
@@ -2758,15 +2761,6 @@ class AddConseilAdministrationSerializer(serializers.ModelSerializer):
     
     # Remplacer le champ par défaut
     fonction_dans_le_conseil = serializers.CharField(required=False)
-    fonction_dans_le_conseil_ref = serializers.PrimaryKeyRelatedField(
-        queryset=PosteEntreprise.objects.all(),
-        required=False,
-        allow_null=True,
-        error_messages={
-            'does_not_exist': 'La fonction sélectionnée n\'existe pas.',
-            'incorrect_type': 'Veuillez fournir un ID numérique valide pour la fonction (ex: 16).'
-        }
-    )
     
     class Meta:
         model = ConseilAdministration
@@ -2774,7 +2768,6 @@ class AddConseilAdministrationSerializer(serializers.ModelSerializer):
             'acheteur',
             'nom',
             'fonction_dans_le_conseil',
-            'fonction_dans_le_conseil_ref',
             'numero_adresse',
             'rue_adresse',
             'code_postale_adresse',
@@ -2807,15 +2800,6 @@ class EditConseilAdministrationSerializer(serializers.ModelSerializer):
     
     # Remplacer le champ par défaut
     fonction_dans_le_conseil = serializers.CharField(required=False)
-    fonction_dans_le_conseil_ref = serializers.PrimaryKeyRelatedField(
-        queryset=PosteEntreprise.objects.all(),
-        required=False,
-        allow_null=True,
-        error_messages={
-            'does_not_exist': 'La fonction sélectionnée n\'existe pas.',
-            'incorrect_type': 'Veuillez fournir un ID numérique valide pour la fonction (ex: 16).'
-        }
-    )
     couleur_commentaire = serializers.PrimaryKeyRelatedField(
         queryset=CouleurCommentaire.objects.all(),
         required=False,
@@ -2827,7 +2811,6 @@ class EditConseilAdministrationSerializer(serializers.ModelSerializer):
         fields = [
             'nom',
             'fonction_dans_le_conseil',
-            'fonction_dans_le_conseil_ref',
             'numero_adresse',
             'rue_adresse',
             'code_postale_adresse',
@@ -2837,17 +2820,6 @@ class EditConseilAdministrationSerializer(serializers.ModelSerializer):
     
     def to_internal_value(self, data):
         # Gérer les IDs pour les relations
-        if 'fonction_dans_le_conseil_ref' in data and isinstance(data['fonction_dans_le_conseil_ref'], str):
-            if data['fonction_dans_le_conseil_ref']:
-                try:
-                    data['fonction_dans_le_conseil_ref'] = int(data['fonction_dans_le_conseil_ref'])
-                except (ValueError, TypeError):
-                    raise serializers.ValidationError({
-                        'fonction_dans_le_conseil_ref': 'ID invalide'
-                    })
-            else:
-                data['fonction_dans_le_conseil_ref'] = None
-        
         if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
             if data['couleur_commentaire']:
                 try:

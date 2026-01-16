@@ -1,0 +1,1052 @@
+{% extends 'main/root/base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+/* Styles existants gardés */
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+}
+
+/* Carte de risque améliorée */
+.risk-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e3e6f0;
+    transition: all 0.3s ease;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.risk-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: #0A95CA;
+}
+
+.risk-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.risk-card.professionalisme::before { background: #FF5733; }
+.risk-card.organisation::before { background: #33FF57; }
+.risk-card.turn_over::before { background: #3357FF; }
+.risk-card.greve::before { background: #FF33A6; }
+.risk-card.degradation_qualite::before { background: #FFA500; }
+.risk-card.non_respect_condition::before { background: #8A2BE2; }
+
+.risk-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    background: rgba(10, 149, 202, 0.1);
+    color: #0A95CA;
+}
+
+.risk-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #2c3e50;
+}
+
+.risk-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+/* Badges de statut */
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-oui { 
+    background: rgba(40, 167, 69, 0.1); 
+    color: #28a745; 
+    border: 1px solid rgba(40, 167, 69, 0.2); 
+}
+.status-non { 
+    background: rgba(220, 53, 69, 0.1); 
+    color: #dc3545; 
+    border: 1px solid rgba(220, 53, 69, 0.2); 
+}
+.status-aucun { 
+    background: rgba(108, 117, 125, 0.1); 
+    color: #6c757d; 
+    border: 1px solid rgba(108, 117, 125, 0.2); 
+}
+
+/* Image de gestion des risques */
+.risk-image-container {
+    width: 200px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.risk-image-container:hover {
+    transform: scale(1.05);
+}
+
+.risk-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Commentaire */
+.commentaire-container {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border-left: 4px solid #0A95CA;
+    position: relative;
+    min-height: 100px;
+}
+
+.commentaire-container::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: rgba(0, 0, 0, 0.1);
+    font-family: Georgia, serif;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0A95CA;
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.25);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .risk-card {
+        padding: 1rem;
+    }
+    
+    .risk-value {
+        font-size: 1.1rem;
+    }
+    
+    .risk-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+    
+    .risk-image-container {
+        width: 150px;
+        height: 75px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-shield-alt text-primary me-2"></i>Gestion des Risques
+            </h1>
+            <p class="text-muted mb-0">
+                Évaluation des risques managériaux de l'entreprise
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if gestion_risque %}
+            <button class="btn btn-warning btn-action" data-bs-toggle="modal" data-bs-target="#editRiskManagementModal">
+                <i class="fas fa-edit me-1"></i>Modifier
+            </button>
+            <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                <i class="fas fa-trash me-1"></i>Supprimer
+            </button>
+            {% else %}
+            <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+                <i class="fas fa-plus-circle me-1"></i>Ajouter l'évaluation
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Date de création</small>
+                            <span class="fw-medium">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Légende -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-key me-2"></i>Légende des indicateurs
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 16px; height: 16px; background-color: #FF5733; border-radius: 4px;"></div>
+                                <small><strong>PROF:</strong> Professionnalisme</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 16px; height: 16px; background-color: #33FF57; border-radius: 4px;"></div>
+                                <small><strong>ORGA:</strong> Organisation</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 16px; height: 16px; background-color: #3357FF; border-radius: 4px;"></div>
+                                <small><strong>TURN:</strong> Non départ des employés</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 16px; height: 16px; background-color: #FF33A6; border-radius: 4px;"></div>
+                                <small><strong>GRV:</strong> Non grève</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 16px; height: 16px; background-color: #FFA500; border-radius: 4px;"></div>
+                                <small><strong>DEGR:</strong> Non dégradation qualité</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2" style="width: 16px; height: 16px; background-color: #8A2BE2; border-radius: 4px;"></div>
+                                <small><strong>RES:</strong> Respect des Employés</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestion des Risques -->
+    {% if gestion_risque %}
+    <div class="card border enhanced-card mb-4">
+        <div class="card-body">
+            <!-- Image de synthèse -->
+            <div class="text-center mb-4">
+                <div class="risk-image-container" onclick="showManagementImage()">
+                    <img src="{{ gestion_risque.get_management_image_path }}" 
+                         alt="Statut de gestion des risques" 
+                         class="risk-image">
+                </div>
+                <small class="text-muted">Cliquez sur l'image pour l'agrandir</small>
+            </div>
+
+            <!-- Indicateurs de risque -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card professionalisme">
+                        <div class="risk-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="risk-label">Professionnalisme</div>
+                        <span class="status-badge status-{{ gestion_risque.professionalisme|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.professionalisme }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card organisation">
+                        <div class="risk-icon">
+                            <i class="fas fa-sitemap"></i>
+                        </div>
+                        <div class="risk-label">Organisation</div>
+                        <span class="status-badge status-{{ gestion_risque.organisation|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.organisation }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card turn_over">
+                        <div class="risk-icon">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="risk-label">Non départ employés</div>
+                        <span class="status-badge status-{{ gestion_risque.turn_over|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.turn_over }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card greve">
+                        <div class="risk-icon">
+                            <i class="fas fa-hand-paper"></i>
+                        </div>
+                        <div class="risk-label">Non grève</div>
+                        <span class="status-badge status-{{ gestion_risque.greve|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.greve }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card degradation_qualite">
+                        <div class="risk-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="risk-label">Non dégradation qualité</div>
+                        <span class="status-badge status-{{ gestion_risque.degradation_qualite|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.degradation_qualite }}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <div class="risk-card non_respect_condition">
+                        <div class="risk-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="risk-label">Respect employés</div>
+                        <span class="status-badge status-{{ gestion_risque.non_respect_condition|lower }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            {{ gestion_risque.non_respect_condition }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commentaire -->
+            {% if gestion_risque.commentaire %}
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3">
+                    <i class="fas fa-comment-dots text-primary me-2"></i>Commentaire d'évaluation
+                </h5>
+                <div class="commentaire-container">
+                    {{ gestion_risque.commentaire|safe|linebreaks }}
+                </div>
+                {% if gestion_risque.couleur_commentaire %}
+                <div class="mt-2 text-end">
+                    <small class="text-muted">
+                        <i class="fas fa-palette me-1"></i>
+                        Couleur: {{ gestion_risque.couleur_commentaire.couleur }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Informations temporelles -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                        <div>
+                            <i class="fas fa-calendar me-1"></i>
+                            Évaluation créée le {{ gestion_risque.created_at|date:"d/m/Y H:i" }}
+                        </div>
+                        <div>
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Dernière mise à jour : {{ gestion_risque.updated_at|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- État vide -->
+    <div class="card enhanced-card">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-shield-alt empty-state-icon"></i>
+                <h4 class="fw-bold mb-2">Aucune évaluation des risques</h4>
+                <p class="text-muted mb-4">
+                    Cet acheteur ne possède pas encore d'évaluation des risques managériaux.<br>
+                    Ajoutez une évaluation complète des risques de l'entreprise.
+                </p>
+                <button class="btn btn-success btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addRiskManagementModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter l'évaluation
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Ajout de Gestion des Risques -->
+<div class="modal fade" id="addRiskManagementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Évaluation des Risques
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addRiskManagementForm" class="enhanced-form">
+                <div class="modal-body">
+                    <!-- Image dynamique -->
+                    <div class="text-center mb-4">
+                        <div class="risk-image-container">
+                            <img id="addRiskManagementImage" src="{% static 'management/mauvais.png' %}" 
+                                 alt="Statut de gestion des risques" 
+                                 class="risk-image">
+                        </div>
+                        <small class="text-muted">L'image se met à jour automatiquement selon vos sélections</small>
+                    </div>
+
+                    <div class="row">
+                        {% for field in fields %}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ field.id }}" class="form-label">
+                                    <i class="fas {{ field.icon }} text-primary"></i>{{ field.label }}
+                                </label>
+                                <select class="form-select" id="{{ field.id }}" name="{{ field.name }}" required>
+                                    <option value="Aucun">Aucun</option>
+                                    <option value="Oui">Oui</option>
+                                    <option value="Non">Non</option>
+                                </select>
+                                <small class="form-text text-muted">{{ field.description }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="couleur_commentaire" class="form-label">
+                            <i class="fas fa-palette text-info"></i>Couleur Commentaire
+                        </label>
+                        <select class="form-select" id="couleur_commentaire" name="couleur_commentaire">
+                            <option value="">Sélectionnez une couleur</option>
+                            {% for coloration in coloration_list %}
+                            <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="commentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>Commentaire d'évaluation
+                        </label>
+                        <textarea class="form-control" id="commentaire" name="commentaire" 
+                                  rows="4" placeholder="Ajoutez des observations et recommandations..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Enregistrer
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification de Gestion des Risques -->
+<div class="modal fade" id="editRiskManagementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Évaluation des Risques
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editRiskManagementForm" class="enhanced-form">
+                <input type="hidden" id="editRiskManagementId" name="id">
+                <div class="modal-body">
+                    <!-- Image dynamique -->
+                    <div class="text-center mb-4">
+                        <div class="risk-image-container">
+                            <img id="editRiskManagementImage" src="{% static 'management/mauvais.png' %}" 
+                                 alt="Statut de gestion des risques" 
+                                 class="risk-image">
+                        </div>
+                    </div>
+
+                    <!-- Dans le modal d'édition - REMPLACER cette section -->
+                    <div class="row">
+                        {% for field in fields %}
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="edit{{ field.name|capfirst }}" class="form-label">
+                                    <i class="fas {{ field.icon }} text-primary"></i>{{ field.label }}
+                                </label>
+                                <select class="form-select" id="edit{{ field.name|capfirst }}" name="{{ field.name }}">
+                                    <option value="Aucun">Aucun</option>
+                                    <option value="Oui">Oui</option>
+                                    <option value="Non">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCouleurCommentaire" class="form-label">
+                            <i class="fas fa-palette text-info"></i>Couleur Commentaire
+                        </label>
+                        <select class="form-select" id="editCouleurCommentaire" name="couleur_commentaire">
+                            <option value="">Sélectionnez une couleur</option>
+                            {% for coloration in coloration_list %}
+                            <option value="{{ coloration.id }}">{{ coloration.couleur }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCommentaire" class="form-label">
+                            <i class="fas fa-comment-dots text-success"></i>Commentaire d'évaluation
+                        </label>
+                        <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer l'évaluation des risques</h6>
+                <p class="text-muted mb-0">Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour visualiser l'image en grand -->
+<div class="modal fade" id="viewImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Statut de Gestion des Risques</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="fullRiskManagementImage" src="" alt="Statut complet" class="img-fluid">
+                <div class="mt-3">
+                    <p id="riskManagementScore" class="text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Configuration des champs
+const fieldsConfig = [
+    { id: 'professionalisme', name: 'professionalisme', label: 'Professionnalisme', icon: 'fa-user-tie', description: 'Évaluation du professionnalisme de l\'entreprise' },
+    { id: 'organisation', name: 'organisation', label: 'Organisation', icon: 'fa-sitemap', description: 'Évaluation de l\'organisation interne' },
+    { id: 'turn_over', name: 'turn_over', label: 'Non départ des employés', icon: 'fa-user-friends', description: 'Stabilité du personnel' },
+    {id: 'greve', name: 'greve', label: 'Non grève', icon: 'fa-hand-paper', description: 'Absence de mouvements sociaux' },
+    { id: 'degradation_qualite', name: 'degradation_qualite', label: 'Non dégradation de la qualité', icon: 'fa-chart-line', description: 'Maintien de la qualité du travail' },
+    { id: 'non_respect_condition', name: 'non_respect_condition', label: 'Respect des Employés', icon: 'fa-handshake', description: 'Respect des conditions de travail' }
+];
+
+$(document).ready(function() {
+    // Configuration
+    const API_BASE_URL = `/api/acheteur/{{ acheteur.id }}/gestion-risque/`;
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    
+    // Charger les données de l'acheteur
+    const acheteurData = JSON.parse('{{ acheteur_json|escapejs }}');
+    
+    // Charger les données de la gestion des risques si elles existent
+    let gestionRisqueData = null;
+    try {
+        gestionRisqueData = JSON.parse('{{ gestion_risque_json|escapejs }}');
+    } catch(e) {
+        console.log('Aucune donnée de gestion des risques trouvée');
+        gestionRisqueData = null;
+    }
+    
+    // Fonction pour déterminer l'image basée sur les statuts
+    function getManagementImagePath(data) {
+        const fields = [
+            data.professionalisme,
+            data.organisation,
+            data.turn_over,
+            data.greve,
+            data.degradation_qualite,
+            data.non_respect_condition
+        ];
+        
+        let ouiCount = 0;
+        let nonCount = 0;
+        
+        fields.forEach(field => {
+            if (field === 'Oui') ouiCount++;
+            if (field === 'Non') nonCount++;
+        });
+        
+        // Logique de décision pour l'image
+        if (ouiCount >= 4) {
+            return `{% static 'management/bien.png' %}`;
+        } else if (nonCount >= 4) {
+            return `{% static 'management/mauvais.png' %}`;
+        } else {
+            return `{% static 'management/passable.png' %}`;
+        }
+    }
+    
+    // Fonction pour calculer le score
+    function calculateManagementScore(data) {
+        const fields = [
+            data.professionalisme,
+            data.organisation,
+            data.turn_over,
+            data.greve,
+            data.degradation_qualite,
+            data.non_respect_condition
+        ];
+        
+        let ouiCount = 0;
+        let nonCount = 0;
+        
+        fields.forEach(field => {
+            if (field === 'Oui') ouiCount++;
+            if (field === 'Non') nonCount++;
+        });
+        
+        return { ouiCount, nonCount, total: fields.length };
+    }
+    
+    // Mettre à jour l'image dynamique
+    function updateManagementImage(formId, imageId) {
+        const data = {};
+        fieldsConfig.forEach(field => {
+            const value = $(`${formId} [name="${field.name}"]`).val();
+            if (value) data[field.name] = value;
+        });
+        
+        const imagePath = getManagementImagePath(data);
+        $(imageId).attr('src', imagePath);
+        
+        return calculateManagementScore(data);
+    }
+    
+    // Afficher l'image en grand
+    window.showManagementImage = function() {
+        if (!gestionRisqueData) return;
+        
+        const imagePath = getManagementImagePath(gestionRisqueData);
+        const score = calculateManagementScore(gestionRisqueData);
+        
+        $('#fullRiskManagementImage').attr('src', imagePath);
+        $('#riskManagementScore').text(`${score.ouiCount} Oui, ${score.nonCount} Non sur ${score.total} critères`);
+        $('#viewImageModal').modal('show');
+    };
+    
+    // Écouteurs pour les changements dans le formulaire d'ajout
+    fieldsConfig.forEach(field => {
+        $(`#${field.id}`).on('change', function() {
+            updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+        });
+    });
+    
+    // Écouteurs pour les changements dans le formulaire d'édition
+    fieldsConfig.forEach(field => {
+        $(`#edit${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`).on('change', function() {
+            updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
+        });
+    });
+    
+    // Initialisation de l'image dans le modal d'ajout
+    $('#addRiskManagementModal').on('show.bs.modal', function() {
+        setTimeout(() => {
+            updateManagementImage('#addRiskManagementForm', '#addRiskManagementImage');
+        }, 100);
+    });
+    
+    // Remplir le formulaire d'édition
+    // Remplir le formulaire d'édition - CORRIGER cette fonction
+    function populateEditForm() {
+        if (!gestionRisqueData) return;
+        
+        console.log('Remplissage du formulaire avec:', gestionRisqueData);
+        
+        $('#editRiskManagementId').val(gestionRisqueData.id);
+        
+        fieldsConfig.forEach(field => {
+            const value = gestionRisqueData[field.name];
+            // Utiliser la même logique que le template
+            const fieldId = `edit${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`;
+            $(`#${fieldId}`).val(value || 'Aucun');
+        });
+        
+        $('#editCouleurCommentaire').val(gestionRisqueData.couleur_commentaire || '');
+        $('#editCommentaire').val(gestionRisqueData.commentaire || '');
+        
+        // Mettre à jour l'image
+        const imagePath = getManagementImagePath(gestionRisqueData);
+        $('#editRiskManagementImage').attr('src', imagePath);
+    }
+
+    // Écouteurs pour les changements dans le formulaire d'édition - CORRIGER
+    fieldsConfig.forEach(field => {
+        const fieldId = `edit${field.name.charAt(0).toUpperCase() + field.name.slice(1)}`;
+        $(`#${fieldId}`).on('change', function() {
+            updateManagementImage('#editRiskManagementForm', '#editRiskManagementImage');
+        });
+    });
+    
+    // Gérer l'ouverture du modal d'édition
+    $('#editRiskManagementModal').on('shown.bs.modal', function() {
+        populateEditForm();
+    });
+    
+    // Réinitialiser le formulaire d'ajout quand il se ferme
+    $('#addRiskManagementModal').on('hidden.bs.modal', function() {
+        $('#addRiskManagementForm')[0].reset();
+        // Réinitialiser l'image par défaut
+        $('#addRiskManagementImage').attr('src', `{% static 'management/mauvais.png' %}`);
+    });
+    
+    // Formulaire d'ajout
+    $('#addRiskManagementForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitRiskManagementForm('POST', data, '#submitAddBtn', 'addRiskManagementModal');
+    });
+    
+    // Formulaire de modification
+    $('#editRiskManagementForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        submitRiskManagementForm('POST', data, '#submitEditBtn', 'editRiskManagementModal');
+    });
+    
+    // Soumission du formulaire
+    function submitRiskManagementForm(method, data, submitBtn, modalId) {
+        const $btn = $(submitBtn);
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#' + modalId).modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Une erreur est survenue';
+                if (xhr.responseJSON) {
+                    console.log('Erreur serveur:', xhr.responseJSON);
+                    if (typeof xhr.responseJSON === 'object') {
+                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                    } else {
+                        errorMessage = xhr.responseJSON.detail || errorMessage;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        submitRiskManagementForm(method, data, submitBtn, modalId);
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    }
+    
+    // Suppression de la gestion des risques
+    $('#confirmDeleteBtn').on('click', function() {
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $('#confirmDeleteModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Évaluation supprimée avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $('#confirmDeleteBtn').click();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de supprimer l\'évaluation'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi avec succès');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+});
+</script>
+{% endblock %}

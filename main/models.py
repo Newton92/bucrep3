@@ -3556,6 +3556,61 @@ class RiskManagment(Model):
             'non_count': non_count,
             'total': len(fields)
         }
+        
+    def get_valeur(self):
+        """Pour compatibilité avec le code existant qui utilise cette méthode"""
+        valeur = 0
+        if self.professionalisme == self.STATUS_NON:
+            valeur += 1
+        if self.organisation == self.STATUS_OUI:
+            valeur += 1
+        if self.turn_over == self.STATUS_NON:
+            valeur += 1
+        if self.greve == self.STATUS_NON:
+            valeur += 1
+        if self.degradation_qualite == self.STATUS_NON:
+            valeur += 1
+        if self.non_respect_condition == self.STATUS_OUI:
+            valeur += 1
+        return valeur
+
+    def valeur_management(self, lang='fr'):
+        """Pour compatibilité - à adapter à la nouvelle logique ou à déprécier"""
+        score = self.get_management_score()
+        
+        if score['non_count'] >= 4:
+            if lang == 'fr':
+                return 'management_fr1.png'
+            else:
+                return 'management_ang1.png'
+        elif score['oui_count'] >= 4:
+            if lang == 'fr':
+                return 'management_fr3.png'
+            else:
+                return 'management_ang3.png'
+        else:
+            if lang == 'fr':
+                return 'management_fr2.png'
+            else:
+                return 'management_ang2.png'
+
+    def valeur_management_entier(self, lang='fr'):
+        score = self.get_management_score()
+        
+        if lang == 'fr':
+            if score['non_count'] >= 4:
+                return 'Mauvais'
+            elif score['oui_count'] >= 4:
+                return 'Bien'
+            else:
+                return 'Passable'
+        else:
+            if score['non_count'] >= 4:
+                return 'Bad'
+            elif score['oui_count'] >= 4:
+                return 'Good'
+            else:
+                return 'Fair'
 
 
 class ConseilAdministration(Model):
@@ -3577,13 +3632,7 @@ class ConseilAdministration(Model):
         choices=LISTE_NOUVELLE_FONCTION,
         blank=True,
     )
-    # fonction_dans_le_conseil_ref = models.ForeignKey(
-    #     "PosteEntreprise",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.SET_NULL,
-    #     verbose_name=_("Référence Fonction Conseil"),
-    # )
+    
 
     numero_adresse = models.CharField(_("Numéro Adresse"), max_length=200, blank=True)
     rue_adresse = models.CharField(_("Rue Adresse"), max_length=200, blank=True)

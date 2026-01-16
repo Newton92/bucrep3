@@ -2341,6 +2341,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
 
     # Récupérer tous les postes pour les listes déroulantes
     poste_list = PosteEntreprise.objects.all()
+    fonction_list = [{'valeur': val[0], 'libelle': str(val[1])} for val in LISTE_NOUVELLE_FONCTION]
     
     # Récupérer toutes les colorations pour les listes déroulantes
     coloration_list = CouleurCommentaire.objects.all()
@@ -2362,7 +2363,6 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
     membres_recent = ConseilAdministration.objects.filter(
         acheteur=acheteur
     ).select_related(
-        'fonction_dans_le_conseil_ref', 
         'couleur_commentaire'
     ).order_by('-updated_at')[:4]
     
@@ -2398,6 +2398,7 @@ def dash_root_manage_acheteur_membre_conseil(request, acheteur_id):
         "acheteur_json": acheteur_json,
         "acheteur": acheteur,
         "poste_list": poste_list,
+        "fonction_list": fonction_list,  # Ajoutez cette ligne
         "coloration_list": coloration_list,
         "stats": stats,
         "membres_recent": membres_recent,

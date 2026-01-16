@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
@@ -2358,7 +2359,7 @@ class AcheteurConseilListView(APIView):
         # Construction de la requête
         membres = ConseilAdministration.objects.filter(
             acheteur=acheteur
-        ).select_related('fonction_dans_le_conseil_ref', 'couleur_commentaire')
+        ).select_related('couleur_commentaire')
         
         # Recherche
         if search_term:
@@ -2601,6 +2602,14 @@ class AcheteurConseilDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_fonctions_list(request):
+    """API pour récupérer la liste des fonctions"""
+    # Transformer le tuple en liste de dictionnaires
+    fonctions = [{'value': val[0], 'label': str(val[1])} for val in LISTE_NOUVELLE_FONCTION]
+    return Response(fonctions)
 
 
 

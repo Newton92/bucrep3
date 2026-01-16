@@ -2662,6 +2662,7 @@ urlpatterns = [
         AcheteurConseilDetailView.as_view(),
         name="acheteur-conseil-detail",
     ),
+    path('api/fonctions-conseil/', get_fonctions_list, name='api_fonctions_conseil'),
     
     
     
