@@ -68,8 +68,12 @@ class ListUtilisateurView(APIView):
             user_page = paginator.page(paginator.num_pages)
             page_number = paginator.num_pages
         
-        # Sérialiser avec le contexte de la requête
-        serializer = NewUserSerializer(user_page, many=True, context={'request': request})
+        # **IMPORTANT: Passer request dans le contexte**
+        serializer = NewUserSerializer(
+            user_page, 
+            many=True, 
+            context={'request': request}  # <-- Ajouter ceci
+        )
         
         # Calculer les indices
         start_index = (page_number - 1) * paginator.per_page + 1

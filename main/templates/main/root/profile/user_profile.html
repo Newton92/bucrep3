@@ -581,24 +581,33 @@
             <div class="card card-body border">
                 <div class="profile-card h-100">
                     <div class="card-header card-header-profile">
-                        <h5 class="mb-0">
+                        <h5 class="mb-0 text-white">
                             <i class="bi bi-person-vcard me-2"></i>Mon Profil
                         </h5>
                     </div>
                     <div class="card-body text-center p-4">
                         <!-- Avatar -->
                         <div class="avatar-container">
-                            <img id="profile-avatar" 
-                                src="{{ user.avatar.url|default:'/static/images/default-avatar.png' }}" 
-                                alt="Avatar" 
-                                class="avatar-img"><br><br>
+                            {% if user.avatar and user.avatar.url %}
+                                <img id="profile-avatar" 
+                                    src="{{ user.avatar.url|default:'/static/images/default-avatar.png' }}" 
+                                    alt="Avatar" 
+                                    class="avatar-img"
+                                    onerror="this.onerror=null; this.src='/static/images/default-avatar.png';">
+                            {% else %}
+                                <img id="profile-avatar" 
+                                    src="/static/images/default-avatar.png" 
+                                    alt="Avatar" 
+                                    class="avatar-img">
+                            {% endif %}
                             <div class="avatar-edit-btn" 
                                 data-bs-toggle="collapse" 
                                 data-bs-target="#editAvatarForm"
                                 title="Modifier l'avatar">
                                 <i class="bi bi-camera"></i>
                             </div>
-                        </div><br>
+                        </div>
+                        <br>
 
                         <!-- Informations principales -->
                         <h4 id="profile-fullname" class="mb-2" style="color: var(--primary-dark);">
@@ -731,7 +740,7 @@
                 <div class="collapse collapse-section mb-4" id="editProfileForm">
                     <div class="profile-card">
                         <div class="card-header card-header-profile">
-                            <h5 class="mb-0">
+                            <h5 class="mb-0 text-white">
                                 <i class="bi bi-person-gear me-2"></i>Modifier mes informations
                             </h5>
                         </div>
@@ -820,17 +829,25 @@
                 <div class="collapse collapse-section mb-4" id="editAvatarForm">
                     <div class="profile-card">
                         <div class="card-header card-header-profile">
-                            <h5 class="mb-0">
+                            <h5 class="mb-0 text-white">
                                 <i class="bi bi-camera me-2"></i>Modifier mon avatar
                             </h5>
                         </div>
                         <div class="card-body p-4">
                             <div class="text-center mb-4">
                                 <div class="avatar-preview-container" id="avatarPreviewContainer">
-                                    <img id="avatar-preview" 
-                                            src="{{ user.avatar.url|default:'/static/images/default-avatar.png' }}" 
-                                            alt="Aperçu avatar" 
-                                            class="avatar-preview-img">
+                                    {% if user.avatar and user.avatar.url %}
+                                        <img id="avatar-preview" 
+                                                src="{{ user.avatar.url }}" 
+                                                alt="Aperçu avatar" 
+                                                class="avatar-preview-img"
+                                                onerror="this.onerror=null; this.src='/static/images/default-avatar.png';">
+                                    {% else %}
+                                        <img id="avatar-preview" 
+                                                src="/static/images/default-avatar.png" 
+                                                alt="Aperçu avatar" 
+                                                class="avatar-preview-img">
+                                    {% endif %}
                                 </div>
                                 <small class="text-muted">Aperçu de votre nouvel avatar</small>
                             </div>
@@ -871,7 +888,7 @@
                 <div class="collapse collapse-section" id="changePasswordForm">
                     <div class="profile-card">
                         <div class="card-header card-header-profile">
-                            <h5 class="mb-0">
+                            <h5 class="mb-0 text-white">
                                 <i class="bi bi-shield-lock me-2"></i>Changer mon mot de passe
                             </h5>
                         </div>
@@ -1667,9 +1684,9 @@
         $('#profile-lastlogin').text(userData.last_login_formatted);
         
         // Avatar
-        if (userData.avatar_url) {
-            $('#profile-avatar').attr('src', userData.avatar_url);
-            $('#avatar-preview').attr('src', userData.avatar_url);
+        if (userData.avatar.url) {
+            $('#profile-avatar').attr('src', userData.avatar.url);
+            $('#avatar-preview').attr('src', userData.avatar.url);
         }
         
         // Mettre à jour les formulaires

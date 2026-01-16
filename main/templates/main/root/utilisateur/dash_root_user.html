@@ -959,6 +959,8 @@ body {
 {% block scripts %}
 
 <script>
+    
+
     $(document).ready(function() {
 
         // Stockage des tokens
@@ -969,7 +971,75 @@ body {
         let currentPage = 1;
         let currentSearch = '';
 
+        // Fonction utilitaire pour gérer les URLs d'avatar
+        function getAvatarUrl(user) {
+            if (!user) return null;
+            
+            // Priorité 1: URL absolue
+            if (user.avatar_url) {
+                return user.avatar_url;
+            }
+            
+            // Priorité 2: URL relative (à convertir en absolue)
+            if (user.avatar_url_relative) {
+                const baseUrl = window.location.origin;
+                const relativeUrl = user.avatar_url_relative;
+                
+                // Normaliser l'URL
+                let normalizedUrl = relativeUrl;
+                if (!normalizedUrl.startsWith('/') && !normalizedUrl.startsWith('http')) {
+                    normalizedUrl = '/' + normalizedUrl;
+                }
+                
+                // Si c'est déjà une URL absolue, la retourner telle quelle
+                if (normalizedUrl.startsWith('http')) {
+                    return normalizedUrl;
+                }
+                
+                // Sinon, ajouter le domaine
+                return baseUrl + normalizedUrl;
+            }
+            
+            // Priorité 3: Construire l'URL à partir du chemin Django
+            if (user.avatar) {
+                // Supposons que user.avatar contient le chemin relatif
+                const baseUrl = window.location.origin;
+                return baseUrl + user.avatar;
+            }
+            
+            return null;
+        }
 
+        // Fonction de secours pour les images
+        function setupAvatarFallback() {
+            $(document).on('error', 'img[src*="avatar"]', function() {
+                const $img = $(this);
+                const username = $img.attr('alt') || '';
+                const firstLetter = username ? username.charAt(0).toUpperCase() : '?';
+                
+                // Remplacer l'image par une div avec l'initiale
+                $img.replaceWith(`
+                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                        <span class="text-white">${firstLetter}</span>
+                    </div>
+                `);
+            });
+        }
+
+        setupAvatarFallback();
+
+        // Script de débogage pour les avatars
+        function debugAvatars(users) {
+            console.log("=== DEBUG AVATARS ===");
+            users.forEach((user, index) => {
+                console.log(`Utilisateur ${index + 1}: ${user.username}`);
+                console.log('  avatar_url:', user.avatar_url);
+                console.log('  avatar_url_relative:', user.avatar_url_relative);
+                console.log('  avatar:', user.avatar);
+                console.log('---');
+            });
+            console.log("=====================");
+        }
 
         // Function to load users
         // Function to load users - Version corrigée
@@ -1028,24 +1098,14 @@ body {
         }
 
         // Fonction pour mettre à jour le tableau des utilisateurs - Version corrigée
+        // Fonction pour mettre à jour le tableau des utilisateurs - Version corrigée
         function updateUserTable(users, pagination) {
+            debugAvatars(users); // <-- Ajoutez cette ligne
             const userTableBody = $('#userTableBody');
             userTableBody.empty();
             
             if (!users || users.length === 0) {
-                userTableBody.html(`
-                    <tr>
-                        <td colspan="8" class="text-center py-4">
-                            <i class="bi bi-people fs-1 text-muted"></i>
-                            <p class="mt-2">Aucun utilisateur trouvé.</p>
-                            ${currentSearch ? 
-                                '<p class="text-muted">Essayez avec d\'autres termes de recherche.</p>' : 
-                                '<button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addUserModal">' +
-                                '<i class="bi bi-plus-circle"></i> Ajouter le premier utilisateur</button>'
-                            }
-                        </td>
-                    </tr>
-                `);
+                // ... code inchangé ...
                 return;
             }
             
@@ -1059,7 +1119,7 @@ body {
                     '<span class="badge bg-success">Activé</span>' : 
                     '<span class="badge bg-danger">Désactivé</span>';
                 
-                // Formater le pays - plusieurs options
+                // Formater le pays
                 let country = '<span class="text-muted">Non défini</span>';
                 if (user.pays) {
                     if (typeof user.pays === 'object') {
@@ -1071,12 +1131,11 @@ body {
                     country = user.pays_nom;
                 }
                 
-                // Formater la date - plusieurs options
+                // Formater la date
                 let dateFormatted = '<span class="text-muted">-</span>';
                 if (user.date_joined_formatted) {
                     dateFormatted = user.date_joined_formatted;
                 } else if (user.date_joined) {
-                    // Essayer de parser la date
                     try {
                         const date = new Date(user.date_joined);
                         if (!isNaN(date.getTime())) {
@@ -1091,13 +1150,34 @@ body {
                     }
                 }
                 
-                // Avatar ou initiale
+                // **GESTION CORRIGÉE DES AVATARS**
                 const firstLetter = user.username ? user.username.charAt(0).toUpperCase() : '?';
-                const avatarHtml = user.avatar_url ? 
-                    `<img src="${user.avatar_url}" class="avatar-sm rounded-circle me-2" alt="${user.username}">` : 
-                    `<div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                        <span class="text-white">${firstLetter}</span>
-                    </div>`;
+                let avatarHtml = '';
+                
+                if (user.avatar_url) {
+                    // Utiliser l'URL absolue
+                    avatarHtml = `<img src="${user.avatar_url}" 
+                                    class="avatar-sm rounded-circle me-2" 
+                                    alt="${user.username}"
+                                    onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\'avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2\'><span class=\'text-white\'>${firstLetter}</span></div>';">`;
+                } else if (user.avatar_url_relative) {
+                    // Utiliser l'URL relative et la convertir en absolue si nécessaire
+                    const baseUrl = window.location.origin;
+                    const relativeUrl = user.avatar_url_relative;
+                    
+                    // S'assurer que l'URL commence par /
+                    const avatarUrl = relativeUrl.startsWith('/') ? relativeUrl : '/' + relativeUrl;
+                    
+                    avatarHtml = `<img src="${baseUrl}${avatarUrl}" 
+                                    class="avatar-sm rounded-circle me-2" 
+                                    alt="${user.username}"
+                                    onerror="this.onerror=null; this.src=''; this.outerHTML='<div class=\'avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2\'><span class=\'text-white\'>${firstLetter}</span></div>';">`;
+                } else {
+                    // Afficher l'initiale
+                    avatarHtml = `<div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                    <span class="text-white">${firstLetter}</span>
+                                </div>`;
+                }
                 
                 // Créer la ligne
                 userTableBody.append(`
@@ -1147,6 +1227,7 @@ body {
             // Initialiser les tooltips Bootstrap
             $('[data-bs-toggle="tooltip"]').tooltip();
         }
+
 
         // Fonction pour mettre à jour les contrôles de pagination - Version corrigée
         function updatePaginationControls(pagination, currentPage, search) {

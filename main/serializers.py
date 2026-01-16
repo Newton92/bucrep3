@@ -70,6 +70,7 @@ class UserSerializer(serializers.ModelSerializer):
 # serializers.py
 class ProfileUserSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
+    avatar_absolute_url = serializers.SerializerMethodField()  # Nouveau champ
     full_name = serializers.SerializerMethodField()
     password_changed_at = serializers.SerializerMethodField()
     last_login_formatted = serializers.SerializerMethodField()
@@ -79,7 +80,7 @@ class ProfileUserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "username", "email", "first_name", "last_name", 
-            "full_name", "avatar", "avatar_url", "telephone", 
+            "full_name", "avatar", "avatar_url", "avatar_absolute_url", "telephone",  # Ajouté avatar_absolute_url
             "profession", "address", "email_cc", "role",
             "last_login", "last_login_formatted",
             "date_joined", "date_joined_formatted",
@@ -88,13 +89,45 @@ class ProfileUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username', 'role', 'last_login', 'date_joined']
     
     def get_avatar_url(self, obj):
-        if obj.avatar:
+        """Retourne le chemin relatif de l'avatar"""
+        if obj.avatar and hasattr(obj.avatar, 'url'):
+            # Retourne le chemin relatif
+            return obj.avatar.url  # Retourne '/media/avatars/filename.webp'
+        # Avatar par défaut avec initiales
+        return '/static/images/default-avatar.png'
+    
+    def get_avatar_absolute_url(self, obj):
+        """Retourne l'URL absolue de l'avatar"""
+        if obj.avatar and hasattr(obj.avatar, 'url'):
             request = self.context.get('request')
             if request:
+                # En développement avec request
                 return request.build_absolute_uri(obj.avatar.url)
-            return obj.avatar.url
-        # Avatar par défaut avec initiales
-        return None
+            else:
+                # En production sans request, construire l'URL
+                from django.conf import settings
+                
+                # Obtenir le domaine
+                domain = getattr(settings, 'DOMAIN', '')
+                if not domain:
+                    # Essayer d'autres sources
+                    domain = getattr(settings, 'SITE_DOMAIN', '')
+                    if not domain:
+                        # Par défaut, utiliser le nom d'hôte actuel
+                        domain = getattr(settings, 'BASE_URL', '')
+                        if not domain:
+                            # Dernier recours
+                            import socket
+                            domain = f"http://{socket.gethostname()}"
+                
+                # S'assurer que le domaine se termine par /
+                if domain and not domain.endswith('/'):
+                    domain = domain + '/'
+                
+                # Construire l'URL complète
+                avatar_path = obj.avatar.url.lstrip('/') if obj.avatar.url.startswith('/') else obj.avatar.url
+                return f"{domain}{avatar_path}"
+        return f"{getattr(settings, 'DOMAIN', '')}/static/images/default-avatar.png"
     
     def get_full_name(self, obj):
         name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
@@ -7050,6 +7083,7 @@ class NewUserSerializer(serializers.ModelSerializer):
     pays = serializers.SerializerMethodField()
     date_joined_formatted = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
+    avatar_url_absolute = serializers.SerializerMethodField()  # Pour le frontend
     
     class Meta:
         model = User
@@ -7057,7 +7091,7 @@ class NewUserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'role', 'telephone', 'activation', 'pays', 
             'date_joined', 'date_joined_formatted', 'avatar_url',
-            'profession', 'address', 'email_cc'
+            'avatar_url_absolute', 'profession', 'address', 'email_cc'
         ]
     
     def get_pays(self, obj):
@@ -7070,27 +7104,48 @@ class NewUserSerializer(serializers.ModelSerializer):
         return None
     
     def get_date_joined_formatted(self, obj):
-        """Formate la date d'inscription"""
         if obj.date_joined:
-            # Formater selon votre préférence
-            # Option 1: "15/12/2024"
-            # return obj.date_joined.strftime('%d/%m/%Y')
-            
-            # Option 2: "15 déc. 2024"
             mois_fr = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
                       'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
             return f"{obj.date_joined.day} {mois_fr[obj.date_joined.month-1]} {obj.date_joined.year}"
-        
         return None
     
     def get_avatar_url(self, obj):
+        """Retourne le chemin relatif de l'avatar"""
+        if obj.avatar:
+            # Retourne juste le nom du fichier ou le chemin relatif
+            if hasattr(obj.avatar, 'url'):
+                return obj.avatar.url  # Retourne '/media/avatars/filename.jpg'
+            elif hasattr(obj.avatar, 'name'):
+                return f"/media/{obj.avatar.name}"
+        return None
+    
+    def get_avatar_url_absolute(self, obj):
+        """Retourne l'URL absolue pour le frontend"""
         if obj.avatar:
             request = self.context.get('request')
             if request:
+                # En développement avec request
                 return request.build_absolute_uri(obj.avatar.url)
-            return obj.avatar.url
-        return None
-
+            else:
+                # En production sans request, construire l'URL
+                from django.conf import settings
+                if hasattr(settings, 'DOMAIN'):
+                    domain = settings.DOMAIN
+                else:
+                    # Essayer de déterminer le domaine depuis les settings
+                    domain = getattr(settings, 'SITE_DOMAIN', '')
+                    if not domain:
+                        # Par défaut, utiliser le nom d'hôte
+                        import socket
+                        domain = f"http://{socket.gethostname()}"
+                
+                # Construire l'URL complète
+                avatar_path = obj.avatar.url if hasattr(obj.avatar, 'url') else f"/media/{obj.avatar.name}"
+                return f"{domain}{avatar_path}"
+        return None   
+    
+    
 class GetUserSerializerTwo(serializers.ModelSerializer):
     # pays = PaysSerializer()
     date_joined_formatted = serializers.SerializerMethodField()

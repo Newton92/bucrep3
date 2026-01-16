@@ -34,6 +34,7 @@ class UserProfileView(APIView):
         Affiche le profil de l'utilisateur connecté.
         """
         user = request.user
+        # IMPORTANT: Passer request dans le contexte
         serializer = ProfileUserSerializer(user, context={'request': request})
         return Response({
             "success": True,
@@ -55,6 +56,7 @@ class UserProfileView(APIView):
             if field in data and data[field] == '':
                 data[field] = None
         
+        # IMPORTANT: Passer request dans le contexte
         serializer = ProfileUserSerializer(
             user, 
             data=data, 
