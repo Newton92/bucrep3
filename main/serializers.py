@@ -2425,7 +2425,14 @@ class AntecedantJuridiqueListSerializer(serializers.ModelSerializer):
         source='couleur_commentaire.couleur',
         read_only=True
     )
-
+    
+    # Ajouter ce champ pour avoir le code couleur dans le frontend
+    couleur_commentaire_code = serializers.CharField(
+        source='couleur_commentaire.code',
+        read_only=True,
+        allow_null=True
+    )
+    
     created_at_formatted = serializers.SerializerMethodField()
 
     has_faillite = serializers.SerializerMethodField()
@@ -2445,6 +2452,7 @@ class AntecedantJuridiqueListSerializer(serializers.ModelSerializer):
             'antecedant_redressement',
             'autre',
             'couleur_commentaire',
+            'couleur_commentaire_code',  # Ajouté
             'commentaire_preview',
             'has_faillite',
             'has_jugement',
@@ -2475,10 +2483,18 @@ class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     # Exposer 'Autre' comme 'autre' pour l'API
     autre = serializers.CharField(source='Autre', allow_null=True)
     
-    # Ajoutez le champ couleur_commentaire_id pour la lecture
-    couleur_commentaire_id = serializers.PrimaryKeyRelatedField(
-        source='couleur_commentaire',
-        read_only=True
+    # Ajouter le champ couleur_commentaire_id pour la lecture
+    couleur_commentaire_id = serializers.IntegerField(
+        source='couleur_commentaire.id',
+        read_only=True,
+        allow_null=True
+    )
+    
+    # Ajouter aussi le code couleur pour l'affichage
+    couleur_commentaire_code = serializers.CharField(
+        source='couleur_commentaire.code',
+        read_only=True,
+        allow_null=True
     )
     
     class Meta:
@@ -2489,16 +2505,17 @@ class GetAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'autre',  # Utiliser 'autre' au lieu de 'Autre'
+            'autre',
             'couleur_commentaire',
-            'couleur_commentaire_id',
+            'couleur_commentaire_id',  # ID pour la sélection
+            'couleur_commentaire_code',  # Code pour l'affichage
             'commentaire',
             'created_at',
             'updated_at',
             'created_by',
             'updated_by',
         ]
-        
+
 
 class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     """Serializer pour l'ajout d'un antécédent - SIMPLIFIÉ"""
@@ -2525,17 +2542,50 @@ class AddAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
 
 class EditAntecedantsJuridiqueSerializer(serializers.ModelSerializer):
     """Serializer pour la modification d'un antécédent - SIMPLIFIÉ"""
+    # Ajouter ce champ pour traiter 'Autre' correctement
+    autre = serializers.CharField(source='Autre', required=False, allow_null=True, allow_blank=True)
+    
     class Meta:
         model = AntecedantsJuridique
         fields = [
             'dossier_faillite',
             'jugement_cour',
             'antecedant_redressement',
-            'Autre',  # Utiliser 'Autre' directement
+            'autre',  # Utiliser 'autre' dans l'API
             'couleur_commentaire',
             'commentaire'
         ]
-
+    
+    def validate(self, data):
+        """Validation personnalisée"""
+        # S'assurer qu'au moins un champ est rempli
+        fields_to_check = ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre']
+        has_data = False
+        
+        for field in fields_to_check:
+            # 'Autre' est maintenant accessible via 'autre' dans validated_data
+            if field == 'Autre' and 'autre' in data:
+                if data['autre'] and data['autre'].strip():
+                    has_data = True
+                    break
+            elif field in data and data[field] and data[field].strip():
+                has_data = True
+                break
+        
+        if not has_data and not data.get('commentaire'):
+            raise serializers.ValidationError({
+                'non_field_errors': 'Au moins un champ (dossier de faillite, jugement, redressement ou autre) doit être rempli.'
+            })
+        
+        return data
+    
+    def update(self, instance, validated_data):
+        """Surcharge de la mise à jour pour gérer correctement 'Autre'"""
+        # Gérer le champ 'autre' qui correspond à 'Autre' dans le modèle
+        if 'autre' in validated_data:
+            validated_data['Autre'] = validated_data.pop('autre')
+        
+        return super().update(instance, validated_data)
 
 
 

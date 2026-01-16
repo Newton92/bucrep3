@@ -1449,6 +1449,7 @@ $(document).ready(function() {
     });
     
     // Soumission du formulaire
+    // Soumission du formulaire
     function submitAntecedentForm(method, data, submitBtn, modalId, antecedentId = null) {
         const $btn = $(submitBtn);
         const $btnText = $btn.find('.btn-text');
@@ -1462,21 +1463,43 @@ $(document).ready(function() {
             `/api/acheteur/${ACHETEUR_ID}/antecedents/${antecedentId}/` : 
             `/api/acheteur/${ACHETEUR_ID}/antecedents/`;
 
+        // Normaliser les données de manière cohérente
         const normalizedData = {};
         
+        // Copier tous les champs tels quels
         for (const key in data) {
-            if (key === 'autre') {
-                normalizedData['Autre'] = data[key];
-            } else if (key === 'couleur_commentaire' && data[key] === '') {
-                normalizedData[key] = null;
+            // Pour l'édition, garder 'autre' comme 'autre' (le serializer EditAntecedantsJuridiqueSerializer
+            // a un champ 'autre' avec source='Autre')
+            // Pour la création, le serializer AddAntecedantsJuridiqueSerializer attend 'Autre'
+            if (method === 'POST') {
+                if (key === 'autre') {
+                    normalizedData['Autre'] = data[key];
+                } else {
+                    normalizedData[key] = data[key];
+                }
             } else {
+                // Pour PUT, garder les noms tels quels
                 normalizedData[key] = data[key];
+            }
+            
+            // Gérer les valeurs vides pour couleur_commentaire
+            if (key === 'couleur_commentaire' && (data[key] === '' || data[key] === null)) {
+                normalizedData[key] = null;
             }
         }
         
+        // Pour la création, ajouter l'acheteur
         if (method === 'POST') {
             normalizedData['acheteur'] = ACHETEUR_ID;
         }
+        
+        // DEBUG: Afficher les données avant envoi
+        console.log("=== Données envoyées à l'API ===");
+        console.log("Méthode:", method);
+        console.log("URL:", url);
+        console.log("Données:", normalizedData);
+        console.log("Données brutes:", data);
+        console.log("=================================");
         
         $.ajax({
             url: url,
@@ -1492,14 +1515,22 @@ $(document).ready(function() {
                 $btnText.show();
                 $btn.prop('disabled', false);
                 
+                // Fermer le modal
                 $('#' + modalId).modal('hide');
+                
+                // Réinitialiser le formulaire
                 $(`#${modalId} form`)[0].reset();
-                $('.select2-with-search').val(null).trigger('change');
+                
+                // Réinitialiser Select2
+                $(`#${modalId} .select2-with-search`).val(null).trigger('change');
+                
+                // Réinitialiser l'aperçu des couleurs
                 $('#colorPreview, #editColorPreview').css({
                     'background': '#f8f9fa',
                     'border-color': '#e3e6f0'
                 });
                 
+                // Afficher le message de succès
                 Swal.fire({
                     icon: 'success',
                     title: 'Succès',
@@ -1508,6 +1539,7 @@ $(document).ready(function() {
                     showConfirmButton: false,
                     background: '#fcfefe'
                 }).then(() => {
+                    // Recharger la liste des antécédents
                     loadAntecedents(currentPage, currentFilters);
                 });
             },
@@ -1516,31 +1548,65 @@ $(document).ready(function() {
                 $btnText.show();
                 $btn.prop('disabled', false);
                 
-                let errorMessage = 'Une erreur est survenue';
+                let errorMessage = 'Une erreur est survenue lors de l\'opération';
+                
+                // Débogage des erreurs
+                console.log("=== Erreur API ===");
+                console.log("Statut:", xhr.status);
+                console.log("Réponse:", xhr.responseJSON);
+                console.log("==================");
+                
+                // Gestion des erreurs spécifiques
                 if (xhr.responseJSON) {
                     if (xhr.responseJSON.error) {
                         errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = Array.isArray(xhr.responseJSON.non_field_errors) 
+                            ? xhr.responseJSON.non_field_errors.join('\n')
+                            : xhr.responseJSON.non_field_errors;
                     } else if (typeof xhr.responseJSON === 'object') {
-                        errorMessage = Object.values(xhr.responseJSON).flat().join('\n');
+                        // Afficher toutes les erreurs de validation
+                        const errors = [];
+                        for (const field in xhr.responseJSON) {
+                            if (Array.isArray(xhr.responseJSON[field])) {
+                                errors.push(`${field}: ${xhr.responseJSON[field].join(', ')}`);
+                            } else {
+                                errors.push(`${field}: ${xhr.responseJSON[field]}`);
+                            }
+                        }
+                        if (errors.length > 0) {
+                            errorMessage = errors.join('\n');
+                        }
                     }
+                } else if (xhr.status === 0) {
+                    errorMessage = 'Erreur de connexion. Vérifiez votre connexion internet.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Erreur interne du serveur. Veuillez contacter l\'administrateur.';
                 }
                 
+                // Gestion du token expiré
                 if (xhr.status === 401) {
                     refreshAccessToken(() => {
+                        // Retenter la soumission après rafraîchissement du token
                         submitAntecedentForm(method, data, submitBtn, modalId, antecedentId);
                     });
                 } else {
+                    // Afficher l'erreur
                     Swal.fire({
                         icon: 'error',
                         title: 'Erreur',
                         html: errorMessage.replace(/\n/g, '<br>'),
-                        background: '#fcfefe'
+                        background: '#fcfefe',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#0a95ca'
                     });
                 }
             }
         });
     }
+        
 
+    // Édition d'un antécédent
     // Édition d'un antécédent
     $(document).on('click', '.edit-btn', function() {
         const antecedentId = $(this).data('id');
@@ -1552,32 +1618,79 @@ $(document).ready(function() {
                 'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
-
-                console.log(response.couleur_commentaire.id);
-
+                console.log("=== Données récupérées pour l'édition ===");
+                console.log("Réponse complète:", response);
+                console.log("Couleur commentaire:", response.couleur_commentaire);
+                console.log("Couleur commentaire ID:", response.couleur_commentaire_id);
+                console.log("Couleur commentaire code:", response.couleur_commentaire_code);
+                console.log("==========================================");
+                
+                // Remplir le formulaire
                 $('#editAntecedentId').val(response.id);
                 $('#editDossierFaillite').val(response.dossier_faillite || '');
                 $('#editJugementCour').val(response.jugement_cour || '');
                 $('#editAntecedantRedressement').val(response.antecedant_redressement || '');
                 
+                // Utiliser 'autre' depuis la réponse (qui correspond au champ 'Autre' du modèle)
                 const autreValue = response.Autre || response.autre || '';
                 $('#editAutre').val(autreValue);
                 
-                $('#editCouleurCommentaire').val(response.couleur_commentaire?.id || '').trigger('change');
+                // Remplir le commentaire
                 $('#editCommentaire').val(response.commentaire || '');
                 
-                if (response.couleur_commentaire?.code) {
+                // Gérer la couleur du commentaire
+                let couleurId = '';
+                let couleurCode = '#6c757d'; // Couleur par défaut
+                
+                if (response.couleur_commentaire_id) {
+                    couleurId = response.couleur_commentaire_id;
+                    console.log("ID couleur trouvé:", couleurId);
+                } else if (response.couleur_commentaire && response.couleur_commentaire.id) {
+                    couleurId = response.couleur_commentaire.id;
+                    console.log("ID couleur trouvé dans l'objet:", couleurId);
+                }
+                
+                if (response.couleur_commentaire_code) {
+                    couleurCode = response.couleur_commentaire_code;
+                } else if (response.couleur_commentaire && response.couleur_commentaire.code) {
+                    couleurCode = response.couleur_commentaire.code;
+                }
+                
+                console.log("ID à sélectionner:", couleurId);
+                console.log("Code couleur à afficher:", couleurCode);
+                
+                // Sélectionner l'option dans le select
+                if (couleurId) {
+                    $('#editCouleurCommentaire').val(couleurId).trigger('change');
+                    
+                    // Mettre à jour l'aperçu de couleur
                     $('#editColorPreview').css({
-                        'background': response.couleur_commentaire.code,
-                        'border-color': response.couleur_commentaire.code
+                        'background': couleurCode,
+                        'border-color': couleurCode
+                    });
+                } else {
+                    // Si pas de couleur, réinitialiser
+                    $('#editCouleurCommentaire').val('').trigger('change');
+                    $('#editColorPreview').css({
+                        'background': '#f8f9fa',
+                        'border-color': '#e3e6f0'
                     });
                 }
                 
+                // Forcer la mise à jour de Select2 si nécessaire
+                setTimeout(function() {
+                    $('#editCouleurCommentaire').trigger('change.select2');
+                }, 100);
+                
+                // Ouvrir le modal
                 $('#editAntecedentModal').modal('show');
             },
             error: function(xhr) {
+                console.error("Erreur lors du chargement des données:", xhr);
+                
                 if (xhr.status === 401) {
                     refreshAccessToken(() => {
+                        // Réessayer après rafraîchissement du token
                         $(this).click();
                     });
                 } else {
@@ -1585,7 +1698,9 @@ $(document).ready(function() {
                         icon: 'error',
                         title: 'Erreur',
                         text: 'Impossible de charger les données de l\'antécédent',
-                        background: '#fcfefe'
+                        background: '#fcfefe',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#0a95ca'
                     });
                 }
             }

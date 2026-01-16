@@ -1,3 +1,4 @@
+# settings.py
 """
 Django settings for bucrep project.
 

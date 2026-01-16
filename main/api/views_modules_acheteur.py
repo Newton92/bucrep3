@@ -1877,24 +1877,31 @@ class AcheteurAntecedentDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Normaliser les données
+        # DEBUG: Afficher les données brutes
+        print("=== PUT Données brutes ===")
+        print(request.data)
+        print("==========================")
+        
+        # Normaliser les données - IMPORTANT: utiliser 'autre' pour correspondre au serializer
         data = request.data.copy()
-        # Convertir 'autre' en 'Autre' si présent
-        if 'autre' in data:
-            data['Autre'] = data.pop('autre')
+        
+        # Le serializer attend 'autre' mais le modèle a 'Autre'
+        # Le serializer gérera la conversion avec source='Autre'
+        if 'Autre' in data and 'autre' not in data:
+            data['autre'] = data.pop('Autre')
         
         # Sauvegarder les anciennes valeurs pour le log
         old_values = {
             'dossier_faillite': antecedent.dossier_faillite,
             'jugement_cour': antecedent.jugement_cour,
             'antecedant_redressement': antecedent.antecedant_redressement,
-            'Autre': antecedent.Autre,  # Utiliser 'Autre' ici
+            'Autre': antecedent.Autre,
             'commentaire': antecedent.commentaire
         }
         
         serializer = EditAntecedantsJuridiqueSerializer(
             antecedent,
-            data=data,  # Utiliser data normalisé
+            data=data,
             partial=True
         )
         
@@ -1905,21 +1912,21 @@ class AcheteurAntecedentDetailView(APIView):
             changes = []
             new_values = serializer.validated_data
             
-            # Note: maintenant 'autre' dans serializer.validated_data est lié à 'Autre' via source='Autre'
-            for field_name in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'Autre', 'commentaire']:
-                # Vérifier si le champ a été modifié
-                # Pour 'Autre', on utilise 'autre' dans le serializer
-                if field_name == 'Autre' and 'autre' in new_values:
-                    field_value = new_values['autre']
-                elif field_name in new_values:
-                    field_value = new_values[field_name]
-                else:
-                    continue
-                    
-                if field_value != old_values[field_name]:
-                    old_val = str(old_values[field_name])[:50] + ('...' if len(str(old_values[field_name])) > 50 else '')
-                    new_val = str(field_value)[:50] + ('...' if len(str(field_value)) > 50 else '')
-                    changes.append(f"{field_name}: '{old_val}' → '{new_val}'")
+            # Comparer les champs
+            for field_name in ['dossier_faillite', 'jugement_cour', 'antecedant_redressement', 'commentaire']:
+                if field_name in new_values:
+                    if str(new_values[field_name] or '') != str(old_values[field_name] or ''):
+                        old_val = str(old_values[field_name] or '')[:50] + ('...' if len(str(old_values[field_name] or '')) > 50 else '')
+                        new_val = str(new_values[field_name] or '')[:50] + ('...' if len(str(new_values[field_name] or '')) > 50 else '')
+                        changes.append(f"{field_name}: '{old_val}' → '{new_val}'")
+            
+            # Gérer le champ 'Autre' spécialement
+            if 'autre' in new_values:
+                new_autre = new_values['autre'] or ''
+                if str(new_autre) != str(old_values['Autre'] or ''):
+                    old_val = str(old_values['Autre'] or '')[:50] + ('...' if len(str(old_values['Autre'] or '')) > 50 else '')
+                    new_val = str(new_autre)[:50] + ('...' if len(str(new_autre)) > 50 else '')
+                    changes.append(f"Autre: '{old_val}' → '{new_val}'")
             
             # Log d'activité
             details = f"Mise à jour d'un antécédent juridique pour l'acheteur {acheteur.nom}"
@@ -1938,6 +1945,10 @@ class AcheteurAntecedentDetailView(APIView):
                 'message': 'Antécédent juridique mis à jour avec succès',
                 'data': GetAntecedantsJuridiqueSerializer(updated_antecedent).data
             })
+        
+        print("=== Erreurs de validation ===")
+        print(serializer.errors)
+        print("=============================")
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
