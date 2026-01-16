@@ -35,8 +35,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Initialiser environ
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, "localenv", ".env"))
+# environ.Env.read_env(os.path.join(BASE_DIR, "localenv", ".env"))
 # environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+# Déterminer quel fichier .env utiliser
+if os.path.exists(os.path.join(BASE_DIR, ".env")):
+    # Production - utilise .env à la racine
+    environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+    print("📁 Chargement du fichier .env (production)")
+elif os.path.exists(os.path.join(BASE_DIR, "localenv", ".env")):
+    # Développement - utilise localenv/.env
+    environ.Env.read_env(os.path.join(BASE_DIR, "localenv", ".env"))
+    print("📁 Chargement du fichier localenv/.env (développement)")
+else:
+    # Fallback - utiliser les variables d'environnement système
+    print("⚠️  Aucun fichier .env trouvé, utilisation des variables système")
 
 
 # Quick-start development settings - unsuitable for production
