@@ -3697,14 +3697,14 @@ class CompositionCapitalSocial(Model):
         "Devise",
         null=True,
         blank=True,
-        default="",
+        default=None, # CORRIGÉ
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Dévise capital libéré"),
+        verbose_name=_("Dévise du capital libéré"),
     )
     emis = models.DecimalField(
         _("Capital émis"),
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,  # CONSERVER 5 décimales
         blank=True,
         null=True,
         help_text=_("Montant du capital émis"),
@@ -3712,7 +3712,7 @@ class CompositionCapitalSocial(Model):
     publie = models.DecimalField(
         _("Capital publié"),
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,  # CONSERVER 5 décimales
         blank=True,
         null=True,
         help_text=_("Montant du capital publié"),
@@ -3720,7 +3720,7 @@ class CompositionCapitalSocial(Model):
     libere = models.DecimalField(
         _("Capital libéré"),
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,  # CONSERVER 5 décimales
         blank=True,
         null=True,
         help_text=_("Montant du capital libéré"),
@@ -3732,7 +3732,12 @@ class CompositionCapitalSocial(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur du commentaire"),
     )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+    commentaire = models.TextField(
+        _("Commentaire"), 
+        blank=True, 
+        max_length=10000000,
+        null=True  # AJOUTÉ pour compatibilité
+    )
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -3782,12 +3787,22 @@ class CompositionAction(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    nom = models.CharField(_("Nom"), max_length=200, blank=True)
-    prenom = models.CharField(_("Prénom"), max_length=200, blank=True)
+    nom = models.CharField(
+        _("Nom"), 
+        max_length=200, 
+        blank=True,
+        null=True  # AJOUTÉ
+    )
+    prenom = models.CharField(
+        _("Prénom"), 
+        max_length=200, 
+        blank=True,
+        null=True  # AJOUTÉ
+    )
     pourcentage = models.DecimalField(
         _("Pourcentage"),
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,  # CONSERVER 5 décimales
         null=True,
         blank=True,
         validators=[
@@ -3803,7 +3818,12 @@ class CompositionAction(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur du commentaire"),
     )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+    commentaire = models.TextField(
+        _("Commentaire"), 
+        blank=True, 
+        max_length=10000000,
+        null=True  # AJOUTÉ
+    )
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -5638,7 +5658,12 @@ class Structure(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    nom = models.CharField(_("Nom"), max_length=200, blank=True)
+    nom = models.CharField(
+        _("Nom"), 
+        max_length=200, 
+        blank=True,
+        null=True  # AJOUTER pour compatibilité
+    )
 
     type_affiliation = models.CharField(
         max_length=100,
@@ -5646,17 +5671,24 @@ class Structure(Model):
         blank=True,
         verbose_name=_("Type d'affiliation"),
     )
-    type_affiliation_ref = models.ForeignKey(
-        "StructureEntreprise",
-        null=True,
+    
+    numero_adresse = models.CharField(
+        _("Numéro adresse"), 
+        max_length=200, 
         blank=True,
-        on_delete=models.DO_NOTHING,
-        verbose_name=_("Référence Type d'affiliation"),
+        null=True  # AJOUTER pour compatibilité
     )
-    numero_adresse = models.CharField(_("Numéro adresse"), max_length=200, blank=True)
-    rue_adresse = models.CharField(_("Rue adresse"), max_length=200, blank=True)
+    rue_adresse = models.CharField(
+        _("Rue adresse"), 
+        max_length=200, 
+        blank=True,
+        null=True  # AJOUTER pour compatibilité
+    )
     code_postale_adresse = models.CharField(
-        _("Code postal adresse"), max_length=200, blank=True
+        _("Code postal adresse"), 
+        max_length=200, 
+        blank=True,
+        null=True  # AJOUTER pour compatibilité
     )
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -5665,7 +5697,12 @@ class Structure(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur du commentaire"),
     )
-    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+    commentaire = models.TextField(
+        _("Commentaire"), 
+        blank=True, 
+        max_length=10000000,
+        null=True  # AJOUTER pour compatibilité
+    )
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
@@ -6608,7 +6645,10 @@ class Banquier(Model):
         verbose_name=_("Acheteur"),
     )
     nom_banque = models.CharField(
-        blank=True, max_length=200, verbose_name=_("Nom de la banque")
+        blank=True, 
+        max_length=200, 
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Nom de la banque")
     )
     numero_compte = models.CharField(
         default="",
@@ -6620,13 +6660,30 @@ class Banquier(Model):
     type_relation = models.CharField(
         blank=True, max_length=200, null=True, verbose_name=_("Type de relation")
     )
-    numero = models.CharField(max_length=200, blank=True, verbose_name=_("Numéro"))
-    rue = models.CharField(max_length=200, blank=True, verbose_name=_("Rue"))
+    numero = models.CharField(
+        max_length=200, 
+        blank=True,
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Numéro")
+    )
+    rue = models.CharField(
+        max_length=200, 
+        blank=True,
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Rue")
+    )
     ville = models.ForeignKey(
-        "Ville", on_delete=models.DO_NOTHING, verbose_name=_("Ville")
+        "Ville", 
+        on_delete=models.DO_NOTHING, 
+        null=True,  # AJOUTER ABSOLUMENT
+        blank=True,  # AJOUTER ABSOLUMENT
+        verbose_name=_("Ville")
     )
     code_postal = models.CharField(
-        max_length=200, blank=True, verbose_name=_("Code postal")
+        max_length=200, 
+        blank=True,
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Code postal")
     )
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -6635,7 +6692,12 @@ class Banquier(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur du commentaire"),
     )
-    commentaire = models.TextField(blank=True, verbose_name=_("Commentaire"))
+    commentaire = models.TextField(
+        blank=True, 
+        max_length=10000000,  # AJOUTER pour compatibilité
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Commentaire")
+    )
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6672,6 +6734,14 @@ class Banquier(Model):
     class Meta:
         verbose_name = _("Donnée bancaire")
         verbose_name_plural = _("Données bancaires")
+        indexes = [
+            models.Index(fields=['acheteur', 'deleted']),
+            models.Index(fields=['nom_banque']),
+            models.Index(fields=['ville']),
+            models.Index(fields=['couleur_commentaire']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['updated_at']),
+        ]
 
 
 ##########################################################

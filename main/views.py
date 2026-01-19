@@ -1,6 +1,7 @@
 import json
 import random
 import threading
+from django.core.cache import cache
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -2734,7 +2735,7 @@ def dash_root_manage_acheteur_filiale_optimized(request, acheteur_id):
         ).order_by('-count'))
         
         # Calculer le nombre total avec structure définie
-        avec_structure = filiales.exclude(type_affiliation_ref__isnull=True).count()
+        avec_structure = filiales.exclude(type_affiliation__isnull=True).count()
         
         stats = {
             'total': filiales_total,
@@ -2749,9 +2750,11 @@ def dash_root_manage_acheteur_filiale_optimized(request, acheteur_id):
         }
         
         # Filiales récentes
+        # Pour optimiser davantage
         filiales_recent = filiales.select_related(
-            'type_affiliation_ref', 
-            'couleur_commentaire'
+            'couleur_commentaire',
+            'created_by',    # Si vous voulez accéder à ces informations
+            'updated_by'     # Si vous voulez accéder à ces informations
         ).order_by('-updated_at')[:4]
         
         # Génération des tokens JWT
@@ -2791,6 +2794,7 @@ def dash_root_manage_acheteur_filiale_optimized(request, acheteur_id):
             "stats": stats,
             "filiales_recent": filiales_recent,
             "id_acheteur": acheteur_id,
+            "type_affiliation_choices": LIEN_ENTREPRISE_CHOICE,  # Ajouté
         }
         return render(
             request,
@@ -3667,6 +3671,14 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
     """
     Vue optimisée pour la gestion des données bancaires
     """
+    
+    start_time = time.time()
+    cache_key = f'banking_view_{acheteur_id}_{request.user.id}'
+    cached_data = cache.get(cache_key)
+    
+    # J'ai un pays stocke en 
+    # pays = request.get.session('pays')
+
     try:
         # Récupérer l'acheteur avec préfetch pour optimiser
         acheteur = get_object_or_404(
@@ -3682,7 +3694,8 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
         )
 
         # Récupérer les listes pour les formulaires
-        ville_list = Ville.objects.all()
+        # ville_list = Ville.objects.all()
+        ville_list = Ville.objects.select_related('pays').all()[:100]  # Limiter à 100
         coloration_list = CouleurCommentaire.objects.all()
         
         # Statistiques détaillées
@@ -3694,14 +3707,22 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
         # Statistiques
         stats = {
             'total': bankings_total,
-            'banques_uniques': bankings.values('nom_banque').distinct().count(),
-            'avec_compte': bankings.exclude(numero_compte='').count(),
-            'avec_adresse': bankings.exclude(
-                Q(numero='') | Q(rue='')
+            'banques_uniques': bankings.aggregate(
+                count=Count('nom_banque', distinct=True)
+            )['count'],
+            'avec_compte': bankings.filter(
+                numero_compte__isnull=False
+            ).exclude(numero_compte='').count(),
+            'avec_adresse': bankings.filter(
+                ~Q(numero='') & ~Q(rue='')
             ).count(),
-            'avec_commentaire': bankings.exclude(commentaire='').count(),
+            'avec_commentaire': bankings.filter(
+                commentaire__isnull=False
+            ).exclude(commentaire='').count(),
             'avec_couleur': bankings.exclude(couleur_commentaire__isnull=True).count(),
-            'par_relation': list(bankings.values('type_relation').annotate(
+            'par_relation': list(bankings.filter(
+                type_relation__isnull=False
+            ).exclude(type_relation='').values('type_relation').annotate(
                 count=Count('id')
             ).order_by('-count')),
         }
@@ -3734,6 +3755,9 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
             "banking_recent": banking_recent,
             "id_acheteur": acheteur_id,
         }
+        
+        # Log des temps
+        logger.info(f"Temps total pour banking view: {time.time() - start_time:.2f}s")
         
         return render(
             request,

@@ -391,6 +391,9 @@ ASGI_APPLICATION = "bucrep.asgi.application"
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "CONFIG": {
+            "expiry": 30,
+        },
     },
 }
 

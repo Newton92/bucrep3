@@ -20,6 +20,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal, InvalidOperation
+from rest_framework import generics
+from django.db.models import Q
 
 from django.core.cache import cache
 import logging
@@ -3894,7 +3896,7 @@ class AcheteurFilialeListView(APIView):
         # Construction de la requête optimisée
         filiales = Structure.objects.filter(
             acheteur=acheteur
-        ).select_related('type_affiliation_ref', 'couleur_commentaire')
+        ).select_related('couleur_commentaire')
         
         # Recherche avancée
         if search_term:
@@ -4059,7 +4061,6 @@ class AcheteurFilialeDetailView(APIView):
         """Récupère les détails d'une filiale"""
         try:
             filiale = Structure.objects.select_related(
-                'type_affiliation_ref', 
                 'couleur_commentaire'
             ).get(
                 id=filiale_id,
@@ -6971,6 +6972,11 @@ class AcheteurBanquierListView(APIView):
                 {"error": "Acheteur non trouvé"},
                 status=status.HTTP_404_NOT_FOUND
             )
+            
+        # OPTIMISATION : Utiliser get_object_or_404 et une seule requête
+        from django.shortcuts import get_object_or_404
+    
+        get_object_or_404(Acheteur, id=acheteur_id, deleted__isnull=True)
         
         # Récupérer les banquiers avec pagination
         banquiers = self.get_queryset(acheteur_id)
@@ -7221,107 +7227,123 @@ class BanquierStatsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Récupérer tous les banquiers de l'acheteur
+        # Optimiser les requêtes
         banquiers = Banquier.objects.filter(
             acheteur=acheteur,
             deleted__isnull=True
-        )
+        ).select_related('ville', 'couleur_commentaire')
         
         total_banquiers = banquiers.count()
         
-        # Statistiques basiques
+        # Utiliser une seule requête pour plusieurs statistiques
+        stats_data = banquiers.aggregate(
+            total=Count('id'),
+            avec_commentaire=Count('id', filter=~Q(commentaire='')),
+            avec_compte=Count('id', filter=~Q(numero_compte='')),
+            avec_adresse=Count('id', filter=~Q(numero='') & ~Q(rue='')),
+            avec_couleur=Count('id', filter=Q(couleur_commentaire__isnull=False))
+        )
+        
         stats = {
-            'total': total_banquiers,
-            'avec_commentaire': banquiers.filter(
-                commentaire__isnull=False,
-                commentaire__gt=''
-            ).count(),
-            'avec_compte': banquiers.filter(
-                numero_compte__isnull=False,
-                numero_compte__gt=''
-            ).count(),
+            'total': stats_data['total'],
+            'avec_commentaire': stats_data['avec_commentaire'],
+            'avec_compte': stats_data['avec_compte'],
+            'avec_adresse': stats_data['avec_adresse'],
+            'avec_couleur': stats_data['avec_couleur'],
         }
         
-        stats['sans_compte'] = total_banquiers - stats['avec_compte']
+        stats['sans_compte'] = stats['total'] - stats['avec_compte']
         
         # Calculer les pourcentages
-        if total_banquiers > 0:
+        if stats['total'] > 0:
             stats['pourcentage_avec_commentaire'] = round(
-                (stats['avec_commentaire'] / total_banquiers * 100), 2
+                (stats['avec_commentaire'] / stats['total'] * 100), 2
             )
             stats['pourcentage_avec_compte'] = round(
-                (stats['avec_compte'] / total_banquiers * 100), 2
+                (stats['avec_compte'] / stats['total'] * 100), 2
             )
             stats['pourcentage_avec_adresse'] = round(
-                (banquiers.exclude(
-                    Q(numero='') | Q(rue='')
-                ).count() / total_banquiers * 100), 2
+                (stats['avec_adresse'] / stats['total'] * 100), 2
             )
         else:
             stats['pourcentage_avec_commentaire'] = 0
             stats['pourcentage_avec_compte'] = 0
             stats['pourcentage_avec_adresse'] = 0
         
-        # Répartition par ville
+        # OPTIMISATION : Ces requêtes peuvent être lentes si beaucoup de données
+        # Utiliser .only() pour ne récupérer que les champs nécessaires
         banquiers_par_ville = banquiers.filter(
             ville__isnull=False
-        ).values('ville__nom', 'ville__code').annotate(  # CORRECTION : ville__code au lieu de ville__code_postal
+        ).values('ville__nom', 'ville__code').annotate(
             count=Count('id')
-        ).order_by('-count')
+        ).order_by('-count')[:10]  # Limiter à 10 résultats
         
-        stats['repartition_par_ville'] = [
-            {
-                'ville': item['ville__nom'],
-                'code': item['ville__code'],  # CORRECTION : code au lieu de code_postal
-                'count': item['count']
-            }
-            for item in banquiers_par_ville
-        ]
+        stats['repartition_par_ville'] = list(banquiers_par_ville)
         
-        # Répartition par couleur de commentaire
+        # De même pour les couleurs
         banquiers_par_couleur = banquiers.filter(
             couleur_commentaire__isnull=False
         ).values(
             'couleur_commentaire__couleur',
             'couleur_commentaire__code'
-        ).annotate(count=Count('id')).order_by('-count')
+        ).annotate(count=Count('id')).order_by('-count')[:10]
         
-        stats['repartition_par_couleur'] = [
-            {
-                'couleur': item['couleur_commentaire__couleur'],
-                'code_couleur': item['couleur_commentaire__code'],
-                'count': item['count']
-            }
-            for item in banquiers_par_couleur
-        ]
+        stats['repartition_par_couleur'] = list(banquiers_par_couleur)
         
         # Répartition par type de relation
         banquiers_par_relation = banquiers.exclude(
             type_relation=''
         ).values('type_relation').annotate(
             count=Count('id')
-        ).order_by('-count')
+        ).order_by('-count')[:10]
         
-        stats['repartition_par_relation'] = [
-            {
-                'relation': item['type_relation'],
-                'count': item['count']
-            }
-            for item in banquiers_par_relation
-        ]
+        stats['repartition_par_relation'] = list(banquiers_par_relation)
         
-        # Banques uniques
+        # Banques uniques - OPTIMISER
         stats['banques_uniques'] = banquiers.values('nom_banque').distinct().count()
         
         # Dernière mise à jour
-        dernier_banquier = banquiers.order_by('-updated_at').first()
+        dernier_banquier = banquiers.only('updated_at').order_by('-updated_at').first()
         if dernier_banquier:
             stats['derniere_mise_a_jour'] = dernier_banquier.updated_at.isoformat()
         
         return Response(stats)
 
 
-
+class VilleSearchAPIView(generics.ListAPIView):
+    """API pour la recherche de villes avec pagination"""
+    serializer_class = VilleSerializer
+    
+    def get_queryset(self):
+        queryset = Ville.objects.all()
+        
+        # Filtre par recherche
+        search_term = self.request.query_params.get('search', '')
+        if search_term:
+            queryset = queryset.filter(
+                Q(nom__icontains=search_term) | 
+                Q(code__icontains=search_term)
+            )
+        
+        # Limiter si trop de résultats
+        return queryset.order_by('nom')[:100]  # Limiter à 100 résultats
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Pagination simple
+        page = int(request.query_params.get('page', 1))
+        page_size = 20
+        start = (page - 1) * page_size
+        end = start + page_size
+        
+        serializer = self.get_serializer(queryset[start:end], many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': queryset.count(),
+            'next': end < queryset.count()
+        })
 
 
 

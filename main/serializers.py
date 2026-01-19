@@ -3444,7 +3444,6 @@ class CouleurCommentaireMinimalSerializer(serializers.ModelSerializer):
 
 class StructureListSerializer(serializers.ModelSerializer):
     """Serializer pour la liste des filiales"""
-    type_affiliation_ref = StructureEntrepriseMinimalSerializer()
     couleur_commentaire = CouleurCommentaireMinimalSerializer()
     created_at_formatted = serializers.SerializerMethodField()
     updated_at_formatted = serializers.SerializerMethodField()
@@ -3456,7 +3455,6 @@ class StructureListSerializer(serializers.ModelSerializer):
             'id',
             'nom',
             'type_affiliation',
-            'type_affiliation_ref',
             'numero_adresse',
             'rue_adresse',
             'code_postale_adresse',
@@ -3491,7 +3489,6 @@ class StructureListSerializer(serializers.ModelSerializer):
 
 class GetStructureSerializer(serializers.ModelSerializer):
     """Serializer détaillé pour une filiale"""
-    type_affiliation_ref = StructureEntrepriseMinimalSerializer()
     couleur_commentaire = CouleurCommentaireMinimalSerializer()
     
     class Meta:
@@ -3514,15 +3511,7 @@ class AddStructureSerializer(serializers.ModelSerializer):
     )
     
     type_affiliation = serializers.ChoiceField(
-        choices=[
-            ('Société - mère', 'Société - mère'),
-            ('Filiale', 'Filiale'),
-            ('Subsidiary', 'Subsidiary'),
-            ('Société Sœur', 'Société Sœur'),
-            ('La holding', 'La holding'),
-            ('Le groupe de sociétés', 'Le groupe de sociétés'),
-            ('Société de gestion', 'Société de gestion'),
-        ],
+        choices=LIEN_ENTREPRISE_CHOICE,
         required=True,
         error_messages={
             'required': 'Le type d\'affiliation est obligatoire',
@@ -3530,11 +3519,6 @@ class AddStructureSerializer(serializers.ModelSerializer):
         }
     )
     
-    type_affiliation_ref = serializers.PrimaryKeyRelatedField(
-        queryset=StructureEntreprise.objects.all(),
-        required=False,
-        allow_null=True
-    )
     
     couleur_commentaire = serializers.PrimaryKeyRelatedField(
         queryset=CouleurCommentaire.objects.all(),
@@ -3548,7 +3532,6 @@ class AddStructureSerializer(serializers.ModelSerializer):
             'acheteur',
             'nom',
             'type_affiliation',
-            'type_affiliation_ref',
             'numero_adresse',
             'rue_adresse',
             'code_postale_adresse',
@@ -3628,11 +3611,6 @@ class EditStructureSerializer(serializers.ModelSerializer):
         required=False
     )
     
-    type_affiliation_ref = serializers.PrimaryKeyRelatedField(
-        queryset=StructureEntreprise.objects.all(),
-        required=False,
-        allow_null=True
-    )
     
     couleur_commentaire = serializers.PrimaryKeyRelatedField(
         queryset=CouleurCommentaire.objects.all(),
@@ -3645,7 +3623,6 @@ class EditStructureSerializer(serializers.ModelSerializer):
         fields = [
             'nom',
             'type_affiliation',
-            'type_affiliation_ref',
             'numero_adresse',
             'rue_adresse',
             'code_postale_adresse',
