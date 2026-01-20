@@ -5755,9 +5755,9 @@ class AnalyseSectorielle(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Couleur du commentaire"),
     )
-    commentaire = models.TextField(_("Commentaire"), max_length=10000000, blank=True)
+    commentaire = models.TextField(_("Commentaire"), max_length=10000000, blank=True, null=True)
     impact_covid_19 = models.TextField(
-        _("Impact COVID-19"), max_length=10000000, blank=True
+        _("Impact COVID-19"), max_length=10000000, blank=True, null=True
     )
 
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
@@ -5877,23 +5877,24 @@ class CompteFinancier(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    cabinet = models.CharField(max_length=200, blank=True, verbose_name=_("Cabinet"))
+    cabinet = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Cabinet"))
     requis_pour_deposer = models.CharField(
-        max_length=200, blank=True, verbose_name=_("Requis pour déposer")
+        max_length=200, blank=True, null=True, verbose_name=_("Requis pour déposer")
     )
     credibilite_cabinet = models.CharField(
         max_length=200,
-        blank=True,
+        blank=True, 
+        null=True,
         choices=STATUS__OUI_NON,
         verbose_name=_("Crédibilité du cabinet pour ACREMAC"),
     )
-    source = models.CharField(max_length=200, blank=True, verbose_name=_("Source"))
+    source = models.CharField(max_length=200, blank=True, null=True, verbose_name=_("Source"))
     presentation = models.CharField(
-        max_length=200, blank=True, verbose_name=_("Présentation")
+        max_length=200, blank=True, null=True, verbose_name=_("Présentation")
     )
 
     date_compte = models.DateField(
-        blank=True, verbose_name=_("Début de période de compte N")
+        blank=True, null=True, verbose_name=_("Début de période de compte N")
     )
     date_fin = models.DateField(
         blank=True, null=True, verbose_name=_("Fin clôture de compte N")
@@ -5918,22 +5919,18 @@ class CompteFinancier(Model):
         max_length=20,
         default=XAF,
         choices=STATUS_CHANGE,
-        blank=True,
+        blank=True, 
+        null=True,
         verbose_name=_("Devise"),
     )
     type_bilan = models.CharField(
         max_length=255,
         choices=LIEN_TYPE_BILAN_CHOICE,
-        default="--------",
+        default='',  # CORRIGER : utiliser une valeur vide
+        null=True,
         verbose_name=_("Type de bilan"),
     )
-    # type_bilan_ref = models.ForeignKey(
-    #     "ModeleBilan",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.DO_NOTHING,
-    #     verbose_name=_("Référence Type de bilan"),
-    # )
+   
 
     couleur_commentaire = models.ForeignKey(
         "CouleurCommentaire",
@@ -5943,7 +5940,7 @@ class CompteFinancier(Model):
         verbose_name=_("Couleur du commentaire"),
     )
     commentaire = models.TextField(
-        blank=True, max_length=10000000, verbose_name=_("Commentaire")
+        blank=True, null=True, max_length=10000000, verbose_name=_("Commentaire")
     )
 
     created_at = models.DateTimeField(
@@ -6001,6 +5998,51 @@ class CompteFinancier(Model):
         couple_n1 = self.date_compte_n_moins_un and self.date_fin_n_moins_un
         couple_n2 = self.date_compte_n_moins_deux and self.date_fin_n_moins_deux
         return rempli and (couple_n or couple_n1 or couple_n2)
+    
+    def get_periodes_remplies(self):
+        """Retourne les périodes de compte remplies"""
+        periodes = []
+        
+        if self.date_compte and self.date_fin:
+            periodes.append({
+                'periode': 'N',
+                'debut': self.date_compte,
+                'fin': self.date_fin,
+                'complete': True
+            })
+        
+        if self.date_compte_n_moins_un and self.date_fin_n_moins_un:
+            periodes.append({
+                'periode': 'N-1',
+                'debut': self.date_compte_n_moins_un,
+                'fin': self.date_fin_n_moins_un,
+                'complete': True
+            })
+        
+        if self.date_compte_n_moins_deux and self.date_fin_n_moins_deux:
+            periodes.append({
+                'periode': 'N-2',
+                'debut': self.date_compte_n_moins_deux,
+                'fin': self.date_fin_n_moins_deux,
+                'complete': True
+            })
+        
+        return periodes
+    
+    def get_completion_rate(self):
+        """Retourne le taux de complétion en pourcentage"""
+        champs_obligatoires = [
+            self.cabinet,
+            self.date_compte,
+            self.date_fin,
+            self.devise,
+            self.acheteur
+        ]
+        
+        remplis = sum(1 for champ in champs_obligatoires if champ)
+        total = len(champs_obligatoires)
+        
+        return round((remplis / total) * 100, 1) if total > 0 else 0
 
     class Meta:
         verbose_name = _("Compte Financier")
@@ -6018,14 +6060,21 @@ class OperationEtHistorique(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    commentaire_ratios = models.TextField(
-        blank=True, verbose_name=_("Commentaire sur les ratios")
+    commentaire_ratios = models.CharField(
+        max_length=10000000,  # Longueur très grande pour un CharField
+        blank=True,
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Commentaire sur les ratios")
     )
-    description_complete_activite = models.TextField(
-        blank=True, verbose_name=_("Description complète de l'activité")
+
+    description_complete_activite = models.CharField(
+        max_length=10000000,
+        blank=True,
+        null=True,  # AJOUTER pour compatibilité
+        verbose_name=_("Description complète de l'activité")
     )
     importation = models.ManyToManyField("ListeImportation", related_name=_("importation"), blank=True)
-    historique = models.TextField(blank=True, verbose_name=_("Historique"))
+    historique = models.TextField(blank=True, null=True, verbose_name=_("Historique"))
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6064,8 +6113,33 @@ class OperationEtHistorique(Model):
         )
         
     def get_importation_display(self):
-        return ", ".join([str(imp) for imp in self.importation.all()])
-    get_importation_display.short_description = 'Importations'
+        """Retourne la liste des importations sous forme de chaîne"""
+        importations = self.importation.all()
+        if importations:
+            return ", ".join([str(imp) for imp in importations])
+        return _("Aucune")
+    get_importation_display.short_description = _('Importations')
+    
+    def has_content(self):
+        """Vérifie si le modèle a du contenu"""
+        return any([
+            bool(self.commentaire_ratios and self.commentaire_ratios.strip()),
+            bool(self.description_complete_activite and self.description_complete_activite.strip()),
+            bool(self.historique and self.historique.strip()),
+            self.importation.exists()
+        ])
+    
+    def get_summary(self):
+        """Retourne un résumé du contenu"""
+        return {
+            'has_commentaire_ratios': bool(self.commentaire_ratios and self.commentaire_ratios.strip()),
+            'has_description': bool(self.description_complete_activite and self.description_complete_activite.strip()),
+            'has_historique': bool(self.historique and self.historique.strip()),
+            'has_importations': self.importation.exists(),
+            'importations_count': self.importation.count(),
+            'description_length': len(self.description_complete_activite) if self.description_complete_activite else 0,
+            'historique_length': len(self.historique) if self.historique else 0,
+        }
 
     class Meta:
         verbose_name = _("Opération et Historique")
@@ -6392,19 +6466,19 @@ class Advice(Model):
     )
     
     points_forts = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Points forts")
+        max_length=10000000, blank=True, null=True, verbose_name=_("Points forts")
     )
     points_faibles = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Points faibles")
+        max_length=10000000, blank=True, null=True, verbose_name=_("Points faibles")
     )
     
     dynamisme_court_terme = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Dynamisme à court terme")
+        max_length=10000000, blank=True, null=True, verbose_name=_("Dynamisme à court terme")
     )
     dynamisme_long_terme = models.TextField(
         max_length=10000000, blank=True, null=True, verbose_name=_("Dynamisme à long terme")
     )
-    risque_potentiel_court_terme = models.TextField(max_length=10000000, blank=True, null=True, verbose_name=_("Risques potentiel à court terme"))
+    risque_potentiel_court_terme = models.TextField(max_length=10000000, blank=True, null=True, verbose_name=_("Risques potentiels à court terme"))
     
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6436,7 +6510,48 @@ class Advice(Model):
 
 
     def __str__(self):
-        return f"Conseils pour {self.acheteur}"
+        return f"Conseils - {self.acheteur}" if self.acheteur else _("Conseils sans acheteur")
+    
+    def get_summary(self):
+        """Retourne un résumé des conseils"""
+        return {
+            'has_points_forts': bool(self.points_forts and self.points_forts.strip()),
+            'has_points_faibles': bool(self.points_faibles and self.points_faibles.strip()),
+            'has_dynamisme_court_terme': bool(self.dynamisme_court_terme and self.dynamisme_court_terme.strip()),
+            'has_dynamisme_long_terme': bool(self.dynamisme_long_terme and self.dynamisme_long_terme.strip()),
+            'has_risque_court_terme': bool(self.risque_potentiel_court_terme and self.risque_potentiel_court_terme.strip()),
+            'points_forts_length': len(self.points_forts) if self.points_forts else 0,
+            'points_faibles_length': len(self.points_faibles) if self.points_faibles else 0,
+        }
+    
+    def is_complete(self, threshold=50):
+        """Vérifie si les conseils sont suffisamment complets"""
+        summary = self.get_summary()
+        
+        # Compter les champs remplis
+        filled_fields = sum([
+            1 for key, value in summary.items() 
+            if key.startswith('has_') and value
+        ])
+        
+        # 5 champs possibles (points_forts, points_faibles, dynamisme_court_terme, 
+        # dynamisme_long_terme, risque_potentiel_court_terme)
+        total_fields = 5
+        
+        # Calculer le pourcentage de complétion
+        completion_rate = (filled_fields / total_fields) * 100
+        
+        return completion_rate >= threshold
+    
+    def get_completion_rate(self):
+        """Retourne le taux de complétion en pourcentage"""
+        summary = self.get_summary()
+        filled_fields = sum([
+            1 for key, value in summary.items() 
+            if key.startswith('has_') and value
+        ])
+        total_fields = 5
+        return round((filled_fields / total_fields) * 100, 1)
 
     class Meta:
         verbose_name = _("Conseil")
@@ -6492,10 +6607,10 @@ class Geopolitics(Model):
     )
     
     donnees_politiques = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Données politiques")
+        max_length=10000000, blank=True, null=True, verbose_name=_("Données politiques")
     )
     donnees_economiques = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Données économiques")
+        max_length=10000000, blank=True, null=True, verbose_name=_("Données économiques")
     )
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")

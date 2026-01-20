@@ -2441,8 +2441,55 @@ class RapportTelechargerAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
         )
         
         
-        
-        
+@admin.register(Locaux)
+class LocauxAdmin(admin.ModelAdmin):
+    list_display = ("id", "nom")
+    search_fields = ("nom",)
+    ordering = ("nom",)
+
+
+@admin.register(ListeConditionAchat)
+class ListeConditionAchatAdmin(admin.ModelAdmin):
+    list_display = ("id", "nom")
+    search_fields = ("nom",)
+    ordering = ("nom",)
+
+
+@admin.register(ListeConditionVente)
+class ListeConditionVenteAdmin(admin.ModelAdmin):
+    list_display = ("id", "nom")
+    search_fields = ("nom",)
+    ordering = ("nom",)
+
+
+@admin.register(ListeImportation)
+class ListeImportationAdmin(admin.ModelAdmin):
+    list_display = ("id", "libelle")
+    search_fields = ("libelle",)
+
+
+
+@admin.register(ListeComportementsPaiement)
+class ListeComportementsPaiementAdmin(admin.ModelAdmin):
+    list_display = ("id", "libelle", "couleur")
+    search_fields = ("libelle",)
+    list_filter = ("couleur",)
+
+
+
+@admin.register(ListeInformationsRating)
+class ListeInformationsRatingAdmin(admin.ModelAdmin):
+    list_display = ("id", "libelle", "couleur")
+    search_fields = ("libelle",)
+    list_filter = ("couleur",)
+
+
+
+@admin.register(ListeInformationsAvisCommercial)
+class ListeInformationsAvisCommercialAdmin(admin.ModelAdmin):
+    list_display = ("id", "libelle", "couleur")
+    search_fields = ("libelle",)
+    list_filter = ("couleur",)
 
 
     

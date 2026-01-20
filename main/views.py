@@ -3023,9 +3023,9 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     )
 
     # Récupérer les opérations de l'acheteur
-    operations = OperationEtHistorique.objects.filter(
+    operation = OperationEtHistorique.objects.filter(
         acheteur=acheteur
-    ).prefetch_related('importation').order_by('-created_at')
+    ).prefetch_related('importation').order_by('-created_at').first()
     
     # Génération des tokens JWT
     try:
@@ -3062,8 +3062,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
 
     # Préparer les données des opérations pour le template
     operations_data = []
-    for operation in operations:
-        operations_data.append({
+    operations_data.append({
             'id': operation.id,
             'commentaire_ratios': operation.commentaire_ratios or '',
             'description_complete_activite': operation.description_complete_activite or '',
@@ -3072,6 +3071,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
             'created_at': operation.created_at.isoformat() if operation.created_at else None,
             'updated_at': operation.updated_at.isoformat() if operation.updated_at else None,
         })
+        
     
     operations_json = json.dumps(operations_data, default=str)
 
@@ -3084,8 +3084,7 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
         "operations_json": operations_json or '[]',
         "importations_json": importations_json or '[]',
         "acheteur": acheteur,
-        "operations": operations,
-        "operations_count": operations.count(),
+        "operation": operation,
         "importations": importations,
         "id_acheteur": acheteur_id,
     }
@@ -3677,7 +3676,15 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
     cached_data = cache.get(cache_key)
     
     # J'ai un pays stocke en 
-    # pays = request.get.session('pays')
+    pays = request.session.get('pays')
+
+    pays_user = None
+    if request.user.is_authenticated:
+        pays_user = getattr(request.user, 'pays', None)
+
+    print("Pays session :", pays)
+    print("Pays utilisateur :", pays_user)
+
 
     try:
         # Récupérer l'acheteur avec préfetch pour optimiser
@@ -3694,8 +3701,10 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
         )
 
         # Récupérer les listes pour les formulaires
-        # ville_list = Ville.objects.all()
-        ville_list = Ville.objects.select_related('pays').all()[:100]  # Limiter à 100
+        # ville_list = Ville.objects.select_related('pays').all()[:100]  # Limiter à 100
+        ville_list = Ville.objects.filter(
+            Q(pays=pays) | Q(pays=pays_user)
+        )
         coloration_list = CouleurCommentaire.objects.all()
         
         # Statistiques détaillées

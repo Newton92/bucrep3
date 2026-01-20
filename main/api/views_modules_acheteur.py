@@ -6972,11 +6972,6 @@ class AcheteurBanquierListView(APIView):
                 {"error": "Acheteur non trouvé"},
                 status=status.HTTP_404_NOT_FOUND
             )
-            
-        # OPTIMISATION : Utiliser get_object_or_404 et une seule requête
-        from django.shortcuts import get_object_or_404
-    
-        get_object_or_404(Acheteur, id=acheteur_id, deleted__isnull=True)
         
         # Récupérer les banquiers avec pagination
         banquiers = self.get_queryset(acheteur_id)
@@ -7022,7 +7017,7 @@ class AcheteurBanquierListView(APIView):
         })
     
     def post(self, request, acheteur_id, *args, **kwargs):
-        """Créer un nouveau banquier pour un acheteur"""
+        """Créer un nouveau banquier"""
         # Vérifier que l'acheteur existe
         try:
             acheteur = Acheteur.objects.get(id=acheteur_id, deleted__isnull=True)
@@ -7032,28 +7027,45 @@ class AcheteurBanquierListView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Ajouter l'acheteur aux données
+        # Ajouter l'acheteur dans les données
         data = request.data.copy()
         data['acheteur'] = acheteur_id
         
-        # Sérialiser et valider les données
+        # Gérer les champs vides
+        for field in ['numero_compte', 'type_relation', 'numero', 'rue', 'code_postal', 'commentaire']:
+            if field in data and data[field] == '':
+                data[field] = None
+        
+        # Gérer couleur_commentaire vide
+        if 'couleur_commentaire' in data and data['couleur_commentaire'] == '':
+            data['couleur_commentaire'] = None
+        
         serializer = AddBanquierSerializer(data=data)
         
         if serializer.is_valid():
-            # Sauvegarder le banquier
-            banquier = serializer.save(acheteur=acheteur)
-            
-            # Retourner la réponse avec le banquier créé
-            response_serializer = GetBanquierSerializer(banquier)
-            return Response(
-                {
-                    'message': 'Banquier créé avec succès',
-                    'data': response_serializer.data
-                },
-                status=status.HTTP_201_CREATED
-            )
+            try:
+                # Créer le banquier avec l'utilisateur courant
+                banquier = serializer.save(
+                    created_by=request.user,
+                    updated_by=request.user
+                )
+                
+                # Sérialiser la réponse
+                response_serializer = GetBanquierSerializer(banquier)
+                return Response(
+                    {
+                        'message': 'Banquier créé avec succès',
+                        'data': response_serializer.data
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            except Exception as e:
+                logger.error(f"Erreur lors de la création du banquier: {e}")
+                return Response(
+                    {'error': 'Erreur lors de la création du banquier'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         
-        # Retourner les erreurs de validation
         return Response(
             {'errors': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
@@ -7070,38 +7082,44 @@ class AcheteurBanquierListView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Vérifier les IDs fournis
+        # Vérifier si des IDs sont fournis
         ids = request.data.get('ids', [])
         if not ids:
             return Response(
-                {"error": "Aucun ID fourni"},
+                {'error': 'Aucun ID fourni pour la suppression'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Récupérer les banquiers à supprimer
-        banquiers_to_delete = Banquier.objects.filter(
-            acheteur=acheteur,
+        # Vérifier que les IDs sont des entiers
+        try:
+            ids = [int(id) for id in ids]
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Les IDs doivent être des nombres entiers'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les banquiers
+        banquiers = Banquier.objects.filter(
             id__in=ids,
+            acheteur=acheteur,
             deleted__isnull=True
         )
         
-        count = banquiers_to_delete.count()
+        count = banquiers.count()
         
         if count == 0:
             return Response(
-                {"error": "Aucun banquier trouvé avec les IDs fournis"},
+                {'error': 'Aucun banquier trouvé avec les IDs fournis'},
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Soft delete des banquiers
-        for banquier in banquiers_to_delete:
+        # Soft delete
+        for banquier in banquiers:
             banquier.delete()
         
         return Response(
-            {
-                'message': f'{count} banquier(s) supprimé(s) avec succès',
-                'count': count
-            },
+            {'message': f'{count} banquier(s) supprimé(s) avec succès'},
             status=status.HTTP_200_OK
         )
 
@@ -7227,11 +7245,11 @@ class BanquierStatsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # Optimiser les requêtes
+        # CORRECTION : Enlever select_related pour la queryset principale
         banquiers = Banquier.objects.filter(
             acheteur=acheteur,
             deleted__isnull=True
-        ).select_related('ville', 'couleur_commentaire')
+        )
         
         total_banquiers = banquiers.count()
         
@@ -7270,17 +7288,17 @@ class BanquierStatsView(APIView):
             stats['pourcentage_avec_compte'] = 0
             stats['pourcentage_avec_adresse'] = 0
         
-        # OPTIMISATION : Ces requêtes peuvent être lentes si beaucoup de données
-        # Utiliser .only() pour ne récupérer que les champs nécessaires
+        # OPTIMISATION : Utiliser une requête séparée pour les statistiques agrégées
+        # Ville - utiliser .values() pour éviter select_related
         banquiers_par_ville = banquiers.filter(
             ville__isnull=False
         ).values('ville__nom', 'ville__code').annotate(
             count=Count('id')
-        ).order_by('-count')[:10]  # Limiter à 10 résultats
+        ).order_by('-count')[:10]
         
         stats['repartition_par_ville'] = list(banquiers_par_ville)
         
-        # De même pour les couleurs
+        # Couleur
         banquiers_par_couleur = banquiers.filter(
             couleur_commentaire__isnull=False
         ).values(
@@ -7299,13 +7317,21 @@ class BanquierStatsView(APIView):
         
         stats['repartition_par_relation'] = list(banquiers_par_relation)
         
-        # Banques uniques - OPTIMISER
+        # Banques uniques
         stats['banques_uniques'] = banquiers.values('nom_banque').distinct().count()
         
-        # Dernière mise à jour
-        dernier_banquier = banquiers.only('updated_at').order_by('-updated_at').first()
+        # CORRECTION : Dernière mise à jour - utiliser une requête séparée
+        # NE PAS utiliser .only() après select_related
+        dernier_banquier = banquiers.order_by('-updated_at').values(
+            'updated_at', 'nom_banque'
+        ).first()
+        
         if dernier_banquier:
-            stats['derniere_mise_a_jour'] = dernier_banquier.updated_at.isoformat()
+            stats['derniere_mise_a_jour'] = dernier_banquier['updated_at'].isoformat()
+            stats['dernier_banquier'] = dernier_banquier['nom_banque']
+        else:
+            stats['derniere_mise_a_jour'] = None
+            stats['dernier_banquier'] = None
         
         return Response(stats)
 
