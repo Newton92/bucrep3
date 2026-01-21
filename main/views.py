@@ -3008,8 +3008,10 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
     """
     Vue pour la gestion des opérations et historiques d'un acheteur
     """
-    
-    # Récupérer l'acheteur avec préfetch pour optimiser
+
+    # =========================
+    # Acheteur
+    # =========================
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(
             'statut_entreprise',
@@ -3022,31 +3024,41 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
         id=acheteur_id
     )
 
-    # Récupérer les opérations de l'acheteur
-    operation = OperationEtHistorique.objects.filter(
-        acheteur=acheteur
-    ).prefetch_related('importation').order_by('-created_at').first()
-    
-    # Génération des tokens JWT
+    # =========================
+    # Opérations / Historiques
+    # =========================
+    operation = (
+        OperationEtHistorique.objects
+        .filter(acheteur=acheteur)
+        .prefetch_related('importation')
+        .order_by('-created_at')
+        .first()
+    )
+
+    # =========================
+    # JWT Tokens
+    # =========================
     try:
         refresh = RefreshToken.for_user(request.user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
     except Exception as e:
-        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        logger.error(f"Erreur lors de la génération des tokens JWT : {e}")
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
-    
-    # Récupérer toutes les importations disponibles
+
+    # =========================
+    # Importations
+    # =========================
     importations = ListeImportation.objects.all().order_by('libelle')
-    importations_json = json.dumps([
-        {'id': imp.id, 'libelle': str(imp)} for imp in importations
-    ], default=str)
-    
-    print(importations)
-    print(importations_json)
-    
-    # Préparer les données de l'acheteur pour le template
+    importations_json = json.dumps(
+        [{'id': imp.id, 'libelle': str(imp)} for imp in importations],
+        default=str
+    )
+
+    # =========================
+    # Données Acheteur (JS)
+    # =========================
     acheteur_data = {
         'id': acheteur.id,
         'nom': acheteur.nom or 'Non spécifié',
@@ -3056,44 +3068,52 @@ def dash_root_manage_acheteur_operation_historique(request, acheteur_id):
         'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
         'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
     }
-    
-    # Convertir en JSON sécurisé pour JavaScript
+
     acheteur_json = json.dumps(acheteur_data, default=str)
 
-    # Préparer les données des opérations pour le template
+    # =========================
+    # Données Opérations (JS)
+    # =========================
     operations_data = []
-    operations_data.append({
+
+    if operation:
+        operations_data.append({
             'id': operation.id,
             'commentaire_ratios': operation.commentaire_ratios or '',
             'description_complete_activite': operation.description_complete_activite or '',
             'historique': operation.historique or '',
-            'importation_list': [{'id': imp.id, 'nom': str(imp)} for imp in operation.importation.all()],
+            'importation_list': [
+                {'id': imp.id, 'libelle': str(imp)}
+                for imp in operation.importation.all()
+            ],
             'created_at': operation.created_at.isoformat() if operation.created_at else None,
             'updated_at': operation.updated_at.isoformat() if operation.updated_at else None,
         })
-        
-    
+
     operations_json = json.dumps(operations_data, default=str)
 
+    # =========================
+    # Context Template
+    # =========================
     context = {
         "acheteur_active": "active",
         "user": request.user,
         "access_token": access_token,
         "refresh_token": refresh_token,
         "acheteur_json": acheteur_json,
-        "operations_json": operations_json or '[]',
-        "importations_json": importations_json or '[]',
+        "operations_json": operations_json,
+        "importations_json": importations_json,
         "acheteur": acheteur,
         "operation": operation,
         "importations": importations,
         "id_acheteur": acheteur_id,
     }
+
     return render(
         request,
         "main/root/acheteur/operation/dash_root_manage_acheteur_operation_historique.html",
         context,
     )
-
 
 
 
