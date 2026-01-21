@@ -6157,16 +6157,10 @@ class ProprieteEtActif(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    locaux = models.ManyToManyField("Locaux", related_name=_("Locaux"), blank=True)
-    # locaux_ref = models.ForeignKey(
-    #     "ModeleBail",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.DO_NOTHING,
-    #     verbose_name=_("Référence sur les locaux"),
-    # )
+    locaux = models.ManyToManyField("Locaux", related_name=_("Locaux"), blank=True) # ERREUR : ne pas utiliser _() pour related_name
+    
 
-    branche = models.CharField(max_length=255, blank=True, verbose_name=_("Branche"))
+    branche = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Branche"))
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6198,15 +6192,37 @@ class ProprieteEtActif(Model):
 
 
     def __str__(self):
-        return (
-            f"{self.acheteur} - {self.branche}"
-            if self.acheteur
-            else _("Propriété et Actif")
-        )
-        
+        if self.acheteur and self.branche:
+            return f"{self.acheteur} - {self.branche}"
+        elif self.acheteur:
+            return f"{self.acheteur} - Propriétés et Actifs"
+        else:
+            return _("Propriété et Actif")
+    
     def get_locaux_display(self):
-        return ", ".join([str(local) for local in self.locaux.all()])
-    get_locaux_display.short_description = 'Locaux'
+        """Retourne la liste des locaux sous forme de chaîne"""
+        locaux_list = self.locaux.all()
+        if locaux_list:
+            return ", ".join([str(local) for local in locaux_list])
+        return _("Aucun")
+    get_locaux_display.short_description = _('Locaux')
+    
+    def has_locaux(self):
+        """Vérifie si des locaux sont associés"""
+        return self.locaux.exists()
+    
+    def get_locaux_count(self):
+        """Retourne le nombre de locaux"""
+        return self.locaux.count()
+    
+    def get_summary(self):
+        """Retourne un résumé des propriétés et actifs"""
+        return {
+            'has_branche': bool(self.branche and self.branche.strip()),
+            'has_locaux': self.has_locaux(),
+            'locaux_count': self.get_locaux_count(),
+            'branche': self.branche or _("Non spécifié"),
+        }
 
     class Meta:
         verbose_name = _("Propriété et Actif")
@@ -6224,10 +6240,10 @@ class ConditionAchat(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    local = models.ManyToManyField("ListeConditionAchat", related_name=_("local"), blank=True)  # Enlevez null=True
-    importation = models.ManyToManyField("ListeConditionAchat", related_name=_("importation"), blank=True)  # Enlevez null=True
-    les_clients = models.TextField(blank=True, verbose_name=_("Les clients"))
-    fournisseur = models.TextField(blank=True, verbose_name=_("Fournisseur"))
+    local = models.ManyToManyField("ListeConditionAchat", related_name=_("local"), blank=True, null=True)  # Enlevez null=True
+    importation = models.ManyToManyField("ListeConditionAchat", related_name=_("importation"), blank=True, null=True)  # Enlevez null=True
+    les_clients = models.TextField(blank=True, null=True, verbose_name=_("Les clients"))
+    fournisseur = models.TextField(blank=True, null=True, verbose_name=_("Fournisseur"))
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6259,19 +6275,53 @@ class ConditionAchat(Model):
 
 
     def __str__(self):
-        return (
-            f"{self.acheteur} - {self.local}"
-            if self.acheteur
-            else _("Condition d'Achat")
-        )
-        
+        if self.acheteur:
+            local_count = self.local.count()
+            import_count = self.importation.count()
+            return f"{self.acheteur} - {local_count} local, {import_count} import"
+        return _("Conditions d'achat")
+    
     def get_local_display(self):
-        return ", ".join([str(item) for item in self.local.all()])
-    get_local_display.short_description = 'Conditions Locales'
+        """Retourne la liste des conditions locales sous forme de chaîne"""
+        local_items = self.local.all()
+        if local_items:
+            return ", ".join([str(item) for item in local_items])
+        return _("Aucune condition locale")
+    get_local_display.short_description = _('Conditions Locales')
     
     def get_importation_display(self):
-        return ", ".join([str(item) for item in self.importation.all()])
-    get_importation_display.short_description = 'Conditions Importation'
+        """Retourne la liste des conditions d'importation sous forme de chaîne"""
+        import_items = self.importation.all()
+        if import_items:
+            return ", ".join([str(item) for item in import_items])
+        return _("Aucune condition d'importation")
+    get_importation_display.short_description = _('Conditions Importation')
+    
+    def has_clients_info(self):
+        """Vérifie si des informations clients sont renseignées"""
+        return bool(self.les_clients and self.les_clients.strip())
+    
+    def has_fournisseurs_info(self):
+        """Vérifie si des informations fournisseurs sont renseignées"""
+        return bool(self.fournisseur and self.fournisseur.strip())
+    
+    def get_summary(self):
+        """Retourne un résumé des conditions d'achat"""
+        return {
+            'local_count': self.local.count(),
+            'importation_count': self.importation.count(),
+            'has_clients': self.has_clients_info(),
+            'has_fournisseurs': self.has_fournisseurs_info(),
+            'clients_length': len(self.les_clients) if self.les_clients else 0,
+            'fournisseurs_length': len(self.fournisseur) if self.fournisseur else 0,
+        }
+    
+    def is_complete(self, min_conditions=1):
+        """Vérifie si les conditions d'achat sont suffisamment remplies"""
+        conditions_count = self.local.count() + self.importation.count()
+        has_text_info = self.has_clients_info() or self.has_fournisseurs_info()
+        
+        return conditions_count >= min_conditions or has_text_info
 
     class Meta:
         verbose_name = _("Condition d'Achat")
@@ -6280,26 +6330,7 @@ class ConditionAchat(Model):
 
 class ConditionDeVente(Model):
     
-    LIEN_COMPORTEMENT_JUGEMENT_CHOICE = (
-        (gettext_lazy("Aucune information négative n'a été trouvée"),
-        gettext_lazy("Aucune information négative n'a été trouvée")),
-        (gettext_lazy(
-            "Il n'existe aucune trace d'une quelconque action de recouvrement de créances par ACREMAC à l'encontre de cette entreprise"),
-        gettext_lazy(
-            "Il n'existe aucune trace d'une quelconque action de recouvrement de créances par ACREMAC à l'encontre de cette entreprise")),
-        (gettext_lazy(
-            "Selon nos sources, l'entreprise n'est pas en situation d'insolvabilité/procédure préliminaire/procédure de répartition des dettes"),
-        gettext_lazy(
-            "Selon nos sources, l'entreprise n'est pas en situation d'insolvabilité/procédure préliminaire/procédure de répartition des dettes")),
-        (gettext_lazy("Des actions en recouvrement judiciaire sont ouvertes contre l'acheteur"),
-        gettext_lazy("Des actions en recouvrement judiciaire sont ouvertes contre l'acheteur")),
-        (gettext_lazy("Des actions de recouvrement à l'amiable sont ouvertes contre l'acheteur"),
-        gettext_lazy("Des actions de recouvrement à l'amiable sont ouvertes contre l'acheteur")),
-        (gettext_lazy("Des cas de recouvrement fermés existent chez nos sources sur l'acheteur"), 
-         gettext_lazy("Des cas de recouvrement fermés existent chez nos sources sur l'acheteur")),
-        (gettext_lazy("Inconnu de nos sources"), gettext_lazy("Inconnu de nos sources")),
-
-    )
+    LIEN_TYPE_RAPPORT_CHOICE_DEFAUT = '--------'
     
     LIEN_COMPORTEMENT_PAIEMENT_CHOICE = (
         (LIEN_TYPE_RAPPORT_CHOICE_DEFAUT, LIEN_TYPE_RAPPORT_CHOICE_DEFAUT),
@@ -6319,6 +6350,30 @@ class ConditionDeVente(Model):
 
     )
     
+    LIEN_COMPORTEMENT_JUGEMENT_CHOICE = (
+        (LIEN_TYPE_RAPPORT_CHOICE_DEFAUT, LIEN_TYPE_RAPPORT_CHOICE_DEFAUT),
+
+        # (gettext_lazy("En raison des informations sur les procédures d'insolvabilité/préliminaires/réglementaires, ACREMAC n'est pas en mesure de donner une évaluation finale du comportement de paiement de l'entreprise à ce stade"),gettext_lazy("En raison des informations sur les procédures d'insolvabilité/préliminaires/réglementaires, ACREMAC n'est pas en mesure de donner une évaluation finale du comportement de paiement de l'entreprise à ce stade")),
+        # (gettext_lazy("Aucune expérience de paiement d'une quelconque importance n'est disponible"),gettext_lazy("Aucune expérience de paiement d'une quelconque importance n'est disponible")),
+        (gettext_lazy("Aucune information négative n'a été trouvée"),
+        gettext_lazy("Aucune information négative n'a été trouvée")),
+        (gettext_lazy(
+            "Il n'existe aucune trace d'une quelconque action de recouvrement de créances par ACREMAC à l'encontre de cette entreprise"),
+        gettext_lazy(
+            "Il n'existe aucune trace d'une quelconque action de recouvrement de créances par ACREMAC à l'encontre de cette entreprise")),
+        (gettext_lazy(
+            "Selon nos sources, l'entreprise n'est pas en situation d'insolvabilité/procédure préliminaire/procédure de répartition des dettes"),
+        gettext_lazy(
+            "Selon nos sources, l'entreprise n'est pas en situation d'insolvabilité/procédure préliminaire/procédure de répartition des dettes")),
+        (gettext_lazy("Des actions en recouvrement judiciaire sont ouvertes contre l'acheteur"),
+        gettext_lazy("Des actions en recouvrement judiciaire sont ouvertes contre l'acheteur")),
+        (gettext_lazy("Des actions de recouvrement à l'amiable sont ouvertes contre l'acheteur"),
+        gettext_lazy("Des actions de recouvrement à l'amiable sont ouvertes contre l'acheteur")),
+        (gettext_lazy("Des cas de recouvrement fermés existent chez nos sources sur l'acheteur"), gettext_lazy("Des cas de recouvrement fermés existent chez nos sources sur l'acheteur")),
+        (gettext_lazy("Inconnu de nos sources"), gettext_lazy("Inconnu de nos sources")),
+
+    )
+   
     safedelete_policy  = SOFT_DELETE_CASCADE
     
     acheteur = models.ForeignKey(
@@ -6328,35 +6383,23 @@ class ConditionDeVente(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    local = models.ManyToManyField("ListeConditionVente", related_name=_("local"), blank=True)  # Enlevez null=True
+    local = models.ManyToManyField("ListeConditionVente", related_name=_("local"), blank=True, null=True)  # Enlevez null=True
 
     recouvrement_de_dette_jugement = models.CharField(
         max_length=255,
         choices=LIEN_COMPORTEMENT_JUGEMENT_CHOICE,
-        default="--------",
+        default='',  # CORRIGER : utiliser une valeur vide
+        blank=True,  # AJOUTER : pour permettre champ vide
         verbose_name=_("Recouvrement de dette jugement"),
     )
-    # recouvrement_de_dette_jugement_ref = models.ForeignKey(
-    #     "ModeleComportementJugement",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.DO_NOTHING,
-    #     verbose_name=_("Référence sur les locaux"),
-    # )
 
     comportement_de_paiement = models.CharField(
         max_length=255,
         choices=LIEN_COMPORTEMENT_PAIEMENT_CHOICE,
-        default="--------",
+        default='',  # CORRIGER : utiliser une valeur vide
+        blank=True,  # AJOUTER : pour permettre champ vide
         verbose_name=_("Comportement de paiement"),
     )
-    # comportement_de_paiement_ref = models.ForeignKey(
-    #     "ModeleComportementPaiement",
-    #     null=True,
-    #     blank=True,
-    #    on_delete=models.DO_NOTHING,
-    #     verbose_name=_("Référence sur les locaux"),
-    # )
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6388,11 +6431,54 @@ class ConditionDeVente(Model):
 
 
     def __str__(self):
-        return f"Condition de vente for {self.acheteur} - {self.local}"
+        if self.acheteur:
+            local_count = self.local.count()
+            return f"Conditions vente - {self.acheteur} ({local_count} conditions)"
+        return _("Conditions de vente")
     
     def get_local_display(self):
-        return ", ".join([str(item) for item in self.local.all()])
-    get_local_display.short_description = 'Conditions Locales'
+        """Retourne la liste des conditions locales sous forme de chaîne"""
+        local_items = self.local.all()
+        if local_items:
+            return ", ".join([str(item) for item in local_items])
+        return _("Aucune condition locale")
+    get_local_display.short_description = _('Conditions Locales de Vente')
+    
+    def get_jugement_display_full(self):
+        """Retourne l'affichage complet du recouvrement/jugement"""
+        if self.recouvrement_de_dette_jugement:
+            return dict(self.LIEN_COMPORTEMENT_JUGEMENT_CHOICE).get(
+                self.recouvrement_de_dette_jugement, 
+                self.recouvrement_de_dette_jugement
+            )
+        return _("Non spécifié")
+    
+    def get_paiement_display_full(self):
+        """Retourne l'affichage complet du comportement de paiement"""
+        if self.comportement_de_paiement:
+            return dict(self.LIEN_COMPORTEMENT_PAIEMENT_CHOICE).get(
+                self.comportement_de_paiement,
+                self.comportement_de_paiement
+            )
+        return _("Non spécifié")
+    
+    def get_summary(self):
+        """Retourne un résumé des conditions de vente"""
+        return {
+            'local_count': self.local.count(),
+            'has_jugement': bool(self.recouvrement_de_dette_jugement),
+            'has_paiement': bool(self.comportement_de_paiement),
+            'jugement': self.get_jugement_display_full(),
+            'paiement': self.get_paiement_display_full(),
+        }
+    
+    def is_complete(self):
+        """Vérifie si les conditions de vente sont suffisamment remplies"""
+        return any([
+            self.local.exists(),
+            bool(self.recouvrement_de_dette_jugement),
+            bool(self.comportement_de_paiement),
+        ])
 
     class Meta:
         verbose_name = _("Condition de Vente")
@@ -6415,10 +6501,10 @@ class SommaireEtAvis(Model):
         null=True,
         blank=True,
         on_delete=models.DO_NOTHING,
-        verbose_name=_("Couleur du commentaire"),
+        verbose_name=_("Couleur commentaire"),
     )
     commentaire = models.TextField(
-        max_length=10000000, blank=True, verbose_name=_("Commentaire")
+        max_length=10000000, blank=True, verbose_name=_("Commentaire"), null=True
     )
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -6450,7 +6536,42 @@ class SommaireEtAvis(Model):
 
 
     def __str__(self):
-        return f"Sommaire et avis for {self.acheteur}"
+        if self.acheteur:
+            return f"Sommaire et avis - {self.acheteur}"
+        return _("Sommaire et avis")
+    
+    def has_commentaire(self):
+        """Vérifie si un commentaire existe"""
+        return bool(self.commentaire and self.commentaire.strip())
+    
+    def get_commentaire_preview(self, length=100):
+        """Retourne un aperçu du commentaire"""
+        if self.commentaire and self.commentaire.strip():
+            comment = self.commentaire.strip()
+            if len(comment) > length:
+                return comment[:length] + "..."
+            return comment
+        return _("Aucun commentaire")
+    
+    def get_couleur_display(self):
+        """Retourne la couleur du commentaire ou une valeur par défaut"""
+        if self.couleur_commentaire:
+            return str(self.couleur_commentaire)
+        return _("Non spécifié")
+    
+    def get_summary(self):
+        """Retourne un résumé du sommaire et avis"""
+        return {
+            'has_commentaire': self.has_commentaire(),
+            'has_couleur': self.couleur_commentaire is not None,
+            'commentaire_length': len(self.commentaire) if self.commentaire else 0,
+            'commentaire_preview': self.get_commentaire_preview(),
+            'couleur': self.get_couleur_display(),
+        }
+    
+    def is_complete(self):
+        """Vérifie si le sommaire est suffisamment rempli"""
+        return self.has_commentaire() or self.couleur_commentaire is not None
 
     class Meta:
         verbose_name = _("Sommaire et Avis")

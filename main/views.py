@@ -3155,9 +3155,12 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
     
     # Récupérer tous les locaux disponibles
     locaux = Locaux.objects.all().order_by('nom')
-    locaux_json = json.dumps([
-        {'id': local.id, 'nom': local.nom} for local in locaux
-    ], default=str)
+    locaux_data = [
+        {'id': local.id, 'nom': local.nom or ''} 
+        for local in locaux
+    ]
+    # Convertir en JSON sécurisé
+    locaux_json = json.dumps(locaux_data, ensure_ascii=False)
     
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
@@ -3193,10 +3196,11 @@ def dash_root_manage_acheteur_propriete_actif(request, acheteur_id):
         "refresh_token": refresh_token,
         "acheteur_json": acheteur_json,
         "propriete_actif_json": propriete_actif_json or 'null',
-        "locaux_json": locaux_json or '[]',
         "acheteur": acheteur,
         "propriete_actif": propriete_actif,
         "locaux": locaux,
+        "locaux_data": locaux_data,  # Ajoutez cette ligne
+        "locaux_json": locaux_json or '[]',
         "has_propriete_actif": propriete_actif is not None,
         "id_acheteur": acheteur_id,
     }
