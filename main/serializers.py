@@ -10184,10 +10184,10 @@ class AddMarqueOneSerializer(serializers.ModelSerializer):
             acheteur=acheteur
         ).exists()
         
-        if existing and self.instance is None:
-            raise serializers.ValidationError({
-                'acheteur': 'Cet acheteur possède déjà des marques enregistrées.'
-            })
+        # if existing and self.instance is None:
+        #     raise serializers.ValidationError({
+        #         'acheteur': 'Cet acheteur possède déjà des marques enregistrées.'
+        #     })
         
         # Vérifier que le champ marques est rempli
         if not marques:

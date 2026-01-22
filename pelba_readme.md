@@ -101,4 +101,4 @@ Documentation technique – **PELBA**
 [ cd /var/www/html/bucrepapi ]
 [ ./deploy.sh ]
 [ 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 ]
-[ 107.172.88.238 - 1651221@$Ng ]
+[ 107.172.88.238 - 1651221@$Ng - yannick ]

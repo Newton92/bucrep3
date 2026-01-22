@@ -1,0 +1,1324 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --cotisation-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Carte Cotisation */
+.cotisation-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.cotisation-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #ff6b6b;
+}
+
+.cotisation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--cotisation-gradient);
+}
+
+/* En-tête de la carte */
+.cotisation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.cotisation-main {
+    flex: 1;
+}
+
+.cotisation-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ee5a52;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 0.25rem;
+}
+
+.cotisation-subtitle {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.cotisation-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 107, 107, 0.1);
+    color: #ee5a52;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.cotisation-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Badge date */
+.date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, #ee5a52 0%, #ff6b6b 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.date-badge i {
+    font-size: 0.75rem;
+}
+
+/* Actions rapides */
+.cotisation-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.btn-cotisation {
+    background: var(--cotisation-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-cotisation:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+    color: white;
+}
+
+.btn-cotisation-outline {
+    background: transparent;
+    border: 2px solid #ff6b6b;
+    color: #ff6b6b;
+}
+
+.btn-cotisation-outline:hover {
+    background: #ff6b6b;
+    color: white;
+}
+
+/* Informations métadonnées */
+.cotisation-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.enhanced-form .form-control:focus {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 0 0.25rem rgba(255, 107, 107, 0.15);
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--cotisation-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des cotisations */
+.cotisations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche */
+.search-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    flex: 1;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Indicateur Cotisation */
+.cotisation-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ff6b6b;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Info bulle */
+.info-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+.info-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* Date picker personnalisé */
+.flatpickr-input {
+    background-color: white;
+    cursor: pointer;
+}
+
+.flatpickr-calendar {
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .cotisations-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .cotisations-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .cotisation-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .cotisation-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .cotisation-title {
+        font-size: 1.1rem;
+    }
+    
+    .cotisation-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .cotisation-indicator {
+        position: static;
+        display: inline-flex;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Animation pour validation */
+.input-valid {
+    position: relative;
+}
+
+.input-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Style pour les numéros */
+.number-highlight {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    border-left: 3px solid #ff6b6b;
+}
+
+.number-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    letter-spacing: 1px;
+}
+
+/* Format spécifique pour numéro de sécurité sociale */
+.numero-ss {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-shield-alt text-danger me-2"></i>Cotisations Sociales
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des cotisations sociales (sécurité sociale) de l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques simplifiées -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ cotisations_count }}</div>
+            <div class="stat-label">Cotisations Sociales</div>
+        </div>
+    </div>
+
+    <!-- Section Cotisations Sociales -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Cotisations Sociales Associées
+                        <span class="badge bg-danger ms-2">{{ cotisations_count }}</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#addCotisationModal">
+                            <i class="fas fa-plus-circle me-1"></i>Ajouter une cotisation
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche -->
+                    <div class="search-controls mb-4">
+                        <div class="search-input">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchCotisationInput" 
+                                       placeholder="Rechercher par numéro ou date d'affiliation...">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary" id="clearSearchBtn">
+                            <i class="fas fa-times me-1"></i>Effacer
+                        </button>
+                    </div>
+
+                    {% if cotisations %}
+                        <!-- Grille des cotisations -->
+                        <div class="cotisations-grid" id="cotisationsContainer">
+                            {% for cotisation in cotisations %}
+                                <div class="cotisation-card" data-id="{{ cotisation.id }}">
+                                    <!-- Indicateur -->
+                                    <span class="cotisation-indicator">
+                                        <i class="fas fa-shield-alt"></i> SS
+                                    </span>
+                                    <br>
+                                    
+                                    <div class="cotisation-header">
+                                        <div class="cotisation-main">
+                                            <div class="cotisation-number">
+                                                <i class="fas fa-id-card me-2"></i>
+                                                <span class="numero-ss">{{ cotisation.numero|default:"N/A" }}</span>
+                                            </div>
+                                            <div class="cotisation-subtitle">
+                                                Numéro de sécurité sociale
+                                            </div>
+                                            {% if cotisation.date_affiliation %}
+                                            <div class="date-badge">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                Affiliation: {{ cotisation.date_affiliation|date:"d/m/Y" }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="cotisation-actions">
+                                            <button class="btn btn-sm btn-outline-warning edit-cotisation-btn" 
+                                                    data-id="{{ cotisation.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-cotisation-btn" 
+                                                    data-id="{{ cotisation.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Métadonnées -->
+                                    <div class="cotisation-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <span>Ajouté le: {{ cotisation.created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-sync-alt"></i>
+                                            <span>Màj: {{ cotisation.updated_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide -->
+                        <div class="empty-state">
+                            <i class="fas fa-shield-alt empty-state-icon"></i>
+                            <h4 class="fw-bold mb-2">Aucune cotisation sociale</h4>
+                            <p class="text-muted mb-4">
+                                Cet acheteur ne possède pas encore de cotisation sociale associée.<br>
+                                La cotisation sociale est le numéro d'affiliation à la sécurité sociale de l'entreprise.
+                            </p>
+                            <button class="btn btn-danger btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCotisationModal">
+                                <i class="fas fa-plus-circle me-2"></i>Ajouter la première cotisation
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Cotisation -->
+<div class="modal fade" id="addCotisationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Cotisation Sociale
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCotisationForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="numeroCotisation" class="form-label">
+                            <i class="fas fa-id-card text-danger"></i>Numéro de sécurité sociale
+                            <span class="info-tooltip" data-tooltip="Numéro d'affiliation à la sécurité sociale">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="numeroCotisation" 
+                               name="numero"
+                               placeholder="Ex: 1 85 08 75 115 035 29"
+                               required
+                               maxlength="255">
+                        <div class="form-text">
+                            Saisissez le numéro de sécurité sociale de l'entreprise
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="dateAffiliation" class="form-label">
+                            <i class="fas fa-calendar-alt text-danger"></i>Date d'affiliation
+                        </label>
+                        <input type="text" 
+                               class="form-control flatpickr-input" 
+                               id="dateAffiliation" 
+                               name="date_affiliation"
+                               placeholder="Sélectionner une date"
+                               data-date-format="Y-m-d">
+                        <div class="form-text">
+                            Date d'affiliation à la sécurité sociale (optionnel)
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-danger" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Ajouter
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Cotisation -->
+<div class="modal fade" id="editCotisationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier la Cotisation Sociale
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCotisationForm" class="enhanced-form">
+                <input type="hidden" id="editCotisationId" name="id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNumeroCotisation" class="form-label">
+                            <i class="fas fa-id-card text-danger"></i>Numéro de sécurité sociale
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="editNumeroCotisation" 
+                               name="numero"
+                               placeholder="Ex: 1 85 08 75 115 035 29"
+                               required
+                               maxlength="255">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editDateAffiliation" class="form-label">
+                            <i class="fas fa-calendar-alt text-danger"></i>Date d'affiliation
+                        </label>
+                        <input type="text" 
+                               class="form-control flatpickr-input" 
+                               id="editDateAffiliation" 
+                               name="date_affiliation"
+                               placeholder="Sélectionner une date"
+                               data-date-format="Y-m-d">
+                    </div>
+                    
+                    <div class="cotisation-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Créé le: <span id="editCreatedAtInfo"></span></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Dernière Màj: <span id="editUpdatedAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-shield-slash fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer la cotisation sociale</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette cotisation sociale ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="mt-3">
+                    <div class="number-highlight">
+                        <div class="number-display numero-ss" id="deleteNumeroInfo"></div>
+                    </div>
+                    <div class="small text-muted mt-2" id="deleteDateInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/cotisations-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentCotisationId = null;
+
+    // Initialiser Flatpickr pour les dates
+    flatpickr('.flatpickr-input', {
+        dateFormat: 'Y-m-d',
+        locale: 'fr',
+        allowInput: true,
+        disableMobile: true,
+        altInput: true,
+        altFormat: 'd/m/Y',
+        static: true
+    });
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        if (!dateString) return 'Non spécifiée';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    // Fonction pour formater la date et heure
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('fr-FR');
+    }
+
+    // Charger les cotisations sociales
+    function loadCotisations(search = '') {
+        if (search) {
+            let url = API_BASE_URL;
+            url += `?search=${encodeURIComponent(search)}`;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN
+                },
+                success: function(response) {
+                    const container = $('#cotisationsContainer');
+                    const emptyState = $('.empty-state');
+                    const statsCards = $('.stats-cards');
+                    
+                    if (response.results && response.results.length > 0) {
+                        // Cacher l'état vide
+                        if (emptyState.length) {
+                            emptyState.hide();
+                        }
+                        
+                        // Afficher les cotisations
+                        let html = '';
+                        
+                        response.results.forEach(function(cotisation) {
+                            const numero = cotisation.numero || 'N/A';
+                            const dateAffiliation = cotisation.date_affiliation ? formatDate(cotisation.date_affiliation) : null;
+                            const createdAt = formatDateTime(cotisation.created_at);
+                            const updatedAt = formatDateTime(cotisation.updated_at);
+                            
+                            html += `
+                            <div class="cotisation-card" data-id="${cotisation.id}">
+                                <span class="cotisation-indicator">
+                                    <i class="fas fa-shield-alt"></i> SS
+                                </span>
+                                <br>
+                                
+                                <div class="cotisation-header">
+                                    <div class="cotisation-main">
+                                        <div class="cotisation-number">
+                                            <i class="fas fa-id-card me-2"></i>
+                                            <span class="numero-ss">${numero}</span>
+                                        </div>
+                                        <div class="cotisation-subtitle">
+                                            Numéro de sécurité sociale
+                                        </div>
+                                        ${dateAffiliation ? `
+                                        <div class="date-badge">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            Affiliation: ${dateAffiliation}
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                    <div class="cotisation-actions">
+                                        <button class="btn btn-sm btn-outline-warning edit-cotisation-btn" 
+                                                data-id="${cotisation.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-cotisation-btn" 
+                                                data-id="${cotisation.id}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="cotisation-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span>Ajouté le: ${createdAt}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <span>Màj: ${updatedAt}</span>
+                                    </div>
+                                </div>
+                            </div>`;
+                        });
+                        
+                        container.html(html);
+                        
+                        // Initialiser les tooltips
+                        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                        
+                        // Mettre à jour les statistiques
+                        if (statsCards.length) {
+                            statsCards.find('.stat-number').first().text(response.count || response.results?.length || 0);
+                        }
+                        
+                    } else {
+                        // Afficher l'état vide
+                        if (!emptyState.length) {
+                            container.html(`
+                                <div class="empty-state">
+                                    <i class="fas fa-shield-alt empty-state-icon"></i>
+                                    <h4 class="fw-bold mb-2">Aucune cotisation trouvée</h4>
+                                    <p class="text-muted mb-4">
+                                        Aucune cotisation sociale ne correspond à votre recherche.
+                                    </p>
+                                </div>
+                            `);
+                        } else {
+                            emptyState.show();
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Erreur lors du chargement:', xhr);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les cotisations sociales.'
+                    });
+                }
+            });
+        }
+    }
+
+    // Recherche de cotisations
+    $('#searchCotisationInput').on('input', function() {
+        const search = $(this).val();
+        loadCotisations(search);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchCotisationInput').val('');
+        loadCotisations();
+    });
+    
+    // Formulaire d'ajout
+    $('#addCotisationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            numero: $('#numeroCotisation').val().trim(),
+            date_affiliation: $('#dateAffiliation').val() || null,
+            acheteur: ACHETEUR_ID
+        };
+        
+        if (!formData.numero) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champ requis',
+                text: 'Le numéro de sécurité sociale est obligatoire.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addCotisationModal').modal('hide');
+                $('#addCotisationForm')[0].reset();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCotisations();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout de la cotisation sociale';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.numero) {
+                        errorMessage = Array.isArray(xhr.responseJSON.numero) ? 
+                            xhr.responseJSON.numero.join('\n') : xhr.responseJSON.numero;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-cotisation-btn', function() {
+        const cotisationId = $(this).data('id');
+        currentCotisationId = cotisationId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${cotisationId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editCotisationId').val(response.id);
+                $('#editNumeroCotisation').val(response.numero);
+                
+                // Définir la date d'affiliation
+                if (response.date_affiliation) {
+                    $('#editDateAffiliation').flatpickr().setDate(response.date_affiliation, false);
+                } else {
+                    $('#editDateAffiliation').flatpickr().clear();
+                }
+                
+                // Pré-remplir les dates
+                $('#editCreatedAtInfo').text(formatDateTime(response.created_at));
+                $('#editUpdatedAtInfo').text(formatDateTime(response.updated_at));
+                
+                $('#editCotisationModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de la cotisation sociale.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editCotisationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentCotisationId) return;
+        
+        const formData = {
+            numero: $('#editNumeroCotisation').val().trim(),
+            date_affiliation: $('#editDateAffiliation').val() || null
+        };
+        
+        if (!formData.numero) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champ requis',
+                text: 'Le numéro de sécurité sociale est obligatoire.'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCotisationId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editCotisationModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCotisations();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification de la cotisation sociale';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.numero) {
+                        errorMessage = Array.isArray(xhr.responseJSON.numero) ? 
+                            xhr.responseJSON.numero.join('\n') : xhr.responseJSON.numero;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join('\n');
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-cotisation-btn', function() {
+        const cotisationId = $(this).data('id');
+        const card = $(this).closest('.cotisation-card');
+        const numero = card.find('.cotisation-number .numero-ss').text();
+        const dateBadge = card.find('.date-badge');
+        const date = dateBadge.length ? dateBadge.text().replace('📅 ', '') : 'Date non spécifiée';
+        
+        currentCotisationId = cotisationId;
+        $('#deleteNumeroInfo').text(numero);
+        $('#deleteDateInfo').text(date);
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentCotisationId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCotisationId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCotisations();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer la cotisation sociale'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialiser les tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -5341,6 +5341,19 @@ def dash_root_certification_acheteur(request, acheteur_id):
     )
 
 
+def get_type_badge_class(type_innovation):
+    class_map = {
+        'nouveau_produit_service': 'badge-nouveau-produit-premium',
+        'nouveaux_outils_production': 'badge-outils-production-premium',
+        'innovation_produit': 'badge-innovation-produit-premium',
+        'innovation_procede': 'badge-innovation-procede-premium',
+        'innovation_commercialisation': 'badge-innovation-commercialisation-premium',
+        'innovation_organisation': 'badge-innovation-organisation-premium'
+    }
+    return class_map.get(type_innovation, 'badge-nouveau-produit-premium')
+
+
+
 @login_required
 def dash_root_innovation_acheteur(request, acheteur_id):
     """
@@ -5442,6 +5455,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
         "id_acheteur": acheteur_id,
         "types_innovation": InnovationDeveloppement.TYPES_INNOVATION,
         "types_innovation_display": TYPES_INNOVATION_DISPLAY,
+        "get_type_badge_class": get_type_badge_class,
     }
     
     return render(
@@ -7427,6 +7441,7 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
     """
     
     # Récupérer l'acheteur avec préfetch pour optimiser
+    # Au lieu de .prefetch_related('code_nace')
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(
             'statut_entreprise',
@@ -7435,7 +7450,10 @@ def dash_root_manage_code_nace_acheteur(request, acheteur_id):
             'pays',
             'province',
             'ville'
-        ).prefetch_related('code_nace'),
+        ).prefetch_related(
+            'codes_nace__code',  # ← Utilisez le related_name
+            'codes_nace__code__category'
+        ),
         id=acheteur_id
     )
 
@@ -7588,7 +7606,10 @@ def dash_root_manage_code_naf_acheteur(request, acheteur_id):
             'pays',
             'province',
             'ville'
-        ).prefetch_related('code_naf'),
+        ).prefetch_related(
+            'codes_naf__code',  # ← Utilisez le related_name
+            'codes_naf__code__category'
+        ),
         id=acheteur_id
     )
 

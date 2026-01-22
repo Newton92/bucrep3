@@ -1,0 +1,1823 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #0A95CA 0%, #1c6ea4 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --certification-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+/* Carte Certification */
+.certification-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.certification-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #0d6efd;
+}
+
+.certification-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--certification-gradient);
+}
+
+/* En-tête de la carte */
+.certification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.certification-main {
+    flex: 1;
+}
+
+.certification-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0a58ca;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.certification-subtitle {
+    font-size: 0.95rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.certification-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(13, 110, 253, 0.1);
+    color: #0a58ca;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.certification-type i {
+    font-size: 0.75rem;
+}
+
+.certification-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Badge date */
+.date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.date-badge i {
+    font-size: 0.75rem;
+}
+
+/* Sections d'informations */
+.info-section {
+    margin-bottom: 1rem;
+}
+
+.info-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-label i {
+    color: #0d6efd;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    border-left: 3px solid #0d6efd;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #495057;
+    white-space: pre-line;
+}
+
+.info-value-empty {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    border-left: 3px solid #adb5bd;
+    font-style: italic;
+    color: #6c757d;
+    text-align: center;
+}
+
+/* Organisme délivreur */
+.organisme-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #20c997 0%, #198754 100%);
+    color: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.organisme-badge i {
+    font-size: 0.75rem;
+}
+
+/* Actions rapides */
+.certification-actions-quick {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.btn-certification {
+    background: var(--certification-gradient);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-certification:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    color: white;
+}
+
+.btn-certification-outline {
+    background: transparent;
+    border: 2px solid #0d6efd;
+    color: #0d6efd;
+}
+
+.btn-certification-outline:hover {
+    background: #0d6efd;
+    color: white;
+}
+
+/* Informations métadonnées */
+.certification-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #e3e6f0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meta-item i {
+    font-size: 1rem;
+}
+
+/* État vide */
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px dashed #dee2e6;
+    margin: 2rem 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: #ced4da;
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    color: #6c757d;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-group {
+    margin-bottom: 1.25rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+}
+
+.enhanced-form textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Cartes améliorées */
+.enhanced-card {
+    border-radius: 12px;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.enhanced-card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.card-header-gradient {
+    background: var(--certification-gradient);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.btn-action {
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Grille des certifications */
+.certifications-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contrôles de recherche et filtre */
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.search-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.search-input {
+    flex: 1;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    min-width: 250px;
+}
+
+.filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #e9ecef;
+    color: #495057;
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-badge:hover {
+    background: #dee2e6;
+}
+
+.filter-badge.active {
+    background: #0d6efd;
+    color: white;
+}
+
+/* Statistiques */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 2px solid #e3e6f0;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0d6efd;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Indicateur Certification */
+.certification-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #0d6efd;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Info bulle */
+.info-tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+.info-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+/* Date picker personnalisé */
+.flatpickr-input {
+    background-color: white;
+    cursor: pointer;
+}
+
+.flatpickr-calendar {
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Compteur de caractères */
+.char-counter {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+.char-counter.warning {
+    color: #fd7e14;
+}
+
+.char-counter.danger {
+    color: #dc3545;
+}
+
+/* Icônes spécifiques */
+.cert-icon {
+    color: #0d6efd;
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .certifications-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .certifications-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .certification-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .certification-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .search-controls {
+        flex-direction: column;
+    }
+    
+    .filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-select {
+        min-width: 100%;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .certification-title {
+        font-size: 1.1rem;
+    }
+    
+    .certification-actions-quick {
+        flex-direction: column;
+    }
+    
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .certification-indicator {
+        position: static;
+        display: inline-flex;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Animation pour validation */
+.input-valid {
+    position: relative;
+}
+
+.input-valid::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+}
+
+/* Style pour les listes */
+.text-content ul,
+.text-content ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.text-content li {
+    margin-bottom: 0.25rem;
+}
+
+/* Champ spécifique pour type "autre" */
+#nomCertificationGroup {
+    transition: all 0.3s ease;
+}
+
+#nomCertificationGroup.required {
+    border-left: 3px solid #dc3545;
+    padding-left: 10px;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-certificate text-primary me-2"></i>Certifications
+            </h1>
+            <p class="text-muted mb-0">
+                Gestion des certifications obtenues par l'acheteur
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-outline-primary btn-action">
+                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+            </a>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="card border enhanced-card mb-4">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge bg-light text-dark fs-6 p-2">
+                        <i class="fas fa-hashtag me-1"></i>{{ acheteur.code }}
+                    </span>
+                    <p class="mb-0 mt-1 small opacity-75">Code ACREMAC</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-briefcase text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-medium">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Pays</small>
+                            <span class="fw-medium">{{ acheteur.pays.nom|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-primary me-3 fa-lg"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="badge bg-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques simplifiées -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ certifications_count }}</div>
+            <div class="stat-label">Certifications</div>
+        </div>
+    </div>
+
+    <!-- Section Certifications -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border enhanced-card">
+                <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="card-header-title mb-0">
+                        <i class="fas fa-award me-2"></i>Certifications Obtenues
+                        <span class="badge bg-primary ms-2">{{ certifications_count }}</span>
+                    </h5>
+                    <div>
+                        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addCertificationModal">
+                            <i class="fas fa-plus-circle me-1"></i>Ajouter une certification
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Contrôles de recherche et filtre -->
+                    <div class="controls-container">
+                        <div class="search-controls">
+                            <div class="search-input">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchCertificationInput" 
+                                           placeholder="Rechercher par nom, organisme ou description...">
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-secondary" id="clearSearchBtn">
+                                <i class="fas fa-times me-1"></i>Effacer
+                            </button>
+                        </div>
+                        
+                        <div class="filter-controls">
+                            <select class="form-select filter-select" id="typeFilter">
+                                <option value="">Tous les types</option>
+                                {% for type_code, type_label in certification_types %}
+                                <option value="{{ type_code }}">{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                            <div class="d-flex gap-2 flex-wrap" id="quickFilters">
+                                <span class="filter-badge active" data-type="">Toutes</span>
+                                <span class="filter-badge" data-type="management_risque">Management risque</span>
+                                <span class="filter-badge" data-type="qualite">Qualité</span>
+                                <span class="filter-badge" data-type="bon_payeur">Bon payeur</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if certifications %}
+                        <!-- Grille des certifications -->
+                        <div class="certifications-grid" id="certificationsContainer">
+                            {% for cert in certifications %}
+                                <div class="certification-card" data-id="{{ cert.id }}" data-type="{{ cert.type_certification }}">
+                                    <!-- Indicateur -->
+                                    <span class="certification-indicator">
+                                        <i class="fas fa-certificate"></i> CERT
+                                    </span>
+                                    <br>
+                                    
+                                    <div class="certification-header">
+                                        <div class="certification-main">
+                                            <div class="certification-title">
+                                                <i class="fas fa-award cert-icon"></i>
+                                                {{ cert.nom_certification|default:cert.get_type_certification_display }}
+                                            </div>
+                                            <div class="certification-subtitle">
+                                                {{ cert.get_type_certification_display }}
+                                            </div>
+                                            
+                                            <!-- Type et date -->
+                                            <div class="mt-2">
+                                                <span class="certification-type">
+                                                    <i class="fas fa-tag"></i>
+                                                    {{ cert.get_type_certification_display }}
+                                                </span>
+                                                {% if cert.date_obtention %}
+                                                <span class="date-badge">
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    Obtention: {{ cert.date_obtention|date:"d/m/Y" }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="certification-actions">
+                                            <button class="btn btn-sm btn-outline-warning edit-certification-btn" 
+                                                    data-id="{{ cert.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-certification-btn" 
+                                                    data-id="{{ cert.id }}"
+                                                    data-bs-toggle="tooltip" 
+                                                    data-bs-title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Organisme délivreur -->
+                                    {% if cert.organisme_delivreur %}
+                                    <div class="info-section">
+                                        <div class="info-label">
+                                            <i class="fas fa-building"></i>
+                                            Organisme délivreur
+                                        </div>
+                                        <div class="info-value">
+                                            {{ cert.organisme_delivreur }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Description -->
+                                    {% if cert.description %}
+                                    <div class="info-section">
+                                        <div class="info-label">
+                                            <i class="fas fa-file-alt"></i>
+                                            Description
+                                        </div>
+                                        <div class="info-value text-content">
+                                            {{ cert.description|linebreaks }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Métadonnées -->
+                                    <div class="certification-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar-plus"></i>
+                                            <span>Ajouté le: {{ cert.created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <i class="fas fa-sync-alt"></i>
+                                            <span>Màj: {{ cert.updated_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide -->
+                        <div class="empty-state">
+                            <i class="fas fa-certificate empty-state-icon"></i>
+                            <h4 class="fw-bold mb-2">Aucune certification</h4>
+                            <p class="text-muted mb-4">
+                                Cet acheteur ne possède pas encore de certification enregistrée.<br>
+                                Les certifications démontrent la compétence et la conformité de l'entreprise.
+                            </p>
+                            <button class="btn btn-primary btn-lg btn-action" data-bs-toggle="modal" data-bs-target="#addCertificationModal">
+                                <i class="fas fa-plus-circle me-2"></i>Ajouter la première certification
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Certification -->
+<div class="modal fade" id="addCertificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter une Certification
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCertificationForm" class="enhanced-form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="typeCertification" class="form-label">
+                                    <i class="fas fa-tag text-primary"></i>Type de certification
+                                    <span class="info-tooltip" data-tooltip="Catégorie principale de la certification">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </label>
+                                <select class="form-select" id="typeCertification" name="type_certification" required>
+                                    <option value="">Sélectionner un type</option>
+                                    {% for type_code, type_label in certification_types %}
+                                    <option value="{{ type_code }}">{{ type_label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" id="nomCertificationGroup">
+                                <label for="nomCertification" class="form-label">
+                                    <i class="fas fa-award text-primary"></i>Nom spécifique
+                                    <span class="info-tooltip" data-tooltip="Nom exact de la certification (obligatoire pour 'Autre certification')">
+                                        <i class="fas fa-info-circle"></i>
+                                    </span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nomCertification" 
+                                       name="nom_certification"
+                                       placeholder="Ex: ISO 9001, Certificat de conformité..."
+                                       maxlength="255">
+                                <div class="form-text">
+                                    Laisser vide pour utiliser le nom par défaut du type
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="dateObtention" class="form-label">
+                                    <i class="fas fa-calendar-alt text-primary"></i>Date d'obtention
+                                </label>
+                                <input type="text" 
+                                       class="form-control flatpickr-input" 
+                                       id="dateObtention" 
+                                       name="date_obtention"
+                                       placeholder="Sélectionner une date"
+                                       data-date-format="Y-m-d">
+                                <div class="form-text">
+                                    Date à laquelle la certification a été obtenue
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="organismeDelivreur" class="form-label">
+                                    <i class="fas fa-building text-primary"></i>Organisme délivreur
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="organismeDelivreur" 
+                                       name="organisme_delivreur"
+                                       placeholder="Ex: AFNOR, Bureau Veritas..."
+                                       maxlength="255">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descriptionCertification" class="form-label">
+                            <i class="fas fa-file-alt text-primary"></i>Description / Commentaires
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="descriptionCertification" 
+                            name="description"
+                            placeholder="Détails supplémentaires, portée de la certification, commentaires..."
+                            rows="4"
+                            maxlength="1000"></textarea>
+                        <div class="char-counter" id="descriptionCounter">
+                            <span id="descriptionCount">0</span>/1000 caractères
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note :</strong> 
+                        <ul class="mb-0 mt-1">
+                            <li>Pour le type "Autre certification", le nom spécifique est obligatoire</li>
+                            <li>Une certification unique par combinaison type/nom pour chaque acheteur</li>
+                            <li>La date d'obtention ne peut pas être dans le futur</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-check me-1"></i>Ajouter
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Certification -->
+<div class="modal fade" id="editCertificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header-gradient">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier la Certification
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCertificationForm" class="enhanced-form">
+                <input type="hidden" id="editCertificationId" name="id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editTypeCertification" class="form-label">
+                                    <i class="fas fa-tag text-primary"></i>Type de certification
+                                </label>
+                                <select class="form-select" id="editTypeCertification" name="type_certification" required>
+                                    <option value="">Sélectionner un type</option>
+                                    {% for type_code, type_label in certification_types %}
+                                    <option value="{{ type_code }}">{{ type_label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" id="editNomCertificationGroup">
+                                <label for="editNomCertification" class="form-label">
+                                    <i class="fas fa-award text-primary"></i>Nom spécifique
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="editNomCertification" 
+                                       name="nom_certification"
+                                       placeholder="Ex: ISO 9001, Certificat de conformité..."
+                                       maxlength="255">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editDateObtention" class="form-label">
+                                    <i class="fas fa-calendar-alt text-primary"></i>Date d'obtention
+                                </label>
+                                <input type="text" 
+                                       class="form-control flatpickr-input" 
+                                       id="editDateObtention" 
+                                       name="date_obtention"
+                                       placeholder="Sélectionner une date"
+                                       data-date-format="Y-m-d">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="editOrganismeDelivreur" class="form-label">
+                                    <i class="fas fa-building text-primary"></i>Organisme délivreur
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="editOrganismeDelivreur" 
+                                       name="organisme_delivreur"
+                                       placeholder="Ex: AFNOR, Bureau Veritas..."
+                                       maxlength="255">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editDescriptionCertification" class="form-label">
+                            <i class="fas fa-file-alt text-primary"></i>Description / Commentaires
+                        </label>
+                        <textarea 
+                            class="form-control" 
+                            id="editDescriptionCertification" 
+                            name="description"
+                            placeholder="Détails supplémentaires, portée de la certification, commentaires..."
+                            rows="4"
+                            maxlength="1000"></textarea>
+                        <div class="char-counter" id="editDescriptionCounter">
+                            <span id="editDescriptionCount">0</span>/1000 caractères
+                        </div>
+                    </div>
+                    
+                    <div class="certification-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Créé le: <span id="editCreatedAtInfo"></span></span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Dernière Màj: <span id="editUpdatedAtInfo"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="submitEditBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Mettre à jour
+                        </span>
+                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-certificate fa-3x text-danger mb-3"></i>
+                <h6 class="fw-bold">Supprimer la certification</h6>
+                <p class="text-muted mb-0">
+                    Êtes-vous sûr de vouloir supprimer cette certification ? 
+                    Cette action est irréversible.
+                </p>
+                <div class="mt-3">
+                    <div class="alert alert-light">
+                        <i class="fas fa-award me-2"></i>
+                        <span id="deleteCertificationName"></span>
+                    </div>
+                    <div class="small text-muted" id="deleteCertificationType"></div>
+                    <div class="small text-muted" id="deleteCertificationDate"></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/fr.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/certifications-oneview/`;
+    let ACCESS_TOKEN = '{{ access_token }}';
+    const REFRESH_TOKEN = '{{ refresh_token }}';
+    let currentCertificationId = null;
+    
+    // Types de certifications
+    const CERTIFICATION_TYPES = JSON.parse('{{ certification_types_json|escapejs }}');
+
+    // Initialiser Flatpickr pour les dates
+    flatpickr('.flatpickr-input', {
+        dateFormat: 'Y-m-d',
+        locale: 'fr',
+        allowInput: true,
+        disableMobile: true,
+        altInput: true,
+        altFormat: 'd/m/Y',
+        static: true,
+        maxDate: 'today'
+    });
+
+    // Fonction pour formater la date
+    function formatDate(dateString) {
+        if (!dateString) return 'Non spécifiée';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    // Fonction pour formater la date et heure
+    function formatDateTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleString('fr-FR');
+    }
+
+    // Fonction pour obtenir le libellé du type
+    function getTypeLabel(typeCode) {
+        const type = CERTIFICATION_TYPES.find(t => t[0] === typeCode);
+        return type ? type[1] : typeCode;
+    }
+
+    // Fonction pour compter les caractères
+    function updateCharCounter(textareaId, counterId, countId) {
+        const textarea = $(textareaId);
+        const counter = $(counterId);
+        const countSpan = $(countId);
+        
+        function update() {
+            const length = textarea.val().length;
+            countSpan.text(length);
+            
+            // Changer la couleur selon la longueur
+            counter.removeClass('warning danger');
+            if (length > 900) {
+                counter.addClass('danger');
+            } else if (length > 800) {
+                counter.addClass('warning');
+            }
+        }
+        
+        textarea.on('input', update);
+        update(); // Initialiser
+    }
+
+    // Initialiser les compteurs de caractères
+    updateCharCounter('#descriptionCertification', '#descriptionCounter', '#descriptionCount');
+    updateCharCounter('#editDescriptionCertification', '#editDescriptionCounter', '#editDescriptionCount');
+
+    // Gérer la visibilité du champ nom pour le type "autre"
+    function handleNomCertificationRequired(selectId, inputGroupId) {
+        const $select = $(selectId);
+        const $inputGroup = $(inputGroupId);
+        
+        function update() {
+            if ($select.val() === 'autre') {
+                $inputGroup.addClass('required');
+                $inputGroup.find('input').prop('required', true);
+            } else {
+                $inputGroup.removeClass('required');
+                $inputGroup.find('input').prop('required', false);
+            }
+        }
+        
+        $select.on('change', update);
+        update(); // Initialiser
+    }
+
+    // Appliquer la logique pour les deux formulaires
+    handleNomCertificationRequired('#typeCertification', '#nomCertificationGroup');
+    handleNomCertificationRequired('#editTypeCertification', '#editNomCertificationGroup');
+
+    // Charger les certifications
+    function loadCertifications(search = '', typeFilter = '') {
+        let url = API_BASE_URL;
+        const params = [];
+        
+        if (search) {
+            params.push(`search=${encodeURIComponent(search)}`);
+        }
+        
+        if (typeFilter) {
+            params.push(`type=${encodeURIComponent(typeFilter)}`);
+        }
+        
+        if (params.length > 0) {
+            url += `?${params.join('&')}`;
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                const container = $('#certificationsContainer');
+                const emptyState = $('.empty-state');
+                const statsCards = $('.stats-cards');
+                
+                if (response.results && response.results.length > 0) {
+                    // Cacher l'état vide
+                    if (emptyState.length) {
+                        emptyState.hide();
+                    }
+                    
+                    // Afficher les certifications
+                    let html = '';
+                    
+                    response.results.forEach(function(cert) {
+                        const typeLabel = getTypeLabel(cert.type_certification);
+                        const nomCertification = cert.nom_certification || typeLabel;
+                        const dateObtention = cert.date_obtention ? formatDate(cert.date_obtention) : null;
+                        const organismeDelivreur = cert.organisme_delivreur || '';
+                        const description = cert.description || '';
+                        const createdAt = formatDateTime(cert.created_at);
+                        const updatedAt = formatDateTime(cert.updated_at);
+                        
+                        html += `
+                        <div class="certification-card" data-id="${cert.id}" data-type="${cert.type_certification}">
+                            <span class="certification-indicator">
+                                <i class="fas fa-certificate"></i> CERT
+                            </span>
+                            <br>
+                            
+                            <div class="certification-header">
+                                <div class="certification-main">
+                                    <div class="certification-title">
+                                        <i class="fas fa-award cert-icon"></i>
+                                        ${nomCertification}
+                                    </div>
+                                    <div class="certification-subtitle">
+                                        ${typeLabel}
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <span class="certification-type">
+                                            <i class="fas fa-tag"></i>
+                                            ${typeLabel}
+                                        </span>
+                                        ${dateObtention ? `
+                                        <span class="date-badge">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            Obtention: ${dateObtention}
+                                        </span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="certification-actions">
+                                    <button class="btn btn-sm btn-outline-warning edit-certification-btn" 
+                                            data-id="${cert.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-certification-btn" 
+                                            data-id="${cert.id}"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            ${organismeDelivreur ? `
+                            <div class="info-section">
+                                <div class="info-label">
+                                    <i class="fas fa-building"></i>
+                                    Organisme délivreur
+                                </div>
+                                <div class="info-value">
+                                    ${organismeDelivreur}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            ${description ? `
+                            <div class="info-section">
+                                <div class="info-label">
+                                    <i class="fas fa-file-alt"></i>
+                                    Description
+                                </div>
+                                <div class="info-value text-content">
+                                    ${description.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <div class="certification-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>Ajouté le: ${createdAt}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Màj: ${updatedAt}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                    
+                    container.html(html);
+                    
+                    // Initialiser les tooltips
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                    
+                    // Mettre à jour les statistiques
+                    if (statsCards.length) {
+                        statsCards.find('.stat-number').first().text(response.count || response.results?.length || 0);
+                    }
+                    
+                } else {
+                    // Afficher l'état vide
+                    if (!emptyState.length) {
+                        container.html(`
+                            <div class="empty-state">
+                                <i class="fas fa-certificate empty-state-icon"></i>
+                                <h4 class="fw-bold mb-2">Aucune certification trouvée</h4>
+                                <p class="text-muted mb-4">
+                                    Aucune certification ne correspond à votre recherche${typeFilter ? ` pour le type sélectionné` : ''}.
+                                </p>
+                            </div>
+                        `);
+                    } else {
+                        emptyState.show();
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Erreur lors du chargement:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les certifications.'
+                });
+            }
+        });
+    }
+
+    // Recherche
+    $('#searchCertificationInput').on('input', function() {
+        const search = $(this).val();
+        const typeFilter = $('#typeFilter').val();
+        loadCertifications(search, typeFilter);
+    });
+    
+    $('#clearSearchBtn').click(function() {
+        $('#searchCertificationInput').val('');
+        $('#typeFilter').val('');
+        $('.filter-badge').removeClass('active');
+        $('.filter-badge[data-type=""]').addClass('active');
+        loadCertifications();
+    });
+    
+    // Filtre par type
+    $('#typeFilter').on('change', function() {
+        const search = $('#searchCertificationInput').val();
+        const typeFilter = $(this).val();
+        
+        // Mettre à jour les badges rapides
+        $('.filter-badge').removeClass('active');
+        if (typeFilter) {
+            $(`.filter-badge[data-type="${typeFilter}"]`).addClass('active');
+        } else {
+            $('.filter-badge[data-type=""]').addClass('active');
+        }
+        
+        loadCertifications(search, typeFilter);
+    });
+    
+    // Filtres rapides
+    $('.filter-badge').on('click', function() {
+        const typeFilter = $(this).data('type');
+        
+        // Mettre à jour les badges
+        $('.filter-badge').removeClass('active');
+        $(this).addClass('active');
+        
+        // Mettre à jour le select
+        $('#typeFilter').val(typeFilter);
+        
+        // Charger avec le filtre
+        const search = $('#searchCertificationInput').val();
+        loadCertifications(search, typeFilter);
+    });
+    
+    // Formulaire d'ajout
+    $('#addCertificationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            type_certification: $('#typeCertification').val(),
+            nom_certification: $('#nomCertification').val().trim(),
+            date_obtention: $('#dateObtention').val() || null,
+            organisme_delivreur: $('#organismeDelivreur').val().trim() || null,
+            description: $('#descriptionCertification').val().trim() || null,
+            acheteur: ACHETEUR_ID
+        };
+        
+        // Validation
+        if (!formData.type_certification) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation requise',
+                text: 'Le type de certification est obligatoire.'
+            });
+            return;
+        }
+        
+        if (formData.type_certification === 'autre' && !formData.nom_certification) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation requise',
+                text: 'Le nom de la certification est obligatoire pour le type "Autre certification".'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitAddBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: API_BASE_URL,
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#addCertificationModal').modal('hide');
+                $('#addCertificationForm')[0].reset();
+                
+                // Réinitialiser les compteurs
+                $('#descriptionCount').text('0');
+                $('#descriptionCounter').removeClass('warning danger');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCertifications();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de l\'ajout de la certification';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = Array.isArray(xhr.responseJSON.non_field_errors) ? 
+                            xhr.responseJSON.non_field_errors.join('\n') : xhr.responseJSON.non_field_errors;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.nom_certification) {
+                        errorMessage = Array.isArray(xhr.responseJSON.nom_certification) ? 
+                            xhr.responseJSON.nom_certification.join('\n') : xhr.responseJSON.nom_certification;
+                    } else if (xhr.responseJSON.date_obtention) {
+                        errorMessage = Array.isArray(xhr.responseJSON.date_obtention) ? 
+                            xhr.responseJSON.date_obtention.join('\n') : xhr.responseJSON.date_obtention;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale d'édition
+    $(document).on('click', '.edit-certification-btn', function() {
+        const certificationId = $(this).data('id');
+        currentCertificationId = certificationId;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${certificationId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                $('#editCertificationId').val(response.id);
+                $('#editTypeCertification').val(response.type_certification);
+                $('#editNomCertification').val(response.nom_certification || '');
+                
+                // Définir la date d'obtention
+                if (response.date_obtention) {
+                    $('#editDateObtention').flatpickr().setDate(response.date_obtention, false);
+                } else {
+                    $('#editDateObtention').flatpickr().clear();
+                }
+                
+                $('#editOrganismeDelivreur').val(response.organisme_delivreur || '');
+                $('#editDescriptionCertification').val(response.description || '');
+                
+                // Mettre à jour les compteurs
+                $('#editDescriptionCount').text(response.description ? response.description.length : 0);
+                const descriptionCounter = $('#editDescriptionCounter');
+                descriptionCounter.removeClass('warning danger');
+                
+                if (response.description && response.description.length > 900) {
+                    descriptionCounter.addClass('danger');
+                } else if (response.description && response.description.length > 800) {
+                    descriptionCounter.addClass('warning');
+                }
+                
+                // Pré-remplir les dates
+                $('#editCreatedAtInfo').text(formatDateTime(response.created_at));
+                $('#editUpdatedAtInfo').text(formatDateTime(response.updated_at));
+                
+                $('#editCertificationModal').modal('show');
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Impossible de charger les détails de la certification.'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Formulaire de modification
+    $('#editCertificationForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!currentCertificationId) return;
+        
+        const formData = {
+            type_certification: $('#editTypeCertification').val(),
+            nom_certification: $('#editNomCertification').val().trim(),
+            date_obtention: $('#editDateObtention').val() || null,
+            organisme_delivreur: $('#editOrganismeDelivreur').val().trim() || null,
+            description: $('#editDescriptionCertification').val().trim() || null
+        };
+        
+        // Validation
+        if (!formData.type_certification) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation requise',
+                text: 'Le type de certification est obligatoire.'
+            });
+            return;
+        }
+        
+        if (formData.type_certification === 'autre' && !formData.nom_certification) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation requise',
+                text: 'Le nom de la certification est obligatoire pour le type "Autre certification".'
+            });
+            return;
+        }
+        
+        const $btn = $('#submitEditBtn');
+        const $btnText = $btn.find('.btn-text');
+        const $spinner = $btn.find('.spinner-border');
+        
+        // Afficher le spinner
+        $btn.prop('disabled', true);
+        $btnText.hide();
+        $spinner.removeClass('d-none');
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCertificationId}/`,
+            type: 'PUT',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                $('#editCertificationModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCertifications();
+                });
+            },
+            error: function(xhr) {
+                $spinner.addClass('d-none');
+                $btnText.show();
+                $btn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification de la certification';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = Array.isArray(xhr.responseJSON.non_field_errors) ? 
+                            xhr.responseJSON.non_field_errors.join('\n') : xhr.responseJSON.non_field_errors;
+                    } else if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.nom_certification) {
+                        errorMessage = Array.isArray(xhr.responseJSON.nom_certification) ? 
+                            xhr.responseJSON.nom_certification.join('\n') : xhr.responseJSON.nom_certification;
+                    } else if (xhr.responseJSON.date_obtention) {
+                        errorMessage = Array.isArray(xhr.responseJSON.date_obtention) ? 
+                            xhr.responseJSON.date_obtention.join('\n') : xhr.responseJSON.date_obtention;
+                    }
+                }
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        html: errorMessage.replace(/\n/g, '<br>')
+                    });
+                }
+            }
+        });
+    });
+    
+    // Ouvrir la modale de suppression
+    $(document).on('click', '.delete-certification-btn', function() {
+        const certificationId = $(this).data('id');
+        const card = $(this).closest('.certification-card');
+        const nomCertification = card.find('.certification-title').text().replace('🏆 ', '');
+        const typeCertification = card.find('.certification-subtitle').text();
+        const dateObtention = card.find('.date-badge').text().replace('📅 ', '') || 'Date non spécifiée';
+        
+        currentCertificationId = certificationId;
+        $('#deleteCertificationName').text(nomCertification);
+        $('#deleteCertificationType').text(`Type: ${typeCertification}`);
+        $('#deleteCertificationDate').text(dateObtention);
+        
+        $('#confirmDeleteModal').modal('show');
+    });
+    
+    // Confirmer la suppression
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentCertificationId) return;
+        
+        $.ajax({
+            url: `${API_BASE_URL}${currentCertificationId}/`,
+            type: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                $('#confirmDeleteModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: response.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    loadCertifications();
+                });
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    refreshAccessToken();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: xhr.responseJSON?.detail || 'Impossible de supprimer la certification'
+                    });
+                }
+            }
+        });
+    });
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Fonction pour rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    ACCESS_TOKEN = response.access;
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Configurer l'interception des erreurs 401
+    $(document).ajaxError(function(event, xhr) {
+        if (xhr.status === 401) {
+            refreshAccessToken();
+        }
+    });
+    
+    // Initialiser les tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
