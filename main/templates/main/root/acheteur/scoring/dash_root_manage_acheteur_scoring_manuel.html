@@ -1,0 +1,879 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<style>
+    /* Style pour les onglets */
+    .nav-tabs .nav-link {
+        color: #495057;
+        font-weight: 500;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+    }
+    
+    /* Style pour la jauge */
+    .score-slider-container {
+        margin: 30px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .score-image-container {
+        text-align: center;
+        margin: 20px 0;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .score-image {
+        max-width: 300px;
+        max-height: 200px;
+        transition: transform 0.3s ease;
+    }
+    
+    .score-image:hover {
+        transform: scale(1.05);
+    }
+    
+    .score-value-display {
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin: 10px 0;
+        color: #0d6efd;
+    }
+    
+    .score-category {
+        font-size: 1.2rem;
+        text-align: center;
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+    
+    /* Style pour le slider */
+    input[type="range"] {
+        width: 100%;
+        height: 10px;
+        -webkit-appearance: none;
+        background: linear-gradient(to right, 
+            #dc3545 0%, 
+            #dc3545 20%, 
+            #fd7e14 20%, 
+            #fd7e14 40%, 
+            #ffc107 40%, 
+            #ffc107 60%, 
+            #20c997 60%, 
+            #20c997 80%, 
+            #198754 80%, 
+            #198754 100%
+        );
+        border-radius: 5px;
+        outline: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 25px;
+        height: 25px;
+        background: #0d6efd;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Style pour la table */
+    .table-scoring {
+        font-size: 0.9rem;
+    }
+    
+    .score-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .score-excellent { background-color: #198754; color: white; }
+    .score-bon { background-color: #20c997; color: white; }
+    .score-moyen { background-color: #ffc107; color: black; }
+    .score-faible { background-color: #fd7e14; color: white; }
+    .score-tres-faible { background-color: #dc3545; color: white; }
+    
+    /* Animation de chargement */
+    .loading-spinner {
+        display: none;
+    }
+    
+    .loading-spinner.active {
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-0">🎯 Scoring Manuel</h2>
+            <p class="text-muted mb-0">
+                {% if acheteur %}
+                    Scoring manuel pour : <strong>{{ acheteur.nom }}</strong>
+                {% else %}
+                    Gestion des scores manuels
+                {% endif %}
+            </p>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScoringModal">
+                <i class="fas fa-plus me-2"></i>Nouveau Scoring
+            </button>
+        </div>
+    </div>
+    
+    <!-- Onglets -->
+    <ul class="nav nav-tabs mb-4" id="scoringTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="listing-tab" data-bs-toggle="tab" data-bs-target="#listing" type="button" role="tab">
+                <i class="fas fa-list me-2"></i>Listing des Scorings
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="form-tab" data-bs-toggle="tab" data-bs-target="#form" type="button" role="tab">
+                <i class="fas fa-edit me-2"></i>Formulaire de Traitement
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Contenu des onglets -->
+    <div class="tab-content" id="scoringTabsContent">
+        <!-- Onglet 1: Listing -->
+        <div class="tab-pane fade show active" id="listing" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Liste des Scorings Manuels</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filtres -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label">Recherche</label>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Nom acheteur, commentaire...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Année</label>
+                            <select id="anneeFilter" class="form-select">
+                                <option value="">Toutes</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Score min</label>
+                            <input type="number" id="scoreMin" class="form-control" min="0" max="10" step="0.1" placeholder="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Score max</label>
+                            <input type="number" id="scoreMax" class="form-control" min="0" max="10" step="0.1" placeholder="10">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-outline-primary me-2" onclick="loadScorings()">
+                                <i class="fas fa-filter me-2"></i>Filtrer
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-scoring">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Acheteur</th>
+                                    <th>Année</th>
+                                    <th>Score</th>
+                                    <th>Catégorie</th>
+                                    <th>Commentaire</th>
+                                    <th>Créé le</th>
+                                    <th>Créé par</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoringTableBody">
+                                <!-- Données chargées via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav id="paginationContainer">
+                        <!-- Pagination chargée via AJAX -->
+                    </nav>
+                    
+                    <!-- Message vide -->
+                    <div id="emptyMessage" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun scoring manuel trouvé</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Onglet 2: Formulaire -->
+        <div class="tab-pane fade" id="form" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Formulaire de Scoring Manuel</h5>
+                </div>
+                <div class="card-body">
+                    <form id="scoringForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Acheteur *</label>
+                                <select id="acheteurSelect" class="form-select" required>
+                                    <option value="">Sélectionner un acheteur</option>
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner un acheteur</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Année *</label>
+                                <select id="anneeSelect" class="form-select" required>
+                                    <option value="">Sélectionner une année</option>
+                                </select>
+                                <div class="invalid-feedback">Veuillez sélectionner une année</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Jauge de score -->
+                        <div class="score-slider-container">
+                            <h6 class="mb-3">Score (0-10)</h6>
+                            
+                            <div class="score-image-container">
+                                <img id="scoreImage" src="{% static 'scoring/5.png' %}" alt="Score" class="score-image">
+                            </div>
+                            
+                            <div class="score-value-display">
+                                <span id="scoreValue">5.0</span>
+                            </div>
+                            
+                            <div class="score-category">
+                                <span id="scoreCategory">Moyen</span>
+                            </div>
+                            
+                            <input type="range" 
+                                   id="scoreSlider" 
+                                   min="0" 
+                                   max="10" 
+                                   step="0.5" 
+                                   value="5" 
+                                   class="form-range">
+                            
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-danger">0 - Très faible</small>
+                                <small class="text-warning">5 - Moyen</small>
+                                <small class="text-success">10 - Excellent</small>
+                            </div>
+                            
+                            <!-- Champ score numérique caché -->
+                            <input type="hidden" id="scoreInput" name="score" value="5">
+                            
+                            <div class="mt-3">
+                                <label class="form-label">Ou saisir directement :</label>
+                                <input type="text" 
+                                       id="scoreDirectInput" 
+                                       class="form-control" 
+                                       placeholder="Ex: 7.5 ou A+"
+                                       maxlength="4">
+                                <small class="text-muted">Format : nombre (0-10) ou note alphabétique (A-F avec +/-)</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Commentaire -->
+                        <div class="mb-3">
+                            <label class="form-label">Commentaire</label>
+                            <textarea id="commentaireInput" 
+                                      class="form-control" 
+                                      rows="4" 
+                                      placeholder="Commentaire détaillé sur le scoring..."
+                                      maxlength="10000000"></textarea>
+                        </div>
+                        
+                        <!-- Boutons -->
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="saveAsDraft()">
+                                    <i class="fas fa-save me-2"></i>Enregistrer brouillon
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check me-2"></i>Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'édition -->
+<div class="modal fade" id="editScoringModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier le Scoring</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Dans votre template HTML - Remplacez le script par ceci -->
+
+<script>
+    // Variables globales
+    const API_BASE = '/api';
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const ACHEETEUR_ID = {{ id_acheteur }};
+    let currentPage = 1;
+    let editingId = null;
+    
+    // Configuration des requêtes AJAX
+    $.ajaxSetup({
+        headers: {
+            'Authorization': 'Bearer ' + ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    });
+    
+    // Catégories de score
+    const SCORE_CATEGORIES = {
+        'excellent': { min: 8, label: 'Excellent', class: 'score-excellent' },
+        'bon': { min: 6, label: 'Bon', class: 'score-bon' },
+        'moyen': { min: 4, label: 'Moyen', class: 'score-moyen' },
+        'faible': { min: 2, label: 'Faible', class: 'score-faible' },
+        'tres_faible': { min: 0, label: 'Très faible', class: 'score-tres-faible' }
+    };
+    
+    // Initialisation au chargement
+    $(document).ready(function() {
+        loadInitialData();
+        loadScorings();
+        
+        // Si un acheteur est pré-sélectionné, on le fixe
+        if (ACHEETEUR_ID && ACHEETEUR_ID !== 'null') {
+            $('#acheteurSelect').prop('disabled', true);
+            loadAcheteurDetails(ACHEETEUR_ID);
+        }
+    });
+    
+    // Charger les données initiales
+    async function loadInitialData() {
+        try {
+            // Charger les années
+            const annees = await $.getJSON(`${API_BASE}/annees-actives/`);
+            $('#anneeSelect, #anneeFilter').empty().append('<option value="">Toutes</option>');
+            annees.forEach(annee => {
+                const option = `<option value="${annee.id}">${annee.annee}</option>`;
+                $('#anneeSelect').append(option);
+                $('#anneeFilter').append(option);
+            });
+            
+            // Charger les acheteurs si pas pré-sélectionné
+            if (!ACHEETEUR_ID || ACHEETEUR_ID === 'null') {
+                try {
+                    const acheteurs = await $.getJSON(`${API_BASE}/acheteurs/`);
+                    $('#acheteurSelect').empty().append('<option value="">Sélectionner un acheteur</option>');
+                    acheteurs.forEach(acheteur => {
+                        $('#acheteurSelect').append(
+                            `<option value="${acheteur.id}">${acheteur.nom} (${acheteur.code || ''})</option>`
+                        );
+                    });
+                } catch (error) {
+                    console.warn('API acheteurs non disponible, utilisation de méthode alternative');
+                    // Option alternative si l'API n'existe pas
+                    $('#acheteurSelect').append('<option value="" disabled>API acheteurs non disponible</option>');
+                }
+            }
+        } catch (error) {
+            console.error('Erreur chargement données:', error);
+            showToast('Erreur lors du chargement des données initiales', 'danger');
+        }
+    }
+    
+    // Charger les détails d'un acheteur
+    async function loadAcheteurDetails(acheteurId) {
+        try {
+            const acheteur = await $.getJSON(`${API_BASE}/acheteurs/${acheteurId}/`);
+            $('#acheteurSelect').append(
+                `<option value="${acheteur.id}" selected>${acheteur.nom} (${acheteur.code || ''})</option>`
+            );
+        } catch (error) {
+            console.error('Erreur chargement acheteur:', error);
+            // Solution de secours si l'API n'existe pas
+            $('#acheteurSelect').append(
+                `<option value="${acheteurId}" selected>Acheteur ID: ${acheteurId}</option>`
+            );
+        }
+    }
+    
+    // Gestion du slider de score
+    $('#scoreSlider').on('input', function() {
+        const value = parseFloat($(this).val());
+        updateScoreDisplay(value);
+    });
+    
+    // Gestion de la saisie directe
+    $('#scoreDirectInput').on('input', function() {
+        const value = $(this).val().trim();
+        if (value) {
+            // Si c'est un nombre
+            if (!isNaN(value) && value !== '') {
+                const numValue = parseFloat(value);
+                if (numValue >= 0 && numValue <= 10) {
+                    $('#scoreSlider').val(numValue);
+                    updateScoreDisplay(numValue);
+                }
+            }
+        }
+    });
+    
+    // Mettre à jour l'affichage du score
+    function updateScoreDisplay(value) {
+        $('#scoreValue').text(value.toFixed(1));
+        $('#scoreInput').val(value);
+        
+        // Mettre à jour l'image
+        const imageNum = Math.round(value);
+        $('#scoreImage').attr('src', `/static/scoring/${imageNum}.png`);
+        
+        // Mettre à jour la catégorie
+        let category = 'tres_faible';
+        for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
+            if (value >= cat.min) {
+                category = key;
+            }
+        }
+        $('#scoreCategory').text(SCORE_CATEGORIES[category].label);
+        
+        // Mettre à jour la saisie directe
+        $('#scoreDirectInput').val(value.toFixed(1));
+    }
+    
+    // Fonction pour nettoyer les paramètres avant envoi
+    function cleanParams(params) {
+        const cleaned = new URLSearchParams();
+        
+        for (const [key, value] of params.entries()) {
+            if (value && value !== 'undefined' && value !== '') {
+                cleaned.append(key, value);
+            }
+        }
+        
+        return cleaned;
+    }
+    
+    // Charger la liste des scorings
+    async function loadScorings(page = 1) {
+        try {
+            showLoading(true);
+            
+            const params = new URLSearchParams({
+                page: page,
+                search: $('#searchInput').val() || '',
+                annee_id: $('#anneeFilter').val() || '',
+                score_min: $('#scoreMin').val() || '',
+                score_max: $('#scoreMax').val() || ''
+            });
+            
+            if (ACHEETEUR_ID && ACHEETEUR_ID !== 'null') {
+                params.append('acheteur_id', ACHEETEUR_ID);
+            }
+            
+            // Nettoyer les paramètres
+            const cleanedParams = cleanParams(params);
+            
+            const response = await $.getJSON(`${API_BASE}/scoring/?${cleanedParams}`);
+            
+            renderScoringTable(response.results);
+            renderPagination(response);
+            
+            if (response.count === 0) {
+                $('#scoringTableBody').hide();
+                $('#emptyMessage').show();
+            } else {
+                $('#scoringTableBody').show();
+                $('#emptyMessage').hide();
+            }
+            
+        } catch (error) {
+            console.error('Erreur chargement scorings:', error);
+            showToast('Erreur lors du chargement des scorings', 'danger');
+        } finally {
+            showLoading(false);
+        }
+    }
+    
+    // Rendre le tableau des scorings
+    function renderScoringTable(scorings) {
+        const tbody = $('#scoringTableBody');
+        tbody.empty();
+        
+        if (scorings.length === 0) {
+            tbody.append(`
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun scoring manuel trouvé</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+        
+        scorings.forEach(scoring => {
+            const category = getScoreCategory(scoring.score_numeric);
+            const badgeClass = SCORE_CATEGORIES[category]?.class || 'bg-secondary';
+            const commentaire = scoring.commentaire || '';
+            const commentairePreview = commentaire.length > 50 ? 
+                commentaire.substring(0, 50) + '...' : commentaire;
+            
+            const row = `
+                <tr>
+                    <td>${scoring.id}</td>
+                    <td>
+                        <strong>${scoring.acheteur_nom || 'N/A'}</strong><br>
+                        <small class="text-muted">${scoring.acheteur_sigle || ''}</small>
+                    </td>
+                    <td>${scoring.annee_value || 'N/A'}</td>
+                    <td>
+                        <span class="badge ${badgeClass} score-badge">${scoring.score || 'N/A'}</span>
+                    </td>
+                    <td>${scoring.score_category || 'Non évalué'}</td>
+                    <td>
+                        ${commentaire ? 
+                            `<small title="${commentaire}">${commentairePreview}</small>` : 
+                            '<span class="text-muted">Aucun</span>'}
+                    </td>
+                    <td>
+                        <small>${formatDate(scoring.created_at)}</small><br>
+                        <small class="text-muted">${formatTime(scoring.created_at)}</small>
+                    </td>
+                    <td>${scoring.created_by_name || 'System'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editScoring(${scoring.id})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteScoring(${scoring.id})" title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    // Formater la date
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        try {
+            return new Date(dateString).toLocaleDateString('fr-FR');
+        } catch {
+            return dateString;
+        }
+    }
+    
+    // Formater l'heure
+    function formatTime(dateString) {
+        if (!dateString) return '';
+        try {
+            return new Date(dateString).toLocaleTimeString('fr-FR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        } catch {
+            return '';
+        }
+    }
+    
+    // Rendre la pagination
+    function renderPagination(response) {
+        const container = $('#paginationContainer');
+        container.empty();
+        
+        if (response.count > 10) {
+            const totalPages = Math.ceil(response.count / 10);
+            currentPage = response.current_page || 1;
+            
+            let paginationHtml = `
+                <ul class="pagination justify-content-center">
+            `;
+            
+            // Bouton précédent
+            if (response.previous) {
+                paginationHtml += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadScorings(${currentPage - 1})">Précédent</a>
+                    </li>
+                `;
+            } else {
+                paginationHtml += `
+                    <li class="page-item disabled">
+                        <span class="page-link">Précédent</span>
+                    </li>
+                `;
+            }
+            
+            // Pages numérotées
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let page = startPage; page <= endPage; page++) {
+                paginationHtml += `
+                    <li class="page-item ${page === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadScorings(${page})">${page}</a>
+                    </li>
+                `;
+            }
+            
+            // Bouton suivant
+            if (response.next) {
+                paginationHtml += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadScorings(${currentPage + 1})">Suivant</a>
+                    </li>
+                `;
+            } else {
+                paginationHtml += `
+                    <li class="page-item disabled">
+                        <span class="page-link">Suivant</span>
+                    </li>
+                `;
+            }
+            
+            paginationHtml += `</ul>`;
+            container.html(paginationHtml);
+        }
+    }
+    
+    // Déterminer la catégorie d'un score
+    function getScoreCategory(score) {
+        if (score === null || score === undefined) return 'tres_faible';
+        
+        for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
+            if (score >= cat.min) {
+                return key;
+            }
+        }
+        return 'tres_faible';
+    }
+    
+    // Enregistrer le formulaire
+    $('#scoringForm').on('submit', async function(e) {
+        e.preventDefault();
+        await saveScoring(false);
+    });
+    
+    // Enregistrer comme brouillon
+    async function saveAsDraft() {
+        await saveScoring(true);
+    }
+    
+    // Sauvegarder le scoring
+    async function saveScoring(isDraft) {
+        try {
+            const acheteurId = $('#acheteurSelect').val();
+            const anneeId = $('#anneeSelect').val();
+            const score = $('#scoreInput').val();
+            const commentaire = $('#commentaireInput').val();
+            
+            // Validation
+            if (!acheteurId || !anneeId) {
+                showToast('Veuillez remplir tous les champs obligatoires', 'warning');
+                return;
+            }
+            
+            const formData = {
+                acheteur_id: parseInt(acheteurId),
+                annee_id: parseInt(anneeId),
+                score: score,
+                commentaire: commentaire
+            };
+            
+            // Vérifier si le scoring existe déjà
+            let existing = null;
+            try {
+                existing = await $.ajax({
+                    url: `${API_BASE}/scoring/acheteur/${formData.acheteur_id}/annee/${formData.annee_id}/`,
+                    method: 'GET'
+                });
+            } catch (error) {
+                // Si erreur 404, c'est normal (scoring n'existe pas)
+                if (error.status !== 404) {
+                    console.error('Erreur vérification scoring existant:', error);
+                }
+            }
+            
+            let response;
+            if (existing && existing.id) {
+                // Mise à jour
+                response = await $.ajax({
+                    url: `${API_BASE}/scoring/${existing.id}/`,
+                    method: 'PATCH',
+                    data: JSON.stringify(formData)
+                });
+                showToast('Scoring mis à jour avec succès', 'success');
+            } else {
+                // Création
+                response = await $.ajax({
+                    url: `${API_BASE}/scoring/create/`,
+                    method: 'POST',
+                    data: JSON.stringify(formData)
+                });
+                showToast('Scoring créé avec succès', 'success');
+            }
+            
+            // Recharger la liste
+            loadScorings();
+            resetForm();
+            
+        } catch (error) {
+            console.error('Erreur sauvegarde scoring:', error);
+            const errorMsg = error.responseJSON?.detail || 
+                            error.responseJSON?.message || 
+                            'Erreur lors de la sauvegarde';
+            showToast(errorMsg, 'danger');
+        }
+    }
+    
+    // Éditer un scoring
+    async function editScoring(id) {
+        try {
+            const scoring = await $.getJSON(`${API_BASE}/scoring/${id}/`);
+            editingId = id;
+            
+            // Pré-remplir le formulaire
+            $('#acheteurSelect').val(scoring.acheteur_id);
+            $('#anneeSelect').val(scoring.annee_id);
+            $('#scoreInput').val(scoring.score);
+            $('#commentaireInput').val(scoring.commentaire || '');
+            
+            // Mettre à jour l'affichage
+            const scoreNum = scoring.score_numeric || 5;
+            $('#scoreSlider').val(scoreNum);
+            updateScoreDisplay(scoreNum);
+            
+            // Basculer vers l'onglet formulaire
+            $('#form-tab').tab('show');
+            
+            showToast('Scoring chargé pour modification', 'info');
+            
+        } catch (error) {
+            console.error('Erreur chargement scoring:', error);
+            showToast('Erreur lors du chargement du scoring', 'danger');
+        }
+    }
+    
+    // Supprimer un scoring
+    async function deleteScoring(id) {
+        if (!confirm('Voulez-vous vraiment supprimer ce scoring ?')) return;
+        
+        try {
+            await $.ajax({
+                url: `${API_BASE}/scoring/${id}/`,
+                method: 'DELETE'
+            });
+            
+            showToast('Scoring supprimé avec succès', 'success');
+            loadScorings();
+            
+        } catch (error) {
+            console.error('Erreur suppression scoring:', error);
+            showToast('Erreur lors de la suppression', 'danger');
+        }
+    }
+    
+    // Réinitialiser le formulaire
+    function resetForm() {
+        $('#scoringForm')[0].reset();
+        $('#scoreSlider').val(5);
+        updateScoreDisplay(5);
+        editingId = null;
+        
+        // Réactiver le select acheteur si on était en mode pré-sélectionné
+        if (ACHEETEUR_ID && ACHEETEUR_ID !== 'null') {
+            $('#acheteurSelect').prop('disabled', false);
+            $('#acheteurSelect').val(ACHEETEUR_ID);
+            $('#acheteurSelect').prop('disabled', true);
+        }
+    }
+    
+    // Réinitialiser les filtres
+    function resetFilters() {
+        $('#searchInput').val('');
+        $('#anneeFilter').val('');
+        $('#scoreMin').val('');
+        $('#scoreMax').val('');
+        loadScorings(1);
+    }
+    
+    // Afficher/masquer le chargement
+    function showLoading(show) {
+        if (show) {
+            $('#scoringTableBody').html(`
+                <tr>
+                    <td colspan="9" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </td>
+                </tr>
+            `);
+        }
+    }
+    
+    // Afficher une notification
+    function showToast(message, type = 'info') {
+        const toast = $(`
+            <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        
+        $('#toastContainer').append(toast);
+        const bsToast = new bootstrap.Toast(toast[0]);
+        bsToast.show();
+        
+        toast.on('hidden.bs.toast', function() {
+            $(this).remove();
+        });
+    }
+    
+    // Ajouter un container pour les toasts dans le layout
+    $(document).ready(function() {
+        $('body').append(`
+            <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+        `);
+    });
+</script>
+{% endblock %}

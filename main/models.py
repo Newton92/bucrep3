@@ -6795,15 +6795,17 @@ class Scoring(Model):
     annee = models.ForeignKey(
         "Annee",
         on_delete=models.DO_NOTHING,
-        related_name="scorings",
         verbose_name=_("Année"),
+        null=True,
+        blank=True,
     )
 
     acheteur = models.ForeignKey(
         "Acheteur",
         on_delete=models.DO_NOTHING,
-        related_name="scorings",
         verbose_name=_("Acheteur"),
+        null=True,
+        blank=True,
     )
 
     score = models.CharField(
@@ -6812,12 +6814,15 @@ class Scoring(Model):
         null=True,
         verbose_name=_("Score"),
         db_index=True,
+        help_text=_("Score sur 4 caractères maximum"),
     )
 
     commentaire = models.TextField(
         blank=True,
         null=True,
         verbose_name=_("Commentaire"),
+        max_length=10000000,  # AJOUTER pour compatibilité
+        help_text=_("Commentaire détaillé sur le scoring"),
     )
 
     created_at = models.DateTimeField(
@@ -6836,19 +6841,19 @@ class Scoring(Model):
 
     created_by = models.ForeignKey(
         "User",
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="scorings_crees",
+        related_name="scoring_user_create",
         verbose_name=_("Créé par"),
     )
 
     updated_by = models.ForeignKey(
         "User",
-        on_delete=models.DO_NOTHING,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="scorings_modifies",
+        related_name="scoring_user_update",
         verbose_name=_("Mis à jour par"),
     )
 
@@ -6858,14 +6863,93 @@ class Scoring(Model):
         verbose_name = _("Scoring")
         verbose_name_plural = _("Scorings")
         ordering = ("-created_at",)
-        unique_together = ("annee", "acheteur")
+        unique_together = ("annee", "acheteur")  # Attention aux doublons existants !
         indexes = [
             models.Index(fields=["annee", "acheteur"]),
             models.Index(fields=["score"]),
+            models.Index(fields=["created_at"]),
         ]
 
     def __str__(self):
-        return f"{self.acheteur} - {self.annee} : {self.score or 'N/A'}"
+        if self.acheteur and self.annee:
+            return f"{self.acheteur} - {self.annee} : {self.score or 'N/A'}"
+        elif self.acheteur:
+            return f"{self.acheteur} : {self.score or 'N/A'}"
+        else:
+            return f"Scoring : {self.score or 'N/A'}"
+    
+    def get_score_numeric(self):
+        """Retourne le score sous forme numérique si possible"""
+        if self.score:
+            try:
+                # Essayer de convertir en float
+                return float(self.score)
+            except (ValueError, TypeError):
+                pass
+        return None
+    
+    def get_score_category(self):
+        """Retourne la catégorie du score"""
+        score_num = self.get_score_numeric()
+        
+        if score_num is None:
+            return _("Non évalué")
+        
+        if score_num >= 8:
+            return _("Excellent")
+        elif score_num >= 6:
+            return _("Bon")
+        elif score_num >= 4:
+            return _("Moyen")
+        elif score_num >= 2:
+            return _("Faible")
+        else:
+            return _("Très faible")
+    
+    def is_valid_score(self):
+        """Vérifie si le score est valide"""
+        if not self.score:
+            return False
+        
+        # Vérifier le format (ex: "85", "A+", etc.)
+        import re
+        # Accepte nombres (avec ou sans décimales) et notes alphabétiques
+        pattern = r'^[A-F][+-]?$|^\d{1,3}(\.\d{1,2})?$'
+        return bool(re.match(pattern, str(self.score).strip()))
+    
+    def get_summary(self):
+        """Retourne un résumé du scoring"""
+        return {
+            'annee': str(self.annee) if self.annee else _("Non spécifiée"),
+            'acheteur': str(self.acheteur) if self.acheteur else _("Non spécifié"),
+            'score': self.score or _("Non spécifié"),
+            'score_numeric': self.get_score_numeric(),
+            'score_category': self.get_score_category(),
+            'has_commentaire': bool(self.commentaire and self.commentaire.strip()),
+            'commentaire_length': len(self.commentaire) if self.commentaire else 0,
+            'is_valid': self.is_valid_score(),
+        }
+    
+    def clean(self):
+        """Validation au niveau modèle"""
+        super().clean()
+        
+        # Validation du score
+        if self.score and not self.is_valid_score():
+            raise ValidationError({
+                'score': _('Format de score invalide. Utilisez un nombre ou une note alphabétique (A-F).')
+            })
+        
+        # Validation des champs obligatoires
+        if not self.annee:
+            raise ValidationError({
+                'annee': _('L\'année est obligatoire')
+            })
+        
+        if not self.acheteur:
+            raise ValidationError({
+                'acheteur': _('L\'acheteur est obligatoire')
+            })
 
 
 
@@ -13189,15 +13273,38 @@ class ScoringSansBilanAcheteur(Model):
     created_at = models.DateTimeField(_("Date de Création"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Date de Mise à Jour"), auto_now=True)
 
+    created_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="scorings_sansbilan_crees",
+        verbose_name=_("Créé par"),
+    )
+
+    updated_by = models.ForeignKey(
+        "User",
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="scorings_sansbilan_modifies",
+        verbose_name=_("Mis à jour par"),
+    )
+
     history = HistoricalRecords()
 
 
     def __str__(self):
-        return (
-            f"{self.code} - {self.libelle}"
-            if self.code and self.libelle
-            else _("Modèle interpretation scoring sans bilan")
-        )
+        parts = []
+        if self.code:
+            parts.append(self.code)
+        if self.libelle:
+            parts.append(self.libelle)
+
+        if parts:
+            return " - ".join(parts)
+
+        return str(_("Modèle interpretation scoring sans bilan"))
 
     def is_empty(self):
         return not self.code and not self.libelle

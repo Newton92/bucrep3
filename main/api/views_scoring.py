@@ -15,7 +15,22 @@ from main.serializers import ScoringSansBilanAcheteurSerializer, BilanClassiqueS
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
+from main.models import ScoringSansBilanAcheteur, Acheteur
+from main.serializers import ScoringSansBilanAcheteurSerializer
+from decimal import Decimal
+from typing import Dict, Tuple, Optional
+
+
 import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -98,14 +113,13 @@ class ScoringSansBilanAcheteurDetailViewTwo(RetrieveUpdateAPIView):
         return ScoringSansBilanAcheteur.objects.get(acheteur_id=acheteur_id)
 
 
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
-from main.models import ScoringSansBilanAcheteur, Acheteur
-from main.serializers import ScoringSansBilanAcheteurSerializer
+
 
 class ScoringSansBilanAcheteurDetailView(RetrieveUpdateAPIView):
     serializer_class = ScoringSansBilanAcheteurSerializer
     permission_classes = [IsAuthenticated]
+    
+    
 
     def get_queryset(self):
         acheteur_id = self.kwargs.get("acheteur_id")
@@ -117,27 +131,44 @@ class ScoringSansBilanAcheteurDetailView(RetrieveUpdateAPIView):
         
         try:
             scoring = ScoringSansBilanAcheteur.objects.get(acheteur_id=acheteur_id)
+            
+            code_scoring = generate_unique_code()
+            libelle_scoring = "Scoring crédit acheteur basé sur critères non financiers"
+            
+            print(code_scoring)
+            print(libelle_scoring)
             print(f"✅ Scoring existant trouvé: {scoring.id}, score: {scoring.scoring_value}")
             
             # Forcer le recalcul du score pour s'assurer qu'il est à jour
             scoring.scoring_value = scoring.calculate_scoring_value()
             scoring.interpretation = scoring.generate_interpretation()
+            
             if scoring._state.adding or scoring.has_changed():
+                scoring.code = code_scoring
+                scoring.libelle = libelle_scoring
+                scoring.updated_by = self.request.user
                 scoring.save()
                 
             return scoring
         except ScoringSansBilanAcheteur.DoesNotExist:
             print(f"⚠️ Scoring non trouvé, création d'un nouveau pour acheteur {acheteur_id}")
             acheteur = get_object_or_404(Acheteur, id=acheteur_id)
-            scoring = ScoringSansBilanAcheteur.objects.create(acheteur=acheteur)
+            scoring = ScoringSansBilanAcheteur.objects.create(
+                code=code_scoring,
+                libelle=libelle_scoring,
+                acheteur=acheteur,
+                created_by=self.request.user
+            )
             return scoring
+        
+    def perform_update(self, serializer):
+        serializer.save(updated_by=self.request.user)
 
 
 
 
 
-from decimal import Decimal
-from typing import Dict, Tuple, Optional
+
 
 class ScoreACREMACBilanService:
     """
@@ -308,16 +339,7 @@ class ScoreACREMACBilanService:
         
         
 
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.db import transaction
-from django.shortcuts import get_object_or_404
-import logging
 
-
-logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

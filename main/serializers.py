@@ -12254,6 +12254,9 @@ class ScoringSansBilanAcheteurSerializer(serializers.ModelSerializer):
     avis_commercial_ref = ModeleAvisCommercialScoringSerializer(read_only=True)
     locaux_ref = ModeleBailScoringSerializer(read_only=True)
     
+    created_by = UserSimpleSerializer(read_only=True)
+    updated_by = UserSimpleSerializer(read_only=True)
+    
     # Champs en écriture pour la mise à jour
     comportement_de_paiement_ref_id = serializers.PrimaryKeyRelatedField(
         queryset=ModeleComportementPaiement.objects.all(), 
@@ -12307,9 +12310,9 @@ class ScoringSansBilanAcheteurSerializer(serializers.ModelSerializer):
             "locaux_ref", "locaux_ref_id",
             "categories_nace_ref", "categories_nace_ref_ids",
             "scoring_value", "interpretation", "commentaire", 
-            "created_at", "updated_at"
+            "created_at", "updated_at", "created_by", "updated_by"
         ]
-        read_only_fields = ["scoring_value", "interpretation", "created_at", "updated_at"]
+        read_only_fields = ["scoring_value", "interpretation", "created_at", "updated_at", "created_by", "updated_by"]
         
     def get_object(self):
         acheteur_id = self.kwargs.get("acheteur_id")
@@ -12338,6 +12341,9 @@ class ScoringSansBilanAcheteurSerializer(serializers.ModelSerializer):
         
         print(f"🎯 Score final: {instance.scoring_value}")
         return instance
+
+
+
 
 
 
@@ -12830,3 +12836,127 @@ class ResultatIFRSSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultatIFRS
         fields = '__all__'
+        
+        
+        
+# serializers.py - Ajoutez ces classes à votre fichier serializers.py
+
+class ScoringSerializer(serializers.ModelSerializer):
+    """Serializer pour le scoring manuel"""
+    
+    # Champs en lecture seule pour l'affichage
+    annee_details = serializers.SerializerMethodField(read_only=True)
+    acheteur_details = serializers.SerializerMethodField(read_only=True)
+    created_by_details = UserSimpleSerializer(source='created_by', read_only=True)
+    updated_by_details = UserSimpleSerializer(source='updated_by', read_only=True)
+    score_category = serializers.SerializerMethodField(read_only=True)
+    score_numeric = serializers.SerializerMethodField(read_only=True)
+    
+    # Champs en écriture
+    annee_id = serializers.PrimaryKeyRelatedField(
+        queryset=Annee.objects.all(),
+        source='annee',
+        write_only=True,
+        required=True
+    )
+    
+    acheteur_id = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all(),
+        source='acheteur',
+        write_only=True,
+        required=True
+    )
+    
+    class Meta:
+        model = Scoring
+        fields = [
+            'id',
+            'annee', 'annee_id', 'annee_details',
+            'acheteur', 'acheteur_id', 'acheteur_details',
+            'score', 'score_category', 'score_numeric',
+            'commentaire',
+            'created_at', 'updated_at',
+            'created_by', 'created_by_details',
+            'updated_by', 'updated_by_details'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by', 'updated_by']
+    
+    def get_annee_details(self, obj):
+        if obj.annee:
+            return {
+                'id': obj.annee.id,
+                'annee': obj.annee.annee,
+                'is_active': obj.annee.is_active
+            }
+        return None
+    
+    def get_acheteur_details(self, obj):
+        if obj.acheteur:
+            return {
+                'id': obj.acheteur.id,
+                'nom': obj.acheteur.nom,
+                'sigle': obj.acheteur.sigle,
+                'code': obj.acheteur.code
+            }
+        return None
+    
+    def get_score_category(self, obj):
+        return obj.get_score_category()
+    
+    def get_score_numeric(self, obj):
+        return obj.get_score_numeric()
+    
+    def validate_score(self, value):
+        """Validation du score (0-10)"""
+        if value:
+            try:
+                score_num = float(value)
+                if score_num < 0 or score_num > 10:
+                    raise serializers.ValidationError(
+                        _("Le score doit être compris entre 0 et 10")
+                    )
+            except (ValueError, TypeError):
+                # Si ce n'est pas un nombre, vérifier le format alphabétique
+                import re
+                if not re.match(r'^[A-F][+-]?$', str(value).strip()):
+                    raise serializers.ValidationError(
+                        _("Format de score invalide. Utilisez un nombre (0-10) ou une note alphabétique (A-F)")
+                    )
+        return value
+    
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        validated_data['updated_by'] = self.context['request'].user
+        return super().update(instance, validated_data)
+
+
+class ScoringListSerializer(serializers.ModelSerializer):
+    """Serializer simplifié pour les listes"""
+    
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    acheteur_sigle = serializers.CharField(source='acheteur.sigle', read_only=True)
+    annee_value = serializers.IntegerField(source='annee.annee', read_only=True)
+    score_category = serializers.SerializerMethodField()
+    score_numeric = serializers.SerializerMethodField()
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    
+    class Meta:
+        model = Scoring
+        fields = [
+            'id',
+            'annee', 'annee_value',
+            'acheteur', 'acheteur_nom', 'acheteur_sigle',
+            'score', 'score_category', 'score_numeric',
+            'commentaire',
+            'created_at',
+            'created_by_name'
+        ]
+    
+    def get_score_category(self, obj):
+        return obj.get_score_category()
+    
+    def get_score_numeric(self, obj):
+        return obj.get_score_numeric()

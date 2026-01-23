@@ -2492,6 +2492,119 @@ class ListeInformationsAvisCommercialAdmin(admin.ModelAdmin):
     list_filter = ("couleur",)
 
 
+
+
+
+@admin.register(ScoringSansBilanAcheteur)
+class ScoringSansBilanAcheteurAdmin(admin.ModelAdmin):
+    # -------------------------
+    # LISTE
+    # -------------------------
+    list_display = (
+        "code",
+        "libelle",
+        "acheteur",
+        "scoring_value",
+        "short_interpretation",
+        "created_at",
+        "updated_at",
+    )
+
+    list_filter = (
+        "forme_juridique",
+        "avis_commercial_ref",
+        "created_at",
+        "updated_at",
+    )
+
+    search_fields = (
+        "code",
+        "libelle",
+        "acheteur__nom",
+    )
+
+    ordering = ("-updated_at",)
+
+    autocomplete_fields = (
+        "acheteur",
+        "comportement_de_paiement_ref",
+        "age_company_ref",
+        "forme_juridique",
+        "avis_commercial_ref",
+        "locaux_ref",
+        "categories_nace_ref",
+        "created_by",
+        "updated_by",
+    )
+
+    readonly_fields = (
+        "scoring_value",
+        "interpretation",
+        "created_at",
+        "updated_at",
+    )
+
+    filter_horizontal = ("categories_nace_ref",)
+
+    # -------------------------
+    # FORMULAIRE
+    # -------------------------
+    fieldsets = (
+        (_("Identification"), {
+            "fields": ("code", "libelle", "acheteur")
+        }),
+        (_("Critères de scoring"), {
+            "fields": (
+                "comportement_de_paiement_ref",
+                "age_company_ref",
+                "forme_juridique",
+                "avis_commercial_ref",
+                "locaux_ref",
+                "categories_nace_ref",
+            )
+        }),
+        (_("Résultat du scoring (calculé automatiquement)"), {
+            "fields": ("scoring_value", "interpretation"),
+        }),
+        (_("Commentaire"), {
+            "fields": ("commentaire",),
+        }),
+        (_("Audit"), {
+            "fields": (
+                "created_at",
+                "updated_at",
+                "created_by",
+                "updated_by",
+            )
+        }),
+    )
+
+    # -------------------------
+    # MÉTHODES D'AFFICHAGE
+    # -------------------------
+    @admin.display(
+        description=_("Interprétation"),
+        ordering="scoring_value",
+    )
+    def short_interpretation(self, obj):
+        if not obj.interpretation:
+            return "-"
+        return (
+            obj.interpretation[:80] + "…"
+            if len(obj.interpretation) > 80
+            else obj.interpretation
+        )
+
+    # -------------------------
+    # AUTOMATISATION USERS
+    # -------------------------
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)
+
+
     
     
     

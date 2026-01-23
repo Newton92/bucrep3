@@ -36,6 +36,7 @@ from main.api.views_scoring import (
     calculer_score_direct,
     historique_scores_acheteur
 )
+from main.api.views_scoring_manuel import *
 from main.api.views_scoring_classique import *
 from main.api.views_scoring_anglais import *
 from main.api.views_scoring_bancaire import *
@@ -588,6 +589,11 @@ urlpatterns = [
         "root-dashboard/monitoring/alertes-log/",
         dash_root_alerte_log,
         name="dash_root_alerte_log",
+    ),
+    path(
+        "root-dashboard/scoring-manuel/acheteur/<int:acheteur_id>/",
+        dash_root_manage_acheteur_scoring_manuel,
+        name="dash_root_manage_acheteur_scoring_manuel",
     ),
     
     
@@ -5721,7 +5727,16 @@ urlpatterns = [
         name="delete-resultat-a",
     ),
     
+    # Scoring manuel
+    path('api/scoring/', ScoringListView.as_view(), name='api_scoring_list'),
+    path('api/scoring/create/', ScoringCreateView.as_view(), name='api_scoring_create'),
+    path('api/scoring/<int:pk>/', ScoringDetailView.as_view(), name='api_scoring_detail'),
+    path('api/scoring/acheteur/<int:acheteur_id>/annee/<int:annee_id>/', 
+         ScoringByAcheteurAnneeView.as_view(), name='api_scoring_by_acheteur_annee'),
+    path('api/scoring/stats/', ScoringStatsView.as_view(), name='api_scoring_stats'),
     
+    # Années pour le formulaire
+    path('api/annees-actives/', AnneeListView.as_view(), name='api_annees_actives'),
     
     path("api/acheteur/<int:acheteur_id>/scoring/", ScoringSansBilanAcheteurDetailView.as_view(), name="api_acheteur_scoring"),
     path("api/comportement-paiement/", ModeleComportementPaiementScoringListView.as_view(), name="api_comportement_paiement_list"),
