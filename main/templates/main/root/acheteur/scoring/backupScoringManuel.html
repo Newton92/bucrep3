@@ -4,8 +4,7 @@
 {% block styles %}
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- SweetAlert2 CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
 <style>
 :root {
     --primary-color: #0d80be;
@@ -776,38 +775,6 @@ body {
     border-color: var(--primary-color);
     color: white;
 }
-
-/* SweetAlert personnalisé */
-.swal2-popup {
-    border-radius: 20px !important;
-    border: 2px solid rgba(13, 128, 190, 0.1);
-    overflow: hidden;
-}
-
-.swal2-title {
-    color: var(--primary-color) !important;
-    font-weight: 700 !important;
-}
-
-.swal2-confirm {
-    background: linear-gradient(135deg, var(--accent-color), var(--primary-color)) !important;
-    border: none !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 2rem !important;
-    font-weight: 600 !important;
-}
-
-.swal2-cancel {
-    background: linear-gradient(135deg, #6c757d, #495057) !important;
-    border: none !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 2rem !important;
-    font-weight: 600 !important;
-}
-
-.swal2-icon {
-    border-width: 4px !important;
-}
 </style>
 {% endblock %}
 
@@ -825,7 +792,7 @@ body {
                 </p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-action" onclick="window.resetFormWithAlert()">
+                <button class="btn btn-primary btn-action" onclick="resetForm()">
                     <i class="fas fa-plus-circle me-2"></i>Nouveau Scoring
                 </button>
             </div>
@@ -944,10 +911,10 @@ body {
                     
                     <div class="d-flex justify-content-between mb-4">
                         <div>
-                            <button class="btn btn-primary btn-action me-2" onclick="window.loadScorings()">
+                            <button class="btn btn-primary btn-action me-2" onclick="loadScorings()">
                                 <i class="fas fa-filter me-2"></i>Appliquer les filtres
                             </button>
-                            <button class="btn btn-secondary btn-action" onclick="window.resetFiltersWithAlert()">
+                            <button class="btn btn-secondary btn-action" onclick="resetFilters()">
                                 <i class="fas fa-redo me-2"></i>Réinitialiser
                             </button>
                         </div>
@@ -990,7 +957,7 @@ body {
                             Commencez par créer votre premier scoring manuel<br>
                             pour évaluer les performances des acheteurs.
                         </p>
-                        <button class="btn btn-primary btn-lg btn-action" onclick="window.switchToFormTab()">
+                        <button class="btn btn-primary btn-lg btn-action" onclick="switchToFormTab()">
                             <i class="fas fa-plus-circle me-2"></i>Créer un scoring
                         </button>
                     </div>
@@ -1091,20 +1058,39 @@ body {
                         
                         <!-- Boutons Premium -->
                         <div class="d-flex justify-content-between">
-                            <button type="button" class="btn btn-secondary btn-action" onclick="window.resetFormWithAlert()">
+                            <button type="button" class="btn btn-secondary btn-action" onclick="resetForm()">
                                 <i class="fas fa-redo me-2"></i>Réinitialiser
                             </button>
                             <div>
-                                <button type="button" class="btn btn-outline-primary btn-action me-2" onclick="window.saveAsDraftWithAlert()">
+                                <button type="button" class="btn btn-outline-primary btn-action me-2" onclick="saveAsDraft()">
                                     <i class="fas fa-save me-2"></i>Enregistrer brouillon
                                 </button>
-                                <button type="button" class="btn btn-primary btn-action" onclick="window.saveScoringWithAlert()">
+                                <button type="submit" class="btn btn-primary btn-action">
                                     <i class="fas fa-check me-2"></i>Enregistrer
                                 </button>
                             </div>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce scoring ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Supprimer</button>
             </div>
         </div>
     </div>
@@ -1137,950 +1123,695 @@ body {
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-// Variables globales
-const API_BASE = '/api';
-const ACCESS_TOKEN = '{{ access_token }}';
-const ACHEETEUR_ID = '{{ id_acheteur }}';
-let currentPage = 1;
-let editingScoringId = null;
-let deleteScoringId = null;
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    const API_BASE = '/api';
+    const ACCESS_TOKEN = '{{ access_token }}';
+    const ACHEETEUR_ID = '{{ id_acheteur }}';
+    let currentPage = 1;
+    let editingScoringId = null;
+    let deleteScoringId = null;
 
-// Catégories de score
-const SCORE_CATEGORIES = {
-    'excellent': { 
-        min: 8, 
-        label: 'Excellent', 
-        class: 'score-excellent',
-        icon: 'fas fa-trophy'
-    },
-    'bon': { 
-        min: 6, 
-        label: 'Bon', 
-        class: 'score-bon',
-        icon: 'fas fa-thumbs-up'
-    },
-    'moyen': { 
-        min: 4, 
-        label: 'Moyen', 
-        class: 'score-moyen',
-        icon: 'fas fa-chart-line'
-    },
-    'faible': { 
-        min: 2, 
-        label: 'Faible', 
-        class: 'score-faible',
-        icon: 'fas fa-exclamation-triangle'
-    },
-    'tres_faible': { 
-        min: 0, 
-        label: 'Très faible', 
-        class: 'score-tres-faible',
-        icon: 'fas fa-times-circle'
-    }
-};
-
-// Initialisation au chargement
-$(document).ready(function() {
-    setupScoreSlider();
-    setupEventListeners();
-    window.loadScorings();
-    
-    // Si on arrive sur la page avec un ID de scoring dans l'URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const scoringId = urlParams.get('scoring_id');
-    if (scoringId) {
-        window.editScoring(scoringId);
-    }
-});
-
-// Configuration du slider de score
-function setupScoreSlider() {
-    const $scoreSlider = $('#scoreSlider');
-    const $scoreValue = $('#scoreValue');
-    const $scoreInput = $('#scoreInput');
-    const $scoreImage = $('#scoreImage');
-    const $scoreCategory = $('#scoreCategory');
-    const $scoreDirectInput = $('#scoreDirectInput');
-    
-    let isProgrammaticUpdate = false;
-    
-    $scoreSlider.on('input', function() {
-        if (!isProgrammaticUpdate) {
-            const value = parseFloat($(this).val());
-            updateScoreDisplay(value);
+    // Configuration AJAX
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + ACCESS_TOKEN);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         }
     });
-    
-    $scoreDirectInput.on('input', function() {
-        const value = $(this).val().trim();
-        if (value && !isNaN(value)) {
-            const numValue = parseFloat(value);
-            if (numValue >= 0 && numValue <= 10) {
-                isProgrammaticUpdate = true;
-                $scoreSlider.val(numValue);
-                updateScoreDisplay(numValue);
-                isProgrammaticUpdate = false;
-            }
+
+    // Catégories de score
+    const SCORE_CATEGORIES = {
+        'excellent': { 
+            min: 8, 
+            label: 'Excellent', 
+            class: 'score-excellent',
+            icon: 'fas fa-trophy'
+        },
+        'bon': { 
+            min: 6, 
+            label: 'Bon', 
+            class: 'score-bon',
+            icon: 'fas fa-thumbs-up'
+        },
+        'moyen': { 
+            min: 4, 
+            label: 'Moyen', 
+            class: 'score-moyen',
+            icon: 'fas fa-chart-line'
+        },
+        'faible': { 
+            min: 2, 
+            label: 'Faible', 
+            class: 'score-faible',
+            icon: 'fas fa-exclamation-triangle'
+        },
+        'tres_faible': { 
+            min: 0, 
+            label: 'Très faible', 
+            class: 'score-tres-faible',
+            icon: 'fas fa-times-circle'
+        }
+    };
+
+    // Initialisation au chargement
+    $(document).ready(function() {
+        loadScorings();
+        setupScoreSlider();
+        setupEventListeners();
+        
+        // Si on arrive sur la page avec un ID de scoring dans l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const scoringId = urlParams.get('scoring_id');
+        if (scoringId) {
+            editScoring(scoringId);
         }
     });
-    
-    function updateScoreDisplay(value) {
-        const roundedValue = Math.round(value * 2) / 2;
-        $scoreValue.text(roundedValue.toFixed(1));
-        $scoreInput.val(roundedValue.toFixed(1));
-        
-        const imageNum = Math.round(value);
-        $scoreImage.attr('src', `/static/scoring/${imageNum}.png`);
-        
-        let category = 'tres_faible';
-        for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
-            if (value >= cat.min) {
-                category = key;
-            }
-        }
-        
-        const categoryData = SCORE_CATEGORIES[category];
-        $scoreCategory.html(`
-            <i class="${categoryData.icon} me-2"></i>${categoryData.label}
-        `);
-        
-        $scoreDirectInput.val(roundedValue.toFixed(1));
-    }
-    
-    window.updateScoreDisplay = updateScoreDisplay;
-}
 
-// Configuration des écouteurs d'événements
-function setupEventListeners() {
-    // Navigation par onglets
-    $('#scoringTabs button').on('shown.bs.tab', function(e) {
-        const targetTabId = $(e.target).attr('id');
+    // Configuration du slider de score
+    function setupScoreSlider() {
+        const $scoreSlider = $('#scoreSlider');
+        const $scoreValue = $('#scoreValue');
+        const $scoreInput = $('#scoreInput');
+        const $scoreImage = $('#scoreImage');
+        const $scoreCategory = $('#scoreCategory');
+        const $scoreDirectInput = $('#scoreDirectInput');
         
-        if (targetTabId === 'form-tab') {
-            if (editingScoringId) {
-                console.log('✏️  Mode édition actif - conservation des données');
-                // Ne rien faire, garder les données
-            } else {
-                console.log('⚠️  Nouveau formulaire - réinitialisation');
-                window.resetForm();
-            }
-        }
-    });
-    
-    // Filtres
-    $('#anneeFilter, #scoreMin, #scoreMax').on('change', function() {
-        window.loadScorings(1);
-    });
-}
-
-// Fonctions avec SweetAlert
-
-// 1. Réinitialiser le formulaire avec alerte
-window.resetFormWithAlert = function() {
-    if (editingScoringId) {
-        Swal.fire({
-            title: 'Confirmer la réinitialisation',
-            html: `
-                <div class="text-center">
-                    <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
-                    <p>Vous êtes en train de modifier un scoring existant.</p>
-                    <p class="fw-bold">Êtes-vous sûr de vouloir tout réinitialiser ?</p>
-                    <p class="text-muted small">Les modifications non enregistrées seront perdues.</p>
-                </div>
-            `,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Oui, réinitialiser',
-            cancelButtonText: 'Annuler',
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            customClass: {
-                confirmButton: 'btn btn-danger',
-                cancelButton: 'btn btn-secondary'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.resetForm();
-                Swal.fire({
-                    title: 'Formulaire réinitialisé',
-                    text: 'Le formulaire a été réinitialisé avec succès',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-        });
-    } else {
-        Swal.fire({
-            title: 'Confirmer la réinitialisation',
-            text: 'Voulez-vous réinitialiser tous les champs du formulaire ?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Oui, réinitialiser',
-            cancelButtonText: 'Annuler',
-            confirmButtonColor: '#0d80be',
-            cancelButtonColor: '#6c757d'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.resetForm();
-                Swal.fire({
-                    title: 'Réinitialisé !',
-                    text: 'Le formulaire a été réinitialisé.',
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            }
-        });
-    }
-};
-
-// 2. Sauvegarder avec alerte
-window.saveScoringWithAlert = async function() {
-    const anneeId = $('#anneeSelect').val();
-    const score = $('#scoreInput').val();
-    const commentaire = $('#commentaireInput').val();
-    
-    // Validation
-    if (!anneeId) {
-        Swal.fire({
-            title: 'Champ manquant',
-            text: 'Veuillez sélectionner une année',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-        $('#anneeSelect').addClass('is-invalid');
-        return;
-    }
-    
-    if (!score || isNaN(score) || parseFloat(score) < 0 || parseFloat(score) > 10) {
-        Swal.fire({
-            title: 'Score invalide',
-            text: 'Le score doit être un nombre entre 0 et 10',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-        return;
-    }
-    
-    try {
-        const { value: confirm } = await Swal.fire({
-            title: editingScoringId ? 'Mettre à jour le scoring' : 'Créer un nouveau scoring',
-            html: `
-                <div class="text-start">
-                    <p><strong>Année :</strong> ${$('#anneeSelect option:selected').text()}</p>
-                    <p><strong>Score :</strong> <span class="badge score-excellent">${score}</span></p>
-                    ${commentaire ? `<p><strong>Commentaire :</strong> ${commentaire.substring(0, 100)}${commentaire.length > 100 ? '...' : ''}</p>` : ''}
-                    <p class="text-muted small mt-3">Confirmez-vous cette action ?</p>
-                </div>
-            `,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: editingScoringId ? 'Mettre à jour' : 'Créer',
-            cancelButtonText: 'Annuler',
-            confirmButtonColor: '#198754',
-            cancelButtonColor: '#6c757d',
-            showLoaderOnConfirm: true,
-            preConfirm: async () => {
-                return await saveScoring();
+        let isProgrammaticUpdate = false;
+        
+        $scoreSlider.on('input', function() {
+            if (!isProgrammaticUpdate) {
+                const value = parseFloat($(this).val());
+                updateScoreDisplay(value);
             }
         });
         
-        if (confirm && confirm.success) {
-            Swal.fire({
-                title: 'Succès !',
-                text: confirm.message,
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
+        $scoreDirectInput.on('input', function() {
+            const value = $(this).val().trim();
+            if (value && !isNaN(value)) {
+                const numValue = parseFloat(value);
+                if (numValue >= 0 && numValue <= 10) {
+                    isProgrammaticUpdate = true;
+                    $scoreSlider.val(numValue);
+                    updateScoreDisplay(numValue);
+                    isProgrammaticUpdate = false;
+                }
+            }
+        });
+        
+        function updateScoreDisplay(value) {
+            const roundedValue = Math.round(value * 2) / 2;
+            $scoreValue.text(roundedValue.toFixed(1));
+            $scoreInput.val(roundedValue.toFixed(1));
             
-            // Redirection vers l'onglet listing
-            setTimeout(() => {
-                $('#listing-tab').tab('show');
-            }, 500);
+            const imageNum = Math.round(value);
+            $scoreImage.attr('src', `/static/scoring/${imageNum}.png`);
+            
+            let category = 'tres_faible';
+            for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
+                if (value >= cat.min) {
+                    category = key;
+                }
+            }
+            
+            const categoryData = SCORE_CATEGORIES[category];
+            $scoreCategory.html(`
+                <i class="${categoryData.icon} me-2"></i>${categoryData.label}
+            `);
+            
+            $scoreDirectInput.val(roundedValue.toFixed(1));
         }
-    } catch (error) {
-        console.error('Erreur:', error);
+        
+        window.updateScoreDisplay = updateScoreDisplay;
     }
-};
 
-// 3. Enregistrer comme brouillon avec alerte
-window.saveAsDraftWithAlert = function() {
-    const score = $('#scoreInput').val();
-    const anneeId = $('#anneeSelect').val();
-    
-    if (!anneeId) {
-        Swal.fire({
-            title: 'Année requise',
-            text: 'Veuillez sélectionner une année pour enregistrer le brouillon',
-            icon: 'warning',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
+    // Configuration des écouteurs d'événements - VERSION CORRIGÉE
+    function setupEventListeners() {
+        // Soumission du formulaire
+        $('#scoringForm').on('submit', async function(e) {
+            e.preventDefault();
+            await saveScoring();
         });
-        return;
+        
+        // Confirmation suppression
+        $('#confirmDelete').on('click', function() {
+            if (deleteScoringId) {
+                deleteScoring(deleteScoringId);
+            }
+        });
+        
+        // Navigation par onglets - CORRECTION ICI
+        $('#scoringTabs button').on('shown.bs.tab', function(e) {
+            const targetTabId = $(e.target).attr('id');
+            
+            if (targetTabId === 'form-tab') {
+                if (editingScoringId) {
+                    console.log('✏️  Mode édition actif - conservation des données');
+                    // Ne rien faire, garder les données
+                } else {
+                    console.log('⚠️  Nouveau formulaire - réinitialisation');
+                    resetForm();
+                }
+            }
+        });
+        
+        // Filtres
+        $('#anneeFilter, #scoreMin, #scoreMax').on('change', function() {
+            loadScorings(1);
+        });
     }
-    
-    Swal.fire({
-        title: 'Enregistrer comme brouillon',
-        text: 'Voulez-vous enregistrer ce scoring comme brouillon ?',
-        icon: 'info',
-        showCancelButton: true,
-        confirmButtonText: 'Enregistrer brouillon',
-        cancelButtonText: 'Annuler',
-        confirmButtonColor: '#6c757d',
-        cancelButtonColor: '#0d80be'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Simuler l'enregistrement
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+
+    // Charger les scorings
+    async function loadScorings(page = 1) {
+        try {
+            currentPage = page;
+            showLoading(true);
+            
+            let params = new URLSearchParams();
+            params.append('page', page);
+            params.append('acheteur_id', ACHEETEUR_ID);
+            
+            const anneeFilter = $('#anneeFilter').val();
+            const scoreMin = $('#scoreMin').val();
+            const scoreMax = $('#scoreMax').val();
+            
+            if (anneeFilter) params.append('annee_id', anneeFilter);
+            if (scoreMin) params.append('score_min', scoreMin);
+            if (scoreMax) params.append('score_max', scoreMax);
+            
+            const url = `${API_BASE}/scoring/?${params}`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json'
                 }
             });
             
-            Toast.fire({
-                icon: 'success',
-                title: 'Brouillon enregistré !'
-            });
-            
-            // Vous pouvez ajouter ici la logique d'enregistrement réel
-            console.log('Brouillon enregistré avec score:', score);
-        }
-    });
-};
-
-// 4. Réinitialiser les filtres avec alerte
-window.resetFiltersWithAlert = function() {
-    Swal.fire({
-        title: 'Réinitialiser les filtres',
-        text: 'Voulez-vous réinitialiser tous les filtres ?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Oui, réinitialiser',
-        cancelButtonText: 'Annuler',
-        confirmButtonColor: '#0d80be',
-        cancelButtonColor: '#6c757d'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            window.resetFilters();
-            Swal.fire({
-                title: 'Filtres réinitialisés',
-                text: 'Tous les filtres ont été réinitialisés',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        }
-    });
-};
-
-// 5. Confirmer la suppression avec SweetAlert
-window.confirmDelete = function(scoringId) {
-    deleteScoringId = scoringId;
-    
-    Swal.fire({
-        title: 'Confirmer la suppression',
-        html: `
-            <div class="text-center">
-                <i class="fas fa-trash-alt text-danger fa-3x mb-3"></i>
-                <p class="fw-bold">Êtes-vous sûr de vouloir supprimer ce scoring ?</p>
-                <p class="text-muted small">Cette action est irréversible et supprimera définitivement le scoring.</p>
-            </div>
-        `,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Oui, supprimer',
-        cancelButtonText: 'Annuler',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        customClass: {
-            confirmButton: 'btn btn-danger',
-            cancelButton: 'btn btn-secondary'
-        },
-        reverseButtons: true
-    }).then((result) => {
-        if (result.isConfirmed) {
-            deleteScoring(scoringId);
-        }
-    });
-};
-
-// 6. Afficher le commentaire avec SweetAlert
-window.viewComment = async function(scoringId) {
-    try {
-        const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'Content-Type': 'application/json'
+            if (response.ok) {
+                const data = await response.json();
+                renderScoringTable(data.results);
+                renderPagination(data.count, page);
+                updateScoringCount(data.count);
+                
+                if (data.count === 0) {
+                    $('#emptyMessage').show();
+                } else {
+                    $('#emptyMessage').hide();
+                }
+            } else {
+                throw new Error('Erreur lors du chargement des données');
             }
-        });
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', 'Impossible de charger les scorings', 'error');
+            $('#scoringTableBody').html(`
+                <tr>
+                    <td colspan="8" class="text-center text-danger py-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Erreur lors du chargement des données
+                    </td>
+                </tr>
+            `);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Afficher les scorings dans le tableau
+    function renderScoringTable(scorings) {
+        const tbody = $('#scoringTableBody');
+        tbody.empty();
         
-        if (response.ok) {
-            const scoring = await response.json();
-            const comment = scoring.commentaire || 'Aucun commentaire disponible';
+        if (!scorings || scorings.length === 0) {
+            $('#emptyMessage').show();
+            return;
+        }
+        
+        scorings.forEach(scoring => {
+            const createdDate = new Date(scoring.created_at).toLocaleDateString('fr-FR');
+            const commentPreview = scoring.commentaire ? 
+                (scoring.commentaire.length > 50 ? 
+                    scoring.commentaire.substring(0, 50) + '...' : 
+                    scoring.commentaire) : 
+                '-';
             
-            Swal.fire({
-                title: 'Commentaire détaillé',
-                html: `
-                    <div class="text-start" style="max-height: 400px; overflow-y: auto; padding: 10px;">
-                        <p class="mb-3"><strong>Score :</strong> ${scoring.score || 'N/A'}</p>
-                        <p class="mb-3"><strong>Année :</strong> ${scoring.annee_details?.annee || 'N/A'}</p>
-                        <hr>
-                        <div class="bg-light p-3 rounded" style="white-space: pre-line;">
-                            ${comment}
+            const scoreNum = parseFloat(scoring.score);
+            let badgeClass = 'score-badge ';
+            let category = 'Non évalué';
+            
+            if (!isNaN(scoreNum)) {
+                if (scoreNum >= 8) {
+                    badgeClass += 'score-excellent';
+                    category = 'Excellent';
+                } else if (scoreNum >= 6) {
+                    badgeClass += 'score-bon';
+                    category = 'Bon';
+                } else if (scoreNum >= 4) {
+                    badgeClass += 'score-moyen';
+                    category = 'Moyen';
+                } else if (scoreNum >= 2) {
+                    badgeClass += 'score-faible';
+                    category = 'Faible';
+                } else {
+                    badgeClass += 'score-tres-faible';
+                    category = 'Très faible';
+                }
+            }
+            
+            const row = `
+                <tr>
+                    <td>${scoring.id || '-'}</td>
+                    <td>${scoring.annee_details?.annee || 'N/A'}</td>
+                    <td>
+                        <span class="${badgeClass}">
+                            ${scoring.score || '-'}
+                        </span>
+                    </td>
+                    <td>${category}</td>
+                    <td>
+                        ${scoring.commentaire ? 
+                            `<span class="comment-preview" onclick="viewComment(${scoring.id})">
+                                ${commentPreview}
+                            </span>` : 
+                            '-'
+                        }
+                    </td>
+                    <td>${createdDate}</td>
+                    <td>${scoring.created_by_details?.username || 'System'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editScoring(${scoring.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="confirmDelete(${scoring.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    // Afficher la pagination
+    function renderPagination(total, currentPage) {
+        const container = $('#paginationContainer');
+        container.empty();
+        
+        if (!total || total <= 10) return;
+        
+        const totalPages = Math.ceil(total / 10);
+        let paginationHTML = `
+            <ul class="pagination">
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadScorings(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+        `;
+        
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="loadScorings(${i})">${i}</a>
+                </li>
+            `;
+        }
+        
+        paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="loadScorings(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        `;
+        
+        container.html(paginationHTML);
+    }
+
+    // Mettre à jour le compteur
+    function updateScoringCount(count) {
+        $('#scoringCount').text(`${count} scoring(s) trouvé(s)`);
+    }
+
+    // Sauvegarder un scoring - VERSION CORRIGÉE
+    async function saveScoring() {
+        const anneeId = $('#anneeSelect').val();
+        const score = $('#scoreInput').val();
+        const commentaire = $('#commentaireInput').val();
+        
+        console.log('📝 saveScoring appelé');
+        console.log('   editingScoringId:', editingScoringId);
+        
+        if (!anneeId) {
+            showToast('Erreur', 'Veuillez sélectionner une année', 'error');
+            $('#anneeSelect').addClass('is-invalid');
+            return;
+        }
+        
+        if (!score || isNaN(score) || parseFloat(score) < 0 || parseFloat(score) > 10) {
+            showToast('Erreur', 'Le score doit être un nombre entre 0 et 10', 'error');
+            return;
+        }
+        
+        try {
+            showLoading(true);
+            
+            const scoringData = {
+                annee: parseInt(anneeId),
+                acheteur: parseInt(ACHEETEUR_ID),
+                score: score,
+                commentaire: commentaire || ''
+            };
+            
+            console.log('📤 Envoi:', scoringData);
+            
+            let url = `${API_BASE}/scoring/create-or-update/`;
+            let method = 'POST';
+            
+            if (editingScoringId) {
+                console.log(`✏️  Mode MISE À JOUR pour ID: ${editingScoringId}`);
+                url = `${API_BASE}/scoring/${editingScoringId}/`;
+                method = 'PUT';
+            } else {
+                console.log('🆕 Mode CRÉATION');
+            }
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(scoringData)
+            });
+            
+            const contentType = response.headers.get('content-type');
+            
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('❌ Réponse non-JSON:', text.substring(0, 500));
+                throw new Error(`Erreur serveur (${response.status})`);
+            }
+            
+            const responseData = await response.json();
+            console.log('📥 Réponse:', responseData);
+            
+            if (response.ok) {
+                const message = editingScoringId ? 
+                    'Scoring mis à jour avec succès' : 
+                    'Scoring créé avec succès';
+                
+                showToast('Succès', message, 'success');
+                
+                await loadScorings(currentPage);
+                
+                editingScoringId = null;
+                resetForm();
+                $('#listing-tab').tab('show');
+                
+            } else {
+                console.error('❌ Erreur API:', responseData);
+                
+                let errorMessage = 'Erreur lors de la sauvegarde';
+                
+                if (responseData.detail) {
+                    errorMessage = responseData.detail;
+                } else if (typeof responseData === 'object') {
+                    const errors = [];
+                    for (const [field, fieldErrors] of Object.entries(responseData)) {
+                        if (Array.isArray(fieldErrors)) {
+                            errors.push(`${field}: ${fieldErrors.join(', ')}`);
+                        }
+                    }
+                    if (errors.length > 0) {
+                        errorMessage = errors.join('\n');
+                    }
+                }
+                
+                showToast('Erreur', errorMessage, 'error');
+            }
+        } catch (error) {
+            console.error('❌ Erreur:', error);
+            showToast('Erreur', error.message || 'Erreur lors de la sauvegarde', 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Éditer un scoring - VERSION FINALE
+    async function editScoring(scoringId) {
+        try {
+            showLoading(true);
+            console.log(`🔄 Chargement du scoring ID: ${scoringId}`);
+            
+            const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const scoring = await response.json();
+            console.log('✅ Données reçues:', scoring);
+            
+            // IMPORTANT: Stocker l'ID D'ABORD
+            editingScoringId = scoring.id;
+            console.log(`📝 Mode édition activé pour ID: ${editingScoringId}`);
+            
+            let anneeId = scoring.annee || (scoring.annee_details && scoring.annee_details.id);
+            let scoreValue = scoring.score || '5';
+            
+            console.log(`📅 Année ID: ${anneeId}`);
+            console.log(`🎯 Score: ${scoreValue}`);
+            
+            // Remplir le formulaire
+            if (anneeId) {
+                $('#anneeSelect').val(anneeId.toString());
+                console.log(`✅ Année sélectionnée: ${$('#anneeSelect option:selected').text()}`);
+            }
+            
+            const scoreFloat = parseFloat(scoreValue) || 5;
+            $('#scoreInput').val(scoreValue);
+            $('#scoreSlider').val(scoreFloat);
+            $('#scoreDirectInput').val(scoreValue);
+            $('#commentaireInput').val(scoring.commentaire || '');
+            
+            // Mettre à jour l'affichage
+            const roundedValue = Math.round(scoreFloat * 2) / 2;
+            $('#scoreValue').text(roundedValue.toFixed(1));
+            
+            const imageNum = Math.round(scoreFloat);
+            $('#scoreImage').attr('src', `/static/scoring/${imageNum}.png`);
+            
+            let category = 'tres_faible';
+            for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
+                if (scoreFloat >= cat.min) {
+                    category = key;
+                }
+            }
+            
+            const categoryData = SCORE_CATEGORIES[category];
+            $('#scoreCategory').html(`
+                <i class="${categoryData.icon} me-2"></i>${categoryData.label}
+            `);
+            
+            // Basculer vers l'onglet formulaire
+            $('#form-tab').tab('show');
+            
+            showToast('Info', 'Formulaire prêt pour la modification', 'info');
+            
+            console.log('✅ Formulaire rempli - Mode édition actif');
+            
+        } catch (error) {
+            console.error('❌ Erreur editScoring:', error);
+            showToast('Erreur', `Impossible de charger le scoring: ${error.message}`, 'error');
+            editingScoringId = null;
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Confirmer la suppression
+    function confirmDelete(scoringId) {
+        deleteScoringId = scoringId;
+        $('#deleteModal').modal('show');
+    }
+
+    // Supprimer un scoring
+    async function deleteScoring(scoringId) {
+        try {
+            showLoading(true);
+            
+            const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (response.ok) {
+                showToast('Succès', 'Scoring supprimé avec succès', 'success');
+                
+                if (editingScoringId === scoringId) {
+                    editingScoringId = null;
+                    resetForm();
+                    $('#listing-tab').tab('show');
+                }
+                
+                loadScorings(currentPage);
+            } else {
+                throw new Error('Erreur lors de la suppression');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', 'Impossible de supprimer le scoring', 'error');
+        } finally {
+            showLoading(false);
+            $('#deleteModal').modal('hide');
+            deleteScoringId = null;
+        }
+    }
+
+    // Réinitialiser le formulaire
+    function resetForm() {
+        console.log('🚀 resetForm() appelé');
+        
+        editingScoringId = null;
+        
+        $('#anneeSelect').val('').removeClass('is-invalid');
+        $('#scoreInput').val('5');
+        $('#scoreSlider').val(5);
+        $('#scoreDirectInput').val('5');
+        $('#commentaireInput').val('');
+        
+        $('#scoreValue').text('5.0');
+        $('#scoreImage').attr('src', '/static/scoring/5.png');
+        $('#scoreCategory').html('<i class="fas fa-chart-line me-2"></i>Moyen');
+        
+        console.log('✅ Formulaire réinitialisé');
+    }
+
+    // Réinitialiser les filtres
+    function resetFilters() {
+        $('#anneeFilter').val('');
+        $('#scoreMin').val('');
+        $('#scoreMax').val('');
+        loadScorings(1);
+    }
+
+    // Enregistrer comme brouillon
+    function saveAsDraft() {
+        $('#scoringForm').submit();
+    }
+
+    // Basculer vers l'onglet formulaire
+    function switchToFormTab() {
+        editingScoringId = null; // Pas en mode édition
+        resetForm();
+        $('#form-tab').tab('show');
+    }
+
+    // Afficher un commentaire
+    async function viewComment(scoringId) {
+        try {
+            const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const scoring = await response.json();
+                $('#commentContent').text(scoring.commentaire || 'Aucun commentaire');
+                $('#viewCommentModal').modal('show');
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+            showToast('Erreur', 'Impossible de charger le commentaire', 'error');
+        }
+    }
+
+    // Afficher un loader
+    function showLoading(show) {
+        if (show) {
+            if ($('#loadingOverlay').length === 0) {
+                $('body').append(`
+                    <div id="loadingOverlay">
+                        <div class="loading-spinner-premium">
+                            <div class="spinner"></div>
+                            <div class="text">Chargement...</div>
                         </div>
                     </div>
-                `,
-                width: '600px',
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal2-container-custom'
+                `);
+            }
+            $('#loadingOverlay').show();
+        } else {
+            $('#loadingOverlay').hide();
+        }
+    }
+
+    // Afficher une notification
+    function showToast(title, message, type = 'info') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+        
+        Toast.fire({
+            icon: type,
+            title: title,
+            text: message
+        });
+    }
+
+    // Fonction utilitaire pour récupérer le cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
-            });
-        } else {
-            throw new Error('Impossible de charger le commentaire');
-        }
-    } catch (error) {
-        Swal.fire({
-            title: 'Erreur',
-            text: 'Impossible de charger le commentaire',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-    }
-};
-
-// Fonctions de base
-window.loadScorings = async function(page = 1) {
-    try {
-        currentPage = page;
-        showLoading(true);
-        
-        let params = new URLSearchParams();
-        params.append('page', page);
-        params.append('acheteur_id', ACHEETEUR_ID);
-        
-        const anneeFilter = $('#anneeFilter').val();
-        const scoreMin = $('#scoreMin').val();
-        const scoreMax = $('#scoreMax').val();
-        
-        if (anneeFilter) params.append('annee_id', anneeFilter);
-        if (scoreMin) params.append('score_min', scoreMin);
-        if (scoreMax) params.append('score_max', scoreMax);
-        
-        const url = `${API_BASE}/scoring/?${params}`;
-        
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            window.renderScoringTable(data.results);
-            window.renderPagination(data.count, page);
-            updateScoringCount(data.count);
-            
-            if (data.count === 0) {
-                $('#emptyMessage').show();
-            } else {
-                $('#emptyMessage').hide();
-            }
-        } else {
-            throw new Error('Erreur lors du chargement des données');
-        }
-    } catch (error) {
-        console.error('Erreur:', error);
-        Swal.fire({
-            title: 'Erreur de chargement',
-            text: 'Impossible de charger les scorings',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-        $('#scoringTableBody').html(`
-            <tr>
-                <td colspan="8" class="text-center text-danger py-4">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Erreur lors du chargement des données
-                </td>
-            </tr>
-        `);
-    } finally {
-        showLoading(false);
-    }
-};
-
-// Afficher les scorings dans le tableau
-window.renderScoringTable = function(scorings) {
-    const tbody = $('#scoringTableBody');
-    tbody.empty();
-    
-    if (!scorings || scorings.length === 0) {
-        $('#emptyMessage').show();
-        return;
-    }
-    
-    scorings.forEach(scoring => {
-        const createdDate = new Date(scoring.created_at).toLocaleDateString('fr-FR');
-        const commentPreview = scoring.commentaire ? 
-            (scoring.commentaire.length > 50 ? 
-                scoring.commentaire.substring(0, 50) + '...' : 
-                scoring.commentaire) : 
-            '-';
-        
-        const scoreNum = parseFloat(scoring.score);
-        let badgeClass = 'score-badge ';
-        let category = 'Non évalué';
-        
-        if (!isNaN(scoreNum)) {
-            if (scoreNum >= 8) {
-                badgeClass += 'score-excellent';
-                category = 'Excellent';
-            } else if (scoreNum >= 6) {
-                badgeClass += 'score-bon';
-                category = 'Bon';
-            } else if (scoreNum >= 4) {
-                badgeClass += 'score-moyen';
-                category = 'Moyen';
-            } else if (scoreNum >= 2) {
-                badgeClass += 'score-faible';
-                category = 'Faible';
-            } else {
-                badgeClass += 'score-tres-faible';
-                category = 'Très faible';
             }
         }
-        
-        const row = `
-            <tr>
-                <td>${scoring.id || '-'}</td>
-                <td>${scoring.annee_details?.annee || 'N/A'}</td>
-                <td>
-                    <span class="${badgeClass}">
-                        ${scoring.score || '-'}
-                    </span>
-                </td>
-                <td>${category}</td>
-                <td>
-                    ${scoring.commentaire ? 
-                        `<span class="comment-preview" onclick="window.viewComment(${scoring.id})">
-                            ${commentPreview}
-                        </span>` : 
-                        '-'
-                    }
-                </td>
-                <td>${createdDate}</td>
-                <td>${scoring.created_by_details?.username || 'System'}</td>
-                <td>
-                    <button class="btn btn-sm btn-primary me-1" onclick="window.editScoring(${scoring.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="window.confirmDelete(${scoring.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-        tbody.append(row);
-    });
-};
-
-// Afficher la pagination
-window.renderPagination = function(total, currentPage) {
-    const container = $('#paginationContainer');
-    container.empty();
-    
-    if (!total || total <= 10) return;
-    
-    const totalPages = Math.ceil(total / 10);
-    let paginationHTML = `
-        <ul class="pagination">
-            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="window.loadScorings(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-            </li>
-    `;
-    
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-    
-    for (let i = startPage; i <= endPage; i++) {
-        paginationHTML += `
-            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="window.loadScorings(${i})">${i}</a>
-            </li>
-        `;
+        return cookieValue;
     }
+
+    // Exposer les fonctions au scope global
+    window.loadScorings = loadScorings;
+    window.editScoring = editScoring;
+    window.confirmDelete = confirmDelete;
+    window.resetForm = resetForm;
+    window.resetFilters = resetFilters;
+    window.saveAsDraft = saveAsDraft;
+    window.switchToFormTab = switchToFormTab;
+    window.viewComment = viewComment;
+        
     
-    paginationHTML += `
-            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="window.loadScorings(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-        </ul>
-    `;
-    
-    container.html(paginationHTML);
-};
-
-// Mettre à jour le compteur
-function updateScoringCount(count) {
-    $('#scoringCount').text(`${count} scoring(s) trouvé(s)`);
-}
-
-async function saveScoring() {
-    const anneeId = $('#anneeSelect').val();
-    const score = $('#scoreInput').val();
-    const commentaire = $('#commentaireInput').val();
-    
-    try {
-        const scoringData = {
-            annee: parseInt(anneeId),
-            acheteur: parseInt(ACHEETEUR_ID),
-            score: score,
-            commentaire: commentaire || ''
-        };
-        
-        let url = `${API_BASE}/scoring/create-or-update/`;
-        let method = 'POST';
-        
-        if (editingScoringId) {
-            url = `${API_BASE}/scoring/${editingScoringId}/`;
-            method = 'PUT';
-        }
-        
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(scoringData)
-        });
-        
-        const responseData = await response.json();
-        
-        if (response.ok) {
-            await window.loadScorings(currentPage);
-            editingScoringId = null;
-            window.resetForm();
-            return {
-                success: true,
-                message: editingScoringId ? 'Scoring mis à jour avec succès' : 'Scoring créé avec succès'
-            };
-        } else {
-            let errorMessage = 'Erreur lors de la sauvegarde';
-            if (responseData.detail) {
-                errorMessage = responseData.detail;
-            }
-            throw new Error(errorMessage);
-        }
-    } catch (error) {
-        console.error('Erreur:', error);
-        Swal.fire({
-            title: 'Erreur',
-            text: error.message || 'Erreur lors de la sauvegarde',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-        return { success: false, message: error.message };
-    }
-}
-
-// Éditer un scoring
-window.editScoring = async function(scoringId) {
-    try {
-        showLoading(true);
-        console.log(`🔄 Chargement du scoring ID: ${scoringId}`);
-        
-        const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'Accept': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const scoring = await response.json();
-        console.log('✅ Données reçues:', scoring);
-        
-        // IMPORTANT: Stocker l'ID D'ABORD
-        editingScoringId = scoring.id;
-        console.log(`📝 Mode édition activé pour ID: ${editingScoringId}`);
-        
-        let anneeId = scoring.annee || (scoring.annee_details && scoring.annee_details.id);
-        let scoreValue = scoring.score || '5';
-        
-        console.log(`📅 Année ID: ${anneeId}`);
-        console.log(`🎯 Score: ${scoreValue}`);
-        
-        // Remplir le formulaire
-        if (anneeId) {
-            $('#anneeSelect').val(anneeId.toString());
-            console.log(`✅ Année sélectionnée: ${$('#anneeSelect option:selected').text()}`);
-        }
-        
-        const scoreFloat = parseFloat(scoreValue) || 5;
-        $('#scoreInput').val(scoreValue);
-        $('#scoreSlider').val(scoreFloat);
-        $('#scoreDirectInput').val(scoreValue);
-        $('#commentaireInput').val(scoring.commentaire || '');
-        
-        // Mettre à jour l'affichage
-        const roundedValue = Math.round(scoreFloat * 2) / 2;
-        $('#scoreValue').text(roundedValue.toFixed(1));
-        
-        const imageNum = Math.round(scoreFloat);
-        $('#scoreImage').attr('src', `/static/scoring/${imageNum}.png`);
-        
-        let category = 'tres_faible';
-        for (const [key, cat] of Object.entries(SCORE_CATEGORIES)) {
-            if (scoreFloat >= cat.min) {
-                category = key;
-            }
-        }
-        
-        const categoryData = SCORE_CATEGORIES[category];
-        $('#scoreCategory').html(`
-            <i class="${categoryData.icon} me-2"></i>${categoryData.label}
-        `);
-        
-        // Basculer vers l'onglet formulaire
-        $('#form-tab').tab('show');
-        
-        Swal.fire({
-            title: 'Mode édition activé',
-            text: 'Vous pouvez maintenant modifier ce scoring',
-            icon: 'info',
-            timer: 1500,
-            showConfirmButton: false
-        });
-        
-        console.log('✅ Formulaire rempli - Mode édition actif');
-        
-    } catch (error) {
-        console.error('❌ Erreur editScoring:', error);
-        Swal.fire({
-            title: 'Erreur',
-            text: `Impossible de charger le scoring: ${error.message}`,
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-        editingScoringId = null;
-    } finally {
-        showLoading(false);
-    }
-};
-
-// Supprimer un scoring
-async function deleteScoring(scoringId) {
-    try {
-        showLoading(true);
-        
-        const response = await fetch(`${API_BASE}/scoring/${scoringId}/`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + ACCESS_TOKEN,
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        });
-        
-        if (response.ok) {
-            if (editingScoringId === scoringId) {
-                editingScoringId = null;
-                window.resetForm();
-                $('#listing-tab').tab('show');
-            }
-            
-            await window.loadScorings(currentPage);
-            
-            Swal.fire({
-                title: 'Supprimé !',
-                text: 'Le scoring a été supprimé avec succès',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        } else {
-            throw new Error('Erreur lors de la suppression');
-        }
-    } catch (error) {
-        console.error('Erreur:', error);
-        Swal.fire({
-            title: 'Erreur',
-            text: 'Impossible de supprimer le scoring',
-            icon: 'error',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#0d80be'
-        });
-    } finally {
-        showLoading(false);
-    }
-}
-
-// Réinitialiser le formulaire
-window.resetForm = function() {
-    console.log('🚀 resetForm() appelé');
-    
-    editingScoringId = null;
-    
-    $('#anneeSelect').val('').removeClass('is-invalid');
-    $('#scoreInput').val('5');
-    $('#scoreSlider').val(5);
-    $('#scoreDirectInput').val('5');
-    $('#commentaireInput').val('');
-    
-    $('#scoreValue').text('5.0');
-    $('#scoreImage').attr('src', '/static/scoring/5.png');
-    $('#scoreCategory').html('<i class="fas fa-chart-line me-2"></i>Moyen');
-    
-    console.log('✅ Formulaire réinitialisé');
-};
-
-// Réinitialiser les filtres
-window.resetFilters = function() {
-    $('#anneeFilter').val('');
-    $('#scoreMin').val('');
-    $('#scoreMax').val('');
-    window.loadScorings(1);
-};
-
-// Basculer vers l'onglet formulaire
-window.switchToFormTab = function() {
-    editingScoringId = null; // Pas en mode édition
-    window.resetForm();
-    $('#form-tab').tab('show');
-    Swal.fire({
-        title: 'Prêt à créer',
-        text: 'Le formulaire est prêt pour un nouveau scoring',
-        icon: 'info',
-        timer: 1500,
-        showConfirmButton: false
-    });
-};
-
-// Afficher un loader
-function showLoading(show) {
-    if (show) {
-        Swal.fire({
-            title: 'Chargement...',
-            text: 'Veuillez patienter',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-    } else {
-        Swal.close();
-    }
-}
-
-// Fonction utilitaire pour récupérer le cookie CSRF
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-    
-// Fonction pour récupérer le token CSRF
-function getCsrfToken() {
-    const name = 'csrftoken';
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-// Intercepteur pour les erreurs d'authentification
-$(document).ajaxError(function(event, jqxhr, settings, thrownError) {
-    if (jqxhr.status === 401) {
-        // Token expiré, tenter de le rafraîchir
-        refreshAccessToken();
-        return false; // Empêcher d'autres gestionnaires d'erreurs
-    }
 });
-
-// Fonction pour rafraîchir le token
-function refreshAccessToken() {
-    Swal.fire({
-        title: 'Session expirée',
-        text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Rafraîchir',
-        cancelButtonText: 'Recharger la page',
-        showLoaderOnConfirm: true,
-        preConfirm: () => {
-            return $.ajax({
-                url: '/api/token/refresh/',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ refresh: refreshToken }),
-                success: function(response) {
-                    accessToken = response.access;
-                    localStorage.setItem('access_token', accessToken);
-                    localStorage.setItem('refresh_token', refreshToken);
-                    
-                    // Recharger les données
-                    loadUsers(currentPage, currentSearch);
-                    
-                    return true;
-                },
-                error: function() {
-                    return false;
-                }
-            });
-        }
-    }).then((result) => {
-        if (result.dismiss === Swal.DismissReason.cancel) {
-            window.location.reload();
-        } else if (result.isConfirmed) {
-            Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
-        } else {
-            Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
-        }
-    });
-}
-
 </script>
 {% endblock %}

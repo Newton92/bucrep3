@@ -1,0 +1,2412 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<style>
+    .year-tab-content {
+        display: none;
+    }
+    .year-tab-content.active {
+        display: block;
+    }
+    .summary-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .computed-total {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    .category-header {
+        background-color: #e9ecef;
+        font-weight: 600;
+    }
+    .compact-table {
+        font-size: 0.85rem;
+    }
+    .compact-table th {
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan Classique - Actifs de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Acheteur Info Card START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border">
+            <div class="card-header border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0" id="editNom">{{ acheteur.nom }}</h5>
+                        <p class="text-muted mb-0" id="editSigle">{{ acheteur.sigle }}</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-dark" id="editCode">{{ acheteur.code }}</span>
+                        <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}?token={{ user.reset_token }}" 
+                           class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-arrow-left"></i> Retour à l'acheteur
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Acheteur Info Card END -->
+
+<!-- Vue par Année avec Onglets START -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border">
+            <!-- Onglets des années -->
+            <div class="card-header border-bottom">
+                <ul class="nav nav-tabs card-header-tabs" id="yearTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" 
+                                data-bs-target="#summary-tab-pane" type="button" role="tab">
+                            <i class="bi bi-bar-chart me-1"></i>Vue Synthétique
+                        </button>
+                    </li>
+                    {% for annee in annee_list %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="year-{{ annee.id }}-tab" data-bs-toggle="tab" 
+                                data-bs-target="#year-{{ annee.id }}-pane" type="button" role="tab">
+                            Année {{ annee.annee }}
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <!-- Contenu des onglets -->
+                <div class="tab-content" id="yearTabContent">
+                    <!-- Onglet Synthèse -->
+                    <div class="tab-pane fade show active" id="summary-tab-pane" role="tabpanel">
+                        <div class="row" id="yearSummary">
+                            <!-- Le contenu sera chargé dynamiquement -->
+                        </div>
+                    </div>
+
+                    <!-- Onglets par année -->
+                    {% for annee in annee_list %}
+                    <div class="tab-pane fade" id="year-{{ annee.id }}-pane" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Tableau détaillé pour l'année -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered compact-table" id="actifTable-{{ annee.id }}">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Catégorie</th>
+                                                <th>Élément</th>
+                                                <th>Valeur</th>
+                                                <th>% Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Le contenu sera chargé dynamiquement -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <!-- Graphique et résumé -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Résumé {{ annee.annee }}</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="chart-{{ annee.id }}" height="200"></canvas>
+                                        <div class="mt-3" id="summary-{{ annee.id }}">
+                                            <!-- Résumé calculé -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Vue par Année avec Onglets END -->
+
+<!-- Bouton d'ajout multi-années START -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" 
+                    data-bs-target="#addMultiYearModal">
+                <i class="bi bi-plus-circle me-1"></i>Ajouter pour N, N-1, N-2
+            </button>
+            
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-download me-1"></i>Exporter
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportToExcel()">Excel</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportToPDF()">PDF</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportComparison()">Comparaison Années</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Bouton d'ajout multi-années END -->
+
+<!-- Modal pour ajout multi-années START -->
+<div class="modal fade" id="addMultiYearModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter les Actifs sur 3 Ans</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMultiYearForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Année N ({{ current_year }})</h6>
+                            <input type="hidden" name="acheteur_n" value="{{ acheteur.id }}">
+                            <div class="mb-2">
+                                <label class="form-label">Année</label>
+                                <select class="form-select" name="annee_n" required>
+                                    {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}" {% if annee.annee == current_year %}selected{% endif %}>
+                                        {{ annee.annee }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <!-- Champs compressés pour N -->
+                            {% include 'main/root/acheteur/bilans/classique/partials/actif_fields_compact.html' with suffix='n' %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6>Année N-1 ({{ current_year|add:"-1" }})</h6>
+                            <input type="hidden" name="acheteur_n1" value="{{ acheteur.id }}">
+                            <div class="mb-2">
+                                <label class="form-label">Année</label>
+                                <select class="form-select" name="annee_n1" required>
+                                    {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}" {% if annee.annee == current_year|add:"-1" %}selected{% endif %}>
+                                        {{ annee.annee }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% include 'main/root/acheteur/bilans/classique/partials/actif_fields_compact.html' with suffix='n1' %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <h6>Année N-2 ({{ current_year|add:"-2" }})</h6>
+                            <input type="hidden" name="acheteur_n2" value="{{ acheteur.id }}">
+                            <div class="mb-2">
+                                <label class="form-label">Année</label>
+                                <select class="form-select" name="annee_n2" required>
+                                    {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}" {% if annee.annee == current_year|add:"-2" %}selected{% endif %}>
+                                        {{ annee.annee }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% include 'main/root/acheteur/bilans/classique/partials/actif_fields_compact.html' with suffix='n2' %}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Enregistrer les 3 années</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal pour ajout multi-années END -->
+
+<!-- Modal pour modification START -->
+<div class="modal fade" id="editActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier l'Actif - Année <span id="editYearDisplay"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editActifForm">
+                    <input type="hidden" id="editActifId" name="id">
+                    <input type="hidden" id="editAcheteurId" name="acheteur" value="{{ acheteur.id }}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Année</label>
+                                <select class="form-select" id="editAnnee" name="annee" required>
+                                    {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info mb-0 p-2">
+                                <small>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Les totaux seront recalculés automatiquement après la modification
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Les mêmes champs que pour l'ajout, mais pré-remplis -->
+                    <div class="accordion" id="editAccordion">
+                        
+                        <!-- Groupe 1: Immobilisations Incorporelles -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseInc">
+                                    <i class="bi bi-cash-coin me-2"></i>Immobilisations Incorporelles
+                                </button>
+                            </h2>
+                            <div id="editCollapseInc" class="accordion-collapse collapse show">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Capital Souscrit Non App</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editCapitalSouscritNonApp" 
+                                                   name="capital_souscrit_non_app"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Frais Recherche Développement</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editFraisRechercheDeveloppement"
+                                                   name="frais_recherche_developpement"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Brevet Licence Logiciels</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editBrevetLicenceLogiciels"
+                                                   name="brevet_licence_logiciels"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Fonds Commercial</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editFondsCommercial"
+                                                   name="fonds_commercial"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Autres Immobilisations Incorporelles</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAutresImmobilisationsIncorporelles"
+                                                   name="autres_immobilisations_incorporelles"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 2: Immobilisations Corporelles -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseCorp">
+                                    <i class="bi bi-building me-2"></i>Immobilisations Corporelles
+                                </button>
+                            </h2>
+                            <div id="editCollapseCorp" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Terrains</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editTerrains"
+                                                   name="terrains"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Constructions</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editConstructions"
+                                                   name="constructions"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Matériels et Outils</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editMaterielsEtOutils"
+                                                   name="materiels_et_outils"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Matériel de Transport</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editMaterielDeTransport"
+                                                   name="materiel_de_transport"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Autres Immos Corporelles</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAutresImmosCorp"
+                                                   name="autres_immos_corp"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Immos en Cours</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editImmosEnCours"
+                                                   name="immos_en_cours"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Avances et Acomptes</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAvancesEtAcptes"
+                                                   name="avances_et_acptes"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 3: Immobilisations Financières -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseFin">
+                                    <i class="bi bi-graph-up me-2"></i>Immobilisations Financières
+                                </button>
+                            </h2>
+                            <div id="editCollapseFin" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Participations</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editParticipations"
+                                                   name="participations"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Prêts</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editPrets"
+                                                   name="prets"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Autres</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAutres"
+                                                   name="autres"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 4: Stocks -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseStocks">
+                                    <i class="bi bi-box-seam me-2"></i>Stocks
+                                </button>
+                            </h2>
+                            <div id="editCollapseStocks" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Stocks MP</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editStocksMP"
+                                                   name="stocks_mp"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Stocks Encours MP</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editStocksEncoursMP"
+                                                   name="stocks_encours_mp"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Stocks PF</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editStocksPF"
+                                                   name="stocks_pf"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Stocks Encours PF</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editStocksEncoursPF"
+                                                   name="stocks_encours_pf"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Stocks Encours Services</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editStocksEncoursServices"
+                                                   name="stocks_encours_services"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Stocks MSES</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editStocksMSES"
+                                                   name="stocks_mses"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 5: Créances -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseCreances">
+                                    <i class="bi bi-receipt me-2"></i>Créances
+                                </button>
+                            </h2>
+                            <div id="editCollapseCreances" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Avances Acomptes Versées</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAvancesAcptesVerses"
+                                                   name="avances_acptes_verses"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Clients et Comptes Rattachés</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editClientsEtCptesRattaches"
+                                                   name="clients_et_cptes_rattaches"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Autres Créances</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAutresCreances"
+                                                   name="autres_creances"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Valeurs à Encaisser</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editValeursAEncaisser"
+                                                   name="valeurs_a_encaisser"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 6: Disponibilités -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseDispo">
+                                    <i class="bi bi-bank me-2"></i>Disponibilités
+                                </button>
+                            </h2>
+                            <div id="editCollapseDispo" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <label class="form-label small">Banques Chèques Postaux Caisse</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editBanquesChequesPostauxCaisse"
+                                                   name="banques_cheques_postaux_caisse"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 7: Comptes de Régularisation -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseRegul">
+                                    <i class="bi bi-calendar-check me-2"></i>Comptes de Régularisation
+                                </button>
+                            </h2>
+                            <div id="editCollapseRegul" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">CCA</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editCCA"
+                                                   name="cca"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Charges à Répartir et Frais d'Établissement</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editChargesARepartirEtFraisEtablissement"
+                                                   name="charges_a_repartir_et_frais_etablissement"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 8: Primes et Autres -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapsePrimes">
+                                    <i class="bi bi-award me-2"></i>Primes et Autres
+                                </button>
+                            </h2>
+                            <div id="editCollapsePrimes" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Primes de RBT</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editPrimesDeRBT"
+                                                   name="primes_de_rbt"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">ECA</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editECA"
+                                                   name="eca"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">ENE</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editENE"
+                                                   name="eene"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Effectif</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editEffectif"
+                                                   name="effectif"
+                                                   step="1" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 9: Provisions et Amortissements -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseProv">
+                                    <i class="bi bi-shield-check me-2"></i>Provisions et Amortissements
+                                </button>
+                            </h2>
+                            <div id="editCollapseProv" class="accordion-collapse collapse">
+                                <div class="accordion-body p-2">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Amortissements</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editAmortissements"
+                                                   name="amortissements"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Provisions Stocks</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editProvisionsStocks"
+                                                   name="provisions_stocks"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Provisions Créances</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editProvisionsCreances"
+                                                   name="provisions_creances"
+                                                   step="0.01" min="0">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Provisions VMP</label>
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="editProvisionsVMP"
+                                                   name="provisions_vmp"
+                                                   step="0.01" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Aperçu des totaux en temps réel -->
+                    <div class="card mt-3">
+                        <div class="card-header py-2">
+                            <h6 class="mb-0"><i class="bi bi-calculator me-1"></i> Aperçu des totaux</h6>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="row small g-1">
+                                <div class="col-4">
+                                    <span>Immobilisé:</span>
+                                    <span id="editPreviewTotalI" class="fw-bold">0</span>
+                                </div>
+                                <div class="col-4">
+                                    <span>Circulant:</span>
+                                    <span id="editPreviewTotalII" class="fw-bold">0</span>
+                                </div>
+                                <div class="col-4">
+                                    <span>Régularisation:</span>
+                                    <span id="editPreviewTotalIII" class="fw-bold">0</span>
+                                </div>
+                                <div class="col-12 border-top pt-1 mt-1">
+                                    <span>Total Général:</span>
+                                    <span id="editPreviewGeneralTotal" class="fw-bold fs-6 text-primary">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i> Mettre à jour
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="deleteActifBtn">
+                            <i class="bi bi-trash me-1"></i> Supprimer
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-1"></i> Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal pour modification END -->
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Script pour le calcul en temps réel (optionnel)
+$(document).ready(function() {
+    function calculatePreview(suffix) {
+        let totalInc = 0;
+        let totalCorp = 0;
+        let totalStocks = 0;
+        let totalCreances = 0;
+        
+        // Calcul des totaux par catégorie
+        $(`[name$="_${suffix}"]`).each(function() {
+            const val = parseFloat($(this).val()) || 0;
+            const name = $(this).attr('name');
+            
+            if (name.includes('frais_recherche') || name.includes('brevet') || 
+                name.includes('fonds_commercial') || name.includes('autres_immobilisations_incorporelles')) {
+                totalInc += val;
+            }
+            
+            if (name.includes('terrains') || name.includes('constructions') || 
+                name.includes('materiels_et_outils') || name.includes('materiel_de_transport') ||
+                name.includes('autres_immos_corp') || name.includes('immos_en_cours') ||
+                name.includes('avances_et_acptes')) {
+                totalCorp += val;
+            }
+            
+            if (name.includes('stocks_')) {
+                totalStocks += val;
+            }
+            
+            if (name.includes('avances_acptes_verses') || name.includes('clients_et_cptes_rattaches') ||
+                name.includes('autres_creances') || name.includes('valeurs_a_encaisser')) {
+                totalCreances += val;
+            }
+        });
+        
+        const total = totalInc + totalCorp + totalStocks + totalCreances;
+        
+        $(`#previewInc${suffix}`).text(totalInc.toLocaleString('fr-FR'));
+        $(`#previewCorp${suffix}`).text(totalCorp.toLocaleString('fr-FR'));
+        $(`#previewStocks${suffix}`).text(totalStocks.toLocaleString('fr-FR'));
+        $(`#previewCreances${suffix}`).text(totalCreances.toLocaleString('fr-FR'));
+        $(`#previewTotal${suffix}`).text(total.toLocaleString('fr-FR'));
+    }
+    
+    // Mettre à jour la prévisualisation quand les champs changent
+    $(document).on('input', '[name$="_n"], [name$="_n1"], [name$="_n2"]', function() {
+        const name = $(this).attr('name');
+        const suffix = name.split('_').pop();
+        calculatePreview(suffix);
+    });
+    
+    // Initialiser les calculs
+    calculatePreview('n');
+    calculatePreview('n1');
+    calculatePreview('n2');
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const acheteurId = '{{ acheteur.id }}';
+    let allActifs = {};
+    let charts = {};
+
+    // Charger toutes les données
+    loadAllActifs();
+
+    function loadAllActifs() {
+        const acheteurId = '{{ acheteur.id }}';
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/bilan-classique/liste-des-actifs/?all=true`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                // Grouper les données par année
+                allActifs = groupActifsByYear(response.results || response);
+                
+                // Cacher les onglets d'années sans données
+                hideEmptyYearTabs(allActifs);
+                
+                // Mettre à jour toutes les vues
+                populateYearTabs();
+                populateSummaryTab();
+                initializeCharts();
+                
+                // Activer le premier onglet si des données existent
+                if (Object.keys(allActifs).length > 0) {
+                    const firstYear = Object.keys(allActifs)[0];
+                    const firstActif = allActifs[firstYear][0];
+                    if (firstActif && firstActif.annee) {
+                        $(`#year-${firstActif.annee.id}-tab`).tab('show');
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Erreur chargement actifs:', xhr);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données des actifs'
+                });
+            }
+        });
+    }
+
+    function hideEmptyYearTabs(actifs) {
+        // Récupérer tous les onglets d'année
+        const yearTabs = document.querySelectorAll('[id^="year-"][id$="-tab"]');
+        
+        yearTabs.forEach(tab => {
+            const tabId = tab.id;
+            // Extraire l'ID de l'année de l'ID du tab
+            const match = tabId.match(/year-(\d+)-tab/);
+            if (match) {
+                const anneeId = match[1];
+                // Vérifier si cette année a des données
+                const hasData = Object.values(actifs).some(yearActifs => {
+                    return yearActifs.some(actif => actif.annee && actif.annee.id == anneeId);
+                });
+                
+                // Cacher l'onglet s'il n'y a pas de données
+                if (!hasData) {
+                    tab.style.display = 'none';
+                    // Cacher aussi le contenu de l'onglet
+                    const tabPane = document.getElementById(`year-${anneeId}-pane`);
+                    if (tabPane) {
+                        tabPane.style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+
+    function groupActifsByYear(actifs) {
+        const grouped = {};
+        
+        // Vérifier d'abord si actifs est un tableau
+        if (!Array.isArray(actifs)) {
+            console.error('Les actifs ne sont pas un tableau:', actifs);
+            return grouped;
+        }
+        
+        actifs.forEach(actif => {
+            if (!actif || !actif.annee) {
+                console.warn('Actif sans année:', actif);
+                return;
+            }
+            
+            // Essayer différentes façons d'extraire l'année
+            let year = '';
+            
+            if (typeof actif.annee === 'object') {
+                // annee est un objet avec propriété 'annee'
+                year = actif.annee.annee;
+            } else if (typeof actif.annee === 'number' || typeof actif.annee === 'string') {
+                // annee est directement l'année
+                year = actif.annee.toString();
+            }
+            
+            if (!year) {
+                console.warn('Impossible d\'extraire l\'année de:', actif.annee);
+                return;
+            }
+            
+            if (!grouped[year]) {
+                grouped[year] = [];
+            }
+            grouped[year].push(actif);
+        });
+        
+        // Trier les années par ordre décroissant
+        const sorted = {};
+        Object.keys(grouped)
+            .sort((a, b) => parseInt(b) - parseInt(a)) // Convertir en nombres pour trier
+            .forEach(year => {
+                sorted[year] = grouped[year];
+            });
+        
+        console.log('Années groupées:', sorted);
+        return sorted;
+    }
+
+    function populateYearTabs() {
+        for (const [year, actifs] of Object.entries(allActifs)) {
+            actifs.forEach(actif => {
+                const tableId = `actifTable-${actif.annee.id}`;
+                const tableBody = $(`#${tableId} tbody`);
+                const tableContainer = $(`#${tableId}`).closest('.table-responsive');
+
+                if (tableContainer.length) {
+                    // Ajouter un bouton de modification au-dessus du tableau
+                    if (!tableContainer.find('.edit-table-btn').length) {
+                        tableContainer.prepend(`
+                            <div class="d-flex justify-content-end mb-2">
+                                <button class="btn btn-sm btn-primary edit-table-btn" 
+                                        data-id="${actif.id}">
+                                    <i class="bi bi-pencil me-1"></i> Modifier cette année
+                                </button>
+                            </div>
+                        `);
+                    }
+                    
+                    // Continuer avec le remplissage du tableau...
+                    if (tableBody.length) {
+                        // Vider le contenu existant
+                        tableBody.empty();
+                        
+                        // DEBUG: Vérifier les données reçues
+                        console.log(`Actif ${year}:`, actif);
+                        console.log(`general_total:`, actif.general_total);
+                        console.log(`total_I:`, actif.total_I);
+                        
+                        // Calculer le total général si nécessaire
+                        const generalTotal = actif.general_total || calculateGeneralTotal(actif);
+                        
+                        // Ajouter les données avec catégories
+                        const categories = [
+                            {
+                                name: "CAPITAL SOUSCRIT NON APPELÉ",
+                                items: [
+                                    { 
+                                        label: "Capital Souscrit Non Appelé", 
+                                        value: actif.capital_souscrit_non_app || 0,
+                                        field: 'capital_souscrit_non_app'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "IMMOBILISATIONS INCORPORELLES",
+                                items: [
+                                    { 
+                                        label: "Frais Recherche Développement", 
+                                        value: actif.frais_recherche_developpement || 0,
+                                        field: 'frais_recherche_developpement'
+                                    },
+                                    { 
+                                        label: "Brevet Licence Logiciels", 
+                                        value: actif.brevet_licence_logiciels || 0,
+                                        field: 'brevet_licence_logiciels'
+                                    },
+                                    { 
+                                        label: "Fonds Commercial", 
+                                        value: actif.fonds_commercial || 0,
+                                        field: 'fonds_commercial'
+                                    },
+                                    { 
+                                        label: "Autres Immobilisations Incorporelles", 
+                                        value: actif.autres_immobilisations_incorporelles || 0,
+                                        field: 'autres_immobilisations_incorporelles'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "IMMOBILISATIONS CORPORELLES",
+                                items: [
+                                    { 
+                                        label: "Terrains", 
+                                        value: actif.terrains || 0,
+                                        field: 'terrains'
+                                    },
+                                    { 
+                                        label: "Constructions", 
+                                        value: actif.constructions || 0,
+                                        field: 'constructions'
+                                    },
+                                    { 
+                                        label: "Matériels et Outils", 
+                                        value: actif.materiels_et_outils || 0,
+                                        field: 'materiels_et_outils'
+                                    },
+                                    { 
+                                        label: "Matériel de Transport", 
+                                        value: actif.materiel_de_transport || 0,
+                                        field: 'materiel_de_transport'
+                                    },
+                                    { 
+                                        label: "Autres Immobilisations Corporelles", 
+                                        value: actif.autres_immos_corp || 0,
+                                        field: 'autres_immos_corp'
+                                    },
+                                    { 
+                                        label: "Immobilisations en Cours", 
+                                        value: actif.immos_en_cours || 0,
+                                        field: 'immos_en_cours'
+                                    },
+                                    { 
+                                        label: "Avances et Acomptes", 
+                                        value: actif.avances_et_acptes || 0,
+                                        field: 'avances_et_acptes'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "IMMOBILISATIONS FINANCIÈRES",
+                                items: [
+                                    { 
+                                        label: "Participations", 
+                                        value: actif.participations || 0,
+                                        field: 'participations'
+                                    },
+                                    { 
+                                        label: "Prêts", 
+                                        value: actif.prets || 0,
+                                        field: 'prets'
+                                    },
+                                    { 
+                                        label: "Autres", 
+                                        value: actif.autres || 0,
+                                        field: 'autres'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "STOCKS",
+                                items: [
+                                    { 
+                                        label: "Stocks Matières Premières", 
+                                        value: actif.stocks_mp || 0,
+                                        field: 'stocks_mp'
+                                    },
+                                    { 
+                                        label: "Stocks Encours Matières Premières", 
+                                        value: actif.stocks_encours_mp || 0,
+                                        field: 'stocks_encours_mp'
+                                    },
+                                    { 
+                                        label: "Stocks Produits Finis", 
+                                        value: actif.stocks_pf || 0,
+                                        field: 'stocks_pf'
+                                    },
+                                    { 
+                                        label: "Stocks Encours Produits Finis", 
+                                        value: actif.stocks_encours_pf || 0,
+                                        field: 'stocks_encours_pf'
+                                    },
+                                    { 
+                                        label: "Stocks Encours Services", 
+                                        value: actif.stocks_encours_services || 0,
+                                        field: 'stocks_encours_services'
+                                    },
+                                    { 
+                                        label: "Stocks Matières et Fournitures", 
+                                        value: actif.stocks_mses || 0,
+                                        field: 'stocks_mses'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "CRÉANCES",
+                                items: [
+                                    { 
+                                        label: "Avances et Acomptes Versés", 
+                                        value: actif.avances_acptes_verses || 0,
+                                        field: 'avances_acptes_verses'
+                                    },
+                                    { 
+                                        label: "Clients et Comptes Rattachés", 
+                                        value: actif.clients_et_cptes_rattaches || 0,
+                                        field: 'clients_et_cptes_rattaches'
+                                    },
+                                    { 
+                                        label: "Autres Créances", 
+                                        value: actif.autres_creances || 0,
+                                        field: 'autres_creances'
+                                    },
+                                    { 
+                                        label: "Valeurs à Encaisser", 
+                                        value: actif.valeurs_a_encaisser || 0,
+                                        field: 'valeurs_a_encaisser'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "DISPOSITIBILITÉS",
+                                items: [
+                                    { 
+                                        label: "Banques, Chèques Postaux, Caisse", 
+                                        value: actif.banques_cheques_postaux_caisse || 0,
+                                        field: 'banques_cheques_postaux_caisse'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "COMPTES DE RÉGULARISATION",
+                                items: [
+                                    { 
+                                        label: "CCA", 
+                                        value: actif.cca || 0,
+                                        field: 'cca'
+                                    },
+                                    { 
+                                        label: "Charges à Répartir et Frais d'Établissement", 
+                                        value: actif.charges_a_repartir_et_frais_etablissement || 0,
+                                        field: 'charges_a_repartir_et_frais_etablissement'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "PRIMES ET AUTRES",
+                                items: [
+                                    { 
+                                        label: "Primes de RBT", 
+                                        value: actif.primes_de_rbt || 0,
+                                        field: 'primes_de_rbt'
+                                    },
+                                    { 
+                                        label: "ECA", 
+                                        value: actif.eca || 0,
+                                        field: 'eca'
+                                    },
+                                    { 
+                                        label: "ENE", 
+                                        value: actif.eene || 0,
+                                        field: 'eene'
+                                    },
+                                    { 
+                                        label: "Effectif (personnes)", 
+                                        value: actif.effectif || 0,
+                                        field: 'effectif'
+                                    }
+                                ]
+                            },
+                            {
+                                name: "PROVISIONS ET AMORTISSEMENTS",
+                                items: [
+                                    { 
+                                        label: "Amortissements", 
+                                        value: actif.amortissements || 0,
+                                        field: 'amortissements'
+                                    },
+                                    { 
+                                        label: "Provisions sur Stocks", 
+                                        value: actif.provisions_stocks || 0,
+                                        field: 'provisions_stocks'
+                                    },
+                                    { 
+                                        label: "Provisions sur Créances", 
+                                        value: actif.provisions_creances || 0,
+                                        field: 'provisions_creances'
+                                    },
+                                    { 
+                                        label: "Provisions sur VMP", 
+                                        value: actif.provisions_vmp || 0,
+                                        field: 'provisions_vmp'
+                                    }
+                                ]
+                            }
+                        ];
+
+                        // Ajouter les catégories et leurs éléments
+                        categories.forEach(category => {
+                            // Calculer le total de la catégorie
+                            const categoryTotal = category.items.reduce((sum, item) => {
+                                return sum + (parseFloat(item.value) || 0);
+                            }, 0);
+                            
+                            // Calculer le pourcentage (éviter la division par 0)
+                            const categoryPercentage = generalTotal > 0 ? 
+                                ((categoryTotal / generalTotal) * 100).toFixed(1) : '0.0';
+                            
+                            // Ajouter ligne de catégorie avec total
+                            tableBody.append(`
+                                <tr class="category-header">
+                                    <td colspan="2"><strong>${category.name}</strong></td>
+                                    <td class="text-end"><strong>${formatNumber(categoryTotal)}</strong></td>
+                                    <td class="text-end"><strong>${categoryPercentage}%</strong></td>
+                                </tr>
+                            `);
+                            
+                            // Ajouter les éléments de la catégorie
+                            category.items.forEach(item => {
+                                const itemValue = parseFloat(item.value) || 0;
+                                const itemPercentage = generalTotal > 0 ? 
+                                    ((itemValue / generalTotal) * 100).toFixed(1) : '0.0';
+                                
+                                tableBody.append(`
+                                    <tr>
+                                        <td width="30"></td>
+                                        <td>${item.label}</td>
+                                        <td class="text-end">${formatNumber(itemValue)}</td>
+                                        <td class="text-end">${itemPercentage}%</td>
+                                    </tr>
+                                `);
+                            });
+                            
+                            // Ajouter une ligne vide entre les catégories (sauf après la dernière)
+                            if (category !== categories[categories.length - 1]) {
+                                tableBody.append('<tr><td colspan="4" style="height: 10px;"></td></tr>');
+                            }
+                        });
+
+                        // Calculer les totaux manquants si nécessaire
+                        const elements_incorporels = actif.elements_incorporels || 
+                            calculateElementsIncorporels(actif);
+                        const elements_corporels = actif.elements_corporels || 
+                            calculateElementsCorporels(actif);
+                        const elements_financiers = actif.elements_financiers || 
+                            calculateElementsFinanciers(actif);
+                        const total_I = actif.total_I || 
+                            (elements_incorporels + elements_corporels + elements_financiers);
+                        
+                        const stocks = actif.stocks || calculateStocks(actif);
+                        const creances = actif.creances || calculateCreances(actif);
+                        const disponibilites_vmp = actif.disponibilites_vmp || 
+                            (parseFloat(actif.valeurs_a_encaisser || 0) + 
+                            parseFloat(actif.banques_cheques_postaux_caisse || 0));
+                        const total_II = actif.total_II || (stocks + creances + disponibilites_vmp);
+                        
+                        const compte_regul = actif.compte_regul || (parseFloat(actif.cca || 0));
+                        const total_III = actif.total_III || compte_regul;
+
+                        // Ajouter les totaux calculés et sous-totaux
+                        const subtotals = [
+                            { 
+                                label: "SOUS-TOTAL IMMOBILISATIONS INCORPORELLES", 
+                                value: elements_incorporels,
+                                indent: true
+                            },
+                            { 
+                                label: "SOUS-TOTAL IMMOBILISATIONS CORPORELLES", 
+                                value: elements_corporels,
+                                indent: true
+                            },
+                            { 
+                                label: "SOUS-TOTAL IMMOBILISATIONS FINANCIÈRES", 
+                                value: elements_financiers,
+                                indent: true
+                            },
+                            { 
+                                label: "TOTAL ACTIF IMMOBILISÉ (I)", 
+                                value: total_I, 
+                                isTotal: true,
+                                class: "table-warning"
+                            },
+                            { 
+                                label: "SOUS-TOTAL STOCKS", 
+                                value: stocks,
+                                indent: true
+                            },
+                            { 
+                                label: "SOUS-TOTAL CRÉANCES", 
+                                value: creances,
+                                indent: true
+                            },
+                            { 
+                                label: "SOUS-TOTAL DISPONIBILITÉS", 
+                                value: disponibilites_vmp,
+                                indent: true
+                            },
+                            { 
+                                label: "TOTAL ACTIF CIRCULANT (II)", 
+                                value: total_II, 
+                                isTotal: true,
+                                class: "table-warning"
+                            },
+                            { 
+                                label: "SOUS-TOTAL COMPTES DE RÉGULARISATION", 
+                                value: compte_regul,
+                                indent: true
+                            },
+                            { 
+                                label: "TOTAL COMPTES DE RÉGULARISATION (III)", 
+                                value: total_III,
+                                isTotal: true,
+                                class: "table-info"
+                            }
+                        ];
+
+                        // Ajouter les sous-totaux
+                        subtotals.forEach(subtotal => {
+                            const indent = subtotal.indent ? 'style="padding-left: 20px;"' : '';
+                            const rowClass = subtotal.class || 'table-light';
+                            const subtotalValue = parseFloat(subtotal.value) || 0;
+                            const subtotalPercentage = generalTotal > 0 ? 
+                                ((subtotalValue / generalTotal) * 100).toFixed(1) : '0.0';
+                            
+                            tableBody.append(`
+                                <tr class="${rowClass}">
+                                    <td colspan="2" ${indent}><strong>${subtotal.label}</strong></td>
+                                    <td class="text-end"><strong>${formatNumber(subtotalValue)}</strong></td>
+                                    <td class="text-end"><strong>${subtotalPercentage}%</strong></td>
+                                </tr>
+                            `);
+                        });
+
+                        // Ajouter le total général
+                        const grandTotalPercentage = generalTotal > 0 ? '100.0' : '0.0';
+                        tableBody.append(`
+                            <tr class="table-success">
+                                <td colspan="2"><strong>TOTAL GÉNÉRAL DE L'ACTIF</strong></td>
+                                <td class="text-end"><strong class="fs-5">${formatNumber(generalTotal)}</strong></td>
+                                <td class="text-end"><strong class="fs-5">${grandTotalPercentage}%</strong></td>
+                            </tr>
+                        `);
+
+                        // Mettre à jour le résumé
+                        updateSummaryForYear(actif, actif.annee.id, {
+                            elements_incorporels,
+                            elements_corporels,
+                            elements_financiers,
+                            total_I,
+                            stocks,
+                            creances,
+                            disponibilites_vmp,
+                            total_II,
+                            compte_regul,
+                            total_III,
+                            generalTotal
+                        });
+                    }
+                }
+                
+                
+            });
+        }
+    }
+
+    function populateSummaryTab() {
+        const years = Object.keys(allActifs).sort().reverse();
+        const summaryContainer = $('#yearSummary');
+        
+        years.forEach(year => {
+            const actifsForYear = allActifs[year];
+            
+            // Vérifier s'il y a des données pour cette année
+            if (!actifsForYear || actifsForYear.length === 0) {
+                // Afficher un message "Aucune donnée"
+                summaryContainer.append(`
+                    <div class="col-md-4 mb-3">
+                        <div class="card summary-card h-100">
+                            <div class="card-header bg-secondary text-white">
+                                <h6 class="mb-0">Année ${year}</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    Aucune donnée disponible
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                return;
+            }
+            
+            const actif = actifsForYear[0]; // Prendre le premier actif
+            const evolution = calculateYearEvolution(year, years);
+            
+            // S'assurer que les valeurs existent
+            const totalI = actif.total_I || 0;
+            const totalII = actif.total_II || 0;
+            const generalTotal = actif.general_total || 0;
+            
+            summaryContainer.append(`
+                <div class="col-md-4 mb-3">
+                    <div class="card summary-card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Année ${year}</h6>
+                                <button class="btn btn-sm btn-light edit-year-btn" 
+                                        data-id="${actif.id}"
+                                        data-year="${year}"
+                                        data-annee-id="${actif.annee ? actif.annee.id : ''}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <span>Actif Immobilisé:</span>
+                                <span class="fw-bold">${formatNumber(totalI)}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Actif Circulant:</span>
+                                <span class="fw-bold">${formatNumber(totalII)}</span>
+                            </div>
+                            ${evolution.html}
+                            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                <span>Total Général:</span>
+                                <span class="fw-bold fs-5">${formatNumber(generalTotal)}</span>
+                            </div>
+                            <div class="mt-2 text-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    Dernière mise à jour: ${formatDate(actif.updated_at)}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center">
+                            <button class="btn btn-sm btn-outline-primary edit-actif-btn" 
+                                    data-id="${actif.id}">
+                                <i class="bi bi-pencil me-1"></i> Modifier les données
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
+    }  
+
+    function initializeCharts() {
+        // Graphique de comparaison
+        if ($('#comparisonChart').length) {
+            const years = Object.keys(allActifs).sort();
+            const totals = years.map(year => allActifs[year][0].general_total);
+            
+            new Chart($('#comparisonChart'), {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: 'Total Actif',
+                        data: totals,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Évolution du Total Actif'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Graphiques par année (camembert)
+        for (const [year, actifs] of Object.entries(allActifs)) {
+            const actif = actifs[0];
+            const ctx = document.getElementById(`chart-${actif.annee.id}`);
+            
+            if (ctx) {
+                charts[year] = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Immobilisé', 'Circulant'],
+                        datasets: [{
+                            data: [actif.total_I, actif.total_II],
+                            backgroundColor: ['#0d6efd', '#20c997']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    function formatNumber(num) {
+        if (num === null || num === undefined) return '0';
+        if (typeof num === 'string') num = parseFloat(num);
+        if (isNaN(num)) return '0';
+        
+        // Formater avec séparateurs de milliers
+        return new Intl.NumberFormat('fr-FR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(num);
+    }
+
+    function calculateAndDisplayRatios(actif, yearId) {
+        if (!actif || !actif.general_total) return;
+        
+        const ratiosContainer = $(`#summary-${yearId}`);
+        if (!ratiosContainer.length) return;
+        
+        // Calculer les ratios
+        const ratios = {
+            "Ratio Actif Immobilisé": ((actif.total_I / actif.general_total) * 100).toFixed(1) + '%',
+            "Ratio Actif Circulant": ((actif.total_II / actif.general_total) * 100).toFixed(1) + '%',
+            "Ratio Stocks/Actif": ((actif.stocks / actif.general_total) * 100).toFixed(1) + '%',
+            "Ratio Créances/Actif": ((actif.creances / actif.general_total) * 100).toFixed(1) + '%',
+            "Ratio Disponibilités/Actif": ((actif.disponibilites_vmp / actif.general_total) * 100).toFixed(1) + '%'
+        };
+        
+        // Ajouter les ratios au résumé existant
+        let ratiosHtml = `
+            <div class="mt-3 pt-2 border-top">
+                <small class="text-muted d-block mb-1"><strong>Ratios clés:</strong></small>
+        `;
+        
+        Object.entries(ratios).forEach(([label, value]) => {
+            ratiosHtml += `
+                <div class="d-flex justify-content-between small">
+                    <span>${label}:</span>
+                    <span class="fw-bold">${value}</span>
+                </div>
+            `;
+        });
+        
+        ratiosHtml += `</div>`;
+        
+        // Ajouter les ratios au contenu existant
+        const existingContent = ratiosContainer.html();
+        ratiosContainer.html(existingContent + ratiosHtml);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR');
+    }
+
+    function calculateYearEvolution(year, allYears) {
+        const currentIndex = allYears.indexOf(year.toString());
+        if (currentIndex === -1 || currentIndex >= allYears.length - 1) {
+            return { html: '', percentage: 0 };
+        }
+        
+        const prevYear = allYears[currentIndex + 1];
+        const currentActifs = allActifs[year];
+        const prevActifs = allActifs[prevYear];
+        
+        // Vérifier que les données existent
+        if (!currentActifs || currentActifs.length === 0 || 
+            !prevActifs || prevActifs.length === 0) {
+            return { html: '', percentage: 0 };
+        }
+        
+        const currentActif = currentActifs[0];
+        const prevActif = prevActifs[0];
+        
+        if (!currentActif || !prevActif || 
+            !currentActif.general_total || !prevActif.general_total) {
+            return { html: '', percentage: 0 };
+        }
+        
+        // Éviter la division par zéro
+        if (parseFloat(prevActif.general_total) === 0) {
+            return { 
+                html: `
+                    <div class="d-flex justify-content-between mt-2">
+                        <span>Évolution vs ${prevYear}:</span>
+                        <span class="fw-bold text-muted">
+                            <i class="bi bi-dash me-1"></i>Non calculable
+                        </span>
+                    </div>
+                `,
+                percentage: 0 
+            };
+        }
+        
+        const evolution = ((currentActif.general_total - prevActif.general_total) / 
+                        prevActif.general_total * 100).toFixed(1);
+        
+        const color = evolution >= 0 ? 'text-success' : 'text-danger';
+        const icon = evolution >= 0 ? 'bi-arrow-up' : 'bi-arrow-down';
+        
+        return {
+            html: `
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Évolution vs ${prevYear}:</span>
+                    <span class="fw-bold ${color}">
+                        <i class="bi ${icon} me-1"></i>${evolution}%
+                    </span>
+                </div>
+            `,
+            percentage: parseFloat(evolution)
+        };
+    }
+
+    // Fonctions de calcul auxiliaires
+    function calculateGeneralTotal(actif) {
+        // Logique de calcul du total général selon votre modèle
+        const capital = parseFloat(actif.capital_souscrit_non_app || 0);
+        const elements_incorporels = calculateElementsIncorporels(actif);
+        const elements_corporels = calculateElementsCorporels(actif);
+        const elements_financiers = calculateElementsFinanciers(actif);
+        const total_I = elements_incorporels + elements_corporels + elements_financiers;
+        
+        const stocks = calculateStocks(actif);
+        const creances = calculateCreances(actif);
+        const disponibilites_vmp = parseFloat(actif.valeurs_a_encaisser || 0) + 
+                                parseFloat(actif.banques_cheques_postaux_caisse || 0);
+        const total_II = stocks + creances + disponibilites_vmp;
+        
+        const total_III = parseFloat(actif.cca || 0);
+        
+        return capital + total_I + total_II + total_III;
+    }
+
+    function calculateElementsIncorporels(actif) {
+        return (parseFloat(actif.frais_recherche_developpement || 0) +
+                parseFloat(actif.brevet_licence_logiciels || 0) +
+                parseFloat(actif.fonds_commercial || 0) +
+                parseFloat(actif.autres_immobilisations_incorporelles || 0));
+    }
+
+    function calculateElementsCorporels(actif) {
+        return (parseFloat(actif.terrains || 0) +
+                parseFloat(actif.constructions || 0) +
+                parseFloat(actif.materiels_et_outils || 0) +
+                parseFloat(actif.materiel_de_transport || 0) +
+                parseFloat(actif.autres_immos_corp || 0) +
+                parseFloat(actif.immos_en_cours || 0) +
+                parseFloat(actif.avances_et_acptes || 0));
+    }
+
+    function calculateElementsFinanciers(actif) {
+        return (parseFloat(actif.participations || 0) +
+                parseFloat(actif.prets || 0) +
+                parseFloat(actif.autres || 0));
+    }
+
+    function calculateStocks(actif) {
+        return (parseFloat(actif.stocks_mp || 0) +
+                parseFloat(actif.stocks_encours_mp || 0) +
+                parseFloat(actif.stocks_pf || 0) +
+                parseFloat(actif.stocks_encours_pf || 0) +
+                parseFloat(actif.stocks_encours_services || 0) +
+                parseFloat(actif.stocks_mses || 0));
+    }
+
+    function calculateCreances(actif) {
+        return (parseFloat(actif.avances_acptes_verses || 0) +
+                parseFloat(actif.clients_et_cptes_rattaches || 0) +
+                parseFloat(actif.autres_creances || 0) +
+                parseFloat(actif.valeurs_a_encaisser || 0));
+    }
+
+    function updateSummaryForYear(actif, yearId, calculatedValues) {
+        const generalTotal = calculatedValues.generalTotal || 0;
+        const total_I = calculatedValues.total_I || 0;
+        const total_II = calculatedValues.total_II || 0;
+        const total_III = calculatedValues.total_III || 0;
+        const capital = parseFloat(actif.capital_souscrit_non_app || 0);
+        
+        const totalIPercentage = generalTotal > 0 ? 
+            ((total_I / generalTotal) * 100).toFixed(1) : '0.0';
+        const totalIIPercentage = generalTotal > 0 ? 
+            ((total_II / generalTotal) * 100).toFixed(1) : '0.0';
+        
+        $(`#summary-${yearId}`).html(`
+            <div class="small">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Actif Immobilisé:</span>
+                    <span class="fw-bold">${formatNumber(total_I)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Actif Circulant:</span>
+                    <span class="fw-bold">${formatNumber(total_II)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Comptes Régularisation:</span>
+                    <span class="fw-bold">${formatNumber(total_III)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>Capital Non Appelé:</span>
+                    <span class="fw-bold">${formatNumber(capital)}</span>
+                </div>
+                <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                    <span><strong>Total Général:</strong></span>
+                    <span class="fw-bold fs-6 text-primary">${formatNumber(generalTotal)}</span>
+                </div>
+                <div class="mt-2">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: ${totalIPercentage}%" 
+                            title="Actif Immobilisé: ${totalIPercentage}%"></div>
+                        <div class="progress-bar bg-success" style="width: ${totalIIPercentage}%" 
+                            title="Actif Circulant: ${totalIIPercentage}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small>Immobilisé</small>
+                        <small>Circulant</small>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    // Fonction pour ajouter les 3 années séparément
+    async function addThreeYears(data) {
+        const promises = [];
+        
+        // Pour chaque année (n, n1, n2)
+        for (const suffix of ['n', 'n1', 'n2']) {
+            const yearData = {};
+            
+            // Extraire les données pour cette année
+            Object.keys(data).forEach(key => {
+                if (key.endsWith(`_${suffix}`)) {
+                    const baseKey = key.replace(`_${suffix}`, '');
+                    yearData[baseKey] = data[key];
+                }
+            });
+            
+            // Ajouter l'acheteur
+            yearData['acheteur'] = data[`acheteur_${suffix}`];
+            
+            // Filtrer les données vides
+            if (yearData['annee'] && yearData['acheteur']) {
+                promises.push(
+                    $.ajax({
+                        url: '/api/acheteur/' + acheteurId + '/bilan-classique/ajouter-un-actif/',
+                        type: 'POST',
+                        data: JSON.stringify(yearData),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'
+                        }
+                    })
+                );
+            }
+        }
+        
+        return Promise.all(promises);
+    }
+
+    // Form submission for multi-year
+    // Utilisation
+    $('#addMultiYearForm').submit(async function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serializeArray();
+        const data = {};
+        formData.forEach(item => {
+            data[item.name] = item.value;
+        });
+        
+        try {
+            await addThreeYears(data);
+            Swal.fire({
+                icon: 'success',
+                title: 'Succès',
+                text: 'Données enregistrées pour les 3 années'
+            }).then(() => {
+                $('#addMultiYearModal').modal('hide');
+                loadAllActifs();
+            });
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Impossible d\'enregistrer les données'
+            });
+        }
+    });
+
+    // Gestionnaire pour le bouton de modification
+    $(document).on('click', '.edit-actif-btn, .edit-year-btn', function() {
+        const actifId = $(this).data('id');
+        loadActifForEdit(actifId);
+    });
+
+    // Gérer le clic sur le bouton du tableau
+    $(document).on('click', '.edit-table-btn', function() {
+        const actifId = $(this).data('id');
+        loadActifForEdit(actifId);
+    });
+
+    // Charger les données pour modification
+    // Fonction pour charger et afficher les données dans le modal
+    // Charger les données pour modification - VERSION AMÉLIORÉE
+    function loadActifForEdit(actifId) {
+        const acheteurId = '{{ acheteur.id }}';
+        
+        console.log('Début de loadActifForEdit pour ID:', actifId);
+        
+        // Vérifier si une requête est déjà en cours
+        if (window.loadingActifEdit) {
+            console.log('Une requête est déjà en cours, annulation');
+            return;
+        }
+        
+        window.loadingActifEdit = true;
+        
+        // Vérifier si le modal existe
+        const modalElement = document.getElementById('editActifModal');
+        if (!modalElement) {
+            console.error('Modal non trouvé');
+            window.loadingActifEdit = false;
+            return;
+        }
+        
+        // Fermer d'abord le modal s'il est ouvert
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+        if (existingModal) {
+            existingModal.hide();
+        }
+        
+        // Créer une nouvelle instance
+        const modal = new bootstrap.Modal(modalElement);
+        
+        // Sauvegarder le contenu ORIGINAL
+        const originalModalBody = $('#editActifModal .modal-body').html();
+        
+        // Mettre un loader
+        $('#editActifModal .modal-body').html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-3">Chargement des données...</p>
+            </div>
+        `);
+        
+        // Afficher le modal
+        modal.show();
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/bilan-classique/editer-un-actif/${actifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log('Données reçues:', response);
+                
+                // Restaurer le contenu original
+                $('#editActifModal .modal-body').html(originalModalBody);
+                
+                // Remplir les champs
+                populateEditForm(response);
+                updateEditPreview();
+                
+                // Ré-attacher les événements
+                attachEditFormEvents(actifId);
+                
+                window.loadingActifEdit = false;
+                console.log('Modal prêt');
+            },
+            error: function(xhr) {
+                console.error('Erreur:', xhr);
+                
+                // Restaurer le contenu original même en cas d'erreur
+                $('#editActifModal .modal-body').html(originalModalBody);
+                
+                window.loadingActifEdit = false;
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données'
+                });
+            }
+        });
+    }
+
+    // Fonction pour attacher les événements du formulaire
+    function attachEditFormEvents(actifId) {
+        // Gestionnaire de soumission
+        $('#editActifForm').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            handleEditFormSubmit(actifId);
+        });
+        
+        // Gestionnaire de suppression
+        $('#deleteActifBtn').off('click').on('click', function() {
+            deleteActif(actifId);
+        });
+        
+        // Mettre à jour l'aperçu en temps réel
+        $('#editActifForm input[type="number"]').off('input').on('input', updateEditPreview);
+    }
+
+    // Fonction pour gérer la soumission
+    function handleEditFormSubmit(actifId) {
+        const acheteurId = '{{ acheteur.id }}';
+        
+        // Récupérer les données
+        const formData = $('#editActifForm').serializeArray();
+        const data = {};
+        formData.forEach(item => {
+            data[item.name] = item.value;
+        });
+        
+        data['acheteur'] = acheteurId;
+        
+        console.log('Envoi des données:', data);
+        
+        // Afficher un loader
+        const submitBtn = $('#editActifForm').find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...');
+        submitBtn.prop('disabled', true);
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/bilan-classique/editer-un-actif/${actifId}/`,
+            type: 'PUT',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                // Restaurer le bouton
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif modifié avec succès',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    $('#editActifModal').modal('hide');
+                    loadAllActifs();
+                });
+            },
+            error: function(xhr) {
+                // Restaurer le bouton
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification';
+                if (xhr.responseJSON?.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                } else if (xhr.responseJSON?.errors) {
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage = errors.join(', ');
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    }
+
+    // Mettre à jour les gestionnaires d'événements
+    $(document).on('click', '.edit-actif-btn, .edit-year-btn, .edit-table-btn', function() {
+        const actifId = $(this).data('id');
+        loadActifForEdit(actifId);
+    });
+
+    // Soumission du formulaire de modification
+    $('#editActifForm').submit(function(e) {
+        e.preventDefault();
+        
+        const actifId = $('#editActifId').val();
+        const acheteurId = '{{ acheteur.id }}';
+        
+        // Récupérer les données du formulaire
+        const formData = $(this).serializeArray();
+        const data = {};
+        formData.forEach(item => {
+            data[item.name] = item.value;
+        });
+        
+        // Ajouter l'acheteur
+        data['acheteur'] = acheteurId;
+        
+        console.log('Données envoyées pour modification:', data);
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/bilan-classique/editer-un-actif/${actifId}/`,
+            type: 'PUT',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log('Modification réussie:', response);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif modifié avec succès',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    $('#editActifModal').modal('hide');
+                    loadAllActifs(); // Recharger toutes les données
+                });
+            },
+            error: function(xhr) {
+                console.error('Erreur modification:', xhr.responseText);
+                
+                let errorMessage = 'Erreur lors de la modification';
+                if (xhr.responseJSON && xhr.responseJSON.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    // Afficher les erreurs de validation
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage = errors.join(', ');
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+            }
+        });
+    });
+
+    // Fonction de suppression
+    function deleteActif(actifId) {
+        Swal.fire({
+            title: 'Êtes-vous sûr ?',
+            text: "Cette action est irréversible !",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer !',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const acheteurId = '{{ acheteur.id }}';
+                
+                $.ajax({
+                    url: `/api/acheteur/${acheteurId}/bilan-classique/supprimer-des-actifs/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [actifId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé !',
+                            text: 'L\'actif a été supprimé avec succès',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#editActifModal').modal('hide');
+                            loadAllActifs(); // Recharger toutes les données
+                        });
+                    },
+                    error: function(xhr) {
+                        console.error('Erreur suppression:', xhr);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer l\'actif'
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // Fonction pour remplir le formulaire avec les données
+    // Fonction pour remplir le formulaire avec les données - VERSION SIMPLIFIÉE
+    function populateEditForm(response) {
+        console.log('Remplissage du formulaire avec:', response);
+        
+        // Champs de base
+        $('#editActifId').val(response.id || '');
+
+        console.log('DEBUG - Structure complète de response:', response);
+        console.log('DEBUG - response.annee:', response.annee);
+        console.log('DEBUG - Type de response.annee:', typeof response.annee);
+        
+        // Inspecter toutes les clés
+        for (let key in response) {
+            console.log(`DEBUG - ${key}:`, response[key], 'Type:', typeof response[key]);
+        }
+        
+        // ESSAYER DIFFÉRENTES STRUCTURES POSSIBLES
+        // Récupérer l'ID de l'année différemment
+        let anneeId = '';
+        
+        // Essai 1: annee est un objet avec propriétés id et annee
+        if (response.annee && response.annee.id) {
+            anneeId = response.annee.id;
+            console.log('Année ID via response.annee.id:', anneeId);
+        }
+        // Essai 2: annee est un simple nombre (l'ID)
+        else if (response.annee && typeof response.annee === 'number') {
+            anneeId = response.annee;
+            console.log('Année ID comme nombre direct:', anneeId);
+        }
+        // Essai 3: annee_id séparé
+        else if (response.annee_id) {
+            anneeId = response.annee_id;
+            console.log('Année ID via annee_id:', anneeId);
+        }
+        // Essai 4: chercher par valeur d'année
+        else if (response.annee) {
+            // Si annee = 26, on doit trouver l'ID correspondant à 2026
+            const yearValue = response.annee;
+            console.log('Valeur année brute:', yearValue);
+            
+            // Chercher dans les options existantes
+            const $options = $('#editAnnee option');
+            let foundId = '';
+            
+            $options.each(function() {
+                const text = $(this).text().trim();
+                // Extraire le nombre de "Année 2026"
+                const match = text.match(/Année\s*(\d+)/);
+                if (match) {
+                    const yearFromText = match[1];
+                    // Vérifier si c'est la même année
+                    if (yearFromText === yearValue.toString() || 
+                        yearFromText.endsWith(yearValue.toString())) {
+                        foundId = $(this).val();
+                        console.log('Année trouvée dans les options:', text, 'ID:', foundId);
+                    }
+                }
+            });
+            
+            if (foundId) {
+                anneeId = foundId;
+            }
+        }
+        
+        console.log('Année ID final pour select:', anneeId);
+        
+        // Mettre à jour le select
+        if (anneeId) {
+            $('#editAnnee').val(anneeId);
+        } else {
+            console.warn('Aucun ID d\'année trouvé pour sélectionner');
+        }
+        
+        
+        
+        // Remplir manuellement chaque champ
+        $('#editCapitalSouscritNonApp').val(response.capital_souscrit_non_app || 0);
+        $('#editFraisRechercheDeveloppement').val(response.frais_recherche_developpement || 0);
+        $('#editBrevetLicenceLogiciels').val(response.brevet_licence_logiciels || 0);
+        $('#editFondsCommercial').val(response.fonds_commercial || 0);
+        $('#editAutresImmobilisationsIncorporelles').val(response.autres_immobilisations_incorporelles || 0);
+        $('#editTerrains').val(response.terrains || 0);
+        $('#editConstructions').val(response.constructions || 0);
+        $('#editMaterielsEtOutils').val(response.materiels_et_outils || 0);
+        $('#editMaterielDeTransport').val(response.materiel_de_transport || 0);
+        $('#editAutresImmosCorp').val(response.autres_immos_corp || 0);
+        $('#editImmosEnCours').val(response.immos_en_cours || 0);
+        $('#editAvancesEtAcptes').val(response.avances_et_acptes || 0);
+        $('#editParticipations').val(response.participations || 0);
+        $('#editPrets').val(response.prets || 0);
+        $('#editAutres').val(response.autres || 0);
+        $('#editStocksMP').val(response.stocks_mp || 0);
+        $('#editStocksEncoursMP').val(response.stocks_encours_mp || 0);
+        $('#editStocksPF').val(response.stocks_pf || 0);
+        $('#editStocksEncoursPF').val(response.stocks_encours_pf || 0);
+        $('#editStocksEncoursServices').val(response.stocks_encours_services || 0);
+        $('#editStocksMSES').val(response.stocks_mses || 0);
+        $('#editAvancesAcptesVerses').val(response.avances_acptes_verses || 0);
+        $('#editClientsEtCptesRattaches').val(response.clients_et_cptes_rattaches || 0);
+        $('#editAutresCreances').val(response.autres_creances || 0);
+        $('#editValeursAEncaisser').val(response.valeurs_a_encaisser || 0);
+        $('#editBanquesChequesPostauxCaisse').val(response.banques_cheques_postaux_caisse || 0);
+        $('#editCCA').val(response.cca || 0);
+        $('#editChargesARepartirEtFraisEtablissement').val(response.charges_a_repartir_et_frais_etablissement || 0);
+        $('#editPrimesDeRBT').val(response.primes_de_rbt || 0);
+        $('#editECA').val(response.eca || 0);
+        $('#editENE').val(response.eene || 0);
+        $('#editEffectif').val(response.effectif || 0);
+        $('#editAmortissements').val(response.amortissements || 0);
+        $('#editProvisionsStocks').val(response.provisions_stocks || 0);
+        $('#editProvisionsCreances').val(response.provisions_creances || 0);
+        $('#editProvisionsVMP').val(response.provisions_vmp || 0);
+        
+        console.log('Formulaire rempli avec succès');
+    }
+
+    // Fonction pour mettre à jour l'aperçu des totaux en temps réel
+    function updateEditPreview() {
+        // Calculer les totaux à partir des champs du formulaire
+        const elements_incorporels = calculateEditElementsIncorporels();
+        const elements_corporels = calculateEditElementsCorporels();
+        const elements_financiers = calculateEditElementsFinanciers();
+        
+        const total_I = elements_incorporels + elements_corporels + elements_financiers;
+        
+        const stocks = calculateEditStocks();
+        const creances = calculateEditCreances();
+        const disponibilites_vmp = parseFloat($('#editBanquesChequesPostauxCaisse').val() || 0) + 
+                                parseFloat($('#editValeursAEncaisser').val() || 0);
+        const total_II = stocks + creances + disponibilites_vmp;
+        
+        const total_III = parseFloat($('#editCCA').val() || 0);
+        const capital = parseFloat($('#editCapitalSouscritNonApp').val() || 0);
+        
+        const generalTotal = capital + total_I + total_II + total_III;
+        
+        // Mettre à jour l'affichage
+        $('#editPreviewTotalI').text(formatNumber(total_I));
+        $('#editPreviewTotalII').text(formatNumber(total_II));
+        $('#editPreviewTotalIII').text(formatNumber(total_III));
+        $('#editPreviewGeneralTotal').text(formatNumber(generalTotal));
+    }
+
+    // Fonctions de calcul pour l'aperçu
+    function calculateEditElementsIncorporels() {
+        return (parseFloat($('#editFraisRechercheDeveloppement').val() || 0) +
+                parseFloat($('#editBrevetLicenceLogiciels').val() || 0) +
+                parseFloat($('#editFondsCommercial').val() || 0) +
+                parseFloat($('#editAutresImmobilisationsIncorporelles').val() || 0));
+    }
+
+    function calculateEditElementsCorporels() {
+        return (parseFloat($('#editTerrains').val() || 0) +
+                parseFloat($('#editConstructions').val() || 0) +
+                parseFloat($('#editMaterielsEtOutils').val() || 0) +
+                parseFloat($('#editMaterielDeTransport').val() || 0) +
+                parseFloat($('#editAutresImmosCorp').val() || 0) +
+                parseFloat($('#editImmosEnCours').val() || 0) +
+                parseFloat($('#editAvancesEtAcptes').val() || 0));
+    }
+
+    function calculateEditElementsFinanciers() {
+        return (parseFloat($('#editParticipations').val() || 0) +
+                parseFloat($('#editPrets').val() || 0) +
+                parseFloat($('#editAutres').val() || 0));
+    }
+
+    function calculateEditStocks() {
+        return (parseFloat($('#editStocksMP').val() || 0) +
+                parseFloat($('#editStocksEncoursMP').val() || 0) +
+                parseFloat($('#editStocksPF').val() || 0) +
+                parseFloat($('#editStocksEncoursPF').val() || 0) +
+                parseFloat($('#editStocksEncoursServices').val() || 0) +
+                parseFloat($('#editStocksMSES').val() || 0));
+    }
+
+    function calculateEditCreances() {
+        return (parseFloat($('#editAvancesAcptesVerses').val() || 0) +
+                parseFloat($('#editClientsEtCptesRattaches').val() || 0) +
+                parseFloat($('#editAutresCreances').val() || 0));
+    }
+
+    // Gestion de la soumission du formulaire de modification
+    $('#editActifForm').submit(function(e) {
+        e.preventDefault();
+        
+        const actifId = $('#editActifId').val();
+        const acheteurId = '{{ acheteur.id }}';
+        
+        // Récupérer les données du formulaire
+        const formData = $(this).serializeArray();
+        const data = {};
+        formData.forEach(item => {
+            // Convertir les valeurs en nombres quand c'est possible
+            data[item.name] = !isNaN(parseFloat(item.value)) ? parseFloat(item.value) : item.value;
+        });
+        
+        // Ajouter l'acheteur
+        data['acheteur'] = acheteurId;
+        
+        // Afficher un loader
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Enregistrement...');
+        submitBtn.prop('disabled', true);
+        
+        $.ajax({
+            url: `/api/acheteur/${acheteurId}/bilan-classique/editer-un-actif/${actifId}/`,
+            type: 'PUT',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                // Restaurer le bouton
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif modifié avec succès',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    $('#editActifModal').modal('hide');
+                    loadAllActifs(); // Recharger toutes les données
+                });
+            },
+            error: function(xhr) {
+                // Restaurer le bouton
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                let errorMessage = 'Erreur lors de la modification';
+                if (xhr.responseJSON && xhr.responseJSON.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    // Afficher les erreurs de validation
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage = errors.join(', ');
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    html: `<div class="text-start"><strong>Erreur:</strong> ${errorMessage}</div>`
+                });
+            }
+        });
+    });
+
+    // Gestion de la suppression
+    $('#deleteActifBtn').click(function() {
+        const actifId = $('#editActifId').val();
+        const year = $('#editYearDisplay').text();
+
+        console.log(actifId);
+        console.log(year);
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            html: `<p>Êtes-vous sûr de vouloir supprimer l'actif pour l'année <strong>${year}</strong> ?</p>
+                <p class="text-danger"><small>Cette action est irréversible !</small></p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const acheteurId = '{{ acheteur.id }}';
+
+                console.log(acheteurId);
+                
+                $.ajax({
+                    url: `/api/acheteur/${acheteurId}/bilan-classique/supprimer-des-actifs/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [actifId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + '{{ access }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé !',
+                            text: 'L\'actif a été supprimé avec succès',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            $('#editActifModal').modal('hide');
+                            loadAllActifs(); // Recharger toutes les données
+                        });
+                    },
+                    error: function(xhr) {
+                        console.error('Erreur suppression:', xhr);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer l\'actif'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+
+
+
+
+
+    // Navigation rapide vers une année
+    window.showYearDetail = function(yearId) {
+        const tab = $(`#year-${yearId}-tab`);
+        if (tab.length) {
+            tab.tab('show');
+        }
+    };
+});
+</script>
+{% endblock %}

@@ -8042,6 +8042,7 @@ class DeleteAcheteurActifClassiqueView(APIView):
 
     def delete(self, request, *args, **kwargs):
         ids = request.data.get("ids", [])
+        print(ids)
         if not ids or not isinstance(ids, list):
             return Response(
                 {"error": "Une liste d'IDs est requise."},
@@ -8049,6 +8050,7 @@ class DeleteAcheteurActifClassiqueView(APIView):
             )
 
         actifs = ActifC.objects.filter(id__in=ids)
+        print(actifs)
         if not actifs.exists():
             return Response(
                 {"error": "Aucun actif trouvé pour les IDs fournis."},

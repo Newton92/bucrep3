@@ -320,7 +320,7 @@ class AnneeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
     ]
     list_filter = [
         'is_active',
-        ('annee', admin.RelatedOnlyFieldListFilter),
+        'annee',  # filtre simple sur IntegerField
         ('date_creation', admin.DateFieldListFilter),
     ] + list(SafeDeleteAdmin.list_filter)
     search_fields = ['annee']

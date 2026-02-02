@@ -1,0 +1,3173 @@
+{% extends 'main/root/base.html' %}
+{% load static humanize %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --color-background: #fcfefe;
+    --color-primary: #0a95ca;
+    --color-primary-dark: #0d80be;
+    --color-secondary: #25add6;
+    --color-accent: #106cb2;
+    --color-text: #000000;
+    --color-text-muted: #5a6c7d;
+    --color-border: rgba(13, 128, 190, 0.1);
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    --danger-gradient: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    --success-gradient: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    --purple-gradient: linear-gradient(135deg, #6f42c1 0%, var(--color-accent) 100%);
+    --info-gradient: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+}
+
+/* Header Premium */
+.page-header {
+    background: var(--primary-gradient);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2.5rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(12, 128, 190, 0.2);
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    max-width: 700px;
+    font-weight: 400;
+}
+
+/* Carte Acheteur Premium */
+.acheteur-card {
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 20px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.acheteur-header {
+    background: var(--primary-gradient);
+    padding: 1.75rem 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.acheteur-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+}
+
+.acheteur-badge {
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+}
+
+.acheteur-info-grid {
+    padding: 2rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateY(-2px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.25rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    font-size: 1.5rem;
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de statistiques améliorées */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    padding: 1.75rem;
+    text-align: center;
+    border: 1px solid rgba(13, 128, 190, 0.1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: calc(var(--stat-order, 0) * 0.1s);
+    animation-fill-mode: both;
+}
+
+.stat-card:nth-child(1) { --stat-order: 1; }
+.stat-card:nth-child(2) { --stat-order: 2; }
+.stat-card:nth-child(3) { --stat-order: 3; }
+.stat-card:nth-child(4) { --stat-order: 4; }
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    border-radius: 4px 4px 0 0;
+}
+
+.stat-immobilise::before { background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); }
+.stat-circulant::before { background: var(--success-gradient); }
+.stat-regul::before { background: var(--purple-gradient); }
+.stat-capital::before { background: var(--warning-gradient); }
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    border-color: transparent;
+}
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.75rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.stat-immobilise .stat-icon { 
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+}
+
+.stat-circulant .stat-icon { 
+    background: var(--success-gradient);
+}
+
+.stat-regul .stat-icon { 
+    background: var(--purple-gradient);
+}
+
+.stat-capital .stat-icon { 
+    background: var(--warning-gradient);
+}
+
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Cartes Année Premium */
+.annee-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    padding: 1.75rem;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.annee-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(10, 149, 202, 0.15);
+    border-color: transparent;
+}
+
+.annee-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--color-primary), var(--color-secondary));
+    border-radius: 5px 0 0 5px;
+}
+
+.annee-badge {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-background);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 6px 20px rgba(10, 149, 202, 0.25);
+}
+
+.annee-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.5rem;
+}
+
+.annee-total {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Progress bar premium */
+.progress-bar-premium {
+    height: 10px;
+    background: linear-gradient(145deg, var(--color-background), #f0f7ff);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 0.75rem;
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    border-radius: 5px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+/* Badge d'évolution premium */
+.evolution-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 25px;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.05));
+    border: 2px solid rgba(13, 128, 190, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.evolution-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-primary);
+}
+
+/* Table premium */
+.table-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+}
+
+.table-card .card-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    padding: 1.5rem 2rem;
+}
+
+.table-card th {
+    background: rgba(10, 149, 202, 0.05);
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    padding: 1.25rem 1.5rem;
+}
+
+.table-card td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(13, 128, 190, 0.05);
+}
+
+.table-card tbody tr {
+    transition: all 0.3s ease;
+    background: var(--color-background);
+}
+
+.table-card tbody tr:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    transform: translateX(5px);
+}
+
+/* Boutons premium */
+.btn-action {
+    border-radius: 12px;
+    padding: 0.75rem 1.75rem;
+    font-weight: 700;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.btn-action:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(10, 149, 202, 0.25);
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: var(--color-background);
+}
+
+.btn-outline-primary {
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: var(--color-background);
+}
+
+.btn-success {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-warning {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-outline-secondary {
+    color: var(--color-text-muted);
+    border: 2px solid var(--color-text-muted);
+    background: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, var(--color-text-muted), #adb5bd);
+    border-color: transparent;
+    color: white;
+}
+
+/* Formulaires premium */
+.enhanced-form .form-group {
+    margin-bottom: 1.75rem;
+    position: relative;
+}
+
+.enhanced-form .form-label {
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+}
+
+.enhanced-form .form-label i {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 149, 202, 0.1);
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select,
+.enhanced-form .select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid rgba(13, 128, 190, 0.15);
+    border-radius: 12px;
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    color: var(--color-text);
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus,
+.enhanced-form .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+    background: var(--color-background);
+}
+
+/* Accordion premium */
+.accordion-premium .accordion-item {
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    border-radius: 12px !important;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+}
+
+.accordion-premium .accordion-button {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    border-radius: 12px !important;
+    padding: 1rem 1.5rem;
+}
+
+.accordion-premium .accordion-button:not(.collapsed) {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
+    color: var(--color-primary-dark);
+    box-shadow: none;
+}
+
+.accordion-premium .accordion-body {
+    padding: 1.5rem;
+    background: var(--color-background);
+    border-radius: 0 0 12px 12px;
+}
+
+/* Filtres premium */
+.filter-card {
+    background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02));
+    border-radius: 16px;
+    border: 1px solid rgba(37, 173, 214, 0.15);
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(10, 149, 202, 0.08);
+    margin-bottom: 2rem;
+}
+
+/* Checkbox premium */
+.form-check-input:checked {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.form-check-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.25rem rgba(10, 149, 202, 0.15);
+}
+
+/* Animation de ripple */
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(40, 40);
+        opacity: 0;
+    }
+}
+
+/* Animation d'apparition */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Appliquer les animations */
+.acheteur-card, .stats-grid, .filter-card, .table-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Avatar premium */
+.avatar-premium {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    background: var(--primary-gradient);
+    color: var(--color-background);
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Tabs premium */
+.nav-tabs-premium {
+    border-bottom: 2px solid rgba(13, 128, 190, 0.1);
+}
+
+.nav-tabs-premium .nav-link {
+    border: none;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    border-radius: 10px 10px 0 0;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.nav-tabs-premium .nav-link:hover {
+    color: var(--color-primary);
+    background: rgba(10, 149, 202, 0.05);
+}
+
+.nav-tabs-premium .nav-link.active {
+    color: var(--color-primary-dark);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
+    border-bottom: 3px solid var(--color-primary);
+}
+
+/* Pagination premium */
+.pagination {
+    gap: 0.5rem;
+}
+
+.page-item .page-link {
+    border: 2px solid rgba(13, 128, 190, 0.1);
+    border-radius: 10px;
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+    color: var(--color-background);
+}
+
+.page-item .page-link:hover {
+    background: rgba(10, 149, 202, 0.1);
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.75rem;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .acheteur-info-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .acheteur-info-icon {
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .annee-card {
+        padding: 1.5rem;
+    }
+    
+    .table-card th,
+    .table-card td {
+        padding: 1rem;
+    }
+    
+    .btn-action {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title {
+        font-size: 1.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.75rem;
+    }
+    
+    .annee-title {
+        font-size: 1.1rem;
+    }
+    
+    .annee-total {
+        font-size: 1.5rem;
+    }
+}
+
+/* Optimisations d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus visible pour l'accessibilité */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header Premium -->
+    <div class="page-header" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-chart-line me-3"></i>Bilan Classique - Actifs de l'Acheteur
+                </h1>
+                <p class="page-subtitle">
+                    Analyse détaillée de la structure des actifs sur plusieurs années
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" class="btn btn-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </a>
+                <button class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#addMultiYearModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter Actif
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur Premium -->
+    <div class="acheteur-card">
+        <div class="acheteur-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-white-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="acheteur-badge">
+                        <i class="fas fa-building me-2"></i>
+                        {{ acheteur.statut_entreprise.libelle|default:"Actif" }}
+                    </span>
+                    <p class="mb-0 mt-2 small text-white-75">Code: {{ acheteur.code }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="acheteur-info-grid">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
+                        <div>
+                            <small class="tendance-label">Code ACREMAC</small>
+                            <span class="fw-bold text-dark">{{ acheteur.code }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="tendance-label">Activité Principale</small>
+                            <span class="fw-bold text-dark">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="tendance-label">Années disponibles</small>
+                            <span class="fw-bold text-dark">{{ annee_list|length }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="tendance-label">Statut Entreprise</small>
+                            <span class="badge" style="background: var(--success-gradient); color: white; border: none; padding: 0.5rem 1rem;">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques Premium -->
+    <div class="stats-grid">
+        <div class="stat-card stat-immobilise">
+            <div class="stat-icon">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="stat-value" id="statImmobilise">0</div>
+            <div class="stat-label">Actif Immobilisé</div>
+        </div>
+        <div class="stat-card stat-circulant">
+            <div class="stat-icon">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="stat-value" id="statCirculant">0</div>
+            <div class="stat-label">Actif Circulant</div>
+        </div>
+        <div class="stat-card stat-regul">
+            <div class="stat-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-value" id="statRegul">0</div>
+            <div class="stat-label">Régularisation</div>
+        </div>
+        <div class="stat-card stat-capital">
+            <div class="stat-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="stat-value" id="statCapital">0</div>
+            <div class="stat-label">Capital Non Appelé</div>
+        </div>
+    </div>
+
+    <!-- Vue Synthétique -->
+    <div class="table-card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0" style="color: var(--color-primary-dark);">
+                <i class="fas fa-chart-bar me-2"></i>Vue Synthétique par Année
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row" id="yearSummary">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets des Années -->
+    <div class="table-card">
+        <div class="card-header">
+            <ul class="nav nav-tabs nav-tabs-premium" id="yearTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" 
+                            data-bs-target="#summary-tab-pane" type="button" role="tab">
+                        <i class="fas fa-chart-pie me-1"></i>Vue Synthétique
+                    </button>
+                </li>
+                {% for annee in annee_list %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="year-{{ annee.id }}-tab" data-bs-toggle="tab" 
+                            data-bs-target="#year-{{ annee.id }}-pane" type="button" role="tab">
+                        Année {{ annee.annee }}
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="yearTabContent">
+                <!-- Onglet Synthèse -->
+                <div class="tab-pane fade show active" id="summary-tab-pane" role="tabpanel">
+                    <div class="row g-3" id="summaryCards">
+                        <!-- Cartes d'années chargées dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Onglets par année -->
+                {% for annee in annee_list %}
+                <div class="tab-pane fade" id="year-{{ annee.id }}-pane" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Tableau détaillé pour l'année -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-card" id="actifTable-{{ annee.id }}">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Catégorie</th>
+                                            <th>Élément</th>
+                                            <th class="text-end">Valeur</th>
+                                            <th class="text-end">% Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Le contenu sera chargé dynamiquement -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <!-- Graphique et résumé -->
+                            <div class="card" style="background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)); border: 1px solid rgba(37, 173, 214, 0.15);">
+                                <div class="card-header" style="background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));">
+                                    <h6 class="mb-0">Résumé {{ annee.annee }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="chart-{{ annee.id }}" height="200"></canvas>
+                                    <div class="mt-3" id="summary-{{ annee.id }}">
+                                        <!-- Résumé calculé -->
+                                    </div>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary w-100 btn-action edit-year-btn" 
+                                                data-annee-id="{{ annee.id }}">
+                                            <i class="fas fa-edit me-2"></i>Modifier cette année
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary btn-action" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-2"></i>Exporter Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-action" onclick="exportToPDF()">
+                        <i class="fas fa-file-pdf me-2"></i>Exporter PDF
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-action" onclick="exportComparison()">
+                        <i class="fas fa-chart-line me-2"></i>Comparaison
+                    </button>
+                </div>
+                <button type="button" class="btn btn-success btn-action" data-bs-toggle="modal" 
+                        data-bs-target="#addMultiYearModal">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter pour N, N-1, N-2
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour ajout multi-années Premium -->
+<div class="modal fade" id="addMultiYearModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
+            <div class="modal-header" style="background: var(--primary-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter les Actifs sur 3 Ans
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-white">
+                <form id="addMultiYearForm" class="enhanced-form">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card h-100" style="background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)); border: 1px solid rgba(37, 173, 214, 0.15);">
+                                <div class="card-header" style="background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));">
+                                    <h6 class="mb-0">Année N ({{ current_year }})</h6>
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="acheteur_n" value="{{ acheteur.id }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-calendar"></i>Année
+                                        </label>
+                                        <select class="form-select" name="annee_n" required>
+                                            {% for annee in annee_list %}
+                                            <option value="{{ annee.id }}" {% if annee.annee == current_year %}selected{% endif %}>
+                                                {{ annee.annee }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% include 'main/root/acheteur/bilans/classique/partials/actif_fields_compact.html' with suffix='n' %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100" style="background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)); border: 1px solid rgba(37, 173, 214, 0.15);">
+                                <div class="card-header" style="background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));">
+                                    <h6 class="mb-0">Année N-1 ({{ current_year|add:"-1" }})</h6>
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="acheteur_n1" value="{{ acheteur.id }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-calendar"></i>Année
+                                        </label>
+                                        <select class="form-select" name="annee_n1" required>
+                                            {% for annee in annee_list %}
+                                            <option value="{{ annee.id }}" {% if annee.annee == current_year|add:"-1" %}selected{% endif %}>
+                                                {{ annee.annee }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% include 'main/root/acheteur/bilans/classique/partials/actif_fields_compact.html' with suffix='n1' %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card h-100" style="background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)); border: 1px solid rgba(37, 173, 214, 0.15);">
+                                <div class="card-header" style="background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));">
+                                    <h6 class="mb-0">Année N-2 ({{ current_year|add:"-2" }})</h6>
+                                </div>
+                                <div class="card-body">
+                                    <input type="hidden" name="acheteur_n2" value="{{ acheteur.id }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-calendar"></i>Année
+                                        </label>
+                                        <select class="form-select" name="annee_n2" required>
+                                            {% for annee in annee_list %}
+                                            <option value="{{ annee.id }}" {% if annee.annee == current_year|add:"-2" %}selected{% endif %}>
+                                                {{ annee.annee }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% include 'main/root/acheteur/bilans/classique/partials/actif_fields_compact.html' with suffix='n2' %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-success btn-action">
+                            <i class="fas fa-check-circle me-2"></i>Enregistrer les 3 années
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour modification Premium -->
+<div class="modal fade" id="editActifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);">
+            <div class="modal-header" style="background: var(--primary-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>Modifier l'Actif
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-white">
+                <form id="editActifForm" class="enhanced-form">
+                    <input type="hidden" id="editActifId" name="id">
+                    <input type="hidden" id="editAcheteurId" name="acheteur" value="{{ acheteur.id }}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar"></i>Année
+                                </label>
+                                <select class="form-select" id="editAnnee" name="annee" required>
+                                    {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert" style="background: linear-gradient(145deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05)); border: 1px solid rgba(37, 173, 214, 0.15);">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Les totaux seront recalculés automatiquement
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Accordion premium -->
+                    <div class="accordion accordion-premium" id="editAccordion">
+                        
+                        <!-- Groupe 1: Immobilisations Incorporelles -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseInc">
+                                    <i class="fas fa-cash-coin me-2"></i>Immobilisations Incorporelles
+                                </button>
+                            </h2>
+                            <div id="editCollapseInc" class="accordion-collapse collapse show">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Capital Souscrit Non App</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editCapitalSouscritNonApp" 
+                                                       name="capital_souscrit_non_app"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Frais Recherche Développement</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editFraisRechercheDeveloppement"
+                                                       name="frais_recherche_developpement"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Brevet Licence Logiciels</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editBrevetLicenceLogiciels"
+                                                       name="brevet_licence_logiciels"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Fonds Commercial</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editFondsCommercial"
+                                                       name="fonds_commercial"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label class="form-label small">Autres Immobilisations Incorporelles</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAutresImmobilisationsIncorporelles"
+                                                       name="autres_immobilisations_incorporelles"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 2: Immobilisations Corporelles -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseCorp">
+                                    <i class="fas fa-building me-2"></i>Immobilisations Corporelles
+                                </button>
+                            </h2>
+                            <div id="editCollapseCorp" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Terrains</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editTerrains"
+                                                       name="terrains"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Constructions</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editConstructions"
+                                                       name="constructions"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Matériels et Outils</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editMaterielsEtOutils"
+                                                       name="materiels_et_outils"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Matériel de Transport</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editMaterielDeTransport"
+                                                       name="materiel_de_transport"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Autres Immos Corporelles</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAutresImmosCorp"
+                                                       name="autres_immos_corp"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Immos en Cours</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editImmosEnCours"
+                                                       name="immos_en_cours"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label class="form-label small">Avances et Acomptes</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAvancesEtAcptes"
+                                                       name="avances_et_acptes"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 3: Immobilisations Financières -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseFin">
+                                    <i class="fas fa-chart-line me-2"></i>Immobilisations Financières
+                                </button>
+                            </h2>
+                            <div id="editCollapseFin" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Participations</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editParticipations"
+                                                       name="participations"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Prêts</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editPrets"
+                                                       name="prets"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label class="form-label small">Autres</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAutres"
+                                                       name="autres"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 4: Stocks -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseStocks">
+                                    <i class="fas fa-box me-2"></i>Stocks
+                                </button>
+                            </h2>
+                            <div id="editCollapseStocks" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Stocks MP</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editStocksMP"
+                                                       name="stocks_mp"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Stocks Encours MP</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editStocksEncoursMP"
+                                                       name="stocks_encours_mp"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Stocks PF</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editStocksPF"
+                                                       name="stocks_pf"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Stocks Encours PF</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editStocksEncoursPF"
+                                                       name="stocks_encours_pf"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Stocks Encours Services</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editStocksEncoursServices"
+                                                       name="stocks_encours_services"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Stocks MSES</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editStocksMSES"
+                                                       name="stocks_mses"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 5: Créances -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseCreances">
+                                    <i class="fas fa-receipt me-2"></i>Créances
+                                </button>
+                            </h2>
+                            <div id="editCollapseCreances" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Avances Acomptes Versées</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAvancesAcptesVerses"
+                                                       name="avances_acptes_verses"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Clients et Comptes Rattachés</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editClientsEtCptesRattaches"
+                                                       name="clients_et_cptes_rattaches"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Autres Créances</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAutresCreances"
+                                                       name="autres_creances"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Valeurs à Encaisser</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editValeursAEncaisser"
+                                                       name="valeurs_a_encaisser"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 6: Disponibilités -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseDispo">
+                                    <i class="fas fa-university me-2"></i>Disponibilités
+                                </button>
+                            </h2>
+                            <div id="editCollapseDispo" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label class="form-label small">Banques Chèques Postaux Caisse</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editBanquesChequesPostauxCaisse"
+                                                       name="banques_cheques_postaux_caisse"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 7: Comptes de Régularisation -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseRegul">
+                                    <i class="fas fa-calendar-check me-2"></i>Comptes de Régularisation
+                                </button>
+                            </h2>
+                            <div id="editCollapseRegul" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">CCA</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editCCA"
+                                                       name="cca"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Charges à Répartir et Frais d'Établissement</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editChargesARepartirEtFraisEtablissement"
+                                                       name="charges_a_repartir_et_frais_etablissement"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 8: Primes et Autres -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapsePrimes">
+                                    <i class="fas fa-award me-2"></i>Primes et Autres
+                                </button>
+                            </h2>
+                            <div id="editCollapsePrimes" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Primes de RBT</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editPrimesDeRBT"
+                                                       name="primes_de_rbt"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">ECA</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editECA"
+                                                       name="eca"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">ENE</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editENE"
+                                                       name="eene"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Effectif</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editEffectif"
+                                                       name="effectif"
+                                                       step="1" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Groupe 9: Provisions et Amortissements -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#editCollapseProv">
+                                    <i class="fas fa-shield-alt me-2"></i>Provisions et Amortissements
+                                </button>
+                            </h2>
+                            <div id="editCollapseProv" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Amortissements</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editAmortissements"
+                                                       name="amortissements"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Provisions Stocks</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editProvisionsStocks"
+                                                       name="provisions_stocks"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Provisions Créances</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editProvisionsCreances"
+                                                       name="provisions_creances"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label small">Provisions VMP</label>
+                                                <input type="number" class="form-control" 
+                                                       id="editProvisionsVMP"
+                                                       name="provisions_vmp"
+                                                       step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    <!-- Aperçu des totaux en temps réel -->
+                    <div class="card mt-4" style="background: linear-gradient(145deg, var(--color-background), rgba(10, 149, 202, 0.02)); border: 1px solid rgba(37, 173, 214, 0.15);">
+                        <div class="card-header py-2" style="background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));">
+                            <h6 class="mb-0"><i class="fas fa-calculator me-1"></i> Aperçu des totaux</h6>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    <div class="text-center p-2 rounded" style="background: rgba(10, 149, 202, 0.05);">
+                                        <small class="d-block text-muted">Immobilisé</small>
+                                        <span id="editPreviewTotalI" class="fw-bold fs-5">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <div class="text-center p-2 rounded" style="background: rgba(40, 167, 69, 0.05);">
+                                        <small class="d-block text-muted">Circulant</small>
+                                        <span id="editPreviewTotalII" class="fw-bold fs-5">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <div class="text-center p-2 rounded" style="background: rgba(111, 66, 193, 0.05);">
+                                        <small class="d-block text-muted">Régularisation</small>
+                                        <span id="editPreviewTotalIII" class="fw-bold fs-5">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <div class="text-center p-2 rounded" style="background: rgba(255, 193, 7, 0.05);">
+                                        <small class="d-block text-muted">Capital</small>
+                                        <span id="editPreviewCapital" class="fw-bold fs-5">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="text-center p-3 mt-2 rounded" style="background: linear-gradient(145deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));">
+                                        <small class="d-block text-muted">Total Général</small>
+                                        <span id="editPreviewGeneralTotal" class="fw-bold fs-4 text-primary">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <button type="submit" class="btn btn-primary btn-action">
+                            <i class="fas fa-check-circle me-2"></i> Mettre à jour
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-action" id="deleteActifBtn">
+                            <i class="fas fa-trash me-2"></i> Supprimer
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i> Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression premium -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3);">
+            <div class="modal-header" style="background: var(--danger-gradient);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt fa-4x" style="background: var(--danger-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                </div>
+                <h6 class="fw-bold mb-2" style="background: linear-gradient(90deg, #dc2626, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Supprimer l'actif
+                </h6>
+                <p class="text-muted mb-0" id="deleteConfirmationText">
+                    Êtes-vous sûr de vouloir supprimer cet actif ? Cette action est irréversible.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-outline-secondary btn-action" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Annuler
+                </button>
+                <button type="button" class="btn btn-danger btn-action" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Script principal amélioré avec logs de débogage
+$(document).ready(function() {
+    console.log('=== DÉBUT INITIALISATION ACTIFS ===');
+    
+    // Configuration
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const API_BASE_URL = `/api/acheteur/${ACHETEUR_ID}/bilan-classique/`;
+    const ACCESS_TOKEN = '{{ access_token|default:"" }}';
+    
+    console.log('Config - Acheteur ID:', ACHETEUR_ID);
+    console.log('Config - API Base URL:', API_BASE_URL);
+    console.log('Config - Access Token présent:', ACCESS_TOKEN ? 'Oui' : 'Non');
+    
+    // Variables d'état
+    let allActifs = {};
+    let charts = {};
+    let currentEditActifId = null;
+    
+    // Initialiser Select2
+    $('.select2-with-search').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Sélectionnez une option',
+        language: 'fr',
+        allowClear: true
+    });
+    
+    // Fonction de débogage améliorée
+    function debugLog(message, data = null) {
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[${timestamp}] [DEBUG] ${message}`);
+        if (data !== null) {
+            console.log('[DEBUG] Données:', data);
+        }
+    }
+    
+    // Fonction pour obtenir le token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Charger toutes les données
+    loadAllActifs();
+    
+    // Fonction pour charger tous les actifs
+    function loadAllActifs() {
+        debugLog('Début du chargement des actifs');
+        
+        // Afficher un indicateur de chargement
+        $('#yearSummary').html(`
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-2 text-muted">Chargement des données...</p>
+            </div>
+        `);
+        
+        $.ajax({
+            url: `${API_BASE_URL}liste-des-actifs/?all=true`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                debugLog('Réponse API reçue', response);
+                
+                // Vérifier si la réponse est valide
+                if (!response) {
+                    debugLog('Réponse API vide');
+                    showErrorMessage('Réponse API vide');
+                    return;
+                }
+                
+                // Extraire les résultats
+                const actifsData = response.results || response;
+                debugLog('Données d\'actifs extraites', actifsData);
+                
+                if (!Array.isArray(actifsData)) {
+                    debugLog('Les données ne sont pas un tableau', actifsData);
+                    showErrorMessage('Format de données invalide');
+                    return;
+                }
+                
+                if (actifsData.length === 0) {
+                    debugLog('Aucune donnée disponible');
+                    $('#yearSummary').html(`
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune donnée disponible</h5>
+                            <p class="text-muted">Utilisez le bouton "Ajouter 3 années" pour commencer</p>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                // Grouper les données par année
+                allActifs = groupActifsByYear(actifsData);
+                debugLog('Actifs groupés par année', allActifs);
+                
+                // Mettre à jour l'interface
+                try {
+                    populateSummaryTab();
+                    debugLog('Onglet synthèse peuplé');
+                    
+                    populateYearTabs();
+                    debugLog('Onglets d\'année peuplés');
+                    
+                    updateStatistics();
+                    debugLog('Statistiques mises à jour');
+                    
+                    initializeCharts();
+                    debugLog('Graphiques initialisés');
+                    
+                    debugLog('Chargement terminé avec succès');
+                } catch (error) {
+                    debugLog('Erreur lors de la mise à jour de l\'interface', error);
+                    showErrorMessage('Erreur d\'affichage des données: ' + error.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                debugLog('Erreur AJAX', {
+                    status: status,
+                    error: error,
+                    response: xhr.responseText
+                });
+                
+                let errorMessage = 'Impossible de charger les données des actifs';
+                if (xhr.status === 401) {
+                    errorMessage = 'Session expirée. Veuillez vous reconnecter.';
+                } else if (xhr.status === 403) {
+                    errorMessage = 'Accès interdit. Vérifiez vos permissions.';
+                } else if (xhr.responseText) {
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorMessage = errorResponse.detail || errorMessage;
+                    } catch (e) {
+                        errorMessage = 'Erreur serveur: ' + xhr.statusText;
+                    }
+                }
+                
+                showErrorMessage(errorMessage);
+            }
+        });
+    }
+    
+    // Fonction pour afficher les erreurs
+    function showErrorMessage(message) {
+        debugLog('Affichage message d\'erreur', message);
+        
+        $('#yearSummary').html(`
+            <div class="col-12">
+                <div class="alert alert-danger" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Erreur
+                    </h5>
+                    <p class="mb-0">${message}</p>
+                    <hr>
+                    <button class="btn btn-sm btn-outline-danger" onclick="window.loadAllActifs()">
+                        <i class="fas fa-redo me-1"></i>Réessayer
+                    </button>
+                </div>
+            </div>
+        `);
+        
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: message,
+            background: '#fcfefe',
+            color: '#000000'
+        });
+    }
+    
+    // Grouper les actifs par année
+    function groupActifsByYear(actifs) {
+        debugLog('Groupement des actifs par année', actifs);
+        
+        const grouped = {};
+        
+        if (!Array.isArray(actifs)) {
+            debugLog('Les actifs ne sont pas un tableau', actifs);
+            return grouped;
+        }
+        
+        debugLog(`Nombre d'actifs à traiter: ${actifs.length}`);
+        
+        actifs.forEach((actif, index) => {
+            debugLog(`Traitement actif ${index + 1}`, actif);
+            
+            if (!actif) {
+                debugLog(`Actif ${index} est null ou undefined`);
+                return;
+            }
+            
+            let year = '';
+            
+            // Extraire l'année de différentes manières
+            if (actif.annee && typeof actif.annee === 'object') {
+                debugLog('Année est un objet', actif.annee);
+                year = actif.annee.annee || actif.annee.id || '';
+            } else if (actif.annee && (typeof actif.annee === 'number' || typeof actif.annee === 'string')) {
+                debugLog('Année est un nombre ou chaîne', actif.annee);
+                year = actif.annee.toString();
+            } else if (actif.annee_id) {
+                debugLog('Utilisation de annee_id', actif.annee_id);
+                year = actif.annee_id.toString();
+            }
+            
+            if (!year) {
+                debugLog(`Impossible d'extraire l'année pour l'actif ${index}`, actif);
+                return;
+            }
+            
+            debugLog(`Année extraite: ${year} pour l'actif ID: ${actif.id}`);
+            
+            if (!grouped[year]) {
+                grouped[year] = [];
+            }
+            grouped[year].push(actif);
+        });
+        
+        debugLog('Groupement intermédiaire', grouped);
+        
+        // Trier les années par ordre décroissant
+        const sorted = {};
+        Object.keys(grouped)
+            .sort((a, b) => parseInt(b) - parseInt(a))
+            .forEach(year => {
+                sorted[year] = grouped[year];
+            });
+        
+        debugLog('Groupement final trié', sorted);
+        return sorted;
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStatistics() {
+        debugLog('Mise à jour des statistiques');
+        
+        let totalImmobilise = 0;
+        let totalCirculant = 0;
+        let totalRegul = 0;
+        let totalCapital = 0;
+        
+        for (const [year, actifs] of Object.entries(allActifs)) {
+            debugLog(`Calcul statistiques pour année ${year}`);
+            actifs.forEach((actif, index) => {
+                const immobilise = parseFloat(actif.total_I || 0);
+                const circulant = parseFloat(actif.total_II || 0);
+                const regul = parseFloat(actif.total_III || 0);
+                const capital = parseFloat(actif.capital_souscrit_non_app || 0);
+                
+                debugLog(`Actif ${index} - Immobilisé: ${immobilise}, Circulant: ${circulant}, Régul: ${regul}, Capital: ${capital}`);
+                
+                totalImmobilise += immobilise;
+                totalCirculant += circulant;
+                totalRegul += regul;
+                totalCapital += capital;
+            });
+        }
+        
+        debugLog('Totaux statistiques', {
+            totalImmobilise,
+            totalCirculant,
+            totalRegul,
+            totalCapital
+        });
+        
+        $('#statImmobilise').text(formatNumber(totalImmobilise));
+        $('#statCirculant').text(formatNumber(totalCirculant));
+        $('#statRegul').text(formatNumber(totalRegul));
+        $('#statCapital').text(formatNumber(totalCapital));
+    }
+    
+    // Fonctions utilitaires
+    function formatNumber(num) {
+        if (num === null || num === undefined) return '0';
+        if (typeof num === 'string') num = parseFloat(num);
+        if (isNaN(num)) return '0';
+        
+        return new Intl.NumberFormat('fr-FR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(num);
+    }
+    
+    function calculateYearEvolution(year, allYears) {
+        const currentIndex = allYears.indexOf(year.toString());
+        if (currentIndex === -1 || currentIndex >= allYears.length - 1) {
+            return { html: '', percentage: 0 };
+        }
+        
+        const prevYear = allYears[currentIndex + 1];
+        const currentActifs = allActifs[year];
+        const prevActifs = allActifs[prevYear];
+        
+        if (!currentActifs || currentActifs.length === 0 || 
+            !prevActifs || prevActifs.length === 0) {
+            return { html: '', percentage: 0 };
+        }
+        
+        const currentActif = currentActifs[0];
+        const prevActif = prevActifs[0];
+        
+        if (!currentActif || !prevActif || 
+            !currentActif.general_total || !prevActif.general_total) {
+            return { html: '', percentage: 0 };
+        }
+        
+        if (parseFloat(prevActif.general_total) === 0) {
+            return { 
+                html: `
+                    <div class="d-flex justify-content-between mt-2">
+                        <span>Évolution:</span>
+                        <span class="fw-bold text-muted">
+                            <i class="fas fa-minus me-1"></i>N/A
+                        </span>
+                    </div>
+                `,
+                percentage: 0 
+            };
+        }
+        
+        const evolution = ((currentActif.general_total - prevActif.general_total) / 
+                        prevActif.general_total * 100).toFixed(1);
+        
+        const color = evolution >= 0 ? 'text-success' : 'text-danger';
+        const icon = evolution >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+        
+        return {
+            html: `
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Évolution vs ${prevYear}:</span>
+                    <span class="fw-bold ${color}">
+                        <i class="${icon} me-1"></i>${evolution}%
+                    </span>
+                </div>
+            `,
+            percentage: parseFloat(evolution)
+        };
+    }
+    
+    // Remplir l'onglet synthèse
+    function populateSummaryTab() {
+        debugLog('Remplissage de l\'onglet synthèse');
+        
+        const years = Object.keys(allActifs).sort().reverse();
+        const summaryContainer = $('#summaryCards');
+        
+        debugLog(`Années disponibles: ${years.length}`, years);
+        
+        summaryContainer.empty();
+        
+        if (years.length === 0) {
+            debugLog('Aucune année disponible');
+            summaryContainer.html(`
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune donnée disponible</h5>
+                    <p class="text-muted">Utilisez le bouton "Ajouter 3 années" pour commencer</p>
+                </div>
+            `);
+            return;
+        }
+        
+        years.forEach(year => {
+            debugLog(`Traitement année ${year}`);
+            
+            const actifsForYear = allActifs[year];
+            
+            if (!actifsForYear || actifsForYear.length === 0) {
+                debugLog(`Aucun actif pour l'année ${year}`);
+                return;
+            }
+            
+            const actif = actifsForYear[0];
+            debugLog(`Actif pour année ${year}`, actif);
+            
+            const evolution = calculateYearEvolution(year, years);
+            const totalI = actif.total_I || 0;
+            const totalII = actif.total_II || 0;
+            const generalTotal = actif.general_total || calculateGeneralTotal(actif);
+            const totalIPercentage = generalTotal > 0 ? ((totalI / generalTotal) * 100).toFixed(1) : '0.0';
+            const totalIIPercentage = generalTotal > 0 ? ((totalII / generalTotal) * 100).toFixed(1) : '0.0';
+            
+            debugLog(`Calculs année ${year}: I=${totalI}, II=${totalII}, Total=${generalTotal}`);
+            
+            const actifId = actif.id || '';
+            const anneeId = actif.annee?.id || actif.annee_id || '';
+            
+            summaryContainer.append(`
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="annee-card">
+                        <div class="annee-badge">
+                            ${year}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <div class="annee-title">
+                                    Année ${year}
+                                </div>
+                                <div class="annee-total">
+                                    ${formatNumber(generalTotal)}
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item edit-actif-btn" href="#" data-id="${actifId}">
+                                            <i class="fas fa-edit me-2"></i>Modifier
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="window.showYearDetail('${anneeId}')">
+                                            <i class="fas fa-eye me-2"></i>Voir détail
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span>Immobilisé:</span>
+                            <span class="fw-bold">${formatNumber(totalI)}</span>
+                        </div>
+                        <div class="progress-bar-premium mb-3">
+                            <div class="progress-fill" style="width: ${totalIPercentage}%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mb-2 small">
+                            <span>Circulant:</span>
+                            <span class="fw-bold">${formatNumber(totalII)}</span>
+                        </div>
+                        <div class="progress-bar-premium mb-3">
+                            <div class="progress-fill" style="width: ${totalIIPercentage}%"></div>
+                        </div>
+                        
+                        ${evolution.html}
+                        
+                        <div class="mt-3 pt-3 border-top">
+                            <button class="btn btn-primary w-100 btn-action edit-actif-btn" 
+                                    data-id="${actifId}">
+                                <i class="fas fa-edit me-2"></i>Modifier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
+    }
+    
+    // Calculer le total général
+    function calculateGeneralTotal(actif) {
+        try {
+            const capital = parseFloat(actif.capital_souscrit_non_app || 0);
+            const elements_incorporels = calculateElementsIncorporels(actif);
+            const elements_corporels = calculateElementsCorporels(actif);
+            const elements_financiers = calculateElementsFinanciers(actif);
+            const total_I = elements_incorporels + elements_corporels + elements_financiers;
+            
+            const stocks = calculateStocks(actif);
+            const creances = calculateCreances(actif);
+            const disponibilites_vmp = parseFloat(actif.valeurs_a_encaisser || 0) + 
+                                    parseFloat(actif.banques_cheques_postaux_caisse || 0);
+            const total_II = stocks + creances + disponibilites_vmp;
+            
+            const total_III = parseFloat(actif.cca || 0);
+            
+            return capital + total_I + total_II + total_III;
+        } catch (error) {
+            debugLog('Erreur calcul total général', error);
+            return 0;
+        }
+    }
+    
+    // Fonctions de calcul auxiliaires
+    function calculateElementsIncorporels(actif) {
+        return (parseFloat(actif.frais_recherche_developpement || 0) +
+                parseFloat(actif.brevet_licence_logiciels || 0) +
+                parseFloat(actif.fonds_commercial || 0) +
+                parseFloat(actif.autres_immobilisations_incorporelles || 0));
+    }
+    
+    function calculateElementsCorporels(actif) {
+        return (parseFloat(actif.terrains || 0) +
+                parseFloat(actif.constructions || 0) +
+                parseFloat(actif.materiels_et_outils || 0) +
+                parseFloat(actif.materiel_de_transport || 0) +
+                parseFloat(actif.autres_immos_corp || 0) +
+                parseFloat(actif.immos_en_cours || 0) +
+                parseFloat(actif.avances_et_acptes || 0));
+    }
+    
+    function calculateElementsFinanciers(actif) {
+        return (parseFloat(actif.participations || 0) +
+                parseFloat(actif.prets || 0) +
+                parseFloat(actif.autres || 0));
+    }
+    
+    function calculateStocks(actif) {
+        return (parseFloat(actif.stocks_mp || 0) +
+                parseFloat(actif.stocks_encours_mp || 0) +
+                parseFloat(actif.stocks_pf || 0) +
+                parseFloat(actif.stocks_encours_pf || 0) +
+                parseFloat(actif.stocks_encours_services || 0) +
+                parseFloat(actif.stocks_mses || 0));
+    }
+    
+    function calculateCreances(actif) {
+        return (parseFloat(actif.avances_acptes_verses || 0) +
+                parseFloat(actif.clients_et_cptes_rattaches || 0) +
+                parseFloat(actif.autres_creances || 0) +
+                parseFloat(actif.valeurs_a_encaisser || 0));
+    }
+    
+    // Remplir les onglets par année
+    function populateYearTabs() {
+        debugLog('Remplissage des onglets par année');
+        
+        for (const [year, actifs] of Object.entries(allActifs)) {
+            debugLog(`Traitement onglet année ${year}`);
+            
+            actifs.forEach(actif => {
+                const anneeId = actif.annee?.id || actif.annee_id || 'unknown';
+                const tableId = `actifTable-${anneeId}`;
+                const tableBody = $(`#${tableId} tbody`);
+                
+                if (tableBody.length) {
+                    debugLog(`Remplissage tableau ${tableId}`);
+                    
+                    // Vérifier d'abord si le tableau a des données
+                    if (tableBody.find('tr').length > 0) {
+                        debugLog(`Tableau ${tableId} déjà rempli, skip`);
+                        return;
+                    }
+                    
+                    // Créer une ligne de chargement
+                    tableBody.html(`
+                        <tr>
+                            <td colspan="4" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Chargement...</span>
+                                </div>
+                                <span class="ms-2">Chargement des données...</span>
+                            </td>
+                        </tr>
+                    `);
+                    
+                    // Simuler un délai pour le chargement
+                    setTimeout(() => {
+                        try {
+                            // Remplir le tableau avec les données
+                            populateYearTable(actif, tableBody);
+                            debugLog(`Tableau ${tableId} rempli avec succès`);
+                            
+                            // Mettre à jour le résumé pour cette année
+                            updateSummaryForYear(actif, anneeId);
+                        } catch (error) {
+                            debugLog(`Erreur lors du remplissage du tableau ${tableId}`, error);
+                            tableBody.html(`
+                                <tr>
+                                    <td colspan="4" class="text-center text-danger py-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Erreur d'affichage
+                                    </td>
+                                </tr>
+                            `);
+                        }
+                    }, 100);
+                } else {
+                    debugLog(`Tableau ${tableId} non trouvé`);
+                }
+            });
+        }
+    }
+    
+    // Fonction pour remplir un tableau d'année
+    function populateYearTable(actif, tableBody) {
+        const generalTotal = actif.general_total || calculateGeneralTotal(actif);
+        
+        // Nettoyer le tableau
+        tableBody.empty();
+        
+        // Structure complète des catégories
+        const categories = [
+            {
+                name: "CAPITAL SOUSCRIT NON APPELÉ",
+                items: [
+                    { label: "Capital Souscrit Non Appelé", value: actif.capital_souscrit_non_app || 0 }
+                ]
+            },
+            {
+                name: "IMMOBILISATIONS INCORPORELLES",
+                items: [
+                    { label: "Frais Recherche Développement", value: actif.frais_recherche_developpement || 0 },
+                    { label: "Brevet Licence Logiciels", value: actif.brevet_licence_logiciels || 0 },
+                    { label: "Fonds Commercial", value: actif.fonds_commercial || 0 },
+                    { label: "Autres Immobilisations Incorporelles", value: actif.autres_immobilisations_incorporelles || 0 }
+                ]
+            },
+            {
+                name: "IMMOBILISATIONS CORPORELLES",
+                items: [
+                    { label: "Terrains", value: actif.terrains || 0 },
+                    { label: "Constructions", value: actif.constructions || 0 },
+                    { label: "Matériels et Outils", value: actif.materiels_et_outils || 0 },
+                    { label: "Matériel de Transport", value: actif.materiel_de_transport || 0 },
+                    { label: "Autres Immobilisations Corporelles", value: actif.autres_immos_corp || 0 },
+                    { label: "Immobilisations en Cours", value: actif.immos_en_cours || 0 },
+                    { label: "Avances et Acomptes", value: actif.avances_et_acptes || 0 }
+                ]
+            },
+            {
+                name: "IMMOBILISATIONS FINANCIÈRES",
+                items: [
+                    { label: "Participations", value: actif.participations || 0 },
+                    { label: "Prêts", value: actif.prets || 0 },
+                    { label: "Autres", value: actif.autres || 0 }
+                ]
+            },
+            {
+                name: "STOCKS",
+                items: [
+                    { label: "Stocks Matières Premières", value: actif.stocks_mp || 0 },
+                    { label: "Stocks Encours Matières Premières", value: actif.stocks_encours_mp || 0 },
+                    { label: "Stocks Produits Finis", value: actif.stocks_pf || 0 },
+                    { label: "Stocks Encours Produits Finis", value: actif.stocks_encours_pf || 0 },
+                    { label: "Stocks Encours Services", value: actif.stocks_encours_services || 0 },
+                    { label: "Stocks Matières et Fournitures", value: actif.stocks_mses || 0 }
+                ]
+            },
+            {
+                name: "CRÉANCES",
+                items: [
+                    { label: "Avances et Acomptes Versés", value: actif.avances_acptes_verses || 0 },
+                    { label: "Clients et Comptes Rattachés", value: actif.clients_et_cptes_rattaches || 0 },
+                    { label: "Autres Créances", value: actif.autres_creances || 0 },
+                    { label: "Valeurs à Encaisser", value: actif.valeurs_a_encaisser || 0 }
+                ]
+            },
+            {
+                name: "DISPOSITIBILITÉS",
+                items: [
+                    { label: "Banques, Chèques Postaux, Caisse", value: actif.banques_cheques_postaux_caisse || 0 }
+                ]
+            },
+            {
+                name: "COMPTES DE RÉGULARISATION",
+                items: [
+                    { label: "CCA", value: actif.cca || 0 },
+                    { label: "Charges à Répartir et Frais d'Établissement", value: actif.charges_a_repartir_et_frais_etablissement || 0 }
+                ]
+            }
+        ];
+        
+        // Ajouter les catégories au tableau
+        categories.forEach(category => {
+            const categoryTotal = category.items.reduce((sum, item) => sum + (parseFloat(item.value) || 0), 0);
+            const categoryPercentage = generalTotal > 0 ? 
+                ((categoryTotal / generalTotal) * 100).toFixed(1) : '0.0';
+            
+            tableBody.append(`
+                <tr class="category-header">
+                    <td colspan="2"><strong>${category.name}</strong></td>
+                    <td class="text-end"><strong>${formatNumber(categoryTotal)}</strong></td>
+                    <td class="text-end"><strong>${categoryPercentage}%</strong></td>
+                </tr>
+            `);
+            
+            category.items.forEach(item => {
+                const itemValue = parseFloat(item.value) || 0;
+                const itemPercentage = generalTotal > 0 ? 
+                    ((itemValue / generalTotal) * 100).toFixed(1) : '0.0';
+                
+                tableBody.append(`
+                    <tr>
+                        <td width="30"></td>
+                        <td>${item.label}</td>
+                        <td class="text-end">${formatNumber(itemValue)}</td>
+                        <td class="text-end">${itemPercentage}%</td>
+                    </tr>
+                `);
+            });
+            
+            // Ajouter un espace entre les catégories
+            tableBody.append('<tr><td colspan="4" style="height: 10px;"></td></tr>');
+        });
+        
+        // Ajouter les totaux
+        const elements_incorporels = calculateElementsIncorporels(actif);
+        const elements_corporels = calculateElementsCorporels(actif);
+        const elements_financiers = calculateElementsFinanciers(actif);
+        const total_I = elements_incorporels + elements_corporels + elements_financiers;
+        
+        const stocks = calculateStocks(actif);
+        const creances = calculateCreances(actif);
+        const disponibilites_vmp = parseFloat(actif.valeurs_a_encaisser || 0) + 
+                                parseFloat(actif.banques_cheques_postaux_caisse || 0);
+        const total_II = stocks + creances + disponibilites_vmp;
+        
+        const total_III = parseFloat(actif.cca || 0);
+        const capital = parseFloat(actif.capital_souscrit_non_app || 0);
+        
+        // Ajouter les sous-totaux
+        const subtotals = [
+            { label: "SOUS-TOTAL IMMOBILISATIONS INCORPORELLES", value: elements_incorporels, indent: true },
+            { label: "SOUS-TOTAL IMMOBILISATIONS CORPORELLES", value: elements_corporels, indent: true },
+            { label: "SOUS-TOTAL IMMOBILISATIONS FINANCIÈRES", value: elements_financiers, indent: true },
+            { label: "TOTAL ACTIF IMMOBILISÉ (I)", value: total_I, isTotal: true, class: "table-warning" },
+            { label: "SOUS-TOTAL STOCKS", value: stocks, indent: true },
+            { label: "SOUS-TOTAL CRÉANCES", value: creances, indent: true },
+            { label: "SOUS-TOTAL DISPONIBILITÉS", value: disponibilites_vmp, indent: true },
+            { label: "TOTAL ACTIF CIRCULANT (II)", value: total_II, isTotal: true, class: "table-warning" },
+            { label: "TOTAL COMPTES DE RÉGULARISATION (III)", value: total_III, isTotal: true, class: "table-info" }
+        ];
+        
+        subtotals.forEach(subtotal => {
+            const indent = subtotal.indent ? 'style="padding-left: 20px;"' : '';
+            const rowClass = subtotal.class || 'table-light';
+            const subtotalValue = parseFloat(subtotal.value) || 0;
+            const subtotalPercentage = generalTotal > 0 ? 
+                ((subtotalValue / generalTotal) * 100).toFixed(1) : '0.0';
+            
+            tableBody.append(`
+                <tr class="${rowClass}">
+                    <td colspan="2" ${indent}><strong>${subtotal.label}</strong></td>
+                    <td class="text-end"><strong>${formatNumber(subtotalValue)}</strong></td>
+                    <td class="text-end"><strong>${subtotalPercentage}%</strong></td>
+                </tr>
+            `);
+        });
+        
+        // Total général
+        const grandTotalPercentage = generalTotal > 0 ? '100.0' : '0.0';
+        tableBody.append(`
+            <tr class="table-success">
+                <td colspan="2"><strong>TOTAL GÉNÉRAL DE L'ACTIF</strong></td>
+                <td class="text-end"><strong class="fs-5">${formatNumber(generalTotal)}</strong></td>
+                <td class="text-end"><strong class="fs-5">${grandTotalPercentage}%</strong></td>
+            </tr>
+        `);
+    }
+    
+    // Mettre à jour le résumé pour une année
+    function updateSummaryForYear(actif, yearId) {
+        const generalTotal = actif.general_total || calculateGeneralTotal(actif);
+        const total_I = actif.total_I || calculateElementsIncorporels(actif) + calculateElementsCorporels(actif) + calculateElementsFinanciers(actif);
+        const total_II = actif.total_II || calculateStocks(actif) + calculateCreances(actif) + (parseFloat(actif.banques_cheques_postaux_caisse || 0));
+        const total_III = actif.total_III || parseFloat(actif.cca || 0);
+        const capital = parseFloat(actif.capital_souscrit_non_app || 0);
+        
+        const totalIPercentage = generalTotal > 0 ? ((total_I / generalTotal) * 100).toFixed(1) : '0.0';
+        const totalIIPercentage = generalTotal > 0 ? ((total_II / generalTotal) * 100).toFixed(1) : '0.0';
+        const totalIIIPercentage = generalTotal > 0 ? ((total_III / generalTotal) * 100).toFixed(1) : '0.0';
+        const capitalPercentage = generalTotal > 0 ? ((capital / generalTotal) * 100).toFixed(1) : '0.0';
+        
+        $(`#summary-${yearId}`).html(`
+            <div class="small">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Immobilisé:</span>
+                    <span class="fw-bold">${formatNumber(total_I)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Circulant:</span>
+                    <span class="fw-bold">${formatNumber(total_II)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Régularisation:</span>
+                    <span class="fw-bold">${formatNumber(total_III)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Capital:</span>
+                    <span class="fw-bold">${formatNumber(capital)}</span>
+                </div>
+                <div class="mt-3">
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar" style="width: ${totalIPercentage}%; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));" 
+                            title="Immobilisé: ${totalIPercentage}%"></div>
+                        <div class="progress-bar" style="width: ${totalIIPercentage}%; background: var(--success-gradient);" 
+                            title="Circulant: ${totalIIPercentage}%"></div>
+                        <div class="progress-bar" style="width: ${totalIIIPercentage}%; background: var(--purple-gradient);" 
+                            title="Régularisation: ${totalIIIPercentage}%"></div>
+                        <div class="progress-bar" style="width: ${capitalPercentage}%; background: var(--warning-gradient);" 
+                            title="Capital: ${capitalPercentage}%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small>I</small>
+                        <small>II</small>
+                        <small>III</small>
+                        <small>Cap.</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary w-100 btn-action edit-actif-btn" 
+                            data-id="${actif.id}">
+                        <i class="fas fa-edit me-2"></i>Modifier cette année
+                    </button>
+                </div>
+            </div>
+        `);
+    }
+    
+    // Initialiser les graphiques
+    function initializeCharts() {
+        debugLog('Initialisation des graphiques');
+        
+        try {
+            for (const [year, actifs] of Object.entries(allActifs)) {
+                const actif = actifs[0];
+                const anneeId = actif.annee?.id || actif.annee_id || 'unknown';
+                const canvasId = `chart-${anneeId}`;
+                const ctx = document.getElementById(canvasId);
+                
+                if (ctx) {
+                    debugLog(`Création graphique pour ${canvasId}`);
+                    
+                    // Détruire le graphique existant
+                    if (charts[year]) {
+                        charts[year].destroy();
+                    }
+                    
+                    charts[year] = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Immobilisé', 'Circulant', 'Régularisation', 'Capital'],
+                            datasets: [{
+                                data: [
+                                    actif.total_I || 0,
+                                    actif.total_II || 0,
+                                    actif.total_III || 0,
+                                    actif.capital_souscrit_non_app || 0
+                                ],
+                                backgroundColor: [
+                                    'rgba(10, 149, 202, 0.8)',
+                                    'rgba(40, 167, 69, 0.8)',
+                                    'rgba(111, 66, 193, 0.8)',
+                                    'rgba(255, 193, 7, 0.8)'
+                                ],
+                                borderColor: [
+                                    'rgba(10, 149, 202, 1)',
+                                    'rgba(40, 167, 69, 1)',
+                                    'rgba(111, 66, 193, 1)',
+                                    'rgba(255, 193, 7, 1)'
+                                ],
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                            return `${label}: ${formatNumber(value)} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    debugLog(`Graphique ${canvasId} créé avec succès`);
+                } else {
+                    debugLog(`Canvas ${canvasId} non trouvé`);
+                }
+            }
+        } catch (error) {
+            debugLog('Erreur lors de l\'initialisation des graphiques', error);
+        }
+    }
+    
+    // Gestionnaire pour l'édition
+    $(document).on('click', '.edit-actif-btn', function(e) {
+        e.preventDefault();
+        const actifId = $(this).data('id');
+        if (actifId) {
+            debugLog(`Clic sur modifier actif ID: ${actifId}`);
+            loadActifForEdit(actifId);
+        } else {
+            debugLog('ID d\'actif non trouvé sur le bouton');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention',
+                text: 'ID d\'actif non disponible',
+                background: '#fcfefe',
+                color: '#000000'
+            });
+        }
+    });
+    
+    // Charger les données pour modification
+    function loadActifForEdit(actifId) {
+        debugLog(`Chargement actif pour édition ID: ${actifId}`);
+        currentEditActifId = actifId;
+        
+        // Afficher un loader dans le modal
+        const modalBody = $('#editActifModal .modal-body');
+        const originalContent = modalBody.html();
+        
+        modalBody.html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-3">Chargement des données...</p>
+            </div>
+        `);
+        
+        $('#editActifModal').modal('show');
+        
+        $.ajax({
+            url: `${API_BASE_URL}editer-un-actif/${actifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                debugLog('Réponse édition reçue', response);
+                
+                // Restaurer le contenu original
+                modalBody.html(originalContent);
+                
+                // Remplir le formulaire
+                try {
+                    populateEditForm(response);
+                    debugLog('Formulaire d\'édition rempli');
+                    
+                    // Attacher les événements
+                    attachEditFormEvents();
+                } catch (error) {
+                    debugLog('Erreur lors du remplissage du formulaire', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: 'Erreur lors du chargement des données',
+                        background: '#fcfefe',
+                        color: '#000000'
+                    });
+                }
+            },
+            error: function(xhr) {
+                debugLog('Erreur lors du chargement pour édition', xhr);
+                
+                // Restaurer le contenu original
+                modalBody.html(originalContent);
+                
+                let errorMessage = 'Impossible de charger les données';
+                if (xhr.responseJSON?.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Actif non trouvé';
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    background: '#fcfefe',
+                    color: '#000000'
+                });
+            }
+        });
+    }
+    
+    // Remplir le formulaire d'édition
+    function populateEditForm(response) {
+        debugLog('Remplissage formulaire d\'édition', response);
+        
+        // Remplir l'ID
+        $('#editActifId').val(response.id || '');
+        
+        // Remplir l'année
+        if (response.annee_id) {
+            $('#editAnnee').val(response.annee_id);
+        } else if (response.annee?.id) {
+            $('#editAnnee').val(response.annee.id);
+        }
+        
+        // Remplir les champs de valeurs
+        const fields = [
+            'capital_souscrit_non_app',
+            'frais_recherche_developpement',
+            'brevet_licence_logiciels',
+            'fonds_commercial',
+            'autres_immobilisations_incorporelles',
+            'terrains',
+            'constructions',
+            'materiels_et_outils',
+            'materiel_de_transport',
+            'autres_immos_corp',
+            'immos_en_cours',
+            'avances_et_acptes',
+            'participations',
+            'prets',
+            'autres',
+            'stocks_mp',
+            'stocks_encours_mp',
+            'stocks_pf',
+            'stocks_encours_pf',
+            'stocks_encours_services',
+            'stocks_mses',
+            'avances_acptes_verses',
+            'clients_et_cptes_rattaches',
+            'autres_creances',
+            'valeurs_a_encaisser',
+            'banques_cheques_postaux_caisse',
+            'cca',
+            'charges_a_repartir_et_frais_etablissement',
+            'primes_de_rbt',
+            'eca',
+            'eene',
+            'effectif',
+            'amortissements',
+            'provisions_stocks',
+            'provisions_creances',
+            'provisions_vmp'
+        ];
+        
+        fields.forEach(field => {
+            const fieldId = `edit${field.charAt(0).toUpperCase() + field.slice(1)}`;
+            const fieldElement = $(`#${fieldId}`);
+            if (fieldElement.length) {
+                const value = response[field] || 0;
+                fieldElement.val(value);
+            }
+        });
+        
+        // Mettre à jour l'aperçu
+        updateEditPreview();
+        
+        debugLog('Formulaire d\'édition rempli avec succès');
+    }
+    
+    // Mettre à jour l'aperçu en temps réel
+    function updateEditPreview() {
+        try {
+            const capital = parseFloat($('#editCapitalSouscritNonApp').val()) || 0;
+            const elements_incorporels = calculateEditElementsIncorporels();
+            const elements_corporels = calculateEditElementsCorporels();
+            const elements_financiers = calculateEditElementsFinanciers();
+            const totalI = elements_incorporels + elements_corporels + elements_financiers;
+            
+            const stocks = calculateEditStocks();
+            const creances = calculateEditCreances();
+            const disponibilites_vmp = parseFloat($('#editBanquesChequesPostauxCaisse').val()) || 0;
+            const totalII = stocks + creances + disponibilites_vmp;
+            
+            const totalIII = parseFloat($('#editCCA').val()) || 0;
+            const generalTotal = capital + totalI + totalII + totalIII;
+            
+            $('#editPreviewCapital').text(formatNumber(capital));
+            $('#editPreviewTotalI').text(formatNumber(totalI));
+            $('#editPreviewTotalII').text(formatNumber(totalII));
+            $('#editPreviewTotalIII').text(formatNumber(totalIII));
+            $('#editPreviewGeneralTotal').text(formatNumber(generalTotal));
+        } catch (error) {
+            debugLog('Erreur lors de la mise à jour de l\'aperçu', error);
+        }
+    }
+    
+    // Calculs pour l'aperçu d'édition
+    function calculateEditElementsIncorporels() {
+        return (parseFloat($('#editFraisRechercheDeveloppement').val()) || 0) +
+               (parseFloat($('#editBrevetLicenceLogiciels').val()) || 0) +
+               (parseFloat($('#editFondsCommercial').val()) || 0) +
+               (parseFloat($('#editAutresImmobilisationsIncorporelles').val()) || 0);
+    }
+    
+    function calculateEditElementsCorporels() {
+        return (parseFloat($('#editTerrains').val()) || 0) +
+               (parseFloat($('#editConstructions').val()) || 0) +
+               (parseFloat($('#editMaterielsEtOutils').val()) || 0) +
+               (parseFloat($('#editMaterielDeTransport').val()) || 0) +
+               (parseFloat($('#editAutresImmosCorp').val()) || 0) +
+               (parseFloat($('#editImmosEnCours').val()) || 0) +
+               (parseFloat($('#editAvancesEtAcptes').val()) || 0);
+    }
+    
+    function calculateEditElementsFinanciers() {
+        return (parseFloat($('#editParticipations').val()) || 0) +
+               (parseFloat($('#editPrets').val()) || 0) +
+               (parseFloat($('#editAutres').val()) || 0);
+    }
+    
+    function calculateEditStocks() {
+        return (parseFloat($('#editStocksMP').val()) || 0) +
+               (parseFloat($('#editStocksEncoursMP').val()) || 0) +
+               (parseFloat($('#editStocksPF').val()) || 0) +
+               (parseFloat($('#editStocksEncoursPF').val()) || 0) +
+               (parseFloat($('#editStocksEncoursServices').val()) || 0) +
+               (parseFloat($('#editStocksMSES').val()) || 0);
+    }
+    
+    function calculateEditCreances() {
+        return (parseFloat($('#editAvancesAcptesVerses').val()) || 0) +
+               (parseFloat($('#editClientsEtCptesRattaches').val()) || 0) +
+               (parseFloat($('#editAutresCreances').val()) || 0) +
+               (parseFloat($('#editValeursAEncaisser').val()) || 0);
+    }
+    
+    // Attacher les événements du formulaire d'édition
+    function attachEditFormEvents() {
+        // Mettre à jour l'aperçu en temps réel
+        $('#editActifForm input[type="number"]').off('input').on('input', updateEditPreview);
+        
+        // Soumission du formulaire
+        $('#editActifForm').off('submit').on('submit', function(e) {
+            e.preventDefault();
+            submitEditForm();
+        });
+        
+        // Bouton de suppression
+        $('#deleteActifBtn').off('click').on('click', function() {
+            deleteActif();
+        });
+    }
+    
+    // Soumettre le formulaire d'édition
+    function submitEditForm() {
+        const actifId = $('#editActifId').val();
+        const formData = $('#editActifForm').serializeArray();
+        const data = {};
+        
+        formData.forEach(item => {
+            // Convertir les nombres
+            const value = item.value;
+            data[item.name] = !isNaN(parseFloat(value)) ? parseFloat(value) : value;
+        });
+        
+        // Ajouter l'acheteur
+        data['acheteur'] = ACHETEUR_ID;
+        
+        debugLog('Soumission formulaire d\'édition', data);
+        
+        // Afficher un loader
+        const submitBtn = $('#editActifForm').find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Enregistrement...');
+        submitBtn.prop('disabled', true);
+        
+        $.ajax({
+            url: `${API_BASE_URL}editer-un-actif/${actifId}/`,
+            type: 'PUT',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function(response) {
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                debugLog('Modification réussie', response);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Actif modifié avec succès',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    $('#editActifModal').modal('hide');
+                    loadAllActifs();
+                });
+            },
+            error: function(xhr) {
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                debugLog('Erreur lors de la modification', xhr);
+                
+                let errorMessage = 'Erreur lors de la modification';
+                if (xhr.responseJSON?.detail) {
+                    errorMessage = xhr.responseJSON.detail;
+                } else if (xhr.responseJSON?.errors) {
+                    const errors = Object.values(xhr.responseJSON.errors).flat();
+                    errorMessage = errors.join(', ');
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    background: '#fcfefe',
+                    color: '#000000'
+                });
+            }
+        });
+    }
+    
+    // Supprimer un actif
+    function deleteActif() {
+        if (!currentEditActifId) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention',
+                text: 'Aucun actif sélectionné',
+                background: '#fcfefe',
+                color: '#000000'
+            });
+            return;
+        }
+        
+        Swal.fire({
+            title: 'Supprimer cet actif ?',
+            text: 'Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Supprimer',
+            cancelButtonText: 'Annuler',
+            background: '#fcfefe',
+            color: '#000000'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `${API_BASE_URL}supprimer-des-actifs/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [currentEditActifId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé !',
+                            text: 'L\'actif a été supprimé avec succès',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            background: '#fcfefe',
+                            color: '#000000'
+                        }).then(() => {
+                            $('#editActifModal').modal('hide');
+                            loadAllActifs();
+                        });
+                    },
+                    error: function(xhr) {
+                        debugLog('Erreur lors de la suppression', xhr);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer l\'actif',
+                            background: '#fcfefe',
+                            color: '#000000'
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
+    // Soumission du formulaire multi-années
+    $('#addMultiYearForm').submit(function(e) {
+        e.preventDefault();
+        
+        debugLog('Soumission formulaire multi-années');
+        
+        const formData = $(this).serializeArray();
+        const data = {};
+        formData.forEach(item => {
+            data[item.name] = item.value;
+        });
+        
+        // Préparer les données pour l'envoi
+        const yearsData = prepareMultiYearData(data);
+        debugLog('Données préparées pour multi-années', yearsData);
+        
+        if (yearsData.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Attention',
+                text: 'Aucune donnée à enregistrer',
+                background: '#fcfefe',
+                color: '#000000'
+            });
+            return;
+        }
+        
+        // Afficher un loader
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>Enregistrement...');
+        submitBtn.prop('disabled', true);
+        
+        // Envoyer les données pour chaque année
+        const promises = yearsData.map(yearData => {
+            return $.ajax({
+                url: `${API_BASE_URL}ajouter-un-actif/`,
+                type: 'POST',
+                data: JSON.stringify(yearData),
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+        });
+        
+        // Exécuter toutes les promesses
+        Promise.all(promises)
+            .then(responses => {
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                debugLog('Toutes les années ont été enregistrées', responses);
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: `${yearsData.length} année(s) ajoutée(s) avec succès`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    background: '#fcfefe',
+                    color: '#000000'
+                }).then(() => {
+                    $('#addMultiYearModal').modal('hide');
+                    loadAllActifs();
+                });
+            })
+            .catch(error => {
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+                
+                debugLog('Erreur lors de l\'ajout multi-années', error);
+                
+                let errorMessage = 'Erreur lors de l\'ajout des données';
+                if (error.responseJSON?.detail) {
+                    errorMessage = error.responseJSON.detail;
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage,
+                    background: '#fcfefe',
+                    color: '#000000'
+                });
+            });
+    });
+    
+    // Préparer les données multi-années
+    function prepareMultiYearData(data) {
+        const years = ['n', 'n1', 'n2'];
+        const result = [];
+        
+        years.forEach(suffix => {
+            const annee = data[`annee_${suffix}`];
+            const acheteur = data[`acheteur_${suffix}`];
+            
+            if (!annee || !acheteur) {
+                debugLog(`Données manquantes pour l'année ${suffix}`);
+                return;
+            }
+            
+            const yearData = {
+                acheteur: acheteur,
+                annee: annee
+            };
+            
+            // Ajouter tous les champs avec ce suffixe
+            Object.keys(data).forEach(key => {
+                if (key.endsWith(`_${suffix}`)) {
+                    const baseKey = key.replace(`_${suffix}`, '');
+                    const value = data[key];
+                    // Convertir les nombres
+                    yearData[baseKey] = !isNaN(parseFloat(value)) ? parseFloat(value) : value;
+                }
+            });
+            
+            // Supprimer les clés inutiles
+            delete yearData['acheteur_' + suffix];
+            delete yearData['annee_' + suffix];
+            
+            result.push(yearData);
+        });
+        
+        return result;
+    }
+    
+    // Navigation vers une année spécifique
+    window.showYearDetail = function(yearId) {
+        debugLog(`Navigation vers l'année ID: ${yearId}`);
+        if (yearId) {
+            const tab = $(`#year-${yearId}-tab`);
+            if (tab.length) {
+                tab.tab('show');
+            } else {
+                debugLog(`Onglet pour l'année ${yearId} non trouvé`);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Information',
+                    text: `L'onglet pour l'année sélectionnée n'est pas disponible`,
+                    background: '#fcfefe',
+                    color: '#000000'
+                });
+            }
+        } else {
+            debugLog('ID d\'année invalide pour showYearDetail');
+        }
+    };
+    
+    // Fonctions d'export (placeholder)
+    function exportToExcel() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Export Excel',
+            text: 'Fonctionnalité d\'export Excel à implémenter',
+            background: '#fcfefe',
+            color: '#000000'
+        });
+    }
+    
+    function exportToPDF() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Export PDF',
+            text: 'Fonctionnalité d\'export PDF à implémenter',
+            background: '#fcfefe',
+            color: '#000000'
+        });
+    }
+    
+    function exportComparison() {
+        Swal.fire({
+            icon: 'info',
+            title: 'Comparaison',
+            text: 'Fonctionnalité de comparaison à implémenter',
+            background: '#fcfefe',
+            color: '#000000'
+        });
+    }
+    
+    // Rendre les fonctions accessibles globalement
+    window.loadAllActifs = loadAllActifs;
+    window.showYearDetail = showYearDetail;
+    window.exportToExcel = exportToExcel;
+    window.exportToPDF = exportToPDF;
+    window.exportComparison = exportComparison;
+    
+    console.log('=== FIN INITIALISATION ACTIFS ===');
+});
+</script>
+{% endblock %}

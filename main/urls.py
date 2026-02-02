@@ -47,6 +47,10 @@ from main.api.views_reporting import *
 from main.api.views_api_emailling import *
 from main.api.views_bucrep3 import *
 
+
+# OPTION 3: Import global
+from main.api import views_scoring_manuel
+
 # from .views import PaysViewSet
 
 
@@ -3312,6 +3316,8 @@ urlpatterns = [
         DeleteAcheteurResultatAnglaisView.as_view(),
         name="delete-resultat-anglais-acheteur",
     ),
+    
+    # DEBUT : ACTIFS CLASSIQUES
     path(
         "api/acheteur/<int:acheteur_id>/bilan-classique/liste-des-actifs/",
         ListAcheteurActifClassiqueView.as_view(),
@@ -3327,6 +3333,10 @@ urlpatterns = [
         AddAcheteurActifClassiqueView.as_view(),
         name="add-actif-classique-acheteur",
     ),
+    path('api/acheteur/<int:acheteur_id>/bilan-classique/ajouter-multi-annee/', 
+         AddMultiYearActifCView.as_view(), 
+         name='add-multi-year-actif-classique',
+    ),
     path(
         "api/acheteur/<int:acheteur_id>/bilan-classique/editer-un-actif/<int:actif_id>/",
         EditAcheteurActifClassiqueView.as_view(),
@@ -3337,6 +3347,8 @@ urlpatterns = [
         DeleteAcheteurActifClassiqueView.as_view(),
         name="delete-actif-classique-acheteur",
     ),
+    # FIN : ACTIFS CLASSIQUES
+    
     path(
         "api/acheteur/<int:acheteur_id>/bilan-classique/liste-des-passifs/",
         ListAcheteurPassifClassiqueView.as_view(),
@@ -5730,6 +5742,7 @@ urlpatterns = [
     # Scoring manuel
     path('api/scoring/', ScoringListView.as_view(), name='api_scoring_list'),
     path('api/scoring/create/', ScoringCreateView.as_view(), name='api_scoring_create'),
+    path('api/scoring/create-or-update/', CreateOrUpdateScoringView.as_view(), name='api_scoring_create_or_update'),
     path('api/scoring/<int:pk>/', ScoringDetailView.as_view(), name='api_scoring_detail'),
     path('api/scoring/acheteur/<int:acheteur_id>/annee/<int:annee_id>/', 
          ScoringByAcheteurAnneeView.as_view(), name='api_scoring_by_acheteur_annee'),

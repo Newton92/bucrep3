@@ -1606,77 +1606,114 @@ def dash_root_manage_acheteur_scoring(request, acheteur_id):
     
     
 # views.py - Ajoutez cette vue
-
 @login_required
 def dash_root_manage_acheteur_scoring_manuel(request, acheteur_id):
     """
     Vue pour la gestion du scoring manuel
     Si acheteur_id est fourni, on filtre par acheteur
     """
-    # Récupérer l'acheteur avec préfetch pour optimiser
-    acheteur = get_object_or_404(
-        Acheteur.objects.select_related(
-            'statut_entreprise',
-            'forme_juridique',
-            'categorie_entreprise',
-            'pays',
-            'province',
-            'ville'
-        ),
-        id=acheteur_id
-    )
-    
-    # Préparer les données de l'acheteur pour le template
-    acheteur_data = {
-        'id': acheteur.id,
-        'nom': acheteur.nom or 'Non spécifié',
-        'sigle': acheteur.sigle or '',
-        'code': acheteur.code or 'N/A',
-        'activite_principale': acheteur.activite_principale or 'Non spécifié',
-        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
-        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
-        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
-        'description': acheteur.description or 'Aucune description disponible',
-        'email': acheteur.email or 'Non spécifié',
-        'fax': acheteur.fax or 'Non spécifié',
-        'boite_postale': acheteur.boite_postale or 'Non spécifié',
-        'site_internet': acheteur.site_internet or 'Non spécifié',
-        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
-        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
-        'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
-    }
-    
-    # Convertir en JSON sécurisé pour JavaScript
-    acheteur_json = json.dumps(acheteur_data, default=str)
-    
-    # Génération des tokens JWT
     try:
-        refresh = RefreshToken.for_user(request.user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-    except Exception as e:
-        logger.error(f"Erreur lors de la génération des tokens: {e}")
-        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
-        return redirect('login')
-    
-    context = {
-        "acheteur_active": "active",
-        "user": request.user,
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "acheteur_json": acheteur_json,  # JSON pour JavaScript
-        "acheteur": acheteur,  # Objet pour le template si besoin
-        "id_acheteur": acheteur_id,
-    }
-    
-    return render(
-        request,
-        "main/root/acheteur/scoring/dash_root_manage_acheteur_scoring_manuel.html",
-        context,
-    )
+        # Récupérer l'acheteur avec préfetch pour optimiser
+        acheteur = get_object_or_404(
+            Acheteur.objects.select_related(
+                'statut_entreprise',
+                'forme_juridique',
+                'categorie_entreprise',
+                'pays',
+                'province',
+                'ville'
+            ),
+            id=acheteur_id
+        )
+        
+        # Supprimez TOUS les scorings pour l'acheteur 2
+        # scorings = Scoring.objects.filter(acheteur_id=acheteur_id)
+        # print(f"Suppression de {scorings.count()} scorings")
+        # deleted_count, _ = scorings.delete()
+        # print(f"{deleted_count} scorings supprimés")
 
+        # Vérifiez que c'est vide
+        # remaining = Scoring.objects.filter(acheteur_id=acheteur_id).count()
+        # print(f"Scorings restants: {remaining}")
+        
+        # Dans votre vue dash_root_manage_acheteur_scoring_manuel
+        # Au lieu de :s
+        # scorings = Scoring.objects.filter(acheteur_id=acheteur_id)
+        # print(f"Suppression de {scorings.count()} scorings")
+
+        # Essayez avec ALL pour voir même les soft-deletes :
+        # from safedelete.models import DELETED_INVISIBLE
+        # from safedelete.managers import SafeDeleteManager
+
+        # Pour voir TOUS les scorings (y compris soft-deleted)
+        # all_scorings = Scoring.objects.all(force_visibility=SafeDeleteManager.DELETED_VISIBLE)
+        # print(f"Total scorings (y compris soft-deleted): {all_scorings.filter(acheteur_id=acheteur_id).count()}")
+
+        # Pour vraiment supprimer (hard delete) :
+        # Scoring.objects.filter(acheteur_id=acheteur_id).delete()
+        
+        # Préparer les données pour l'encart acheteur
+        acheteur_context = {
+            'id': acheteur.id,
+            'nom': acheteur.nom or 'Non spécifié',
+            'sigle': acheteur.sigle or '',
+            'code': acheteur.code or 'N/A',
+            'activite_principale': acheteur.activite_principale or 'Non spécifié',
+            'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else None,
+            'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+            'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+            'description': acheteur.description or 'Aucune description disponible',
+            'email': acheteur.email or 'Non spécifié',
+            'fax': acheteur.fax or 'Non spécifié',
+            'boite_postale': acheteur.boite_postale or 'Non spécifié',
+            'site_internet': acheteur.site_internet or 'Non spécifié',
+            'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+            'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+            'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
+        }
+        
+        # Convertir en JSON sécurisé pour JavaScript
+        acheteur_json = json.dumps(acheteur_context, default=str)
+        
+        # Génération des tokens JWT
+        try:
+            refresh = RefreshToken.for_user(request.user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération des tokens: {e}")
+            messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+            return redirect('login')
+        
+        # Récupérer les années actives pour le formulaire
+        annee_list = Annee.objects.filter(is_active=True).order_by('-annee')
+        
+        # Préparer les données des années pour le template
+        annee_data = [{'id': a.id, 'annee': a.annee} for a in annee_list]
+        
+        context = {
+            "acheteur_active": "active",
+            "user": request.user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "acheteur_json": acheteur_json,  # JSON pour JavaScript
+            "acheteur": acheteur,  # Objet pour le template
+            "annee_list": annee_data,  # Liste pour le select
+            "id_acheteur": acheteur_id,
+        }
+        
+        return render(
+            request,
+            "main/root/acheteur/scoring/dash_root_manage_acheteur_scoring_manuel.html",
+            context,
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur dans la vue scoring manuel: {e}")
+        messages.error(request, f"Une erreur est survenue: {str(e)}")
+        return redirect('dashboard')
+    
+    
 
 @login_required
 def dash_root_manage_acheteur_scoring_with_bilan(request, acheteur_id):
@@ -4019,9 +4056,42 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4036,9 +4106,13 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }

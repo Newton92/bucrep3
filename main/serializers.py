@@ -6,7 +6,9 @@ from rest_framework import serializers
 
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-
+from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
 from main.models import *
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import RetrieveUpdateAPIView
@@ -17,8 +19,19 @@ from rest_framework import serializers
 import re
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
+from rest_framework.response import Response  # ⭐⭐ AJOUTEZ CET IMPORT ⭐⭐
 
 from django.contrib.auth import get_user_model
+
+# Classe de pagination personnalisée
+# ===== CLASSES DE PAGINATION =====
+class StandardPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class NoPagination(PageNumberPagination):
+    page_size = None
 
 User = get_user_model()
 
@@ -11698,7 +11711,7 @@ class ActifClassiqueSerializer(serializers.ModelSerializer):
     updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul en lecture seule
-    elements_incorporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
+    elements_incorporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True, source='elements_incorporels')
     elements_corporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     elements_financiers = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
@@ -12841,39 +12854,41 @@ class ResultatIFRSSerializer(serializers.ModelSerializer):
         
 # serializers.py - Ajoutez ces classes à votre fichier serializers.py
 
-class ScoringSerializer(serializers.ModelSerializer):
-    """Serializer pour le scoring manuel"""
+# serializers.py - CORRECTION DU SERIALIZER
+
+# CORRECTION 1: Classe AnneeListView
+class AnneeListView(ListAPIView):
+    """Liste des années pour le formulaire"""
+    permission_classes = [IsAuthenticated]
+    pagination_class = NoPagination
     
-    # Champs en lecture seule pour l'affichage
+    def get(self, request, *args, **kwargs):
+        annees = Annee.objects.filter(is_active=True).order_by('-annee')
+        data = [
+            {
+                'id': annee.id,
+                'annee': annee.annee,
+                'is_active': annee.is_active
+            }
+            for annee in annees
+        ]
+        return Response(data)
+
+# serializers.py
+class ScoringSerializer(serializers.ModelSerializer):
     annee_details = serializers.SerializerMethodField(read_only=True)
     acheteur_details = serializers.SerializerMethodField(read_only=True)
     created_by_details = UserSimpleSerializer(source='created_by', read_only=True)
     updated_by_details = UserSimpleSerializer(source='updated_by', read_only=True)
     score_category = serializers.SerializerMethodField(read_only=True)
-    score_numeric = serializers.SerializerMethodField(read_only=True)
-    
-    # Champs en écriture
-    annee_id = serializers.PrimaryKeyRelatedField(
-        queryset=Annee.objects.all(),
-        source='annee',
-        write_only=True,
-        required=True
-    )
-    
-    acheteur_id = serializers.PrimaryKeyRelatedField(
-        queryset=Acheteur.objects.all(),
-        source='acheteur',
-        write_only=True,
-        required=True
-    )
     
     class Meta:
         model = Scoring
         fields = [
             'id',
-            'annee', 'annee_id', 'annee_details',
-            'acheteur', 'acheteur_id', 'acheteur_details',
-            'score', 'score_category', 'score_numeric',
+            'annee', 'annee_details',
+            'acheteur', 'acheteur_details',
+            'score', 'score_category',
             'commentaire',
             'created_at', 'updated_at',
             'created_by', 'created_by_details',
@@ -12903,26 +12918,19 @@ class ScoringSerializer(serializers.ModelSerializer):
     def get_score_category(self, obj):
         return obj.get_score_category()
     
-    def get_score_numeric(self, obj):
-        return obj.get_score_numeric()
-    
     def validate_score(self, value):
-        """Validation du score (0-10)"""
-        if value:
-            try:
-                score_num = float(value)
-                if score_num < 0 or score_num > 10:
-                    raise serializers.ValidationError(
-                        _("Le score doit être compris entre 0 et 10")
-                    )
-            except (ValueError, TypeError):
-                # Si ce n'est pas un nombre, vérifier le format alphabétique
-                import re
-                if not re.match(r'^[A-F][+-]?$', str(value).strip()):
-                    raise serializers.ValidationError(
-                        _("Format de score invalide. Utilisez un nombre (0-10) ou une note alphabétique (A-F)")
-                    )
-        return value
+        """Validation du score"""
+        if value is None or value == '':
+            raise serializers.ValidationError("Le score est obligatoire")
+        
+        try:
+            score_float = float(value)
+            if score_float < 0 or score_float > 10:
+                raise serializers.ValidationError("Le score doit être entre 0 et 10")
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Le score doit être un nombre valide entre 0 et 10")
+        
+        return str(score_float)  # S'assurer que c'est une chaîne
     
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
@@ -12932,8 +12940,103 @@ class ScoringSerializer(serializers.ModelSerializer):
         validated_data['updated_by'] = self.context['request'].user
         return super().update(instance, validated_data)
 
+# CORRECTION 2: ScoringListView - amélioration des filtres
+class ScoringListView(ListAPIView):
+    """Liste des scorings manuels avec filtrage"""
+    serializer_class = ScoringSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
+    page_size = 10  # Définir une taille de page
+    
+    def get_queryset(self):
+        queryset = Scoring.objects.select_related(
+            'annee', 'acheteur', 'created_by'
+        ).order_by('-created_at')
+        
+        # Filtrage par acheteur (ID de l'acheteur courant)
+        acheteur_id = self.request.query_params.get('acheteur_id')
+        if acheteur_id and acheteur_id != 'null':
+            try:
+                queryset = queryset.filter(acheteur_id=int(acheteur_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # Filtrage par année
+        annee_id = self.request.query_params.get('annee_id')
+        if annee_id and annee_id != '' and annee_id != 'null':
+            try:
+                queryset = queryset.filter(annee_id=int(annee_id))
+            except (ValueError, TypeError):
+                pass
+        
+        # Filtrage par score (gestion des erreurs)
+        try:
+            score_min = self.request.query_params.get('score_min')
+            if score_min and score_min != '':
+                score_min_float = float(score_min)
+                # Filtrage pour scores numériques
+                queryset = queryset.filter(
+                    Q(score__gte=str(score_min_float)) |
+                    Q(score__isnull=False) & ~Q(score='')
+                )
+        except (ValueError, TypeError):
+            pass
+        
+        try:
+            score_max = self.request.query_params.get('score_max')
+            if score_max and score_max != '':
+                score_max_float = float(score_max)
+                queryset = queryset.filter(
+                    Q(score__lte=str(score_max_float)) |
+                    Q(score__isnull=False) & ~Q(score='')
+                )
+        except (ValueError, TypeError):
+            pass
+        
+        # Recherche texte
+        search = self.request.query_params.get('search')
+        if search and search != '':
+            queryset = queryset.filter(
+                Q(acheteur__nom__icontains=search) |
+                Q(acheteur__sigle__icontains=search) |
+                Q(commentaire__icontains=search)
+            )
+        
+        return queryset
 
-class ScoringListSerializer(serializers.ModelSerializer):
+# CORRECTION 3: APIView pour obtenir les détails d'un acheteur
+class AcheteurDetailView(APIView):
+    """Récupérer les détails d'un acheteur pour l'encart"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, acheteur_id):
+        try:
+            acheteur = Acheteur.objects.select_related(
+                'statut_entreprise', 'forme_juridique', 'categorie_entreprise',
+                'pays', 'province', 'ville'
+            ).get(id=acheteur_id)
+            
+            data = {
+                'id': acheteur.id,
+                'nom': acheteur.nom or 'Non spécifié',
+                'sigle': acheteur.sigle or '',
+                'code': acheteur.code or 'N/A',
+                'activite_principale': acheteur.activite_principale or 'Non spécifié',
+                'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else None,
+                'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+                'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+                'description': acheteur.description or 'Aucune description disponible',
+                'email': acheteur.email or 'Non spécifié',
+                'fax': acheteur.fax or 'Non spécifié',
+                'boite_postale': acheteur.boite_postale or 'Non spécifié',
+                'site_internet': acheteur.site_internet or 'Non spécifié',
+                'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+                'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+                'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
+            }
+            return Response(data)
+        except Acheteur.DoesNotExist:
+            return Response({'error': 'Acheteur non trouvé'}, status=404)
     """Serializer simplifié pour les listes"""
     
     acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)

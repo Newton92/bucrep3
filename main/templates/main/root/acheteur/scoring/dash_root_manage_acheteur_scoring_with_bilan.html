@@ -1447,6 +1447,75 @@ const SCORING_MANAGER = {
 // Initialisation
 $(document).ready(() => {
     SCORING_MANAGER.init();
+    
+    // Fonction pour récupérer le token CSRF
+    function getCsrfToken() {
+        const name = 'csrftoken';
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Intercepteur pour les erreurs d'authentification
+    $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+        if (jqxhr.status === 401) {
+            // Token expiré, tenter de le rafraîchir
+            refreshAccessToken();
+            return false; // Empêcher d'autres gestionnaires d'erreurs
+        }
+    });
+
+    // Fonction pour rafraîchir le token
+    function refreshAccessToken() {
+        Swal.fire({
+            title: 'Session expirée',
+            text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Rafraîchir',
+            cancelButtonText: 'Recharger la page',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return $.ajax({
+                    url: '/api/token/refresh/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ refresh: refreshToken }),
+                    success: function(response) {
+                        accessToken = response.access;
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
+                        return true;
+                    },
+                    error: function() {
+                        return false;
+                    }
+                });
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                window.location.reload();
+            } else if (result.isConfirmed) {
+                Swal.fire('Succès!', 'Token rafraîchi avec succès.', 'success');
+            } else {
+                Swal.fire('Erreur', 'Impossible de rafraîchir le token.', 'error');
+            }
+        });
+    }
+    
 });
 </script>
 {% endblock %}

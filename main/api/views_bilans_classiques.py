@@ -1,4 +1,4 @@
-# Dans votre fichier views.py
+# Dans votre fichier views_bilans_classiques.py
 
 from django.core.paginator import Paginator
 from rest_framework import status

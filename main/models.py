@@ -33,6 +33,12 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 
+# Vérifier s'il existe un scoring soft-deleted pour cette combinaison
+# models.py - CORRIGEZ LES IMPORTS EN HAUT
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from safedelete.managers import SafeDeleteManager
+
+
 from main.constantes import *
 
 # from main.tasks import log_responsable_acheteur_changes
@@ -227,6 +233,7 @@ class User(AbstractUser):
         verbose_name="Droits utilisateur",
         null=True,
         blank=True,
+        default="Root"
     )
 
     reset_token = models.CharField(
@@ -6789,7 +6796,8 @@ class Geopolitics(Model):
         verbose_name_plural = _("Géopolitiques")
         
 
-class Scoring(Model):
+
+class Scoring(SafeDeleteModel):  # Changez Model en SafeDeleteModel
     _safedelete_policy = SOFT_DELETE_CASCADE
 
     annee = models.ForeignKey(
@@ -6821,7 +6829,7 @@ class Scoring(Model):
         blank=True,
         null=True,
         verbose_name=_("Commentaire"),
-        max_length=10000000,  # AJOUTER pour compatibilité
+        max_length=10000000,
         help_text=_("Commentaire détaillé sur le scoring"),
     )
 
@@ -6863,12 +6871,36 @@ class Scoring(Model):
         verbose_name = _("Scoring")
         verbose_name_plural = _("Scorings")
         ordering = ("-created_at",)
-        unique_together = ("annee", "acheteur")  # Attention aux doublons existants !
+        unique_together = ("annee", "acheteur")  # Gardez cette contrainte
         indexes = [
             models.Index(fields=["annee", "acheteur"]),
             models.Index(fields=["score"]),
             models.Index(fields=["created_at"]),
         ]
+    
+    def clean_score(self):
+        """Nettoyer et valider le score"""
+        if self.score:
+            # Nettoyer les espaces
+            self.score = str(self.score).strip()
+            
+            # Valider le format
+            import re
+            pattern = r'^[A-F][+-]?$|^\d{1,3}(\.\d{1,2})?$'
+            if not re.match(pattern, self.score):
+                raise ValidationError({
+                    'score': _('Format de score invalide. Utilisez un nombre (0-10) ou une note alphabétique (A-F).')
+                })
+            
+            # Si c'est un nombre, s'assurer qu'il est entre 0 et 10
+            try:
+                score_num = float(self.score)
+                if score_num < 0 or score_num > 10:
+                    raise ValidationError({
+                        'score': _('Le score doit être compris entre 0 et 10')
+                    })
+            except (ValueError, TypeError):
+                pass
 
     def __str__(self):
         if self.acheteur and self.annee:
@@ -6934,12 +6966,6 @@ class Scoring(Model):
         """Validation au niveau modèle"""
         super().clean()
         
-        # Validation du score
-        if self.score and not self.is_valid_score():
-            raise ValidationError({
-                'score': _('Format de score invalide. Utilisez un nombre ou une note alphabétique (A-F).')
-            })
-        
         # Validation des champs obligatoires
         if not self.annee:
             raise ValidationError({
@@ -6950,7 +6976,6 @@ class Scoring(Model):
             raise ValidationError({
                 'acheteur': _('L\'acheteur est obligatoire')
             })
-
 
 
 class Banquier(Model):
@@ -7650,232 +7675,232 @@ class ActifC(Model):
 
     capital_souscrit_non_app = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Capital sousc. non app"),
     )
     frais_recherche_developpement = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Frais recherche developpement"),
     )
     brevet_licence_logiciels = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Brevet licence logiciels"),
     )
     fonds_commercial = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Fonds commercial"),
     )
     autres_immobilisations_incorporelles = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres immobilisations incorporelles"),
     )
     terrains = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Terrains"),
     )
     constructions = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Constructions"),
     )
     materiels_et_outils = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Materiels et outils"),
     )
     materiel_de_transport = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Materiel de transport"),
     )
     autres_immos_corp = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres immos corp"),
     )
     immos_en_cours = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Immos en cours"),
     )
     avances_et_acptes = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Avances et acptes"),
     )
     participations = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Participations")
+        max_digits=100, decimal_places=5, null=True, blank=True, verbose_name=_("Participations")
     )
     prets = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Prets")
+        max_digits=100, decimal_places=5, null=True, blank=True, verbose_name=_("Prets")
     )
     autres = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres"),
     )
     stocks_mp = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Stocks mp"),
     )
     stocks_encours_mp = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Stocks encours mp"),
     )
     stocks_pf = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Stocks pf"),
     )
     stocks_encours_pf = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Stocks encours pf"),
     )
     stocks_encours_services = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Stocks encours services"),
     )
     stocks_mses = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Stocks mses"),
     )
     avances_acptes_verses = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Avances acptes verses"),
     )
     clients_et_cptes_rattaches = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Clients et cptes rattaches"),
     )
     autres_creances = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres creances"),
     )
     valeurs_a_encaisser = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Valeurs a encaisser"),
     )
     banques_cheques_postaux_caisse = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Banques cheques postaux caisse"),
     )
     cca = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Cca")
+        max_digits=100, decimal_places=5, null=True, blank=True, verbose_name=_("Cca")
     )
     charges_a_repartir_et_frais_etablissement = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Charges a repartir et frais etablissement"),
     )
     primes_de_rbt = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Primes de rbt"),
     )
     eca = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca")
+        max_digits=100, decimal_places=5, null=True, blank=True, verbose_name=_("Eca")
     )
     eene = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eene")
+        max_digits=100, decimal_places=5, null=True, blank=True, verbose_name=_("Eene")
     )
     effectif = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Effectif"),
     )
     amortissements = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Amortissements"),
     )
     provisions_stocks = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Provisions stocks"),
     )
     provisions_creances = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Provisions creances"),
     )
     provisions_vmp = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Provisions vmp"),
