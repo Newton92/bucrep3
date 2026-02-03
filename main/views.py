@@ -46,6 +46,25 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.db.models import Sum
 
 
+import json
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur
+from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
+
+import json
+import logging
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.contrib import messages
+from rest_framework_simplejwt.tokens import RefreshToken
+
+logger = logging.getLogger(__name__)
+
 
 User = get_user_model()
 
@@ -4054,6 +4073,12 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
     )
 
 
+
+
+
+
+
+
 @login_required
 def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
     # Récupérer l'acheteur avec préfetch pour optimiser
@@ -4125,9 +4150,42 @@ def dash_root_manage_acheteur_actif_classique(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4142,9 +4200,13 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4157,9 +4219,42 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4174,9 +4269,13 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4185,6 +4284,92 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
         "main/root/acheteur/bilans/classique/dash_root_manage_acheteur_resultat_classique.html",
         context,
     )
+    
+    
+@login_required
+def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
+    # 1. Récupération unique et optimisée de l'acheteur
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise', 'forme_juridique', 'categorie_entreprise', 
+            'pays', 'province', 'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+
+    # 2. Gestion des Tokens JWT (Une seule fois)
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+    except Exception as e:
+        logger.error(f"Erreur JWT : {e}")
+        messages.error(request, "Session expirée. Veuillez vous reconnecter.")
+        return redirect('login')
+
+    # 3. Préparation des données JSON pour le frontend
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+
+    # 4. Pagination Helper (pour éviter la répétition)
+    def get_paginated_data(queryset, page_param, per_page=10):
+        paginator = Paginator(queryset, per_page)
+        return paginator.get_page(request.GET.get(page_param))
+
+    # Récupération des données financières
+    actifs = ActifC.objects.filter(acheteur=acheteur).all()
+    actifs_qs = ActifC.objects.filter(acheteur=acheteur).select_related('annee').order_by("-created_at")
+    passifs_qs = PassifC.objects.filter(acheteur=acheteur).select_related('annee').order_by("-created_at")
+    resultats_qs = ResultatC.objects.filter(acheteur=acheteur).select_related('annee').order_by("-created_at")
+    
+    print(acheteur)
+    print(actifs)
+    print(actifs_qs)
+    print(passifs_qs)
+    print(resultats_qs)
+
+    # 5. Construction du contexte
+    context = {
+        # UI State
+        "acheteur_active": "active",
+        
+        # Auth/Tokens
+        "access_token": access_token,
+        "refresh_token": str(refresh),
+        
+        # Objets principaux
+        "acheteur": acheteur,
+        "acheteur_json": json.dumps(acheteur_data, default=str),
+        
+        # Données pour formulaires/listes
+        "acheteurs": Acheteur.objects.only('id', 'nom'), # Optimisé : ne charge que le nécessaire
+        "annee_list": Annee.objects.all().order_by('-annee'),
+        "annee_list_data": json.dumps(list(Annee.objects.values("id", "annee"))),
+        "type_bilan_choices_json": json.dumps(list(TYPE_BILAN_CHOICES)),
+        "semestre_choices_json": json.dumps(list(SEMESTRE_CHOICES)),
+        
+        # Pagination
+        "actifs_c_page": get_paginated_data(actifs_qs, "page_actifs"),
+        "passifs_c_page": get_paginated_data(passifs_qs, "page_passifs"),
+        "resultats_c_page": get_paginated_data(resultats_qs, "page_resultats"),
+    }
+
+    return render(
+        request,
+        "main/root/acheteur/bilans/classique/dash_root_manage_acheteur_bilan_classique.html",
+        context,
+    ) 
+
+
+
+
+
 
 
 @login_required
@@ -6120,78 +6305,7 @@ def dash_root_manage_acheteur_bilan_irfs_cobac(request, acheteur_id):
     
     
 # Dans votre fichier views.py
-
-import json
-from django.shortcuts import render
-from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required
-from rest_framework_simplejwt.tokens import RefreshToken
-
-from main.models import ActifC, PassifC, ResultatC, Annee, Acheteur
-from main.models import TYPE_BILAN_CHOICES, SEMESTRE_CHOICES
-
-@login_required
-def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
-    """
-    Vue pour gérer les bilans (Actifs, Passifs, Résultats) d'un acheteur,
-    avec pagination pour chaque section.
-    """
-    user = request.user
-    refresh = RefreshToken.for_user(user)
-    id_acheteur = acheteur_id
-
-    try:
-        acheteur_actuel = Acheteur.objects.get(id=id_acheteur)
-    except Acheteur.DoesNotExist:
-        return render(
-            request, "main/error_page.html", {"error": "Acheteur non trouvé."}
-        )
-    
-    tous_les_acheteurs = Acheteur.objects.all()
-    annee_list = Annee.objects.all()
-
-    # --- PAGINATION DES ACTIFS CLASSIQUES ---
-    actifs_c_list = ActifC.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
-    actifs_c_paginator = Paginator(actifs_c_list, 10)
-    page_actifs_c = request.GET.get("page_actifs")
-    actifs_c_page_obj = actifs_c_paginator.get_page(page_actifs_c)
-
-    # --- PAGINATION DES PASSIFS CLASSIQUES ---
-    passifs_c_list = PassifC.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
-    passifs_c_paginator = Paginator(passifs_c_list, 10)
-    page_passifs_c = request.GET.get("page_passifs")
-    passifs_c_page_obj = passifs_c_paginator.get_page(page_passifs_c)
-
-    # --- PAGINATION DES COMPTES DE RÉSULTATS CLASSIQUES ---
-    resultats_c_list = ResultatC.objects.filter(acheteur_id=acheteur_id).order_by("-annee__annee")
-    resultats_c_paginator = Paginator(resultats_c_list, 10)
-    page_resultats_c = request.GET.get("page_resultats")
-    resultats_c_page_obj = resultats_c_paginator.get_page(page_resultats_c)
-
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-        "acheteur": acheteur_actuel,
-        "acheteurs": tous_les_acheteurs,
-        "annee_list": annee_list,
-        "annee_list_data": json.dumps(list(Annee.objects.values("id", "annee"))),
-        "type_bilan_choices_json": json.dumps(list(TYPE_BILAN_CHOICES)),
-        "semestre_choices_json": json.dumps(list(SEMESTRE_CHOICES)),
-        # Objets de page paginés pour le template
-        "actifs_c_page": actifs_c_page_obj,
-        "passifs_c_page": passifs_c_page_obj,
-        "resultats_c_page": resultats_c_page_obj,
-    }
-
-    return render(
-        request,
-        "main/root/acheteur/bilans/classique/dash_root_manage_acheteur_bilan_classique.html",
-        context,
-    )
-    
+ 
     
     
 # Dans votre fichier views.py

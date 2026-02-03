@@ -7127,7 +7127,7 @@ class ActifA(Model):
 
     biens_installations_equipements = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Biens, installations et équipements"),
@@ -7137,21 +7137,21 @@ class ActifA(Model):
     )
     creances_commerciales_autres_creances = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Créances commerciales et autres"),
     )
     actif_impots_courant = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Actif d'Impôts courant"),
     )
     caisses_banques = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Caisse et banque"),
@@ -7206,6 +7206,50 @@ class ActifA(Model):
     def total_actif(self):
         """Calcule le total général de l'actif."""
         return self.total_actifs_non_courants + self.total_actifs_courants
+    
+    # PROPRIÉTÉS ANALYTIQUES SUPPLEMENTAIRES
+    
+    @property
+    def ratio_liquidite(self):
+        """Ratio de liquidité (actifs courants / total actif)."""
+        if self.total_actif:
+            return float(self.actifs_courants) / float(self.total_actif)
+        return 0
+    
+    @property
+    def ratio_tresorerie(self):
+        """Ratio de trésorerie (caisse / actifs courants)."""
+        if self.actifs_courants and self.caisses_banques:
+            return float(self.caisses_banques) / float(self.actifs_courants)
+        return 0
+    
+    @property
+    def rotation_stocks(self):
+        """Rotation des stocks (inventaire / actifs courants)."""
+        if self.actifs_courants and self.inventaire:
+            return float(self.inventaire) / float(self.actifs_courants)
+        return 0
+    
+    @property
+    def jours_creances_clients(self):
+        """Jours de créances clients estimés."""
+        # Formule simplifiée : (créances / CA annuel) * 365
+        # À adapter avec les données réelles de CA
+        return None  # À implémenter avec données supplémentaires
+    
+    def get_summary(self):
+        """Retourne un résumé de l'actif."""
+        return {
+            'actifs_non_courants': float(self.actifs_non_courants),
+            'actifs_courants': float(self.actifs_courants),
+            'total_actif': float(self.total_actif),
+            'inventaire': float(self.inventaire) if self.inventaire else 0,
+            'creances': float(self.creances_commerciales_autres_creances) if self.creances_commerciales_autres_creances else 0,
+            'liquidite': float(self.caisses_banques) if self.caisses_banques else 0,
+            'ratio_liquidite': self.ratio_liquidite,
+            'ratio_tresorerie': self.ratio_tresorerie,
+            'rotation_stocks': self.rotation_stocks,
+        }
 
 
 class PassifA(Model):
@@ -8051,143 +8095,143 @@ class PassifC(Model):
     )
     capital_social = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Capital social"),
     )
     primes = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Primes"),
     )
     ecarts_de_reevaluation = models.DecimalField(
-        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Eca")
+        max_digits=100, decimal_places=2, null=True, blank=True, verbose_name=_("Écarts de réévaluation")
     )
     reserve = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Reserve"),
     )
     report_a_nouveau = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Report a nouveau"),
     )
     resultat_exercice = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Resultat exercice"),
     )
     subv_invest = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Subventions investies"),
     )
     provision_regl = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Provision regle"),
     )
     emprunts = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Emprunts"),
     )
     dette_credit_bail_contrat_assimile = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Credit lease debts and related contracts"),
     )
     dettes_financiere_diverses = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dettes financiere diverses"),
     )
     provision_financiere_risque_charge = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Provision financiere risque charge"),
     )
     dettes_fournisseurs_divers = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dettes fournisseurs divers"),
     )
     avance_et_acomptes_recu = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Avance et acomptes recu"),
     )
     dettes = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dettes"),
     )
     dettes_fiscales_sociales = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dettes fiscales sociales"),
     )
     autres_dettes = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres dettes"),
     )
     banques_credit_escompte = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Banques credit escompte"),
     )
     banque_credit_caisse = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Banque credit caisse"),
     )
     banques_decouvert = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Banques decouvert"),
     )
     ecart_conversion_passif = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Ecart conversion passif"),
@@ -8224,6 +8268,10 @@ class PassifC(Model):
     class Meta:
         verbose_name = _("Passif bilan classique")
         verbose_name_plural = _("Passifs bilans classiques")
+        indexes = [
+            models.Index(fields=['annee', 'acheteur']),
+            models.Index(fields=['created_at']),
+        ]
 
     @property
     def total_I(self):
@@ -8299,280 +8347,280 @@ class ResultatC(Model):
     )
     vente_de_mdses = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Vente de mdses"),
     )
     ventes_de_produits_fabriques = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Ventes de produits fabriques"),
     )
     travaux_services_vendus = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Travaux services vendus"),
     )
     produit_accessoires = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Produit accessoires"),
     )
     production_imblise = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Production imblise"),
     )
     subventions_exploitations = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Subventions exploitations"),
     )
     production_stockee = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Production stockee"),
     )
     reprises_de_provision = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Reprises de provision"),
     )
     transferts_charges = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Transferts charges"),
     )
     autres_produits = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres produits"),
     )
     achat_mdses = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Achat mdses"),
     )
     variation_stock_mdses = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Variation stock mdses"),
     )
     achat_mp_autres_appro = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Achat mp autres appro"),
     )
     var_stk_mp_app = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Var stk mp app"),
     )
     autres_achats = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres achats"),
     )
     variation_de_stocks_autres_appro = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Variation de stocks autres appro"),
     )
     transports = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Transports"),
     )
     services_ext = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Services ext"),
     )
     impots_taxes = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Impots taxes"),
     )
     autres_charges_valeur_ajoutee = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres charges valeur ajoutee"),
     )
     charges_personnel = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Charges personnel"),
     )
     dotation_aux_amorts = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dotation aux amorts"),
     )
     dotation_aux_provisions = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dotation aux provisions"),
     )
     autres_charges_excedent_brute = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Autres charges excedent brute"),
     )
     revenus_fin_assimiles = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Revenus fin assimiles"),
     )
     prof_vmp_et_cre_actif_immo = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Prof vmp et cre actif immo"),
     )
     interets_produit_assim = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Interets produit assim"),
     )
     reprise_prov_et_transfert = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Reprise prov et transfert"),
     )
     diff_positive_de_change = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Diff positive de change"),
     )
     prod_nets_cessions_vmp = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Prod nets cessions vmp"),
     )
     dap = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dot. aux prov. & depreciations"),
     )
     frais_fin_charges_assi = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Frais fin. & chrges assimilées"),
     )
     diff_negatives_de_change = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Diff negatives de change"),
     )
     ch_nettes_cessions_vmp = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Ch nettes cessions vmp"),
     )
     sur_op_gestion_prod_except = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Sur op gestion prod except"),
     )
     sur_op_en_capital_prod_except = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Sur op en capital prod except"),
     )
     reprise_prov_transfert = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Reprise prov transfert"),
     )
     sur_op_gestion_charg_except = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Sur op gestion charg except"),
     )
     sur_op_en_capital_charg_except = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Sur op en capital charg except"),
     )
     dap_et_transfert_charg_except = models.DecimalField(
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
         verbose_name=_("Dap et transfert charg except"),
@@ -8580,14 +8628,14 @@ class ResultatC(Model):
     participation_salairies = models.DecimalField(
         _("Participations des salariés"),
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
     )
     impot_sur_benefices = models.DecimalField(
         _("Impôts sur les bénéfices"),
         max_digits=100,
-        decimal_places=2,
+        decimal_places=5,
         null=True,
         blank=True,
     )
