@@ -1,0 +1,604 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block css %}{% endblock %}
+
+{% block body %}
+
+<!-- Title START -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="fs-4 mb-0"><i class="bi bi-file-earmark-text fa-fw me-1"></i>Bilan Anglais - Actifs de l'Acheteur</h3>
+    </div>
+</div>
+<!-- Title END -->
+
+<!-- Counter START -->
+<div class="row g-4">
+    <!-- Counter item -->
+    <div class="col-sm-12 col-xl-12">
+        <div class="card card-body border">
+            <div class="d-flex align-items-center">
+                <!-- Content -->
+                <div class="ms-3">
+                    <h4 id="countActifs">Module de Gestion des Actifs</h4>
+                    <span>Dans ce module, il vous sera plus facile de manager l'ensemble des opérations propres à un actif notamment celle de consultation, recherche, ajout, modification et même de suppression.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Counter END -->
+
+<!-- Acheteurs d'Entreprise START -->
+<div class="row">
+    <div class="col-12">
+
+        <!-- Card item START -->
+        <div class="card border">
+            <!-- Card header -->
+            <div class="card-header border-bottom d-md-flex justify-content-md-between align-items-center">
+                <!-- Icon and Title -->
+                <div class="d-flex align-items-center">
+                    <div class="icon-lg bg-light rounded-circle flex-shrink-0"><i class="bi bi-alexa"></i></div>
+                        <!-- Title -->
+                    <div class="ms-2">
+                        <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}?token={{ user.reset_token }}">
+                            <h6 class="card-title mb-0" id="editNom"></h6>
+                        </a>
+                        <ul class="nav nav-divider small">
+                            <li class="nav-item" id="editSigle"></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div class="mt-2 mt-md-0">
+                    <a href="#" class="btn btn-dark-soft mb-0">Code ACREMAC</a>
+                    <p class="text-danger text-md-end mb-0" id="editCode"></p>
+                </div>
+            </div>
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Légende</u></h6>
+                        <strong>Biens, Installations et Équipements : </strong><span id="">BIE</span><br>
+                        <strong>Inventaire : </strong><span id="">INV</span><br>
+                        <strong>Créances Commerciales et Autres : </strong><span id="">CCA</span><br>
+                        <strong>Actif d'Impôts Courant : </strong><span id="">AIC</span><br>
+                        <strong>Caisse et Banque : </strong><span id="">CB</span><br>
+                        <strong>Année : </strong><span id="">AN</span><br>
+                    </div>
+                </div>
+                <br>
+
+                <div class="d-flex align-items-center">
+                    <!-- Content -->
+                    <div class="ms-3">
+                        <h6 id="countAcheteurs"><u>Note d'information</u></h6>
+                        <span id="">Cher agent, si toutefois vous souhaitez retourner consulter la page
+                            de gestion de l'acheteur sur lequel vous êtes, il vous suffira de cliquer sur le nom de l'acheteur !</span><br>
+                    </div>
+                </div>
+                <br>
+
+            </div>
+        </div>
+        <!-- Card item END -->
+
+    </div>
+</div>
+<!-- Acheteurs d'Entreprise END -->
+
+<!-- ACTIFS START -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border rounded-3">
+            <!-- Card header START -->
+            <div class="card-header border-bottom">
+                <h5 class="card-header-title">Liste des Actifs</h5>
+            </div>
+            <!-- Card header END -->
+
+            <!-- Card body START -->
+            <div class="card-body">
+                <!-- Search and select START -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+                    <!-- Search -->
+                    <div class="col-md-8">
+                        <form class="rounded position-relative" id="searchForm">
+                            <input class="form-control pe-5" type="search" placeholder="Recherche..." aria-label="Search" id="searchInput">
+                            <button class="btn border-0 px-3 py-0 position-absolute top-50 end-0 translate-middle-y" type="submit">
+                                <i class="bi bi-search fs-6"></i></button>
+                        </form>
+                    </div>
+
+                    <!-- Select option -->
+                    <div class="col-md-4">
+                        <!-- Short by filter -->
+                        <div>
+                            <button type="button" class="btn btn-primary w-100 mb-0" style="background-color: #0A95CA; border-color: #0A95CA;" data-bs-toggle="modal" data-bs-target="#addActifModal">
+                                Ajouter un Actif
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search and select END -->
+
+                <!-- Actif list START -->
+                <div class="table-responsive border-0" id="actifList">
+                    <table class="table align-middle p-4 mb-0 table-hover table-shrink">
+                        <!-- Table head -->
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="border-0 rounded-start">#</th>
+                                <th scope="col" class="border-0">AN</th>
+                                <th scope="col" class="border-0">BIE</th>
+                                <th scope="col" class="border-0">INV</th>
+                                <th scope="col" class="border-0">CCA</th>
+                                <th scope="col" class="border-0">AIC</th>
+                                <th scope="col" class="border-0">CB</th>
+                                <th scope="col" class="border-0 rounded-end">Action</th>
+                            </tr>
+                        </thead>
+
+                        <!-- Table body START -->
+                        <tbody class="border-top-0" id="actifTableBody"></tbody>
+                        <!-- Table body END -->
+                    </table>
+                </div>
+                <!-- Actif list END -->
+            </div>
+            <!-- Card body END -->
+
+            <!-- Card footer START -->
+            <div class="card-footer pt-0">
+                <!-- Pagination and content -->
+                <div class="d-sm-flex justify-content-sm-between align-items-sm-center">
+                    <!-- Content -->
+                    <p class="mb-sm-0 text-center text-sm-start" id="paginationInfo"></p>
+                    <!-- Pagination -->
+                    <nav class="mb-sm-0 d-flex justify-content-center" aria-label="navigation">
+                        <ul class="pagination pagination-sm pagination-primary-soft mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+            <!-- Card footer END -->
+        </div>
+    </div>
+</div>
+<!-- ACTIFS END -->
+
+<!-- Add Actif Modal START -->
+<div class="modal fade" id="addActifModal" tabindex="-1" aria-labelledby="addActifModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addActifModalLabel">Ajouter un Actif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addActifForm">
+                    <input type="hidden" value="{{ id_acheteur }}" name="acheteur" />
+                    <div class="mb-3">
+                        <label for="biens_installations_equipements" class="form-label">Biens, Installations et Équipements</label>
+                        <input type="number" class="form-control" id="biens_installations_equipements" name="biens_installations_equipements" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inventaire" class="form-label">Inventaire</label>
+                        <input type="number" class="form-control" id="inventaire" name="inventaire" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="creances_commerciales_autres_creances" class="form-label">Créances Commerciales et Autres</label>
+                        <input type="number" class="form-control" id="creances_commerciales_autres_creances" name="creances_commerciales_autres_creances" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="actif_impots_courant" class="form-label">Actif d'Impôts Courant</label>
+                        <input type="number" class="form-control" id="actif_impots_courant" name="actif_impots_courant" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="caisses_banques" class="form-label">Caisse et Banque</label>
+                        <input type="number" class="form-control" id="caisses_banques" name="caisses_banques" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="annee" class="form-label">Année</label>
+                        <select class="form-select" id="annee" name="annee" required>
+                            {% for annee in annee_list %}
+                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Actif Modal END -->
+
+<!-- Edit Actif Modal START -->
+<div class="modal fade" id="editActifModal" tabindex="-1" aria-labelledby="editActifModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editActifModalLabel">Editer un Actif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editActifForm">
+                    <input type="hidden" id="editActifId" name="id">
+                    <div class="mb-3">
+                        <label for="editBiensInstallationsEquipements" class="form-label">Biens, Installations et Équipements</label>
+                        <input type="number" class="form-control" id="editBiensInstallationsEquipements" name="biens_installations_equipements" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editInventaire" class="form-label">Inventaire</label>
+                        <input type="number" class="form-control" id="editInventaire" name="inventaire" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCreancesCommercialesAutresCreances" class="form-label">Créances Commerciales et Autres</label>
+                        <input type="number" class="form-control" id="editCreancesCommercialesAutresCreances" name="creances_commerciales_autres_creances" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editActifImpotsCourant" class="form-label">Actif d'Impôts Courant</label>
+                        <input type="number" class="form-control" id="editActifImpotsCourant" name="actif_impots_courant" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCaissesBanques" class="form-label">Caisse et Banque</label>
+                        <input type="number" class="form-control" id="editCaissesBanques" name="caisses_banques" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAnnee" class="form-label">Année</label>
+                        <select class="form-select" id="editAnnee" name="annee" required>
+                            {% for annee in annee_list %}
+                                <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Actif Modal END -->
+
+{% endblock %}
+
+{% block scripts %}
+
+<!-- Place the first <script> tag in your HTML's <head> -->
+<script src="https://cdn.jsdelivr.net/nicedit/0.9/nicEdit.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    new nicEditor({
+        buttonList: [
+            'bold','italic','underline','left','center','right','justify',
+            'ol','ul','fontSize','fontFamily','fontFormat','link','unlink','image'
+        ]
+    }).panelInstance('message');
+});
+</script>
+
+
+<script>
+    // Load Acheteur on load
+    $(document).ready(function() {
+        const id = '{{ id_acheteur }}'; // ou récupérer l'id depuis l'URL
+
+        if (!id) {
+            console.error("L'ID de l'acheteur est introuvable.");
+            return;
+        }
+
+        $.ajax({
+            url: `/api/consulter-un-acheteur/${id}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + '{{ access }}'
+            },
+            success: function(response) {
+                console.log(response);
+                $('#editAcheteurId').val(response.id);
+                $('#editCode').val(response.code).text(response.code);
+                $('#editNom').val(response.nom).text(response.nom);
+                $('#editSigle').val(response.sigle).text(response.sigle);
+                if (response.date_creation) {
+                    let parts = response.date_creation.split('-'); // Séparer année, mois, jour
+                    let formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // Réorganiser en JJ/MM/AAAA
+
+                    $('#editDateCreation').val(response.date_creation).text(formattedDate);
+                }
+
+                $('#editActivitePrincipale').val(response.activite_principale).text(response.activite_principale);
+                $('#editStatutEntreprise').val(response.statut_entreprise.libelle).text(response.statut_entreprise.libelle);
+                $('#editCategorieEntreprise').val(response.categorie_entreprise.libelle).text(response.categorie_entreprise.libelle);
+                $('#editFormeJuridique').val(response.forme_juridique.libelle).text(response.forme_juridique.libelle);
+                $('#editDescription').html(response.description);
+                $('#editEmail').val(response.email).text(response.email);
+                $('#editFax').val(response.fax).text(response.fax);
+                $('#editBoitePostale').val(response.boite_postale).text(response.boite_postale);
+                $('#editCodePostal').val(response.code_postal).text(response.code_postal);
+                $('#editSiteInternet').val(response.site_internet).text(response.site_internet);
+                $('#editNumeroAdresse').val(response.numero_adresse).text(response.numero_adresse);
+                $('#editRueAdresse').val(response.rue_adresse).text(response.rue_adresse);
+                $('#editPays').val(response.pays.nom).text(response.pays.nom);
+                $('#editProvince').val(response.province.nom).text(response.province.nom);
+                $('#editVille').val(response.ville.nom).text(response.ville.nom);
+
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Erreur lors de la récupération des données de l\'acheteur.',
+                });
+                console.error("Erreur AJAX :", xhr.responseText);
+            }
+        });
+    });
+
+</script>
+
+<script>
+    $(document).ready(function() {
+        // Function to load actifs data
+        function loadActifs(page = 1, search = '') {
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/liste-des-actifs/?page=' + page + '&search=' + search,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    // Update pagination info
+                    $('#paginationInfo').text('Affichage ' + ((page - 1) * response.count + 1) + ' à ' +  (page * response.count > response.total ? response.total : page * response.count) + ' de items');
+
+                    // Update pagination controls
+                    $('#paginationControls').html('');
+                    if (response.previous) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page - 1) + '">Prev</a></li>');
+                    }
+                    for (let i = 1; i <= response.total_pages; i++) {
+                        if (i === page) {
+                            $('#paginationControls').append('<li class="page-item active"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        } else {
+                            $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>');
+                        }
+                    }
+                    if (response.next) {
+                        $('#paginationControls').append('<li class="page-item"><a class="page-link" href="#" data-page="' + (page + 1) + '">Next</a></li>');
+                    }
+
+                    // Update actifs table body
+                    $('#actifTableBody').html('');
+                    response.results.forEach(function(actif, index) {
+                        $('#actifTableBody').append('<tr>' +
+                            '<td>' + (index + 1 + (page - 1) * response.count) + '</td>' +
+                            '<td class="text-success">' + actif.annee.annee + '</td>' +
+                            '<td class="text-success">' + actif.biens_installations_equipements + '</td>' +
+                            '<td class="text-success">' + actif.inventaire + '</td>' +
+                            '<td class="text-success">' + actif.creances_commerciales_autres_creances + '</td>' +
+                            '<td class="text-success">' + actif.actif_impots_courant + '</td>' +
+                            '<td class="text-success">' + actif.caisses_banques + '</td>' +
+                            '<td><button class="btn btn-success btn-round mb-0 edit-btn" data-id="' + actif.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Editer"><i class="bi bi-pencil"></i></button>' +
+                            '&nbsp; <button class="btn btn-danger btn-round mb-0 delete-btn" data-id="' + actif.id + '" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Supprimer"><i class="bi bi-trash"></i></button></td>' +
+                            '</tr>');
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données.',
+                    });
+                }
+            });
+        }
+
+        // Initial load
+        loadActifs();
+
+        // Search form submission
+        $('#searchForm').on('submit', function(event) {
+            event.preventDefault();
+            var search = $('#searchInput').val();
+            loadActifs(1, search);
+        });
+
+        // Pagination controls
+        $(document).on('click', '#paginationControls .page-link', function(event) {
+            event.preventDefault();
+            var page = $(this).data('page');
+            var search = $('#searchInput').val();
+            loadActifs(page, search);
+        });
+
+        // Add Actif form submission
+        $('#addActifForm').on('submit', function(event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+            console.log(formData);
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/ajouter-un-actif/',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Actif ajouté avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#addActifModal').modal('hide');
+                        loadActifs();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de l\'ajout de l\'actif.',
+                    });
+                }
+            });
+        });
+
+        // Edit Actif button click
+        $(document).on('click', '.edit-btn', function() {
+            var id = $(this).data('id');
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/editer-un-actif/' + id + '/',
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    $('#editActifId').val(response.id);
+                    $('#editBiensInstallationsEquipements').val(response.biens_installations_equipements);
+                    $('#editInventaire').val(response.inventaire);
+                    $('#editCreancesCommercialesAutresCreances').val(response.creances_commerciales_autres_creances);
+                    $('#editActifImpotsCourant').val(response.actif_impots_courant);
+                    $('#editCaissesBanques').val(response.caisses_banques);
+                    $('#editAnnee').val(response.annee);
+                    $('#editActifModal').modal('show');
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la récupération des données de l\'actif.',
+                    });
+                }
+            });
+        });
+
+        // Edit Actif form submission
+        $('#editActifForm').on('submit', function(event) {
+            event.preventDefault();
+            var id = $('#editActifId').val();
+            var formData = $(this).serialize();
+            $.ajax({
+                url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/editer-un-actif/' + id + '/',
+                type: 'PUT',
+                data: formData,
+                headers: {
+                    'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Actif mis à jour avec succès.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        $('#editActifModal').modal('hide');
+                        loadActifs();
+                    });
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors de la mise à jour de l\'actif.',
+                    });
+                }
+            });
+        });
+
+        // Delete Actif button click
+        $(document).on('click', '.delete-btn', function() {
+            var id = $(this).data('id');
+            Swal.fire({
+                title: 'Êtes-vous sûr?',
+                text: 'Vous ne pourrez pas revenir en arrière!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Oui, supprimez-le!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/api/acheteur/' + '{{ id_acheteur }}' + '/bilan-anglais/supprimer-des-actifs/',
+                        type: 'DELETE',
+                        data: JSON.stringify({ ids: [id] }),
+                        contentType: 'application/json',
+                        headers: {
+                            'Authorization': 'Bearer ' + '{{ access }}'  // Utiliser le token d'accès
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Supprimé!',
+                                'L\'actif a été supprimé.',
+                                'success'
+                            ).then(() => {
+                                loadActifs();
+                            });
+                        },
+                        error: function(response) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Oops...',
+                                text: 'Erreur lors de la suppression de l\'actif.',
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Intercept AJAX responses to check for token expiration
+        $.ajaxSetup({
+            statusCode: {
+                401: function() {
+                    // Token has expired, refresh the token
+                    refreshToken();
+                }
+            }
+        });
+
+        // Function to refresh the token
+        function refreshToken() {
+            $.ajax({
+                url: '/api/token/refresh/',
+                type: 'POST',
+                data: JSON.stringify({ refresh: '{{ refresh }}' }),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Update the access token
+                    localStorage.setItem('access_token', response.access);
+                    // Retry the failed request
+                    $.ajax(this);
+                },
+                error: function(response) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Erreur lors du rafraîchissement du token.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Recharger la page',
+                        cancelButtonText: 'Rafraîchir le token',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.reload(true);
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            refreshToken();
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

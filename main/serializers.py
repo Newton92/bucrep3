@@ -8325,17 +8325,63 @@ class SearchAlerteLogSerializer(serializers.ModelSerializer):
         ]
 
 
+
+
+
+
+
 class AssetsSerializer(serializers.ModelSerializer):
     """Serializer générique pour la lecture (liste et détail)."""
-
+    
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
     created_by = UserSerializer(read_only=True)
     updated_by = UserSerializer(read_only=True)
+    
+    # Propriétés calculées
+    a_vue = serializers.SerializerMethodField()
+    pret_interbancaire = serializers.SerializerMethodField()
+    creance_sur_la_clientele = serializers.SerializerMethodField()
+    porteuille_papier_commercial = serializers.SerializerMethodField()
+    autres_concours_clients = serializers.SerializerMethodField()
+    total_assets = serializers.SerializerMethodField()
 
     class Meta:
         model = Assets
         fields = "__all__"  # Affiche tous les champs du modèle
+    
+    def to_representation(self, instance):
+        """Ajouter des logs pour voir ce qui est sérialisé"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"Sérialisation de l'asset ID: {instance.id}")
+        logger.info(f"Type de bilan: {instance.type_bilan}")
+        logger.info(f"Année: {instance.annee}")
+        logger.info(f"Valeurs importantes: caisse={instance.caisse}, immobilisation_corporelle={instance.immobilisation_corporelle}")
+        
+        representation = super().to_representation(instance)
+        logger.info(f"Représentation sérialisée (premiers champs): {dict(list(representation.items())[:10])}")
+        
+        return representation
+    
+    def get_a_vue(self, obj):
+        return obj.a_vue
+    
+    def get_pret_interbancaire(self, obj):
+        return obj.pret_interbancaire
+    
+    def get_creance_sur_la_clientele(self, obj):
+        return obj.creance_sur_la_clientele
+    
+    def get_porteuille_papier_commercial(self, obj):
+        return obj.porteuille_papier_commercial
+    
+    def get_autres_concours_clients(self, obj):
+        return obj.autres_concours_clients
+    
+    def get_total_assets(self, obj):
+        return obj.total_assets
 
 
 class AddAssetsSerializer(serializers.ModelSerializer):
@@ -8343,12 +8389,17 @@ class AddAssetsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assets
-        # Exclut les champs auto-gérés
+        # Exclut les champs auto-gérés et inutiles pour l'ajout
         exclude = ("created_at", "updated_at", "created_by", "updated_by")
-
+    
     def create(self, validated_data):
-        # Assigne l'utilisateur connecté à created_by
-        validated_data["created_by"] = self.context["request"].user
+        # Récupère l'utilisateur actuel de manière sécurisée
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["created_by"] = request.user
+        else:
+            validated_data["created_by"] = None
+            
         return super().create(validated_data)
 
 
@@ -8370,13 +8421,21 @@ class EditAssetsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Assets
-        # Permet de modifier tous les champs sauf les IDs et les infos de création
         exclude = ("created_at", "updated_at", "created_by", "updated_by")
-
+    
     def update(self, instance, validated_data):
         # Assigne l'utilisateur connecté à updated_by
-        validated_data["updated_by"] = self.context["request"].user
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["updated_by"] = request.user
+        else:
+            validated_data["updated_by"] = None
         return super().update(instance, validated_data)
+
+
+
+
+
 
 
 class LiabilitiesSerializer(serializers.ModelSerializer):
@@ -8413,21 +8472,18 @@ class AddLiabilitiesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Liabilities
-        # Exclut les champs qui sont gérés automatiquement par le système
+        # Exclut les champs auto-gérés et inutiles pour l'ajout
         exclude = ("created_at", "updated_at", "created_by", "updated_by")
-
+    
     def create(self, validated_data):
-        """
-        Personnalise la méthode de création pour assigner automatiquement
-        l'utilisateur connecté au champ 'created_by'.
-        """
-        # Récupère l'utilisateur depuis le contexte de la requête
-        user = self.context["request"].user
-        validated_data["created_by"] = user
-
-        # Crée l'objet Liabilities
-        liabilities = Liabilities.objects.create(**validated_data)
-        return liabilities
+        # Récupère l'utilisateur actuel de manière sécurisée
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["created_by"] = request.user
+        else:
+            validated_data["created_by"] = None
+            
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         """
@@ -8435,8 +8491,17 @@ class AddLiabilitiesSerializer(serializers.ModelSerializer):
         l'utilisateur connecté au champ 'updated_by'.
         """
         # Assigne l'utilisateur qui fait la mise à jour
-        validated_data["updated_by"] = self.context["request"].user
-        return super().update(instance, validated_data)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["updated_by"] = request.user
+        else:
+            validated_data["updated_by"] = None
+            
+        return super().update(validated_data)
+
+
+
+
 
 
 class ExpensesSerializer(serializers.ModelSerializer):
@@ -8491,13 +8556,14 @@ class AddExpensesSerializer(serializers.ModelSerializer):
         Personnalise la méthode de création pour assigner automatiquement
         l'utilisateur connecté au champ 'created_by'.
         """
-        # Récupère l'utilisateur depuis le contexte de la requête
-        user = self.context["request"].user
-        validated_data["created_by"] = user
-
-        # Crée l'objet Expenses
-        expense = Expenses.objects.create(**validated_data)
-        return expense
+        # Assigne l'utilisateur qui fait la mise à jour
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["created_by"] = request.user
+        else:
+            validated_data["created_by"] = None
+            
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         """
@@ -8505,8 +8571,16 @@ class AddExpensesSerializer(serializers.ModelSerializer):
         l'utilisateur connecté au champ 'updated_by'.
         """
         # Assigne l'utilisateur qui fait la mise à jour
-        validated_data["updated_by"] = self.context["request"].user
-        return super().update(instance, validated_data)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["updated_by"] = request.user
+        else:
+            validated_data["updated_by"] = None
+            
+        return super().update(validated_data)
+    
+    
+        
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -8547,50 +8621,92 @@ class AddProductSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Assigne automatiquement l'utilisateur connecté lors de la création.
+        Personnalise la méthode de création pour assigner automatiquement
+        l'utilisateur connecté au champ 'created_by'.
         """
-        user = self.context["request"].user
-        validated_data["created_by"] = user
-        return Products.objects.create(**validated_data)
+        # Assigne l'utilisateur qui fait la mise à jour
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["created_by"] = request.user
+        else:
+            validated_data["created_by"] = None
+            
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
         """
-        Assigne automatiquement l'utilisateur connecté lors de la mise à jour.
+        Personnalise la méthode de mise à jour pour assigner automatiquement
+        l'utilisateur connecté au champ 'updated_by'.
         """
-        validated_data["updated_by"] = self.context["request"].user
-        return super().update(instance, validated_data)
+        # Assigne l'utilisateur qui fait la mise à jour
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["updated_by"] = request.user
+        else:
+            validated_data["updated_by"] = None
+            
+        return super().update(validated_data)
+
+
+
+
+
 
 
 class OffBalanceSheetSerializer(serializers.ModelSerializer):
     """
     Serializer pour la lecture des données du Hors Bilan.
-    Expose les champs du modèle ainsi que les totaux calculés via les propriétés.
     """
-
-    # Nested serializers pour afficher les détails des objets liés
     annee = AnneeSerializer(read_only=True)
     acheteur = AcheteurSerializer(read_only=True)
     created_by = UserSerializer(read_only=True)
     updated_by = UserSerializer(read_only=True)
 
-    # Exposition des propriétés du modèle comme des champs en lecture seule
+    # Totaux calculés
     total_engagement_financement_donne = serializers.ReadOnlyField()
     total_engagement_garantie_donne = serializers.ReadOnlyField()
     total_engagements_donnes = serializers.ReadOnlyField()
     total_engagement_financement_recu = serializers.ReadOnlyField()
     total_engagements_recus = serializers.ReadOnlyField()
+    total_general = serializers.ReadOnlyField()
 
     class Meta:
         model = OffBalanceSheet
-        fields = "__all__"  # Inclut tous les champs du modèle et ceux définis ci-dessus
+        fields = [
+            "id",
+            "type_bilan",
+            "annee",
+            "semestre",
+            "acheteur",
+            # Champs des engagements
+            "en_faveur_des_ets_credit",
+            "en_faveur_clientele",
+            "pour_compte_ets_credit",
+            "pour_compte_clientele",
+            "engagement_sur_titre",
+            "recu_ets_credit",
+            "recu_ets_credit2",
+            "recu_clientele",
+            "engagement_sur_titre2",
+            # Totaux calculés
+            "total_engagement_financement_donne",
+            "total_engagement_garantie_donne",
+            "total_engagements_donnes",
+            "total_engagement_financement_recu",
+            "total_engagements_recus",
+            "total_general",
+            # Champs de suivi
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]
 
 
 class AddOffBalanceSheetSerializer(serializers.ModelSerializer):
     """
-    Serializer pour la création et la mise à jour d'une instance OffBalanceSheet.
-    N'inclut que les champs modifiables.
+    Serializer pour la création d'une instance OffBalanceSheet.
     """
-
     class Meta:
         model = OffBalanceSheet
         fields = [
@@ -8599,30 +8715,101 @@ class AddOffBalanceSheetSerializer(serializers.ModelSerializer):
             "annee",
             "semestre",
             "acheteur",
-            # Champs des engagements donnés
-            "engagement_financement_donne_ets_credit",
-            "engagement_financement_donne_clientele",
-            "engagement_garantie_donne_ets_credit",
-            "engagement_garantie_donne_clientele",
-            "engagement_sur_titres_donnes",
-            # Champs des engagements reçus
-            "engagement_financement_recu_ets_credit",
-            "engagement_financement_recu_clientele",
-            "engagement_garantie_recu_ets_credit",
-            "engagement_sur_titres_recus",
+            # Champs des engagements
+            "en_faveur_des_ets_credit",
+            "en_faveur_clientele",
+            "pour_compte_ets_credit",
+            "pour_compte_clientele",
+            "engagement_sur_titre",
+            "recu_ets_credit",
+            "recu_ets_credit2",
+            "recu_clientele",
+            "engagement_sur_titre2",
         ]
 
     def create(self, validated_data):
-        # Logique pour associer l'utilisateur créateur, si nécessaire
-        # Par exemple : validated_data['created_by'] = self.context['request'].user
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["created_by"] = request.user
         return super().create(validated_data)
 
+
+class EditOffBalanceSheetSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'édition des données hors bilan.
+    """
+    class Meta:
+        model = OffBalanceSheet
+        fields = [
+            # Champs d'identification
+            "type_bilan",
+            "annee",
+            "semestre",
+            # Champs des engagements
+            "en_faveur_des_ets_credit",
+            "en_faveur_clientele",
+            "pour_compte_ets_credit",
+            "pour_compte_clientele",
+            "engagement_sur_titre",
+            "recu_ets_credit",
+            "recu_ets_credit2",
+            "recu_clientele",
+            "engagement_sur_titre2",
+        ]
+
     def update(self, instance, validated_data):
-        # Logique pour associer l'utilisateur modificateur, si nécessaire
-        # Par exemple : validated_data['updated_by'] = self.context['request'].user
-        return super().update(instance, validated_data)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data["updated_by"] = request.user
+        return super().update(instance, validated_data) 
+    
+      
+class GetOffBalanceSheetSerializer(serializers.ModelSerializer):
+    """Serializer utilisé par la vue EditAcheteurOffBalanceSheetView (GET)"""
+    annee = AnneeSerializer(read_only=True)
+    
+    class Meta:
+        model = OffBalanceSheet
+        fields = [
+            "id",
+            "type_bilan",
+            "annee",
+            "semestre",
+            "en_faveur_des_ets_credit",
+            "en_faveur_clientele",
+            "pour_compte_ets_credit",
+            "pour_compte_clientele",
+            "engagement_sur_titre",
+            "recu_ets_credit",
+            "recu_ets_credit2",
+            "recu_clientele",
+            "engagement_sur_titre2",
+            "total_engagements_donnes",
+            "total_engagements_recus",
+            "total_general",
+        ]
 
 
+# Vues compatibles avec votre template actuel
+class LegacyListOffBalanceSheetView(APIView):
+    """Vue compatible avec votre template actuel"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        # Cette vue utilise les mêmes paramètres que votre template
+        page_number = request.query_params.get("page", 1)
+        search_term = request.query_params.get("search", "")
+        
+        # Appeler la nouvelle vue
+        list_view = ListAcheteurOffBalanceSheetView()
+        return list_view.get(request, acheteur_id)    
+   
+   
+   
+   
+   
+        
+        
 # Fichier: DANS VOTRE FICHIER serializers.py
 
 from rest_framework import serializers
@@ -11744,6 +11931,7 @@ class AddActifClassiqueSerializer(serializers.ModelSerializer):
             'amortissements', 'provisions_stocks', 'provisions_creances', 'provisions_vmp',
             'effectif' # J'ajoute l'effectif car il semble être une donnée d'entrée
         ]
+
 
 class EditActifClassiqueSerializer(serializers.ModelSerializer):
     class Meta:

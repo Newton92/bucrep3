@@ -6247,8 +6247,8 @@ class ConditionAchat(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    local = models.ManyToManyField("ListeConditionAchat", related_name=_("local"), blank=True)  # Enlevez null=True
-    importation = models.ManyToManyField("ListeConditionAchat", related_name=_("importation"), blank=True)  # Enlevez null=True
+    local = models.ManyToManyField("ListeConditionAchat", related_name=_("local"), blank=True, null=True)  # Enlevez null=True
+    importation = models.ManyToManyField("ListeConditionAchat", related_name=_("importation"), blank=True, null=True)  # Enlevez null=True
     les_clients = models.TextField(blank=True, null=True, verbose_name=_("Les clients"))
     fournisseur = models.TextField(blank=True, null=True, verbose_name=_("Fournisseur"))
 
@@ -6390,7 +6390,7 @@ class ConditionDeVente(Model):
         on_delete=models.DO_NOTHING,
         verbose_name=_("Acheteur"),
     )
-    local = models.ManyToManyField("ListeConditionVente", related_name=_("local"), blank=True)  # Enlevez null=True
+    local = models.ManyToManyField("ListeConditionVente", related_name=_("local"), blank=True, null=True)  # Enlevez null=True
 
     recouvrement_de_dette_jugement = models.CharField(
         max_length=255,
@@ -10407,7 +10407,87 @@ class OffBalanceSheet(Model):
         verbose_name=_("Anciens engagements sur titres (2)"),
     )
 
-    
+    # --- ENGAGEMENTS DONNÉS ---
+    # Catégorie : Engagements de financement donnés
+    engagement_financement_donne_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_(
+            "Engagements de financement donnés en faveur des établissements de crédit"
+        ),
+    )
+    engagement_financement_donne_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement donnés en faveur de la clientèle"),
+    )
+
+    # Catégorie : Engagements de garantie donnés
+    engagement_garantie_donne_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_(
+            "Engagements de garantie donnés pour le compte des établissements de crédit"
+        ),
+    )
+    engagement_garantie_donne_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de garantie donnés pour le compte de la clientèle"),
+    )
+
+    # Catégorie : Engagements sur titres donnés
+    engagement_sur_titres_donnes = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements sur titres donnés"),
+    )
+
+    # --- ENGAGEMENTS REÇUS ---
+    # Catégorie : Engagements de financement reçus
+    engagement_financement_recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement reçus d'établissements de crédit"),
+    )
+    engagement_financement_recu_clientele = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de financement reçus de la clientèle"),
+    )
+
+    # Catégorie : Engagements de garantie reçus
+    engagement_garantie_recu_ets_credit = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements de garantie reçus d'établissements de crédit"),
+    )
+
+    # Catégorie : Engagements sur titres reçus
+    engagement_sur_titres_recus = models.DecimalField(
+        max_digits=100,
+        decimal_places=5,
+        null=True,
+        blank=True,
+        verbose_name=_("Engagements sur titres reçus"),
+    )
+
     # --- Champs de suivi (inchangés) ---
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -10449,13 +10529,18 @@ class OffBalanceSheet(Model):
         verbose_name_plural = _("Hors Bilans bancaires")
 
     # ----------------------------------------
-    #   PROPRIÉTÉS CORRIGÉES (uniquement avec les champs existants)
+    #   Liste des méthodes utiles pour ce modèle
     # ----------------------------------------
+
+    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS DONNÉS ---
 
     @property
     def total_engagement_financement_donne(self):
         """Calcule le total des engagements de financement DONNÉS."""
         fields_to_sum = [
+            self.engagement_financement_donne_ets_credit,
+            self.engagement_financement_donne_clientele,
+            # Ajout des anciens champs
             self.en_faveur_des_ets_credit,
             self.en_faveur_clientele,
         ]
@@ -10465,10 +10550,15 @@ class OffBalanceSheet(Model):
     def total_engagement_garantie_donne(self):
         """Calcule le total des engagements de garantie DONNÉS."""
         fields_to_sum = [
+            self.engagement_garantie_donne_ets_credit,
+            self.engagement_garantie_donne_clientele,
+            # Ajout des anciens champs
             self.pour_compte_ets_credit,
             self.pour_compte_clientele,
         ]
         return sum(field or 0 for field in fields_to_sum)
+
+    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS DONNÉS ---
 
     @property
     def total_engagements_donnes(self):
@@ -10476,31 +10566,36 @@ class OffBalanceSheet(Model):
         return (
             self.total_engagement_financement_donne
             + self.total_engagement_garantie_donne
-            + (self.engagement_sur_titre or 0)
+            + (self.engagement_sur_titres_donnes or 0)
+            + (self.engagement_sur_titre or 0)  # Ajout de l'ancien champ
         )
+
+    # --- SOUS-TOTAUX POUR LES ENGAGEMENTS REÇUS ---
 
     @property
     def total_engagement_financement_recu(self):
         """Calcule le total des engagements de financement REÇUS."""
         fields_to_sum = [
+            self.engagement_financement_recu_ets_credit,
+            self.engagement_financement_recu_clientele,
+            # Ajout des anciens champs
             self.recu_ets_credit,
             self.recu_clientele,
         ]
         return sum(field or 0 for field in fields_to_sum)
+
+    # --- TOTAL GÉNÉRAL DES ENGAGEMENTS REÇUS ---
 
     @property
     def total_engagements_recus(self):
         """Calcule le total de TOUS les engagements REÇUS."""
         return (
             self.total_engagement_financement_recu
-            + (self.recu_ets_credit2 or 0)
-            + (self.engagement_sur_titre2 or 0)
+            + (self.engagement_garantie_recu_ets_credit or 0)
+            + (self.engagement_sur_titres_recus or 0)
+            + (self.recu_ets_credit2 or 0)  # Ajout de l'ancien champ
+            + (self.engagement_sur_titre2 or 0)  # Ajout de l'ancien champ
         )
-
-    @property
-    def total_general(self):
-        """Calcule le total général (engagements donnés + reçus)."""
-        return self.total_engagements_donnes + self.total_engagements_recus
 
 
 ##########################################################
@@ -11739,6 +11834,11 @@ class BilanIFRSBase(Model):
         return libelle
 
 
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+# Assurez-vous que BilanIFRSBase est défini au-dessus de cette classe.
+
 
 class ActifIFRS(BilanIFRSBase):
     """
@@ -11872,7 +11972,6 @@ class ActifIFRS(BilanIFRSBase):
     class Meta(BilanIFRSBase.Meta):
         verbose_name = _("Actif IFRS")
         verbose_name_plural = _("Actifs IFRS")
-
 
 
 class PassifIFRS(BilanIFRSBase):
@@ -12026,6 +12125,11 @@ class PassifIFRS(BilanIFRSBase):
         verbose_name = _("Passif IFRS")
         verbose_name_plural = _("Passifs IFRS")
 
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+# Assurez-vous que votre classe de base BilanIFRSBase est définie au-dessus.
 
 
 class ResultatIFRS(BilanIFRSBase):

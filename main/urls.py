@@ -474,6 +474,9 @@ urlpatterns = [
         dash_root_manage_acheteur_offbalancesheet_bancaire,
         name="dash_root_manage_acheteur_offbalancesheet_bancaire",
     ),
+    
+    
+    
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-irfs/comptes-financiers/",
         dash_root_manage_acheteur_compte_financier_irfs,
@@ -504,6 +507,9 @@ urlpatterns = [
         dash_root_manage_acheteur_add_passif_irfs,
         name="dash_root_manage_acheteur_add_passif_irfs",
     ),
+    
+    
+    
     path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/rapport-version-web/",
         dash_root_manage_acheteur_report_web,
@@ -3578,6 +3584,11 @@ urlpatterns = [
         "api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-donnees-hors-bilan/",
         ListAcheteurOffBalanceSheetView.as_view(),
         name="list-off-balance-sheet-acheteur",
+    ),
+    path(
+        'api/acheteur/<int:acheteur_id>/bilan-bancaire/liste-des-donnees-hors-bilan/',
+        LegacyListOffBalanceSheetView.as_view(),
+        name='liste_donnees_hors_bilan'
     ),
     path(
         "api/acheteur/<int:acheteur_id>/bilan-bancaire/recherche-donnee-hors-bilan/",

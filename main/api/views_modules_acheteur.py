@@ -1,6 +1,7 @@
 # api_views.py
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
 from rest_framework import status
@@ -22,6 +23,17 @@ from rest_framework.pagination import PageNumberPagination
 from decimal import Decimal, InvalidOperation
 from rest_framework import generics
 from django.db.models import Q
+from django.core.paginator import Paginator, EmptyPage
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q, Sum, DecimalField
+from django.db.models.functions import Coalesce
+# views.py
+from django.db.models import Q, Sum, Avg, Max, Min, Count
+from django.db.models.functions import Coalesce
+from django.db.models import DecimalField
 
 from django.core.cache import cache
 import logging
@@ -8871,12 +8883,19 @@ class DeleteAcheteurResultatSysCohadaView(APIView):
         )
 
 
+
+
+
+
 class ListAcheteurAssetsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
+        logger.info(f"GET ListAcheteurAssetsView - Acheteur ID: {acheteur_id}")
+        logger.info(f"Paramètres de requête: page={request.query_params.get('page')}, search={request.query_params.get('search')}")
+        
         page_number = request.query_params.get("page", 1)
-        request.query_params.get("search", "")
+        search_term = request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
         caisse_min = request.query_params.get("caisse_min", "")
         caisse_max = request.query_params.get("caisse_max", "")
@@ -8892,19 +8911,42 @@ class ListAcheteurAssetsView(APIView):
                 status=400,
             )
 
-        assets_list = Assets.objects.filter(annee__annee__icontains=annee).order_by(
-            "-created_at"
-        )
-
+        # Filtrer par acheteur spécifique
+        assets_list = Assets.objects.filter(acheteur_id=acheteur_id)
+        logger.info(f"Nombre d'assets pour acheteur {acheteur_id}: {assets_list.count()}")
+        
+        # Log des premiers assets
+        for asset in assets_list[:5]:
+            logger.info(f"Asset ID: {asset.id}, Année: {asset.annee}, Caisse: {asset.caisse}")
+        
+        # Filtres supplémentaires
+        if annee:
+            assets_list = assets_list.filter(annee__annee__icontains=annee)
+            logger.info(f"Filtré par année '{annee}': {assets_list.count()} résultats")
+        
         if caisse_min is not None:
             assets_list = assets_list.filter(caisse__gte=caisse_min)
 
         if caisse_max is not None:
             assets_list = assets_list.filter(caisse__lte=caisse_max)
 
+        # Si un terme de recherche est fourni, chercher dans les champs pertinents
+        if search_term:
+            assets_list = assets_list.filter(
+                Q(annee__annee__icontains=search_term) |
+                Q(acheteur__nom__icontains=search_term)
+            )
+            logger.info(f"Recherche '{search_term}': {assets_list.count()} résultats")
+
+        assets_list = assets_list.order_by("-created_at")
+
         paginator = Paginator(assets_list, 10)
         assets_page = paginator.get_page(page_number)
         serializer = AssetsSerializer(assets_page, many=True)
+        
+        logger.info(f"Données sérialisées pour la page {page_number}: {len(serializer.data)} éléments")
+        if serializer.data:
+            logger.info(f"Premier élément sérialisé: {serializer.data[0]}")
 
         return Response(
             {
@@ -8913,6 +8955,8 @@ class ListAcheteurAssetsView(APIView):
                 "total_pages": paginator.num_pages,
                 "next": assets_page.has_next(),
                 "previous": assets_page.has_previous(),
+                "start_index": assets_page.start_index(),
+                "end_index": assets_page.end_index(),
             }
         )
 
@@ -8951,40 +8995,90 @@ class SearchAcheteurAssetsView(APIView):
 class AddAcheteurAssetsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddAssetsSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        logger.info(f"POST AddAcheteurAssetsView - Acheteur ID: {acheteur_id}")
+        logger.info(f"Données reçues: {request.data}")
+        
+        # Vérifier si l'acheteur existe
+        try:
+            acheteur = Acheteur.objects.get(id=acheteur_id)
+        except Acheteur.DoesNotExist:
+            return Response(
+                {"detail": "Acheteur non trouvé."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Ajouter l'acheteur aux données
+        data = request.data.copy()
+        data['acheteur'] = acheteur_id
+        logger.info(f"Données avec acheteur: {data}")
+        
+        # Passez le contexte avec la requête
+        serializer = AddAssetsSerializer(
+            data=data, 
+            context={'request': request}
+        )
+        
         if serializer.is_valid():
+            logger.info("Serializer valide, création de l'asset...")
             serializer.save()
+            logger.info(f"Asset créé avec ID: {serializer.instance.id}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            logger.error(f"Erreurs de validation: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EditAcheteurAssetsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, asset_id, *args, **kwargs):
-        asset = Assets.objects.filter(id=asset_id).first()
-        if not asset:
+    def get(self, request, acheteur_id, asset_id, *args, **kwargs):
+        logger.info(f"GET EditAcheteurAssetsView - Acheteur ID: {acheteur_id}, Asset ID: {asset_id}")
+        logger.info(f"Requête utilisateur: {request.user}")
+        
+        try:
+            asset = Assets.objects.get(id=asset_id, acheteur_id=acheteur_id)
+            logger.info(f"Asset trouvé: {asset.id}, Annee: {asset.annee}, Acheteur: {asset.acheteur_id}")
+            logger.info(f"Valeurs de l'asset: caisse={asset.caisse}, banques_centrales={asset.banques_centrales}")
+        except Assets.DoesNotExist:
+            logger.error(f"Asset non trouvé avec ID: {asset_id} pour acheteur: {acheteur_id}")
             return Response(
-                {"detail": "Asset non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Asset non trouvé."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
-
-        serializer = GetAssetsSerializer(asset)
+        
+        serializer = AssetsSerializer(asset)
+        logger.info(f"Données sérialisées: {serializer.data}")
         return Response(serializer.data)
 
-    def put(self, request, asset_id, *args, **kwargs):
-        asset = Assets.objects.filter(id=asset_id).first()
-        if not asset:
+    def put(self, request, acheteur_id, asset_id, *args, **kwargs):
+        logger.info(f"PUT EditAcheteurAssetsView - Acheteur ID: {acheteur_id}, Asset ID: {asset_id}")
+        logger.info(f"Données reçues: {request.data}")
+        
+        try:
+            asset = Assets.objects.get(id=asset_id, acheteur_id=acheteur_id)
+        except Assets.DoesNotExist:
             return Response(
-                {"detail": "Asset non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Asset non trouvé."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditAssetsSerializer(asset, data=request.data, partial=True)
+        serializer = EditAssetsSerializer(
+            asset, 
+            data=request.data, 
+            context={'request': request}, 
+            partial=True
+        )
+        
         if serializer.is_valid():
+            logger.info("Serializer valide, sauvegarde...")
             serializer.save()
+            logger.info(f"Données sauvegardées: {serializer.data}")
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        else:
+            logger.error(f"Erreurs de validation: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class DeleteAcheteurAssetsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -9009,6 +9103,11 @@ class DeleteAcheteurAssetsView(APIView):
             {"message": f"{count} assets supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
+
 
 
 class ListAcheteurLiabilitiesView(APIView):
@@ -9161,66 +9260,12 @@ class DeleteAcheteurLiabilitiesView(APIView):
         )
 
 
-class ListAcheteurOffBalanceSheetView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
-        page_number = request.query_params.get("page", 1)
-        request.query_params.get("search", "")
-        annee = request.query_params.get("annee", "")
-        en_faveur_des_ets_credit_min = request.query_params.get(
-            "en_faveur_des_ets_credit_min", ""
-        )
-        en_faveur_des_ets_credit_max = request.query_params.get(
-            "en_faveur_des_ets_credit_max", ""
-        )
 
-        try:
-            en_faveur_des_ets_credit_min = (
-                Decimal(en_faveur_des_ets_credit_min)
-                if en_faveur_des_ets_credit_min
-                else None
-            )
-            en_faveur_des_ets_credit_max = (
-                Decimal(en_faveur_des_ets_credit_max)
-                if en_faveur_des_ets_credit_max
-                else None
-            )
-        except Decimal.InvalidOperation:
-            return Response(
-                {
-                    "error": "Les valeurs de en_faveur_des_ets_credit_min et en_faveur_des_ets_credit_max doivent être des nombres décimaux valides."
-                },
-                status=400,
-            )
 
-        off_balance_sheet_list = OffBalanceSheet.objects.filter(
-            annee__annee__icontains=annee
-        ).order_by("-created_at")
 
-        if en_faveur_des_ets_credit_min is not None:
-            off_balance_sheet_list = off_balance_sheet_list.filter(
-                en_faveur_des_ets_credit__gte=en_faveur_des_ets_credit_min
-            )
 
-        if en_faveur_des_ets_credit_max is not None:
-            off_balance_sheet_list = off_balance_sheet_list.filter(
-                en_faveur_des_ets_credit__lte=en_faveur_des_ets_credit_max
-            )
 
-        paginator = Paginator(off_balance_sheet_list, 10)
-        off_balance_sheet_page = paginator.get_page(page_number)
-        serializer = OffBalanceSheetSerializer(off_balance_sheet_page, many=True)
-
-        return Response(
-            {
-                "results": serializer.data,
-                "count": paginator.count,
-                "total_pages": paginator.num_pages,
-                "next": off_balance_sheet_page.has_next(),
-                "previous": off_balance_sheet_page.has_previous(),
-            }
-        )
 
 
 class SearchAcheteurOffBalanceSheetView(APIView):
@@ -9254,75 +9299,324 @@ class SearchAcheteurOffBalanceSheetView(APIView):
         )
 
 
+class ListAcheteurOffBalanceSheetView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self, acheteur_id, search_term=""):
+        """Retourne le queryset filtré et optimisé"""
+        queryset = OffBalanceSheet.objects.filter(
+            acheteur_id=acheteur_id
+        ).select_related('annee', 'created_by', 'updated_by')
+        
+        if search_term:
+            queryset = queryset.filter(
+                Q(annee__annee__icontains=search_term) |
+                Q(type_bilan__icontains=search_term) |
+                Q(semestre__icontains=search_term)
+            )
+        
+        return queryset.order_by("-created_at")
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        try:
+            page_number = int(request.query_params.get("page", 1))
+            search_term = request.query_params.get("search", "").strip()
+            items_per_page = int(request.query_params.get("per_page", 10))
+            
+            # Récupérer le queryset
+            queryset = self.get_queryset(acheteur_id, search_term)
+            
+            # Pagination
+            paginator = Paginator(queryset, items_per_page)
+            
+            try:
+                off_balance_sheet_page = paginator.page(page_number)
+            except EmptyPage:
+                return Response({
+                    "results": [],
+                    "count": 0,
+                    "total_pages": 0,
+                    "next": False,
+                    "previous": False,
+                    "current_page": page_number,
+                    "global_totals": {
+                        "total_engagements_donnes": 0,
+                        "total_engagements_recus": 0,
+                        "total_general": 0,
+                        "total_count": 0
+                    },
+                    "per_page": items_per_page
+                })
+            
+            # Sérialiser les données
+            serializer = OffBalanceSheetSerializer(off_balance_sheet_page, many=True)
+            
+            # Calculer les totaux manuellement (car ce sont des propriétés)
+            total_engagements_donnes = 0
+            total_engagements_recus = 0
+            total_general = 0
+            
+            for item in off_balance_sheet_page:
+                total_engagements_donnes += float(item.total_engagements_donnes or 0)
+                total_engagements_recus += float(item.total_engagements_recus or 0)
+                total_general += float(item.total_general or 0)
+            
+            global_totals = {
+                "total_engagements_donnes": total_engagements_donnes,
+                "total_engagements_recus": total_engagements_recus,
+                "total_general": total_general,
+                "total_count": paginator.count
+            }
+            
+            return Response({
+                "results": serializer.data,
+                "count": paginator.count,
+                "total_pages": paginator.num_pages,
+                "next": off_balance_sheet_page.has_next(),
+                "previous": off_balance_sheet_page.has_previous(),
+                "current_page": off_balance_sheet_page.number,
+                "global_totals": global_totals,
+                "per_page": items_per_page
+            })
+            
+        except ValueError as e:
+            return Response(
+                {"error": "Paramètres de pagination invalides."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Erreur lors du chargement des données: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class AddAcheteurOffBalanceSheetView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddOffBalanceSheetSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        try:
+            # Vérifier qu'un hors bilan n'existe pas déjà pour cette année/semestre
+            annee_id = request.data.get('annee')
+            semestre = request.data.get('semestre')
+            type_bilan = request.data.get('type_bilan', 'annuel')
+            
+            if annee_id:
+                existing = OffBalanceSheet.objects.filter(
+                    acheteur_id=acheteur_id,
+                    annee_id=annee_id,
+                    semestre=semestre if type_bilan == 'semestriel' else None
+                ).exists()
+                
+                if existing:
+                    return Response(
+                        {"error": "Un hors bilan existe déjà pour cette période."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Ajouter l'acheteur_id aux données
+            data = request.data.copy()
+            data['acheteur'] = acheteur_id
+            
+            serializer = AddOffBalanceSheetSerializer(
+                data=data,
+                context={'request': request}
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    OffBalanceSheetSerializer(serializer.instance).data,
+                    status=status.HTTP_201_CREATED
+                )
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Erreur lors de l'ajout: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class EditAcheteurOffBalanceSheetView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, off_balance_sheet_id, *args, **kwargs):
-        off_balance_sheet = OffBalanceSheet.objects.filter(
-            id=off_balance_sheet_id
-        ).first()
+    def get_object(self, acheteur_id, off_balance_sheet_id):
+        """Récupère l'objet avec vérification de l'acheteur"""
+        try:
+            return OffBalanceSheet.objects.get(
+                id=off_balance_sheet_id,
+                acheteur_id=acheteur_id
+            )
+        except OffBalanceSheet.DoesNotExist:
+            return None
+
+    def get(self, request, acheteur_id, off_balance_sheet_id, *args, **kwargs):
+        off_balance_sheet = self.get_object(acheteur_id, off_balance_sheet_id)
+        
         if not off_balance_sheet:
             return Response(
                 {"detail": "OffBalanceSheet non trouvé."},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = GetOffBalanceSheetSerializer(off_balance_sheet)
+        serializer = OffBalanceSheetSerializer(off_balance_sheet)
         return Response(serializer.data)
 
-    def put(self, request, off_balance_sheet_id, *args, **kwargs):
-        off_balance_sheet = OffBalanceSheet.objects.filter(
-            id=off_balance_sheet_id
-        ).first()
+    def put(self, request, acheteur_id, off_balance_sheet_id, *args, **kwargs):
+        off_balance_sheet = self.get_object(acheteur_id, off_balance_sheet_id)
+        
         if not off_balance_sheet:
             return Response(
                 {"detail": "OffBalanceSheet non trouvé."},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditOffBalanceSheetSerializer(
-            off_balance_sheet, data=request.data, partial=True
+            off_balance_sheet,
+            data=request.data,
+            partial=True,
+            context={'request': request}
         )
+        
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            # Retourner les données complètes après mise à jour
+            updated_serializer = OffBalanceSheetSerializer(serializer.instance)
+            return Response(updated_serializer.data)
+            
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DeleteAcheteurOffBalanceSheetView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
-        ids = request.data.get("ids", [])
-        if not ids or not isinstance(ids, list):
+    def delete(self, request, acheteur_id, *args, **kwargs):
+        try:
+            ids = request.data.get("ids", [])
+            if not ids or not isinstance(ids, list):
+                return Response(
+                    {"error": "Une liste d'IDs est requise."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Vérifier que tous les IDs appartiennent à l'acheteur
+            off_balance_sheets = OffBalanceSheet.objects.filter(
+                id__in=ids,
+                acheteur_id=acheteur_id
+            )
+            
+            deleted_count = off_balance_sheets.count()
+            
+            if deleted_count == 0:
+                return Response(
+                    {"error": "Aucun off_balance_sheet trouvé pour les IDs fournis."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Supprimer les objets
+            off_balance_sheets.delete()
+            
             return Response(
-                {"error": "Une liste d'IDs est requise."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "message": f"{deleted_count} off_balance_sheets supprimés avec succès.",
+                    "deleted_count": deleted_count
+                },
+                status=status.HTTP_200_OK
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Erreur lors de la suppression: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        off_balance_sheets = OffBalanceSheet.objects.filter(id__in=ids)
-        if not off_balance_sheets.exists():
+
+class OffBalanceSheetStatsView(APIView):
+    """Vue pour les statistiques des hors bilans"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, acheteur_id, *args, **kwargs):
+        try:
+            # Récupérer tous les hors bilans de l'acheteur
+            off_balance_sheets = OffBalanceSheet.objects.filter(
+                acheteur_id=acheteur_id
+            )
+            
+            # Initialiser les statistiques
+            stats = {
+                "total_count": off_balance_sheets.count(),
+                "total_engagements_donnes_sum": 0,
+                "total_engagements_recus_sum": 0,
+                "avg_engagements_donnes": 0,
+                "avg_engagements_recus": 0,
+                "max_engagements_donnes": 0,
+                "max_engagements_recus": 0,
+                "min_engagements_donnes": 0,
+                "min_engagements_recus": 0,
+            }
+            
+            # Calculer manuellement car ce sont des propriétés
+            engagements_donnes_list = []
+            engagements_recus_list = []
+            
+            for item in off_balance_sheets:
+                engagements_donnes = float(item.total_engagements_donnes or 0)
+                engagements_recus = float(item.total_engagements_recus or 0)
+                
+                stats["total_engagements_donnes_sum"] += engagements_donnes
+                stats["total_engagements_recus_sum"] += engagements_recus
+                
+                engagements_donnes_list.append(engagements_donnes)
+                engagements_recus_list.append(engagements_recus)
+            
+            # Calculer les autres statistiques si on a des données
+            if engagements_donnes_list:
+                stats["avg_engagements_donnes"] = stats["total_engagements_donnes_sum"] / len(engagements_donnes_list)
+                stats["max_engagements_donnes"] = max(engagements_donnes_list)
+                stats["min_engagements_donnes"] = min(engagements_donnes_list)
+            
+            if engagements_recus_list:
+                stats["avg_engagements_recus"] = stats["total_engagements_recus_sum"] / len(engagements_recus_list)
+                stats["max_engagements_recus"] = max(engagements_recus_list)
+                stats["min_engagements_recus"] = min(engagements_recus_list)
+            
+            # Ajouter le total général
+            stats['total_general_sum'] = (
+                stats['total_engagements_donnes_sum'] + 
+                stats['total_engagements_recus_sum']
+            )
+            
+            # Calculer les pourcentages
+            total_general = stats['total_general_sum']
+            if total_general > 0:
+                stats['percentage_engagements_donnes'] = round(
+                    (stats['total_engagements_donnes_sum'] / total_general) * 100, 2
+                )
+                stats['percentage_engagements_recus'] = round(
+                    (stats['total_engagements_recus_sum'] / total_general) * 100, 2
+                )
+            else:
+                stats['percentage_engagements_donnes'] = 0
+                stats['percentage_engagements_recus'] = 0
+            
+            # Formater les nombres
+            for key in stats:
+                if isinstance(stats[key], float):
+                    stats[key] = round(stats[key], 2)
+            
+            return Response(stats)
+            
+        except Exception as e:
             return Response(
-                {"error": "Aucun off_balance_sheet trouvé pour les IDs fournis."},
-                status=status.HTTP_404_NOT_FOUND,
+                {"error": f"Erreur lors du calcul des statistiques: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        count, _ = off_balance_sheets.delete()
-        return Response(
-            {"message": f"{count} off_balance_sheets supprimés avec succès."},
-            status=status.HTTP_200_OK,
-        )
+
+
+
 
 
 class ListAcheteurExpensesView(APIView):

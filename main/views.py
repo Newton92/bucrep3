@@ -3979,9 +3979,42 @@ def dash_root_manage_acheteur_banking_optimized(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -3996,9 +4029,13 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4011,9 +4048,42 @@ def dash_root_manage_acheteur_actif_anglais(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4028,9 +4098,13 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4043,9 +4117,42 @@ def dash_root_manage_acheteur_passif_anglais(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4060,9 +4167,13 @@ def dash_root_manage_acheteur_resultat_anglais(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4374,9 +4485,42 @@ def dash_root_manage_acheteur_bilan_classique(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4391,9 +4535,13 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4406,9 +4554,42 @@ def dash_root_manage_acheteur_actif_syscohada(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4423,9 +4604,13 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4438,9 +4623,42 @@ def dash_root_manage_acheteur_passif_syscohada(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4455,9 +4673,13 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4468,11 +4690,52 @@ def dash_root_manage_acheteur_resultat_syscohada(request, acheteur_id):
     )
 
 
+
+
+
+
+
+
+
+
 @login_required
 def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4483,13 +4746,17 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
     id_acheteur = acheteur_id
 
     # Récupérer tous les annees
-    annee_list = Annee.objects.all()
+    annee_list = Annee.objects.filter(is_active=True).order_by('-annee')
 
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
     }
@@ -4502,9 +4769,42 @@ def dash_root_manage_acheteur_asset_bancaire(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4517,13 +4817,24 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    # Convertir la liste des années en JSON
+    annee_list_json = json.dumps([
+        {'id': annee.id, 'annee': annee.annee} 
+        for annee in annee_list
+    ])
+
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "annee_list_json": annee_list_json,
     }
     return render(
         request,
@@ -4534,9 +4845,42 @@ def dash_root_manage_acheteur_liabilitie_bancaire(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4549,13 +4893,24 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    # Convertir la liste des années en JSON
+    annee_list_json = json.dumps([
+        {'id': annee.id, 'annee': annee.annee} 
+        for annee in annee_list
+    ])
+
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "annee_list_json": annee_list_json,
     }
     return render(
         request,
@@ -4566,9 +4921,42 @@ def dash_root_manage_acheteur_offbalancesheet_bancaire(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4581,13 +4969,24 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    # Convertir la liste des années en JSON
+    annee_list_json = json.dumps([
+        {'id': annee.id, 'annee': annee.annee} 
+        for annee in annee_list
+    ])
+
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "annee_list_json": annee_list_json,
     }
     return render(
         request,
@@ -4598,9 +4997,42 @@ def dash_root_manage_acheteur_expense_bancaire(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
+    # Récupérer l'acheteur avec préfetch pour optimiser
+    acheteur = get_object_or_404(
+        Acheteur.objects.select_related(
+            'statut_entreprise',
+            'forme_juridique',
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
+        ).prefetch_related('banquier_set'),
+        id=acheteur_id
+    )
+    
+    # Préparer les données de l'acheteur pour le template
+    acheteur_data = {
+        'id': acheteur.id,
+        'nom': acheteur.nom or 'Non spécifié',
+        'sigle': acheteur.sigle or '',
+        'code': acheteur.code or 'N/A',
+        'activite_principale': acheteur.activite_principale or 'Non spécifié',
+        'date_creation': acheteur.date_creation.isoformat() if acheteur.date_creation else None,
+        'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+    }
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_data, default=str)
+        
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     user = request.user
 
@@ -4613,13 +5045,24 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    # Convertir la liste des années en JSON
+    annee_list_json = json.dumps([
+        {'id': annee.id, 'annee': annee.annee} 
+        for annee in annee_list
+    ])
+
     context = {
         "acheteur_active": "active",
-        "user": user,
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
+        "acheteur": acheteur,
+        "acheteur_json": acheteur_json,
         "id_acheteur": id_acheteur,
         "annee_list": annee_list,
+        "annee_list_json": annee_list_json,
     }
     return render(
         request,
@@ -4628,60 +5071,20 @@ def dash_root_manage_acheteur_product_bancaire(request, acheteur_id):
     )
 
 
-@login_required
-def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
-
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-    }
-    return render(
-        request,
-        "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_compte_financier_irfs.html",
-        context,
-    )
 
 
-@login_required
-def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
 
-    user = request.user
 
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
 
-    # Recuperer l'id de l'acheteur
-    id_acheteur = acheteur_id
 
-    context = {
-        "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "id_acheteur": id_acheteur,
-    }
-    return render(
-        request,
-        "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_ratio_financier_irfs.html",
-        context,
-    )
+
+
+
+
+
+
+
+
 
 
 @login_required
@@ -4808,6 +5211,70 @@ def dash_root_manage_acheteur_resultat_irfs(request, acheteur_id):
         "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_passif_irfs.html",
         context,
     )
+
+
+
+@login_required
+def dash_root_manage_acheteur_ratio_financier_irfs(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+    }
+    return render(
+        request,
+        "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_ratio_financier_irfs.html",
+        context,
+    )
+
+
+
+
+
+
+
+
+@login_required
+def dash_root_manage_acheteur_compte_financier_irfs(request, acheteur_id):
+    token = request.GET.get("token")
+    if not token:
+        pass
+
+    user = request.user
+
+    # Génération des tokens d'accès
+    refresh = RefreshToken.for_user(user)
+
+    # Recuperer l'id de l'acheteur
+    id_acheteur = acheteur_id
+
+    context = {
+        "acheteur_active": "active",
+        "user": user,
+        "refresh": str(refresh),
+        "access": str(refresh.access_token),
+        "id_acheteur": id_acheteur,
+    }
+    return render(
+        request,
+        "main/root/acheteur/bilans/irfs/dash_root_manage_acheteur_compte_financier_irfs.html",
+        context,
+    )
+
 
 
 @login_required
