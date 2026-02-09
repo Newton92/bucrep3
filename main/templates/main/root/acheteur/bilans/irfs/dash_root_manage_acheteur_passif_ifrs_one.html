@@ -1,0 +1,2723 @@
+{% extends 'main/root/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+:root {
+    --color-primary: #0A95CA;
+    --color-primary-dark: #0d80be;
+    --color-primary-light: rgba(10, 149, 202, 0.1);
+    --color-secondary: #25add6;
+    --color-success: #28a745;
+    --color-danger: #dc3545;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
+    --color-purple: #6f42c1;
+    --color-orange: #fd7e14;
+    --color-pink: #e83e8c;
+    --color-background: #f8fafc;
+    --color-card: #ffffff;
+    --color-text: #2d3748;
+    --color-text-light: #718096;
+    --color-border: #e2e8f0;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-primary) 0%, #106cb2 100%);
+    --success-gradient: linear-gradient(135deg, var(--color-success) 0%, #20c997 100%);
+    --danger-gradient: linear-gradient(135deg, var(--color-danger) 0%, #fd7e14 100%);
+    --info-gradient: linear-gradient(135deg, var(--color-info) 0%, #25add6 100%);
+    --purple-gradient: linear-gradient(135deg, var(--color-purple) 0%, #8a3ffc 100%);
+    --orange-gradient: linear-gradient(135deg, var(--color-orange) 0%, #ff9f43 100%);
+    
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 50px rgba(10, 149, 202, 0.15);
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+/* Header Premium */
+.dashboard-header {
+    background: var(--primary-gradient);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+/* Carte Acheteur */
+.acheteur-summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-summary-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.acheteur-summary-header {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.acheteur-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+}
+
+.acheteur-info {
+    padding: 1.5rem;
+}
+
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.03), rgba(37, 173, 214, 0.03));
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.acheteur-info-item:hover {
+    background: linear-gradient(145deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    transform: translateX(5px);
+}
+
+.acheteur-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(10, 149, 202, 0.25);
+}
+
+/* Cartes de résumé */
+.summary-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 1.25rem;
+}
+
+.summary-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Tableau moderne */
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table th {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.08), rgba(37, 173, 214, 0.08));
+    padding: 1rem 1.25rem;
+    text-align: left;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    border-bottom: 3px solid var(--color-primary);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(10, 149, 202, 0.03);
+}
+
+.value-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    text-align: right;
+    font-size: 0.95rem;
+    min-width: 120px;
+}
+
+.value-positive {
+    color: var(--color-success);
+}
+
+.value-negative {
+    color: var(--color-danger);
+}
+
+/* Boutons améliorés */
+.btn-enhanced {
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary-enhanced {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-success-enhanced {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-danger-enhanced {
+    background: var(--danger-gradient);
+    color: white;
+}
+
+.btn-info-enhanced {
+    background: var(--info-gradient);
+    color: white;
+}
+
+.btn-purple-enhanced {
+    background: var(--purple-gradient);
+    color: white;
+}
+
+/* Modal amélioré */
+.enhanced-modal .modal-content {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-xl);
+}
+
+.enhanced-modal .modal-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: none;
+}
+
+.enhanced-modal .modal-body {
+    padding: 1.5rem;
+    background: var(--color-background);
+}
+
+/* Formulaires améliorés */
+.enhanced-form .form-label {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.enhanced-form .form-label i {
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.enhanced-form .form-control,
+.enhanced-form .form-select {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.enhanced-form .form-control:focus,
+.enhanced-form .form-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+/* Section de légende */
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.legend-code {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    min-width: 80px;
+    font-size: 0.85rem;
+}
+
+.legend-name {
+    font-size: 0.85rem;
+    color: var(--color-text);
+    flex: 1;
+}
+
+/* Badges pour les catégories */
+.category-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+}
+
+.badge-capitaux {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+    border: 1px solid rgba(111, 66, 193, 0.3);
+}
+
+.badge-noncourant {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.badge-courant {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Pagination améliorée */
+.pagination-enhanced .page-link {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-primary-dark);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.pagination-enhanced .page-item.active .page-link {
+    background: var(--primary-gradient);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-in {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.delay-1 {
+    animation-delay: 0.1s;
+}
+
+.delay-2 {
+    animation-delay: 0.2s;
+}
+
+.delay-3 {
+    animation-delay: 0.3s;
+}
+
+/* Alertes personnalisées */
+.custom-alert {
+    border-radius: var(--radius-md);
+    border: 2px solid transparent;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.custom-alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+.custom-alert-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.custom-alert-purple {
+    background: rgba(111, 66, 193, 0.1);
+    border-color: var(--color-purple);
+    color: var(--color-purple);
+}
+
+/* Fix pour les tables horizontales */
+.table-responsive-horizontal {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1px;
+}
+
+/* Catégories de colonnes */
+.column-group-header {
+    background: var(--color-primary-light);
+    font-weight: 700;
+    text-align: center;
+    padding: 0.5rem;
+    border-bottom: 2px solid var(--color-primary);
+    vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+    
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acheteur-info-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem 0.75rem;
+    }
+    
+    .acheteur-info-icon {
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+    
+    .column-group-header {
+        font-size: 0.8rem;
+        padding: 0.25rem;
+    }
+}
+
+@media (max-width: 1200px) {
+    .value-cell {
+        min-width: 100px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Style pour les selects améliorés */
+.select2-enhanced {
+    width: 100%;
+}
+
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(10, 149, 202, 0.15);
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--color-primary) !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 0;
+    color: var(--color-text);
+}
+
+.select2-container--bootstrap-5 .select2-dropdown {
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    background-color: white;
+    z-index: 1060 !important;
+}
+
+/* Style pour les totaux */
+.total-row {
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.05), rgba(37, 173, 214, 0.05));
+    font-weight: 700;
+}
+
+.total-row td {
+    border-top: 2px solid var(--color-primary);
+}
+
+/* Bannière IFRS */
+.ifrs-banner {
+    background: linear-gradient(135deg, #0A95CA, #0d80be);
+    color: white;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ifrs-banner-icon {
+    font-size: 2rem;
+}
+
+/* Indicateurs de performance */
+.performance-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.indicator-up {
+    background: rgba(40, 167, 69, 0.1);
+    color: var(--color-success);
+}
+
+.indicator-down {
+    background: rgba(220, 53, 69, 0.1);
+    color: var(--color-danger);
+}
+
+.indicator-neutral {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+/* Balance indicator */
+.balance-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(10, 149, 202, 0.1), rgba(37, 173, 214, 0.1));
+}
+
+.balance-actif {
+    color: var(--color-success);
+    font-weight: 700;
+}
+
+.balance-passif {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.balance-equal {
+    color: var(--color-primary);
+    font-weight: 700;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header animate-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="dashboard-title text-white">
+                    <i class="fas fa-balance-scale-right me-3"></i>Bilan IFRS COBAC - Gestion des Passifs
+                </h1>
+                <p class="dashboard-subtitle">
+                    Module de gestion des passifs et capitaux propres selon les normes IFRS COBAC
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'dash_root_manage_acheteur' acheteur.id %}" 
+                   class="btn-enhanced btn-danger-enhanced">
+                    <i class="fas fa-arrow-left me-2"></i>Retour à l'acheteur
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carte Acheteur -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="acheteur-summary-header">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-success">{{ acheteur.nom }}</h4>
+                    <p class="mb-0 text-muted">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div>
+                    <span class="acheteur-badge">
+                        <i class="fas fa-hashtag"></i>
+                        Code: <span class="text-warning">{{ acheteur.code }}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="acheteur-info">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Date de création</small>
+                            <div class="fw-bold">
+                                {% if acheteur.date_creation %}
+                                    {{ acheteur.date_creation|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifié
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Activité principale</small>
+                            <div class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="acheteur-info-item">
+                        <div class="acheteur-info-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">Statut</small>
+                            <div class="fw-bold text-success">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bannière IFRS -->
+    <div class="ifrs-banner animate-in delay-2">
+        <div class="ifrs-banner-icon">
+            <i class="fas fa-file-invoice-dollar"></i>
+        </div>
+        <div>
+            <h5 class="mb-1 fw-bold text-white">Passifs & Capitaux Propres IFRS</h5>
+            <p class="mb-0">Gestion des passifs et capitaux propres selon les normes IFRS COBAC</p>
+        </div>
+    </div>
+
+    <!-- Cartes de résumé par catégorie -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: var(--purple-gradient);">
+                    <i class="fas fa-landmark"></i>
+                </div>
+                <h5 class="fw-bold">Capitaux Propres</h5>
+                <div class="summary-value" id="totalCapitauxPropres">0</div>
+                <p class="text-muted mb-0">Capital, réserves et résultat</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-2">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+                <h5 class="fw-bold">Passif Non Courant</h5>
+                <div class="summary-value" id="totalPassifNonCourant">0</div>
+                <p class="text-muted mb-0">Emprunts LT et provisions</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-3">
+                <div class="summary-icon" style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h5 class="fw-bold">Passif Courant</h5>
+                <div class="summary-value" id="totalPassifCourant">0</div>
+                <p class="text-muted mb-0">Dettes CT et obligations court terme</p>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="summary-card animate-in delay-3">
+                <div class="summary-icon" style="background: var(--primary-gradient);">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h5 class="fw-bold">Total Passif</h5>
+                <div class="summary-value" id="totalPassif">0</div>
+                <p class="text-muted mb-0">Somme totale du passif</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Information & Légende -->
+    <div class="acheteur-summary-card animate-in delay-1">
+        <div class="p-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-key text-primary me-2"></i>Légende des Comptes Passifs IFRS
+                        </h6>
+                        <div class="legend-grid">
+                            <!-- Capitaux Propres -->
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Capital</span>
+                                <span class="legend-name">Capital social</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Primes</span>
+                                <span class="legend-name">Primes d'émission</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Rés. Légales</span>
+                                <span class="legend-name">Réserves légales</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Rés. Stat.</span>
+                                <span class="legend-name">Réserves statutaires</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Rés. Fac.</span>
+                                <span class="legend-name">Réserves facultatives</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Aut. Rés.</span>
+                                <span class="legend-name">Autres réserves</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #6f42c1;"></div>
+                                <span class="legend-code">Rés. Reporté</span>
+                                <span class="legend-name">Résultat net reporté</span>
+                            </div>
+                            
+                            <!-- Passif Non Courant -->
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">Emprunts LT</span>
+                                <span class="legend-name">Emprunts bancaires long terme</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">Obligations</span>
+                                <span class="legend-name">Obligations</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">Prov. Retraite</span>
+                                <span class="legend-name">Provisions pour retraites</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #ffc107;"></div>
+                                <span class="legend-code">Aut. Prov.</span>
+                                <span class="legend-name">Autres provisions</span>
+                            </div>
+                            
+                            <!-- Passif Courant -->
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">Dettes Four.</span>
+                                <span class="legend-name">Dettes fournisseurs CT</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">Impôts</span>
+                                <span class="legend-name">Impôts sur le revenu</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">Cot. Sociales</span>
+                                <span class="legend-name">Cotisations sociales</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">Emprunts CT</span>
+                                <span class="legend-name">Emprunts bancaires CT</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">Dettes D.</span>
+                                <span class="legend-name">Dettes diverses</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #dc3545;"></div>
+                                <span class="legend-code">Dividendes</span>
+                                <span class="legend-name">Dividendes à payer</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="custom-alert custom-alert-purple mb-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle fa-lg mt-1 me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-2">Équilibre du Bilan</h6>
+                                <p class="mb-0">
+                                    En comptabilité IFRS, le total de l'actif doit toujours être égal au total du passif 
+                                    (incluant les capitaux propres). Cette égalité fondamentale assure l'équilibre du bilan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Type de bilan -->
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-calendar-alt text-primary me-2"></i>Répartition des Passifs
+                        </h6>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-purple fs-4" id="pourcentageCapitaux">0%</div>
+                                    <small class="text-muted">Capitaux Propres</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-warning fs-4" id="pourcentageNonCourant">0%</div>
+                                    <small class="text-muted">Passif Non Courant</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="fw-bold text-danger fs-4" id="pourcentageCourant">0%</div>
+                                    <small class="text-muted">Passif Courant</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistiques -->
+                    <div class="mt-4">
+                        <div class="card border-primary bg-primary bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h6 class="fw-bold mb-2">Structure Financière</h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="fw-bold text-primary" id="countPeriodes">0</div>
+                                        <small class="text-muted">Bilans</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="fw-bold text-success" id="countAnnees">0</div>
+                                        <small class="text-muted">Années</small>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <small class="text-muted">Ratio d'endettement:</small>
+                                    <div class="fw-bold text-info" id="ratioEndettement">0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des Passifs IFRS -->
+    <div class="card border-0 shadow-sm mb-4 animate-in delay-2">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="fas fa-table me-2"></i>Liste des Passifs IFRS
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="search" class="form-control border-start-0" id="searchInput" 
+                                       placeholder="Rechercher par année, semestre...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn-enhanced btn-success-enhanced w-100" 
+                                    data-bs-toggle="modal" data-bs-target="#addPassifModal">
+                                <i class="fas fa-plus-circle me-2"></i>Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive-horizontal">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">#</th>
+                            <th rowspan="2">Période</th>
+                            <th rowspan="2">Type</th>
+                            <th colspan="7" class="column-group-header">
+                                <span class="badge badge-capitaux">CAPITAUX PROPRES</span>
+                            </th>
+                            <th colspan="4" class="column-group-header">
+                                <span class="badge badge-noncourant">PASSIF NON COURANT</span>
+                            </th>
+                            <th colspan="6" class="column-group-header">
+                                <span class="badge badge-courant">PASSIF COURANT</span>
+                            </th>
+                            <th rowspan="2" class="text-end">Total Passif</th>
+                            <th rowspan="2" class="text-center">Actions</th>
+                        </tr>
+                        <tr>
+                            <!-- Capitaux Propres -->
+                            <th class="small">Capital</th>
+                            <th class="small">Primes</th>
+                            <th class="small">Rés. Légales</th>
+                            <th class="small">Rés. Stat.</th>
+                            <th class="small">Rés. Fac.</th>
+                            <th class="small">Aut. Rés.</th>
+                            <th class="small">Rés. Reporté</th>
+                            
+                            <!-- Passif Non Courant -->
+                            <th class="small">Emprunts LT</th>
+                            <th class="small">Obligations</th>
+                            <th class="small">Prov. Retraite</th>
+                            <th class="small">Aut. Prov.</th>
+                            
+                            <!-- Passif Courant -->
+                            <th class="small">Dettes Four.</th>
+                            <th class="small">Impôts</th>
+                            <th class="small">Cot. Sociales</th>
+                            <th class="small">Emprunts CT</th>
+                            <th class="small">Dettes D.</th>
+                            <th class="small">Dividendes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="passifTableBody">
+                        <!-- Rempli par JavaScript -->
+                    </tbody>
+                    <tfoot id="passifTableFooter" style="display: none;">
+                        <tr class="total-row">
+                            <td colspan="3" class="text-end fw-bold">TOTAUX</td>
+                            <!-- Capitaux Propres -->
+                            <td class="text-end fw-bold" id="footerCapital">0</td>
+                            <td class="text-end fw-bold" id="footerPrimes">0</td>
+                            <td class="text-end fw-bold" id="footerReservesLegales">0</td>
+                            <td class="text-end fw-bold" id="footerReservesStatutaires">0</td>
+                            <td class="text-end fw-bold" id="footerReservesFacultatives">0</td>
+                            <td class="text-end fw-bold" id="footerAutresReserves">0</td>
+                            <td class="text-end fw-bold" id="footerResultatReporte">0</td>
+                            
+                            <!-- Passif Non Courant -->
+                            <td class="text-end fw-bold" id="footerEmpruntsLT">0</td>
+                            <td class="text-end fw-bold" id="footerObligations">0</td>
+                            <td class="text-end fw-bold" id="footerProvisionsRetraite">0</td>
+                            <td class="text-end fw-bold" id="footerAutresProvisions">0</td>
+                            
+                            <!-- Passif Courant -->
+                            <td class="text-end fw-bold" id="footerDettesFournisseurs">0</td>
+                            <td class="text-end fw-bold" id="footerImpots">0</td>
+                            <td class="text-end fw-bold" id="footerCotisations">0</td>
+                            <td class="text-end fw-bold" id="footerEmpruntsCT">0</td>
+                            <td class="text-end fw-bold" id="footerDettesDiverses">0</td>
+                            <td class="text-end fw-bold" id="footerDividendes">0</td>
+                            
+                            <!-- Total -->
+                            <td class="text-end fw-bold text-primary" id="footerTotal">0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <!-- Aucun résultat -->
+            <div id="noResults" class="text-center py-5" style="display: none;">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun passif IFRS trouvé</h5>
+                <p class="text-muted mb-0">Cliquez sur "Ajouter Passif" pour commencer à enregistrer</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-0">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted small" id="paginationInfo">
+                        Chargement des données...
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav class="d-flex justify-content-md-end">
+                        <ul class="pagination pagination-enhanced mb-0" id="paginationControls"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajout Passif -->
+<div class="modal fade enhanced-modal" id="addPassifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un Nouveau Passif IFRS
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addPassifForm" class="enhanced-form">
+                <input type="hidden" name="acheteur" value="{{ acheteur.id }}" />
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Remplissez tous les champs ci-dessous pour ajouter un nouveau passif selon les normes IFRS COBAC.
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Type de bilan -->
+                        <div class="col-md-4 mb-3">
+                            <label for="type_bilan" class="form-label">
+                                <i class="fas fa-calendar"></i>Type de bilan *
+                            </label>
+                            <select class="form-select" id="type_bilan" name="type_bilan" required>
+                                <option value="">Sélectionnez un type...</option>
+                                <option value="annuel">Bilan annuel</option>
+                                <option value="semestriel">Bilan semestriel</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Année -->
+                        <div class="col-md-4 mb-3">
+                            <label for="annee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="annee" name="annee" required>
+                                <option value="">Sélectionnez une année...</option>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Semestre (conditionnel) -->
+                        <div class="col-md-4 mb-3" id="semestreField" style="display: none;">
+                            <label for="semestre" class="form-label">
+                                <i class="fas fa-calendar-week"></i>Semestre *
+                            </label>
+                            <select class="form-select" id="semestre" name="semestre">
+                                <option value="">Sélectionnez un semestre...</option>
+                                <option value="1">1er semestre (Janvier - Juin)</option>
+                                <option value="2">2e semestre (Juillet - Décembre)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-landmark text-purple me-2"></i>Capitaux Propres
+                            </h6>
+                        </div>
+                        
+                        <!-- Capitaux propres -->
+                        <div class="col-md-6 mb-3">
+                            <label for="capital_social" class="form-label">
+                                Capital social *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="capital_social" 
+                                       name="capital_social" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="primes_emission" class="form-label">
+                                Primes d'émission *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="primes_emission" 
+                                       name="primes_emission" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="reserves_legales" class="form-label">
+                                Réserves légales *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="reserves_legales" 
+                                       name="reserves_legales" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="reserves_statutaires" class="form-label">
+                                Réserves statutaires *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="reserves_statutaires" 
+                                       name="reserves_statutaires" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="reserves_facultatives" class="form-label">
+                                Réserves facultatives *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="reserves_facultatives" 
+                                       name="reserves_facultatives" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_reserves" class="form-label">
+                                Autres réserves *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_reserves" 
+                                       name="autres_reserves" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="resultat_net_reporte" class="form-label">
+                                Résultat net reporté *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="resultat_net_reporte" 
+                                       name="resultat_net_reporte" step="0.01" min="-999999999999" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-file-contract text-warning me-2"></i>Passif Non Courant
+                            </h6>
+                        </div>
+                        
+                        <!-- Passif non courant -->
+                        <div class="col-md-6 mb-3">
+                            <label for="emprunts_bancaires_long_terme" class="form-label">
+                                Emprunts bancaires à long terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="emprunts_bancaires_long_terme" 
+                                       name="emprunts_bancaires_long_terme" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="obligations" class="form-label">
+                                Obligations *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="obligations" 
+                                       name="obligations" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="provisions_pour_retraites_et_pensions" class="form-label">
+                                Provisions pour retraites et pensions *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="provisions_pour_retraites_et_pensions" 
+                                       name="provisions_pour_retraites_et_pensions" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="autres_provisions" class="form-label">
+                                Autres provisions *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="autres_provisions" 
+                                       name="autres_provisions" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-clock text-danger me-2"></i>Passif Courant
+                            </h6>
+                        </div>
+                        
+                        <!-- Passif courant -->
+                        <div class="col-md-6 mb-3">
+                            <label for="dettes_fournisseurs_a_court_terme" class="form-label">
+                                Dettes fournisseurs à court terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="dettes_fournisseurs_a_court_terme" 
+                                       name="dettes_fournisseurs_a_court_terme" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="impots_sur_le_revenu" class="form-label">
+                                Impôts sur le revenu *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="impots_sur_le_revenu" 
+                                       name="impots_sur_le_revenu" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="cotisations_sociales" class="form-label">
+                                Cotisations sociales *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="cotisations_sociales" 
+                                       name="cotisations_sociales" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="emprunts_bancaires_court_terme" class="form-label">
+                                Emprunts bancaires à court terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="emprunts_bancaires_court_terme" 
+                                       name="emprunts_bancaires_court_terme" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="dettes_diverses" class="form-label">
+                                Dettes diverses *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="dettes_diverses" 
+                                       name="dettes_diverses" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="dividendes_a_payer" class="form-label">
+                                Dividendes à payer *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="dividendes_a_payer" 
+                                       name="dividendes_a_payer" step="0.01" min="0" value="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>Résumé par Catégorie IFRS
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <span class="text-muted">Capitaux Propres:</span>
+                                                <span class="fw-bold float-end" id="summaryCapitauxPropres">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Capital et primes:</small>
+                                                <small class="fw-bold float-end" id="summaryCapitalPrimes">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Réserves:</small>
+                                                <small class="fw-bold float-end" id="summaryReserves">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Résultat reporté:</small>
+                                                <small class="fw-bold float-end" id="summaryResultat">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <span class="text-muted">Passif Non Courant:</span>
+                                                <span class="fw-bold float-end" id="summaryPassifNonCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Emprunts LT:</small>
+                                                <small class="fw-bold float-end" id="summaryEmpruntsLT">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Obligations:</small>
+                                                <small class="fw-bold float-end" id="summaryObligations">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Provisions:</small>
+                                                <small class="fw-bold float-end" id="summaryProvisions">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <span class="text-muted">Passif Courant:</span>
+                                                <span class="fw-bold float-end" id="summaryPassifCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Dettes CT:</small>
+                                                <small class="fw-bold float-end" id="summaryDettesCT">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Impôts et cotisations:</small>
+                                                <small class="fw-bold float-end" id="summaryImpotCotisation">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Emprunts CT:</small>
+                                                <small class="fw-bold float-end" id="summaryEmpruntsCT">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="pt-2 border-top">
+                                                <span class="text-primary fw-bold fs-5">Total Passif IFRS:</span>
+                                                <span class="fw-bold text-primary float-end fs-5" id="summaryTotal">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-enhanced" id="clearAddFormBtn"
+                                    style="background: #ffc107; color: #000;">
+                                <i class="fas fa-broom me-2"></i>Effacer
+                            </button>
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-check me-2"></i>Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification Passif -->
+<div class="modal fade enhanced-modal" id="editPassifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-edit me-2"></i>Modifier le Passif IFRS
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editPassifForm" class="enhanced-form">
+                <input type="hidden" id="editPassifId" name="id">
+                
+                <div class="modal-body">
+                    <div class="custom-alert custom-alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Modifiez les champs ci-dessous pour mettre à jour le passif selon les normes IFRS COBAC.
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Type de bilan -->
+                        <div class="col-md-4 mb-3">
+                            <label for="editTypeBilan" class="form-label">
+                                <i class="fas fa-calendar"></i>Type de bilan *
+                            </label>
+                            <select class="form-select" id="editTypeBilan" name="type_bilan" required>
+                                <option value="annuel">Bilan annuel</option>
+                                <option value="semestriel">Bilan semestriel</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Année -->
+                        <div class="col-md-4 mb-3">
+                            <label for="editAnnee" class="form-label">
+                                <i class="fas fa-calendar-alt"></i>Année *
+                            </label>
+                            <select class="form-select select2-enhanced" id="editAnnee" name="annee" required>
+                                {% for annee in annee_list %}
+                                    <option value="{{ annee.id }}">{{ annee.annee }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Semestre (conditionnel) -->
+                        <div class="col-md-4 mb-3" id="editSemestreField" style="display: none;">
+                            <label for="editSemestre" class="form-label">
+                                <i class="fas fa-calendar-week"></i>Semestre *
+                            </label>
+                            <select class="form-select" id="editSemestre" name="semestre">
+                                <option value="1">1er semestre (Janvier - Juin)</option>
+                                <option value="2">2e semestre (Juillet - Décembre)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-landmark text-purple me-2"></i>Capitaux Propres
+                            </h6>
+                        </div>
+                        
+                        <!-- Capitaux propres -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editCapitalSocial" class="form-label">
+                                Capital social *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editCapitalSocial" 
+                                       name="capital_social" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editPrimesEmission" class="form-label">
+                                Primes d'émission *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editPrimesEmission" 
+                                       name="primes_emission" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editReservesLegales" class="form-label">
+                                Réserves légales *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editReservesLegales" 
+                                       name="reserves_legales" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editReservesStatutaires" class="form-label">
+                                Réserves statutaires *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editReservesStatutaires" 
+                                       name="reserves_statutaires" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="editReservesFacultatives" class="form-label">
+                                Réserves facultatives *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editReservesFacultatives" 
+                                       name="reserves_facultatives" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editAutresReserves" class="form-label">
+                                Autres réserves *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editAutresReserves" 
+                                       name="autres_reserves" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editResultatNetReporte" class="form-label">
+                                Résultat net reporté *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editResultatNetReporte" 
+                                       name="resultat_net_reporte" step="0.01" min="-999999999999" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-file-contract text-warning me-2"></i>Passif Non Courant
+                            </h6>
+                        </div>
+                        
+                        <!-- Passif non courant -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmpruntsBancairesLongTerme" class="form-label">
+                                Emprunts bancaires à long terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editEmpruntsBancairesLongTerme" 
+                                       name="emprunts_bancaires_long_terme" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editObligations" class="form-label">
+                                Obligations *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editObligations" 
+                                       name="obligations" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editProvisionsPourRetraitesEtPensions" class="form-label">
+                                Provisions pour retraites et pensions *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editProvisionsPourRetraitesEtPensions" 
+                                       name="provisions_pour_retraites_et_pensions" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editAutresProvisions" class="form-label">
+                                Autres provisions *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editAutresProvisions" 
+                                       name="autres_provisions" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="fas fa-clock text-danger me-2"></i>Passif Courant
+                            </h6>
+                        </div>
+                        
+                        <!-- Passif courant -->
+                        <div class="col-md-6 mb-3">
+                            <label for="editDettesFournisseursCourtTerme" class="form-label">
+                                Dettes fournisseurs à court terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editDettesFournisseursCourtTerme" 
+                                       name="dettes_fournisseurs_a_court_terme" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editImpotsSurLeRevenu" class="form-label">
+                                Impôts sur le revenu *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editImpotsSurLeRevenu" 
+                                       name="impots_sur_le_revenu" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editCotisationsSociales" class="form-label">
+                                Cotisations sociales *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editCotisationsSociales" 
+                                       name="cotisations_sociales" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editEmpruntsBancairesCourtTerme" class="form-label">
+                                Emprunts bancaires à court terme *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editEmpruntsBancairesCourtTerme" 
+                                       name="emprunts_bancaires_court_terme" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editDettesDiverses" class="form-label">
+                                Dettes diverses *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editDettesDiverses" 
+                                       name="dettes_diverses" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="editDividendesAPayer" class="form-label">
+                                Dividendes à payer *
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="editDividendesAPayer" 
+                                       name="dividendes_a_payer" step="0.01" min="0" required>
+                                <span class="input-group-text">FCFA</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Résumé calculé -->
+                        <div class="col-md-12">
+                            <div class="card bg-light border">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-calculator text-primary me-2"></i>Résumé par Catégorie IFRS
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <span class="text-muted">Capitaux Propres:</span>
+                                                <span class="fw-bold float-end" id="editSummaryCapitauxPropres">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Capital et primes:</small>
+                                                <small class="fw-bold float-end" id="editSummaryCapitalPrimes">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Réserves:</small>
+                                                <small class="fw-bold float-end" id="editSummaryReserves">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Résultat reporté:</small>
+                                                <small class="fw-bold float-end" id="editSummaryResultat">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <span class="text-muted">Passif Non Courant:</span>
+                                                <span class="fw-bold float-end" id="editSummaryPassifNonCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Emprunts LT:</small>
+                                                <small class="fw-bold float-end" id="editSummaryEmpruntsLT">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Obligations:</small>
+                                                <small class="fw-bold float-end" id="editSummaryObligations">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Provisions:</small>
+                                                <small class="fw-bold float-end" id="editSummaryProvisions">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-2">
+                                                <span class="text-muted">Passif Courant:</span>
+                                                <span class="fw-bold float-end" id="editSummaryPassifCourant">0 FCFA</span>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Dettes CT:</small>
+                                                <small class="fw-bold float-end" id="editSummaryDettesCT">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Impôts et cotisations:</small>
+                                                <small class="fw-bold float-end" id="editSummaryImpotCotisation">0 FCFA</small>
+                                            </div>
+                                            <div class="mb-2">
+                                                <small class="text-muted">• Emprunts CT:</small>
+                                                <small class="fw-bold float-end" id="editSummaryEmpruntsCT">0 FCFA</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="pt-2 border-top">
+                                                <span class="text-primary fw-bold fs-5">Total Passif IFRS:</span>
+                                                <span class="fw-bold text-primary float-end fs-5" id="editSummaryTotal">0 FCFA</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <button type="button" class="btn-enhanced" data-bs-dismiss="modal"
+                                style="background: #6c757d; color: white;">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn-enhanced btn-success-enhanced">
+                                <i class="fas fa-save me-2"></i>Mettre à jour
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+$(document).ready(function() {
+    // Variables globales
+    let currentPage = 1;
+    let currentSearch = '';
+    let selectedPassifId = null;
+    const ACHETEUR_ID = '{{ acheteur.id }}';
+    const ACCESS_TOKEN = '{{ access }}';
+    const REFRESH_TOKEN = '{{ refresh }}';
+    const TYPE_BILAN_CHOICES = JSON.parse('{{ type_bilan_choices|safe }}');
+    const SEMESTRE_CHOICES = JSON.parse('{{ semestre_choices|safe }}');
+    
+    // Formater les nombres
+    function formatNumber(num, decimals = 2) {
+        if (num === null || num === undefined || num === '') return '-';
+        const number = parseFloat(num);
+        if (isNaN(number)) return '-';
+        return number.toLocaleString('fr-FR', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+    
+    // Formater en devise
+    function formatCurrency(num) {
+        return formatNumber(num) + ' FCFA';
+    }
+    
+    // Initialiser Select2
+    function initSelect2() {
+        const select2Config = {
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#addPassifModal')
+        };
+        
+        const editSelect2Config = {
+            theme: 'bootstrap-5',
+            placeholder: 'Sélectionnez une année...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('#editPassifModal')
+        };
+        
+        $('#annee').select2(select2Config);
+        $('#editAnnee').select2(editSelect2Config);
+    }
+    
+    // Gérer l'affichage du champ semestre
+    $('#type_bilan').on('change', function() {
+        if ($(this).val() === 'semestriel') {
+            $('#semestreField').show();
+            $('#semestre').prop('required', true);
+        } else {
+            $('#semestreField').hide();
+            $('#semestre').prop('required', false);
+            $('#semestre').val('');
+        }
+    });
+    
+    $('#editTypeBilan').on('change', function() {
+        if ($(this).val() === 'semestriel') {
+            $('#editSemestreField').show();
+            $('#editSemestre').prop('required', true);
+        } else {
+            $('#editSemestreField').hide();
+            $('#editSemestre').prop('required', false);
+            $('#editSemestre').val('');
+        }
+    });
+    
+    // Mettre à jour les résumés dans le formulaire d'ajout
+    function updateAddFormSummaries() {
+        // Capitaux Propres
+        const capitalSocial = parseFloat($('#capital_social').val()) || 0;
+        const primesEmission = parseFloat($('#primes_emission').val()) || 0;
+        const reservesLegales = parseFloat($('#reserves_legales').val()) || 0;
+        const reservesStatutaires = parseFloat($('#reserves_statutaires').val()) || 0;
+        const reservesFacultatives = parseFloat($('#reserves_facultatives').val()) || 0;
+        const autresReserves = parseFloat($('#autres_reserves').val()) || 0;
+        const resultatNetReporte = parseFloat($('#resultat_net_reporte').val()) || 0;
+        
+        // Passif Non Courant
+        const empruntsLT = parseFloat($('#emprunts_bancaires_long_terme').val()) || 0;
+        const obligations = parseFloat($('#obligations').val()) || 0;
+        const provisionsRetraite = parseFloat($('#provisions_pour_retraites_et_pensions').val()) || 0;
+        const autresProvisions = parseFloat($('#autres_provisions').val()) || 0;
+        
+        // Passif Courant
+        const dettesFournisseurs = parseFloat($('#dettes_fournisseurs_a_court_terme').val()) || 0;
+        const impots = parseFloat($('#impots_sur_le_revenu').val()) || 0;
+        const cotisations = parseFloat($('#cotisations_sociales').val()) || 0;
+        const empruntsCT = parseFloat($('#emprunts_bancaires_court_terme').val()) || 0;
+        const dettesDiverses = parseFloat($('#dettes_diverses').val()) || 0;
+        const dividendes = parseFloat($('#dividendes_a_payer').val()) || 0;
+        
+        // Totaux par catégorie
+        const totalCapitalPrimes = capitalSocial + primesEmission;
+        const totalReserves = reservesLegales + reservesStatutaires + reservesFacultatives + autresReserves;
+        const totalCapitauxPropres = totalCapitalPrimes + totalReserves + resultatNetReporte;
+        
+        const totalEmpruntsObligations = empruntsLT + obligations;
+        const totalProvisions = provisionsRetraite + autresProvisions;
+        const totalPassifNonCourant = totalEmpruntsObligations + totalProvisions;
+        
+        const totalDettesCT = dettesFournisseurs + dettesDiverses;
+        const totalImpotCotisation = impots + cotisations;
+        const totalPassifCourant = totalDettesCT + totalImpotCotisation + empruntsCT + dividendes;
+        
+        const totalGeneral = totalCapitauxPropres + totalPassifNonCourant + totalPassifCourant;
+        
+        // Mise à jour des résumés
+        $('#summaryCapitalPrimes').text(formatCurrency(totalCapitalPrimes));
+        $('#summaryReserves').text(formatCurrency(totalReserves));
+        $('#summaryResultat').text(formatCurrency(resultatNetReporte));
+        $('#summaryCapitauxPropres').text(formatCurrency(totalCapitauxPropres));
+        
+        $('#summaryEmpruntsLT').text(formatCurrency(empruntsLT));
+        $('#summaryObligations').text(formatCurrency(obligations));
+        $('#summaryProvisions').text(formatCurrency(totalProvisions));
+        $('#summaryPassifNonCourant').text(formatCurrency(totalPassifNonCourant));
+        
+        $('#summaryDettesCT').text(formatCurrency(totalDettesCT));
+        $('#summaryImpotCotisation').text(formatCurrency(totalImpotCotisation));
+        $('#summaryEmpruntsCT').text(formatCurrency(empruntsCT));
+        $('#summaryPassifCourant').text(formatCurrency(totalPassifCourant));
+        
+        $('#summaryTotal').text(formatCurrency(totalGeneral));
+    }
+    
+    // Écouter les changements dans les champs du formulaire d'ajout
+    $('#addPassifForm input[type="number"]').on('input', updateAddFormSummaries);
+    
+    // Charger les passifs
+    function loadPassifs() {
+        const url = `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/liste-des-passifs/?page=${currentPage}&search=${encodeURIComponent(currentSearch)}`;
+        
+        $.ajax({
+            url: url,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            beforeSend: function() {
+                $('#passifTableBody').html(`
+                    <tr>
+                        <td colspan="20" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Chargement des données IFRS...</p>
+                        </td>
+                    </tr>
+                `);
+            },
+            success: function(response) {
+                updateTable(response.results);
+                updatePagination(response);
+                updateStats(response.results);
+            },
+            error: function(xhr) {
+                $('#passifTableBody').html(`
+                    <tr>
+                        <td colspan="20" class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-2x mb-3"></i>
+                            <h5 class="text-warning">Erreur de chargement</h5>
+                            <p class="text-muted">Impossible de charger les données IFRS. Veuillez réessayer.</p>
+                        </td>
+                    </tr>
+                `);
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(loadPassifs);
+                }
+            }
+        });
+    }
+    
+    // Mettre à jour le tableau
+    function updateTable(passifs) {
+        const tbody = $('#passifTableBody');
+        tbody.empty();
+        
+        if (passifs.length === 0) {
+            $('#noResults').show();
+            $('#passifTableFooter').hide();
+            return;
+        }
+        
+        $('#noResults').hide();
+        
+        // Initialiser les totaux
+        const totaux = {
+            capitalSocial: 0, primesEmission: 0, reservesLegales: 0, 
+            reservesStatutaires: 0, reservesFacultatives: 0, autresReserves: 0, resultatNetReporte: 0,
+            empruntsLT: 0, obligations: 0, provisionsRetraite: 0, autresProvisions: 0,
+            dettesFournisseurs: 0, impots: 0, cotisations: 0, empruntsCT: 0, dettesDiverses: 0, dividendes: 0,
+            total: 0
+        };
+        
+        const anneesSet = new Set();
+        let countAnnuel = 0;
+        let countSemestriel = 0;
+        
+        passifs.forEach((passif, index) => {
+            const startIndex = (currentPage - 1) * passifs.length;
+            const rowNumber = startIndex + index + 1;
+            
+            // Période
+            let periode = passif.annee?.annee || 'N/A';
+            if (passif.semestre) {
+                const semestreLabel = SEMESTRE_CHOICES.find(s => s.value == passif.semestre)?.label || `Semestre ${passif.semestre}`;
+                periode += ` - ${semestreLabel}`;
+            }
+            anneesSet.add(passif.annee?.annee);
+            
+            // Type de bilan
+            const typeBilan = passif.type_bilan_display || (passif.type_bilan === 'annuel' ? 'Annuel' : 'Semestriel');
+            if (passif.type_bilan === 'annuel') countAnnuel++;
+            else countSemestriel++;
+            
+            // Récupérer les valeurs
+            const capitalSocial = parseFloat(passif.capital_social) || 0;
+            const primesEmission = parseFloat(passif.primes_emission) || 0;
+            const reservesLegales = parseFloat(passif.reserves_legales) || 0;
+            const reservesStatutaires = parseFloat(passif.reserves_statutaires) || 0;
+            const reservesFacultatives = parseFloat(passif.reserves_facultatives) || 0;
+            const autresReserves = parseFloat(passif.autres_reserves) || 0;
+            const resultatNetReporte = parseFloat(passif.resultat_net_reporte) || 0;
+            const empruntsLT = parseFloat(passif.emprunts_bancaires_long_terme) || 0;
+            const obligations = parseFloat(passif.obligations) || 0;
+            const provisionsRetraite = parseFloat(passif.provisions_pour_retraites_et_pensions) || 0;
+            const autresProvisions = parseFloat(passif.autres_provisions) || 0;
+            const dettesFournisseurs = parseFloat(passif.dettes_fournisseurs_a_court_terme) || 0;
+            const impots = parseFloat(passif.impots_sur_le_revenu) || 0;
+            const cotisations = parseFloat(passif.cotisations_sociales) || 0;
+            const empruntsCT = parseFloat(passif.emprunts_bancaires_court_terme) || 0;
+            const dettesDiverses = parseFloat(passif.dettes_diverses) || 0;
+            const dividendes = parseFloat(passif.dividendes_a_payer) || 0;
+            
+            // Calculer les totaux partiels
+            const totalCapitauxPropres = passif.total_capitaux_propres || 
+                (capitalSocial + primesEmission + reservesLegales + reservesStatutaires + 
+                 reservesFacultatives + autresReserves + resultatNetReporte);
+            
+            const totalPassifNonCourant = passif.total_passif_non_courant || 
+                (empruntsLT + obligations + provisionsRetraite + autresProvisions);
+            
+            const totalPassifCourant = passif.total_passif_courant || 
+                (dettesFournisseurs + impots + cotisations + empruntsCT + dettesDiverses + dividendes);
+            
+            const totalGeneral = passif.total_passif || (totalCapitauxPropres + totalPassifNonCourant + totalPassifCourant);
+            
+            // Accumuler les totaux
+            totaux.capitalSocial += capitalSocial;
+            totaux.primesEmission += primesEmission;
+            totaux.reservesLegales += reservesLegales;
+            totaux.reservesStatutaires += reservesStatutaires;
+            totaux.reservesFacultatives += reservesFacultatives;
+            totaux.autresReserves += autresReserves;
+            totaux.resultatNetReporte += resultatNetReporte;
+            totaux.empruntsLT += empruntsLT;
+            totaux.obligations += obligations;
+            totaux.provisionsRetraite += provisionsRetraite;
+            totaux.autresProvisions += autresProvisions;
+            totaux.dettesFournisseurs += dettesFournisseurs;
+            totaux.impots += impots;
+            totaux.cotisations += cotisations;
+            totaux.empruntsCT += empruntsCT;
+            totaux.dettesDiverses += dettesDiverses;
+            totaux.dividendes += dividendes;
+            totaux.total += totalGeneral;
+            
+            // Badge pour le type de bilan
+            const typeBadgeClass = passif.type_bilan === 'annuel' ? 'bg-success' : 'bg-info';
+            const typeBadgeText = passif.type_bilan === 'annuel' ? 'Annuel' : 'Semestriel';
+            
+            const row = `
+                <tr data-id="${passif.id}" class="passif-row">
+                    <td>${rowNumber}</td>
+                    <td>
+                        <span class="badge bg-primary bg-opacity-10 text-white fw-bold">
+                            ${periode}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge ${typeBadgeClass}">
+                            ${typeBadgeText}
+                        </span>
+                    </td>
+                    
+                    <!-- Capitaux Propres -->
+                    <td class="value-cell value-positive">${formatNumber(capitalSocial)}</td>
+                    <td class="value-cell value-positive">${formatNumber(primesEmission)}</td>
+                    <td class="value-cell value-positive">${formatNumber(reservesLegales)}</td>
+                    <td class="value-cell value-positive">${formatNumber(reservesStatutaires)}</td>
+                    <td class="value-cell value-positive">${formatNumber(reservesFacultatives)}</td>
+                    <td class="value-cell value-positive">${formatNumber(autresReserves)}</td>
+                    <td class="value-cell ${resultatNetReporte >= 0 ? 'value-positive' : 'value-negative'}">
+                        ${formatNumber(resultatNetReporte)}
+                    </td>
+                    
+                    <!-- Passif Non Courant -->
+                    <td class="value-cell">${formatNumber(empruntsLT)}</td>
+                    <td class="value-cell">${formatNumber(obligations)}</td>
+                    <td class="value-cell">${formatNumber(provisionsRetraite)}</td>
+                    <td class="value-cell">${formatNumber(autresProvisions)}</td>
+                    
+                    <!-- Passif Courant -->
+                    <td class="value-cell">${formatNumber(dettesFournisseurs)}</td>
+                    <td class="value-cell">${formatNumber(impots)}</td>
+                    <td class="value-cell">${formatNumber(cotisations)}</td>
+                    <td class="value-cell">${formatNumber(empruntsCT)}</td>
+                    <td class="value-cell">${formatNumber(dettesDiverses)}</td>
+                    <td class="value-cell">${formatNumber(dividendes)}</td>
+                    
+                    <!-- Total -->
+                    <td class="value-cell fw-bold text-primary">${formatNumber(totalGeneral)}</td>
+                    
+                    <!-- Actions -->
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-btn" data-id="${passif.id}" 
+                                    data-bs-toggle="tooltip" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-btn" data-id="${passif.id}" 
+                                    data-bs-toggle="tooltip" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+        
+        // Mettre à jour le footer
+        updateFooterTotals(totaux);
+        $('#passifTableFooter').show();
+        
+        // Mettre à jour les compteurs
+        $('#countPeriodes').text(passifs.length);
+        $('#countAnnees').text(anneesSet.size);
+    }
+    
+    // Mettre à jour les totaux du footer
+    function updateFooterTotals(totaux) {
+        $('#footerCapital').text(formatNumber(totaux.capitalSocial));
+        $('#footerPrimes').text(formatNumber(totaux.primesEmission));
+        $('#footerReservesLegales').text(formatNumber(totaux.reservesLegales));
+        $('#footerReservesStatutaires').text(formatNumber(totaux.reservesStatutaires));
+        $('#footerReservesFacultatives').text(formatNumber(totaux.reservesFacultatives));
+        $('#footerAutresReserves').text(formatNumber(totaux.autresReserves));
+        $('#footerResultatReporte').text(formatNumber(totaux.resultatNetReporte));
+        $('#footerEmpruntsLT').text(formatNumber(totaux.empruntsLT));
+        $('#footerObligations').text(formatNumber(totaux.obligations));
+        $('#footerProvisionsRetraite').text(formatNumber(totaux.provisionsRetraite));
+        $('#footerAutresProvisions').text(formatNumber(totaux.autresProvisions));
+        $('#footerDettesFournisseurs').text(formatNumber(totaux.dettesFournisseurs));
+        $('#footerImpots').text(formatNumber(totaux.impots));
+        $('#footerCotisations').text(formatNumber(totaux.cotisations));
+        $('#footerEmpruntsCT').text(formatNumber(totaux.empruntsCT));
+        $('#footerDettesDiverses').text(formatNumber(totaux.dettesDiverses));
+        $('#footerDividendes').text(formatNumber(totaux.dividendes));
+        $('#footerTotal').text(formatNumber(totaux.total));
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStats(passifs) {
+        let totalCapitauxPropres = 0;
+        let totalPassifNonCourant = 0;
+        let totalPassifCourant = 0;
+        
+        passifs.forEach(passif => {
+            totalCapitauxPropres += parseFloat(passif.total_capitaux_propres) || 0;
+            totalPassifNonCourant += parseFloat(passif.total_passif_non_courant) || 0;
+            totalPassifCourant += parseFloat(passif.total_passif_courant) || 0;
+        });
+        
+        const totalGeneral = totalCapitauxPropres + totalPassifNonCourant + totalPassifCourant;
+        
+        // Pourcentages
+        const pourcentageCapitaux = totalGeneral > 0 ? Math.round((totalCapitauxPropres / totalGeneral) * 100) : 0;
+        const pourcentageNonCourant = totalGeneral > 0 ? Math.round((totalPassifNonCourant / totalGeneral) * 100) : 0;
+        const pourcentageCourant = totalGeneral > 0 ? Math.round((totalPassifCourant / totalGeneral) * 100) : 0;
+        
+        // Ratio d'endettement
+        const capitauxPermanents = totalCapitauxPropres + totalPassifNonCourant;
+        const ratioEndettement = capitauxPermanents > 0 ? (totalPassifNonCourant / capitauxPermanents).toFixed(2) : '0.00';
+        
+        // Mise à jour des statistiques
+        $('#totalCapitauxPropres').text(formatNumber(totalCapitauxPropres));
+        $('#totalPassifNonCourant').text(formatNumber(totalPassifNonCourant));
+        $('#totalPassifCourant').text(formatNumber(totalPassifCourant));
+        $('#totalPassif').text(formatNumber(totalGeneral));
+        
+        $('#pourcentageCapitaux').text(pourcentageCapitaux + '%');
+        $('#pourcentageNonCourant').text(pourcentageNonCourant + '%');
+        $('#pourcentageCourant').text(pourcentageCourant + '%');
+        
+        $('#ratioEndettement').text(ratioEndettement);
+    }
+    
+    // Mettre à jour la pagination
+    function updatePagination(response) {
+        const controls = $('#paginationControls');
+        controls.empty();
+        
+        const startIndex = ((currentPage - 1) * 10) + 1;
+        const endIndex = Math.min(currentPage * 10, response.count);
+        
+        $('#paginationInfo').text(
+            `Affichage ${startIndex} à ${endIndex} sur ${response.count} passifs IFRS`
+        );
+        
+        if (response.previous) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-left"></i>
+                    </span>
+                </li>
+            `);
+        }
+        
+        for (let i = 1; i <= response.total_pages; i++) {
+            controls.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (response.next) {
+            controls.append(`
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `);
+        } else {
+            controls.append(`
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        <i class="fas fa-chevron-right"></i>
+                    </span>
+                </li>
+            `);
+        }
+    }
+    
+    // Recherche avec debounce
+    let searchTimeout;
+    $('#searchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            currentSearch = $(this).val();
+            currentPage = 1;
+            loadPassifs();
+        }, 500);
+    });
+    
+    // Pagination
+    $(document).on('click', '.page-link', function(e) {
+        e.preventDefault();
+        const page = $(this).data('page');
+        if (page) {
+            currentPage = page;
+            loadPassifs();
+            $('html, body').animate({
+                scrollTop: $('#passifTableBody').offset().top - 100
+            }, 500);
+        }
+    });
+    
+    // Effacer le formulaire d'ajout
+    $('#clearAddFormBtn').on('click', function() {
+        Swal.fire({
+            title: 'Confirmer l\'effacement',
+            text: 'Êtes-vous sûr de vouloir effacer tous les champs du formulaire ?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, effacer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#addPassifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                $('#semestreField').hide();
+                $('#semestre').val('');
+                updateAddFormSummaries();
+            }
+        });
+    });
+    
+    // Fonction pour mettre à jour les résumés dans le formulaire d'édition
+    function updateEditFormSummaries() {
+        // Capitaux Propres
+        const capitalSocial = parseFloat($('#editCapitalSocial').val()) || 0;
+        const primesEmission = parseFloat($('#editPrimesEmission').val()) || 0;
+        const reservesLegales = parseFloat($('#editReservesLegales').val()) || 0;
+        const reservesStatutaires = parseFloat($('#editReservesStatutaires').val()) || 0;
+        const reservesFacultatives = parseFloat($('#editReservesFacultatives').val()) || 0;
+        const autresReserves = parseFloat($('#editAutresReserves').val()) || 0;
+        const resultatNetReporte = parseFloat($('#editResultatNetReporte').val()) || 0;
+        
+        // Passif Non Courant
+        const empruntsLT = parseFloat($('#editEmpruntsBancairesLongTerme').val()) || 0;
+        const obligations = parseFloat($('#editObligations').val()) || 0;
+        const provisionsRetraite = parseFloat($('#editProvisionsPourRetraitesEtPensions').val()) || 0;
+        const autresProvisions = parseFloat($('#editAutresProvisions').val()) || 0;
+        
+        // Passif Courant
+        const dettesFournisseurs = parseFloat($('#editDettesFournisseursCourtTerme').val()) || 0;
+        const impots = parseFloat($('#editImpotsSurLeRevenu').val()) || 0;
+        const cotisations = parseFloat($('#editCotisationsSociales').val()) || 0;
+        const empruntsCT = parseFloat($('#editEmpruntsBancairesCourtTerme').val()) || 0;
+        const dettesDiverses = parseFloat($('#editDettesDiverses').val()) || 0;
+        const dividendes = parseFloat($('#editDividendesAPayer').val()) || 0;
+        
+        // Totaux par catégorie
+        const totalCapitalPrimes = capitalSocial + primesEmission;
+        const totalReserves = reservesLegales + reservesStatutaires + reservesFacultatives + autresReserves;
+        const totalCapitauxPropres = totalCapitalPrimes + totalReserves + resultatNetReporte;
+        
+        const totalEmpruntsObligations = empruntsLT + obligations;
+        const totalProvisions = provisionsRetraite + autresProvisions;
+        const totalPassifNonCourant = totalEmpruntsObligations + totalProvisions;
+        
+        const totalDettesCT = dettesFournisseurs + dettesDiverses;
+        const totalImpotCotisation = impots + cotisations;
+        const totalPassifCourant = totalDettesCT + totalImpotCotisation + empruntsCT + dividendes;
+        
+        const totalGeneral = totalCapitauxPropres + totalPassifNonCourant + totalPassifCourant;
+        
+        // Mise à jour des résumés
+        $('#editSummaryCapitalPrimes').text(formatCurrency(totalCapitalPrimes));
+        $('#editSummaryReserves').text(formatCurrency(totalReserves));
+        $('#editSummaryResultat').text(formatCurrency(resultatNetReporte));
+        $('#editSummaryCapitauxPropres').text(formatCurrency(totalCapitauxPropres));
+        
+        $('#editSummaryEmpruntsLT').text(formatCurrency(empruntsLT));
+        $('#editSummaryObligations').text(formatCurrency(obligations));
+        $('#editSummaryProvisions').text(formatCurrency(totalProvisions));
+        $('#editSummaryPassifNonCourant').text(formatCurrency(totalPassifNonCourant));
+        
+        $('#editSummaryDettesCT').text(formatCurrency(totalDettesCT));
+        $('#editSummaryImpotCotisation').text(formatCurrency(totalImpotCotisation));
+        $('#editSummaryEmpruntsCT').text(formatCurrency(empruntsCT));
+        $('#editSummaryPassifCourant').text(formatCurrency(totalPassifCourant));
+        
+        $('#editSummaryTotal').text(formatCurrency(totalGeneral));
+    }
+
+    // Écouter les changements dans les champs du formulaire d'édition
+    $('#editPassifForm input[type="number"]').on('input', updateEditFormSummaries);
+
+    // Éditer un passif
+    $(document).on('click', '.edit-btn', function() {
+        const passifId = $(this).data('id');
+        selectedPassifId = passifId;
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/obtenir-un-passif/${passifId}/`,
+            type: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN
+            },
+            success: function(response) {
+                // Remplir les champs du formulaire d'édition
+                $('#editPassifId').val(response.id);
+                $('#editTypeBilan').val(response.type_bilan);
+                $('#editAnnee').val(response.annee?.id).trigger('change');
+                
+                // Gérer le semestre
+                if (response.type_bilan === 'semestriel') {
+                    $('#editSemestreField').show();
+                    $('#editSemestre').val(response.semestre).prop('required', true);
+                } else {
+                    $('#editSemestreField').hide();
+                    $('#editSemestre').val('').prop('required', false);
+                }
+                
+                // Remplir les valeurs des champs IFRS
+                $('#editCapitalSocial').val(response.capital_social);
+                $('#editPrimesEmission').val(response.primes_emission);
+                $('#editReservesLegales').val(response.reserves_legales);
+                $('#editReservesStatutaires').val(response.reserves_statutaires);
+                $('#editReservesFacultatives').val(response.reserves_facultatives);
+                $('#editAutresReserves').val(response.autres_reserves);
+                $('#editResultatNetReporte').val(response.resultat_net_reporte);
+                $('#editEmpruntsBancairesLongTerme').val(response.emprunts_bancaires_long_terme);
+                $('#editObligations').val(response.obligations);
+                $('#editProvisionsPourRetraitesEtPensions').val(response.provisions_pour_retraites_et_pensions);
+                $('#editAutresProvisions').val(response.autres_provisions);
+                $('#editDettesFournisseursCourtTerme').val(response.dettes_fournisseurs_a_court_terme);
+                $('#editImpotsSurLeRevenu').val(response.impots_sur_le_revenu);
+                $('#editCotisationsSociales').val(response.cotisations_sociales);
+                $('#editEmpruntsBancairesCourtTerme').val(response.emprunts_bancaires_court_terme);
+                $('#editDettesDiverses').val(response.dettes_diverses);
+                $('#editDividendesAPayer').val(response.dividendes_a_payer);
+                
+                // Mettre à jour les résumés
+                updateEditFormSummaries();
+                
+                $('#editPassifModal').modal('show');
+            },
+            error: function(xhr) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Impossible de charger les données du passif IFRS.'
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => {
+                        $(`.edit-btn[data-id="${passifId}"]`).click();
+                    });
+                }
+            }
+        });
+    });
+        
+    // Supprimer un passif
+    $(document).on('click', '.delete-btn', function() {
+        const passifId = $(this).data('id');
+        
+        Swal.fire({
+            title: 'Confirmer la suppression',
+            text: 'Êtes-vous sûr de vouloir supprimer ce passif IFRS ? Cette action est irréversible.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Oui, supprimer',
+            cancelButtonText: 'Annuler'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/supprimer-des-passifs/`,
+                    type: 'DELETE',
+                    data: JSON.stringify({ ids: [passifId] }),
+                    contentType: 'application/json',
+                    headers: {
+                        'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    success: function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Supprimé',
+                            text: 'Passif IFRS supprimé avec succès',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadPassifs();
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur',
+                            text: 'Impossible de supprimer le passif IFRS.'
+                        });
+                        
+                        if (xhr.status === 401) {
+                            refreshAccessToken(() => {
+                                $(`.delete-btn[data-id="${passifId}"]`).click();
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'ajout
+    $('#addPassifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validation du semestre
+        const typeBilan = $('#type_bilan').val();
+        const semestre = $('#semestre').val();
+        
+        if (typeBilan === 'semestriel' && !semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre est obligatoire pour un bilan semestriel.'
+            });
+            return;
+        }
+        
+        if (typeBilan === 'annuel' && semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            });
+            return;
+        }
+        
+        const formData = $(this).serialize();
+        const $btn = $('#addPassifForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Enregistrement...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/ajouter-un-passif/`,
+            type: 'POST',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#addPassifModal').modal('hide');
+                $('#addPassifForm')[0].reset();
+                $('#annee').val(null).trigger('change');
+                $('#semestreField').hide();
+                $('#semestre').val('');
+                updateAddFormSummaries();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Passif IFRS ajouté avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadPassifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de l\'ajout';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    } else if (xhr.responseJSON.semestre) {
+                        errorMessage = xhr.responseJSON.semestre;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#addPassifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Soumettre le formulaire d'édition
+    $('#editPassifForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validation du semestre
+        const typeBilan = $('#editTypeBilan').val();
+        const semestre = $('#editSemestre').val();
+        
+        if (typeBilan === 'semestriel' && !semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre est obligatoire pour un bilan semestriel.'
+            });
+            return;
+        }
+        
+        if (typeBilan === 'annuel' && semestre) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            });
+            return;
+        }
+        
+        const formData = $(this).serialize();
+        const $btn = $('#editPassifForm button[type="submit"]');
+        const originalText = $btn.html();
+        
+        $btn.prop('disabled', true);
+        $btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Mise à jour...');
+        
+        $.ajax({
+            url: `/api/acheteur/${ACHETEUR_ID}/bilan-ifrs/editer-un-passif/${selectedPassifId}/`,
+            type: 'PUT',
+            data: formData,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            success: function() {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                $('#editPassifModal').modal('hide');
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: 'Passif IFRS mis à jour avec succès',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                loadPassifs();
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $btn.html(originalText);
+                
+                let errorMessage = 'Une erreur est survenue lors de la mise à jour';
+                
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.detail) {
+                        errorMessage = xhr.responseJSON.detail;
+                    } else if (xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.responseJSON.non_field_errors) {
+                        errorMessage = xhr.responseJSON.non_field_errors.join(', ');
+                    } else if (xhr.responseJSON.semestre) {
+                        errorMessage = xhr.responseJSON.semestre;
+                    }
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMessage
+                });
+                
+                if (xhr.status === 401) {
+                    refreshAccessToken(() => $('#editPassifForm').submit());
+                }
+            }
+        });
+    });
+    
+    // Rafraîchir le token d'accès
+    function refreshAccessToken(callback) {
+        $.ajax({
+            url: '/api/token/refresh/',
+            type: 'POST',
+            data: JSON.stringify({ refresh: REFRESH_TOKEN }),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.access) {
+                    console.log('Token rafraîchi');
+                    if (callback && typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Session expirée',
+                    text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Se reconnecter',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login/';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Helper: Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Initialisation
+    function init() {
+        // Initialiser les tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+        
+        // Initialiser Select2
+        initSelect2();
+        
+        // Charger les données initiales
+        loadPassifs();
+        updateAddFormSummaries();
+    }
+    
+    init();
+});
+</script>
+{% endblock %}

@@ -455,6 +455,21 @@ urlpatterns = [
         name="dash_root_manage_acheteur_bilan_irfs_cobac",
     ),
     path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-ifrs/actifs/",
+        dash_root_manage_acheteur_actif_ifrs_one,
+        name="dash_root_manage_acheteur_actif_ifrs_one",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-ifrs/passifs/",
+        dash_root_manage_acheteur_passif_ifrs_one,
+        name="dash_root_manage_acheteur_passif_ifrs_one",
+    ),
+    path(
+        "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-ifrs/resultats/",
+        dash_root_manage_acheteur_resultat_ifrs_one,
+        name="dash_root_manage_acheteur_resultat_ifrs_one",
+    ),
+    path(
         "root-dashboard/acheteurs/manager-un-acheteur/<int:acheteur_id>/bilan-bancaire/passifs/",
         dash_root_manage_acheteur_liabilitie_bancaire,
         name="dash_root_manage_acheteur_liabilitie_bancaire",
@@ -4321,6 +4336,38 @@ urlpatterns = [
         DeleteActifsIFRSView.as_view(),
         name="ifrs-delete-actifs",
     ),
+    
+    # --- Actif IFRS One ---
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/liste-des-actifs/",
+        ListActifIFRSOneView.as_view(),
+        name="list-actif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/recherche-actif/",
+        SearchActifIFRSOneView.as_view(),
+        name="search-actif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/ajouter-un-actif/",
+        AddActifIFRSOneView.as_view(),
+        name="add-actif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/obtenir-un-actif/<int:actif_id>/",
+        GetActifIFRSOneView.as_view(),
+        name="get-actif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/editer-un-actif/<int:actif_id>/",
+        EditActifIFRSOneView.as_view(),
+        name="edit-actif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/supprimer-des-actifs/",
+        DeleteActifIFRSOneView.as_view(),
+        name="delete-actif-ifrs-acheteur",
+    ),
     # --- Passif IFRS ---
     path(
         "api/bilan-ifrs/passifs/liste/<int:acheteur_id>/",
@@ -4347,6 +4394,36 @@ urlpatterns = [
         DeletePassifsIFRSView.as_view(),
         name="ifrs-delete-passifs",
     ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/liste-des-passifs/",
+        ListPassifIFRSOneView.as_view(),
+        name="list-passif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/recherche-passif/",
+        SearchPassifIFRSOneView.as_view(),
+        name="search-passif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/ajouter-un-passif/",
+        AddPassifIFRSOneView.as_view(),
+        name="add-passif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/obtenir-un-passif/<int:passif_id>/",
+        GetPassifIFRSOneView.as_view(),
+        name="get-passif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/editer-un-passif/<int:passif_id>/",
+        EditPassifIFRSOneView.as_view(),
+        name="edit-passif-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/supprimer-des-passifs/",
+        DeletePassifIFRSOneView.as_view(),
+        name="delete-passif-ifrs-acheteur",
+    ),
     # --- Compte de Résultat IFRS ---
     path(
         "api/bilan-ifrs/resultats/liste/<int:acheteur_id>/",
@@ -4372,6 +4449,36 @@ urlpatterns = [
         "api/bilan-ifrs/resultats/supprimer/",
         DeleteResultatsIFRSView.as_view(),
         name="ifrs-delete-resultats",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/liste-des-resultats/",
+        ListResultatIFRSOneView.as_view(),
+        name="list-resultat-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/recherche-resultat/",
+        SearchResultatIFRSOneView.as_view(),
+        name="search-resultat-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/ajouter-un-resultat/",
+        AddResultatIFRSOneView.as_view(),
+        name="add-resultat-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/obtenir-un-resultat/<int:resultat_id>/",
+        GetResultatIFRSOneView.as_view(),
+        name="get-resultat-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/editer-un-resultat/<int:resultat_id>/",
+        EditResultatIFRSOneView.as_view(),
+        name="edit-resultat-ifrs-acheteur",
+    ),
+    path(
+        "api/acheteur/<int:acheteur_id>/bilan-ifrs/supprimer-des-resultats/",
+        DeleteResultatIFRSOneView.as_view(),
+        name="delete-resultat-ifrs-acheteur",
     ),
     # --- Ratios IFRS (Lecture seule) ---
     path(

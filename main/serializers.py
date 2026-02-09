@@ -13251,3 +13251,341 @@ class AcheteurDetailView(APIView):
     
     def get_score_numeric(self, obj):
         return obj.get_score_numeric()
+    
+    
+    
+    
+    
+    
+    
+
+
+# Serializers pour le modèle ActifIFRS
+class ActifIFRSOneSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
+    
+    # Inclusion des propriétés de calcul en lecture seule
+    total_actif_non_courant = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_actif_courant = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_actif = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    
+    # Champ pour afficher le type de bilan
+    type_bilan_display = serializers.CharField(
+        source='get_type_bilan_display', read_only=True
+    )
+    
+    # Champ pour afficher le semestre
+    semestre_display = serializers.CharField(
+        source='get_semestre_display', read_only=True
+    )
+
+    class Meta:
+        model = ActifIFRS
+        fields = '__all__'
+
+
+class AddActifIFRSOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifIFRS
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            # Actif non courant
+            'goodwill', 'marques_et_droits_auteur', 'brevets_et_licences',
+            'autres_immobilisations_incorporelles', 'terrains', 'batiments',
+            'materiel_et_equipement', 'participations_dans_des_societes',
+            'prets_a_long_terme',
+            # Actif courant
+            'matieres_premieres', 'produits_finis', 'creances_a_court_terme',
+            'avances_et_acomptes', 'creances_diverses', 'disponibilites_bancaires'
+        ]
+    
+    def validate(self, data):
+        # Validation pour s'assurer que le semestre est fourni si type est semestriel
+        if data.get('type_bilan') == 'semestriel' and not data.get('semestre'):
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre est obligatoire pour un bilan semestriel.'
+            })
+        
+        # Validation pour s'assurer que le semestre n'est pas fourni si type est annuel
+        if data.get('type_bilan') == 'annuel' and data.get('semestre'):
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            })
+        
+        return data
+
+
+class EditActifIFRSOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActifIFRS
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            # Actif non courant
+            'goodwill', 'marques_et_droits_auteur', 'brevets_et_licences',
+            'autres_immobilisations_incorporelles', 'terrains', 'batiments',
+            'materiel_et_equipement', 'participations_dans_des_societes',
+            'prets_a_long_terme',
+            # Actif courant
+            'matieres_premieres', 'produits_finis', 'creances_a_court_terme',
+            'avances_et_acomptes', 'creances_diverses', 'disponibilites_bancaires'
+        ]
+    
+    def validate(self, data):
+        # Reprendre la même validation que pour l'ajout
+        type_bilan = data.get('type_bilan', self.instance.type_bilan if self.instance else None)
+        semestre = data.get('semestre', self.instance.semestre if self.instance else None)
+        
+        if type_bilan == 'semestriel' and not semestre:
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre est obligatoire pour un bilan semestriel.'
+            })
+        
+        if type_bilan == 'annuel' and semestre:
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            })
+        
+        return data
+    
+    
+    
+
+
+# Serializers pour le modèle PassifIFRS
+class PassifIFRSOneSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
+    
+    # Inclusion des propriétés de calcul en lecture seule
+    total_capitaux_propres = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_passif_non_courant = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_passif_courant = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_passif = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    
+    # Champ pour afficher le type de bilan
+    type_bilan_display = serializers.CharField(
+        source='get_type_bilan_display', read_only=True
+    )
+    
+    # Champ pour afficher le semestre
+    semestre_display = serializers.CharField(
+        source='get_semestre_display', read_only=True
+    )
+
+    class Meta:
+        model = PassifIFRS
+        fields = '__all__'
+
+
+class AddPassifIFRSOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifIFRS
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            # Capitaux Propres
+            'capital_social', 'primes_emission', 'reserves_legales',
+            'reserves_statutaires', 'reserves_facultatives', 'autres_reserves',
+            'resultat_net_reporte',
+            # Passif non courant
+            'emprunts_bancaires_long_terme', 'obligations',
+            'provisions_pour_retraites_et_pensions', 'autres_provisions',
+            # Passif courant
+            'dettes_fournisseurs_a_court_terme', 'impots_sur_le_revenu',
+            'cotisations_sociales', 'emprunts_bancaires_court_terme',
+            'dettes_diverses', 'dividendes_a_payer'
+        ]
+    
+    def validate(self, data):
+        # Validation pour s'assurer que le semestre est fourni si type est semestriel
+        if data.get('type_bilan') == 'semestriel' and not data.get('semestre'):
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre est obligatoire pour un bilan semestriel.'
+            })
+        
+        # Validation pour s'assurer que le semestre n'est pas fourni si type est annuel
+        if data.get('type_bilan') == 'annuel' and data.get('semestre'):
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            })
+        
+        return data
+
+
+class EditPassifIFRSOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PassifIFRS
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            # Capitaux Propres
+            'capital_social', 'primes_emission', 'reserves_legales',
+            'reserves_statutaires', 'reserves_facultatives', 'autres_reserves',
+            'resultat_net_reporte',
+            # Passif non courant
+            'emprunts_bancaires_long_terme', 'obligations',
+            'provisions_pour_retraites_et_pensions', 'autres_provisions',
+            # Passif courant
+            'dettes_fournisseurs_a_court_terme', 'impots_sur_le_revenu',
+            'cotisations_sociales', 'emprunts_bancaires_court_terme',
+            'dettes_diverses', 'dividendes_a_payer'
+        ]
+    
+    def validate(self, data):
+        # Reprendre la même validation que pour l'ajout
+        type_bilan = data.get('type_bilan', self.instance.type_bilan if self.instance else None)
+        semestre = data.get('semestre', self.instance.semestre if self.instance else None)
+        
+        if type_bilan == 'semestriel' and not semestre:
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre est obligatoire pour un bilan semestriel.'
+            })
+        
+        if type_bilan == 'annuel' and semestre:
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            })
+        
+        return data
+    
+    
+    
+
+# Serializers pour le modèle ResultatIFRS
+class ResultatIFRSOneSerializer(serializers.ModelSerializer):
+    annee = AnneeSerializer(read_only=True)
+    acheteur = AcheteurSerializer(read_only=True)
+    created_by = UserSerializer(read_only=True)
+    updated_by = UserSerializer(read_only=True)
+    
+    # Inclusion des propriétés de calcul en lecture seule
+    chiffre_affaires = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    autres_produits_operationnels = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_produits = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    cout_des_ventes = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    charges_operationnelles = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    amortissements_et_provisions = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    total_charges = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    resultat_operationnel = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    resultat_financier = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    resultat_avant_impot = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    resultat_net = serializers.DecimalField(
+        max_digits=18, decimal_places=2, read_only=True
+    )
+    
+    # Champ pour afficher le type de bilan
+    type_bilan_display = serializers.CharField(
+        source='get_type_bilan_display', read_only=True
+    )
+    
+    # Champ pour afficher le semestre
+    semestre_display = serializers.CharField(
+        source='get_semestre_display', read_only=True
+    )
+
+    class Meta:
+        model = ResultatIFRS
+        fields = '__all__'
+
+
+class AddResultatIFRSOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatIFRS
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            # Produits
+            'ventes_biens', 'ventes_services', 'subventions_exploitation',
+            'revenus_exceptionnels', 'revenus_financiers',
+            # Charges
+            'achats_matieres_premieres', 'autres_couts_directs',
+            'salaires_et_charges_sociales', 'loyer_et_charges_locatives',
+            'autres_charges_exploitation', 'amortissement_des_immobilisations',
+            'provisions_pour_risques_et_charges', 'charges_financieres',
+            'impot_sur_les_societes'
+        ]
+    
+    def validate(self, data):
+        # Validation pour s'assurer que le semestre est fourni si type est semestriel
+        if data.get('type_bilan') == 'semestriel' and not data.get('semestre'):
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre est obligatoire pour un bilan semestriel.'
+            })
+        
+        # Validation pour s'assurer que le semestre n'est pas fourni si type est annuel
+        if data.get('type_bilan') == 'annuel' and data.get('semestre'):
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            })
+        
+        return data
+
+
+class EditResultatIFRSOneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResultatIFRS
+        fields = [
+            'type_bilan', 'annee', 'semestre', 'acheteur',
+            # Produits
+            'ventes_biens', 'ventes_services', 'subventions_exploitation',
+            'revenus_exceptionnels', 'revenus_financiers',
+            # Charges
+            'achats_matieres_premieres', 'autres_couts_directs',
+            'salaires_et_charges_sociales', 'loyer_et_charges_locatives',
+            'autres_charges_exploitation', 'amortissement_des_immobilisations',
+            'provisions_pour_risques_et_charges', 'charges_financieres',
+            'impot_sur_les_societes'
+        ]
+    
+    def validate(self, data):
+        # Reprendre la même validation que pour l'ajout
+        type_bilan = data.get('type_bilan', self.instance.type_bilan if self.instance else None)
+        semestre = data.get('semestre', self.instance.semestre if self.instance else None)
+        
+        if type_bilan == 'semestriel' and not semestre:
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre est obligatoire pour un bilan semestriel.'
+            })
+        
+        if type_bilan == 'annuel' and semestre:
+            raise serializers.ValidationError({
+                'semestre': 'Le semestre ne doit pas être renseigné pour un bilan annuel.'
+            })
+        
+        return data
