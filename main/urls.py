@@ -32,7 +32,7 @@ from main.api.views_scoring import (
     ModeleAvisCommercialScoringListView,
     ModeleBailScoringListView,
     CategoryNaceCodeScoringListView,
-    calculer_score_acrema_bilan,
+    calculer_score_acremac_bilan,
     calculer_score_direct,
     historique_scores_acheteur
 )
@@ -5877,7 +5877,7 @@ urlpatterns = [
     path("api/bail/", ModeleBailScoringListView.as_view(), name="api_bail_list"),
     path("api/categorie-nace/", CategoryNaceCodeScoringListView.as_view(), name="api_categorie_nace_list"),
     
-    path('api/calculer-score/', calculer_score_acrema_bilan, name='calculer_score'),
+    path('api/calculer-score/', calculer_score_acremac_bilan, name='calculer_score'),
     path('api/calculer-score-direct/', calculer_score_direct, name='calculer_score_direct'),
     path('api/historique/<int:acheteur_id>/', historique_scores_acheteur, name='historique_scores'),
     

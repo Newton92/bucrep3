@@ -1431,7 +1431,7 @@ class AcheteurResponsableDetailView(APIView):
             'nom': responsable.nom,
             'prenom': responsable.prenom,
             'poste': responsable.poste,
-            'sexe': responsable.Sexe,
+            'Sexe': responsable.Sexe,
             'nationalite': responsable.nationalite,
             'commentaire': responsable.commentaire
         }
@@ -1450,8 +1450,9 @@ class AcheteurResponsableDetailView(APIView):
             new_values = serializer.validated_data
             
             for field in ['nom', 'prenom', 'poste', 'Sexe', 'nationalite', 'commentaire']:
-                if field in new_values and new_values[field] != old_values[field]:
-                    old_val = str(old_values[field])[:50] + ('...' if len(str(old_values[field])) > 50 else '')
+                old_value = old_values.get(field)
+                if field in new_values and new_values[field] != old_value:
+                    old_val = str(old_value)[:50] + ('...' if len(str(old_value)) > 50 else '')
                     new_val = str(new_values[field])[:50] + ('...' if len(str(new_values[field])) > 50 else '')
                     changes.append(f"{field}: '{old_val}' → '{new_val}'")
             

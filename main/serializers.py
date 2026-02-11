@@ -2378,6 +2378,14 @@ class GetResponsableAcheteurSerializer(serializers.ModelSerializer):
 
 class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
     """Serializer pour l'ajout d'un responsable"""
+    Sexe = serializers.ChoiceField(
+        choices=ResponsableAcheteur.STATUS_CHOICES,
+        required=True,
+        error_messages={
+            'required': 'Le sexe est obligatoire',
+            'invalid_choice': 'Le sexe doit être "Masculin" ou "Feminin"'
+        }
+    )
     nom = serializers.CharField(
         max_length=50,
         required=True,
@@ -2402,13 +2410,13 @@ class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
             'commentaire'
         ]
     
+    def to_internal_value(self, data):
+        if 'sexe' in data and 'Sexe' not in data:
+            data = data.copy()
+            data['Sexe'] = data.get('sexe')
+        return super().to_internal_value(data)
+
     def validate(self, data):
-        # Validation personnalisée
-        if data.get('sexe') not in ['Masculin', 'Feminin']:
-            raise serializers.ValidationError({
-                'sexe': 'Le sexe doit être "Masculin" ou "Feminin"'
-            })
-        
         # Validation de la nationalité
         nationalite = data.get('nationalite', '').strip()
         if len(nationalite) < 2:
@@ -2420,6 +2428,14 @@ class AddResponsableAcheteurSerializer(serializers.ModelSerializer):
 
 class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
     """Serializer pour la modification d'un responsable"""
+    Sexe = serializers.ChoiceField(
+        choices=ResponsableAcheteur.STATUS_CHOICES,
+        required=False,
+        allow_null=True,
+        error_messages={
+            'invalid_choice': 'Le sexe doit être "Masculin" ou "Feminin"'
+        }
+    )
     couleur_commentaire = serializers.PrimaryKeyRelatedField(
         queryset=CouleurCommentaire.objects.all(),
         required=False,
@@ -2439,6 +2455,9 @@ class EditResponsableAcheteurSerializer(serializers.ModelSerializer):
         ]
     
     def to_internal_value(self, data):
+        if 'sexe' in data and 'Sexe' not in data:
+            data = data.copy()
+            data['Sexe'] = data.get('sexe')
         if 'couleur_commentaire' in data and isinstance(data['couleur_commentaire'], str):
             if data['couleur_commentaire']:
                 try:

@@ -1147,7 +1147,7 @@
                                     <i class="fas fa-calendar-alt"></i>Date d'inscription
                                 </label>
                                 <input type="text" 
-                                       class="form-control flatpickr-input" 
+                                       class="form-control js-date-inscription" 
                                        id="dateInscription" 
                                        name="date_inscription"
                                        placeholder="Sélectionner une date"
@@ -1233,7 +1233,7 @@
                                     <i class="fas fa-calendar-alt"></i>Date d'inscription
                                 </label>
                                 <input type="text" 
-                                       class="form-control flatpickr-input" 
+                                       class="form-control js-date-inscription" 
                                        id="editDateInscription" 
                                        name="date_inscription"
                                        placeholder="Sélectionner une date"
@@ -1340,7 +1340,7 @@ $(document).ready(function() {
 
     // Initialiser Flatpickr pour les dates
     function initDatepickers() {
-        const datepickers = document.querySelectorAll('.flatpickr-input');
+        const datepickers = document.querySelectorAll('.js-date-inscription');
         
         datepickers.forEach(function(input) {
             if (input._flatpickr) return;
@@ -1576,9 +1576,13 @@ $(document).ready(function() {
     $('#addRegistreForm').on('submit', function(e) {
         e.preventDefault();
         
+        const addDatePicker = document.getElementById('dateInscription')?._flatpickr;
+        const addSelectedDate = addDatePicker ? addDatePicker.selectedDates[0] : null;
+        const addDateValue = addSelectedDate ? addDatePicker.formatDate(addSelectedDate, 'Y-m-d') : null;
+
         const formData = {
             numero: $('#numeroRegistre').val(),
-            date_inscription: $('#dateInscription').val() || null,
+            date_inscription: addDateValue,
             acheteur: ACHETEUR_ID
         };
         
@@ -1629,7 +1633,7 @@ $(document).ready(function() {
                     background: 'var(--color-background)',
                     color: 'var(--color-text)'
                 }).then(() => {
-                    loadRegistres();
+                    window.location.reload();
                 });
             },
             error: function(xhr) {
@@ -1676,34 +1680,52 @@ $(document).ready(function() {
                 'Authorization': 'Bearer ' + ACCESS_TOKEN
             },
             success: function(response) {
+                console.log(response);
+                const pendingDateInscription = response.date_inscription || null;
+
                 $('#editRegistreId').val(response.id);
                 $('#editNumeroRegistre').val(response.numero);
-                
-                // Définir la date d'inscription
-                if (response.date_inscription) {
-                    const datePicker = document.getElementById('editDateInscription')._flatpickr;
-                    if (datePicker) {
-                        datePicker.setDate(response.date_inscription, false);
-                    }
-                } else {
-                    const datePicker = document.getElementById('editDateInscription')._flatpickr;
-                    if (datePicker) {
-                        datePicker.clear();
-                    }
-                }
                 
                 // Pré-remplir les dates
                 $('#editCreatedAtInfo').text(formatDate(response.created_at));
                 $('#editUpdatedAtInfo').text(formatDateTime(response.updated_at));
                 
-                // Mettre à jour l'aperçu
-                updateEditPreview();
-                $('#editRegistrePreview').show();
-                
                 $('#editRegistreModal').modal('show');
-                
-                // Réinitialiser les datepickers
-                setTimeout(initDatepickers, 300);
+
+                // S'assurer que flatpickr est prêt et injecter la date après l'ouverture du modal
+                $('#editRegistreModal')
+                    .off('shown.bs.modal.editDate')
+                    .on('shown.bs.modal.editDate', function () {
+                        const editInput = document.getElementById('editDateInscription');
+                        if (editInput._flatpickr) {
+                            editInput._flatpickr.destroy();
+                        }
+
+                        const datePicker = flatpickr(editInput, {
+                            locale: "fr",
+                            dateFormat: "Y-m-d",
+                            altInput: true,
+                            altFormat: "j F Y",
+                            allowInput: true,
+                            disableMobile: true,
+                            static: true,
+                            defaultDate: pendingDateInscription || null,
+                            onOpen: function(selectedDates, dateStr, instance) {
+                                instance.element.classList.add('focus');
+                            },
+                            onClose: function(selectedDates, dateStr, instance) {
+                                instance.element.classList.remove('focus');
+                                updateEditPreview();
+                            }
+                        });
+
+                        if (!pendingDateInscription) {
+                            datePicker.clear();
+                        }
+
+                        updateEditPreview();
+                        $('#editRegistrePreview').show();
+                    });
             },
             error: function(xhr) {
                 if (xhr.status === 401) {
@@ -1727,9 +1749,13 @@ $(document).ready(function() {
         
         if (!currentRegistreId) return;
         
+        const editDatePicker = document.getElementById('editDateInscription')?._flatpickr;
+        const editSelectedDate = editDatePicker ? editDatePicker.selectedDates[0] : null;
+        const editDateValue = editSelectedDate ? editDatePicker.formatDate(editSelectedDate, 'Y-m-d') : null;
+
         const formData = {
             numero: $('#editNumeroRegistre').val(),
-            date_inscription: $('#editDateInscription').val() || null
+            date_inscription_input: editDateValue
         };
         
         if (!formData.numero) {
@@ -1777,7 +1803,7 @@ $(document).ready(function() {
                     background: 'var(--color-background)',
                     color: 'var(--color-text)'
                 }).then(() => {
-                    loadRegistres();
+                    window.location.reload();
                 });
             },
             error: function(xhr) {
@@ -1854,7 +1880,7 @@ $(document).ready(function() {
                     background: 'var(--color-background)',
                     color: 'var(--color-text)'
                 }).then(() => {
-                    loadRegistres();
+                    window.location.reload();
                 });
             },
             error: function(xhr) {

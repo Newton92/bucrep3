@@ -825,9 +825,12 @@ body {
                 </p>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-action" onclick="window.resetFormWithAlert()">
+                <button class="btn btn-success btn-action" onclick="window.resetFormWithAlert()">
                     <i class="fas fa-plus-circle me-2"></i>Nouveau Scoring
                 </button>
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-warning btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+                </a>
             </div>
         </div>
     </div>
@@ -1778,9 +1781,7 @@ async function saveScoring() {
         const responseData = await response.json();
         
         if (response.ok) {
-            await window.loadScorings(currentPage);
-            editingScoringId = null;
-            window.resetForm();
+            window.location.reload();
             return {
                 success: true,
                 message: editingScoringId ? 'Scoring mis à jour avec succès' : 'Scoring créé avec succès'
@@ -1909,21 +1910,7 @@ async function deleteScoring(scoringId) {
         });
         
         if (response.ok) {
-            if (editingScoringId === scoringId) {
-                editingScoringId = null;
-                window.resetForm();
-                $('#listing-tab').tab('show');
-            }
-            
-            await window.loadScorings(currentPage);
-            
-            Swal.fire({
-                title: 'Supprimé !',
-                text: 'Le scoring a été supprimé avec succès',
-                icon: 'success',
-                timer: 2000,
-                showConfirmButton: false
-            });
+            window.location.reload();
         } else {
             throw new Error('Erreur lors de la suppression');
         }

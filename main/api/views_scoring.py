@@ -99,7 +99,6 @@ class CategoryNaceCodeScoringListView(ListAPIView):
         print(f"📡 API Comportement Paiement appelée, {self.queryset.count()} éléments")
         return super().get(request, *args, **kwargs)
 
-
 class ScoringSansBilanAcheteurDetailViewTwo(RetrieveUpdateAPIView):
     serializer_class = ScoringSansBilanAcheteurSerializer
     permission_classes = [IsAuthenticated]
@@ -111,9 +110,6 @@ class ScoringSansBilanAcheteurDetailViewTwo(RetrieveUpdateAPIView):
     def get_object(self):
         acheteur_id = self.kwargs.get("acheteur_id")
         return ScoringSansBilanAcheteur.objects.get(acheteur_id=acheteur_id)
-
-
-
 
 class ScoringSansBilanAcheteurDetailView(RetrieveUpdateAPIView):
     serializer_class = ScoringSansBilanAcheteurSerializer
@@ -128,13 +124,12 @@ class ScoringSansBilanAcheteurDetailView(RetrieveUpdateAPIView):
     def get_object(self):
         acheteur_id = self.kwargs.get("acheteur_id")
         print(f"📡 Scoring demandé pour acheteur {acheteur_id}")
+        code_scoring = generate_unique_code()
+        libelle_scoring = "Scoring crédit acheteur basé sur critères non financiers"
         
         try:
             scoring = ScoringSansBilanAcheteur.objects.get(acheteur_id=acheteur_id)
-            
-            code_scoring = generate_unique_code()
-            libelle_scoring = "Scoring crédit acheteur basé sur critères non financiers"
-            
+
             print(code_scoring)
             print(libelle_scoring)
             print(f"✅ Scoring existant trouvé: {scoring.id}, score: {scoring.scoring_value}")
@@ -163,12 +158,6 @@ class ScoringSansBilanAcheteurDetailView(RetrieveUpdateAPIView):
         
     def perform_update(self, serializer):
         serializer.save(updated_by=self.request.user)
-
-
-
-
-
-
 
 class ScoreACREMACBilanService:
     """
@@ -343,7 +332,7 @@ class ScoreACREMACBilanService:
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def calculer_score_acrema_bilan(request):
+def calculer_score_acremac_bilan(request):
     """
     Calcule le score ACREMAC avec données de bilan pour un acheteur
     """

@@ -3057,11 +3057,11 @@ class ResponsableAcheteur(Model):
     
     def is_masculin(self):
         """Vérifie si le responsable est masculin"""
-        return self.sexe == self.STATUS_MASCULIN
+        return self.Sexe == self.STATUS_MASCULIN
     
     def is_feminin(self):
         """Vérifie si le responsable est féminin"""
-        return self.sexe == self.STATUS_FEMININ
+        return self.Sexe == self.STATUS_FEMININ
     
     def clean(self):
         """Validation des données"""
@@ -3116,7 +3116,7 @@ class ResponsableAcheteur(Model):
         field_to_element_code = {
             "nom": "EXECUTIVE_CHANGE",
             "prenom": "EXECUTIVE_CHANGE",
-            "sexe": "EXECUTIVE_CHANGE",
+            "Sexe": "EXECUTIVE_CHANGE",
             "poste": "EXECUTIVE_CHANGE",
             "nationalite": "EXECUTIVE_CHANGE",
             "commentaire": "EXECUTIVE_REPUTATION",  # Alerte spécifique pour les commentaires

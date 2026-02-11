@@ -114,6 +114,38 @@ body {
     margin: 0;
 }
 
+/* Styles pour les informations acheteur */
+.acheteur-info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background: rgba(13, 128, 190, 0.03);
+    transition: var(--transition);
+}
+
+.acheteur-info-item:hover {
+    background: rgba(13, 128, 190, 0.08);
+    transform: translateY(-2px);
+}
+
+.acheteur-info-item i {
+    color: var(--accent-color);
+    font-size: 1.25rem;
+    width: 24px;
+}
+
+.badge-premium {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
 /* Score Display Premium */
 .score-display {
     text-align: center;
@@ -761,25 +793,89 @@ body {
 
 {% block body %}
 <div class="container-fluid">
+
     <!-- Header Premium -->
-    <div class="help-section d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 fade-in-up" style="--order: 0;">
-        <div>
-            <h3 class="page-title mb-2 text-primary">
-                <i class="fas fa-chart-line me-3"></i>Scoring de Défaillance
-            </h3>
-            <p class="page-subtitle">
-                Évaluation du risque financier et opérationnel de l'acheteur
-            </p>
+    <div class="page-header fade-in-up" style="--order: 0;">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div>
+                <h1 class="page-title text-white">
+                    <i class="fas fa-chart-line me-3"></i>Scoring de défaillance
+                </h1>
+                <p class="page-subtitle">
+                    Évaluation du risque financier et opérationnel de l'acheteur
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-action" onclick="window.resetFormWithAlert()">
+                    <i class="fas fa-plus-circle me-2"></i>Nouveau Scoring
+                </button>
+                <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-warning btn-action">
+                    <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
+                </a>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{% url 'dash_root_manage_acheteur' id_acheteur %}" class="btn btn-outline-primary btn-action">
-                <i class="fas fa-arrow-left me-1"></i>Retour à l'acheteur
-            </a>
+    </div>
+
+    <!-- Encart Acheteur Premium -->
+    <div class="card enhanced-card mb-4 fade-in-up" style="--order: 1;">
+        <div class="card-header card-header-gradient">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-1 fw-bold text-white">{{ acheteur.nom }}</h5>
+                    <p class="mb-0 opacity-90">{{ acheteur.sigle|default:"" }}</p>
+                </div>
+                <div class="text-md-end">
+                    <span class="badge-premium">
+                        <i class="fas fa-hashtag me-2"></i>{{ acheteur.code|default:"N/A" }}
+                    </span>
+                    <p class="mb-0 mt-2 small opacity-75">Code Acheteur</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-briefcase"></i>
+                        <div>
+                            <small class="text-muted d-block">Activité principale</small>
+                            <span class="fw-bold">{{ acheteur.activite_principale|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">Date création</small>
+                            <span class="fw-bold">{{ acheteur.date_creation|date:"d/m/Y"|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <small class="text-muted d-block">Statut</small>
+                            <span class="fw-bold text-warning">{{ acheteur.statut_entreprise.libelle|default:"Inconnu" }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="acheteur-info-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <small class="text-muted d-block">Localisation</small>
+                            <span class="fw-bold">{{ acheteur.ville.nom|default:"Non spécifié" }}, {{ acheteur.pays.nom|default:"" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Section d'aide Premium -->
-    <div class="help-section fade-in-up" style="--order: 1;">
+    <div class="help-section fade-in-up" style="--order: 2;">
         <h6><i class="fas fa-info-circle"></i>Comment ça marche ?</h6>
         <ul>
             <li>Ce module calcule un score de risque basé sur plusieurs critères financiers et opérationnels</li>
@@ -1046,7 +1142,8 @@ body {
 <script>
 $(document).ready(function() {
     const acheteurId = '{{ id_acheteur }}';
-    const accessToken = "{{ access }}";
+    let accessToken = "{{ access }}";
+    const refreshToken = localStorage.getItem('refresh_token');
     let currentScore = 0;
     
     console.log("🎯 Initialisation du module de scoring premium...");
@@ -1593,6 +1690,11 @@ $(document).ready(function() {
 
     // Fonction pour rafraîchir le token
     function refreshAccessToken() {
+        if (!refreshToken) {
+            window.location.reload();
+            return;
+        }
+
         Swal.fire({
             title: 'Session expirée',
             text: 'Votre session a expiré. Voulez-vous rafraîchir votre token?',
@@ -1610,10 +1712,9 @@ $(document).ready(function() {
                     success: function(response) {
                         accessToken = response.access;
                         localStorage.setItem('access_token', accessToken);
-                        localStorage.setItem('refresh_token', refreshToken);
                         
                         // Recharger les données
-                        loadUsers(currentPage, currentSearch);
+                        loadScoring();
                         
                         return true;
                     },

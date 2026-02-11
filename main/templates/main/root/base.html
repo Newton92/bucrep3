@@ -2,7 +2,7 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="fr" data-theme="light" data-lang="fr">
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}" data-theme="light" data-lang="{{ LANGUAGE_CODE|default:'fr' }}">
 
 <head>
     <meta charset="utf-8">
@@ -550,6 +550,57 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
+        /* Translation loading indicator */
+        .translation-indicator {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            background: rgba(13, 128, 190, 0.08);
+            border: 1px solid rgba(13, 128, 190, 0.2);
+            padding: 8px 12px;
+            border-radius: 999px;
+            box-shadow: var(--box-shadow);
+        }
+
+        .translation-indicator .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation: pulse 1.2s infinite;
+        }
+
+        .translation-indicator.is-error {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.08);
+            border-color: rgba(220, 53, 69, 0.3);
+        }
+
+        .translation-indicator.is-error .dot {
+            background: #dc3545;
+            animation: none;
+        }
+
+        .language-selector.is-loading {
+            visibility: hidden;
+        }
+
+        .google-translate-hidden {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            height: 0;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
     
     {% block styles %}{% endblock %}
@@ -561,6 +612,10 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
+    </div>
+    <div class="translation-indicator" id="translationIndicator">
+        <span class="dot"></span>
+        <span id="translationIndicatorText">Traduction en cours...</span>
     </div>
 
     <!-- Header START -->
@@ -589,7 +644,7 @@
                         
                         <!-- Language Selector -->
                         <li class="nav-item ms-3">
-                            <div class="language-selector">
+                            <div class="language-selector is-loading">
                                 <img src="https://flagcdn.com/w20/fr.png" 
                                      alt="Français" 
                                      id="flag-fr" 
@@ -835,7 +890,7 @@
     <!-- Footer END -->
 
     <!-- Google Translate Element (Hidden) -->
-    <div id="google_translate_element" class="d-none"></div>
+    <div id="google_translate_element" class="google-translate-hidden"></div>
     
     <!-- Language Form -->
     <form id="language-form" action="{% url 'set_language' %}" method="post" class="d-none">
@@ -858,9 +913,6 @@
     <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.11.0/dist/sweetalert2.all.min.js"></script>
     
-    <!-- Google Translate -->
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
     <!-- Application Script -->
     <script>
         // Initialize AOS
@@ -971,8 +1023,13 @@
                 'fr': document.getElementById('flag-fr'),
                 'en': document.getElementById('flag-en')
             };
+            const selectorEl = document.querySelector('.language-selector');
+            const indicatorEl = document.getElementById('translationIndicator');
+            const indicatorTextEl = document.getElementById('translationIndicatorText');
             
-            const currentLang = localStorage.getItem('site_lang') || 'fr';
+            const urlLang = new URLSearchParams(window.location.search).get('language');
+            const currentLang = urlLang || localStorage.getItem('site_lang') || 'fr';
+            window.__gtPendingLang = currentLang;
             
             // Update active flag
             function updateActiveFlag(lang) {
@@ -983,22 +1040,83 @@
                 });
             }
             
-            // Set language
+            function setIndicator(show, state = 'loading') {
+                if (!indicatorEl) return;
+                indicatorEl.classList.remove('is-error');
+                if (state === 'error') {
+                    indicatorEl.classList.add('is-error');
+                    if (indicatorTextEl) indicatorTextEl.textContent = 'Traduction indisponible';
+                } else {
+                    if (indicatorTextEl) indicatorTextEl.textContent = 'Traduction en cours...';
+                }
+                indicatorEl.style.display = show ? 'inline-flex' : 'none';
+            }
+
+            function ensureTranslateReady(timeoutMs = 12000) {
+                return new Promise((resolve) => {
+                    const start = Date.now();
+
+                    const tryResolve = () => {
+                        const combo = document.querySelector('#google_translate_element select.goog-te-combo');
+                        if (combo) {
+                            resolve(combo);
+                            return true;
+                        }
+                        return false;
+                    };
+
+                    if (tryResolve()) return;
+
+                    const observer = new MutationObserver(() => {
+                        if (tryResolve()) {
+                            observer.disconnect();
+                        }
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+
+                    const interval = setInterval(() => {
+                        if (tryResolve() || Date.now() - start > timeoutMs) {
+                            clearInterval(interval);
+                            observer.disconnect();
+                            resolve(null);
+                        }
+                    }, 200);
+                });
+            }
+
+            function tryApplyTranslate(lang) {
+                if (!lang) return;
+                const applied = applyGoogleTranslate(lang);
+                if (applied) {
+                    window.__gtPendingLang = null;
+                    setIndicator(false);
+                }
+            }
+
+            // Set language (Google Translate)
             function setLanguage(lang) {
-                const form = document.getElementById('language-form');
                 const input = document.getElementById('language-input');
                 
                 input.value = lang;
                 localStorage.setItem('site_lang', lang);
                 updateActiveFlag(lang);
+                setIndicator(true);
+                window.__gtPendingLang = lang;
                 
                 // Update URL
                 const url = new URL(window.location);
                 url.searchParams.set('language', lang);
                 window.history.replaceState({}, '', url);
                 
-                // Submit form
-                form.submit();
+                tryApplyTranslate(lang);
+                ensureTranslateReady(15000).then((combo) => {
+                    if (combo) {
+                        tryApplyTranslate(lang);
+                    } else {
+                        setIndicator(true, 'error');
+                        setTimeout(() => setIndicator(false), 3000);
+                    }
+                });
             }
             
             // Add click events to flags
@@ -1012,6 +1130,33 @@
             
             // Initialize active flag
             updateActiveFlag(currentLang);
+
+            // Wait for Google Translate widget before showing flags
+            const start = Date.now();
+            setIndicator(true);
+            const readyTimer = setInterval(() => {
+                const combo = document.querySelector('#google_translate_element select.goog-te-combo');
+                if (combo) {
+                    clearInterval(readyTimer);
+                    if (selectorEl) selectorEl.classList.remove('is-loading');
+                    tryApplyTranslate(window.__gtPendingLang);
+                } else if (Date.now() - start > 8000) {
+                    clearInterval(readyTimer);
+                    if (selectorEl) selectorEl.classList.remove('is-loading');
+                    if (window.__gtPendingLang) {
+                        setIndicator(true, 'error');
+                        setTimeout(() => setIndicator(false), 3000);
+                    } else {
+                        setIndicator(false);
+                    }
+                }
+            }, 200);
+
+            // React to Google Translate init callback
+            document.addEventListener('gt-ready', () => {
+                if (selectorEl) selectorEl.classList.remove('is-loading');
+                tryApplyTranslate(window.__gtPendingLang);
+            }, { once: true });
             
             // Add click events to dropdown language items
             document.querySelectorAll('.dropdown-item[data-lang]').forEach(item => {
@@ -1151,6 +1296,37 @@
                 autoDisplay: false,
                 layout: google.translate.TranslateElement.InlineLayout.SIMPLE
             }, 'google_translate_element');
+            document.dispatchEvent(new Event('gt-ready'));
+        }
+
+        // Apply Google Translate language
+        function applyGoogleTranslate(lang) {
+            const combo = document.querySelector('#google_translate_element select.goog-te-combo');
+            if (combo) {
+                combo.value = lang;
+                combo.dispatchEvent(new Event('change'));
+                document.documentElement.setAttribute('lang', lang);
+                document.documentElement.setAttribute('data-lang', lang);
+                sessionStorage.removeItem('gt_reload');
+                const indicatorEl = document.getElementById('translationIndicator');
+                if (indicatorEl) {
+                    setTimeout(() => {
+                        indicatorEl.style.display = 'none';
+                    }, 600);
+                }
+                return true;
+            }
+            
+            // If combo not ready, set googtrans cookie and wait for widget (no reload)
+            if (lang === 'en' || lang === 'fr') {
+                const cookieValue = `/fr/${lang}`;
+                document.cookie = `googtrans=${cookieValue};path=/`;
+                document.cookie = `googtrans=${cookieValue};path=/;domain=${location.hostname}`;
+                document.documentElement.setAttribute('lang', lang);
+                document.documentElement.setAttribute('data-lang', lang);
+                return true;
+            }
+            return false;
         }
         
         // Hide Google Translate toolbar
@@ -1178,6 +1354,9 @@
             console.error('Unhandled promise rejection:', e.reason);
         });
     </script>
+
+    <!-- Google Translate (load after init function is defined) -->
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     
     {% block scripts %}{% endblock %}
 </body>
