@@ -45,6 +45,8 @@ import random
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from main.models import *
+from main.models import ActifC, PassifC, ResultatC
 
 
 # Importez vos classes de Ratios pour chaque type de bilan
@@ -1080,6 +1082,14 @@ def get_simple_actifs_data(acheteur, years):
         instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
         data_by_year[year] = instance
 
+    print(
+        "[DEBUG][UTILS][get_simple_actifs_data] "
+        f"acheteur_id={getattr(acheteur, 'id', None)} years={years} "
+        f"presence_by_year={{"
+        + ", ".join([f"{y}:{'OK' if data_by_year.get(y) else 'None'}" for y in years])
+        + "}}"
+    )
+
     # Définir les champs que vous voulez afficher, dans l'ordre
     fields_to_display = [
         {'label': "Capital sousc. non app", 'key': 'capital_souscrit_non_app'},
@@ -1120,7 +1130,15 @@ def get_simple_actifs_data(acheteur, years):
             'n_moins_1_vs_n_moins_2': var_n_moins_1_vs_n_moins_2,
         }
         table_data.append(row)
-        
+    
+    print(
+        "[DEBUG][UTILS][get_simple_actifs_data] "
+        f"rows={len(table_data)} "
+        f"non_null_n={sum(1 for r in table_data if r.get('values', {}).get('n') is not None)} "
+        f"non_null_n1={sum(1 for r in table_data if r.get('values', {}).get('n_moins_1') is not None)} "
+        f"non_null_n2={sum(1 for r in table_data if r.get('values', {}).get('n_moins_2') is not None)}"
+    )
+
     return table_data
 
 
@@ -1135,6 +1153,17 @@ def get_structured_actif_data(acheteur, years):
     for year in years:
         instance = actif_model.objects.filter(acheteur=acheteur, annee__annee=year).first()
         data_by_year[year] = instance
+        
+    test_actif_2025 = ActifC.objects.filter(acheteur__id=1, annee__annee="2025")
+    print("[DEBUG][CLASSIQUE][2026] "f"actifs={test_actif_2025}")
+
+    print(
+        "[DEBUG][UTILS][get_structured_actif_data] "
+        f"acheteur_id={getattr(acheteur, 'id', None)} years={years} "
+        f"presence_by_year={{"
+        + ", ".join([f"{y}:{'OK' if data_by_year.get(y) else 'None'}" for y in years])
+        + "}}"
+    )
 
     # Définir la structure hiérarchique pour l'affichage des actifs
     # Chaque 'key' correspond à un champ ou une propriété calculée du modèle ActifC.
@@ -1225,7 +1254,11 @@ def get_structured_actif_data(acheteur, years):
                 'n_moins_1_vs_n_moins_2': calculate_variation(val_n_moins_1, val_n_moins_2),
             }
             structured_data[section].append(row)
-
+    print(
+        "[DEBUG][UTILS][get_structured_actif_data] "
+        f"sections={len(structured_data.keys())} "
+        f"rows_total={sum(len(v) for v in structured_data.values())}"
+    )
     return structured_data
 
 
@@ -1975,8 +2008,20 @@ def get_charts_structure_financiere_data(acheteur, years):
                 has_data = True
             else:
                 ratios_by_year[year] = None
+                print(
+                    "[DEBUG][UTILS][get_charts_structure_financiere_data] "
+                    f"year={year} missing={{"
+                    f"actif:{'OK' if actif_instance else 'None'}, "
+                    f"passif:{'OK' if passif_instance else 'None'}, "
+                    f"resultat:{'OK' if resultat_instance else 'None'}"
+                    f"}}"
+                )
         
         if not has_data:
+            print(
+                "[DEBUG][UTILS][get_charts_structure_financiere_data] "
+                f"acheteur_id={getattr(acheteur, 'id', None)} years={years} -> has_data=False"
+            )
             return None
         
         # Préparer les données
@@ -1996,6 +2041,11 @@ def get_charts_structure_financiere_data(acheteur, years):
             aufin_data.append(float(ratio.autonomie_fin) if ratio and ratio.autonomie_fin else 0.0)
             lr_data.append(float(ratio.liquidite_reduite) if ratio and ratio.liquidite_reduite else 0.0)
             li_data.append(float(ratio.liquidite_immediat) if ratio and ratio.liquidite_immediat else 0.0)
+
+        print(
+            "[DEBUG][UTILS][get_charts_structure_financiere_data] "
+            f"series={{fdr:{fdr_data}, fdrn:{fdrn_data}, aufin:{aufin_data}, lr:{lr_data}, li:{li_data}}}"
+        )
         
         # Créer le graphique
         plt.figure(figsize=(12, 8))
@@ -2056,8 +2106,20 @@ def get_charts_rentabilite_financiere_data(acheteur, years):
                 has_data = True
             else:
                 ratios_by_year[year] = None
+                print(
+                    "[DEBUG][UTILS][get_charts_rentabilite_financiere_data] "
+                    f"year={year} missing={{"
+                    f"actif:{'OK' if actif_instance else 'None'}, "
+                    f"passif:{'OK' if passif_instance else 'None'}, "
+                    f"resultat:{'OK' if resultat_instance else 'None'}"
+                    f"}}"
+                )
         
         if not has_data:
+            print(
+                "[DEBUG][UTILS][get_charts_rentabilite_financiere_data] "
+                f"acheteur_id={getattr(acheteur, 'id', None)} years={years} -> has_data=False"
+            )
             return None
         
         # Préparer les données
@@ -2079,6 +2141,11 @@ def get_charts_rentabilite_financiere_data(acheteur, years):
             ref_data.append(float(ratio.rentabilite_fin) if ratio and ratio.rentabilite_fin else 0.0)
             rop_data.append(float(ratio.rentabilite_de_loutil_de_production) if ratio and ratio.rentabilite_de_loutil_de_production else 0.0)
             cff_data.append(float(ratio.couverture_des_frais_financiers) if ratio and ratio.couverture_des_frais_financiers else 0.0)
+
+        print(
+            "[DEBUG][UTILS][get_charts_rentabilite_financiere_data] "
+            f"series={{caf:{caf_data}, caht:{caht_data}, re:{re_data}, ref:{ref_data}, rop:{rop_data}, cff:{cff_data}}}"
+        )
         
         # Créer le graphique
         plt.figure(figsize=(12, 8))
@@ -2140,8 +2207,20 @@ def get_charts_delais_data(acheteur, years):
                 has_data = True
             else:
                 ratios_by_year[year] = None
+                print(
+                    "[DEBUG][UTILS][get_charts_delais_data] "
+                    f"year={year} missing={{"
+                    f"actif:{'OK' if actif_instance else 'None'}, "
+                    f"passif:{'OK' if passif_instance else 'None'}, "
+                    f"resultat:{'OK' if resultat_instance else 'None'}"
+                    f"}}"
+                )
         
         if not has_data:
+            print(
+                "[DEBUG][UTILS][get_charts_delais_data] "
+                f"acheteur_id={getattr(acheteur, 'id', None)} years={years} -> has_data=False"
+            )
             return None
         
         # Préparer les données
@@ -2163,6 +2242,11 @@ def get_charts_delais_data(acheteur, years):
             rsts_data.append(float(ratio.rotation_des_stock_de_services) if ratio and ratio.rotation_des_stock_de_services else 0.0)
             cc_data.append(float(ratio.credit_clients) if ratio and ratio.credit_clients else 0.0)
             cf_data.append(float(ratio.credits_fournisseurs) if ratio and ratio.credits_fournisseurs else 0.0)
+
+        print(
+            "[DEBUG][UTILS][get_charts_delais_data] "
+            f"series={{rsmp:{rsmp_data}, rspf:{rspf_data}, rstmt:{rstmt_data}, rsts:{rsts_data}, cc:{cc_data}, cf:{cf_data}}}"
+        )
         
         # Créer le graphique
         plt.figure(figsize=(12, 8))

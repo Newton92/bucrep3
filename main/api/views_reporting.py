@@ -85,6 +85,9 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from decimal import Decimal
 from datetime import datetime, date
+from django.db.models.query import QuerySet
+from django.db.models.manager import BaseManager
+from django.utils.functional import Promise
 
 # Dans views_reporting.py - ajoutez ces imports
 from main.api.views_report import (
@@ -104,6 +107,43 @@ from main.api.views_report import get_logo_data, get_logo_path
 
 
 # ... vos autres vues ...
+
+
+def _to_json_safe(value):
+    """Convertit récursivement les données en types JSON sérialisables."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    # gettext_lazy renvoie un objet "lazy" (Promise) qui peut être itérable
+    # et sinon se retrouver découpé caractère par caractère.
+    if isinstance(value, Promise):
+        return str(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, QuerySet):
+        return [_to_json_safe(v) for v in value]
+    if isinstance(value, BaseManager):
+        return [_to_json_safe(v) for v in value.all()]
+    # Couvre aussi les related managers dynamiques (ManyRelatedManager).
+    if hasattr(value, "all") and callable(getattr(value, "all", None)):
+        try:
+            return [_to_json_safe(v) for v in value.all()]
+        except Exception:
+            pass
+    if isinstance(value, dict):
+        return {k: _to_json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_to_json_safe(v) for v in value]
+    # Fallback pour autres objets itérables non pris en charge ci-dessus.
+    if hasattr(value, "__iter__"):
+        try:
+            return [_to_json_safe(v) for v in value]
+        except Exception:
+            pass
+    if hasattr(value, "_meta"):  # Objet Django (Model)
+        return str(value)
+    return str(value)
 
 
 @api_view(['GET'])
@@ -568,7 +608,7 @@ def generer_rapport_solvabilite(request):
                 "dossier_faillite": antecedant.dossier_faillite if antecedant.dossier_faillite else "Non spécifié",
                 "jugement_cour": antecedant.jugement_cour if antecedant.jugement_cour else "Non spécifié",
                 "antecedant_redressement": antecedant.antecedant_redressement if antecedant.antecedant_redressement else "Non spécifié",
-                "autre": antecedant.autre if antecedant.autre else "Non spécifié",
+                "autre": antecedant.Autre if antecedant.Autre else "Non spécifié",
                 "commentaire": antecedant.commentaire if antecedant.commentaire else "Non spécifié",
             })
           
@@ -588,8 +628,8 @@ def generer_rapport_solvabilite(request):
             list_responsables_data.append({
                 "nom": responsable.nom if responsable.nom else "Non spécifié",
                 "prenom": responsable.prenom if responsable.prenom else "Non spécifié",
-                "sexe": responsable.sexe if responsable.sexe else "Non spécifié",
-                "poste": responsable.poste_ref.libelle if responsable.poste_ref else responsable.poste,
+                "sexe": responsable.Sexe if responsable.Sexe else "Non spécifié",
+                "poste": responsable.poste if responsable.poste else "Non spécifié",
                 "nationalite": responsable.nationalite if responsable.nationalite else "Non spécifié",
                 "commentaire": responsable.commentaire if responsable.commentaire else "Non spécifié",
             })
@@ -600,7 +640,7 @@ def generer_rapport_solvabilite(request):
         for membre in conseil_administration_membres:
             list_ca_membres_data.append({
                 "nom": membre.nom if membre.nom else "Non spécifié",
-                "fonction_dans_le_conseil": membre.fonction_dans_le_conseil_ref.libelle if membre.fonction_dans_le_conseil_ref else membre.fonction_dans_le_conseil,
+                "fonction_dans_le_conseil": membre.fonction_dans_le_conseil if membre.fonction_dans_le_conseil else "Non spécifié",
                 "numero_adresse": membre.numero_adresse if membre.numero_adresse else "Non spécifié",
                 "rue_adresse": membre.rue_adresse if membre.rue_adresse else "Non spécifié",
                 "code_postale_adresse": membre.code_postale_adresse if membre.code_postale_adresse else "Non spécifié",
@@ -636,7 +676,7 @@ def generer_rapport_solvabilite(request):
         for affiliation in affiliations:
             list_affiliations_data.append({
                 "nom": affiliation.nom if affiliation.nom else "Non spécifié",
-                "type_affiliation": affiliation.type_affiliation_ref.libelle if affiliation.type_affiliation_ref else affiliation.type_affiliation,
+                "type_affiliation": affiliation.type_affiliation if affiliation.type_affiliation else "Non spécifié",
                 "numero_adresse": affiliation.numero_adresse if affiliation.numero_adresse else "Non spécifié",
                 "rue_adresse": affiliation.rue_adresse if affiliation.rue_adresse else "Non spécifié",
                 "code_postale_adresse": affiliation.code_postale_adresse if affiliation.code_postale_adresse else "Non spécifié",
@@ -760,6 +800,14 @@ def generer_rapport_solvabilite(request):
         
         # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
         # Scoring avec bilan classique
+        # Initialisation des scores par année pour le bilan classique
+        score_value_annee_N = None
+        score_value_annee_N1 = None
+        score_value_annee_N2 = None
+        interpretation_annee_N = "N/A"
+        interpretation_annee_N1 = "N/A"
+        interpretation_annee_N2 = "N/A"
+
         # Récupérer le scoring avec bilan en fonction du type de bilan
         # Calculer le scoring pour chaque année
         for i, year in enumerate(years_to_retrieve):
@@ -917,13 +965,14 @@ def generer_rapport_solvabilite(request):
         
         # Recuperation des proprietes et actifs de l'acheteur
         # Utilisez .filter() pour récupérer toutes les instances
-        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur)
+        properties_and_assets = ProprieteEtActif.objects.filter(acheteur=acheteur).prefetch_related("locaux")
         list_properties_and_assets_data = []
 
         # 2. Bouclez sur les objets pour construire une liste de dictionnaires
         for prop_asset in properties_and_assets:
+            locaux_labels = [str(local) for local in prop_asset.locaux.all()]
             list_properties_and_assets_data.append({
-                "locaux": prop_asset.locaux_ref.libelle if prop_asset.locaux_ref else prop_asset.locaux,
+                "locaux": locaux_labels if locaux_labels else [],
                 "branche": prop_asset.branche if prop_asset.branche else "Non spécifié",
             })  
         
@@ -940,6 +989,24 @@ def generer_rapport_solvabilite(request):
             condition_vente = ConditionDeVente.objects.get(acheteur=acheteur)
         except ConditionDeVente.DoesNotExist:
             pass
+
+        # Valeurs robustes pour couvrir les modèles avec/sans champs *_ref
+        condition_vente_recouvrement = "Non spécifié"
+        condition_vente_comportement = "Non spécifié"
+        if condition_vente:
+            recouvrement_ref = getattr(condition_vente, "recouvrement_de_dette_jugement_ref", None)
+            comportement_ref = getattr(condition_vente, "comportement_de_paiement_ref", None)
+
+            condition_vente_recouvrement = (
+                getattr(recouvrement_ref, "libelle", None)
+                or getattr(condition_vente, "recouvrement_de_dette_jugement", None)
+                or "Non spécifié"
+            )
+            condition_vente_comportement = (
+                getattr(comportement_ref, "libelle", None)
+                or getattr(condition_vente, "comportement_de_paiement", None)
+                or "Non spécifié"
+            )
             
         
         # Add new section to retrieve general conclusion
@@ -948,6 +1015,29 @@ def generer_rapport_solvabilite(request):
             conclusion_generale = SommaireEtAvis.objects.get(acheteur=acheteur)
         except SommaireEtAvis.DoesNotExist:
             pass
+
+        # DEBUG: Diagnostic détaillé des données classiques
+        classic_actif_table = get_simple_actifs_data(acheteur, years_to_retrieve)
+        classic_actif_data = get_structured_actif_data(acheteur, years_to_retrieve)
+        classic_passif_data = get_structured_passif_data(acheteur, years_to_retrieve)
+        classic_resultat_data = get_structured_resultat_data(acheteur, years_to_retrieve)
+        classic_ratios_data = get_structured_ratios_data(acheteur, years_to_retrieve)
+        classic_chart_structure = get_charts_structure_financiere_data(acheteur, years_to_retrieve)
+        classic_chart_rentabilite = get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve)
+        classic_chart_delais = get_charts_delais_data(acheteur, years_to_retrieve)
+
+        print(
+            "[DEBUG][REPORTING][CLASSIQUE] "
+            f"acheteur_id={getattr(acheteur, 'id', None)} years={years_to_retrieve} "
+            f"actif_table_rows={len(classic_actif_table) if isinstance(classic_actif_table, list) else 'N/A'} "
+            f"actif_sections={len(classic_actif_data.keys()) if isinstance(classic_actif_data, dict) else 'N/A'} "
+            f"passif_sections={len(classic_passif_data.keys()) if isinstance(classic_passif_data, dict) else 'N/A'} "
+            f"resultat_sections={len(classic_resultat_data.keys()) if isinstance(classic_resultat_data, dict) else 'N/A'} "
+            f"ratios_sections={len(classic_ratios_data.keys()) if isinstance(classic_ratios_data, dict) else 'N/A'} "
+            f"chart_structure={'OK' if classic_chart_structure else 'None'} "
+            f"chart_rentabilite={'OK' if classic_chart_rentabilite else 'None'} "
+            f"chart_delais={'OK' if classic_chart_delais else 'None'}"
+        )
            
         
         
@@ -995,7 +1085,10 @@ def generer_rapport_solvabilite(request):
                     "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
                     "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
+                    "rue_adresse": acheteur.rue_adresse if hasattr(acheteur, 'rue_adresse') else "Non spécifié",
+                    "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
                     "code_postal": acheteur.code_postal if hasattr(acheteur, 'code_postal') else "Non spécifié",
+                    "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
                 }
             },
             "additional_information": {
@@ -1010,6 +1103,8 @@ def generer_rapport_solvabilite(request):
                 "categorie_entreprise": acheteur.categorie_entreprise.libelle if hasattr(acheteur, 'categorie_entreprise') else "Non spécifié",
                 "statut_entreprise": acheteur.statut_entreprise.libelle if hasattr(acheteur, 'statut_entreprise') else "Non spécifié",
                 "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
+                "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
+                "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
             },
             "executive_summary": {
                 "title_4": "RESUME EXECUTIF",
@@ -1057,16 +1152,16 @@ def generer_rapport_solvabilite(request):
                 "date_creation": donnees_enregistrement.date_creation.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_creation else "Non spécifié",
                 "date_registre": donnees_enregistrement.date_registre.strftime("%d/%m/%Y") if donnees_enregistrement and donnees_enregistrement.date_registre else "Non spécifié",
                 "forme_juridique": (
-                    donnees_enregistrement.forme_juridique_ref.libelle
-                    if donnees_enregistrement and donnees_enregistrement.forme_juridique_ref
+                    donnees_enregistrement.forme_juridique
+                    if donnees_enregistrement and donnees_enregistrement.forme_juridique
                     else donnees_enregistrement.forme_juridique if donnees_enregistrement else "Non spécifié"
                 ),
                 "acheteur": donnees_enregistrement.acheteur.nom if donnees_enregistrement.acheteur.nom else "Non spécifié",
                 "numero_registre_commerce": donnees_enregistrement.numero_registre_commerce if donnees_enregistrement and donnees_enregistrement.numero_registre_commerce else "Non spécifié",
                 "numero_fiscale": donnees_enregistrement.numero_fiscale if donnees_enregistrement and donnees_enregistrement.numero_fiscale else "Non spécifié",
                 "statut_registre": (
-                    donnees_enregistrement.statut_registre_ref.libelle
-                    if donnees_enregistrement and donnees_enregistrement.statut_registre_ref
+                    donnees_enregistrement.statut_registre
+                    if donnees_enregistrement and donnees_enregistrement.statut_registre
                     else donnees_enregistrement.statut_registre if donnees_enregistrement else "Non spécifié"
                 ),
                 "commentaire": donnees_enregistrement.commentaire if donnees_enregistrement and donnees_enregistrement.commentaire else "Aucun commentaire disponible",
@@ -1118,7 +1213,12 @@ def generer_rapport_solvabilite(request):
                     "impact_covid_19": analyse_sectorielle.impact_covid_19 if analyse_sectorielle and analyse_sectorielle.impact_covid_19 else "Non spécifié",
                 },
                 "tendance": {
-                    "avis_commercial": tendance.avis_commercial_ref.libelle if tendance and tendance.avis_commercial_ref else tendance.avis_commercial if tendance else "Non spécifié",
+                    "avis_commercial": (
+                        getattr(tendance.avis_commercial, "libelle", str(tendance.avis_commercial))
+                        if tendance and tendance.avis_commercial
+                        else "Non spécifié"
+                    ),
+                    "plus_informations": tendance.plus_informations if tendance and tendance.plus_informations else "Non spécifié",
                     "presse_media": tendance.presse_media if tendance and tendance.presse_media else "Non spécifié",
                     "principaux_concurrent": tendance.principaux_concurrent if tendance and tendance.principaux_concurrent else "Non spécifié",
                     "commentaire": tendance.commentaire if tendance and tendance.commentaire else "Aucun commentaire disponible",
@@ -1153,7 +1253,7 @@ def generer_rapport_solvabilite(request):
                 "date_fin_n_moins_deux": compte_financier.date_fin_n_moins_deux.strftime("%d/%m/%Y") if compte_financier and compte_financier.date_fin_n_moins_deux else "Non spécifié",
                 "type_compte": compte_financier.type_compte if compte_financier and compte_financier.type_compte else "Non spécifié",
                 "devise": compte_financier.devise if compte_financier and compte_financier.devise else "Non spécifié",
-                "type_bilan": compte_financier.type_bilan_ref.libelle if compte_financier and compte_financier.type_bilan_ref else compte_financier.type_bilan if compte_financier else "Non spécifié",
+                "type_bilan": compte_financier.type_bilan if compte_financier and compte_financier.type_bilan else compte_financier.type_bilan if compte_financier else "Non spécifié",
                 "commentaire": compte_financier.commentaire if compte_financier and compte_financier.commentaire else "Aucun commentaire disponible",
             },
             
@@ -1165,15 +1265,15 @@ def generer_rapport_solvabilite(request):
                     "annee_N": data['annee_n'],
                     "annee_N1": data['annee_n1'],
                     "annee_N2": data['annee_n2'],
-                    "actif_table": get_simple_actifs_data(acheteur, years_to_retrieve),
-                    "actif_data":  get_structured_actif_data(acheteur, years_to_retrieve),
-                    "passif_data": get_structured_passif_data(acheteur, years_to_retrieve),
-                    "resultat_data": get_structured_resultat_data(acheteur, years_to_retrieve),
-                    "ratios_data": get_structured_ratios_data(acheteur, years_to_retrieve),
+                    "actif_table": classic_actif_table,
+                    "actif_data": classic_actif_data,
+                    "passif_data": classic_passif_data,
+                    "resultat_data": classic_resultat_data,
+                    "ratios_data": classic_ratios_data,
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve),
-                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere": classic_chart_structure,
+                        "charts_rentabilite_financiere": classic_chart_rentabilite,
+                        "charts_delais": classic_chart_delais,
                     },
                 },
                 "etats_financiers_anglais": {
@@ -1249,17 +1349,17 @@ def generer_rapport_solvabilite(request):
                 
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
                 "score_value_annee_N": score_value_annee_N,
-                "score_value_annee_N_arrondi": round(float(score_value_annee_N)),
+                "score_value_annee_N_arrondi": round(float(score_value_annee_N)) if score_value_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_annee_N,
                 
                 "score_image_annee_N1": f"scoring/{round(float(score_value_annee_N1)) if score_value_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_annee_N1,
-                "score_value_annee_N1_arrondi": round(float(score_value_annee_N1)),
+                "score_value_annee_N1_arrondi": round(float(score_value_annee_N1)) if score_value_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_annee_N1,
                 
                 "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_annee_N2,
-                "score_value_annee_N2_arrondi": round(float(score_value_annee_N2)),
+                "score_value_annee_N2_arrondi": round(float(score_value_annee_N2)) if score_value_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_annee_N2,
                 
                 "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
@@ -1272,17 +1372,17 @@ def generer_rapport_solvabilite(request):
                 
                 "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
                 "score_value_annee_N": score_value_anglais_annee_N,
-                "score_value_annee_N_arrondi": round(float(score_value_anglais_annee_N)),
+                "score_value_annee_N_arrondi": round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_anglais_annee_N,
                 
                 "score_image_annee_N1": f"scoring/{round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_anglais_annee_N1,
-                "score_value_annee_N1_arrondi": round(float(score_value_anglais_annee_N1)),
+                "score_value_annee_N1_arrondi": round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_anglais_annee_N1,
                 
                 "score_image_annee_N2": f"scoring/{round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_anglais_annee_N2,
-                "score_value_annee_N2_arrondi": round(float(score_value_anglais_annee_N2)),
+                "score_value_annee_N2_arrondi": round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_anglais_annee_N2,
                 
                 "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
@@ -1295,17 +1395,17 @@ def generer_rapport_solvabilite(request):
                 
                 "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
                 "score_value_annee_N": score_value_bancaire_annee_N,
-                "score_value_annee_N_arrondi": round(float(score_value_bancaire_annee_N)),
+                "score_value_annee_N_arrondi": round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_bancaire_annee_N,
                 
                 "score_image_annee_N1": f"scoring/{round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_bancaire_annee_N1,
-                "score_value_annee_N1_arrondi": round(float(score_value_bancaire_annee_N1)),
+                "score_value_annee_N1_arrondi": round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_bancaire_annee_N1,
                 
                 "score_image_annee_N2": f"scoring/{round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_bancaire_annee_N2,
-                "score_value_annee_N2_arrondi": round(float(score_value_bancaire_annee_N2)),
+                "score_value_annee_N2_arrondi": round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_bancaire_annee_N2,
                 
                 "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
@@ -1318,17 +1418,17 @@ def generer_rapport_solvabilite(request):
                 
                 "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
                 "score_value_annee_N": score_value_syscohada_annee_N,
-                "score_value_annee_N_arrondi": round(float(score_value_syscohada_annee_N)),
+                "score_value_annee_N_arrondi": round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_syscohada_annee_N,
                 
                 "score_image_annee_N1": f"scoring/{round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_syscohada_annee_N1,
-                "score_value_annee_N1_arrondi": round(float(score_value_syscohada_annee_N1)),
+                "score_value_annee_N1_arrondi": round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_syscohada_annee_N1,
                 
                 "score_image_annee_N2": f"scoring/{round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_syscohada_annee_N2,
-                "score_value_annee_N2_arrondi": round(float(score_value_syscohada_annee_N2)),
+                "score_value_annee_N2_arrondi": round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_syscohada_annee_N2,
                 
                 "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
@@ -1341,17 +1441,17 @@ def generer_rapport_solvabilite(request):
                 
                 "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
                 "score_value_annee_N": score_value_ifrs_annee_N,
-                "score_value_annee_N_arrondi": round(float(score_value_ifrs_annee_N)),
+                "score_value_annee_N_arrondi": round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_ifrs_annee_N,
                 
                 "score_image_annee_N1": f"scoring/{round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_ifrs_annee_N1,
-                "score_value_annee_N1_arrondi": round(float(score_value_ifrs_annee_N1)),
+                "score_value_annee_N1_arrondi": round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_ifrs_annee_N1,
                 
                 "score_image_annee_N2": f"scoring/{round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_ifrs_annee_N2,
-                "score_value_annee_N2_arrondi": round(float(score_value_ifrs_annee_N2)),
+                "score_value_annee_N2_arrondi": round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
                 
                 "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
@@ -1378,8 +1478,8 @@ def generer_rapport_solvabilite(request):
                 },
                 "conditions_vente": {
                     "local": condition_vente.local if condition_vente and condition_vente.local else "Non spécifié",
-                    "recouvrement_dette_jugement": condition_vente.recouvrement_de_dette_jugement_ref.libelle if condition_vente and condition_vente.recouvrement_de_dette_jugement_ref else condition_vente.recouvrement_de_dette_jugement if condition_vente else "Non spécifié",
-                    "comportement_de_paiement": condition_vente.comportement_de_paiement_ref.libelle if condition_vente and condition_vente.comportement_de_paiement_ref else condition_vente.comportement_de_paiement if condition_vente else "Non spécifié",
+                    "recouvrement_dette_jugement": condition_vente_recouvrement,
+                    "comportement_de_paiement": condition_vente_comportement,
                 }
             },
             "conclusion_generale": {
@@ -1393,8 +1493,8 @@ def generer_rapport_solvabilite(request):
         return Response({
             'status': 'success',
             'message': 'Rapport généré avec succès',
-            'report_data': report_data,
-            'form_data': data
+            'report_data': _to_json_safe(report_data),
+            'form_data': _to_json_safe(data)
         })
     
     return Response(serializer.errors, status=400)
