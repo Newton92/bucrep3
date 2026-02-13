@@ -1,10 +1,10 @@
-{% load static custom_filters %}
+{% load i18n static custom_filters %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
    <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Rapport de Solvabilité</title>
+      <title>{% trans "Rapport de Solvabilité" %}</title>
       <style>
          /* Styles pour WeasyPrint */
          @media screen {
@@ -18,18 +18,18 @@
             size: A4;
             margin: 15mm 10mm 20mm 10mm; /* Ces marges s'appliquent à la page PDF */
             @bottom-left {
-                content: "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.";
+                content: "{% trans "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts." %}";
                 font-size: 8pt;
                 color: #666;
             }
             @bottom-right {
-                content: "Page " counter(page) " sur " counter(pages);
+                content: "{% trans "Page" %} " counter(page) " {% trans "sur" %} " counter(pages);
                 font-size: 8pt;
                 color: #666;
             }
         }
          @bottom-right {
-         content: "Page " counter(page) " sur " counter(pages);
+         content: "{% trans "Page" %} " counter(page) " {% trans "sur" %} " counter(pages);
          font-size: 8pt;
          color: #666;
          }
@@ -433,8 +433,16 @@
                   <td>{{ identification.acremac_info.pays }}</td>
                </tr>
                <tr>
+                  <th>Email</th>
+                  <td>{{ identification.acremac_info.email }}</td>
+               </tr>
+               <tr>
+                  <th>Téléphone</th>
+                  <td>{{ identification.acremac_info.telephone }}</td>
+               </tr>
+               <tr>
                   <th>Fax / Email</th>
-                  <td>{{ identification.acremac_info.fax }} / {{ identification.acremac_info.email }}</td>
+                  <td>{{ identification.acremac_info.fax }}</td>
                </tr>
             </table>
          </div>
@@ -469,7 +477,8 @@
                      {{ additional_information.description|striptags|safe }}<br>
                   </td>
                </tr>
-               <th>Code(s) NACE</th>
+               <tr>
+                  <th>Code(s) NACE</th>
                   <td>
                      {% if additional_information.nace_codes and additional_information.nace_codes.0 != "Aucun code NACE disponible" %}
                            <ul style="margin: 0; padding-left: 20px;">
@@ -631,7 +640,7 @@
             <table>
                <tr>
                   <th>Date de création</th>
-                  <td>{{ registered_data.date_creation }}</td>
+                  <td>{{ registered_data.date_registre|default:"Non spécifié" }}</td>
                </tr>
                <tr>
                   <th>Date d'enregistrement</th>
@@ -665,7 +674,7 @@
          </div>
          <!-- Dossiers juridiques -->
          <div class="section-title">ANTECEDENTS JURIDIQUES</div>
-         {% if legal_background.antecedents_juridiques %}
+         {% if legal_background.antecedents_juridiques and legal_background.antecedents_juridiques.0.dossier_faillite %}
          {% for antecedant in legal_background.antecedents_juridiques %}
          <div class="antecedent-entry">
             <table>
@@ -699,7 +708,7 @@
          <div class="section">
             <div class="section-title">MANAGEMENT ET STAFF</div>
             <div class="subsection-title">CONSEIL D'ADMINISTRATION</div>
-            {% if management.conseil_administration %}
+            {% if management.conseil_administration and management.conseil_administration.0.nom %}
             {% for membre in management.conseil_administration %}
             <div class="ca-membre-entry">
                <table>
@@ -729,7 +738,7 @@
             <div class="subsection-title">Aucun membre du conseil d'administration n'est spécifié.</div>
             {% endif %}
             <div class="subsection-title">DIRIGEANTS</div>
-            {% if management.responsables %}
+            {% if management.responsables and management.responsables.0.nom %}
             {% for responsable in management.responsables %}
             <div class="responsable-entry">
                <table>
@@ -828,7 +837,7 @@
          <!-- Actionnariat/Propriétaires -->
          <div class="section">
             <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
-            {% if shareholders.actionnaires %}
+            {% if shareholders.actionnaires and shareholders.actionnaires.0.nom %}
             {% for shareholder in shareholders.actionnaires %}
             <div class="shareholder-entry">
                <table>
@@ -866,7 +875,7 @@
          <!-- Affiliations d'entreprise -->
          <div class="section">
             <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
-            {% if affiliations.affiliations %}
+            {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
             {% for affiliation in affiliations.affiliations %}
             <div class="affiliation-entry">
                <table>
@@ -973,7 +982,7 @@
                </table>
             </div>
             <div class="subsection-title">DONNÉES BANCAIRES</div>
-            {% if banking_data.data_banks %}
+            {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
             {% for bank in banking_data.data_banks %}
             <div class="bank-entry">
                <table>
@@ -2198,17 +2207,17 @@
                   <tbody>
                      <tr>
                         <th>Score</th>
-                        <td style="color: #00cc00;">{{ scoring_anglais.score_value_annee_N2 }}</td>
+                        <td style="color: #00cc00;">{{ scoring_bancaire.score_value_annee_N2 }}</td>
                      </tr>
                      <tr>
                         <th>Interprétation</th>
-                        <td>{{ scoring_anglais.interpretation_annee_N2 }}</td>
+                        <td>{{ scoring_bancaire.interpretation_annee_N2 }}</td>
                      </tr>
                   </tbody>
                </table>
             </div>
             {% else %}
-            <div class="subsection-title">Aucun scoring avec bilan anglais disponible pour cet acheteur.</div>
+            <div class="subsection-title">Aucun scoring avec bilan bancaire disponible pour cet acheteur.</div>
             {% endif %}
          </div>
 
@@ -2559,7 +2568,7 @@
                </table>
             </div>
             {% else %}
-            <div class="subsection-title">Aucun scoring avec bilan anglais disponible pour cet acheteur.</div>
+            <div class="subsection-title">Aucun scoring avec bilan syscohada disponible pour cet acheteur.</div>
             {% endif %}
          </div>
 
@@ -2950,7 +2959,7 @@
             </tbody>
          </table>
          <div class="subsection-title">PROPRIÉTÉ & ACTIFS</div>
-         {% if properties_and_assets.assets_list %}
+         {% if properties_and_assets.assets_list and properties_and_assets.assets_list.0.locaux %}
          {% for asset in properties_and_assets.assets_list %}
          <div class="asset-entry">
             <table>
@@ -3051,7 +3060,7 @@
       </div>
       <!-- Pied de page -->
       <div class="footer">
-         <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.</p>
+         <p>{% trans "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts." %}</p>
          <p>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.</p>
          <p>Rapport généré le {{ header_report.date_today }} (GMT) - {{ header_report.acremac_services }}.</p>
       </div>

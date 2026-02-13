@@ -466,6 +466,14 @@ def generer_rapport_solvabilite(request):
             except Commande.DoesNotExist:
                 pass
         
+        # Récupération du premier téléphone
+        # Recuperation des téléphones en fonction de l'acheteur
+        telephone = None
+        try:
+            telephone = TelephoneAcheteur.objects.filter(acheteur=acheteur).first()
+        except TelephoneAcheteur.DoesNotExist:
+            pass
+        
         # Récupération du Résumé executif
         # Recuperation du resume en fonction de l'acheteur
         resume = None
@@ -793,9 +801,10 @@ def generer_rapport_solvabilite(request):
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
         
         # Limiter le score entre 0 et 10 pour correspondre aux images
-        score_indexe = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
+        raw_score_sans_bilan = float(scoring_sans_bilan.scoring_value) if scoring_sans_bilan and scoring_sans_bilan.scoring_value is not None else 0.0
+        score_indexe = int(round(raw_score_sans_bilan))  # arrondi à l'entier le plus proche
         score_indexe = max(0, min(score_indexe, 10))
-        print(int(round(scoring_sans_bilan.scoring_value)))
+        print(int(round(raw_score_sans_bilan)))
         print(score_indexe)
         
         # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
@@ -1084,6 +1093,7 @@ def generer_rapport_solvabilite(request):
                     "province": acheteur.province.nom if hasattr(acheteur, 'province') else "Non spécifié",
                     "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
+                    "telephone": telephone.telephone if hasattr(telephone, 'telephone') else "Non spécifié",
                     "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
                     "rue_adresse": acheteur.rue_adresse if hasattr(acheteur, 'rue_adresse') else "Non spécifié",
                     "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
@@ -1168,7 +1178,7 @@ def generer_rapport_solvabilite(request):
             },
             "legal_background": {
                 "title_8": "ANTECEDENTS JURIDIQUES",
-                "antecedents_juridiques": list_antecedants_data if list_antecedants_data else ["Aucun antécédent juridique disponible"],
+                "antecedents_juridiques": list_antecedants_data if list_antecedants_data else [],
             },
             "management": {
                 "title_9": "MANAGEMENT DU RISQUE",
@@ -1185,8 +1195,8 @@ def generer_rapport_solvabilite(request):
                     "image_base64": risk_management.get_management_image_base64() if risk_management else None,
                     "image_path": risk_management.get_management_image_path_report() if risk_management else "management/passable.png",
                 },
-                "responsables": list_responsables_data if list_responsables_data else "Aucun responsable disponible",
-                "conseil_administration": list_ca_membres_data if list_ca_membres_data else "Aucun membre du conseil d'administration disponible",
+                "responsables": list_responsables_data if list_responsables_data else [],
+                "conseil_administration": list_ca_membres_data if list_ca_membres_data else [],
             },
             "capital_composition": {
                 "title_10": "COMPOSITION DU CAPITAL",
@@ -1198,11 +1208,11 @@ def generer_rapport_solvabilite(request):
             },
             "shareholders": {
                 "title_11": "ACTIONNARIAT/PROPRIETAIRES",
-                "actionnaires": list_shareholders_data if list_shareholders_data else ["Aucun actionnaire disponible"],
+                "actionnaires": list_shareholders_data if list_shareholders_data else [],
             },
             "affiliations": {
                 "title_12": "AFFILIATIONS D'ENTREPRISE",
-                "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
+                "affiliations": list_affiliations_data if list_affiliations_data else [],
             },
             "sector_analysis": {
                 "title_13": "ANALYSE SECTORIELLE",
@@ -1236,7 +1246,7 @@ def generer_rapport_solvabilite(request):
             },
             "banking_data": {
                 "title_14": "DONNEES BANCAIRES",
-                "data_banks": list_banking_data if list_banking_data else ["Aucune donnée bancaire disponible"],
+                "data_banks": list_banking_data if list_banking_data else [],
             },
             "financial_accounts": {
                 "title_15": "COMPTES FINANCIERS",
@@ -1334,10 +1344,10 @@ def generer_rapport_solvabilite(request):
             "scoring_sans_bilan": {
                 "title_16": "SCORING ACREMAC - SANS BILAN",
                 "score_image": f"scoring/{score_indexe}.png",
-                "score_png": f"scoring/{int(round(scoring_sans_bilan.scoring_value))}.png",
-                "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
-                "interpretation": scoring_sans_bilan.interpretation,
-                "commentaire": scoring_sans_bilan.commentaire,
+                "score_png": f"scoring/{score_indexe}.png",
+                "score_value": f"{raw_score_sans_bilan:.2f}",  # <- toujours 2 décimales
+                "interpretation": scoring_sans_bilan.interpretation if scoring_sans_bilan else "Non spécifié",
+                "commentaire": scoring_sans_bilan.commentaire if scoring_sans_bilan else "Aucun commentaire disponible",
                 "score_type": "Scoring sans bilan",
                 "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
             },
@@ -1518,12 +1528,29 @@ from rest_framework.response import Response
 import base64
 from datetime import datetime
 import random
+import re
+import unicodedata
 
 def generate_code_reference():
     date_du_jour = datetime.now().strftime("%Y%m%d")  # ex : 20241204
     chiffre_aleatoire = random.randint(10000, 99999)  # 5 chiffres aléatoires
     codeReference = f"{date_du_jour}.{chiffre_aleatoire}"
     return codeReference
+
+
+def _safe_download_filename(name, default='rapport_solvabilite'):
+    """
+    Nettoie un nom de fichier pour éviter les erreurs d'en-têtes HTTP
+    (caractères spéciaux, slash, espaces multiples, etc.).
+    """
+    value = str(name or '').strip()
+    if not value:
+        return default
+
+    normalized = unicodedata.normalize('NFKD', value)
+    ascii_value = normalized.encode('ascii', 'ignore').decode('ascii')
+    cleaned = re.sub(r'[^A-Za-z0-9._-]+', '_', ascii_value).strip('._-')
+    return cleaned or default
 
 
 @api_view(['POST'])
@@ -2173,7 +2200,8 @@ def exporter_pdf(report_data, form_data, request=None):
         # Préparer la réponse HTTP
         response = HttpResponse(pdf_file, content_type='application/pdf')
         nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
-        filename = f"rapport_solvabilite_{nom_acheteur}.pdf"
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        filename = f"rapport_solvabilite_{safe_nom}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         response['Content-Length'] = len(pdf_file)
         
@@ -2202,26 +2230,16 @@ def exporter_html(report_data, form_data, request=None):
     try:
         print("🌐 Début génération HTML...")
         
-        # Utilisez directement la fonction du module 1 si disponible
-        try:
-            from main.api.views_report import generate_html
-            response = generate_html(report_data)
-            return response
-        except ImportError:
-            print("⚠️ Fonction generate_html non trouvée, fallback local")
-        
-        # Fallback : générer un HTML simple
         from django.template.loader import render_to_string
         from django.http import HttpResponse
-        
-        html_content = render_to_string('main/report_html_standalone.html', {
-            'report_data': report_data,
-            'form_data': form_data
-        })
+
+        # Utiliser le meme template que le PDF pour conserver la structure
+        html_content = render_to_string('main/report_html_standalone_pdf.html', report_data)
         
         response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
         nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
-        filename = f"rapport_solvabilite_{nom_acheteur}.html"
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        filename = f"rapport_solvabilite_{safe_nom}.html"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         print(f"✅ HTML généré: {len(html_content)} caractères")
@@ -2377,13 +2395,15 @@ def generate_report_html_standalone(report_data):
     """Génère un rapport HTML complet et le force en téléchargement"""
     try:
         # Utiliser render_to_string pour générer le HTML à partir du template
-        html_content = render_to_string('main/report_html_standalone_html.html', report_data)
+        html_content = render_to_string('main/report_html_standalone_pdf.html', report_data)
         
         # Créer une réponse HTTP avec le contenu HTML
-        response = HttpResponse(html_content, content_type='text/html')
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
         
         # Forcer le téléchargement avec Content-Disposition
-        response['Content-Disposition'] = f'attachment; filename="rapport_solvabilite_{report_data.get("identification", {}).get("acremac_info", {}).get("nom", "acheteur")}.html"'
+        acheteur_nom = report_data.get("identification", {}).get("acremac_info", {}).get("nom", "acheteur")
+        safe_nom = _safe_download_filename(acheteur_nom, default='acheteur')
+        response['Content-Disposition'] = f'attachment; filename="rapport_solvabilite_{safe_nom}.html"'
         
         return response
         
@@ -2407,6 +2427,6 @@ def generate_report_html_standalone(report_data):
             </body>
         </html>
         """
-        response = HttpResponse(html_content, content_type='text/html')
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8', status=500)
         response['Content-Disposition'] = 'attachment; filename="rapport_erreur.html"'
         return response

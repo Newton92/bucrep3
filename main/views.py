@@ -2295,50 +2295,69 @@ def dash_root_manage_acheteur_gestion_risque(request, acheteur_id):
 
 @login_required
 def dash_root_manage_acheteur_report_solvency(request, acheteur_id):
-    token = request.GET.get("token")
-    if not token:
-        pass
-
-    user = request.user
-
-    # Génération des tokens d'accès
-    refresh = RefreshToken.for_user(user)
-
-    # Récupérer l'acheteur pour avoir ses données
-    # Récupérer l'acheteur avec relations optimisées
+    # Récupérer l'acheteur avec préfetch pour optimiser
     acheteur = get_object_or_404(
         Acheteur.objects.select_related(
             'statut_entreprise',
             'forme_juridique',
-            'categorie_entreprise'
+            'categorie_entreprise',
+            'pays',
+            'province',
+            'ville'
         ),
         id=acheteur_id
     )
-
-    # Préparer les données pour JavaScript
-    acheteur_data = {
+        
+    # Préparer les données pour l'encart acheteur
+    acheteur_context = {
         'id': acheteur.id,
         'nom': acheteur.nom or 'Non spécifié',
         'sigle': acheteur.sigle or '',
         'code': acheteur.code or 'N/A',
         'activite_principale': acheteur.activite_principale or 'Non spécifié',
-        'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else 'Non spécifiée',
+        'date_creation': acheteur.date_creation.strftime('%d/%m/%Y') if acheteur.date_creation else None,
         'statut_entreprise': acheteur.statut_entreprise.libelle if acheteur.statut_entreprise else 'Inconnu',
+        'forme_juridique': acheteur.forme_juridique.libelle if acheteur.forme_juridique else 'Non spécifié',
+        'description': acheteur.description or 'Aucune description disponible',
+        'email': acheteur.email or 'Non spécifié',
+        'fax': acheteur.fax or 'Non spécifié',
+        'boite_postale': acheteur.boite_postale or 'Non spécifié',
+        'site_internet': acheteur.site_internet or 'Non spécifié',
+        'pays': acheteur.pays.nom if acheteur.pays else 'Non spécifié',
+        'ville': acheteur.ville.nom if acheteur.ville else 'Non spécifié',
+        'province': acheteur.province.nom if acheteur.province else 'Non spécifié',
     }
-
-    # Récupérer tous les colorations
-    coloration_list = CouleurCommentaire.objects.all()
-
+    
+    # Convertir en JSON sécurisé pour JavaScript
+    acheteur_json = json.dumps(acheteur_context, default=str)
+    
+    # Génération des tokens JWT
+    try:
+        refresh = RefreshToken.for_user(request.user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
+    
+    # Récupérer les années actives pour le formulaire
+    annee_list = Annee.objects.filter(is_active=True).order_by('-annee')
+    
+    # Préparer les données des années pour le template
+    annee_data = [{'id': a.id, 'annee': a.annee} for a in annee_list]
+    
     context = {
         "acheteur_active": "active",
-        "user": user,
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "acheteur_json": json.dumps(acheteur_data),
+        "user": request.user,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteur_json": acheteur_json,  # JSON pour JavaScript
+        "acheteur": acheteur,  # Objet pour le template
+        "annee_list": annee_data,  # Liste pour le select
         "id_acheteur": acheteur_id,
-        "acheteur": acheteur,  # Ajoutez l'objet acheteur
-        "coloration_list": coloration_list,
     }
+        
     return render(
         request,
         "main/root/acheteur/reporting/dash_root_manage_acheteur_report_solvency.html",

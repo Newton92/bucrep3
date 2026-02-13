@@ -2,10 +2,10 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
 
 <head>
-    <title>BUCREP - Login</title>
+    <title>{% trans "BUCREP - Connexion" %}</title>
 
     <!-- Meta Tags -->
     <meta charset="utf-8">
@@ -72,11 +72,7 @@
         }
 
         /* Suppression du bandeau Google Translate */
-        .goog-te-banner-frame.skiptranslate { display: none !important; }
         body { top: 0px !important; }
-        #google_translate_element { display: none; }
-        .goog-te-gadget { display: none !important; }
-        .goog-text-highlight { background: none !important; box-shadow: none !important; }
 
         /* Container principal */
         .container.h-100 {
@@ -471,7 +467,7 @@
                                             </div>
                                             <!-- Button -->
                                             <div>
-                                                <button type="submit" class="btn btn-primary w-100 mb-0">
+                                                <button type="submit" class="btn btn-primary text-white w-100 mb-0">
                                                     {% trans "connexion" %}
                                                 </button>
                                             </div>
@@ -490,13 +486,6 @@
                                                 <a href="https://www.acremac.com/" class="text-body">ACREMAC</a>. 
                                             </div>
 
-                                            <!-- Formulaire de changement de langue -->
-                                            <form id="language-form" action="{% url 'set_language' %}" method="post" style="display: none;">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="next" value="{{ request.path }}">
-                                                <input type="hidden" id="language-input" name="language">
-                                            </form>
-
                                             <!-- Drapeaux de sélection de langue -->
                                             <div class="text-primary-hover text-body mt-3 text-center">
                                                 <a href="#" class="lang-flag" data-lang="fr">
@@ -509,6 +498,12 @@
                                             </div>
                                         </form>
                                         <!-- Form END -->
+                                        <!-- Formulaire de changement de langue -->
+                                        <form id="language-form" action="{% url 'set_language' %}" method="post" style="display: none;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                            <input type="hidden" id="language-input" name="language">
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -521,10 +516,6 @@
         Main Content END -->
     </main>
     <!-- **************** MAIN CONTENT END **************** -->
-
-    <!-- Élément caché Google Translate -->
-    <div id="google_translate_element" style="display: none;"></div>
-
     <!-- Bootstrap JS -->
     <script src="{% static 'assets/vendor/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
 
@@ -574,7 +565,7 @@
             $('#loginForm').on('submit', function(event) {
                 event.preventDefault();
                 var $submitBtn = $(this).find('button[type="submit"]');
-                $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Connexion...');
+                $submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> {% trans "Connexion..." %}');
                 
                 var username = $('#username').val();
                 var password = $('#password').val();
@@ -583,8 +574,8 @@
                 if (!username || !password) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Champs requis',
-                        text: 'Veuillez remplir tous les champs.',
+                        title: '{% trans "Champs requis" %}',
+                        text: '{% trans "Veuillez remplir tous les champs." %}',
                         confirmButtonColor: 'var(--primary-color)'
                     });
                     $submitBtn.prop('disabled', false).html('connexion');
@@ -608,8 +599,8 @@
                         
                         Swal.fire({
                             icon: 'success',
-                            title: 'Succès',
-                            text: 'Authentification réussie. Redirection en cours...',
+                            title: '{% trans "Succès" %}',
+                            text: '{% trans "Authentification réussie. Redirection en cours..." %}',
                             showConfirmButton: false,
                             timer: 1500,
                             background: 'var(--light-color)',
@@ -622,8 +613,8 @@
                             } else {
                                 Swal.fire({
                                     icon: 'error',
-                                    title: 'Erreur',
-                                    text: 'URL de redirection introuvable.',
+                                    title: '{% trans "Erreur" %}',
+                                    text: '{% trans "URL de redirection introuvable." %}',
                                     confirmButtonColor: 'var(--primary-color)'
                                 });
                             }
@@ -632,14 +623,14 @@
                     error: function(response) {
                         $submitBtn.prop('disabled', false).html('connexion');
                         
-                        let errorMessage = 'Vos identifiants sont invalides.';
+                        let errorMessage = '{% trans "Vos identifiants sont invalides." %}';
                         if (response.responseJSON && response.responseJSON.detail) {
                             errorMessage = response.responseJSON.detail;
                         }
                         
                         Swal.fire({
                             icon: 'error',
-                            title: 'Erreur d\'authentification',
+                            title: "{% trans "Erreur d'authentification" %}",
                             text: errorMessage,
                             confirmButtonColor: 'var(--primary-color)'
                         });
@@ -647,97 +638,50 @@
                 });
             });
 
-            // Gestion du changement de langue
-            $(".lang-flag").click(function(e) {
-                e.preventDefault();
-                var lang = $(this).data("lang");
-                var csrfToken = getCookie('csrftoken');
-
-                // Mise à jour visuelle immédiate
-                $('.lang-flag img').removeClass('flag-active');
-                $(this).find('img').addClass('flag-active');
-
-                $.ajax({
-                    type: "POST",
-                    url: "{% url 'set_language' %}",
-                    data: {
-                        language: lang,
-                        csrfmiddlewaretoken: csrfToken,
-                        next: "{{ request.path }}"
-                    },
-                    success: function() {
-                        Swal.fire({
-                            title: "Langue changée",
-                            text: "La langue a été changée avec succès.",
-                            icon: "success",
-                            timer: 1500,
-                            showConfirmButton: false,
-                            background: 'var(--light-color)',
-                            color: 'var(--primary-dark)'
-                        }).then(() => {
-                            location.reload(true);
-                        });
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: "Erreur",
-                            text: "Impossible de changer la langue.",
-                            icon: "error",
-                            confirmButtonColor: 'var(--primary-color)'
-                        });
+                        // Gestion du changement de langue via set_language
+            function updateActiveFlag(lang) {
+                const code = (lang || 'fr').toLowerCase().slice(0, 2);
+                ['fr', 'en'].forEach(function(item) {
+                    const el = document.getElementById('flag-' + item);
+                    if (el) {
+                        el.classList.toggle('flag-active', item === code);
                     }
                 });
+            }
+
+            const htmlLang = (document.documentElement.getAttribute('lang') || 'fr').toLowerCase();
+            const initialLang = (localStorage.getItem('ui_lang') || htmlLang).slice(0, 2);
+            updateActiveFlag(initialLang);
+
+            $(".lang-flag").click(function(e) {
+                e.preventDefault();
+                var lang = ($(this).data("lang") || 'fr').toLowerCase();
+                var languageInput = document.getElementById('language-input');
+                var languageForm = document.getElementById('language-form');
+
+                if (!languageInput || !languageForm) {
+                    return;
+                }
+
+                languageInput.value = lang;
+                updateActiveFlag(lang);
+                localStorage.setItem('ui_lang', lang);
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: lang === 'en' ? 'Language changed' : 'Langue changée',
+                        text: lang === 'en' ? 'English activated.' : 'Français activé.',
+                        timer: 800,
+                        showConfirmButton: false
+                    }).then(function() {
+                        languageForm.submit();
+                    });
+                } else {
+                    languageForm.submit();
+                }
             });
-
-            // Initialisation des drapeaux de langue
-            function initLanguageFlags() {
-                const currentLang = localStorage.getItem('site_lang') || "fr";
-                $('#flag-' + currentLang).addClass('flag-active');
-            }
-
-            initLanguageFlags();
-        });
-
-        // Fonction d'initialisation Google Translate
-        function googleTranslateElementInit() {
-            new google.translate.TranslateElement({
-                pageLanguage: 'fr',
-                includedLanguages: 'en,fr',
-                autoDisplay: false,
-                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-            }, 'google_translate_element');
-        }
-
-        // Fonction pour masquer la barre Google Translate
-        function hideGoogleToolbar() {
-            const toolbar = document.querySelector('.goog-te-banner-frame.skiptranslate');
-            if (toolbar) toolbar.style.display = 'none';
-            document.body.style.top = '0px';
-        }
-
-        // Masquer périodiquement la barre Google Translate
-        setInterval(hideGoogleToolbar, 500);
-
-        // Charger Google Translate
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initial hide
-            setTimeout(hideGoogleToolbar, 500);
-            
-            // Appliquer la langue sauvegardée
-            const savedLang = localStorage.getItem('site_lang');
-            if (savedLang && savedLang !== 'fr') {
-                setTimeout(() => {
-                    const googleCombo = document.querySelector('.goog-te-combo');
-                    if (googleCombo) {
-                        googleCombo.value = savedLang;
-                        googleCombo.dispatchEvent(new Event('change'));
-                    }
-                }, 1000);
-            }
         });
     </script>
-
-    <!-- Google Translate Script -->
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>

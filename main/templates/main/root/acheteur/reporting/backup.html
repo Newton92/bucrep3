@@ -1338,6 +1338,7 @@ $(document).ready(function() {
             data: JSON.stringify(data),
             contentType: 'application/json',
             success: function(response) {
+                console.log(response);
                 Swal.close();
                 
                 if (response.status === 'success') {
@@ -1628,11 +1629,11 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Codes NAF</th>
-                        <td colspan="3">${Array.isArray(info.naf_codes) ? info.naf_codes.join(', ') : info.naf_codes}</td>
+                        <td colspan="3">${Array.isArray(info.naf_codes) ? info.naf_codes.join('<br>') : info.naf_codes}</td>
                     </tr>
                     <tr>
                         <th>Codes NACE</th>
-                        <td colspan="3">${Array.isArray(info.nace_codes) ? info.nace_codes.join(', ') : info.nace_codes}</td>
+                        <td colspan="3">${Array.isArray(info.nace_codes) ? info.nace_codes.join('<br>') : info.nace_codes}</td>
                     </tr>
                 </table>
             </div>
@@ -1666,7 +1667,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${resume.commentaire}</td>
+                        <td colspan="3" class="warning">${resume.commentaire}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -1675,6 +1676,15 @@ $(document).ready(function() {
 
     function genererSectionEvaluationRisque(reportData) {
         const evaluation = reportData.summary_and_opinion;
+        const cotationRisque = Array.isArray(evaluation.cotation_du_risque)
+            ? evaluation.cotation_du_risque.join('')
+            : (evaluation.cotation_du_risque || 'Non spécifié');
+        const cotationRisqueDisplay = Array.isArray(evaluation.cotation_du_risque)
+            ? evaluation.cotation_du_risque.join('')
+            : (evaluation.cotation_du_risque || 'Non évalué');
+        const indiceRisque = Array.isArray(evaluation.indice_du_risque)
+            ? evaluation.indice_du_risque.join('')
+            : (evaluation.indice_du_risque || 'Non spécifié');
         
         // Récupérez la valeur du score de risque avec valeur par défaut
         let riskScore = evaluation.risk_rating_value;
@@ -1702,8 +1712,8 @@ $(document).ready(function() {
                             alt="Score de risque : ${riskScore}/9"
                             style="max-height: 250px; display: block; margin: 0 auto;"
                             onerror="this.src='${STATIC_URL}riskrating/0.svg'">
-                        <p style="margin-top: 10px; font-weight: bold;">
-                            Score: ${riskScore}/9 - ${evaluation.cotation_du_risque || 'Non évalué'}
+                        <p style="margin-top: 10px; font-weight: bold; color: green;">
+                            <u>Score</u> : ${riskScore}/9
                         </p>
                     </div>
                 </div>
@@ -1712,16 +1722,18 @@ $(document).ready(function() {
                     <tr>
                         <th>Score de risque</th>
                         <td>${riskScore}/9</td>
+                    </tr>
+                    <tr>
                         <th>Cotation du risque</th>
-                        <td>${evaluation.cotation_du_risque || 'Non spécifié'}</td>
+                        <td colspan="2">${cotationRisque}</td>
                     </tr>
                     <tr>
                         <th>Indice du risque</th>
-                        <td colspan="3">${evaluation.indice_du_risque || 'Non spécifié'}</td>
+                        <td colspan="2">${indiceRisque}</td>
                     </tr>
                     <tr>
                         <th>Analyse détaillée</th>
-                        <td colspan="3" class="warning">${evaluation.analyse_detailee || 'Aucune analyse disponible'}</td>
+                        <td colspan="2" class="warning">${evaluation.analyse_detailee || 'Aucune analyse disponible'}<br><br></td>
                     </tr>
                 </table>
                 
@@ -1773,7 +1785,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${avis.commentaire}</td>
+                        <td colspan="3" class="warning">${avis.commentaire}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -1807,7 +1819,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${donnees.commentaire}</td>
+                        <td colspan="3" class="warning">${donnees.commentaire}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -1849,7 +1861,7 @@ $(document).ready(function() {
                         </tr>
                         <tr>
                             <th>Commentaire</th>
-                            <td class="warning">${antecedent.commentaire}</td>
+                            <td class="warning">${antecedent.commentaire}<br><br></td>
                         </tr>
                     </table>
                 `).join('')}
@@ -1894,7 +1906,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${management.risk_management.commentaire}</td>
+                        <td colspan="3" class="warning">${management.risk_management.commentaire}<br><br></td>
                     </tr>
                 </table>
                 
@@ -1927,7 +1939,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${responsable.commentaire}</td>
+                        <td colspan="3" class="warning">${responsable.commentaire}<br></td>
                     </tr>
                 </table>
             `).join('')}
@@ -1955,7 +1967,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${membre.commentaire}</td>
+                        <td colspan="3" class="warning">${membre.commentaire}<br></td>
                     </tr>
                 </table>
             `).join('')}
@@ -1981,7 +1993,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${capital.commentaire}</td>
+                        <td colspan="3" class="warning">${capital.commentaire}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -2016,7 +2028,7 @@ $(document).ready(function() {
                         </tr>
                         <tr>
                             <th>Commentaire</th>
-                            <td colspan="3" class="warning">${actionnaire.commentaire}</td>
+                            <td colspan="3" class="warning">${actionnaire.commentaire}<br></td>
                         </tr>
                     </table>
                 `).join('')}
@@ -2052,7 +2064,7 @@ $(document).ready(function() {
                         </tr>
                         <tr>
                             <th>Commentaire</th>
-                            <td colspan="3" class="warning">${affiliation.commentaire}</td>
+                            <td colspan="3" class="warning">${affiliation.commentaire}<br><br></td>
                         </tr>
                     </table>
                 `).join('')}
@@ -2071,11 +2083,11 @@ $(document).ready(function() {
                 <table>
                     <tr>
                         <th>Impact COVID-19</th>
-                        <td class="warning">${secteur.sectorielle.impact_covid_19}</td>
+                        <td class="warning">${secteur.sectorielle.impact_covid_19}<br><br></td>
                     </tr>
                     <tr>
                         <th>Commentaire sectoriel</th>
-                        <td class="warning">${secteur.sectorielle.commentaire}</td>
+                        <td class="warning">${secteur.sectorielle.commentaire}<br><br></td>
                     </tr>
                 </table>
                 
@@ -2095,7 +2107,7 @@ $(document).ready(function() {
                     </tr>
                     <tr>
                         <th>Commentaire tendance</th>
-                        <td class="warning">${secteur.tendance.commentaire}</td>
+                        <td class="warning">${secteur.tendance.commentaire}<br><br></td>
                     </tr>
                 </table>
                 
@@ -2103,19 +2115,19 @@ $(document).ready(function() {
                 <table>
                     <tr>
                         <th>Points forts</th>
-                        <td class="warning">${secteur.advice.points_forts}</td>
+                        <td class="warning">${secteur.advice.points_forts}<br><br></td>
                     </tr>
                     <tr>
                         <th>Points faibles</th>
-                        <td class="warning">${secteur.advice.points_faibles}</td>
+                        <td class="warning">${secteur.advice.points_faibles}<br><br></td>
                     </tr>
                     <tr>
                         <th>Dynamisme court terme</th>
-                        <td>${secteur.advice.dynamisme_court_terme}</td>
+                        <td>${secteur.advice.dynamisme_court_terme}<br><br></td>
                     </tr>
                     <tr>
                         <th>Dynamisme long terme</th>
-                        <td>${secteur.advice.dynamisme_long_terme}</td>
+                        <td>${secteur.advice.dynamisme_long_terme}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -2154,7 +2166,7 @@ $(document).ready(function() {
                         </tr>
                         <tr>
                             <th>Commentaire</th>
-                            <td colspan="3" class="warning">${banque.commentaire}</td>
+                            <td colspan="3" class="warning">${banque.commentaire}<br><br></td>
                         </tr>
                     </table>
                 `).join('')}
@@ -2179,19 +2191,19 @@ $(document).ready(function() {
                         <th>Devise</th>
                         <td>${comptes.devise}</td>
                         <th>Type de bilan</th>
-                        <td>${comptes.type_bilan}</td>
+                        <td class="warning">${comptes.type_bilan}</td>
                     </tr>
                     <tr>
                         <th>Période de compte</th>
                         <td colspan="3">
-                            N-0: ${comptes.date_compte} - ${comptes.date_fin}<br>
-                            N-1: ${comptes.date_compte_n_moins_un} - ${comptes.date_fin_n_moins_un}<br>
-                            N-2: ${comptes.date_compte_n_moins_deux} - ${comptes.date_fin_n_moins_deux}
+                            N-0: <strong>${comptes.date_compte} - ${comptes.date_fin}</strong><br>
+                            N-1: <strong>${comptes.date_compte_n_moins_un} - ${comptes.date_fin_n_moins_un}</strong><br>
+                            N-2: <strong>${comptes.date_compte_n_moins_deux} - ${comptes.date_fin_n_moins_deux}</strong>
                         </td>
                     </tr>
                     <tr>
                         <th>Commentaire</th>
-                        <td colspan="3" class="warning">${comptes.commentaire}</td>
+                        <td colspan="3" class="warning">${comptes.commentaire}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -2201,9 +2213,15 @@ $(document).ready(function() {
 
 
     // Gestion des Etats financiers et des graphiques
+    function normalizeBilanType(value) {
+        const v = (value || '').toString().trim().toLowerCase();
+        if (v === 'irfs_cobac') return 'ifrs';
+        return v;
+    }
+
     function genererSectionEtatsFinanciers(reportData) {
         const financial = reportData.financial_statements;
-        const typeBilan = financial.bilan_type;
+        const typeBilan = normalizeBilanType(financial?.bilan_type);
         
         // Déterminer quelle structure de données utiliser selon le type de bilan
         let etatsFinanciers = null;
@@ -2226,7 +2244,7 @@ $(document).ready(function() {
                 etatsFinanciers = financial.etats_financiers_syscohada;
                 prefixe = 'syscohada';
                 break;
-            case 'irfs_cobac':
+            case 'ifrs':
                 etatsFinanciers = financial.etats_financiers_irfs_cobac;
                 prefixe = 'irfs_cobac';
                 break;
@@ -2234,10 +2252,16 @@ $(document).ready(function() {
                 etatsFinanciers = financial.etats_financiers_classiques;
                 prefixe = 'classiques';
         }
+
+        // Fallback: certaines versions renvoient "actif_table" au lieu de "actif_data"
+        if (etatsFinanciers && !etatsFinanciers.actif_data && Array.isArray(etatsFinanciers.actif_table)) {
+            etatsFinanciers.actif_data = { "ACTIFS": etatsFinanciers.actif_table };
+        }
         
         // Vérifier si les données financières sont disponibles
         const hasData = etatsFinanciers && (
             (etatsFinanciers.actif_data && Object.keys(etatsFinanciers.actif_data).length > 0) ||
+            (etatsFinanciers.actif_table && etatsFinanciers.actif_table.length > 0) ||
             (etatsFinanciers.passif_data && Object.keys(etatsFinanciers.passif_data).length > 0) ||
             (etatsFinanciers.resultat_data && Object.keys(etatsFinanciers.resultat_data).length > 0) ||
             (etatsFinanciers.ratios_data && Object.keys(etatsFinanciers.ratios_data).length > 0)
@@ -2372,10 +2396,18 @@ $(document).ready(function() {
 
     // Fonction pour générer les tableaux financiers (Actif, Passif, Résultat)
     function genererTableauFinancier(data, years, type) {
+        if (!data) return '';
+
+        // Supporte une structure liste simple (ex: actif_table)
+        if (Array.isArray(data)) {
+            data = { [type || 'Données']: data };
+        }
+
         let html = '';
         
         for (const [section, rows] of Object.entries(data)) {
-            if (!rows || rows.length === 0) continue;
+            const normalizedRows = Array.isArray(rows) ? rows : [];
+            if (normalizedRows.length === 0) continue;
             
             html += `
                 <div class="subsection-title">${section}</div>
@@ -2391,7 +2423,7 @@ $(document).ready(function() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${rows.map(row => {
+                        ${normalizedRows.map(row => {
                             if (row.is_section_title) {
                                 return `<tr><td colspan="6" style="font-weight: bold; background-color: #f8f9fa;">${row.label}</td></tr>`;
                             }
@@ -2424,10 +2456,12 @@ $(document).ready(function() {
 
     // Fonction pour générer le tableau des ratios
     function genererTableauRatios(ratiosData, years) {
+        if (!ratiosData) return '';
         let html = '';
         
         for (const [section, ratios] of Object.entries(ratiosData)) {
-            if (!ratios || ratios.length === 0) continue;
+            const normalizedRatios = Array.isArray(ratios) ? ratios : [];
+            if (normalizedRatios.length === 0) continue;
             
             html += `
                 <div class="subsection-title">${section}</div>
@@ -2443,7 +2477,7 @@ $(document).ready(function() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${ratios.map(ratio => {
+                        ${normalizedRatios.map(ratio => {
                             // Gestion spéciale pour les ratios bancaires qui ont une structure différente
                             const isRatioBancaire = ratio.values?.n && typeof ratio.values.n === 'object';
                             
@@ -2564,7 +2598,9 @@ $(document).ready(function() {
     // Fonction principale pour générer la section scoring en fonction du type de bilan
     // Fonction principale pour générer TOUS les scoring
     function genererSectionScoring(reportData, formData) {
-        const typeBilan = formData?.type_bilan || 'sans_bilan';
+        const typeBilan = normalizeBilanType(
+            formData?.type_bilan || reportData?.financial_statements?.bilan_type || 'sans_bilan'
+        );
         
         let html = '';
         
@@ -2826,7 +2862,7 @@ $(document).ready(function() {
 
         // Générer chaque année individuellement
         annees.forEach((annee, index) => {
-            if (annee.score && annee.score !== 'None' && annee.score !== '0' && annee.score !== '0.00') {
+            if (annee.score !== null && annee.score !== undefined && annee.score !== '' && annee.score !== 'None') {
                 hasData = true;
                 const scoreArrondi = Math.round(parseFloat(annee.score));
                 
@@ -2885,19 +2921,23 @@ $(document).ready(function() {
                 <table>
                     <tr>
                         <th>Description complète de l'activité</th>
-                        <td class="warning">${operations.description_complete_activite}</td>
+                        <td class="warning">${operations.description_complete_activite}<br><br></td>
                     </tr>
                     <tr>
                         <th>Importation</th>
-                        <td>${operations.importation}</td>
+                        <td>${
+                            Array.isArray(operations.importation) && operations.importation.length
+                                ? operations.importation.join('<br>')
+                                : 'Non spécifié'
+                        }</td>
                     </tr>
                     <tr>
                         <th>Historique</th>
-                        <td class="warning">${operations.historique}</td>
+                        <td class="warning">${operations.historique}<br><br></td>
                     </tr>
                     <tr>
                         <th>Commentaire sur les ratios</th>
-                        <td class="warning">${operations.commentaire_ratios}</td>
+                        <td class="warning">${operations.commentaire_ratios}<br><br></td>
                     </tr>
                 </table>
             </div>
@@ -2922,7 +2962,13 @@ $(document).ready(function() {
                     <table>
                         <tr>
                             <th>Locaux</th>
-                            <td>${propriete.locaux}</td>
+                            <td>${
+                                Array.isArray(propriete.locaux) && propriete.locaux.length
+                                    ? propriete.locaux.join('<br>')
+                                    : 'Non spécifié'
+                            }</td>
+                        </tr>
+                        <tr>
                             <th>Branche</th>
                             <td>${propriete.branche}</td>
                         </tr>
@@ -2943,19 +2989,27 @@ $(document).ready(function() {
                 <table>
                     <tr>
                         <th>Local</th>
-                        <td>${conditions.conditions_achat.local}</td>
+                        <td>${
+                            Array.isArray(conditions.conditions_achat.local) && conditions.conditions_achat.local.length
+                                ? conditions.conditions_achat.local.join('<br>')
+                                : 'Non spécifié'
+                        }</td>
                     </tr>
                     <tr>
                         <th>Importation</th>
-                        <td class="warning">${conditions.conditions_achat.importation}</td>
+                        <td>${
+                            Array.isArray(conditions.conditions_achat.importation) && conditions.conditions_achat.importation.length
+                                ? conditions.conditions_achat.importation.join('<br>')
+                                : 'Non spécifié'
+                        }</td>
                     </tr>
                     <tr>
                         <th>Clients</th>
-                        <td class="warning">${conditions.conditions_achat.les_clients}</td>
+                        <td class="warning">${conditions.conditions_achat.les_clients}<br><br></td>
                     </tr>
                     <tr>
                         <th>Fournisseur</th>
-                        <td class="warning">${conditions.conditions_achat.fournisseur}</td>
+                        <td class="warning">${conditions.conditions_achat.fournisseur}<br><br></td>
                     </tr>
                 </table>
                 
@@ -2963,7 +3017,11 @@ $(document).ready(function() {
                 <table>
                     <tr>
                         <th>Local</th>
-                        <td>${conditions.conditions_vente.local}</td>
+                        <td>${
+                            Array.isArray(conditions.conditions_vente.local) && conditions.conditions_vente.local.length
+                                ? conditions.conditions_vente.local.join('<br>')
+                                : 'Non spécifié'
+                        }</td>
                     </tr>
                     <tr>
                         <th>Recouvrement de dette jugement</th>
@@ -2985,11 +3043,11 @@ $(document).ready(function() {
                 <div class="section-title">SOURCES D'INVESTIGATION</div>
                 <table>
                     <tbody>
-                        <tr><td>Services judiciaires</td></tr>
-                        <tr><td>Chambres de commerce et d'industrie</td></tr>
-                        <tr><td>Banques</td></tr>
-                        <tr><td>Groupe de sociétés</td></tr>
-                        <tr><td>La société faisant l'objet de l'enquête</td></tr>
+                        <tr><td><strong>Services judiciaires</strong></td></tr>
+                        <tr><td><strong>Chambres de commerce et d'industrie</strong></td></tr>
+                        <tr><td><strong>Banques</strong></td></tr>
+                        <tr><td><strong>Groupe de sociétés</strong></td></tr>
+                        <tr><td><strong>La société faisant l'objet de l'enquête</strong></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -3005,13 +3063,7 @@ $(document).ready(function() {
                 <table>
                     <tr>
                         <th>Évaluation globale</th>
-                        <td style="background-color: ${getCouleurConclusion(conclusion.couleur_commentaire)}; padding: 10px; text-align: center; font-weight: bold;">
-                            ${conclusion.couleur_commentaire}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Commentaire final</th>
-                        <td class="warning">${conclusion.commentaire}</td>
+                        <td style="background-color: ${getCouleurConclusion(conclusion.couleur_commentaire)};">${conclusion.commentaire}<br><br></td>
                     </tr>
                 </table>
             </div>
