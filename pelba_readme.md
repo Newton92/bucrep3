@@ -102,3 +102,5 @@ Documentation technique – **PELBA**
 [ ./deploy.sh ]
 [ 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 ]
 [ 107.172.88.238 - 1651221@$Ng - yannick ]
+[ git remote set-url origin git@github.com:yannickaboh/bucrep-api.git ]
+

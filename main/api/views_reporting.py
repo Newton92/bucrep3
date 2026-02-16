@@ -72,7 +72,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status  # Ajoutez cette importation
-from main.models import Annee, Devise, Commande, Acheteur, CodeNaceAcheteur  # Ajoutez Acheteur ici
+from main.models import Annee, Devise, Commande, Acheteur, CodeNaceAcheteur, TelephoneAcheteur, ProprieteEtActif  # Ajoutez Acheteur ici
 from main.serializers_reporting import AnneeSerializer, DeviseSerializer, CommandeSerializer, RapportSolvabiliteSerializer
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -144,6 +144,35 @@ def _to_json_safe(value):
     if hasattr(value, "_meta"):  # Objet Django (Model)
         return str(value)
     return str(value)
+
+
+def _safe_nested_attr(obj, attrs, default="Non spécifié"):
+    """Lit un attribut imbriqué de manière sûre (None-safe)."""
+    current = obj
+    for attr in attrs:
+        if current is None:
+            return default
+        current = getattr(current, attr, None)
+    return current if current not in (None, "") else default
+
+
+def _normalize_type_bilan(value, default="classique"):
+    """Normalise le type de bilan vers les clés attendues côté reporting."""
+    if not value:
+        return default
+
+    normalized = str(value).strip().lower()
+    mapping = {
+        "classique": "classique",
+        "bancaire": "bancaire",
+        "anglais": "anglais",
+        "syscohada": "syscohada",
+        "ifrs": "ifrs",
+        "ifrs cobac": "ifrs",
+        "irfs_cobac": "ifrs",
+        "irfs cobac": "ifrs",
+    }
+    return mapping.get(normalized, default)
 
 
 @api_view(['GET'])
@@ -742,6 +771,18 @@ def generer_rapport_solvabilite(request):
             compte_financier = CompteFinancier.objects.get(acheteur=acheteur)
         except CompteFinancier.DoesNotExist:
             pass
+
+        # Résolution métier: devise/type_bilan viennent d'abord de la requête, sinon de CompteFinancier.
+        requested_devise = (data.get("devise") or "").strip().upper()
+        financial_devise = (getattr(compte_financier, "devise", None) or "").strip().upper()
+        effective_devise = requested_devise or financial_devise or "XAF"
+
+        requested_type_bilan = data.get("type_bilan")
+        financial_type_bilan = getattr(compte_financier, "type_bilan", None)
+        effective_type_bilan = _normalize_type_bilan(requested_type_bilan or financial_type_bilan, default="classique")
+
+        data["devise"] = effective_devise
+        data["type_bilan"] = effective_type_bilan
             
             
         # Recuperation de l'historique des operations de l'acheteur
@@ -1081,17 +1122,17 @@ def generer_rapport_solvabilite(request):
                     "code_postale_adresse": commande.code_postale_adresse if hasattr(commande, 'code_postale_adresse') else "Non spécifié",
                     "telephone": commande.telephone if hasattr(commande, 'telephone') else "Non spécifié",
                     "email": commande.email if hasattr(commande, 'email') else "Non spécifié",
-                    "pays": commande.pays.nom if hasattr(commande, 'pays') else "Non spécifié",
-                    "ville": commande.ville.nom if hasattr(commande, 'ville') else "Non spécifié",
+                    "pays": _safe_nested_attr(commande, ["pays", "nom"]),
+                    "ville": _safe_nested_attr(commande, ["ville", "nom"]),
                 },
                 "acremac_info": {
                     "nom": acheteur.nom if hasattr(acheteur, 'nom') else "Non spécifié",
                     "sigle": acheteur.sigle if hasattr(acheteur, 'sigle') else "Non spécifié",
                     "email": acheteur.email if hasattr(acheteur, 'email') else "Non spécifié",
                     "boite_postale": acheteur.boite_postale if hasattr(acheteur, 'boite_postale') else "Non spécifié",
-                    "pays": acheteur.pays.nom if hasattr(acheteur, 'pays') else "Non spécifié",
-                    "province": acheteur.province.nom if hasattr(acheteur, 'province') else "Non spécifié",
-                    "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
+                    "pays": _safe_nested_attr(acheteur, ["pays", "nom"]),
+                    "province": _safe_nested_attr(acheteur, ["province", "nom"]),
+                    "ville": _safe_nested_attr(acheteur, ["ville", "nom"]),
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
                     "telephone": telephone.telephone if hasattr(telephone, 'telephone') else "Non spécifié",
                     "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
@@ -1110,9 +1151,9 @@ def generer_rapport_solvabilite(request):
                 "site_internet": acheteur.site_internet if hasattr(acheteur, 'site_internet') else "Non spécifié",
                 "description": acheteur.description if hasattr(acheteur, 'description') else "Non spécifié",
                 "commentaire": acheteur.commentaire if hasattr(acheteur, 'commentaire') else "Non spécifié",
-                "categorie_entreprise": acheteur.categorie_entreprise.libelle if hasattr(acheteur, 'categorie_entreprise') else "Non spécifié",
-                "statut_entreprise": acheteur.statut_entreprise.libelle if hasattr(acheteur, 'statut_entreprise') else "Non spécifié",
-                "forme_juridique": acheteur.forme_juridique.libelle if hasattr(acheteur, 'forme_juridique') else "Non spécifié",
+                "categorie_entreprise": _safe_nested_attr(acheteur, ["categorie_entreprise", "libelle"]),
+                "statut_entreprise": _safe_nested_attr(acheteur, ["statut_entreprise", "libelle"]),
+                "forme_juridique": _safe_nested_attr(acheteur, ["forme_juridique", "libelle"]),
                 "activite_principale": acheteur.activite_principale if hasattr(acheteur, 'activite_principale') else "Non spécifié",
                 "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
             },
@@ -1166,7 +1207,7 @@ def generer_rapport_solvabilite(request):
                     if donnees_enregistrement and donnees_enregistrement.forme_juridique
                     else donnees_enregistrement.forme_juridique if donnees_enregistrement else "Non spécifié"
                 ),
-                "acheteur": donnees_enregistrement.acheteur.nom if donnees_enregistrement.acheteur.nom else "Non spécifié",
+                "acheteur": _safe_nested_attr(donnees_enregistrement, ["acheteur", "nom"]),
                 "numero_registre_commerce": donnees_enregistrement.numero_registre_commerce if donnees_enregistrement and donnees_enregistrement.numero_registre_commerce else "Non spécifié",
                 "numero_fiscale": donnees_enregistrement.numero_fiscale if donnees_enregistrement and donnees_enregistrement.numero_fiscale else "Non spécifié",
                 "statut_registre": (

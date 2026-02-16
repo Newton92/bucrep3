@@ -455,10 +455,26 @@ def dash_root(request):
         messages.error(request, "Erreur lors de la génération des tokens.")
         return redirect('index')
     
-    # Recuperer les donnees
+    # Récupérer le pays sélectionné (session -> profil -> premier pays dashboard)
+    selected_pays_id = request.session.get("selected_pays_id")
+    if not selected_pays_id and request.user.pays:
+        selected_pays_id = request.user.pays.id
+        request.session["selected_pays_id"] = selected_pays_id
+
+    if not selected_pays_id:
+        default_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom").first()
+        selected_pays_id = default_pays.id if default_pays else None
+        if selected_pays_id:
+            request.session["selected_pays_id"] = selected_pays_id
+
+    # Recuperer les donnees filtrées par pays si disponible
     commandes = Commande.objects.all()
     acheteurs = Acheteur.objects.all()
     alertes = Warning.objects.all()
+    if selected_pays_id:
+        commandes = commandes.filter(pays_id=selected_pays_id)
+        acheteurs = acheteurs.filter(pays_id=selected_pays_id)
+        alertes = alertes.filter(acheteurs__pays_id=selected_pays_id).distinct()
 
     context = {
         "dash_active": "active",

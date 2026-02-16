@@ -64,7 +64,7 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
         choices=[('fr', 'Français'), ('en', 'English')],
         required=True
     )
-    devise = serializers.CharField(required=True)
+    devise = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     type_bilan = serializers.ChoiceField(
         choices=[
             ('classique', 'Classique'),
@@ -74,7 +74,9 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
             ('ifrs', 'IFRS COBAC'),  # <-- Correction ici
             ('irfs_cobac', 'IFRS COBAC'),  # OU gardez cette valeur
         ],
-        required=True
+        required=False,
+        allow_blank=True,
+        allow_null=True,
     )
     format_rapport = serializers.ChoiceField(
         choices=[
@@ -83,7 +85,9 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
             ('xml', 'XML'),
             ('json', 'JSON')
         ],
-        required=True
+        required=False,
+        allow_blank=True,
+        allow_null=True,
     )
     acheteur_id = serializers.IntegerField(required=True)  # <-- Ajoutez ou vérifiez cette ligne
     
@@ -104,5 +108,13 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
         
         if data.get('inclure_commande') == 'non':
             data['commande_id'] = None
+
+        # Prévisualisation: ces champs peuvent être omis et seront résolus côté vue.
+        if not data.get('devise'):
+            data['devise'] = None
+        if not data.get('type_bilan'):
+            data['type_bilan'] = None
+        if not data.get('format_rapport'):
+            data['format_rapport'] = None
 
         return data

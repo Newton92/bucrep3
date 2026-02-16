@@ -143,8 +143,8 @@ class PaysCarteView(APIView):
             }
             
             
-            # Récupérer tous les pays
-            pays = Pays.objects.all()
+            # Récupérer uniquement les pays affichés au dashboard
+            pays = Pays.objects.filter(afficher_au_dashboard=True)
             
             if not pays.exists():
                 logger.warning("Aucun pays trouvé dans la base de données")
@@ -165,6 +165,7 @@ class PaysCarteView(APIView):
                     "code": p.code,  # Code original
                     "iso_code": iso_code,  # Code ISO A2
                     "is_active": p.is_active if hasattr(p, 'is_active') else True,
+                    "afficher_au_dashboard": p.afficher_au_dashboard if hasattr(p, "afficher_au_dashboard") else False,
                     "created_at": p.created_at.isoformat() if hasattr(p, 'created_at') and p.created_at else None,
                     "updated_at": p.updated_at.isoformat() if hasattr(p, 'updated_at') and p.updated_at else None,
                     "capitale": capitale_info.get("capitale", ""),

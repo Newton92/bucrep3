@@ -1239,7 +1239,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (inactiveEl) inactiveEl.textContent = 0;
                     
                     // Créer un Set des codes ISO A2 des pays actifs
-                    activeCountriesSet = new Set(pays.map(p => p.code));
+                    activeCountriesSet = new Set(
+                        pays.map((p) => codeMappingToA2[p.code] || p.code)
+                    );
                     
                     // Charger la carte après avoir les données
                     loadGeoJson();
@@ -1261,7 +1263,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     console.log("🧭 GeoJSON chargé avec", geojson.features.length, "pays");
                     
                     // Ajouter les polygones des pays
-                    L.geoJSON(geojson, {
+                    const geojsonLayer = L.geoJSON(geojson, {
                         style: function(feature) {
                             const isoA3 = feature.id;
                             const isoA2 = codeMappingToA2[isoA3];
@@ -1343,6 +1345,11 @@ document.addEventListener("DOMContentLoaded", function () {
                             popupContent += `</div>`;
                             
                             layer.bindPopup(popupContent);
+                            layer.bindTooltip(popupContent, {
+                                direction: 'top',
+                                sticky: true,
+                                opacity: 0.95
+                            });
                             
                             // Effet au survol
                             layer.on('mouseover', function() {
@@ -1351,10 +1358,12 @@ document.addEventListener("DOMContentLoaded", function () {
                                     color: paysInfo ? '#0d80be' : '#6c757d',
                                     fillOpacity: paysInfo ? 0.8 : 0.4
                                 });
+                                this.openTooltip();
                             });
                             
                             layer.on('mouseout', function() {
                                 geojsonLayer.resetStyle(this);
+                                this.closeTooltip();
                             });
                         }
                     }).addTo(map);
@@ -1461,55 +1470,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 Erreur de chargement de la carte
             </div>
         `;
-    }
-});
-</script>
-
-<script>
-// Bouton d'export harmonisé
-document.addEventListener("DOMContentLoaded", function() {
-    const exportBtn = document.getElementById('exportCountries');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', function() {
-            if (window.paysData && window.paysData.length > 0) {
-                const dataStr = JSON.stringify(window.paysData, null, 2);
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                const exportFileDefaultName = 'pays-actifs-' + new Date().toISOString().slice(0,10) + '.json';
-                
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
-                
-                // Notification visuelle harmonisée
-                const alert = document.createElement('div');
-                alert.className = 'alert alert-success position-fixed top-0 end-0 m-3';
-                alert.style.zIndex = '9999';
-                alert.style.border = '1px solid rgba(25, 135, 84, 0.2)';
-                alert.style.boxShadow = 'var(--shadow-light)';
-                alert.innerHTML = `
-                    <i class="bi bi-check-circle me-2"></i>
-                    Données exportées avec succès
-                `;
-                document.body.appendChild(alert);
-                
-                setTimeout(() => alert.remove(), 3000);
-            } else {
-                // Notification d'erreur harmonisée
-                const alert = document.createElement('div');
-                alert.className = 'alert alert-danger position-fixed top-0 end-0 m-3';
-                alert.style.zIndex = '9999';
-                alert.style.border = '1px solid rgba(220, 53, 69, 0.2)';
-                alert.style.boxShadow = 'var(--shadow-light)';
-                alert.innerHTML = `
-                    <i class="bi bi-exclamation-circle me-2"></i>
-                    Aucune donnée disponible pour l'export
-                `;
-                document.body.appendChild(alert);
-                
-                setTimeout(() => alert.remove(), 3000);
-            }
-        });
     }
 });
 </script>

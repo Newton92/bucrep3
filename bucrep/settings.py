@@ -41,14 +41,14 @@ env = environ.Env()
 if os.path.exists(os.path.join(BASE_DIR, ".env")):
     # Production - utilise .env à la racine
     environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-    print("📁 Chargement du fichier .env (production)")
+    print("Chargement du fichier .env (production)")
 elif os.path.exists(os.path.join(BASE_DIR, "localenv", ".env")):
     # Développement - utilise localenv/.env
     environ.Env.read_env(os.path.join(BASE_DIR, "localenv", ".env"))
-    print("📁 Chargement du fichier localenv/.env (développement)")
+    print("Chargement du fichier localenv/.env (developpement)")
 else:
     # Fallback - utiliser les variables d'environnement système
-    print("⚠️  Aucun fichier .env trouvé, utilisation des variables système")
+    print("Aucun fichier .env trouve, utilisation des variables systeme")
 
 
 # Quick-start development settings - unsuitable for production

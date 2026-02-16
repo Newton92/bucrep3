@@ -743,7 +743,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
             <span>Paramètres du rapport</span>
         </div>
         <div class="premium-card-body">
-            <form id="rapportSolvabiliteForm" class="premium-form">
+            <form id="rapportSolvabiliteForm" class="premium-form" novalidate>
                 {% csrf_token %}
                 
                 <!-- Sélecteurs d'années -->
@@ -870,11 +870,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">
-                                <i class="fas fa-coins"></i>Devise
+                                <i class="fas fa-coins"></i>Devise (facultatif)
                             </label>
-                            <select class="form-select" id="devise" name="devise" required>
+                            <select class="form-select" id="devise" name="devise">
                                 <option value="" disabled selected>Choisir la devise</option>
                             </select>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Champ facultatif: si vide, la devise est récupérée automatiquement depuis les comptes financiers.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -883,9 +887,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">
-                                <i class="fas fa-balance-scale"></i>Type de bilan
+                                <i class="fas fa-balance-scale"></i>Type de bilan (facultatif)
                             </label>
-                            <select class="form-select" id="type_bilan" name="type_bilan" required>
+                            <select class="form-select" id="type_bilan" name="type_bilan">
                                 <option value="" disabled selected>Choisir le type de bilan</option>
                                 <option value="classique">Classique</option>
                                 <option value="bancaire">Bancaire</option>
@@ -893,20 +897,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                                 <option value="syscohada">Syscohada</option>
                                 <option value="ifrs">Ifrs Cobac</option>
                             </select>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Champ facultatif: si vide, le type de bilan est déduit automatiquement.
+                            </small>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">
-                                <i class="fas fa-file-export"></i>Format du rapport
+                                <i class="fas fa-file-export"></i>Format du rapport (facultatif)
                             </label>
-                            <select class="form-select" id="format_rapport" name="format_rapport" required>
+                            <select class="form-select" id="format_rapport" name="format_rapport">
                                 <option value="" disabled selected>Choisir le format</option>
                                 <option value="pdf">PDF - Document portable</option>
                                 <option value="html">HTML - Page web</option>
                                 <option value="xml">XML - Données structurées</option>
                                 <option value="json">JSON - Format d'échange</option>
                             </select>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Champ facultatif pour la prévisualisation: le format est choisi au moment de l'export.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -1295,6 +1307,12 @@ $(document).ready(function() {
             e.preventDefault();
             generateRapport();
         });
+
+        // Filet de sécurité: certains navigateurs bloquent silencieusement le submit natif.
+        $('#btnGenererRapport').on('click', function(e) {
+            e.preventDefault();
+            generateRapport();
+        });
         
         // Export buttons
         $(document).on('click', '.export-btn', function() {
@@ -1317,9 +1335,9 @@ $(document).ready(function() {
             date_debut: $('#date_debut').val(),
             date_fin: $('#date_fin').val(),
             langue: $('#langue').val(),
-            devise: $('#devise').val(),
-            type_bilan: $('#type_bilan').val(),
-            format_rapport: $('#format_rapport').val(),
+            devise: $('#devise').val() || null,
+            type_bilan: $('#type_bilan').val() || null,
+            format_rapport: $('#format_rapport').val() || null,
             acheteur_id: parseInt(ACHETEUR_ID)
         };
         
@@ -1393,7 +1411,7 @@ $(document).ready(function() {
     }
     
     function validateFormData(data) {
-        const required = ['annee_n', 'annee_n1', 'annee_n2', 'langue', 'devise', 'type_bilan', 'format_rapport'];
+        const required = ['annee_n', 'annee_n1', 'annee_n2', 'langue'];
         
         for (let field of required) {
             if (!data[field]) {
