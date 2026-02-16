@@ -342,6 +342,9 @@ class CustomLoginView(APIView):
                 f"Pays sélectionné pour user_id={user.id} : {selected_pays_id}"
             )
 
+            if selected_pays_id:
+                request.session["selected_pays_id"] = selected_pays_id
+
             # Cookies sécurisés
             response = Response({"message": _("Authentification réussie.")})
 
@@ -724,7 +727,7 @@ class PaysListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        pays_list = Pays.objects.all()
+        pays_list = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom")
         serializer = PaysSerializer(pays_list, many=True)
         return Response(serializer.data)
     
@@ -742,7 +745,7 @@ class UpdateSelectedPaysView(APIView):
             )
 
         try:
-            pays = Pays.objects.get(id=pays_id)
+            pays = Pays.objects.get(id=pays_id, afficher_au_dashboard=True)
             request.session['selected_pays_id'] = pays.id
             return Response(
                 {
@@ -758,7 +761,21 @@ class UpdateSelectedPaysView(APIView):
             )
             
     def get(self, request, *args, **kwargs):
-        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
+        selected_pays_id = request.session.get("selected_pays_id")
+
+        if not selected_pays_id and request.user.pays:
+            selected_pays_id = request.user.pays.id
+            request.session["selected_pays_id"] = selected_pays_id
+
+        if selected_pays_id:
+            exists = Pays.objects.filter(
+                id=selected_pays_id, afficher_au_dashboard=True
+            ).exists()
+            if not exists:
+                selected_pays_id = request.user.pays.id if request.user.pays else None
+                if selected_pays_id:
+                    request.session["selected_pays_id"] = selected_pays_id
+
         return Response(
             {"selected_pays_id": selected_pays_id},
             status=status.HTTP_200_OK

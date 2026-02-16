@@ -7884,56 +7884,252 @@ class DeleteAcheteurResultatAnglaisView(APIView):
         )
 
 
+
 class ListAcheteurActifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
-        request.query_params.get("search", "")
+        search_term = request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
-        capital_souscrit_non_app_min = request.query_params.get(
-            "capital_souscrit_non_app_min", ""
-        )
-        capital_souscrit_non_app_max = request.query_params.get(
-            "capital_souscrit_non_app_max", ""
-        )
+        
+        # Numeric range filters
+        capital_souscrit_non_app_min = request.query_params.get("capital_souscrit_non_app_min", "")
+        capital_souscrit_non_app_max = request.query_params.get("capital_souscrit_non_app_max", "")
+        
+        frais_recherche_developpement_min = request.query_params.get("frais_recherche_developpement_min", "")
+        frais_recherche_developpement_max = request.query_params.get("frais_recherche_developpement_max", "")
+        
+        brevet_licence_logiciels_min = request.query_params.get("brevet_licence_logiciels_min", "")
+        brevet_licence_logiciels_max = request.query_params.get("brevet_licence_logiciels_max", "")
+        
+        fonds_commercial_min = request.query_params.get("fonds_commercial_min", "")
+        fonds_commercial_max = request.query_params.get("fonds_commercial_max", "")
+        
+        autres_immobilisations_incorporelles_min = request.query_params.get("autres_immobilisations_incorporelles_min", "")
+        autres_immobilisations_incorporelles_max = request.query_params.get("autres_immobilisations_incorporelles_max", "")
+        
+        terrains_min = request.query_params.get("terrains_min", "")
+        terrains_max = request.query_params.get("terrains_max", "")
+        
+        constructions_min = request.query_params.get("constructions_min", "")
+        constructions_max = request.query_params.get("constructions_max", "")
+        
+        materiels_et_outils_min = request.query_params.get("materiels_et_outils_min", "")
+        materiels_et_outils_max = request.query_params.get("materiels_et_outils_max", "")
+        
+        materiel_de_transport_min = request.query_params.get("materiel_de_transport_min", "")
+        materiel_de_transport_max = request.query_params.get("materiel_de_transport_max", "")
+        
+        autres_immos_corp_min = request.query_params.get("autres_immos_corp_min", "")
+        autres_immos_corp_max = request.query_params.get("autres_immos_corp_max", "")
+        
+        immos_en_cours_min = request.query_params.get("immos_en_cours_min", "")
+        immos_en_cours_max = request.query_params.get("immos_en_cours_max", "")
+        
+        avances_et_acptes_min = request.query_params.get("avances_et_acptes_min", "")
+        avances_et_acptes_max = request.query_params.get("avances_et_acptes_max", "")
+        
+        participations_min = request.query_params.get("participations_min", "")
+        participations_max = request.query_params.get("participations_max", "")
+        
+        prets_min = request.query_params.get("prets_min", "")
+        prets_max = request.query_params.get("prets_max", "")
+        
+        autres_min = request.query_params.get("autres_min", "")
+        autres_max = request.query_params.get("autres_max", "")
+        
+        stocks_mp_min = request.query_params.get("stocks_mp_min", "")
+        stocks_mp_max = request.query_params.get("stocks_mp_max", "")
+        
+        stocks_encours_mp_min = request.query_params.get("stocks_encours_mp_min", "")
+        stocks_encours_mp_max = request.query_params.get("stocks_encours_mp_max", "")
+        
+        stocks_pf_min = request.query_params.get("stocks_pf_min", "")
+        stocks_pf_max = request.query_params.get("stocks_pf_max", "")
+        
+        stocks_encours_pf_min = request.query_params.get("stocks_encours_pf_min", "")
+        stocks_encours_pf_max = request.query_params.get("stocks_encours_pf_max", "")
+        
+        stocks_encours_services_min = request.query_params.get("stocks_encours_services_min", "")
+        stocks_encours_services_max = request.query_params.get("stocks_encours_services_max", "")
+        
+        stocks_mses_min = request.query_params.get("stocks_mses_min", "")
+        stocks_mses_max = request.query_params.get("stocks_mses_max", "")
+        
+        avances_acptes_verses_min = request.query_params.get("avances_acptes_verses_min", "")
+        avances_acptes_verses_max = request.query_params.get("avances_acptes_verses_max", "")
+        
+        clients_et_cptes_rattaches_min = request.query_params.get("clients_et_cptes_rattaches_min", "")
+        clients_et_cptes_rattaches_max = request.query_params.get("clients_et_cptes_rattaches_max", "")
+        
+        autres_creances_min = request.query_params.get("autres_creances_min", "")
+        autres_creances_max = request.query_params.get("autres_creances_max", "")
+        
+        valeurs_a_encaisser_min = request.query_params.get("valeurs_a_encaisser_min", "")
+        valeurs_a_encaisser_max = request.query_params.get("valeurs_a_encaisser_max", "")
+        
+        banques_cheques_postaux_caisse_min = request.query_params.get("banques_cheques_postaux_caisse_min", "")
+        banques_cheques_postaux_caisse_max = request.query_params.get("banques_cheques_postaux_caisse_max", "")
+        
+        cca_min = request.query_params.get("cca_min", "")
+        cca_max = request.query_params.get("cca_max", "")
+        
+        charges_a_repartir_et_frais_etablissement_min = request.query_params.get("charges_a_repartir_et_frais_etablissement_min", "")
+        charges_a_repartir_et_frais_etablissement_max = request.query_params.get("charges_a_repartir_et_frais_etablissement_max", "")
+        
+        primes_de_rbt_min = request.query_params.get("primes_de_rbt_min", "")
+        primes_de_rbt_max = request.query_params.get("primes_de_rbt_max", "")
+        
+        eca_min = request.query_params.get("eca_min", "")
+        eca_max = request.query_params.get("eca_max", "")
+        
+        eene_min = request.query_params.get("eene_min", "")
+        eene_max = request.query_params.get("eene_max", "")
+        
+        effectif_min = request.query_params.get("effectif_min", "")
+        effectif_max = request.query_params.get("effectif_max", "")
+        
+        amortissements_min = request.query_params.get("amortissements_min", "")
+        amortissements_max = request.query_params.get("amortissements_max", "")
+        
+        provisions_stocks_min = request.query_params.get("provisions_stocks_min", "")
+        provisions_stocks_max = request.query_params.get("provisions_stocks_max", "")
+        
+        provisions_creances_min = request.query_params.get("provisions_creances_min", "")
+        provisions_creances_max = request.query_params.get("provisions_creances_max", "")
+        
+        provisions_vmp_min = request.query_params.get("provisions_vmp_min", "")
+        provisions_vmp_max = request.query_params.get("provisions_vmp_max", "")
 
+        # Convert string parameters to Decimal where needed
+        range_filters = {
+            'capital_souscrit_non_app': (capital_souscrit_non_app_min, capital_souscrit_non_app_max),
+            'frais_recherche_developpement': (frais_recherche_developpement_min, frais_recherche_developpement_max),
+            'brevet_licence_logiciels': (brevet_licence_logiciels_min, brevet_licence_logiciels_max),
+            'fonds_commercial': (fonds_commercial_min, fonds_commercial_max),
+            'autres_immobilisations_incorporelles': (autres_immobilisations_incorporelles_min, autres_immobilisations_incorporelles_max),
+            'terrains': (terrains_min, terrains_max),
+            'constructions': (constructions_min, constructions_max),
+            'materiels_et_outils': (materiels_et_outils_min, materiels_et_outils_max),
+            'materiel_de_transport': (materiel_de_transport_min, materiel_de_transport_max),
+            'autres_immos_corp': (autres_immos_corp_min, autres_immos_corp_max),
+            'immos_en_cours': (immos_en_cours_min, immos_en_cours_max),
+            'avances_et_acptes': (avances_et_acptes_min, avances_et_acptes_max),
+            'participations': (participations_min, participations_max),
+            'prets': (prets_min, prets_max),
+            'autres': (autres_min, autres_max),
+            'stocks_mp': (stocks_mp_min, stocks_mp_max),
+            'stocks_encours_mp': (stocks_encours_mp_min, stocks_encours_mp_max),
+            'stocks_pf': (stocks_pf_min, stocks_pf_max),
+            'stocks_encours_pf': (stocks_encours_pf_min, stocks_encours_pf_max),
+            'stocks_encours_services': (stocks_encours_services_min, stocks_encours_services_max),
+            'stocks_mses': (stocks_mses_min, stocks_mses_max),
+            'avances_acptes_verses': (avances_acptes_verses_min, avances_acptes_verses_max),
+            'clients_et_cptes_rattaches': (clients_et_cptes_rattaches_min, clients_et_cptes_rattaches_max),
+            'autres_creances': (autres_creances_min, autres_creances_max),
+            'valeurs_a_encaisser': (valeurs_a_encaisser_min, valeurs_a_encaisser_max),
+            'banques_cheques_postaux_caisse': (banques_cheques_postaux_caisse_min, banques_cheques_postaux_caisse_max),
+            'cca': (cca_min, cca_max),
+            'charges_a_repartir_et_frais_etablissement': (charges_a_repartir_et_frais_etablissement_min, charges_a_repartir_et_frais_etablissement_max),
+            'primes_de_rbt': (primes_de_rbt_min, primes_de_rbt_max),
+            'eca': (eca_min, eca_max),
+            'eene': (eene_min, eene_max),
+            'effectif': (effectif_min, effectif_max),
+            'amortissements': (amortissements_min, amortissements_max),
+            'provisions_stocks': (provisions_stocks_min, provisions_stocks_max),
+            'provisions_creances': (provisions_creances_min, provisions_creances_max),
+            'provisions_vmp': (provisions_vmp_min, provisions_vmp_max),
+        }
+
+        range_values = {}
+        for field_name, (min_val, max_val) in range_filters.items():
+            try:
+                range_values[f'{field_name}_min'] = Decimal(min_val) if min_val else None
+                range_values[f'{field_name}_max'] = Decimal(max_val) if max_val else None
+            except InvalidOperation:
+                return Response(
+                    {f"error": f"Les valeurs de {field_name}_min et {field_name}_max doivent être des nombres décimaux valides."},
+                    status=400,
+                )
+
+        # Start with filtering by acheteur_id
+        actif_list = ActifC.objects.filter(acheteur_id=acheteur_id)
+        
+        # Apply year filter if provided
+        if annee:
+            actif_list = actif_list.filter(annee__annee__icontains=annee)
+        
+        # Apply search filter if provided
+        if search_term:
+            actif_list = actif_list.filter(
+                Q(capital_souscrit_non_app__icontains=search_term) |
+                Q(frais_recherche_developpement__icontains=search_term) |
+                Q(brevet_licence_logiciels__icontains=search_term) |
+                Q(fonds_commercial__icontains=search_term) |
+                Q(autres_immobilisations_incorporelles__icontains=search_term) |
+                Q(terrains__icontains=search_term) |
+                Q(constructions__icontains=search_term) |
+                Q(materiels_et_outils__icontains=search_term) |
+                Q(materiel_de_transport__icontains=search_term) |
+                Q(autres_immos_corp__icontains=search_term) |
+                Q(immos_en_cours__icontains=search_term) |
+                Q(avances_et_acptes__icontains=search_term) |
+                Q(participations__icontains=search_term) |
+                Q(prets__icontains=search_term) |
+                Q(autres__icontains=search_term) |
+                Q(stocks_mp__icontains=search_term) |
+                Q(stocks_encours_mp__icontains=search_term) |
+                Q(stocks_pf__icontains=search_term) |
+                Q(stocks_encours_pf__icontains=search_term) |
+                Q(stocks_encours_services__icontains=search_term) |
+                Q(stocks_mses__icontains=search_term) |
+                Q(avances_acptes_verses__icontains=search_term) |
+                Q(clients_et_cptes_rattaches__icontains=search_term) |
+                Q(autres_creances__icontains=search_term) |
+                Q(valeurs_a_encaisser__icontains=search_term) |
+                Q(banques_cheques_postaux_caisse__icontains=search_term) |
+                Q(cca__icontains=search_term) |
+                Q(charges_a_repartir_et_frais_etablissement__icontains=search_term) |
+                Q(primes_de_rbt__icontains=search_term) |
+                Q(eca__icontains=search_term) |
+                Q(eene__icontains=search_term) |
+                Q(effectif__icontains=search_term) |
+                Q(amortissements__icontains=search_term) |
+                Q(provisions_stocks__icontains=search_term) |
+                Q(provisions_creances__icontains=search_term) |
+                Q(provisions_vmp__icontains=search_term)
+            )
+        
+        # Apply numeric range filters
+        for field_name, (min_val, max_val) in range_filters.items():
+            min_key = f'{field_name}_min'
+            max_key = f'{field_name}_max'
+            
+            if range_values[min_key] is not None:
+                actif_list = actif_list.filter(**{f"{field_name}__gte": range_values[min_key]})
+            if range_values[max_key] is not None:
+                actif_list = actif_list.filter(**{f"{field_name}__lte": range_values[max_key]})
+
+        # Order by most recent first
+        actif_list = actif_list.order_by("-created_at")
+
+        # Paginate results
+        paginator = Paginator(actif_list, 10)
+        
         try:
-            capital_souscrit_non_app_min = (
-                Decimal(capital_souscrit_non_app_min)
-                if capital_souscrit_non_app_min
-                else None
-            )
-            capital_souscrit_non_app_max = (
-                Decimal(capital_souscrit_non_app_max)
-                if capital_souscrit_non_app_max
-                else None
-            )
-        except Decimal.InvalidOperation:
+            actif_page = paginator.get_page(page_number)
+        except Exception:
             return Response(
-                {
-                    "error": "Les valeurs de capital_souscrit_non_app_min et capital_souscrit_non_app_max doivent être des nombres décimaux valides."
-                },
+                {"error": "Numéro de page invalide."},
                 status=400,
             )
-
-        actif_list = ActifC.objects.filter(annee__annee__icontains=annee).order_by(
-            "-created_at"
-        )
-
-        if capital_souscrit_non_app_min is not None:
-            actif_list = actif_list.filter(
-                capital_souscrit_non_app__gte=capital_souscrit_non_app_min
-            )
-
-        if capital_souscrit_non_app_max is not None:
-            actif_list = actif_list.filter(
-                capital_souscrit_non_app__lte=capital_souscrit_non_app_max
-            )
-
-        paginator = Paginator(actif_list, 10)
-        actif_page = paginator.get_page(page_number)
+        
         serializer = ActifCSerializer(actif_page, many=True)
+
+        # Calculate start and end indices for pagination info
+        start_index = (actif_page.number - 1) * paginator.per_page + 1 if actif_page else 0
+        end_index = min(actif_page.number * paginator.per_page, paginator.count) if actif_page else 0
 
         return Response(
             {
@@ -7942,6 +8138,8 @@ class ListAcheteurActifClassiqueView(APIView):
                 "total_pages": paginator.num_pages,
                 "next": actif_page.has_next(),
                 "previous": actif_page.has_previous(),
+                "start_index": start_index,
+                "end_index": end_index,
             }
         )
 
@@ -8015,7 +8213,12 @@ class SearchAcheteurActifClassiqueView(APIView):
 class AddAcheteurActifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Add acheteur to the data if not present
+        data = request.data.copy()
+        if 'acheteur' not in data:
+            data['acheteur'] = acheteur_id
+            
         serializer = AddActifCSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -8026,21 +8229,25 @@ class AddAcheteurActifClassiqueView(APIView):
 class EditAcheteurActifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
-        actif = ActifC.objects.filter(id=actif_id).first()
-        if not actif:
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Verify the passif belongs to the specified acheteur
+        passif = ActifC.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
+        if not passif:
             return Response(
-                {"detail": "Actif non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Passif non trouvé pour cet acheteur."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = GetActifCSerializer(actif)
         return Response(serializer.data)
 
-    def put(self, request, actif_id, *args, **kwargs):
-        actif = ActifC.objects.filter(id=actif_id).first()
-        if not actif:
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Verify the passif belongs to the specified acheteur
+        passif = ActifC.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
+        if not passif:
             return Response(
-                {"detail": "Actif non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Passif non trouvé pour cet acheteur."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditActifCSerializer(actif, data=request.data, partial=True)
@@ -8053,17 +8260,16 @@ class EditAcheteurActifClassiqueView(APIView):
 class DeleteAcheteurActifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         ids = request.data.get("ids", [])
-        print(ids)
         if not ids or not isinstance(ids, list):
             return Response(
                 {"error": "Une liste d'IDs est requise."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        actifs = ActifC.objects.filter(id__in=ids)
-        print(actifs)
+        # Verify the actifs belong to the specified acheteur
+        actifs = ActifC.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not actifs.exists():
             return Response(
                 {"error": "Aucun actif trouvé pour les IDs fournis."},
@@ -8077,44 +8283,181 @@ class DeleteAcheteurActifClassiqueView(APIView):
         )
 
 
+
+
+
+
+
 class ListAcheteurPassifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         page_number = request.query_params.get("page", 1)
-        request.query_params.get("search", "")
+        search_term = request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
+        
+        # Numeric range filters
         capital_social_min = request.query_params.get("capital_social_min", "")
         capital_social_max = request.query_params.get("capital_social_max", "")
+        
+        primes_min = request.query_params.get("primes_min", "")
+        primes_max = request.query_params.get("primes_max", "")
+        
+        ecarts_de_reevaluation_min = request.query_params.get("ecarts_de_reevaluation_min", "")
+        ecarts_de_reevaluation_max = request.query_params.get("ecarts_de_reevaluation_max", "")
+        
+        reserve_min = request.query_params.get("reserve_min", "")
+        reserve_max = request.query_params.get("reserve_max", "")
+        
+        report_a_nouveau_min = request.query_params.get("report_a_nouveau_min", "")
+        report_a_nouveau_max = request.query_params.get("report_a_nouveau_max", "")
+        
+        resultat_exercice_min = request.query_params.get("resultat_exercice_min", "")
+        resultat_exercice_max = request.query_params.get("resultat_exercice_max", "")
+        
+        subv_invest_min = request.query_params.get("subv_invest_min", "")
+        subv_invest_max = request.query_params.get("subv_invest_max", "")
+        
+        provision_regl_min = request.query_params.get("provision_regl_min", "")
+        provision_regl_max = request.query_params.get("provision_regl_max", "")
+        
+        emprunts_min = request.query_params.get("emprunts_min", "")
+        emprunts_max = request.query_params.get("emprunts_max", "")
+        
+        dette_credit_bail_contrat_assimile_min = request.query_params.get("dette_credit_bail_contrat_assimile_min", "")
+        dette_credit_bail_contrat_assimile_max = request.query_params.get("dette_credit_bail_contrat_assimile_max", "")
+        
+        dettes_financiere_diverses_min = request.query_params.get("dettes_financiere_diverses_min", "")
+        dettes_financiere_diverses_max = request.query_params.get("dettes_financiere_diverses_max", "")
+        
+        provision_financiere_risque_charge_min = request.query_params.get("provision_financiere_risque_charge_min", "")
+        provision_financiere_risque_charge_max = request.query_params.get("provision_financiere_risque_charge_max", "")
+        
+        dettes_fournisseurs_divers_min = request.query_params.get("dettes_fournisseurs_divers_min", "")
+        dettes_fournisseurs_divers_max = request.query_params.get("dettes_fournisseurs_divers_max", "")
+        
+        avance_et_acomptes_recu_min = request.query_params.get("avance_et_acomptes_recu_min", "")
+        avance_et_acomptes_recu_max = request.query_params.get("avance_et_acomptes_recu_max", "")
+        
+        dettes_min = request.query_params.get("dettes_min", "")
+        dettes_max = request.query_params.get("dettes_max", "")
+        
+        dettes_fiscales_sociales_min = request.query_params.get("dettes_fiscales_sociales_min", "")
+        dettes_fiscales_sociales_max = request.query_params.get("dettes_fiscales_sociales_max", "")
+        
+        autres_dettes_min = request.query_params.get("autres_dettes_min", "")
+        autres_dettes_max = request.query_params.get("autres_dettes_max", "")
+        
+        banques_credit_escompte_min = request.query_params.get("banques_credit_escompte_min", "")
+        banques_credit_escompte_max = request.query_params.get("banques_credit_escompte_max", "")
+        
+        banque_credit_caisse_min = request.query_params.get("banque_credit_caisse_min", "")
+        banque_credit_caisse_max = request.query_params.get("banque_credit_caisse_max", "")
+        
+        banques_decouvert_min = request.query_params.get("banques_decouvert_min", "")
+        banques_decouvert_max = request.query_params.get("banques_decouvert_max", "")
+        
+        ecart_conversion_passif_min = request.query_params.get("ecart_conversion_passif_min", "")
+        ecart_conversion_passif_max = request.query_params.get("ecart_conversion_passif_max", "")
 
+        # Convert string parameters to Decimal where needed
+        range_filters = {
+            'capital_social': (capital_social_min, capital_social_max),
+            'primes': (primes_min, primes_max),
+            'ecarts_de_reevaluation': (ecarts_de_reevaluation_min, ecarts_de_reevaluation_max),
+            'reserve': (reserve_min, reserve_max),
+            'report_a_nouveau': (report_a_nouveau_min, report_a_nouveau_max),
+            'resultat_exercice': (resultat_exercice_min, resultat_exercice_max),
+            'subv_invest': (subv_invest_min, subv_invest_max),
+            'provision_regl': (provision_regl_min, provision_regl_max),
+            'emprunts': (emprunts_min, emprunts_max),
+            'dette_credit_bail_contrat_assimile': (dette_credit_bail_contrat_assimile_min, dette_credit_bail_contrat_assimile_max),
+            'dettes_financiere_diverses': (dettes_financiere_diverses_min, dettes_financiere_diverses_max),
+            'provision_financiere_risque_charge': (provision_financiere_risque_charge_min, provision_financiere_risque_charge_max),
+            'dettes_fournisseurs_divers': (dettes_fournisseurs_divers_min, dettes_fournisseurs_divers_max),
+            'avance_et_acomptes_recu': (avance_et_acomptes_recu_min, avance_et_acomptes_recu_max),
+            'dettes': (dettes_min, dettes_max),
+            'dettes_fiscales_sociales': (dettes_fiscales_sociales_min, dettes_fiscales_sociales_max),
+            'autres_dettes': (autres_dettes_min, autres_dettes_max),
+            'banques_credit_escompte': (banques_credit_escompte_min, banques_credit_escompte_max),
+            'banque_credit_caisse': (banque_credit_caisse_min, banque_credit_caisse_max),
+            'banques_decouvert': (banques_decouvert_min, banques_decouvert_max),
+            'ecart_conversion_passif': (ecart_conversion_passif_min, ecart_conversion_passif_max),
+        }
+
+        range_values = {}
+        for field_name, (min_val, max_val) in range_filters.items():
+            try:
+                range_values[f'{field_name}_min'] = Decimal(min_val) if min_val else None
+                range_values[f'{field_name}_max'] = Decimal(max_val) if max_val else None
+            except InvalidOperation:
+                return Response(
+                    {f"error": f"Les valeurs de {field_name}_min et {field_name}_max doivent être des nombres décimaux valides."},
+                    status=400,
+                )
+
+        # Start with filtering by acheteur_id
+        passif_list = PassifC.objects.filter(acheteur_id=acheteur_id)
+        
+        # Apply year filter if provided
+        if annee:
+            passif_list = passif_list.filter(annee__annee__icontains=annee)
+        
+        # Apply search filter if provided
+        if search_term:
+            passif_list = passif_list.filter(
+                Q(capital_social__icontains=search_term) |
+                Q(primes__icontains=search_term) |
+                Q(ecarts_de_reevaluation__icontains=search_term) |
+                Q(reserve__icontains=search_term) |
+                Q(report_a_nouveau__icontains=search_term) |
+                Q(resultat_exercice__icontains=search_term) |
+                Q(subv_invest__icontains=search_term) |
+                Q(provision_regl__icontains=search_term) |
+                Q(emprunts__icontains=search_term) |
+                Q(dette_credit_bail_contrat_assimile__icontains=search_term) |
+                Q(dettes_financiere_diverses__icontains=search_term) |
+                Q(provision_financiere_risque_charge__icontains=search_term) |
+                Q(dettes_fournisseurs_divers__icontains=search_term) |
+                Q(avance_et_acomptes_recu__icontains=search_term) |
+                Q(dettes__icontains=search_term) |
+                Q(dettes_fiscales_sociales__icontains=search_term) |
+                Q(autres_dettes__icontains=search_term) |
+                Q(banques_credit_escompte__icontains=search_term) |
+                Q(banque_credit_caisse__icontains=search_term) |
+                Q(banques_decouvert__icontains=search_term) |
+                Q(ecart_conversion_passif__icontains=search_term)
+            )
+        
+        # Apply numeric range filters
+        for field_name, (min_val, max_val) in range_filters.items():
+            min_key = f'{field_name}_min'
+            max_key = f'{field_name}_max'
+            
+            if range_values[min_key] is not None:
+                passif_list = passif_list.filter(**{f"{field_name}__gte": range_values[min_key]})
+            if range_values[max_key] is not None:
+                passif_list = passif_list.filter(**{f"{field_name}__lte": range_values[max_key]})
+
+        # Order by most recent first
+        passif_list = passif_list.order_by("-created_at")
+
+        # Paginate results
+        paginator = Paginator(passif_list, 10)
+        
         try:
-            capital_social_min = (
-                Decimal(capital_social_min) if capital_social_min else None
-            )
-            capital_social_max = (
-                Decimal(capital_social_max) if capital_social_max else None
-            )
-        except Decimal.InvalidOperation:
+            passif_page = paginator.get_page(page_number)
+        except Exception:
             return Response(
-                {
-                    "error": "Les valeurs de capital_social_min et capital_social_max doivent être des nombres décimaux valides."
-                },
+                {"error": "Numéro de page invalide."},
                 status=400,
             )
-
-        passif_list = PassifC.objects.filter(annee__annee__icontains=annee).order_by(
-            "-created_at"
-        )
-
-        if capital_social_min is not None:
-            passif_list = passif_list.filter(capital_social__gte=capital_social_min)
-
-        if capital_social_max is not None:
-            passif_list = passif_list.filter(capital_social__lte=capital_social_max)
-
-        paginator = Paginator(passif_list, 10)
-        passif_page = paginator.get_page(page_number)
+        
         serializer = PassifCSerializer(passif_page, many=True)
+
+        # Calculate start and end indices for pagination info
+        start_index = (passif_page.number - 1) * paginator.per_page + 1 if passif_page else 0
+        end_index = min(passif_page.number * paginator.per_page, paginator.count) if passif_page else 0
 
         return Response(
             {
@@ -8123,6 +8466,8 @@ class ListAcheteurPassifClassiqueView(APIView):
                 "total_pages": paginator.num_pages,
                 "next": passif_page.has_next(),
                 "previous": passif_page.has_previous(),
+                "start_index": start_index,
+                "end_index": end_index,
             }
         )
 
@@ -8130,7 +8475,7 @@ class ListAcheteurPassifClassiqueView(APIView):
 class SearchAcheteurPassifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -8138,34 +8483,46 @@ class SearchAcheteurPassifClassiqueView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        passif_list = PassifC.objects.filter(
-            Q(capital_social__icontains=search_term)
-            | Q(primes__icontains=search_term)
-            | Q(ecarts_de_reevaluation__icontains=search_term)
-            | Q(reserve__icontains=search_term)
-            | Q(report_a_nouveau__icontains=search_term)
-            | Q(resultat_exercice__icontains=search_term)
-            | Q(subv_invest__icontains=search_term)
-            | Q(provision_regl__icontains=search_term)
-            | Q(emprunts__icontains=search_term)
-            | Q(dette_credit_bail_contrat_assimile__icontains=search_term)
-            | Q(dettes_financiere_diverses__icontains=search_term)
-            | Q(provision_financiere_risque_charge__icontains=search_term)
-            | Q(dettes_fournisseurs_divers__icontains=search_term)
-            | Q(avance_et_acomptes_recu__icontains=search_term)
-            | Q(dettes__icontains=search_term)
-            | Q(dettes_fiscales_sociales__icontains=search_term)
-            | Q(autres_dettes__icontains=search_term)
-            | Q(banques_credit_escompte__icontains=search_term)
-            | Q(banque_credit_caisse__icontains=search_term)
-            | Q(banques_decouvert__icontains=search_term)
-            | Q(ecart_conversion_passif__icontains=search_term)
+        # Filter by acheteur_id first, then by search term
+        passif_list = PassifC.objects.filter(acheteur_id=acheteur_id).filter(
+            Q(capital_social__icontains=search_term) |
+            Q(primes__icontains=search_term) |
+            Q(ecarts_de_reevaluation__icontains=search_term) |
+            Q(reserve__icontains=search_term) |
+            Q(report_a_nouveau__icontains=search_term) |
+            Q(resultat_exercice__icontains=search_term) |
+            Q(subv_invest__icontains=search_term) |
+            Q(provision_regl__icontains=search_term) |
+            Q(emprunts__icontains=search_term) |
+            Q(dette_credit_bail_contrat_assimile__icontains=search_term) |
+            Q(dettes_financiere_diverses__icontains=search_term) |
+            Q(provision_financiere_risque_charge__icontains=search_term) |
+            Q(dettes_fournisseurs_divers__icontains=search_term) |
+            Q(avance_et_acomptes_recu__icontains=search_term) |
+            Q(dettes__icontains=search_term) |
+            Q(dettes_fiscales_sociales__icontains=search_term) |
+            Q(autres_dettes__icontains=search_term) |
+            Q(banques_credit_escompte__icontains=search_term) |
+            Q(banque_credit_caisse__icontains=search_term) |
+            Q(banques_decouvert__icontains=search_term) |
+            Q(ecart_conversion_passif__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(passif_list, 10)
         page_number = request.query_params.get("page", 1)
-        passif_page = paginator.get_page(page_number)
+        
+        try:
+            passif_page = paginator.get_page(page_number)
+        except Exception:
+            return Response(
+                {"error": "Numéro de page invalide."},
+                status=400,
+            )
+            
         serializer = PassifCSerializer(passif_page, many=True)
+
+        start_index = (passif_page.number - 1) * paginator.per_page + 1 if passif_page else 0
+        end_index = min(passif_page.number * paginator.per_page, paginator.count) if passif_page else 0
 
         return Response(
             {
@@ -8174,6 +8531,8 @@ class SearchAcheteurPassifClassiqueView(APIView):
                 "total_pages": paginator.num_pages,
                 "next": passif_page.has_next(),
                 "previous": passif_page.has_previous(),
+                "start_index": start_index,
+                "end_index": end_index,
             }
         )
 
@@ -8181,8 +8540,13 @@ class SearchAcheteurPassifClassiqueView(APIView):
 class AddAcheteurPassifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddPassifCSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Add acheteur to the data if not present
+        data = request.data.copy()
+        if 'acheteur' not in data:
+            data['acheteur'] = acheteur_id
+            
+        serializer = AddPassifCSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -8192,21 +8556,25 @@ class AddAcheteurPassifClassiqueView(APIView):
 class EditAcheteurPassifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
-        passif = PassifC.objects.filter(id=passif_id).first()
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Verify the passif belongs to the specified acheteur
+        passif = PassifC.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
         if not passif:
             return Response(
-                {"detail": "Passif non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Passif non trouvé pour cet acheteur."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = GetPassifCSerializer(passif)
         return Response(serializer.data)
 
-    def put(self, request, passif_id, *args, **kwargs):
-        passif = PassifC.objects.filter(id=passif_id).first()
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Verify the passif belongs to the specified acheteur
+        passif = PassifC.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
         if not passif:
             return Response(
-                {"detail": "Passif non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Passif non trouvé pour cet acheteur."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditPassifCSerializer(passif, data=request.data, partial=True)
@@ -8219,7 +8587,7 @@ class EditAcheteurPassifClassiqueView(APIView):
 class DeleteAcheteurPassifClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -8227,7 +8595,8 @@ class DeleteAcheteurPassifClassiqueView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        passifs = PassifC.objects.filter(id__in=ids)
+        # Verify the passifs belong to the specified acheteur
+        passifs = PassifC.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not passifs.exists():
             return Response(
                 {"error": "Aucun passif trouvé pour les IDs fournis."},
@@ -8241,44 +8610,286 @@ class DeleteAcheteurPassifClassiqueView(APIView):
         )
 
 
+
+
+
+
+
 class ListAcheteurResultatClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         page_number = request.query_params.get("page", 1)
-        request.query_params.get("search", "")
+        search_term = request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
+        
+        # Numeric range filters for all fields
         vente_de_mdses_min = request.query_params.get("vente_de_mdses_min", "")
         vente_de_mdses_max = request.query_params.get("vente_de_mdses_max", "")
+        
+        ventes_de_produits_fabriques_min = request.query_params.get("ventes_de_produits_fabriques_min", "")
+        ventes_de_produits_fabriques_max = request.query_params.get("ventes_de_produits_fabriques_max", "")
+        
+        travaux_services_vendus_min = request.query_params.get("travaux_services_vendus_min", "")
+        travaux_services_vendus_max = request.query_params.get("travaux_services_vendus_max", "")
+        
+        produit_accessoires_min = request.query_params.get("produit_accessoires_min", "")
+        produit_accessoires_max = request.query_params.get("produit_accessoires_max", "")
+        
+        production_imblise_min = request.query_params.get("production_imblise_min", "")
+        production_imblise_max = request.query_params.get("production_imblise_max", "")
+        
+        subventions_exploitations_min = request.query_params.get("subventions_exploitations_min", "")
+        subventions_exploitations_max = request.query_params.get("subventions_exploitations_max", "")
+        
+        production_stockee_min = request.query_params.get("production_stockee_min", "")
+        production_stockee_max = request.query_params.get("production_stockee_max", "")
+        
+        reprises_de_provision_min = request.query_params.get("reprises_de_provision_min", "")
+        reprises_de_provision_max = request.query_params.get("reprises_de_provision_max", "")
+        
+        transferts_charges_min = request.query_params.get("transferts_charges_min", "")
+        transferts_charges_max = request.query_params.get("transferts_charges_max", "")
+        
+        autres_produits_min = request.query_params.get("autres_produits_min", "")
+        autres_produits_max = request.query_params.get("autres_produits_max", "")
+        
+        achat_mdses_min = request.query_params.get("achat_mdses_min", "")
+        achat_mdses_max = request.query_params.get("achat_mdses_max", "")
+        
+        variation_stock_mdses_min = request.query_params.get("variation_stock_mdses_min", "")
+        variation_stock_mdses_max = request.query_params.get("variation_stock_mdses_max", "")
+        
+        achat_mp_autres_appro_min = request.query_params.get("achat_mp_autres_appro_min", "")
+        achat_mp_autres_appro_max = request.query_params.get("achat_mp_autres_appro_max", "")
+        
+        var_stk_mp_app_min = request.query_params.get("var_stk_mp_app_min", "")
+        var_stk_mp_app_max = request.query_params.get("var_stk_mp_app_max", "")
+        
+        autres_achats_min = request.query_params.get("autres_achats_min", "")
+        autres_achats_max = request.query_params.get("autres_achats_max", "")
+        
+        variation_de_stocks_autres_appro_min = request.query_params.get("variation_de_stocks_autres_appro_min", "")
+        variation_de_stocks_autres_appro_max = request.query_params.get("variation_de_stocks_autres_appro_max", "")
+        
+        transports_min = request.query_params.get("transports_min", "")
+        transports_max = request.query_params.get("transports_max", "")
+        
+        services_ext_min = request.query_params.get("services_ext_min", "")
+        services_ext_max = request.query_params.get("services_ext_max", "")
+        
+        impots_taxes_min = request.query_params.get("impots_taxes_min", "")
+        impots_taxes_max = request.query_params.get("impots_taxes_max", "")
+        
+        autres_charges_valeur_ajoutee_min = request.query_params.get("autres_charges_valeur_ajoutee_min", "")
+        autres_charges_valeur_ajoutee_max = request.query_params.get("autres_charges_valeur_ajoutee_max", "")
+        
+        charges_personnel_min = request.query_params.get("charges_personnel_min", "")
+        charges_personnel_max = request.query_params.get("charges_personnel_max", "")
+        
+        dotation_aux_amorts_min = request.query_params.get("dotation_aux_amorts_min", "")
+        dotation_aux_amorts_max = request.query_params.get("dotation_aux_amorts_max", "")
+        
+        dotation_aux_provisions_min = request.query_params.get("dotation_aux_provisions_min", "")
+        dotation_aux_provisions_max = request.query_params.get("dotation_aux_provisions_max", "")
+        
+        autres_charges_excedent_brute_min = request.query_params.get("autres_charges_excedent_brute_min", "")
+        autres_charges_excedent_brute_max = request.query_params.get("autres_charges_excedent_brute_max", "")
+        
+        revenus_fin_assimiles_min = request.query_params.get("revenus_fin_assimiles_min", "")
+        revenus_fin_assimiles_max = request.query_params.get("revenus_fin_assimiles_max", "")
+        
+        prof_vmp_et_cre_actif_immo_min = request.query_params.get("prof_vmp_et_cre_actif_immo_min", "")
+        prof_vmp_et_cre_actif_immo_max = request.query_params.get("prof_vmp_et_cre_actif_immo_max", "")
+        
+        interets_produit_assim_min = request.query_params.get("interets_produit_assim_min", "")
+        interets_produit_assim_max = request.query_params.get("interets_produit_assim_max", "")
+        
+        reprise_prov_et_transfert_min = request.query_params.get("reprise_prov_et_transfert_min", "")
+        reprise_prov_et_transfert_max = request.query_params.get("reprise_prov_et_transfert_max", "")
+        
+        diff_positive_de_change_min = request.query_params.get("diff_positive_de_change_min", "")
+        diff_positive_de_change_max = request.query_params.get("diff_positive_de_change_max", "")
+        
+        prod_nets_cessions_vmp_min = request.query_params.get("prod_nets_cessions_vmp_min", "")
+        prod_nets_cessions_vmp_max = request.query_params.get("prod_nets_cessions_vmp_max", "")
+        
+        dap_min = request.query_params.get("dap_min", "")
+        dap_max = request.query_params.get("dap_max", "")
+        
+        frais_fin_charges_assi_min = request.query_params.get("frais_fin_charges_assi_min", "")
+        frais_fin_charges_assi_max = request.query_params.get("frais_fin_charges_assi_max", "")
+        
+        diff_negatives_de_change_min = request.query_params.get("diff_negatives_de_change_min", "")
+        diff_negatives_de_change_max = request.query_params.get("diff_negatives_de_change_max", "")
+        
+        ch_nettes_cessions_vmp_min = request.query_params.get("ch_nettes_cessions_vmp_min", "")
+        ch_nettes_cessions_vmp_max = request.query_params.get("ch_nettes_cessions_vmp_max", "")
+        
+        sur_op_gestion_prod_except_min = request.query_params.get("sur_op_gestion_prod_except_min", "")
+        sur_op_gestion_prod_except_max = request.query_params.get("sur_op_gestion_prod_except_max", "")
+        
+        sur_op_en_capital_prod_except_min = request.query_params.get("sur_op_en_capital_prod_except_min", "")
+        sur_op_en_capital_prod_except_max = request.query_params.get("sur_op_en_capital_prod_except_max", "")
+        
+        reprise_prov_transfert_min = request.query_params.get("reprise_prov_transfert_min", "")
+        reprise_prov_transfert_max = request.query_params.get("reprise_prov_transfert_max", "")
+        
+        sur_op_gestion_charg_except_min = request.query_params.get("sur_op_gestion_charg_except_min", "")
+        sur_op_gestion_charg_except_max = request.query_params.get("sur_op_gestion_charg_except_max", "")
+        
+        sur_op_en_capital_charg_except_min = request.query_params.get("sur_op_en_capital_charg_except_min", "")
+        sur_op_en_capital_charg_except_max = request.query_params.get("sur_op_en_capital_charg_except_max", "")
+        
+        dap_et_transfert_charg_except_min = request.query_params.get("dap_et_transfert_charg_except_min", "")
+        dap_et_transfert_charg_except_max = request.query_params.get("dap_et_transfert_charg_except_max", "")
+        
+        participation_salairies_min = request.query_params.get("participation_salairies_min", "")
+        participation_salairies_max = request.query_params.get("participation_salairies_max", "")
+        
+        impot_sur_benefices_min = request.query_params.get("impot_sur_benefices_min", "")
+        impot_sur_benefices_max = request.query_params.get("impot_sur_benefices_max", "")
 
+        # Convert string parameters to Decimal where needed
+        range_filters = {
+            'vente_de_mdses': (vente_de_mdses_min, vente_de_mdses_max),
+            'ventes_de_produits_fabriques': (ventes_de_produits_fabriques_min, ventes_de_produits_fabriques_max),
+            'travaux_services_vendus': (travaux_services_vendus_min, travaux_services_vendus_max),
+            'produit_accessoires': (produit_accessoires_min, produit_accessoires_max),
+            'production_imblise': (production_imblise_min, production_imblise_max),
+            'subventions_exploitations': (subventions_exploitations_min, subventions_exploitations_max),
+            'production_stockee': (production_stockee_min, production_stockee_max),
+            'reprises_de_provision': (reprises_de_provision_min, reprises_de_provision_max),
+            'transferts_charges': (transferts_charges_min, transferts_charges_max),
+            'autres_produits': (autres_produits_min, autres_produits_max),
+            'achat_mdses': (achat_mdses_min, achat_mdses_max),
+            'variation_stock_mdses': (variation_stock_mdses_min, variation_stock_mdses_max),
+            'achat_mp_autres_appro': (achat_mp_autres_appro_min, achat_mp_autres_appro_max),
+            'var_stk_mp_app': (var_stk_mp_app_min, var_stk_mp_app_max),
+            'autres_achats': (autres_achats_min, autres_achats_max),
+            'variation_de_stocks_autres_appro': (variation_de_stocks_autres_appro_min, variation_de_stocks_autres_appro_max),
+            'transports': (transports_min, transports_max),
+            'services_ext': (services_ext_min, services_ext_max),
+            'impots_taxes': (impots_taxes_min, impots_taxes_max),
+            'autres_charges_valeur_ajoutee': (autres_charges_valeur_ajoutee_min, autres_charges_valeur_ajoutee_max),
+            'charges_personnel': (charges_personnel_min, charges_personnel_max),
+            'dotation_aux_amorts': (dotation_aux_amorts_min, dotation_aux_amorts_max),
+            'dotation_aux_provisions': (dotation_aux_provisions_min, dotation_aux_provisions_max),
+            'autres_charges_excedent_brute': (autres_charges_excedent_brute_min, autres_charges_excedent_brute_max),
+            'revenus_fin_assimiles': (revenus_fin_assimiles_min, revenus_fin_assimiles_max),
+            'prof_vmp_et_cre_actif_immo': (prof_vmp_et_cre_actif_immo_min, prof_vmp_et_cre_actif_immo_max),
+            'interets_produit_assim': (interets_produit_assim_min, interets_produit_assim_max),
+            'reprise_prov_et_transfert': (reprise_prov_et_transfert_min, reprise_prov_et_transfert_max),
+            'diff_positive_de_change': (diff_positive_de_change_min, diff_positive_de_change_max),
+            'prod_nets_cessions_vmp': (prod_nets_cessions_vmp_min, prod_nets_cessions_vmp_max),
+            'dap': (dap_min, dap_max),
+            'frais_fin_charges_assi': (frais_fin_charges_assi_min, frais_fin_charges_assi_max),
+            'diff_negatives_de_change': (diff_negatives_de_change_min, diff_negatives_de_change_max),
+            'ch_nettes_cessions_vmp': (ch_nettes_cessions_vmp_min, ch_nettes_cessions_vmp_max),
+            'sur_op_gestion_prod_except': (sur_op_gestion_prod_except_min, sur_op_gestion_prod_except_max),
+            'sur_op_en_capital_prod_except': (sur_op_en_capital_prod_except_min, sur_op_en_capital_prod_except_max),
+            'reprise_prov_transfert': (reprise_prov_transfert_min, reprise_prov_transfert_max),
+            'sur_op_gestion_charg_except': (sur_op_gestion_charg_except_min, sur_op_gestion_charg_except_max),
+            'sur_op_en_capital_charg_except': (sur_op_en_capital_charg_except_min, sur_op_en_capital_charg_except_max),
+            'dap_et_transfert_charg_except': (dap_et_transfert_charg_except_min, dap_et_transfert_charg_except_max),
+            'participation_salairies': (participation_salairies_min, participation_salairies_max),
+            'impot_sur_benefices': (impot_sur_benefices_min, impot_sur_benefices_max),
+        }
+
+        range_values = {}
+        for field_name, (min_val, max_val) in range_filters.items():
+            try:
+                range_values[f'{field_name}_min'] = Decimal(min_val) if min_val else None
+                range_values[f'{field_name}_max'] = Decimal(max_val) if max_val else None
+            except InvalidOperation:
+                return Response(
+                    {f"error": f"Les valeurs de {field_name}_min et {field_name}_max doivent être des nombres décimaux valides."},
+                    status=400,
+                )
+
+        # Start with filtering by acheteur_id
+        resultat_list = ResultatC.objects.filter(acheteur_id=acheteur_id)
+        
+        # Apply year filter if provided
+        if annee:
+            resultat_list = resultat_list.filter(annee__annee__icontains=annee)
+        
+        # Apply search filter if provided
+        if search_term:
+            resultat_list = resultat_list.filter(
+                Q(vente_de_mdses__icontains=search_term) |
+                Q(ventes_de_produits_fabriques__icontains=search_term) |
+                Q(travaux_services_vendus__icontains=search_term) |
+                Q(produit_accessoires__icontains=search_term) |
+                Q(production_imblise__icontains=search_term) |
+                Q(subventions_exploitations__icontains=search_term) |
+                Q(production_stockee__icontains=search_term) |
+                Q(reprises_de_provision__icontains=search_term) |
+                Q(transferts_charges__icontains=search_term) |
+                Q(autres_produits__icontains=search_term) |
+                Q(achat_mdses__icontains=search_term) |
+                Q(variation_stock_mdses__icontains=search_term) |
+                Q(achat_mp_autres_appro__icontains=search_term) |
+                Q(var_stk_mp_app__icontains=search_term) |
+                Q(autres_achats__icontains=search_term) |
+                Q(variation_de_stocks_autres_appro__icontains=search_term) |
+                Q(transports__icontains=search_term) |
+                Q(services_ext__icontains=search_term) |
+                Q(impots_taxes__icontains=search_term) |
+                Q(autres_charges_valeur_ajoutee__icontains=search_term) |
+                Q(charges_personnel__icontains=search_term) |
+                Q(dotation_aux_amorts__icontains=search_term) |
+                Q(dotation_aux_provisions__icontains=search_term) |
+                Q(autres_charges_excedent_brute__icontains=search_term) |
+                Q(revenus_fin_assimiles__icontains=search_term) |
+                Q(prof_vmp_et_cre_actif_immo__icontains=search_term) |
+                Q(interets_produit_assim__icontains=search_term) |
+                Q(reprise_prov_et_transfert__icontains=search_term) |
+                Q(diff_positive_de_change__icontains=search_term) |
+                Q(prod_nets_cessions_vmp__icontains=search_term) |
+                Q(dap__icontains=search_term) |
+                Q(frais_fin_charges_assi__icontains=search_term) |
+                Q(diff_negatives_de_change__icontains=search_term) |
+                Q(ch_nettes_cessions_vmp__icontains=search_term) |
+                Q(sur_op_gestion_prod_except__icontains=search_term) |
+                Q(sur_op_en_capital_prod_except__icontains=search_term) |
+                Q(reprise_prov_transfert__icontains=search_term) |
+                Q(sur_op_gestion_charg_except__icontains=search_term) |
+                Q(sur_op_en_capital_charg_except__icontains=search_term) |
+                Q(dap_et_transfert_charg_except__icontains=search_term) |
+                Q(participation_salairies__icontains=search_term) |
+                Q(impot_sur_benefices__icontains=search_term)
+            )
+        
+        # Apply numeric range filters
+        for field_name, (min_val, max_val) in range_filters.items():
+            min_key = f'{field_name}_min'
+            max_key = f'{field_name}_max'
+            
+            if range_values[min_key] is not None:
+                resultat_list = resultat_list.filter(**{f"{field_name}__gte": range_values[min_key]})
+            if range_values[max_key] is not None:
+                resultat_list = resultat_list.filter(**{f"{field_name}__lte": range_values[max_key]})
+
+        # Order by most recent first
+        resultat_list = resultat_list.order_by("-created_at")
+
+        # Paginate results
+        paginator = Paginator(resultat_list, 10)
+        
         try:
-            vente_de_mdses_min = (
-                Decimal(vente_de_mdses_min) if vente_de_mdses_min else None
-            )
-            vente_de_mdses_max = (
-                Decimal(vente_de_mdses_max) if vente_de_mdses_max else None
-            )
-        except Decimal.InvalidOperation:
+            resultat_page = paginator.get_page(page_number)
+        except Exception:
             return Response(
-                {
-                    "error": "Les valeurs de vente_de_mdses_min et vente_de_mdses_max doivent être des nombres décimaux valides."
-                },
+                {"error": "Numéro de page invalide."},
                 status=400,
             )
-
-        resultat_list = ResultatC.objects.filter(
-            annee__annee__icontains=annee
-        ).order_by("-created_at")
-
-        if vente_de_mdses_min is not None:
-            resultat_list = resultat_list.filter(vente_de_mdses__gte=vente_de_mdses_min)
-
-        if vente_de_mdses_max is not None:
-            resultat_list = resultat_list.filter(vente_de_mdses__lte=vente_de_mdses_max)
-
-        paginator = Paginator(resultat_list, 10)
-        resultat_page = paginator.get_page(page_number)
+        
         serializer = ResultatCSerializer(resultat_page, many=True)
+
+        # Calculate start and end indices for pagination info
+        start_index = (resultat_page.number - 1) * paginator.per_page + 1 if resultat_page else 0
+        end_index = min(resultat_page.number * paginator.per_page, paginator.count) if resultat_page else 0
 
         return Response(
             {
@@ -8287,6 +8898,8 @@ class ListAcheteurResultatClassiqueView(APIView):
                 "total_pages": paginator.num_pages,
                 "next": resultat_page.has_next(),
                 "previous": resultat_page.has_previous(),
+                "start_index": start_index,
+                "end_index": end_index,
             }
         )
 
@@ -8294,7 +8907,7 @@ class ListAcheteurResultatClassiqueView(APIView):
 class SearchAcheteurResultatClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -8302,55 +8915,67 @@ class SearchAcheteurResultatClassiqueView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        resultat_list = ResultatC.objects.filter(
-            Q(vente_de_mdses__icontains=search_term)
-            | Q(ventes_de_produits_fabriques__icontains=search_term)
-            | Q(travaux_services_vendus__icontains=search_term)
-            | Q(produit_accessoires__icontains=search_term)
-            | Q(production_imblise__icontains=search_term)
-            | Q(subventions_exploitations__icontains=search_term)
-            | Q(production_stockee__icontains=search_term)
-            | Q(reprises_de_provision__icontains=search_term)
-            | Q(transferts_charges__icontains=search_term)
-            | Q(autres_produits__icontains=search_term)
-            | Q(achat_mdses__icontains=search_term)
-            | Q(variation_stock_mdses__icontains=search_term)
-            | Q(achat_mp_autres_appro__icontains=search_term)
-            | Q(var_stk_mp_app__icontains=search_term)
-            | Q(autres_achats__icontains=search_term)
-            | Q(variation_de_stocks_autres_appro__icontains=search_term)
-            | Q(transports__icontains=search_term)
-            | Q(services_ext__icontains=search_term)
-            | Q(impots_taxes__icontains=search_term)
-            | Q(autres_charges_valeur_ajoutee__icontains=search_term)
-            | Q(charges_personnel__icontains=search_term)
-            | Q(dotation_aux_amorts__icontains=search_term)
-            | Q(dotation_aux_provisions__icontains=search_term)
-            | Q(autres_charges_excedent_brute__icontains=search_term)
-            | Q(revenus_fin_assimiles__icontains=search_term)
-            | Q(prof_vmp_et_cre_actif_immo__icontains=search_term)
-            | Q(interets_produit_assim__icontains=search_term)
-            | Q(reprise_prov_et_transfert__icontains=search_term)
-            | Q(diff_positive_de_change__icontains=search_term)
-            | Q(prod_nets_cessions_vmp__icontains=search_term)
-            | Q(dap__icontains=search_term)
-            | Q(frais_fin_charges_assi__icontains=search_term)
-            | Q(diff_negatives_de_change__icontains=search_term)
-            | Q(ch_nettes_cessions_vmp__icontains=search_term)
-            | Q(sur_op_gestion_prod_except__icontains=search_term)
-            | Q(sur_op_en_capital_prod_except__icontains=search_term)
-            | Q(reprise_prov_transfert__icontains=search_term)
-            | Q(sur_op_gestion_charg_except__icontains=search_term)
-            | Q(sur_op_en_capital_charg_except__icontains=search_term)
-            | Q(dap_et_transfert_charg_except__icontains=search_term)
-            | Q(participation_salairies__icontains=search_term)
-            | Q(impot_sur_benefices__icontains=search_term)
+        # Filter by acheteur_id first, then by search term
+        resultat_list = ResultatC.objects.filter(acheteur_id=acheteur_id).filter(
+            Q(vente_de_mdses__icontains=search_term) |
+            Q(ventes_de_produits_fabriques__icontains=search_term) |
+            Q(travaux_services_vendus__icontains=search_term) |
+            Q(produit_accessoires__icontains=search_term) |
+            Q(production_imblise__icontains=search_term) |
+            Q(subventions_exploitations__icontains=search_term) |
+            Q(production_stockee__icontains=search_term) |
+            Q(reprises_de_provision__icontains=search_term) |
+            Q(transferts_charges__icontains=search_term) |
+            Q(autres_produits__icontains=search_term) |
+            Q(achat_mdses__icontains=search_term) |
+            Q(variation_stock_mdses__icontains=search_term) |
+            Q(achat_mp_autres_appro__icontains=search_term) |
+            Q(var_stk_mp_app__icontains=search_term) |
+            Q(autres_achats__icontains=search_term) |
+            Q(variation_de_stocks_autres_appro__icontains=search_term) |
+            Q(transports__icontains=search_term) |
+            Q(services_ext__icontains=search_term) |
+            Q(impots_taxes__icontains=search_term) |
+            Q(autres_charges_valeur_ajoutee__icontains=search_term) |
+            Q(charges_personnel__icontains=search_term) |
+            Q(dotation_aux_amorts__icontains=search_term) |
+            Q(dotation_aux_provisions__icontains=search_term) |
+            Q(autres_charges_excedent_brute__icontains=search_term) |
+            Q(revenus_fin_assimiles__icontains=search_term) |
+            Q(prof_vmp_et_cre_actif_immo__icontains=search_term) |
+            Q(interets_produit_assim__icontains=search_term) |
+            Q(reprise_prov_et_transfert__icontains=search_term) |
+            Q(diff_positive_de_change__icontains=search_term) |
+            Q(prod_nets_cessions_vmp__icontains=search_term) |
+            Q(dap__icontains=search_term) |
+            Q(frais_fin_charges_assi__icontains=search_term) |
+            Q(diff_negatives_de_change__icontains=search_term) |
+            Q(ch_nettes_cessions_vmp__icontains=search_term) |
+            Q(sur_op_gestion_prod_except__icontains=search_term) |
+            Q(sur_op_en_capital_prod_except__icontains=search_term) |
+            Q(reprise_prov_transfert__icontains=search_term) |
+            Q(sur_op_gestion_charg_except__icontains=search_term) |
+            Q(sur_op_en_capital_charg_except__icontains=search_term) |
+            Q(dap_et_transfert_charg_except__icontains=search_term) |
+            Q(participation_salairies__icontains=search_term) |
+            Q(impot_sur_benefices__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(resultat_list, 10)
         page_number = request.query_params.get("page", 1)
-        resultat_page = paginator.get_page(page_number)
+        
+        try:
+            resultat_page = paginator.get_page(page_number)
+        except Exception:
+            return Response(
+                {"error": "Numéro de page invalide."},
+                status=400,
+            )
+            
         serializer = ResultatCSerializer(resultat_page, many=True)
+
+        start_index = (resultat_page.number - 1) * paginator.per_page + 1 if resultat_page else 0
+        end_index = min(resultat_page.number * paginator.per_page, paginator.count) if resultat_page else 0
 
         return Response(
             {
@@ -8359,6 +8984,8 @@ class SearchAcheteurResultatClassiqueView(APIView):
                 "total_pages": paginator.num_pages,
                 "next": resultat_page.has_next(),
                 "previous": resultat_page.has_previous(),
+                "start_index": start_index,
+                "end_index": end_index,
             }
         )
 
@@ -8366,8 +8993,13 @@ class SearchAcheteurResultatClassiqueView(APIView):
 class AddAcheteurResultatClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddResultatCSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Add acheteur to the data if not present
+        data = request.data.copy()
+        if 'acheteur' not in data:
+            data['acheteur'] = acheteur_id
+            
+        serializer = AddResultatCSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -8377,21 +9009,25 @@ class AddAcheteurResultatClassiqueView(APIView):
 class EditAcheteurResultatClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
-        resultat = ResultatC.objects.filter(id=resultat_id).first()
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Verify the result belongs to the specified acheteur
+        resultat = ResultatC.objects.filter(id=resultat_id, acheteur_id=acheteur_id).first()
         if not resultat:
             return Response(
-                {"detail": "Résultat non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Résultat non trouvé pour cet acheteur."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = GetResultatCSerializer(resultat)
         return Response(serializer.data)
 
-    def put(self, request, resultat_id, *args, **kwargs):
-        resultat = ResultatC.objects.filter(id=resultat_id).first()
+    def put(self, request, acheteur_id, resultat_id, *args, **kwargs):  # Add acheteur_id parameter
+        # Verify the result belongs to the specified acheteur
+        resultat = ResultatC.objects.filter(id=resultat_id, acheteur_id=acheteur_id).first()
         if not resultat:
             return Response(
-                {"detail": "Résultat non trouvé."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Résultat non trouvé pour cet acheteur."}, 
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditResultatCSerializer(resultat, data=request.data, partial=True)
@@ -8404,7 +9040,7 @@ class EditAcheteurResultatClassiqueView(APIView):
 class DeleteAcheteurResultatClassiqueView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):  # Add acheteur_id parameter
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -8412,7 +9048,8 @@ class DeleteAcheteurResultatClassiqueView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        resultats = ResultatC.objects.filter(id__in=ids)
+        # Verify the results belong to the specified acheteur
+        resultats = ResultatC.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not resultats.exists():
             return Response(
                 {"error": "Aucun résultat trouvé pour les IDs fournis."},
@@ -8424,6 +9061,9 @@ class DeleteAcheteurResultatClassiqueView(APIView):
             {"message": f"{count} résultats supprimés avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+
 
 
 class ListAcheteurActifSysCohadaView(APIView):
@@ -13952,10 +14592,14 @@ class AcheteurDocumentListOneView(APIView):
         """Crée un nouveau document pour l'acheteur"""
         acheteur = self.get_acheteur(acheteur_id)
         
-        data = request.data.copy()
-        data["acheteur"] = acheteur_id
+        # Make request.data mutable
+        if hasattr(request.data, '_mutable'):
+            request.data._mutable = True
         
-        serializer = AddDocumentOneSerializer(data=data)
+        # Add the acheteur_id directly to request.data
+        request.data['acheteur'] = acheteur_id
+        
+        serializer = AddDocumentOneSerializer(data=request.data)
         
         if serializer.is_valid():
             # Sauvegarder le document

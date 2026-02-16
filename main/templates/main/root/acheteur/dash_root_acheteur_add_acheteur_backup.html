@@ -3,11 +3,6 @@
 {% load i18n %}
 {% load static %}
 
-{% block head %}
-    {{ block.super }}
-    <meta charset="UTF-8">
-{% endblock %}
-
 {% block styles %}
 <!-- Leaflet CSS -->
 <!-- MapLibre GL JS -->
@@ -156,10 +151,12 @@
         gap: 5px;
     }
     
-    .required-field:after {
-        content: " *";
-        color: #dc3545;
-        font-weight: bold;
+    .form-label:after {
+        content: attr(data-help);
+        font-size: 0.8rem;
+        color: var(--color-primary-light);
+        font-weight: normal;
+        margin-left: auto;
     }
     
     .form-control, .form-select {
@@ -388,6 +385,7 @@
     
     .is-invalid {
         border-color: #dc3545 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
     }
     
     .invalid-feedback {
@@ -597,6 +595,8 @@
 
 {% block body %}
 
+
+
 <!-- Overlay de chargement -->
 <div class="loading-overlay">
     <div class="spinner"></div>
@@ -660,16 +660,17 @@
                         <h5 class="section-title"><i class="bi bi-info-circle"></i> Généralités sur l'acheteur</h5>
                         
                         <div class="row g-3">
-                            <!-- Nom (OBLIGATOIRE) -->
+                            <!-- Nom -->
                             <div class="col-md-6">
-                                <label class="form-label required-field">Nom de l'acheteur</label>
+                                <label class="form-label">Nom de l'acheteur *</label>
                                 <input type="text" class="form-control" id="nom" name="nom" 
-                                       placeholder="Ex: BATI PLUS" required>
+                                       placeholder="Ex: BATI PLUS" required
+                                       data-validation="required|min:2">
                                 <div class="form-text-help">Nom complet de l'entreprise acheteuse</div>
-                                <div class="invalid-feedback">Veuillez saisir un nom valide</div>
+                                <div class="invalid-feedback">Veuillez saisir un nom valide (minimum 2 caractères)</div>
                             </div>
                             
-                            <!-- Sigle (optionnel) -->
+                            <!-- Sigle -->
                             <div class="col-md-6">
                                 <label class="form-label">Sigle</label>
                                 <input type="text" class="form-control" id="sigle" name="sigle" 
@@ -677,48 +678,56 @@
                                 <div class="form-text-help">Sigle ou abréviation de l'entreprise</div>
                             </div>
                             
-                            <!-- Date de création (optionnel) -->
+                            <!-- Date de création -->
                             <div class="col-md-6">
-                                <label class="form-label">Date de création</label>
+                                <label class="form-label">Date de création *</label>
                                 <input type="date" class="form-control flatpickr" id="date_creation" 
-                                       name="date_creation">
+                                       name="date_creation" required
+                                       data-validation="required">
                                 <div class="form-text-help">Date de création officielle de l'entreprise</div>
+                                <div class="invalid-feedback">Veuillez sélectionner une date valide</div>
                             </div>
                             
-                            <!-- Activité principale (optionnel) -->
+                            <!-- Activité principale -->
                             <div class="col-md-6">
-                                <label class="form-label">Activité principale</label>
+                                <label class="form-label">Activité principale *</label>
                                 <input type="text" class="form-control" id="activite_principale" 
                                        name="activite_principale" 
-                                       placeholder="Ex: Vente de produits de construction">
+                                       placeholder="Ex: Vente de produits de construction" required
+                                       data-validation="required|min:3">
                                 <div class="form-text-help">Activité principale exercée par l'acheteur</div>
+                                <div class="invalid-feedback">Veuillez saisir une activité principale</div>
                             </div>
                             
-                            <!-- Statut (optionnel) -->
+                            <!-- Statut -->
                             <div class="col-md-6">
-                                <label for="statut_entreprise" class="form-label">Statut</label>
+                                <label for="statut_entreprise" class="form-label">Statut *</label>
                                 <select class="form-select select2" id="statut_entreprise" 
-                                        name="statut_entreprise">
+                                        name="statut_entreprise" required
+                                        data-validation="required">
                                     <option value="">Sélectionnez...</option>
                                     {% for statut in statut_list %}
                                         <option value="{{ statut.id }}">{{ statut.libelle }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="invalid-feedback">Veuillez sélectionner un statut</div>
                             </div>
                             
-                            <!-- Forme juridique (optionnel) -->
+                            <!-- Forme juridique -->
                             <div class="col-md-6">
-                                <label for="forme_juridique" class="form-label">Forme juridique</label>
+                                <label for="forme_juridique" class="form-label">Forme juridique *</label>
                                 <select class="form-select select2" id="forme_juridique" 
-                                        name="forme_juridique">
+                                        name="forme_juridique" required
+                                        data-validation="required">
                                     <option value="">Sélectionnez...</option>
                                     {% for juridique in juridique_list %}
                                         <option value="{{ juridique.id }}">{{ juridique.libelle }}</option>
                                     {% endfor %}
                                 </select>
+                                <div class="invalid-feedback">Veuillez sélectionner une forme juridique</div>
                             </div>
                             
-                            <!-- Catégorie (optionnel) -->
+                            <!-- Catégorie -->
                             <div class="col-md-6">
                                 <label for="categorie_entreprise" class="form-label">Catégorie</label>
                                 <select class="form-select select2" id="categorie_entreprise" 
@@ -731,12 +740,13 @@
                                 <div class="form-text-help">Veuillez sélectionner une catégorie d'entreprise</div>
                             </div>
 
-                            <!-- Code NACE (optionnel) -->
+                            <!-- Code NACE -->
                             <div class="col-md-6 mb-3">
                                 <label for="code_nace" class="form-label">Code NACE</label>
                                 <select class="form-control select2" id="code_nace" name="code_nace">
                                     <option value="">Sélectionnez...</option>
                                     {% for code_nace in code_nace_list %}
+                                        <!-- IMPORTANT: value="{{ code_nace.id }}" envoie la valeur complète -->
                                         <option value="{{ code_nace.id }}">
                                             {{ code_nace.code }} - {{ code_nace.libelle }}
                                         </option>
@@ -747,7 +757,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Description (optionnel) -->
+                            <!-- Description -->
                             <div class="col-12">
                                 <label for="description" class="form-label">Description</label>
                                 <textarea class="form-control" id="description" name="description" 
@@ -762,15 +772,17 @@
                         <h5 class="section-title"><i class="bi bi-telephone"></i> Contacts de l'acheteur</h5>
                         
                         <div class="row g-3">
-                            <!-- Email (optionnel) -->
+                            <!-- Email -->
                             <div class="col-md-6">
                                 <label class="form-label">Email principal</label>
                                 <input type="email" class="form-control" id="email" name="email" 
-                                       placeholder="contact@entreprise.ga">
+                                       placeholder="contact@entreprise.ga"
+                                       data-validation="email">
                                 <div class="form-text-help">Adresse email principale</div>
+                                <div class="invalid-feedback">Veuillez saisir une adresse email valide</div>
                             </div>
                             
-                            <!-- Fax (optionnel) -->
+                            <!-- Fax -->
                             <div class="col-md-6">
                                 <label class="form-label">Fax</label>
                                 <div class="input-group">
@@ -780,7 +792,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Boîte postale (optionnel) -->
+                            <!-- Boîte postale -->
                             <div class="col-md-6">
                                 <label class="form-label">Boîte postale</label>
                                 <div class="input-group">
@@ -790,20 +802,21 @@
                                 </div>
                             </div>
                             
-                            <!-- Code postal (optionnel) -->
+                            <!-- Code postal -->
                             <div class="col-md-6">
                                 <label class="form-label">Code postal</label>
                                 <input type="text" class="form-control" id="code_postal" 
                                        name="code_postal" placeholder="241">
                             </div>
                             
-                            <!-- Site internet (optionnel) -->
+                            <!-- Site internet -->
                             <div class="col-12">
                                 <label class="form-label">Site internet</label>
                                 <input type="text" class="form-control" id="site_internet" 
                                     name="site_internet" placeholder="exemple.com"
                                     pattern="^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$">
                                 <div class="form-text-help">Entrez uniquement le nom de domaine (ex: exemple.com)</div>
+                                <div class="invalid-feedback">Format invalide. Utilisez: exemple.com</div>
                             </div>
                         </div>
                     </div>
@@ -813,7 +826,7 @@
                         <h5 class="section-title"><i class="bi bi-geo-alt"></i> Localisation de l'acheteur</h5>
                         
                         <div class="row g-3">
-                            <!-- Adresse (optionnelle) -->
+                            <!-- Adresse -->
                             <div class="col-md-3">
                                 <label class="form-label">Numéro</label>
                                 <input type="text" class="form-control" id="numero_adresse" 
@@ -826,10 +839,11 @@
                                        name="rue_adresse" placeholder="Rue Camp de Gaulle">
                             </div>
                             
-                            <!-- Pays (OBLIGATOIRE) -->
+                            <!-- Pays -->
                             <div class="col-md-4">
-                                <label for="pays" class="form-label required-field">Pays</label>
-                                <select class="form-select select2" id="pays" name="pays" required>
+                                <label for="pays" class="form-label">Pays *</label>
+                                <select class="form-select select2" id="pays" name="pays" required
+                                        data-validation="required">
                                     <option value="">Sélectionnez...</option>
                                     {% for pays in pays_list %}
                                         <option value="{{ pays.id }}" 
@@ -841,21 +855,21 @@
                                 <div class="invalid-feedback">Veuillez sélectionner un pays</div>
                             </div>
                             
-                            <!-- Province (OBLIGATOIRE) -->
+                            <!-- Province -->
                             <div class="col-md-4">
-                                <label for="province" class="form-label required-field">Province</label>
+                                <label for="province" class="form-label">Province *</label>
                                 <select class="form-select select2" id="province" name="province" 
-                                        disabled required>
+                                        disabled required data-validation="required">
                                     <option value="">Sélectionnez...</option>
                                 </select>
                                 <div class="invalid-feedback">Veuillez sélectionner une province</div>
                             </div>
                             
-                            <!-- Ville (OBLIGATOIRE) -->
+                            <!-- Ville -->
                             <div class="col-md-4">
-                                <label for="ville" class="form-label required-field">Ville</label>
+                                <label for="ville" class="form-label">Ville *</label>
                                 <select class="form-select select2" id="ville" name="ville" 
-                                        disabled required>
+                                        disabled required data-validation="required">
                                     <option value="">Sélectionnez...</option>
                                 </select>
                                 <div class="invalid-feedback">Veuillez sélectionner une ville</div>
@@ -884,11 +898,12 @@
                         <h5 class="section-title"><i class="bi bi-chat-left-text"></i> Opinion ACREMAC</h5>
                         
                         <div class="row g-3">
-                            <!-- Coloration (optionnelle) -->
+                            <!-- Coloration -->
                             <div class="col-md-6">
-                                <label for="couleur_commentaire" class="form-label">Coloration</label>
+                                <label for="couleur_commentaire" class="form-label">Coloration *</label>
                                 <select class="form-select select2" id="couleur_commentaire" 
-                                        name="couleur_commentaire">
+                                        name="couleur_commentaire" required
+                                        data-validation="required">
                                     <option value="">Sélectionnez une couleur...</option>
                                     {% for coloration in coloration_list %}
                                         <option value="{{ coloration.id }}" 
@@ -901,14 +916,17 @@
                                     <div class="color-circle" style="background-color: #000;"></div>
                                     <span id="colorName">Aucune couleur sélectionnée</span>
                                 </div>
+                                <div class="invalid-feedback">Veuillez sélectionner une coloration</div>
                             </div>
                             
-                            <!-- Commentaire (optionnel) -->
+                            <!-- Commentaire -->
                             <div class="col-12">
-                                <label for="commentaire" class="form-label">Commentaire</label>
+                                <label for="commentaire" class="form-label">Commentaire *</label>
                                 <textarea class="form-control" id="commentaire" name="commentaire" 
-                                          rows="4" placeholder="Votre commentaire sur cet acheteur..."></textarea>
-                                <div class="form-text-help">Décrivez votre opinion sur cet acheteur.</div>
+                                          rows="4" placeholder="Votre commentaire sur cet acheteur..."
+                                          required data-validation="required|min:10"></textarea>
+                                <div class="form-text-help">Minimum 10 caractères. Décrivez votre opinion sur cet acheteur.</div>
+                                <div class="invalid-feedback">Veuillez saisir un commentaire (minimum 10 caractères)</div>
                             </div>
                         </div>
                     </div>
@@ -959,6 +977,7 @@ $(document).ready(function() {
     let currentStep = 1;
     let totalSteps = 4;
     let map = null;
+    let validationRules = {};
     
     // Initialisation Select2
     $('.select2').select2({
@@ -1030,61 +1049,55 @@ $(document).ready(function() {
         }
     });
 
-    // Validation simplifiée - seulement nom et ville/pays/province
+    
+    // Validation par étape
     function validateStep(step) {
-        if (step === 1) {
-            // Vérifier seulement le nom dans la section 1
-            const nom = $('#nom').val().trim();
-            if (!nom) {
-                $('#nom').addClass('is-invalid');
-                return false;
-            } else {
-                $('#nom').removeClass('is-invalid').addClass('is-valid');
-            }
-        }
+        let isValid = true;
+        const section = $(`.form-section[data-section="${step}"]`);
         
-        if (step === 3) {
-            // Vérifier pays, province, ville dans la section 3
-            const pays = $('#pays').val();
-            const province = $('#province').val();
-            const ville = $('#ville').val();
+        section.find('[data-validation]').each(function() {
+            const $input = $(this);
+            const validation = $input.data('validation');
+            const value = $input.val();
+            const name = $input.attr('name');
             
-            let isValid = true;
-            
-            if (!pays) {
-                $('#pays').next('.select2-container').find('.select2-selection').addClass('is-invalid');
+            if (validation.includes('required') && !value.trim()) {
+                markInvalid($input, 'Ce champ est obligatoire');
                 isValid = false;
-            } else {
-                $('#pays').next('.select2-container').find('.select2-selection').removeClass('is-invalid');
-            }
-            
-            if (!province) {
-                $('#province').next('.select2-container').find('.select2-selection').addClass('is-invalid');
+            } else if (validation.includes('email') && value && !validator.isEmail(value)) {
+                markInvalid($input, 'Email invalide');
                 isValid = false;
-            } else {
-                $('#province').next('.select2-container').find('.select2-selection').removeClass('is-invalid');
-            }
-            
-            if (!ville) {
-                $('#ville').next('.select2-container').find('.select2-selection').addClass('is-invalid');
+            } else if (validation.includes('url') && value && !validator.isURL('https://' + value)) {
+                markInvalid($input, 'URL invalide');
                 isValid = false;
+            } else if (validation.includes('min:') && value) {
+                const min = parseInt(validation.split('min:')[1]);
+                if (value.length < min) {
+                    markInvalid($input, `Minimum ${min} caractères`);
+                    isValid = false;
+                }
             } else {
-                $('#ville').next('.select2-container').find('.select2-selection').removeClass('is-invalid');
+                markValid($input);
             }
-            
-            return isValid;
-        }
+        });
         
-        return true;
+        return isValid;
     }
     
-    // Fonctions de validation simplifiées
+    // Fonctions de marquage validation
     function markInvalid($input, message) {
-        $input.addClass('is-invalid');
+        $input.addClass('is-invalid').removeClass('is-valid');
+        let $feedback = $input.next('.invalid-feedback');
+        if ($feedback.length === 0) {
+            $feedback = $('<div class="invalid-feedback"></div>');
+            $input.after($feedback);
+        }
+        $feedback.text(message);
     }
     
     function markValid($input) {
-        $input.removeClass('is-invalid').addClass('is-valid');
+        $input.addClass('is-valid').removeClass('is-invalid');
+        $input.next('.invalid-feedback').remove();
     }
     
     // Réinitialisation des champs
@@ -1105,6 +1118,7 @@ $(document).ready(function() {
                 currentStep = 1;
                 updateSteps();
                 $('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                $('.invalid-feedback').remove();
                 
                 Swal.fire({
                     icon: 'success',
@@ -1285,30 +1299,7 @@ $(document).ready(function() {
     $('#addAcheteurForm').on('submit', function(event) {
         event.preventDefault();
 
-        // Valider seulement les champs obligatoires (nom, pays, province, ville)
-        const nom = $('#nom').val().trim();
-        const pays = $('#pays').val();
-        const province = $('#province').val();
-        const ville = $('#ville').val();
-        
-        if (!nom || !pays || !province || !ville) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Champs obligatoires manquants',
-                text: 'Veuillez remplir tous les champs obligatoires : Nom, Pays, Province et Ville',
-                confirmButtonColor: '#0A95CA'
-            });
-            
-            // Mettre en évidence les champs manquants
-            if (!nom) $('#nom').addClass('is-invalid');
-            if (!pays) $('#pays').next('.select2-container').find('.select2-selection').addClass('is-invalid');
-            if (!province) $('#province').next('.select2-container').find('.select2-selection').addClass('is-invalid');
-            if (!ville) $('#ville').next('.select2-container').find('.select2-selection').addClass('is-invalid');
-            
-            return;
-        }
-        
-        // Récupérer et nettoyer site_internet si présent
+        // Récupérer et nettoyer site_internet
         let siteInternet = $('#site_internet').val().trim();
         if (siteInternet) {
             // Supprimer https:// si présent
@@ -1316,6 +1307,29 @@ $(document).ready(function() {
             // Ajouter https:// pour l'envoi
             siteInternet = 'https://' + siteInternet;
             $('#site_internet').val(siteInternet);
+        }
+        
+        // Valider toutes les étapes
+        let allValid = true;
+        for (let i = 1; i <= totalSteps; i++) {
+            if (!validateStep(i)) {
+                allValid = false;
+                if (i < currentStep) {
+                    currentStep = i;
+                    updateSteps();
+                }
+                break;
+            }
+        }
+        
+        if (!allValid) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Champs invalides',
+                text: 'Veuillez corriger les erreurs dans le formulaire',
+                confirmButtonColor: '#0A95CA'
+            });
+            return;
         }
         
         // Préparer les données
@@ -1327,7 +1341,12 @@ $(document).ready(function() {
                 
                 // Traitement spécial pour site_internet
                 if (name === 'site_internet' && value) {
-                    value = value.replace(/^https?:\/\//i, '').trim().replace(/\/$/, '');
+                    // Supprimer https:// ou http:// s'ils sont présents
+                    value = value.replace(/^https?:\/\//i, '');
+                    // Supprimer les espaces
+                    value = value.trim();
+                    // Supprimer le / final s'il existe
+                    value = value.replace(/\/$/, '');
                 }
                 
                 formData[name] = value;
@@ -1397,14 +1416,12 @@ $(document).ready(function() {
                     const errors = xhr.responseJSON;
                     let errorMessage = 'Erreurs de validation :<br><ul class="text-start">';
                     
-                    if (errors && errors.errors) {
+                    if (errors.errors) {
                         Object.keys(errors.errors).forEach(key => {
                             errorMessage += `<li>${key}: ${errors.errors[key].join(', ')}</li>`;
                         });
-                    } else if (errors && errors.message) {
+                    } else if (errors.message) {
                         errorMessage = errors.message;
-                    } else {
-                        errorMessage = 'Erreur de validation du formulaire';
                     }
                     
                     errorMessage += '</ul>';
@@ -1446,14 +1463,14 @@ $(document).ready(function() {
         const $overlay = $('.loading-overlay');
         
         if (show) {
-            $overlay.addClass('active').html(`
-                <div class="loading-content">
-                    <div class="spinner"></div>
-                    <div class="loading-text">${message}</div>
+            $overlay.show().html(`
+                <div class="text-center">
+                    <div class="spinner mb-3"></div>
+                    <p class="text-primary fw-medium">${message}</p>
                 </div>
             `);
         } else {
-            $overlay.removeClass('active');
+            $overlay.hide();
         }
     }
     
@@ -1504,6 +1521,10 @@ $(document).ready(function() {
                         accessToken = response.access;
                         localStorage.setItem('access_token', accessToken);
                         localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Recharger les données
+                        loadUsers(currentPage, currentSearch);
+                        
                         return true;
                     },
                     error: function() {
@@ -1527,10 +1548,75 @@ $(document).ready(function() {
         updateSteps();
         initMap();
         
+        // Configurer la validation
+        setupValidation();
+
+        
         // Auto-sélectionner le pays de l'utilisateur si disponible
         {% if request.user.pays %}
         $('#pays').val('{{ request.user.pays.id }}').trigger('change');
         {% endif %}
+        
+        // Stocker l'action actuelle pour rejouer après refresh token
+        $(document).ajaxSend(function(event, xhr, settings) {
+            if (settings.type === 'POST' && settings.url.includes('ajouter-un-acheteur')) {
+                window.lastAction = function() {
+                    const formData = $('#addAcheteurForm').serializeArray();
+                    const data = {};
+                    formData.forEach(item => {
+                        data[item.name] = item.value;
+                    });
+                    submitForm(data);
+                };
+            }
+        });
+    }
+    
+    function setupValidation() {
+        // Validation en temps réel
+        $('#addAcheteurForm').find('[data-validation]').on('blur', function() {
+            validateField($(this));
+        });
+        
+        // Validation pour les select2
+        $('.select2').on('change', function() {
+            validateField($(this));
+        });
+    }
+    
+    function validateField($input) {
+        const validation = $input.data('validation');
+        const value = $input.val();
+        
+        if (!validation) return;
+        
+        if (validation.includes('required') && !value.trim()) {
+            markInvalid($input, 'Ce champ est obligatoire');
+            return false;
+        }
+        
+        if (value) {
+            if (validation.includes('email') && !validator.isEmail(value)) {
+                markInvalid($input, 'Email invalide');
+                return false;
+            }
+            
+            if (validation.includes('url') && !validator.isURL('https://' + value)) {
+                markInvalid($input, 'URL invalide');
+                return false;
+            }
+            
+            if (validation.includes('min:')) {
+                const min = parseInt(validation.split('min:')[1]);
+                if (value.length < min) {
+                    markInvalid($input, `Minimum ${min} caractères`);
+                    return false;
+                }
+            }
+        }
+        
+        markValid($input);
+        return true;
     }
     
     // Démarrer l'initialisation

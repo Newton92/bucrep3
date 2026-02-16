@@ -745,7 +745,7 @@
                 <div>
                     <h5 class="card-header-title">
                         <i class="bi bi-globe-americas"></i>
-                        Couverture Géographique
+                        Couverture Géographique ACREMAC
                     </h5>
                     <p class="text-muted mb-0 mt-1">
                         Visualisez votre présence à travers l'Afrique
@@ -1156,7 +1156,6 @@ function fetchWithAuth(url, options = {}) {
 document.addEventListener("DOMContentLoaded", function () {
     console.log("🗺️ Initialisation de la carte interactive");
     
-    // Vérifier si l'élément map existe
     const mapElement = document.getElementById('map');
     if (!mapElement) {
         console.error("❌ Élément #map non trouvé");
@@ -1167,14 +1166,14 @@ document.addEventListener("DOMContentLoaded", function () {
         // Initialiser la carte centrée sur l'Afrique
         const map = L.map('map').setView([2, 20], 3);
         
-        // Ajouter la couche OpenStreetMap avec un style plus doux
+        // Ajouter la couche OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
             maxZoom: 18,
             minZoom: 2
         }).addTo(map);
         
-        // Mapping des codes ISO
+        // Mapping des codes ISO (A3 vers A2)
         const codeMappingToA2 = {
             "BEN": "BJ", "CMR": "CM", "CIV": "CI", "GAB": "GA", "GHA": "GH", 
             "MLI": "ML", "MAR": "MA", "SEN": "SN", "AGO": "AO", "BDI": "BI",
@@ -1188,127 +1187,71 @@ document.addEventListener("DOMContentLoaded", function () {
             "ZMB": "ZM", "ZWE": "ZW", "TUN": "TN",
         };
 
-        // Coordonnées des capitales africaines
+        // Coordonnées des capitales
         const capitales = {
             "BJ": { lat: 6.3725, lng: 2.3914, capitale: "Porto-Novo" },
             "CM": { lat: 3.8480, lng: 11.5021, capitale: "Yaoundé" },
-            "CI": { lat: 5.3594, lng: -4.0083, capitale: "Abidjan" },
+            "CI": { lat: 5.3594, lng: -4.0083, capitale: "Yamoussoukro" },
             "GA": { lat: 0.4162, lng: 9.4673, capitale: "Libreville" },
             "GH": { lat: 5.6037, lng: -0.1870, capitale: "Accra" },
             "ML": { lat: 12.6392, lng: -8.0029, capitale: "Bamako" },
             "MA": { lat: 33.9716, lng: -6.8498, capitale: "Rabat" },
             "SN": { lat: 14.6928, lng: -17.4467, capitale: "Dakar" },
-            "AO": { lat: -8.8383, lng: 13.2344, capitale: "Luanda" },
-            "BI": { lat: -3.3614, lng: 29.3599, capitale: "Gitega" },
             "BF": { lat: 12.3714, lng: -1.5197, capitale: "Ouagadougou" },
             "CF": { lat: 4.3947, lng: 18.5582, capitale: "Bangui" },
-            "CD": { lat: -4.3250, lng: 15.3222, capitale: "Kinshasa" },
             "CG": { lat: -4.2634, lng: 15.2429, capitale: "Brazzaville" },
-            "DJ": { lat: 11.5721, lng: 43.1456, capitale: "Djibouti" },
-            "DZ": { lat: 36.7538, lng: 3.0588, capitale: "Alger" },
-            "EG": { lat: 30.0444, lng: 31.2357, capitale: "Le Caire" },
-            "ER": { lat: 15.3229, lng: 38.9251, capitale: "Asmara" },
-            "ET": { lat: 9.0320, lng: 38.7469, capitale: "Addis-Abeba" },
-            "GN": { lat: 9.6412, lng: -13.5784, capitale: "Conakry" },
-            "GM": { lat: 13.4549, lng: -16.5790, capitale: "Banjul" },
-            "GW": { lat: 11.8636, lng: -15.5846, capitale: "Bissau" },
-            "GQ": { lat: 3.7523, lng: 8.7741, capitale: "Malabo" },
-            "KE": { lat: -1.2921, lng: 36.8219, capitale: "Nairobi" },
-            "LR": { lat: 6.3008, lng: -10.7972, capitale: "Monrovia" },
-            "LY": { lat: 32.8872, lng: 13.1913, capitale: "Tripoli" },
-            "LS": { lat: -29.3101, lng: 27.4786, capitale: "Maseru" },
-            "MG": { lat: -18.8792, lng: 47.5079, capitale: "Antananarivo" },
-            "MZ": { lat: -25.9692, lng: 32.5732, capitale: "Maputo" },
-            "MR": { lat: 18.0731, lng: -15.9582, capitale: "Nouakchott" },
-            "MW": { lat: -13.9626, lng: 33.7741, capitale: "Lilongwe" },
-            "NA": { lat: -22.5609, lng: 17.0658, capitale: "Windhoek" },
+            "CD": { lat: -4.3250, lng: 15.3222, capitale: "Kinshasa" },
             "NE": { lat: 13.5127, lng: 2.1126, capitale: "Niamey" },
             "NG": { lat: 9.0765, lng: 7.3986, capitale: "Abuja" },
-            "RW": { lat: -1.9500, lng: 30.0588, capitale: "Kigali" },
-            "SD": { lat: 15.5007, lng: 32.5599, capitale: "Khartoum" },
-            "SL": { lat: 8.4840, lng: -13.2299, capitale: "Freetown" },
-            "SO": { lat: 2.0469, lng: 45.3182, capitale: "Mogadiscio" },
-            "SS": { lat: 4.8594, lng: 31.5713, capitale: "Djouba" },
-            "SZ": { lat: -26.3054, lng: 31.1367, capitale: "Mbabane" },
             "TD": { lat: 12.1348, lng: 15.0557, capitale: "N'Djamena" },
             "TG": { lat: 6.1375, lng: 1.2123, capitale: "Lomé" },
-            "TZ": { lat: -6.1630, lng: 35.7516, capitale: "Dodoma" },
-            "UG": { lat: 0.3136, lng: 32.5811, capitale: "Kampala" },
             "ZA": { lat: -25.7313, lng: 28.2184, capitale: "Pretoria" },
-            "ZM": { lat: -15.3875, lng: 28.3228, capitale: "Lusaka" },
-            "ZW": { lat: -17.8252, lng: 31.0335, capitale: "Harare" },
-            "TN": { lat: 36.8065, lng: 10.1815, capitale: "Tunis" },
+            "GN": { lat: 9.6412, lng: -13.5784, capitale: "Conakry" },
+            "GW": { lat: 11.8636, lng: -15.5846, capitale: "Bissau" },
+            "GQ": { lat: 3.7523, lng: 8.7741, capitale: "Malabo" },
+            "MR": { lat: 18.0731, lng: -15.9582, capitale: "Nouakchott" },
         };
         
         // Variables globales
-        window.paysData = [];
-        window.activeCountries = new Set();
-        window.countryNames = {};
+        let paysActifs = [];
+        let activeCountriesSet = new Set();
         
-        // Fonction pour charger les données
-        function loadCountriesData() {
-            fetchWithAuth('/api/pays-carte/')
-                .then(paysDB => {
-                    console.log("🌍 Pays depuis API :", paysDB);
+        // Charger les pays qui ont afficher_au_dashboard = True
+        function loadDashboardCountries() {
+            fetch('/api/pays-list/')  // Cette API filtre déjà afficher_au_dashboard=True
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(pays => {
+                    console.log("🌍 Pays avec afficher_au_dashboard=True:", pays);
+                    paysActifs = pays;
                     
-                    if (paysDB && paysDB.message === "Aucun pays configuré") {
-                        console.warn("Aucun pays configuré");
-                        showMessageOnMap("Aucun pays configuré dans la base de données");
-                        return;
-                    }
+                    // Mettre à jour les statistiques
+                    const activeCountEl = document.getElementById('activeCountriesCount');
+                    const totalEl = document.getElementById('totalCountries');
+                    const activeEl = document.getElementById('activeCountries');
+                    const inactiveEl = document.getElementById('inactiveCountries');
                     
-                    window.paysData = Array.isArray(paysDB) ? paysDB : [];
-                    window.activeCountries = new Set();
+                    if (activeCountEl) activeCountEl.textContent = pays.length;
+                    if (totalEl) totalEl.textContent = pays.length;
+                    if (activeEl) activeEl.textContent = pays.length;
+                    if (inactiveEl) inactiveEl.textContent = 0;
                     
-                    window.paysData.forEach(p => {
-                        if (p.is_active !== false) {
-                            const isoA3 = Object.keys(codeMappingToA2).find(
-                                key => codeMappingToA2[key] === p.iso_code
-                            );
-                            if (isoA3) {
-                                window.activeCountries.add(isoA3);
-                                console.log(`✅ Pays actif: ${p.nom} (ISO A3: ${isoA3}, ISO A2: ${p.iso_code})`);
-                            }
-                        }
-                    });
+                    // Créer un Set des codes ISO A2 des pays actifs
+                    activeCountriesSet = new Set(pays.map(p => p.code));
                     
-                    console.log("🎯 Pays actifs (ISO A3):", Array.from(window.activeCountries));
-                    updateStatistics();
-                    loadMap();
+                    // Charger la carte après avoir les données
+                    loadGeoJson();
                 })
                 .catch(err => {
-                    console.error("❌ Erreur chargement des pays :", err);
+                    console.error("❌ Erreur chargement des pays:", err);
                     showErrorOnMap("Erreur de chargement des données");
                 });
         }
         
-        // Fonction pour mettre à jour les statistiques
-        function updateStatistics() {
-            const total = window.paysData.length;
-            const active = window.paysData.filter(p => p.is_active !== false).length;
-            const inactive = total - active;
-            
-            const totalEl = document.getElementById('totalCountries');
-            const activeEl = document.getElementById('activeCountries');
-            const inactiveEl = document.getElementById('inactiveCountries');
-            const activeCountEl = document.getElementById('activeCountriesCount');
-            
-            if (totalEl) totalEl.textContent = total;
-            if (activeEl) activeEl.textContent = active;
-            if (inactiveEl) inactiveEl.textContent = inactive;
-            if (activeCountEl) activeCountEl.textContent = active;
-            
-            const ordersCountEl = document.getElementById('ordersCount');
-            const buyersCountEl = document.getElementById('buyersCount');
-            const alertsCountEl = document.getElementById('alertsCount');
-            
-            if (ordersCountEl) ordersCountEl.textContent = "0";
-            if (buyersCountEl) buyersCountEl.textContent = "0";
-            if (alertsCountEl) alertsCountEl.textContent = "0";
-        }
-        
-        // Fonction pour charger la carte
-        function loadMap() {
+        // Charger le GeoJSON et créer la carte
+        function loadGeoJson() {
             fetch("{% static 'geo/countries.geo.json' %}")
                 .then(res => {
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1317,100 +1260,146 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(geojson => {
                     console.log("🧭 GeoJSON chargé avec", geojson.features.length, "pays");
                     
-                    geojson.features.forEach(feature => {
-                        if (feature.id) {
-                            window.countryNames[feature.id] = feature.properties.name;
-                        }
-                    });
-                    
-                    // Style harmonisé avec la palette bleue
+                    // Ajouter les polygones des pays
                     L.geoJSON(geojson, {
                         style: function(feature) {
                             const isoA3 = feature.id;
-                            const isActive = window.activeCountries.has(isoA3);
+                            const isoA2 = codeMappingToA2[isoA3];
+                            
+                            // Vérifier si le pays doit être en surbrillance
+                            const isHighlighted = isoA2 && activeCountriesSet.has(isoA2);
                             
                             return {
-                                fillColor: isActive ? '#198754' : 'rgba(13, 128, 190, 0.3)',
-                                weight: isActive ? 2 : 1,
+                                fillColor: isHighlighted ? '#0d80be' : '#e9ecef',
+                                weight: isHighlighted ? 2 : 1,
                                 opacity: 1,
-                                color: isActive ? '#0d6efd' : 'rgba(13, 128, 190, 0.5)',
-                                fillOpacity: isActive ? 0.7 : 0.3,
-                                dashArray: isActive ? null : '5, 5'
+                                color: isHighlighted ? '#106cb2' : '#ced4da',
+                                fillOpacity: isHighlighted ? 0.7 : 0.3
                             };
                         },
                         onEachFeature: function(feature, layer) {
                             const isoA3 = feature.id;
-                            const isoA2 = codeMappingToA2[isoA3] || isoA3;
-                            const countryName = feature.properties.name || "Pays";
+                            const isoA2 = codeMappingToA2[isoA3];
+                            const countryName = feature.properties?.name || "Pays inconnu";
                             
-                            const pays = window.paysData.find(p => p.iso_code === isoA2);
+                            // Trouver les informations du pays dans notre base
+                            const paysInfo = paysActifs.find(p => p.code === isoA2);
                             
-                            let popupContent = `<div style="min-width: 200px;">`;
-                            popupContent += `<h6 style="color: var(--primary-dark);"><strong>${countryName}</strong></h6>`;
-                            popupContent += `<hr style="margin: 5px 0; border-color: rgba(13, 128, 190, 0.1);">`;
+                            // Créer le contenu du popup
+                            let popupContent = `
+                                <div style="min-width: 250px; font-family: 'DM Sans', sans-serif;">
+                                    <h6 style="color: #0d80be; margin-bottom: 10px; font-weight: 600;">
+                                        <i class="bi bi-geo-alt-fill" style="color: #0d80be;"></i> 
+                                        ${countryName}
+                                    </h6>
+                            `;
                             
-                            if (pays) {
-                                const statusIcon = pays.is_active !== false 
-                                    ? '<i class="bi bi-check-circle-fill text-success me-1"></i>'
-                                    : '<i class="bi bi-x-circle-fill" style="color: rgba(13, 128, 190, 0.5);" me-1></i>';
-                                    
-                                const statusText = pays.is_active !== false 
-                                    ? 'Actif dans votre base'
-                                    : 'Inactif dans votre base';
-                                    
-                                popupContent += `<p class="mb-1">${statusIcon}${statusText}</p>`;
-                                popupContent += `<p class="mb-1"><small style="color: rgba(13, 128, 190, 0.7);">Code: ${pays.code}</small></p>`;
-                                popupContent += `<p class="mb-1"><small style="color: rgba(13, 128, 190, 0.7);">Nom: ${pays.nom}</small></p>`;
+                            if (paysInfo) {
+                                // Pays actif dans le dashboard
+                                popupContent += `
+                                    <div style="background: rgba(13, 128, 190, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                                        <p style="margin: 5px 0; color: #0d80be;">
+                                            <i class="bi bi-check-circle-fill" style="color: #198754;"></i> 
+                                            <strong>Actif dans le dashboard</strong>
+                                        </p>
+                                        <p style="margin: 5px 0; font-size: 0.9rem;">
+                                            <span style="color: #6c757d;">Code:</span> 
+                                            <strong style="color: #0d80be;">${paysInfo.code}</strong>
+                                        </p>
+                                `;
+                                
+                                // Ajouter la capitale si disponible
+                                const capitaleInfo = capitales[isoA2];
+                                if (capitaleInfo) {
+                                    popupContent += `
+                                        <p style="margin: 5px 0; font-size: 0.9rem;">
+                                            <span style="color: #6c757d;">Capitale:</span> 
+                                            <strong style="color: #0d80be;">${capitaleInfo.capitale}</strong>
+                                        </p>
+                                    `;
+                                }
+                                
+                                popupContent += `</div>`;
                             } else {
-                                popupContent += `<p class="mb-1" style="color: rgba(13, 128, 190, 0.7);">`;
-                                popupContent += `<i class="bi bi-x-circle-fill me-1" style="color: rgba(13, 128, 190, 0.5);"></i>`;
-                                popupContent += `Non configuré dans votre base`;
-                                popupContent += `</p>`;
+                                // Pays non actif
+                                popupContent += `
+                                    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                                        <p style="margin: 5px 0; color: #6c757d;">
+                                            <i class="bi bi-dash-circle"></i> 
+                                            Non configuré pour le dashboard
+                                        </p>
+                                    </div>
+                                `;
                             }
                             
-                            popupContent += `<p class="mb-0"><small style="color: rgba(13, 128, 190, 0.7);">ISO A3: ${isoA3}</small></p>`;
-                            popupContent += `<p class="mb-0"><small style="color: rgba(13, 128, 190, 0.7);">ISO A2: ${isoA2}</small></p>`;
-                            
-                            const capitaleInfo = capitales[isoA2];
-                            if (capitaleInfo) {
-                                popupContent += `<p class="mt-2 mb-0"><small style="color: rgba(13, 128, 190, 0.7);"><i class="bi bi-geo-alt"></i> ${capitaleInfo.capitale}</small></p>`;
-                            }
+                            // Ajouter les informations ISO
+                            popupContent += `
+                                <div style="font-size: 0.85rem; color: #6c757d; margin-top: 8px;">
+                                    <p style="margin: 3px 0;">ISO A3: ${isoA3}</p>
+                                    <p style="margin: 3px 0;">ISO A2: ${isoA2 || 'Non défini'}</p>
+                                </div>
+                            `;
                             
                             popupContent += `</div>`;
                             
                             layer.bindPopup(popupContent);
                             
-                            layer.on('click', function(e) {
-                                console.log(`Clic sur ${countryName} (${isoA3})`);
+                            // Effet au survol
+                            layer.on('mouseover', function() {
+                                this.setStyle({
+                                    weight: 3,
+                                    color: paysInfo ? '#0d80be' : '#6c757d',
+                                    fillOpacity: paysInfo ? 0.8 : 0.4
+                                });
+                            });
+                            
+                            layer.on('mouseout', function() {
+                                geojsonLayer.resetStyle(this);
                             });
                         }
                     }).addTo(map);
                     
-                    window.paysData.forEach(pays => {
-                        if (pays.is_active !== false && pays.latitude && pays.longitude) {
-                            const isoA2 = pays.iso_code;
-                            const capitaleInfo = capitales[isoA2];
+                    // Ajouter des marqueurs pour les capitales des pays actifs
+                    paysActifs.forEach(pays => {
+                        const capitaleInfo = capitales[pays.code];
+                        if (capitaleInfo) {
+                            const marker = L.marker([capitaleInfo.lat, capitaleInfo.lng], {
+                                icon: L.divIcon({
+                                    className: 'custom-marker',
+                                    html: `<div style="background-color: #0d80be; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                                    iconSize: [14, 14],
+                                    iconAnchor: [7, 7]
+                                })
+                            }).addTo(map);
                             
-                            if (capitaleInfo) {
-                                const marker = L.marker([capitaleInfo.lat, capitaleInfo.lng])
-                                    .addTo(map)
-                                    .bindPopup(`
-                                        <div style="min-width: 150px;">
-                                            <h6 style="color: var(--primary-dark);"><strong>${capitaleInfo.capitale}</strong></h6>
-                                            <p class="mb-1"><small style="color: rgba(13, 128, 190, 0.7);">Capitale de ${pays.nom}</small></p>
-                                            <p class="mb-0"><small style="color: rgba(13, 128, 190, 0.7);">${capitaleInfo.lat.toFixed(4)}, ${capitaleInfo.lng.toFixed(4)}</small></p>
-                                        </div>
-                                    `);
-                            }
+                            marker.bindPopup(`
+                                <div style="min-width: 200px; font-family: 'DM Sans', sans-serif;">
+                                    <h6 style="color: #0d80be; margin-bottom: 5px;">
+                                        <i class="bi bi-building"></i> ${capitaleInfo.capitale}
+                                    </h6>
+                                    <p style="margin: 5px 0; font-size: 0.9rem;">
+                                        Capitale du <strong>${pays.nom}</strong>
+                                    </p>
+                                    <p style="margin: 5px 0; font-size: 0.85rem; color: #6c757d;">
+                                        ${capitaleInfo.lat.toFixed(4)}°, ${capitaleInfo.lng.toFixed(4)}°
+                                    </p>
+                                </div>
+                            `);
                         }
                     });
                     
-                    console.log("✅ Carte chargée avec succès");
+                    // Mettre à jour la dernière mise à jour
+                    const lastUpdateEl = document.getElementById('lastUpdate');
+                    if (lastUpdateEl) {
+                        const now = new Date();
+                        lastUpdateEl.textContent = now.toLocaleTimeString('fr-FR');
+                    }
                     
+                    console.log("✅ Carte chargée avec succès");
                 })
                 .catch(err => {
-                    console.error("❌ Erreur chargement GeoJSON :", err);
-                    showErrorOnMap("Impossible de charger la carte géographique");
+                    console.error("❌ Erreur chargement GeoJSON:", err);
+                    showErrorOnMap("Impossible de charger la carte");
                 });
         }
         
@@ -1418,56 +1407,60 @@ document.addEventListener("DOMContentLoaded", function () {
         function showErrorOnMap(message) {
             L.popup()
                 .setLatLng(map.getCenter())
-                .setContent(`<div class="alert alert-danger">${message}</div>`)
+                .setContent(`<div class="alert alert-danger m-0">${message}</div>`)
                 .openOn(map);
         }
         
-        // Fonction pour afficher un message
-        function showMessageOnMap(message) {
-            L.popup()
-                .setLatLng(map.getCenter())
-                .setContent(`<div class="alert alert-info">${message}</div>`)
-                .openOn(map);
-        }
-        
-        // Événements
+        // Bouton reset vue
         document.getElementById('resetMapView')?.addEventListener('click', function() {
             map.setView([2, 20], 3);
         });
         
-        // Contrôle de légende harmonisé
-        const infoControl = L.control({position: 'bottomleft'});
-        infoControl.onAdd = function(map) {
-            const div = L.DomUtil.create('div', 'info legend');
-            div.innerHTML = `
-                <div class="bg-white p-2 rounded shadow-sm" style="border: 1px solid rgba(13, 128, 190, 0.1);">
-                    <h6 style="color: var(--primary-dark); margin-bottom: 8px;">Légende</h6>
-                    <div class="d-flex align-items-center mb-2">
-                        <div style="width: 20px; height: 15px; background-color: #198754; margin-right: 8px; border: 1px solid #0d6efd;"></div>
-                        <span style="color: rgba(13, 128, 190, 0.8); font-size: 0.85rem;">Pays actif</span>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <div style="width: 20px; height: 15px; background-color: rgba(13, 128, 190, 0.3); margin-right: 8px; border: 1px solid rgba(13, 128, 190, 0.5);"></div>
-                        <span style="color: rgba(13, 128, 190, 0.8); font-size: 0.85rem;">Pays inactif/non configuré</span>
-                    </div>
-                </div>
-            `;
-            return div;
-        };
-        infoControl.addTo(map);
+        // Bouton export
+        document.getElementById('exportCountries')?.addEventListener('click', function() {
+            if (paysActifs.length > 0) {
+                const dataStr = JSON.stringify(paysActifs, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportName = 'pays-dashboard-' + new Date().toISOString().slice(0,10) + '.json';
+                
+                const link = document.createElement('a');
+                link.setAttribute('href', dataUri);
+                link.setAttribute('download', exportName);
+                link.click();
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Export réussi',
+                    text: `${paysActifs.length} pays exportés`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Aucune donnée',
+                    text: 'Aucun pays à exporter',
+                    confirmButtonColor: '#0d80be'
+                });
+            }
+        });
         
-        // Charger les données
-        loadCountriesData();
-        
-        // Redimensionnement
+        // Gestionnaire de redimensionnement
         window.addEventListener('resize', function() {
             setTimeout(() => map.invalidateSize(), 100);
         });
         
+        // Charger les données
+        loadDashboardCountries();
+        
     } catch (error) {
-        console.error("❌ Erreur d'initialisation de la carte:", error);
-        document.getElementById('map').innerHTML = 
-            '<div class="alert alert-danger">Erreur de chargement de la carte</div>';
+        console.error("❌ Erreur d'initialisation:", error);
+        mapElement.innerHTML = `
+            <div class="alert alert-danger m-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Erreur de chargement de la carte
+            </div>
+        `;
     }
 });
 </script>

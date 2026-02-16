@@ -604,6 +604,11 @@
             pointer-events: none;
         }
     </style>
+
+    {% block head %}
+        {{ block.super }}
+        <meta charset="UTF-8">
+    {% endblock %}
     
     {% block styles %}{% endblock %}
     
@@ -1075,7 +1080,7 @@
         }
 
         // Country Selector - Version SIMPLIFIÉE et FONCTIONNELLE
-        function setupCountrySelector() {
+        function setupCountrySelectorTwo() {
             const select = document.getElementById('country-select');
             select.style.minWidth = '320px';
             select.style.width = '320px';
@@ -1193,6 +1198,169 @@
                 });
             });
         }
+        
+        // Country Selector - Version CORRIGÉE et AMÉLIORÉE
+        function setupCountrySelector() {
+            const select = document.getElementById('country-select');
+            
+            if (!select) {
+                console.error('Element #country-select non trouvé');
+                return;
+            }
+            
+            // Configuration du style
+            select.style.minWidth = '320px';
+            select.style.width = '320px';
+            select.classList.remove('country-loading');
+            
+            // Récupérer les informations
+            const userPaysId = "{{ request.user.pays.id|default:'' }}";
+            const userPaysNom = "{{ request.user.pays.nom|default:'Gabon' }}";
+            
+            // Priorité: localStorage > pays de l'utilisateur > Gabon
+            let selectedPaysId = localStorage.getItem('selected_pays_id');
+            let selectedPaysNom = localStorage.getItem('selected_pays_nom');
+            
+            // Afficher le pays actuel dans le select
+            if (selectedPaysId && selectedPaysNom) {
+                select.innerHTML = `<option value="${selectedPaysId}" selected>&nbsp;&nbsp;${selectedPaysNom}&nbsp;&nbsp;</option>`;
+            } else if (userPaysId) {
+                select.innerHTML = `<option value="${userPaysId}" selected>&nbsp;&nbsp;${userPaysNom}&nbsp;&nbsp;</option>`;
+                localStorage.setItem('selected_pays_id', userPaysId);
+                localStorage.setItem('selected_pays_nom', userPaysNom);
+            } else {
+                select.innerHTML = `<option value="" selected>&nbsp;&nbsp;Gabon&nbsp;&nbsp;</option>`;
+            }
+            
+            // Charger la liste complète des pays
+            fetch('/api/pays-list/')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    // Sauvegarder la valeur actuelle
+                    const currentValue = select.value;
+                    
+                    // Construire le select avec toutes les options
+                    let options = '<option value="">&nbsp;&nbsp;Sélectionnez un pays&nbsp;&nbsp;</option>';
+                    
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        data.forEach(pays => {
+                            const selected = (pays.id == currentValue) ? 'selected' : '';
+                            options += `<option value="${pays.id}" ${selected} data-nom="${pays.nom}">&nbsp;&nbsp;${pays.nom}&nbsp;&nbsp;</option>`;
+                        });
+                    }
+                    
+                    select.innerHTML = options;
+                    
+                    // Initialiser Choices.js si disponible
+                    if (typeof Choices !== 'undefined') {
+                        if (window.countryChoices) {
+                            window.countryChoices.destroy();
+                        }
+                        
+                        window.countryChoices = new Choices(select, {
+                            searchEnabled: true,
+                            searchPlaceholderValue: 'Rechercher un pays...',
+                            noResultsText: 'Aucun pays trouvé',
+                            itemSelectText: '',
+                            shouldSort: true,
+                            position: 'bottom',
+                            classNames: {
+                                containerOuter: 'choices',
+                                containerInner: 'choices__inner',
+                                input: 'choices__input',
+                                inputCloned: 'choices__input--cloned',
+                                list: 'choices__list',
+                                listItems: 'choices__list--multiple',
+                                listSingle: 'choices__list--single',
+                                listDropdown: 'choices__list--dropdown',
+                                item: 'choices__item',
+                                itemSelectable: 'choices__item--selectable',
+                                itemDisabled: 'choices__item--disabled',
+                                itemChoice: 'choices__item--choice',
+                                placeholder: 'choices__placeholder',
+                                group: 'choices__group',
+                                groupHeading: 'choices__heading',
+                                button: 'choices__button',
+                                activeState: 'is-active',
+                                focusState: 'is-focused',
+                                openState: 'is-open',
+                                disabledState: 'is-disabled',
+                                highlightedState: 'is-highlighted',
+                                selectedState: 'is-selected',
+                                flippedState: 'is-flipped',
+                                loadingState: 'is-loading',
+                                noResults: 'has-no-results',
+                                noChoices: 'has-no-choices'
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur chargement pays:', error);
+                });
+            
+            // Gérer le changement de pays
+            select.addEventListener('change', function() {
+                const countryId = this.value;
+                if (!countryId) return;
+                
+                const selectedOption = this.options[this.selectedIndex];
+                const countryNom = selectedOption.getAttribute('data-nom') || selectedOption.textContent.trim();
+                
+                showLoading();
+                
+                fetch('/api/update-selected-pays/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pays_id: countryId })
+                })
+                .then(response => {
+                    hideLoading();
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    // Sauvegarder dans localStorage
+                    localStorage.setItem('selected_pays_id', countryId);
+                    localStorage.setItem('selected_pays_nom', countryNom);
+                    
+                    Swal.fire({
+                        title: 'Succès !',
+                        text: `Pays changé pour ${countryNom}. La page va se rafraîchir.`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: 'white',
+                        iconColor: '#0d80be',
+                        customClass: {
+                            popup: 'rounded-4 shadow-lg',
+                            title: 'text-primary'
+                        }
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Erreur mise à jour pays:', error);
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: 'Impossible de mettre à jour le pays.',
+                        icon: 'error',
+                        confirmButtonColor: '#0d80be',
+                        background: 'white',
+                        iconColor: '#dc3545'
+                    });
+                });
+            });
+        }
+                
         // Initialize everything
         document.addEventListener('DOMContentLoaded', function() {
             setupLanguageSwitcher();

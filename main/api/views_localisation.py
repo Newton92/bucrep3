@@ -183,6 +183,7 @@ class PaysCarteView(APIView):
                 "timestamp": timezone.now().isoformat()
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class PaysStatistiquesView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -213,7 +214,7 @@ class PaysDebugView(APIView):
     def get(self, request):
         import traceback
         try:
-            from .models import Pays
+            from main.models import Pays
             pays = Pays.objects.all()
             return Response({
                 "count": pays.count(),

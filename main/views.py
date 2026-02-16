@@ -4383,6 +4383,10 @@ def dash_root_manage_acheteur_passif_classique(request, acheteur_id):
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
 
+    # Récupérer tous les actifs
+    passifs_classiques = PassifC.objects.filter(acheteur=acheteur)
+    print("[ACHETEUR][CLASSIQUE][PASSIFS] "f"passifs={passifs_classiques}")
+
     context = {
         "acheteur_active": "active",
         "user": request.user,
@@ -4451,6 +4455,10 @@ def dash_root_manage_acheteur_resultat_classique(request, acheteur_id):
 
     # Récupérer tous les annees
     annee_list = Annee.objects.all()
+
+    # Récupérer tous les actifs
+    resultats_classiques = ResultatC.objects.filter(acheteur=acheteur)
+    print("[ACHETEUR][CLASSIQUE][RESULTATS] "f"resultats={resultats_classiques}")
 
     context = {
         "acheteur_active": "active",
