@@ -63,3 +63,6 @@
     DJANGO_DEBUG=False
     DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,10.0.57.47,3.236.213.114,93.127.202.151,http://preprod.bucrep3.bucrep.net
 ```
+
+
+python manage.py seed_fake_acheteur_reporting --code FAKE-RPT-DEMO --years 2025,2024,2023 --with-commande

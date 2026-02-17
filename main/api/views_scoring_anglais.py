@@ -40,6 +40,17 @@ class ScoreACREMACBilanAnglaisService:
         'r6': 0.0096
     }
 
+    @staticmethod
+    def _safe_ratio(numerator, denominator, multiplier=1.0):
+        """Retourne 0.0 si le dénominateur est invalide."""
+        try:
+            denominator = float(denominator or 0)
+            if denominator == 0:
+                return 0.0
+            return (float(numerator or 0) / denominator) * float(multiplier)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return 0.0
+
     @classmethod
     def extraire_donnees_bilan_anglais(cls, acheteur, annee):
         """
@@ -60,19 +71,6 @@ class ScoreACREMACBilanAnglaisService:
             actif = ActifA.objects.filter(acheteur=acheteur, annee__annee=annee_value).first()
             passif = PassifA.objects.filter(acheteur=acheteur, annee__annee=annee_value).first()
             resultat = ResultatA.objects.filter(acheteur=acheteur, annee__annee=annee_value).first()
-            
-            # Data for tests
-            tests_resultat_count = 0
-            tests_resultat = None
-            
-            # Compter les ResultatA pour l'acheteur 1
-            tests_resultat_count = ResultatA.objects.filter(acheteur_id=1).count()
-
-            # Voir les années disponibles
-            tests_resultat = ResultatA.objects.filter(acheteur_id=1).values_list('annee__annee', flat=True)
-            
-            logger.info(f"Tests resultat (nbre): {tests_resultat_count is not None}")
-            logger.info(f"Tests resultats: {tests_resultat is not None}")
             
             # DEBUG: Log des objets trouvés
             logger.info(f"Actif trouvé: {actif is not None}")
@@ -152,49 +150,31 @@ class ScoreACREMACBilanAnglaisService:
             # R1 = Frais financiers / EBE
             ebe = donnees.get('ebe', 0)
             frais_financiers = donnees.get('frais_financiers', 0)
-            if ebe and ebe != 0:
-                ratios['r1'] = (frais_financiers / ebe) * 100
-            else:
-                ratios['r1'] = 0
+            ratios['r1'] = cls._safe_ratio(frais_financiers, ebe, 100)
             
             # R2 = (Créances + disponibilités) / Dettes CT
             creances_dispo = donnees.get('creances_disponibilites', 0)
             dettes_ct = donnees.get('dettes_court_terme', 0)
-            if dettes_ct and dettes_ct != 0:
-                ratios['r2'] = (creances_dispo / dettes_ct) * 100
-            else:
-                ratios['r2'] = 0
+            ratios['r2'] = cls._safe_ratio(creances_dispo, dettes_ct, 100)
             
             # R3 = Capitaux permanents / Passif
             capitaux_permanents = donnees.get('capitaux_permanents', 0)
             total_passif = donnees.get('total_passif', 0)
-            if total_passif and total_passif != 0:
-                ratios['r3'] = (capitaux_permanents / total_passif) * 100
-            else:
-                ratios['r3'] = 0
+            ratios['r3'] = cls._safe_ratio(capitaux_permanents, total_passif, 100)
             
             # R4 = VA / CA
             valeur_ajoutee = donnees.get('valeur_ajoutee', 0)
             chiffre_affaires = donnees.get('chiffre_affaires', 0)
-            if chiffre_affaires and chiffre_affaires != 0:
-                ratios['r4'] = (valeur_ajoutee / chiffre_affaires) * 100
-            else:
-                ratios['r4'] = 0
+            ratios['r4'] = cls._safe_ratio(valeur_ajoutee, chiffre_affaires, 100)
             
             # R5 = Trésorerie / Ventes (j)
             tresorerie = donnees.get('tresorerie', 0)
-            ca_journalier = chiffre_affaires / 360 if chiffre_affaires else 0
-            if ca_journalier and ca_journalier != 0:
-                ratios['r5'] = tresorerie / ca_journalier
-            else:
-                ratios['r5'] = 0
+            ca_journalier = (chiffre_affaires or 0) / 360
+            ratios['r5'] = cls._safe_ratio(tresorerie, ca_journalier)
             
             # R6 = Fonds de roulement / CA (j)
             fonds_roulement = donnees.get('fonds_roulement', 0)
-            if ca_journalier and ca_journalier != 0:
-                ratios['r6'] = fonds_roulement / ca_journalier
-            else:
-                ratios['r6'] = 0
+            ratios['r6'] = cls._safe_ratio(fonds_roulement, ca_journalier)
                 
             logger.info(f"Ratios calculés: {ratios}")
                 

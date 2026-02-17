@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
@@ -14,7 +15,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 
-from main.models import User
+from main.models import User, Pays
 from main.serializers import *
 
 # === Vues Acheteur === #
@@ -30,7 +31,9 @@ class ListUtilisateurView(APIView):
     
     def get_queryset(self, search_query=''):
         """Retourne le queryset filtré selon la recherche"""
-        queryset = User.objects.select_related('pays')
+        queryset = User.objects.select_related('pays').prefetch_related(
+            'groups', 'affectation', 'affectation_possible'
+        )
         
         if search_query:
             queryset = queryset.filter(
@@ -150,15 +153,44 @@ class AddUtilisateurViewTwo(APIView):
 class AddUtilisateurView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def generate_password(self, length=10):
-        """Génère un mot de passe sécurisé mais lisible"""
-        import secrets
-        import string
-        letters = string.ascii_letters
-        digits = string.digits
-        alphabet = letters + digits
-        password = ''.join(secrets.choice(alphabet) for i in range(length))
-        return password
+    def generate_password(self, length=14):
+        """Génère un mot de passe complexe."""
+        alphabet = string.ascii_letters + string.digits + "!@#$%&*?"
+        while True:
+            password = ''.join(secrets.choice(alphabet) for _ in range(length))
+            if (
+                any(c.islower() for c in password)
+                and any(c.isupper() for c in password)
+                and any(c.isdigit() for c in password)
+                and any(c in "!@#$%&*?" for c in password)
+            ):
+                return password
+
+    def _to_bool(self, value, default=False):
+        if value is None:
+            return default
+        if isinstance(value, bool):
+            return value
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    def _to_int_list(self, value):
+        if value is None:
+            return []
+        if isinstance(value, list):
+            raw_values = value
+        elif isinstance(value, str):
+            raw_values = [v.strip() for v in value.split(",") if v.strip()]
+        else:
+            raw_values = [value]
+
+        ids = []
+        for item in raw_values:
+            try:
+                ids.append(int(item))
+            except (TypeError, ValueError):
+                continue
+        # Conserver l'ordre tout en retirant les doublons
+        return list(dict.fromkeys(ids))
 
     def send_welcome_email(self, user, plain_password):
         """Envoie l'email de bienvenue avec les identifiants"""
@@ -239,19 +271,13 @@ class AddUtilisateurView(APIView):
             # 1. Préparer les données
             data = request.data.copy()
             
-            # 2. Gérer le champ 'activation' correctement
-            if 'activation' in data:
-                activation_value = data['activation']
-                if isinstance(activation_value, str):
-                    # Si c'est une chaîne ('true' ou 'false'), convertir en booléen
-                    data['activation'] = activation_value.lower() == 'true'
-                # Si c'est déjà un booléen, le laisser tel quel
-                # Si c'est autre chose, essayer de convertir
-                elif not isinstance(activation_value, bool):
-                    try:
-                        data['activation'] = bool(activation_value)
-                    except:
-                        data['activation'] = True  # Valeur par défaut
+            # 2. Gérer les booléens
+            data['activation'] = self._to_bool(data.get('activation'), default=True)
+            data['is_staff'] = self._to_bool(data.get('is_staff'), default=False)
+            data['is_superuser'] = self._to_bool(data.get('is_superuser'), default=False)
+            data['is_client'] = self._to_bool(data.get('is_client'), default=False)
+            if data.get('role') == 'Client':
+                data['is_client'] = True
             
             # 3. S'assurer que 'pays' est un entier
             if 'pays' in data and data['pays']:
@@ -262,15 +288,20 @@ class AddUtilisateurView(APIView):
                         {"pays": ["Veuillez fournir un ID de pays valide (nombre entier)."]},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+
+            # 4. Champs multiples
+            data['groups'] = self._to_int_list(data.get('groups'))
+            data['affectation'] = self._to_int_list(data.get('affectation'))
+            data['affectation_possible'] = self._to_int_list(data.get('affectation_possible'))
             
             print(f"Données après traitement: {data}")
             
-            # 4. Générer un mot de passe sécurisé
-            plain_password = self.generate_password()
+            # 5. Générer (ou récupérer) un mot de passe sécurisé
+            plain_password = data.get('password') or self.generate_password()
             print(f"Mot de passe généré: {plain_password}")
             
-            # 5. Valider les données avec le serializer
-            serializer = AddUserSerializer(data=data)
+            # 6. Valider les données avec le serializer
+            serializer = AddUserSerializer(data=data, context={'request': request})
             
             if not serializer.is_valid():
                 print(f"❌ Erreurs de validation: {serializer.errors}")
@@ -285,30 +316,8 @@ class AddUtilisateurView(APIView):
             
             print(f"✅ Données validées: {serializer.validated_data}")
             
-            # 6. Créer l'utilisateur
-            validated_data = serializer.validated_data
-            
-            # Extraire le pays de validated_data
-            pays = validated_data.pop('pays') if 'pays' in validated_data else None
-            
-            # Créer l'instance utilisateur
-            user = User(
-                username=validated_data['username'],
-                email=validated_data['email'],
-                first_name=validated_data.get('first_name', ''),
-                last_name=validated_data.get('last_name', ''),
-                email_cc=validated_data.get('email_cc'),
-                address=validated_data.get('address'),
-                activation=validated_data.get('activation', True),
-                telephone=validated_data.get('telephone'),
-                profession=validated_data.get('profession'),
-                role=validated_data.get('role'),
-                pays=pays,  # Assigner le pays
-            )
-            
-            # 7. Définir le mot de passe
-            user.set_password(plain_password)
-            user.save()
+            # 7. Créer l'utilisateur
+            user = serializer.save(password=plain_password)
             
             print(f"✅ Utilisateur créé: {user.username} (ID: {user.id})")
             
@@ -326,14 +335,12 @@ class AddUtilisateurView(APIView):
                     'email': user.email,
                     'full_name': f"{user.first_name} {user.last_name}".strip(),
                     'role': user.role,
+                    'is_client': user.is_client,
                 },
                 'email_sent': email_sent,
                 'note': 'Les identifiants ont été envoyés par email.' if email_sent 
                        else 'Les identifiants n\'ont pas pu être envoyés par email.',
-                'debug': {
-                    'password_generated': plain_password,
-                    'activation_set_to': user.activation
-                }
+                'generated_password': plain_password,
             }
             
             return Response(response_data, status=status.HTTP_201_CREATED)
@@ -363,7 +370,9 @@ class EditUtilisateurView(APIView):
     def get_object(self, id):
         """Récupère l'utilisateur ou retourne 404"""
         try:
-            return User.objects.select_related('pays').get(id=id)
+            return User.objects.select_related('pays').prefetch_related(
+                'groups', 'affectation', 'affectation_possible'
+            ).get(id=id)
         except User.DoesNotExist:
             return None
     
@@ -392,9 +401,16 @@ class EditUtilisateurView(APIView):
         # Préparer les données
         data = request.data.copy()
         
-        # Convertir l'activation si c'est une chaîne
-        if 'activation' in data and isinstance(data['activation'], str):
-            data['activation'] = data['activation'].lower() == 'true'
+        # Convertir les booléens
+        for bool_field in ['activation', 'is_staff', 'is_superuser', 'is_client']:
+            if bool_field in data:
+                value = data.get(bool_field)
+                if isinstance(value, bool):
+                    data[bool_field] = value
+                else:
+                    data[bool_field] = str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
+        if data.get('role') == 'Client':
+            data['is_client'] = True
         
         # Convertir pays en entier si nécessaire
         if 'pays' in data and data['pays']:
@@ -405,6 +421,31 @@ class EditUtilisateurView(APIView):
                     {"pays": ["Veuillez fournir un ID de pays valide."]},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+        # Convertir les listes d'IDs
+        def _to_int_list(value):
+            if value is None:
+                return []
+            if isinstance(value, list):
+                values = value
+            elif isinstance(value, str):
+                values = [v.strip() for v in value.split(',') if v.strip()]
+            else:
+                values = [value]
+            output = []
+            for item in values:
+                try:
+                    output.append(int(item))
+                except (TypeError, ValueError):
+                    continue
+            return list(dict.fromkeys(output))
+
+        if 'groups' in data:
+            data['groups'] = _to_int_list(data.get('groups'))
+        if 'affectation' in data:
+            data['affectation'] = _to_int_list(data.get('affectation'))
+        if 'affectation_possible' in data:
+            data['affectation_possible'] = _to_int_list(data.get('affectation_possible'))
         
         serializer = EditUserSerializer(
             utilisateur, 
@@ -502,5 +543,75 @@ class DeleteUtilisateurView(APIView):
         count, _ = utilisateurs.delete()
         return Response(
             {"message": f"{count} Utilisateurs supprimés avec succès."},
+            status=status.HTTP_200_OK,
+        )
+
+
+class GenerateAndSendPasswordUtilisateurView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _generate_password(self, length=14):
+        alphabet = string.ascii_letters + string.digits + "!@#$%&*?"
+        while True:
+            password = ''.join(secrets.choice(alphabet) for _ in range(length))
+            if (
+                any(c.islower() for c in password)
+                and any(c.isupper() for c in password)
+                and any(c.isdigit() for c in password)
+                and any(c in "!@#$%&*?" for c in password)
+            ):
+                return password
+
+    def _send_credentials_mail(self, user, plain_password):
+        try:
+            subject = "Vos identifiants de connexion - BUCREP/ACREMAC"
+            context = {
+                'user_username': user.username,
+                'user_password': plain_password,
+                'user_email': user.email,
+                'user_fullname': f"{user.first_name} {user.last_name}",
+            }
+            html_message = render_to_string('main/emails/email_new_account.html', context)
+            text_message = strip_tags(html_message)
+
+            recipients = [user.email] if user.email else []
+            if user.email_cc:
+                recipients.append(user.email_cc)
+            if not recipients:
+                return False
+
+            mail = EmailMultiAlternatives(
+                subject=subject,
+                body=text_message,
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@bucrep.net'),
+                to=recipients,
+            )
+            mail.attach_alternative(html_message, "text/html")
+            mail.send(fail_silently=True)
+            return True
+        except Exception:
+            return False
+
+    def post(self, request, id, *args, **kwargs):
+        user = User.objects.filter(id=id).first()
+        if not user:
+            return Response(
+                {"success": False, "message": "Utilisateur non trouvé."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        plain_password = self._generate_password()
+        user.set_password(plain_password)
+        user.save(update_fields=["password", "password_changed_at"])
+
+        email_sent = self._send_credentials_mail(user, plain_password)
+
+        return Response(
+            {
+                "success": True,
+                "message": "Mot de passe généré et mis à jour.",
+                "generated_password": plain_password,
+                "email_sent": email_sent,
+            },
             status=status.HTTP_200_OK,
         )

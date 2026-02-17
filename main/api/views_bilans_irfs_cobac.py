@@ -370,11 +370,11 @@ class ListActifIFRSOneView(APIView):
 class GetActifIFRSOneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
             actif = ActifIFRS.objects.select_related(
                 'annee', 'acheteur', 'created_by', 'updated_by'
-            ).get(id=actif_id)
+            ).get(id=actif_id, acheteur_id=acheteur_id)
             serializer = ActifIFRSOneSerializer(actif)
             return Response(serializer.data)
         except ActifIFRS.DoesNotExist:
@@ -605,11 +605,11 @@ class ListPassifIFRSOneView(APIView):
 class GetPassifIFRSOneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
             passif = PassifIFRS.objects.select_related(
                 'annee', 'acheteur', 'created_by', 'updated_by'
-            ).get(id=passif_id)
+            ).get(id=passif_id, acheteur_id=acheteur_id)
             serializer = PassifIFRSOneSerializer(passif)
             return Response(serializer.data)
         except PassifIFRS.DoesNotExist:
@@ -845,11 +845,11 @@ class ListResultatIFRSOneView(APIView):
 class GetResultatIFRSOneView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
             resultat = ResultatIFRS.objects.select_related(
                 'annee', 'acheteur', 'created_by', 'updated_by'
-            ).get(id=resultat_id)
+            ).get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = ResultatIFRSOneSerializer(resultat)
             return Response(serializer.data)
         except ResultatIFRS.DoesNotExist:

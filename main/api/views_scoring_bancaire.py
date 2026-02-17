@@ -28,6 +28,17 @@ class ScoreACREMACBilanBancaireService:
         'r6': 0.008    # Ratio de diversification
     }
 
+    @staticmethod
+    def _safe_ratio(numerator, denominator, multiplier=1.0):
+        """Retourne 0.0 si le dénominateur est invalide."""
+        try:
+            denominator = float(denominator or 0)
+            if denominator == 0:
+                return 0.0
+            return (float(numerator or 0) / denominator) * float(multiplier)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return 0.0
+
     @classmethod
     def extraire_donnees_bilan_bancaire(cls, acheteur, annee, bilan_type="annuel", semestre=None):
         """
@@ -140,10 +151,7 @@ class ScoreACREMACBilanBancaireService:
             # R1: Ratio de solvabilité (Capitaux propres / Total actif)
             total_actif = donnees.get('total_actif', 0)
             capitaux_propres = donnees.get('capitaux_propres', 0)
-            if total_actif and total_actif != 0:
-                ratios['r1'] = (capitaux_propres / total_actif) * 100
-            else:
-                ratios['r1'] = 0
+            ratios['r1'] = cls._safe_ratio(capitaux_propres, total_actif, 100)
             
             # R2: Ratio de liquidité (Actifs liquides / Dettes à court terme)
             actifs_liquides = (
@@ -154,39 +162,24 @@ class ScoreACREMACBilanBancaireService:
                 donnees.get('dette_interbancaire', 0) + 
                 donnees.get('dette_clientele', 0)
             )
-            if dettes_court_terme and dettes_court_terme != 0:
-                ratios['r2'] = (actifs_liquides / dettes_court_terme) * 100
-            else:
-                ratios['r2'] = 0
+            ratios['r2'] = cls._safe_ratio(actifs_liquides, dettes_court_terme, 100)
             
             # R3: Ratio de rentabilité (Résultat net / Total actif)
             resultat_net = donnees.get('total_produits', 0) - donnees.get('total_charges', 0)
-            if total_actif and total_actif != 0:
-                ratios['r3'] = (resultat_net / total_actif) * 100
-            else:
-                ratios['r3'] = 0
+            ratios['r3'] = cls._safe_ratio(resultat_net, total_actif, 100)
             
             # R4: Ratio de qualité des actifs (Créances clientèle / Total actif)
             creance_clientele = donnees.get('creance_clientele', 0)
-            if total_actif and total_actif != 0:
-                ratios['r4'] = (creance_clientele / total_actif) * 100
-            else:
-                ratios['r4'] = 0
+            ratios['r4'] = cls._safe_ratio(creance_clientele, total_actif, 100)
             
             # R5: Ratio d'efficience (Charges / Produits)
             total_produits = donnees.get('total_produits', 0)
             total_charges = donnees.get('total_charges', 0)
-            if total_produits and total_produits != 0:
-                ratios['r5'] = (total_charges / total_produits) * 100
-            else:
-                ratios['r5'] = 0
+            ratios['r5'] = cls._safe_ratio(total_charges, total_produits, 100)
             
             # R6: Ratio de diversification (Produits hors intérêts / Total produits)
             produits_hors_interets = total_produits - donnees.get('interets_produits', 0)
-            if total_produits and total_produits != 0:
-                ratios['r6'] = (produits_hors_interets / total_produits) * 100
-            else:
-                ratios['r6'] = 0
+            ratios['r6'] = cls._safe_ratio(produits_hors_interets, total_produits, 100)
                 
             logger.info(f"Ratios bancaires calculés: {ratios}")
                 
@@ -202,13 +195,13 @@ class ScoreACREMACBilanBancaireService:
         ratios_bornees = {}
         
         try:
-            # Bornes adaptées pour les banques
-            ratios_bornees['r1'] = max(4, min(20, ratios.get('r1', 0)))  # Solvabilité: 4% à 20%
-            ratios_bornees['r2'] = max(80, min(120, ratios.get('r2', 0)))  # Liquidité: 80% à 120%
-            ratios_bornees['r3'] = max(-5, min(3, ratios.get('r3', 0)))   # Rentabilité: -5% à 3%
-            ratios_bornees['r4'] = max(0, min(60, ratios.get('r4', 0)))   # Qualité actifs: 0% à 60%
-            ratios_bornees['r5'] = max(50, min(95, ratios.get('r5', 0)))  # Efficience: 50% à 95%
-            ratios_bornees['r6'] = max(5, min(40, ratios.get('r6', 0)))   # Diversification: 5% à 40%
+            # Bornes sans plancher biaisé pour éviter d'améliorer artificiellement le score
+            ratios_bornees['r1'] = max(0, min(100, ratios.get('r1', 0)))     # Solvabilité
+            ratios_bornees['r2'] = max(0, min(200, ratios.get('r2', 0)))     # Liquidité
+            ratios_bornees['r3'] = max(-100, min(100, ratios.get('r3', 0)))  # Rentabilité
+            ratios_bornees['r4'] = max(0, min(100, ratios.get('r4', 0)))     # Qualité d'actif
+            ratios_bornees['r5'] = max(0, min(200, ratios.get('r5', 0)))     # Efficience
+            ratios_bornees['r6'] = max(0, min(100, ratios.get('r6', 0)))     # Diversification
             
             logger.info(f"Ratios après bornes: {ratios_bornees}")
             

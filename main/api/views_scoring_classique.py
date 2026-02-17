@@ -50,6 +50,17 @@ class ScoreACREMACBilanClassiqueService:
         'r6': 0.0096
     }
 
+    @staticmethod
+    def _safe_ratio(numerator, denominator, multiplier=1.0):
+        """Retourne 0.0 si le dénominateur est invalide pour éviter les erreurs de calcul."""
+        try:
+            denominator = float(denominator or 0)
+            if denominator == 0:
+                return 0.0
+            return (float(numerator or 0) / denominator) * float(multiplier)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return 0.0
+
     @classmethod
     def extraire_donnees_bilan_classique(cls, acheteur, annee):
         """
@@ -112,41 +123,35 @@ class ScoreACREMACBilanClassiqueService:
         
         try:
             # R1 = Frais financiers / EBE
-            if donnees.get('ebe') and donnees['ebe'] != 0:
-                ratios['r1'] = (donnees.get('frais_financiers', 0) / donnees['ebe']) * 100
-            else:
-                ratios['r1'] = 0
+            ratios['r1'] = cls._safe_ratio(donnees.get('frais_financiers', 0), donnees.get('ebe', 0), 100)
             
             # R2 = (Créances + disponibilités) / Dettes CT
-            if donnees.get('dettes_court_terme') and donnees['dettes_court_terme'] != 0:
-                ratios['r2'] = (donnees.get('creances_disponibilites', 0) / donnees['dettes_court_terme']) * 100
-            else:
-                ratios['r2'] = 0
+            ratios['r2'] = cls._safe_ratio(
+                donnees.get('creances_disponibilites', 0),
+                donnees.get('dettes_court_terme', 0),
+                100,
+            )
             
             # R3 = Capitaux permanents / Passif
-            if donnees.get('total_passif') and donnees['total_passif'] != 0:
-                ratios['r3'] = (donnees.get('capitaux_permanents', 0) / donnees['total_passif']) * 100
-            else:
-                ratios['r3'] = 0
+            ratios['r3'] = cls._safe_ratio(
+                donnees.get('capitaux_permanents', 0),
+                donnees.get('total_passif', 0),
+                100,
+            )
             
             # R4 = VA / CA
-            if donnees.get('chiffre_affaires') and donnees['chiffre_affaires'] != 0:
-                ratios['r4'] = (donnees.get('valeur_ajoutee', 0) / donnees['chiffre_affaires']) * 100
-            else:
-                ratios['r4'] = 0
+            ratios['r4'] = cls._safe_ratio(
+                donnees.get('valeur_ajoutee', 0),
+                donnees.get('chiffre_affaires', 0),
+                100,
+            )
             
             # R5 = Trésorerie / Ventes (j)
-            ca_journalier = donnees.get('chiffre_affaires', 0) / 360 if donnees.get('chiffre_affaires') else 0
-            if ca_journalier and ca_journalier != 0:
-                ratios['r5'] = (donnees.get('tresorerie', 0) / ca_journalier)
-            else:
-                ratios['r5'] = 0
+            ca_journalier = (donnees.get('chiffre_affaires', 0) or 0) / 360
+            ratios['r5'] = cls._safe_ratio(donnees.get('tresorerie', 0), ca_journalier)
             
             # R6 = Fonds de roulement / CA (j)
-            if ca_journalier and ca_journalier != 0:
-                ratios['r6'] = (donnees.get('fonds_roulement', 0) / ca_journalier)
-            else:
-                ratios['r6'] = 0
+            ratios['r6'] = cls._safe_ratio(donnees.get('fonds_roulement', 0), ca_journalier)
                 
         except Exception as e:
             logger.error(f"Erreur calcul ratios: {str(e)}")
@@ -194,12 +199,12 @@ class ScoreACREMACBilanClassiqueService:
         """
         try:
             score = cls.COEFFICIENTS['constante']
-            score += cls.COEFFICIENTS['r1'] * ratios_bornees['r1']
-            score += cls.COEFFICIENTS['r2'] * ratios_bornees['r2']
-            score += cls.COEFFICIENTS['r3'] * ratios_bornees['r3']
-            score += cls.COEFFICIENTS['r4'] * ratios_bornees['r4']
-            score += cls.COEFFICIENTS['r5'] * ratios_bornees['r5']
-            score += cls.COEFFICIENTS['r6'] * ratios_bornees['r6']
+            score += cls.COEFFICIENTS['r1'] * ratios_bornees.get('r1', 0)
+            score += cls.COEFFICIENTS['r2'] * ratios_bornees.get('r2', 0)
+            score += cls.COEFFICIENTS['r3'] * ratios_bornees.get('r3', 0)
+            score += cls.COEFFICIENTS['r4'] * ratios_bornees.get('r4', 0)
+            score += cls.COEFFICIENTS['r5'] * ratios_bornees.get('r5', 0)
+            score += cls.COEFFICIENTS['r6'] * ratios_bornees.get('r6', 0)
             
             return round(score, 6)
         except Exception as e:
@@ -229,6 +234,8 @@ class ScoreACREMACBilanClassiqueService:
             elif 2.86 <= score < 3.68:
                 return "Risque très faible", 0.64, "Risque faible (taux de défaillance < 1%)"
             elif 3.68 <= score < 4.83:
+                return "Risque excellent", 0.38, "Risque excellent"
+            elif 4.83 <= score < 5.83:
                 return "Risque excellent", 0.38, "Risque excellent"
             else:  # score >= 5.83
                 return "Risque exceptionnel", 0.42, "Risque exceptionnel"

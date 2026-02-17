@@ -24,11 +24,15 @@ class Command(BaseCommand):
         
         # Liste des pays à activer
         pays_a_activer = [
-            "Afrique du sud", "South Africa", "Benin", "Burkina Faso", "Cameroun", 
+            "Afrique du sud", "Algerie", "Algeria", "Angola", "South Africa", "Benin", "Burkina Faso", 
+            "Cameroun", "Cameroon", "Djibouti", "Gambie", "Gambia", "Angleterre", "England", 
             "Centrafrique", "Central African Republic", "Congo", "Côte d'Ivoire", "Gabon", 
-            "Ghana", "Guinee bissau", "Guinee-bissau", "Guinee equatoriale", "Mali", 
+            "Ghana", "Guinee bissau", "Guinee-bissau", "Guinea", "Guinee equatoriale", "Mali", 
             "Maroc", "Morocco", "Mauritanie", "Mauritania", "Niger", "Nigeria", 
-            "Republique democratique du Congo", "Democratic Republic of the Congo", "Senegal", "Tchad", "Chad", "Togo"
+            "Republique democratique du Congo", "Democratic Republic of the Congo", "Senegal", "Tchad", 
+            "Chad", "Togo", "Austria", "Autriche", "France", "Tanzanie", "Tanzania", 
+            "Belgique", "Belgium", "Etats-unis", "United States", "Netherlands", "Pays-bas", 
+            "Iles Maurices", "Mauritius"
         ]
         
         # Nettoyer les noms pour la recherche (gérer les espaces, accents, etc.)

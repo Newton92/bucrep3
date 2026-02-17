@@ -62,9 +62,9 @@ class AddMultiYearActifAView(APIView):
 class GetActifAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
-            actif = ActifA.objects.get(id=actif_id)
+            actif = ActifA.objects.get(id=actif_id, acheteur_id=acheteur_id)
             serializer = ActifAnglaisSerializer(actif)
             return Response(serializer.data)
         except ActifA.DoesNotExist:
@@ -73,9 +73,9 @@ class GetActifAView(APIView):
 class EditActifAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, actif_id, *args, **kwargs):
+    def put(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
-            actif = ActifA.objects.get(id=actif_id)
+            actif = ActifA.objects.get(id=actif_id, acheteur_id=acheteur_id)
             serializer = EditActifAnglaisSerializer(actif, data=request.data, partial=True, context={"request": request})
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
@@ -87,11 +87,11 @@ class EditActifAView(APIView):
 class DeleteActifAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response({"error": "La liste des IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
-        count, _ = ActifA.objects.filter(id__in=ids).delete()
+        count, _ = ActifA.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response({"error": "Aucun actif trouvé pour les IDs fournis."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"{count} actif(s) supprimé(s) avec succès."}, status=status.HTTP_200_OK)
@@ -145,9 +145,9 @@ class AddMultiYearPassifAView(APIView):
 class GetPassifAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
-            passif = PassifA.objects.get(id=passif_id)
+            passif = PassifA.objects.get(id=passif_id, acheteur_id=acheteur_id)
             serializer = PassifAnglaisSerializer(passif)
             return Response(serializer.data)
         except PassifA.DoesNotExist:
@@ -156,9 +156,9 @@ class GetPassifAView(APIView):
 class EditPassifAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, passif_id, *args, **kwargs):
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
-            passif = PassifA.objects.get(id=passif_id)
+            passif = PassifA.objects.get(id=passif_id, acheteur_id=acheteur_id)
             serializer = EditPassifAnglaisSerializer(passif, data=request.data, partial=True, context={"request": request})
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
@@ -170,11 +170,11 @@ class EditPassifAView(APIView):
 class DeletePassifAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response({"error": "La liste des IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
-        count, _ = PassifA.objects.filter(id__in=ids).delete()
+        count, _ = PassifA.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response({"error": "Aucun passif trouvé pour les IDs fournis."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"{count} passif(s) supprimé(s) avec succès."}, status=status.HTTP_200_OK)
@@ -228,9 +228,9 @@ class AddMultiYearResultatAView(APIView):
 class GetResultatAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
-            resultat = ResultatA.objects.get(id=resultat_id)
+            resultat = ResultatA.objects.get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = ResultatAnglaisSerializer(resultat)
             return Response(serializer.data)
         except ResultatA.DoesNotExist:
@@ -239,9 +239,9 @@ class GetResultatAView(APIView):
 class EditResultatAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, resultat_id, *args, **kwargs):
+    def put(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
-            resultat = ResultatA.objects.get(id=resultat_id)
+            resultat = ResultatA.objects.get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = EditResultatAnglaisSerializer(resultat, data=request.data, partial=True, context={"request": request})
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
@@ -253,11 +253,11 @@ class EditResultatAView(APIView):
 class DeleteResultatAView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response({"error": "La liste des IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
-        count, _ = ResultatA.objects.filter(id__in=ids).delete()
+        count, _ = ResultatA.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response({"error": "Aucun résultat trouvé pour les IDs fournis."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"{count} résultat(s) supprimé(s) avec succès."}, status=status.HTTP_200_OK)

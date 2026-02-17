@@ -235,6 +235,11 @@ class User(AbstractUser):
         blank=True,
         default="Root"
     )
+    is_client = models.BooleanField(
+        _("is client"),
+        default=False,
+        help_text=_("Designates whether this user is a client user."),
+    )
 
     reset_token = models.CharField(
         _("reset token"),

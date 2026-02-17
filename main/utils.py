@@ -2418,13 +2418,13 @@ def _build_ratios_data(structure_map, ratios_by_year, years):
                 instance = ratios_by_year.get(year)
                 if instance:
                     value = getattr(instance, ratio_info['key'], None)
-                    values[year] = float(value) if value is not None else 0.0
+                    values[year] = float(value) if value is not None else None
                 else:
-                    values[year] = 0.0
+                    values[year] = None
 
-            val_n = values.get(years[0], 0.0)
-            val_n_moins_1 = values.get(years[1], 0.0)
-            val_n_moins_2 = values.get(years[2], 0.0)
+            val_n = values.get(years[0])
+            val_n_moins_1 = values.get(years[1])
+            val_n_moins_2 = values.get(years[2])
             row['values'] = {
                 'n': val_n,
                 'n_moins_1': val_n_moins_1,
@@ -2505,11 +2505,11 @@ def _build_ratios_data_bancaire(structure_map, ratios_by_year, years):
                 instance = ratios_by_year.get(year)
                 if instance:
                     values[year] = {
-                        'calculated': instance['ratios'].get(ratio_info['key'], 0.0),
-                        'bounded': instance['ratios_bornees'].get(ratio_info['key'], 0.0),
+                        'calculated': instance['ratios'].get(ratio_info['key']),
+                        'bounded': instance['ratios_bornees'].get(ratio_info['key']),
                     }
                 else:
-                    values[year] = {'calculated': 0.0, 'bounded': 0.0}
+                    values[year] = {'calculated': None, 'bounded': None}
 
             val_n = values.get(years[0])
             val_n_moins_1 = values.get(years[1])
@@ -4523,6 +4523,15 @@ def get_structured_ratios_bancaire_data(acheteur, years):
     Utilise les mêmes formules et bornes que ScoreACREMACBilanBancaireService.
     """
     ratios_by_year = {}
+    def safe_ratio(numerator, denominator, multiplier=1.0):
+        try:
+            denominator = float(denominator or 0)
+            if denominator == 0:
+                return None
+            return (float(numerator or 0) / denominator) * float(multiplier)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return None
+
     for year in years:
         assets_instance = Assets.objects.filter(acheteur=acheteur, annee__annee=year).first()
         liabilities_instance = Liabilities.objects.filter(acheteur=acheteur, annee__annee=year).first()
@@ -4530,11 +4539,10 @@ def get_structured_ratios_bancaire_data(acheteur, years):
         expenses_instance = Expenses.objects.filter(acheteur=acheteur, annee__annee=year).first()
 
         if assets_instance and liabilities_instance and products_instance and expenses_instance:
-            # CORRECTION : Utiliser les champs directement, pas comme des méthodes
-            total_actif = float(assets_instance.total_assets) if assets_instance.total_assets else 1.0
-            total_passif = float(liabilities_instance.total_liabilities) if liabilities_instance.total_liabilities else 1.0
-            total_produit = float(products_instance.total_produit) if products_instance.total_produit else 1.0
-            total_charges = float(expenses_instance.total_des_charges) if expenses_instance.total_des_charges else 1.0
+            # Ne pas biaiser les ratios en cas de dénominateur nul
+            total_actif = float(assets_instance.total_assets) if assets_instance.total_assets else 0.0
+            total_produit = float(products_instance.total_produit) if products_instance.total_produit else 0.0
+            total_charges = float(expenses_instance.total_des_charges) if expenses_instance.total_des_charges else 0.0
 
             # Calcul des composantes en float
             capitaux_propres = (
@@ -4555,24 +4563,30 @@ def get_structured_ratios_bancaire_data(acheteur, years):
             resultat_net = total_produit - total_charges
             interets_produits = float(products_instance.interet_produit_assimile or 0)
 
-            # Calcul des ratios en float
+            # Calcul des ratios
             ratios = {
-                'r1': (capitaux_propres / total_actif) * 100 if total_actif else 0.0,  # Ratio de solvabilité
-                'r2': (actifs_liquides / dettes_court_terme) * 100 if dettes_court_terme else 0.0,  # Ratio de liquidité
-                'r3': (resultat_net / total_actif) * 100 if total_actif else 0.0,  # Ratio de rentabilité
-                'r4': (creance_clientele / total_actif) * 100 if total_actif else 0.0,  # Ratio de qualité des actifs
-                'r5': (total_charges / total_produit) * 100 if total_produit else 0.0,  # Ratio d'efficience
-                'r6': ((total_produit - interets_produits) / total_produit) * 100 if total_produit else 0.0,  # Ratio de diversification
+                'r1': safe_ratio(capitaux_propres, total_actif, 100),  # Ratio de solvabilité
+                'r2': safe_ratio(actifs_liquides, dettes_court_terme, 100),  # Ratio de liquidité
+                'r3': safe_ratio(resultat_net, total_actif, 100),  # Ratio de rentabilité
+                'r4': safe_ratio(creance_clientele, total_actif, 100),  # Ratio de qualité des actifs
+                'r5': safe_ratio(total_charges, total_produit, 100),  # Ratio d'efficience
+                'r6': safe_ratio(total_produit - interets_produits, total_produit, 100),  # Ratio de diversification
             }
 
-            # Application des bornes
+            # Application des bornes sans plancher biaisé
+            r1 = ratios.get('r1')
+            r2 = ratios.get('r2')
+            r3 = ratios.get('r3')
+            r4 = ratios.get('r4')
+            r5 = ratios.get('r5')
+            r6 = ratios.get('r6')
             ratios_bornees = {
-                'r1': max(4.0, min(20.0, ratios.get('r1', 0.0))),  # Solvabilité: 4% à 20%
-                'r2': max(80.0, min(120.0, ratios.get('r2', 0.0))),  # Liquidité: 80% à 120%
-                'r3': max(-5.0, min(3.0, ratios.get('r3', 0.0))),  # Rentabilité: -5% à 3%
-                'r4': max(0.0, min(60.0, ratios.get('r4', 0.0))),  # Qualité actifs: 0% à 60%
-                'r5': max(50.0, min(95.0, ratios.get('r5', 0.0))),  # Efficience: 50% à 95%
-                'r6': max(5.0, min(40.0, ratios.get('r6', 0.0))),  # Diversification: 5% à 40%
+                'r1': max(0.0, min(100.0, r1)) if r1 is not None else None,
+                'r2': max(0.0, min(200.0, r2)) if r2 is not None else None,
+                'r3': max(-100.0, min(100.0, r3)) if r3 is not None else None,
+                'r4': max(0.0, min(100.0, r4)) if r4 is not None else None,
+                'r5': max(0.0, min(200.0, r5)) if r5 is not None else None,
+                'r6': max(0.0, min(100.0, r6)) if r6 is not None else None,
             }
 
             ratios_by_year[year] = {

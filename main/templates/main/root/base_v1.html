@@ -153,7 +153,7 @@
                     <!-- Country Database dropdown START -->
                     <li class="nav-item ms-0 ms-md-3 dropdown">
                         <select id="country-select" class="form-select form-select-sm" data-user-pays-id="{{ request.user.pays.id }}">
-                            <option value="">Chargement des pays...</option>
+                            <option value="">{% trans "Chargement des pays..." %}</option>
                         </select>
                     </li>
                     <!-- Country Database dropdown END -->
@@ -1026,6 +1026,63 @@
         });
 
     });
+    </script>
+
+    <script>
+    (function() {
+        function setupClientSideFallbackTranslation() {
+            const htmlLang = (document.documentElement.getAttribute('lang') || 'fr').toLowerCase().slice(0, 2);
+            const uiLang = (localStorage.getItem('ui_lang') || htmlLang).toLowerCase().slice(0, 2);
+            if (uiLang !== 'en') return;
+
+            const FR_TO_EN = {
+                "Chargement...": "Loading...",
+                "Sélectionnez un pays": "Select a country",
+                "Mise à jour en cours...": "Updating...",
+                "Veuillez patienter.": "Please wait.",
+                "Pays mis à jour !": "Country updated!",
+                "Le pays a été sélectionné avec succès.": "Country has been selected successfully.",
+                "Erreur": "Error",
+                "Impossible de charger la liste des pays. Veuillez réessayer.": "Unable to load countries list. Please try again.",
+                "Déconnecté!": "Logged out!",
+                "Vous avez été déconnecté avec succès.": "You have been logged out successfully."
+            };
+
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+                    const parent = node.parentElement;
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+                    if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+
+            nodes.forEach((node) => {
+                const raw = node.nodeValue;
+                const trimmed = raw.trim();
+                const translated = FR_TO_EN[trimmed];
+                if (!translated) return;
+                const prefix = raw.slice(0, raw.indexOf(trimmed));
+                const suffix = raw.slice(raw.indexOf(trimmed) + trimmed.length);
+                node.nodeValue = `${prefix}${translated}${suffix}`;
+            });
+
+            document.querySelectorAll('[placeholder], [title], [aria-label]').forEach((el) => {
+                ["placeholder", "title", "aria-label"].forEach((attr) => {
+                    const val = el.getAttribute(attr);
+                    if (!val) return;
+                    const translated = FR_TO_EN[val.trim()];
+                    if (translated) el.setAttribute(attr, translated);
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', setupClientSideFallbackTranslation);
+    })();
     </script>
 
 

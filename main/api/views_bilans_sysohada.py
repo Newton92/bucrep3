@@ -62,9 +62,9 @@ class AddMultiYearActifSView(APIView):
 class GetActifSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
-            actif = ActifS.objects.get(id=actif_id)
+            actif = ActifS.objects.get(id=actif_id, acheteur_id=acheteur_id)
             serializer = ActifSysOhadaSerializer(actif)
             return Response(serializer.data)
         except ActifS.DoesNotExist:
@@ -73,9 +73,9 @@ class GetActifSView(APIView):
 class EditActifSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, actif_id, *args, **kwargs):
+    def put(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
-            actif = ActifS.objects.get(id=actif_id)
+            actif = ActifS.objects.get(id=actif_id, acheteur_id=acheteur_id)
             serializer = EditActifSysOhadaSerializer(actif, data=request.data, partial=True, context={"request": request})
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
@@ -87,11 +87,11 @@ class EditActifSView(APIView):
 class DeleteActifSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response({"error": "La liste des IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
-        count, _ = ActifS.objects.filter(id__in=ids).delete()
+        count, _ = ActifS.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response({"error": "Aucun actif trouvé pour les IDs fournis."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"{count} actif(s) supprimé(s) avec succès."}, status=status.HTTP_200_OK)
@@ -145,9 +145,9 @@ class AddMultiYearPassifSView(APIView):
 class GetPassifSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
-            passif = PassifS.objects.get(id=passif_id)
+            passif = PassifS.objects.get(id=passif_id, acheteur_id=acheteur_id)
             serializer = PassifSysOhadaSerializer(passif)
             return Response(serializer.data)
         except PassifS.DoesNotExist:
@@ -156,9 +156,9 @@ class GetPassifSView(APIView):
 class EditPassifSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, passif_id, *args, **kwargs):
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
-            passif = PassifS.objects.get(id=passif_id)
+            passif = PassifS.objects.get(id=passif_id, acheteur_id=acheteur_id)
             serializer = EditPassifSysOhadaSerializer(passif, data=request.data, partial=True, context={"request": request})
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
@@ -170,11 +170,11 @@ class EditPassifSView(APIView):
 class DeletePassifSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response({"error": "La liste des IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
-        count, _ = PassifS.objects.filter(id__in=ids).delete()
+        count, _ = PassifS.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response({"error": "Aucun passif trouvé pour les IDs fournis."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"{count} passif(s) supprimé(s) avec succès."}, status=status.HTTP_200_OK)
@@ -228,9 +228,9 @@ class AddMultiYearResultatSView(APIView):
 class GetResultatSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
-            resultat = ResultatS.objects.get(id=resultat_id)
+            resultat = ResultatS.objects.get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = ResultatSysOhadaSerializer(resultat)
             return Response(serializer.data)
         except ResultatS.DoesNotExist:
@@ -239,9 +239,9 @@ class GetResultatSView(APIView):
 class EditResultatSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, resultat_id, *args, **kwargs):
+    def put(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
-            resultat = ResultatS.objects.get(id=resultat_id)
+            resultat = ResultatS.objects.get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = EditResultatSysOhadaSerializer(resultat, data=request.data, partial=True, context={"request": request})
             if serializer.is_valid():
                 serializer.save(updated_by=request.user)
@@ -253,11 +253,11 @@ class EditResultatSView(APIView):
 class DeleteResultatSView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response({"error": "La liste des IDs est requise."}, status=status.HTTP_400_BAD_REQUEST)
-        count, _ = ResultatS.objects.filter(id__in=ids).delete()
+        count, _ = ResultatS.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response({"error": "Aucun résultat trouvé pour les IDs fournis."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"message": f"{count} résultat(s) supprimé(s) avec succès."}, status=status.HTTP_200_OK)

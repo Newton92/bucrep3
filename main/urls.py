@@ -1850,6 +1850,11 @@ urlpatterns = [
         EditUtilisateurAvatarView.as_view(),
         name="edit-utilisateur-avatar",
     ),
+    path(
+        "api/generer-mot-de-passe-utilisateur/<int:id>/",
+        GenerateAndSendPasswordUtilisateurView.as_view(),
+        name="generate-user-password",
+    ),
     path('api/supprimer-des-utilisateurs/<int:id>/', DeleteUtilisateurView.as_view(), name='delete-single-user'),
     path('api/supprimer-des-utilisateurs/', DeleteUtilisateurView.as_view(), name='delete-multiple-users'),
     

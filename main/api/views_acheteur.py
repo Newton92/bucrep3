@@ -1,20 +1,50 @@
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q
-from django.utils import timezone  # Ajoutez cette ligne pour importer timezone
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models.functions import TruncMonth
 from django.db.models import Count
-from django.utils import timezone
 from datetime import timedelta
 
 from main.serializers import *
+from main.models import Acheteur, Pays
 
 import traceback
 import logging
 logger = logging.getLogger(__name__)
+
+
+def _resolve_selected_pays_id(request, persist=True):
+    """
+    Résout le pays actif avec fallback robuste:
+    session -> user.pays -> premier pays en base.
+    """
+    session_value = request.session.get("selected_pays_id")
+    selected_pays_id = None
+
+    if session_value:
+        try:
+            selected_pays_id = int(session_value)
+        except (TypeError, ValueError):
+            selected_pays_id = None
+
+        if selected_pays_id and not Pays.objects.filter(id=selected_pays_id).exists():
+            selected_pays_id = None
+
+    if not selected_pays_id and getattr(request.user, "pays", None):
+        selected_pays_id = request.user.pays.id
+
+    if not selected_pays_id:
+        default_pays = Pays.objects.order_by("nom").first()
+        selected_pays_id = default_pays.id if default_pays else None
+
+    if persist and selected_pays_id:
+        request.session["selected_pays_id"] = selected_pays_id
+
+    return selected_pays_id
 
 # === Vue pour les codes NACE === #
 
@@ -94,16 +124,28 @@ class ListAcheteurView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # Récupérer le pays sélectionné
-        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
-        
-        # Initialiser le queryset
-        acheteur_list = Acheteur.objects.filter(pays_id=selected_pays_id)
+        selected_pays_id = _resolve_selected_pays_id(request)
+
+        acheteur_list = Acheteur.objects.select_related(
+            "pays", "ville", "province", "categorie_entreprise", "forme_juridique", "statut_entreprise"
+        )
+        if selected_pays_id:
+            acheteur_list = acheteur_list.filter(pays_id=selected_pays_id)
         
         # Récupérer les paramètres de requête
-        search_query = request.query_params.get("search", "")
-        page_number = int(request.query_params.get("page", 1))
-        items_per_page = int(request.query_params.get("page_size", 10))
+        search_query = request.query_params.get("search", "").strip()
+        try:
+            page_number = int(request.query_params.get("page", 1))
+        except (TypeError, ValueError):
+            page_number = 1
+        page_number = max(1, page_number)
+
+        try:
+            items_per_page = int(request.query_params.get("page_size", 10))
+        except (TypeError, ValueError):
+            items_per_page = 10
+        items_per_page = max(1, min(items_per_page, 100))
+
         sort_field = request.query_params.get("sort", "nom")
         sort_dir = request.query_params.get("sort_dir", "asc")
         filter_type = request.query_params.get("filter", "all")
@@ -114,7 +156,7 @@ class ListAcheteurView(APIView):
             start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             acheteur_list = acheteur_list.filter(updated_at__gte=start_of_month)
         elif filter_type == "new":
-            start_of_week = now - timezone.timedelta(days=now.weekday())
+            start_of_week = now - timedelta(days=now.weekday())
             start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
             acheteur_list = acheteur_list.filter(created_at__gte=start_of_week)
         
@@ -138,22 +180,21 @@ class ListAcheteurView(APIView):
             )
         
         # Appliquer le tri
-        if sort_field:
-            if sort_dir == "desc":
-                sort_field = f"-{sort_field}"
-            acheteur_list = acheteur_list.order_by(sort_field)
-        else:
-            acheteur_list = acheteur_list.order_by("nom")
+        sort_mapping = {
+            "code": "code",
+            "nom": "nom",
+            "sigle": "sigle",
+            "ville": "ville__nom",
+            "created_at": "created_at",
+            "updated_at": "updated_at",
+        }
+        resolved_sort = sort_mapping.get(sort_field, "nom")
+        order_prefix = "-" if sort_dir == "desc" else ""
+        acheteur_list = acheteur_list.order_by(f"{order_prefix}{resolved_sort}", "id")
         
         # Pagination
         paginator = Paginator(acheteur_list, items_per_page)
-        
-        try:
-            acheteur_page = paginator.page(page_number)
-        except PageNotAnInteger:
-            acheteur_page = paginator.page(1)
-        except EmptyPage:
-            acheteur_page = paginator.page(paginator.num_pages)
+        acheteur_page = paginator.get_page(page_number)
         
         # Sérialisation
         serializer = AcheteurSerializer(acheteur_page, many=True)
@@ -164,7 +205,8 @@ class ListAcheteurView(APIView):
             "total_pages": paginator.num_pages,
             "next": acheteur_page.has_next(),
             "previous": acheteur_page.has_previous(),
-            "current_page": page_number
+            "current_page": acheteur_page.number,
+            "selected_pays_id": selected_pays_id,
         })
 
 class SearchAcheteurView(APIView):
@@ -185,8 +227,7 @@ class SearchAcheteurView(APIView):
         except ValueError:
             page_number = 1
         
-        # Récupérer le pays sélectionné
-        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id if request.user.pays else None)
+        selected_pays_id = _resolve_selected_pays_id(request)
         
         # Construction de la requête optimisée
         acheteur_query = Acheteur.objects.select_related(
@@ -578,119 +619,46 @@ class AcheteurStatsView(APIView):
     
     def get(self, request, *args, **kwargs):
         try:
-            print("=== DEBUG AcheteurStatsView ===")
-            
-            # 1. Récupérer le pays sélectionné
-            selected_pays_id = None
-            
-            # Priorité 1: Pays de l'utilisateur
-            if hasattr(request.user, 'pays') and request.user.pays:
-                selected_pays_id = request.user.pays.id
-                print(f"Pays depuis utilisateur: {selected_pays_id}")
-            
-            # Priorité 2: Pays de la session
-            if not selected_pays_id:
-                selected_pays_id = request.session.get('selected_pays_id')
-                print(f"Pays depuis session: {selected_pays_id}")
-            
-            # Priorité 3: Premier pays disponible
-            if not selected_pays_id:
-                from main.models import Pays
-                first_pays = Pays.objects.first()
-                if first_pays:
-                    selected_pays_id = first_pays.id
-                    print(f"Pays par défaut: {selected_pays_id}")
-            
-            print(f"Pays sélectionné final: {selected_pays_id}")
-            
-            # 2. Filtrer les acheteurs
+            selected_pays_id = _resolve_selected_pays_id(request)
+
             acheteurs = Acheteur.objects.all()
             if selected_pays_id:
                 acheteurs = acheteurs.filter(pays_id=selected_pays_id)
             
             total_count = acheteurs.count()
-            print(f"Total acheteurs: {total_count}")
-            
-            # 3. Calculer les dates
-            from django.utils import timezone
             now = timezone.now()
-            print(f"Heure actuelle: {now}")
             
             # Ce mois
             start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             this_month = acheteurs.filter(created_at__gte=start_of_month).count()
-            print(f"Start of month: {start_of_month}")
-            print(f"Acheteurs ce mois: {this_month}")
             
             # Cette semaine (lundi à 00:00:00)
-            import datetime
-            start_of_week = now - datetime.timedelta(days=now.weekday())
+            start_of_week = now - timedelta(days=now.weekday())
             start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
             this_week = acheteurs.filter(created_at__gte=start_of_week).count()
-            print(f"Start of week: {start_of_week}")
-            print(f"Acheteurs cette semaine: {this_week}")
             
-            # 4. Nom du pays actif
+            # Nom du pays actif
             active_country = "Tous pays"
             if selected_pays_id:
-                from main.models import Pays
                 pays = Pays.objects.filter(id=selected_pays_id).first()
                 if pays:
                     active_country = pays.nom
-            print(f"Pays actif: {active_country}")
-            
-            # 5. Retourner la structure ATTENDUE par le JavaScript
+
             stats = {
                 'total': total_count,
                 'thisMonth': this_month,
                 'thisWeek': this_week,
                 'activeCountry': active_country
             }
-            
-            print(f"Stats à retourner: {stats}")
-            
+
             return Response(stats)
             
         except Exception as e:
-            import traceback
-            print(f"ERREUR dans AcheteurStatsView: {str(e)}")
-            print(f"Traceback: {traceback.format_exc()}")
+            logger.exception("Erreur dans AcheteurStatsView: %s", str(e))
             
             return Response({
                 'total': 0,
                 'thisMonth': 0,
                 'thisWeek': 0,
                 'activeCountry': 'Erreur'
-            }, status=200)  # Toujours retourner 200 pour éviter les erreurs AJAX
-        from django.db.models import Count, Q
-        
-        # Récupérer le pays sélectionné
-        selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id if request.user.pays else None)
-        
-        # Base queryset
-        queryset = Acheteur.objects.all()
-        if selected_pays_id:
-            queryset = queryset.filter(pays_id=selected_pays_id)
-        
-        stats = {
-            'total': queryset.count(),
-            'actifs': queryset.filter(
-                Q(statut_entreprise__libelle__icontains='actif') | 
-                Q(statut_entreprise__isnull=True)
-            ).count(),
-            'inactifs': queryset.filter(
-                Q(statut_entreprise__libelle__icontains='inactif')
-            ).count(),
-            'par_pays': list(queryset.values('pays__nom').annotate(
-                total=Count('id')
-            ).order_by('-total')),
-            'derniers_ajouts': list(queryset.order_by('-created_at')[:5].values(
-                'id', 'nom', 'created_at'
-            ))
-        }
-        
-        return Response({
-            "success": True,
-            "stats": stats,
-            "selected_pays_id": selected_pays_id
-        })
+            }, status=200)

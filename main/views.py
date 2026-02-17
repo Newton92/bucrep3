@@ -4,6 +4,7 @@ import threading
 from django.core.cache import cache
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import render
@@ -517,10 +518,12 @@ def dash_root_user(request):
         return redirect('index')
 
     pays_list = Pays.objects.all().only('id', 'nom')
+    groups_list = Group.objects.all().only('id', 'name').order_by('name')
 
     context = {
         "users_active": "active",
         "pays_list": pays_list,
+        "groups_list": groups_list,
         "user": request.user,
         "refresh": refresh_token,
         "access": access_token,
@@ -1141,28 +1144,40 @@ def dash_root_acheteur(request):
     
     user = request.user
     
-    # Récupérer le pays sélectionné
-    selected_pays_id = request.session.get('selected_pays_id', request.user.pays.id)
-    
-    acheteurs = Acheteur.objects.filter(pays_id=selected_pays_id)
-    print(acheteurs)
-    print(acheteurs.count())
+    # Récupérer le pays sélectionné (session -> profil -> premier pays dashboard)
+    selected_pays_id = request.session.get("selected_pays_id")
+    if not selected_pays_id and getattr(user, "pays", None):
+        selected_pays_id = user.pays.id
+        request.session["selected_pays_id"] = selected_pays_id
 
-    # Génération des tokens d'accès
+    if not selected_pays_id:
+        default_pays = Pays.objects.filter(afficher_au_dashboard=True).order_by("nom").first()
+        selected_pays_id = default_pays.id if default_pays else None
+        if selected_pays_id:
+            request.session["selected_pays_id"] = selected_pays_id
+
+    # Le listing est chargé côté API (pagination server-side), on évite de charger toute la table ici.
+    acheteurs = Acheteur.objects.none()
+    
+    # Génération des tokens JWT
     try:
         refresh = RefreshToken.for_user(request.user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
-    except Exception:
-        messages.error(request, "Erreur lors de la génération des tokens.")
-        return redirect('index')
+    except Exception as e:
+        logger.error(f"Erreur lors de la génération des tokens: {e}")
+        messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
+        return redirect('login')
 
     context = {
         "acheteur_active": "active",
         "user": request.user,
-        "user_save": user,
-        "refresh": refresh_token,
         "access": access_token,
+        "refresh": refresh_token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "acheteurs": acheteurs,
+        "selected_pays_id": selected_pays_id,
     }
 
     return render(

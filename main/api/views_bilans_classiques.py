@@ -75,9 +75,9 @@ class AddMultiYearActifCView(APIView):
 class GetActifCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
-            actif = ActifC.objects.get(id=actif_id)
+            actif = ActifC.objects.get(id=actif_id, acheteur_id=acheteur_id)
             serializer = ActifClassiqueSerializer(actif)
             return Response(serializer.data)
         except ActifC.DoesNotExist:
@@ -88,9 +88,9 @@ class GetActifCView(APIView):
 class EditActifCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, actif_id, *args, **kwargs):
+    def put(self, request, acheteur_id, actif_id, *args, **kwargs):
         try:
-            actif = ActifC.objects.get(id=actif_id)
+            actif = ActifC.objects.get(id=actif_id, acheteur_id=acheteur_id)
             serializer = EditActifClassiqueSerializer(
                 actif, data=request.data, partial=True, context={"request": request}
             )
@@ -106,14 +106,14 @@ class EditActifCView(APIView):
 class DeleteActifCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response(
                 {"error": "La liste des IDs est requise."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        count, _ = ActifC.objects.filter(id__in=ids).delete()
+        count, _ = ActifC.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response(
                 {"error": "Aucun actif trouvé pour les IDs fournis."},
@@ -184,9 +184,9 @@ class AddMultiYearPassifCView(APIView):
 class GetPassifCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
-            passif = PassifC.objects.get(id=passif_id)
+            passif = PassifC.objects.get(id=passif_id, acheteur_id=acheteur_id)
             serializer = PassifClassiqueSerializer(passif)
             return Response(serializer.data)
         except PassifC.DoesNotExist:
@@ -197,9 +197,9 @@ class GetPassifCView(APIView):
 class EditPassifCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, passif_id, *args, **kwargs):
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):
         try:
-            passif = PassifC.objects.get(id=passif_id)
+            passif = PassifC.objects.get(id=passif_id, acheteur_id=acheteur_id)
             serializer = EditPassifClassiqueSerializer(
                 passif, data=request.data, partial=True, context={"request": request}
             )
@@ -215,14 +215,14 @@ class EditPassifCView(APIView):
 class DeletePassifCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response(
                 {"error": "La liste des IDs est requise."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        count, _ = PassifC.objects.filter(id__in=ids).delete()
+        count, _ = PassifC.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response(
                 {"error": "Aucun passif trouvé pour les IDs fournis."},
@@ -294,9 +294,9 @@ class AddMultiYearResultatCView(APIView):
 class GetResultatCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
-            resultat = ResultatC.objects.get(id=resultat_id)
+            resultat = ResultatC.objects.get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = ResultatClassiqueSerializer(resultat)
             return Response(serializer.data)
         except ResultatC.DoesNotExist:
@@ -307,9 +307,9 @@ class GetResultatCView(APIView):
 class EditResultatCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, resultat_id, *args, **kwargs):
+    def put(self, request, acheteur_id, resultat_id, *args, **kwargs):
         try:
-            resultat = ResultatC.objects.get(id=resultat_id)
+            resultat = ResultatC.objects.get(id=resultat_id, acheteur_id=acheteur_id)
             serializer = EditResultatClassiqueSerializer(
                 resultat, data=request.data, partial=True, context={"request": request}
             )
@@ -325,14 +325,14 @@ class EditResultatCView(APIView):
 class DeleteResultatCView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids:
             return Response(
                 {"error": "La liste des IDs est requise."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        count, _ = ResultatC.objects.filter(id__in=ids).delete()
+        count, _ = ResultatC.objects.filter(id__in=ids, acheteur_id=acheteur_id).delete()
         if count == 0:
             return Response(
                 {"error": "Aucun résultat trouvé pour les IDs fournis."},

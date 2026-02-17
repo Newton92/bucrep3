@@ -7391,7 +7391,7 @@ class VilleSearchAPIView(generics.ListAPIView):
 class ListAcheteurActifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         search_term = request.query_params.get("search", "")
         request.query_params.get("annee", "")
@@ -7421,14 +7421,16 @@ class ListAcheteurActifAnglaisView(APIView):
                 status=400,
             )
 
-        actif_list = ActifA.objects.filter(
-            Q(biens_installations_equipements__icontains=search_term)
-            | Q(inventaire__icontains=search_term)
-            | Q(creances_commerciales_autres_creances__icontains=search_term)
-            | Q(actif_impots_courant__icontains=search_term)
-            | Q(annee__annee__icontains=search_term)
-            | Q(caisses_banques__icontains=search_term)
-        ).order_by("-created_at")
+        actif_list = ActifA.objects.filter(acheteur_id=acheteur_id).order_by("-created_at")
+        if search_term:
+            actif_list = actif_list.filter(
+                Q(biens_installations_equipements__icontains=search_term)
+                | Q(inventaire__icontains=search_term)
+                | Q(creances_commerciales_autres_creances__icontains=search_term)
+                | Q(actif_impots_courant__icontains=search_term)
+                | Q(annee__annee__icontains=search_term)
+                | Q(caisses_banques__icontains=search_term)
+            )
 
         if biens_installations_equipements_min is not None:
             actif_list = actif_list.filter(
@@ -7458,7 +7460,7 @@ class ListAcheteurActifAnglaisView(APIView):
 class SearchAcheteurActifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -7467,6 +7469,8 @@ class SearchAcheteurActifAnglaisView(APIView):
             )
 
         actif_list = ActifA.objects.filter(
+            acheteur_id=acheteur_id
+        ).filter(
             Q(biens_installations_equipements__icontains=search_term)
             | Q(inventaire__icontains=search_term)
             | Q(creances_commerciales_autres_creances__icontains=search_term)
@@ -7494,8 +7498,10 @@ class SearchAcheteurActifAnglaisView(APIView):
 class AddAcheteurActifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddActifASerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddActifASerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -7505,8 +7511,8 @@ class AddAcheteurActifAnglaisView(APIView):
 class EditAcheteurActifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
-        actif = ActifA.objects.filter(id=actif_id).first()
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
+        actif = ActifA.objects.filter(id=actif_id, acheteur_id=acheteur_id).first()
         if not actif:
             return Response(
                 {"detail": "Actif non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -7515,14 +7521,16 @@ class EditAcheteurActifAnglaisView(APIView):
         serializer = GetActifASerializer(actif)
         return Response(serializer.data)
 
-    def put(self, request, actif_id, *args, **kwargs):
-        actif = ActifA.objects.filter(id=actif_id).first()
+    def put(self, request, acheteur_id, actif_id, *args, **kwargs):
+        actif = ActifA.objects.filter(id=actif_id, acheteur_id=acheteur_id).first()
         if not actif:
             return Response(
                 {"detail": "Actif non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditActifASerializer(actif, data=request.data, partial=True)
+        serializer = EditActifASerializer(
+            actif, data=request.data, partial=True, context={"request": request}
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -7532,7 +7540,7 @@ class EditAcheteurActifAnglaisView(APIView):
 class DeleteAcheteurActifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -7540,7 +7548,7 @@ class DeleteAcheteurActifAnglaisView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        actifs = ActifA.objects.filter(id__in=ids)
+        actifs = ActifA.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not actifs.exists():
             return Response(
                 {"error": "Aucun actif trouvé pour les IDs fournis."},
@@ -7557,7 +7565,7 @@ class DeleteAcheteurActifAnglaisView(APIView):
 class ListAcheteurPassifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         search_term = request.query_params.get("search", "")
         request.query_params.get("annee", "")
@@ -7579,17 +7587,19 @@ class ListAcheteurPassifAnglaisView(APIView):
                 status=400,
             )
 
-        passif_list = PassifA.objects.filter(
-            Q(capital_reserves__icontains=search_term)
-            | Q(capital_declare__icontains=search_term)
-            | Q(benefices_non_distribues__icontains=search_term)
-            | Q(pret_bancaire__icontains=search_term)
-            | Q(compte_courant_administrateurs__icontains=search_term)
-            | Q(dettes_commerciales_autres_dettes__icontains=search_term)
-            | Q(decouvert_bancaire__icontains=search_term)
-            | Q(impots__icontains=search_term)
-            | Q(annee__annee__icontains=search_term)
-        ).order_by("-created_at")
+        passif_list = PassifA.objects.filter(acheteur_id=acheteur_id).order_by("-created_at")
+        if search_term:
+            passif_list = passif_list.filter(
+                Q(capital_reserves__icontains=search_term)
+                | Q(capital_declare__icontains=search_term)
+                | Q(benefices_non_distribues__icontains=search_term)
+                | Q(pret_bancaire__icontains=search_term)
+                | Q(compte_courant_administrateurs__icontains=search_term)
+                | Q(dettes_commerciales_autres_dettes__icontains=search_term)
+                | Q(decouvert_bancaire__icontains=search_term)
+                | Q(impots__icontains=search_term)
+                | Q(annee__annee__icontains=search_term)
+            )
 
         if capital_reserves_min is not None:
             passif_list = passif_list.filter(capital_reserves__gte=capital_reserves_min)
@@ -7615,7 +7625,7 @@ class ListAcheteurPassifAnglaisView(APIView):
 class SearchAcheteurPassifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -7624,6 +7634,8 @@ class SearchAcheteurPassifAnglaisView(APIView):
             )
 
         passif_list = PassifA.objects.filter(
+            acheteur_id=acheteur_id
+        ).filter(
             Q(capital_reserves__icontains=search_term)
             | Q(capital_declare__icontains=search_term)
             | Q(benefices_non_distribues__icontains=search_term)
@@ -7653,8 +7665,10 @@ class SearchAcheteurPassifAnglaisView(APIView):
 class AddAcheteurPassifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddPassifASerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddPassifASerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -7664,8 +7678,8 @@ class AddAcheteurPassifAnglaisView(APIView):
 class EditAcheteurPassifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
-        passif = PassifA.objects.filter(id=passif_id).first()
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):
+        passif = PassifA.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
         if not passif:
             return Response(
                 {"detail": "Passif non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -7674,14 +7688,16 @@ class EditAcheteurPassifAnglaisView(APIView):
         serializer = GetPassifASerializer(passif)
         return Response(serializer.data)
 
-    def put(self, request, passif_id, *args, **kwargs):
-        passif = PassifA.objects.filter(id=passif_id).first()
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):
+        passif = PassifA.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
         if not passif:
             return Response(
                 {"detail": "Passif non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditPassifASerializer(passif, data=request.data, partial=True)
+        serializer = EditPassifASerializer(
+            passif, data=request.data, partial=True, context={"request": request}
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -7691,7 +7707,7 @@ class EditAcheteurPassifAnglaisView(APIView):
 class DeleteAcheteurPassifAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -7699,7 +7715,7 @@ class DeleteAcheteurPassifAnglaisView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        passifs = PassifA.objects.filter(id__in=ids)
+        passifs = PassifA.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not passifs.exists():
             return Response(
                 {"error": "Aucun passif trouvé pour les IDs fournis."},
@@ -7716,7 +7732,7 @@ class DeleteAcheteurPassifAnglaisView(APIView):
 class ListAcheteurResultatAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         search_term = request.query_params.get("search", "")
         request.query_params.get("annee", "")
@@ -7746,17 +7762,19 @@ class ListAcheteurResultatAnglaisView(APIView):
                 status=400,
             )
 
-        resultat_list = ResultatA.objects.filter(
-            Q(produits_activites_ordinaires__icontains=search_term)
-            | Q(ventes__icontains=search_term)
-            | Q(charges_exploitation__icontains=search_term)
-            | Q(frais_vente_generaux_administratifs__icontains=search_term)
-            | Q(autres_revenus__icontains=search_term)
-            | Q(frais_financier__icontains=search_term)
-            | Q(charge_impot_sur_revenu__icontains=search_term)
-            | Q(autres_elements_resultat_global__icontains=search_term)
-            | Q(annee__annee__icontains=search_term)
-        ).order_by("-created_at")
+        resultat_list = ResultatA.objects.filter(acheteur_id=acheteur_id).order_by("-created_at")
+        if search_term:
+            resultat_list = resultat_list.filter(
+                Q(produits_activites_ordinaires__icontains=search_term)
+                | Q(ventes__icontains=search_term)
+                | Q(charges_exploitation__icontains=search_term)
+                | Q(frais_vente_generaux_administratifs__icontains=search_term)
+                | Q(autres_revenus__icontains=search_term)
+                | Q(frais_financier__icontains=search_term)
+                | Q(charge_impot_sur_revenu__icontains=search_term)
+                | Q(autres_elements_resultat_global__icontains=search_term)
+                | Q(annee__annee__icontains=search_term)
+            )
 
         if produits_activites_ordinaires_min is not None:
             resultat_list = resultat_list.filter(
@@ -7786,7 +7804,7 @@ class ListAcheteurResultatAnglaisView(APIView):
 class SearchAcheteurResultatAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -7795,6 +7813,8 @@ class SearchAcheteurResultatAnglaisView(APIView):
             )
 
         resultat_list = ResultatA.objects.filter(
+            acheteur_id=acheteur_id
+        ).filter(
             Q(produits_activites_ordinaires__icontains=search_term)
             | Q(ventes__icontains=search_term)
             | Q(charges_exploitation__icontains=search_term)
@@ -7824,8 +7844,10 @@ class SearchAcheteurResultatAnglaisView(APIView):
 class AddAcheteurResultatAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddResultatASerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddResultatASerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -7835,8 +7857,8 @@ class AddAcheteurResultatAnglaisView(APIView):
 class EditAcheteurResultatAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
-        resultat = ResultatA.objects.filter(id=resultat_id).first()
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):
+        resultat = ResultatA.objects.filter(id=resultat_id, acheteur_id=acheteur_id).first()
         if not resultat:
             return Response(
                 {"detail": "Résultat non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -7845,14 +7867,16 @@ class EditAcheteurResultatAnglaisView(APIView):
         serializer = GetResultatASerializer(resultat)
         return Response(serializer.data)
 
-    def put(self, request, resultat_id, *args, **kwargs):
-        resultat = ResultatA.objects.filter(id=resultat_id).first()
+    def put(self, request, acheteur_id, resultat_id, *args, **kwargs):
+        resultat = ResultatA.objects.filter(id=resultat_id, acheteur_id=acheteur_id).first()
         if not resultat:
             return Response(
                 {"detail": "Résultat non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditResultatASerializer(resultat, data=request.data, partial=True)
+        serializer = EditResultatASerializer(
+            resultat, data=request.data, partial=True, context={"request": request}
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -7862,7 +7886,7 @@ class EditAcheteurResultatAnglaisView(APIView):
 class DeleteAcheteurResultatAnglaisView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -7870,7 +7894,7 @@ class DeleteAcheteurResultatAnglaisView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        resultats = ResultatA.objects.filter(id__in=ids)
+        resultats = ResultatA.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not resultats.exists():
             return Response(
                 {"error": "Aucun résultat trouvé pour les IDs fournis."},
@@ -9069,7 +9093,7 @@ class DeleteAcheteurResultatClassiqueView(APIView):
 class ListAcheteurActifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
@@ -9099,9 +9123,9 @@ class ListAcheteurActifSysCohadaView(APIView):
                 status=400,
             )
 
-        actif_list = ActifS.objects.filter(annee__annee__icontains=annee).order_by(
-            "-created_at"
-        )
+        actif_list = ActifS.objects.filter(acheteur_id=acheteur_id).order_by("-created_at")
+        if annee:
+            actif_list = actif_list.filter(annee__annee__icontains=annee)
 
         if frais_developpement_prospection_min is not None:
             actif_list = actif_list.filter(
@@ -9131,7 +9155,7 @@ class ListAcheteurActifSysCohadaView(APIView):
 class SearchAcheteurActifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -9140,7 +9164,11 @@ class SearchAcheteurActifSysCohadaView(APIView):
             )
 
         actif_list = ActifS.objects.filter(
-            # Ajoutez les champs de recherche ici
+            acheteur_id=acheteur_id
+        ).filter(
+            Q(annee__annee__icontains=search_term)
+            | Q(type_bilan__icontains=search_term)
+            | Q(semestre__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(actif_list, 10)
@@ -9162,8 +9190,10 @@ class SearchAcheteurActifSysCohadaView(APIView):
 class AddAcheteurActifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddActifSysCohadaSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddActifSysCohadaSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -9173,8 +9203,8 @@ class AddAcheteurActifSysCohadaView(APIView):
 class EditAcheteurActifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, actif_id, *args, **kwargs):
-        actif = ActifS.objects.filter(id=actif_id).first()
+    def get(self, request, acheteur_id, actif_id, *args, **kwargs):
+        actif = ActifS.objects.filter(id=actif_id, acheteur_id=acheteur_id).first()
         if not actif:
             return Response(
                 {"detail": "Actif non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -9183,15 +9213,15 @@ class EditAcheteurActifSysCohadaView(APIView):
         serializer = GetActifSysCohadaSerializer(actif)
         return Response(serializer.data)
 
-    def put(self, request, actif_id, *args, **kwargs):
-        actif = ActifS.objects.filter(id=actif_id).first()
+    def put(self, request, acheteur_id, actif_id, *args, **kwargs):
+        actif = ActifS.objects.filter(id=actif_id, acheteur_id=acheteur_id).first()
         if not actif:
             return Response(
                 {"detail": "Actif non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditActifSysCohadaSerializer(
-            actif, data=request.data, partial=True
+            actif, data=request.data, partial=True, context={"request": request}
         )
         if serializer.is_valid():
             serializer.save()
@@ -9202,7 +9232,7 @@ class EditAcheteurActifSysCohadaView(APIView):
 class DeleteAcheteurActifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -9210,7 +9240,7 @@ class DeleteAcheteurActifSysCohadaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        actifs = ActifS.objects.filter(id__in=ids)
+        actifs = ActifS.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not actifs.exists():
             return Response(
                 {"error": "Aucun actif trouvé pour les IDs fournis."},
@@ -9227,7 +9257,7 @@ class DeleteAcheteurActifSysCohadaView(APIView):
 class ListAcheteurPassifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
@@ -9245,9 +9275,9 @@ class ListAcheteurPassifSysCohadaView(APIView):
                 status=400,
             )
 
-        passif_list = PassifS.objects.filter(annee__annee__icontains=annee).order_by(
-            "-created_at"
-        )
+        passif_list = PassifS.objects.filter(acheteur_id=acheteur_id).order_by("-created_at")
+        if annee:
+            passif_list = passif_list.filter(annee__annee__icontains=annee)
 
         if capital_min is not None:
             passif_list = passif_list.filter(capital__gte=capital_min)
@@ -9273,7 +9303,7 @@ class ListAcheteurPassifSysCohadaView(APIView):
 class SearchAcheteurPassifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -9282,7 +9312,11 @@ class SearchAcheteurPassifSysCohadaView(APIView):
             )
 
         passif_list = PassifS.objects.filter(
-            # Ajoutez les champs de recherche ici
+            acheteur_id=acheteur_id
+        ).filter(
+            Q(annee__annee__icontains=search_term)
+            | Q(type_bilan__icontains=search_term)
+            | Q(semestre__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(passif_list, 10)
@@ -9304,8 +9338,10 @@ class SearchAcheteurPassifSysCohadaView(APIView):
 class AddAcheteurPassifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddPassifSysCohadaSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddPassifSysCohadaSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -9315,8 +9351,8 @@ class AddAcheteurPassifSysCohadaView(APIView):
 class EditAcheteurPassifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, passif_id, *args, **kwargs):
-        passif = PassifS.objects.filter(id=passif_id).first()
+    def get(self, request, acheteur_id, passif_id, *args, **kwargs):
+        passif = PassifS.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
         if not passif:
             return Response(
                 {"detail": "Passif non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -9325,15 +9361,15 @@ class EditAcheteurPassifSysCohadaView(APIView):
         serializer = GetPassifSysCohadaSerializer(passif)
         return Response(serializer.data)
 
-    def put(self, request, passif_id, *args, **kwargs):
-        passif = PassifS.objects.filter(id=passif_id).first()
+    def put(self, request, acheteur_id, passif_id, *args, **kwargs):
+        passif = PassifS.objects.filter(id=passif_id, acheteur_id=acheteur_id).first()
         if not passif:
             return Response(
                 {"detail": "Passif non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditPassifSysCohadaSerializer(
-            passif, data=request.data, partial=True
+            passif, data=request.data, partial=True, context={"request": request}
         )
         if serializer.is_valid():
             serializer.save()
@@ -9344,7 +9380,7 @@ class EditAcheteurPassifSysCohadaView(APIView):
 class DeleteAcheteurPassifSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -9352,7 +9388,7 @@ class DeleteAcheteurPassifSysCohadaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        passifs = PassifS.objects.filter(id__in=ids)
+        passifs = PassifS.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not passifs.exists():
             return Response(
                 {"error": "Aucun passif trouvé pour les IDs fournis."},
@@ -9369,7 +9405,7 @@ class DeleteAcheteurPassifSysCohadaView(APIView):
 class ListAcheteurResultatSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
@@ -9399,9 +9435,9 @@ class ListAcheteurResultatSysCohadaView(APIView):
                 status=400,
             )
 
-        resultat_list = ResultatS.objects.filter(
-            annee__annee__icontains=annee
-        ).order_by("-created_at")
+        resultat_list = ResultatS.objects.filter(acheteur_id=acheteur_id).order_by("-created_at")
+        if annee:
+            resultat_list = resultat_list.filter(annee__annee__icontains=annee)
 
         if ventes_marchandises_a_min is not None:
             resultat_list = resultat_list.filter(
@@ -9431,7 +9467,7 @@ class ListAcheteurResultatSysCohadaView(APIView):
 class SearchAcheteurResultatSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -9440,7 +9476,11 @@ class SearchAcheteurResultatSysCohadaView(APIView):
             )
 
         resultat_list = ResultatS.objects.filter(
-            # Ajoutez les champs de recherche ici
+            acheteur_id=acheteur_id
+        ).filter(
+            Q(annee__annee__icontains=search_term)
+            | Q(type_bilan__icontains=search_term)
+            | Q(semestre__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(resultat_list, 10)
@@ -9462,8 +9502,10 @@ class SearchAcheteurResultatSysCohadaView(APIView):
 class AddAcheteurResultatSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddResultatSysCohadaSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddResultatSysCohadaSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -9473,8 +9515,8 @@ class AddAcheteurResultatSysCohadaView(APIView):
 class EditAcheteurResultatSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, resultat_id, *args, **kwargs):
-        resultat = ResultatS.objects.filter(id=resultat_id).first()
+    def get(self, request, acheteur_id, resultat_id, *args, **kwargs):
+        resultat = ResultatS.objects.filter(id=resultat_id, acheteur_id=acheteur_id).first()
         if not resultat:
             return Response(
                 {"detail": "Résultat non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -9483,15 +9525,15 @@ class EditAcheteurResultatSysCohadaView(APIView):
         serializer = GetResultatSysCohadaSerializer(resultat)
         return Response(serializer.data)
 
-    def put(self, request, resultat_id, *args, **kwargs):
-        resultat = ResultatS.objects.filter(id=resultat_id).first()
+    def put(self, request, acheteur_id, resultat_id, *args, **kwargs):
+        resultat = ResultatS.objects.filter(id=resultat_id, acheteur_id=acheteur_id).first()
         if not resultat:
             return Response(
                 {"detail": "Résultat non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditResultatSysCohadaSerializer(
-            resultat, data=request.data, partial=True
+            resultat, data=request.data, partial=True, context={"request": request}
         )
         if serializer.is_valid():
             serializer.save()
@@ -9502,7 +9544,7 @@ class EditAcheteurResultatSysCohadaView(APIView):
 class DeleteAcheteurResultatSysCohadaView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -9510,7 +9552,7 @@ class DeleteAcheteurResultatSysCohadaView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        resultats = ResultatS.objects.filter(id__in=ids)
+        resultats = ResultatS.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not resultats.exists():
             return Response(
                 {"error": "Aucun résultat trouvé pour les IDs fournis."},
@@ -9724,7 +9766,7 @@ class EditAcheteurAssetsView(APIView):
 class DeleteAcheteurAssetsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -9732,7 +9774,7 @@ class DeleteAcheteurAssetsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        assets = Assets.objects.filter(id__in=ids)
+        assets = Assets.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not assets.exists():
             return Response(
                 {"error": "Aucun asset trouvé pour les IDs fournis."},
@@ -9754,7 +9796,7 @@ class DeleteAcheteurAssetsView(APIView):
 class ListAcheteurLiabilitiesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
@@ -9777,8 +9819,11 @@ class ListAcheteurLiabilitiesView(APIView):
             )
 
         liabilities_list = Liabilities.objects.filter(
-            annee__annee__icontains=annee
+            acheteur_id=acheteur_id
         ).order_by("-created_at")
+
+        if annee:
+            liabilities_list = liabilities_list.filter(annee__annee__icontains=annee)
 
         if tresorerie_ccp_min is not None:
             liabilities_list = liabilities_list.filter(
@@ -9808,7 +9853,7 @@ class ListAcheteurLiabilitiesView(APIView):
 class SearchAcheteurLiabilitiesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -9817,7 +9862,12 @@ class SearchAcheteurLiabilitiesView(APIView):
             )
 
         liabilities_list = Liabilities.objects.filter(
-            # Ajoutez les champs de recherche ici
+            acheteur_id=acheteur_id
+        ).filter(
+            Q(annee__annee__icontains=search_term)
+            | Q(acheteur__nom__icontains=search_term)
+            | Q(type_bilan__icontains=search_term)
+            | Q(semestre__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(liabilities_list, 10)
@@ -9839,8 +9889,10 @@ class SearchAcheteurLiabilitiesView(APIView):
 class AddAcheteurLiabilitiesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddLiabilitiesSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddLiabilitiesSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -9850,8 +9902,10 @@ class AddAcheteurLiabilitiesView(APIView):
 class EditAcheteurLiabilitiesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, liability_id, *args, **kwargs):
-        liability = Liabilities.objects.filter(id=liability_id).first()
+    def get(self, request, acheteur_id, liability_id, *args, **kwargs):
+        liability = Liabilities.objects.filter(
+            id=liability_id, acheteur_id=acheteur_id
+        ).first()
         if not liability:
             return Response(
                 {"detail": "Liability non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -9860,15 +9914,17 @@ class EditAcheteurLiabilitiesView(APIView):
         serializer = GetLiabilitiesSerializer(liability)
         return Response(serializer.data)
 
-    def put(self, request, liability_id, *args, **kwargs):
-        liability = Liabilities.objects.filter(id=liability_id).first()
+    def put(self, request, acheteur_id, liability_id, *args, **kwargs):
+        liability = Liabilities.objects.filter(
+            id=liability_id, acheteur_id=acheteur_id
+        ).first()
         if not liability:
             return Response(
                 {"detail": "Liability non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EditLiabilitiesSerializer(
-            liability, data=request.data, partial=True
+            liability, data=request.data, partial=True, context={"request": request}
         )
         if serializer.is_valid():
             serializer.save()
@@ -9879,7 +9935,7 @@ class EditAcheteurLiabilitiesView(APIView):
 class DeleteAcheteurLiabilitiesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -9887,7 +9943,7 @@ class DeleteAcheteurLiabilitiesView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        liabilities = Liabilities.objects.filter(id__in=ids)
+        liabilities = Liabilities.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not liabilities.exists():
             return Response(
                 {"error": "Aucune liability trouvée pour les IDs fournis."},
@@ -10263,7 +10319,7 @@ class OffBalanceSheetStatsView(APIView):
 class ListAcheteurExpensesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
@@ -10293,9 +10349,12 @@ class ListAcheteurExpensesView(APIView):
                 status=400,
             )
 
-        expenses_list = Expenses.objects.filter(annee__annee__icontains=annee).order_by(
+        expenses_list = Expenses.objects.filter(acheteur_id=acheteur_id).order_by(
             "-created_at"
         )
+
+        if annee:
+            expenses_list = expenses_list.filter(annee__annee__icontains=annee)
 
         if interet_charges_assimilee_dette_interbancaire_min is not None:
             expenses_list = expenses_list.filter(
@@ -10325,7 +10384,7 @@ class ListAcheteurExpensesView(APIView):
 class SearchAcheteurExpensesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -10334,7 +10393,12 @@ class SearchAcheteurExpensesView(APIView):
             )
 
         expenses_list = Expenses.objects.filter(
-            # Ajoutez les champs de recherche ici
+            acheteur_id=acheteur_id
+        ).filter(
+            Q(annee__annee__icontains=search_term)
+            | Q(acheteur__nom__icontains=search_term)
+            | Q(type_bilan__icontains=search_term)
+            | Q(semestre__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(expenses_list, 10)
@@ -10356,8 +10420,10 @@ class SearchAcheteurExpensesView(APIView):
 class AddAcheteurExpensesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddExpensesSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddExpensesSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -10367,8 +10433,8 @@ class AddAcheteurExpensesView(APIView):
 class EditAcheteurExpensesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, expense_id, *args, **kwargs):
-        expense = Expenses.objects.filter(id=expense_id).first()
+    def get(self, request, acheteur_id, expense_id, *args, **kwargs):
+        expense = Expenses.objects.filter(id=expense_id, acheteur_id=acheteur_id).first()
         if not expense:
             return Response(
                 {"detail": "Expense non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -10377,14 +10443,16 @@ class EditAcheteurExpensesView(APIView):
         serializer = GetExpensesSerializer(expense)
         return Response(serializer.data)
 
-    def put(self, request, expense_id, *args, **kwargs):
-        expense = Expenses.objects.filter(id=expense_id).first()
+    def put(self, request, acheteur_id, expense_id, *args, **kwargs):
+        expense = Expenses.objects.filter(id=expense_id, acheteur_id=acheteur_id).first()
         if not expense:
             return Response(
                 {"detail": "Expense non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditExpensesSerializer(expense, data=request.data, partial=True)
+        serializer = EditExpensesSerializer(
+            expense, data=request.data, partial=True, context={"request": request}
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -10394,7 +10462,7 @@ class EditAcheteurExpensesView(APIView):
 class DeleteAcheteurExpensesView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -10402,7 +10470,7 @@ class DeleteAcheteurExpensesView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        expenses = Expenses.objects.filter(id__in=ids)
+        expenses = Expenses.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not expenses.exists():
             return Response(
                 {"error": "Aucune expense trouvée pour les IDs fournis."},
@@ -10419,7 +10487,7 @@ class DeleteAcheteurExpensesView(APIView):
 class ListAcheteurProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         page_number = request.query_params.get("page", 1)
         request.query_params.get("search", "")
         annee = request.query_params.get("annee", "")
@@ -10453,9 +10521,12 @@ class ListAcheteurProductsView(APIView):
                 status=400,
             )
 
-        products_list = Products.objects.filter(annee__annee__icontains=annee).order_by(
+        products_list = Products.objects.filter(acheteur_id=acheteur_id).order_by(
             "-created_at"
         )
+
+        if annee:
+            products_list = products_list.filter(annee__annee__icontains=annee)
 
         if interets_produit_assimile_sur_pret_avance_interbancaire_min is not None:
             products_list = products_list.filter(
@@ -10485,7 +10556,7 @@ class ListAcheteurProductsView(APIView):
 class SearchAcheteurProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, acheteur_id, *args, **kwargs):
         search_term = request.query_params.get("search", "")
         if not search_term:
             return Response(
@@ -10494,7 +10565,12 @@ class SearchAcheteurProductsView(APIView):
             )
 
         products_list = Products.objects.filter(
-            # Ajoutez les champs de recherche ici
+            acheteur_id=acheteur_id
+        ).filter(
+            Q(annee__annee__icontains=search_term)
+            | Q(acheteur__nom__icontains=search_term)
+            | Q(type_bilan__icontains=search_term)
+            | Q(semestre__icontains=search_term)
         ).order_by("-created_at")
 
         paginator = Paginator(products_list, 10)
@@ -10516,8 +10592,10 @@ class SearchAcheteurProductsView(APIView):
 class AddAcheteurProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        serializer = AddProductsSerializer(data=request.data)
+    def post(self, request, acheteur_id, *args, **kwargs):
+        data = request.data.copy()
+        data["acheteur"] = acheteur_id
+        serializer = AddProductsSerializer(data=data, context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -10527,8 +10605,8 @@ class AddAcheteurProductsView(APIView):
 class EditAcheteurProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, product_id, *args, **kwargs):
-        product = Products.objects.filter(id=product_id).first()
+    def get(self, request, acheteur_id, product_id, *args, **kwargs):
+        product = Products.objects.filter(id=product_id, acheteur_id=acheteur_id).first()
         if not product:
             return Response(
                 {"detail": "Product non trouvé."}, status=status.HTTP_404_NOT_FOUND
@@ -10537,14 +10615,16 @@ class EditAcheteurProductsView(APIView):
         serializer = GetProductsSerializer(product)
         return Response(serializer.data)
 
-    def put(self, request, product_id, *args, **kwargs):
-        product = Products.objects.filter(id=product_id).first()
+    def put(self, request, acheteur_id, product_id, *args, **kwargs):
+        product = Products.objects.filter(id=product_id, acheteur_id=acheteur_id).first()
         if not product:
             return Response(
                 {"detail": "Product non trouvé."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = EditProductsSerializer(product, data=request.data, partial=True)
+        serializer = EditProductsSerializer(
+            product, data=request.data, partial=True, context={"request": request}
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -10554,7 +10634,7 @@ class EditAcheteurProductsView(APIView):
 class DeleteAcheteurProductsView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request, *args, **kwargs):
+    def delete(self, request, acheteur_id, *args, **kwargs):
         ids = request.data.get("ids", [])
         if not ids or not isinstance(ids, list):
             return Response(
@@ -10562,7 +10642,7 @@ class DeleteAcheteurProductsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        products = Products.objects.filter(id__in=ids)
+        products = Products.objects.filter(id__in=ids, acheteur_id=acheteur_id)
         if not products.exists():
             return Response(
                 {"error": "Aucun product trouvé pour les IDs fournis."},

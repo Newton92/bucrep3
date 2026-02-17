@@ -7054,6 +7054,7 @@ class EditValeurRatioIrfsSerializer(serializers.ModelSerializer):
 
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework import serializers
 
 User = get_user_model()
@@ -7065,6 +7066,9 @@ class NewUserSerializer(serializers.ModelSerializer):
     date_joined_formatted = serializers.SerializerMethodField()
     avatar_url = serializers.SerializerMethodField()
     avatar_url_absolute = serializers.SerializerMethodField()  # Pour le frontend
+    groups = serializers.SerializerMethodField()
+    affectation = serializers.SerializerMethodField()
+    affectation_possible = serializers.SerializerMethodField()
     
     class Meta:
         model = User
@@ -7072,7 +7076,9 @@ class NewUserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'first_name', 'last_name',
             'role', 'telephone', 'activation', 'pays', 
             'date_joined', 'date_joined_formatted', 'avatar_url',
-            'avatar_url_absolute', 'profession', 'address', 'email_cc'
+            'avatar_url_absolute', 'profession', 'address', 'email_cc',
+            'is_staff', 'is_superuser', 'is_client', 'groups',
+            'affectation', 'affectation_possible'
         ]
     
     def get_pays(self, obj):
@@ -7126,6 +7132,15 @@ class NewUserSerializer(serializers.ModelSerializer):
                 return f"{domain}{avatar_path}"
         return None   
     
+    def get_groups(self, obj):
+        return list(obj.groups.values("id", "name"))
+
+    def get_affectation(self, obj):
+        return list(obj.affectation.values("id", "nom"))
+
+    def get_affectation_possible(self, obj):
+        return list(obj.affectation_possible.values("id", "nom"))
+    
     
 class GetUserSerializerTwo(serializers.ModelSerializer):
     # pays = PaysSerializer()
@@ -7169,13 +7184,33 @@ class AddUserSerializer(serializers.ModelSerializer):
             'incorrect_type': 'Veuillez fournir un ID de pays valide.'
         }
     )
+    groups = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(),
+        many=True,
+        required=False,
+    )
+    affectation = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        many=True,
+        required=False,
+    )
+    affectation_possible = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        many=True,
+        required=False,
+    )
+    is_staff = serializers.BooleanField(required=False, default=False)
+    is_superuser = serializers.BooleanField(required=False, default=False)
+    is_client = serializers.BooleanField(required=False, default=False)
     
     class Meta:
         model = User
         fields = [
             "username", "first_name", "last_name", "email",
             "email_cc", "address", "activation", "telephone",
-            "profession", "role", "pays", "password"
+            "profession", "role", "pays", "password",
+            "groups", "affectation", "affectation_possible",
+            "is_staff", "is_superuser", "is_client"
         ]
         extra_kwargs = {
             'username': {'required': True},
@@ -7186,13 +7221,13 @@ class AddUserSerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         # Validation de l'email
-        if User.objects.filter(email=data.get('email')).exists():
+        if User.objects.filter(email__iexact=data.get('email', '')).exists():
             raise serializers.ValidationError({
                 "email": "Cet email est déjà utilisé par un autre utilisateur."
             })
         
         # Validation du username
-        if User.objects.filter(username=data.get('username')).exists():
+        if User.objects.filter(username__iexact=data.get('username', '')).exists():
             raise serializers.ValidationError({
                 "username": "Ce nom d'utilisateur est déjà pris."
             })
@@ -7208,6 +7243,9 @@ class AddUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Extraire le mot de passe
         password = validated_data.pop('password', None)
+        groups = validated_data.pop('groups', [])
+        affectation = validated_data.pop('affectation', [])
+        affectation_possible = validated_data.pop('affectation_possible', [])
         
         # Créer l'utilisateur
         user = User(**validated_data)
@@ -7222,6 +7260,18 @@ class AddUserSerializer(serializers.ModelSerializer):
             user.set_password(default_password)
         
         user.save()
+        if groups:
+            user.groups.set(groups)
+
+        if user.pays and user.pays not in affectation:
+            affectation.append(user.pays)
+        if user.pays and user.pays not in affectation_possible:
+            affectation_possible.append(user.pays)
+
+        if affectation:
+            user.affectation.set(affectation)
+        if affectation_possible:
+            user.affectation_possible.set(affectation_possible)
         return user
 
 
@@ -7231,19 +7281,34 @@ class GetUserSerializer(serializers.ModelSerializer):
     pays_id = serializers.IntegerField(source='pays.id', read_only=True)
     pays_nom = serializers.CharField(source='pays.nom', read_only=True)
     date_joined_formatted = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
+    affectation = serializers.SerializerMethodField()
+    affectation_possible = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = [
             "id", "username", "first_name", "last_name", "email",
             "email_cc", "address", "activation", "telephone", "profession",
-            "role", "pays_id", "pays_nom", "date_joined", "date_joined_formatted"
+            "role", "pays_id", "pays_nom", "date_joined", "date_joined_formatted",
+            "last_login",
+            "is_staff", "is_superuser", "is_client", "groups",
+            "affectation", "affectation_possible"
         ]
     
     def get_date_joined_formatted(self, obj):
         if obj.date_joined:
             return obj.date_joined.strftime("%d.%m.%Y à %H:%M:%S")
         return None
+
+    def get_groups(self, obj):
+        return list(obj.groups.values("id", "name"))
+
+    def get_affectation(self, obj):
+        return list(obj.affectation.values("id", "nom"))
+
+    def get_affectation_possible(self, obj):
+        return list(obj.affectation_possible.values("id", "nom"))
 
 
 class EditUserSerializer(serializers.ModelSerializer):
@@ -7252,31 +7317,75 @@ class EditUserSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    groups = serializers.PrimaryKeyRelatedField(
+        queryset=Group.objects.all(),
+        many=True,
+        required=False,
+    )
+    affectation = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        many=True,
+        required=False,
+    )
+    affectation_possible = serializers.PrimaryKeyRelatedField(
+        queryset=Pays.objects.all(),
+        many=True,
+        required=False,
+    )
+    is_staff = serializers.BooleanField(required=False)
+    is_superuser = serializers.BooleanField(required=False)
+    is_client = serializers.BooleanField(required=False)
     
     class Meta:
         model = User
         fields = [
             "username", "first_name", "last_name", "email",
             "email_cc", "address", "activation", "telephone",
-            "profession", "role", "pays"
+            "profession", "role", "pays", "groups",
+            "affectation", "affectation_possible",
+            "is_staff", "is_superuser", "is_client"
         ]
     
     def validate_email(self, value):
         # Exclure l'utilisateur actuel de la vérification d'unicité
         instance = self.instance
-        if instance and User.objects.filter(email=value).exclude(id=instance.id).exists():
+        if instance and User.objects.filter(email__iexact=value).exclude(id=instance.id).exists():
             raise serializers.ValidationError("Cet email est déjà utilisé.")
-        elif not instance and User.objects.filter(email=value).exists():
+        elif not instance and User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("Cet email est déjà utilisé.")
         return value
     
     def validate_username(self, value):
         instance = self.instance
-        if instance and User.objects.filter(username=value).exclude(id=instance.id).exists():
+        if instance and User.objects.filter(username__iexact=value).exclude(id=instance.id).exists():
             raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
-        elif not instance and User.objects.filter(username=value).exists():
+        elif not instance and User.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
         return value
+
+    def update(self, instance, validated_data):
+        groups = validated_data.pop("groups", None)
+        affectation = validated_data.pop("affectation", None)
+        affectation_possible = validated_data.pop("affectation_possible", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if groups is not None:
+            instance.groups.set(groups)
+
+        if affectation is not None:
+            if instance.pays and instance.pays not in affectation:
+                affectation.append(instance.pays)
+            instance.affectation.set(affectation)
+
+        if affectation_possible is not None:
+            if instance.pays and instance.pays not in affectation_possible:
+                affectation_possible.append(instance.pays)
+            instance.affectation_possible.set(affectation_possible)
+
+        return instance
 
 
 class EditUserAvatarSerializer(serializers.ModelSerializer):
@@ -11917,7 +12026,7 @@ class ActifClassiqueSerializer(serializers.ModelSerializer):
     updated_by = UserSerializer(read_only=True)
 
     # Inclusion des propriétés de calcul en lecture seule
-    elements_incorporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True, source='elements_incorporels')
+    elements_incorporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     elements_corporels = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     elements_financiers = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)
     total_I = serializers.DecimalField(max_digits=100, decimal_places=2, read_only=True)

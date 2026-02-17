@@ -1,5 +1,6 @@
 {% extends 'main/root/base.html' %}
-{% load static %}
+{% load static i18n %}
+{% get_current_language as CURRENT_LANGUAGE %}
 
 {% block styles %}
 <!-- Font Awesome 6 -->
@@ -793,7 +794,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                             <select class="form-select" id="inclure_commande" name="inclure_commande" required>
                                 <option value="" disabled selected>Choisir une option</option>
                                 <option value="oui">Oui, rattacher une commande</option>
-                                <option value="non">Non, rapport sans commande</option>
+                                <option value="non" selected>Non, rapport sans commande</option>
                             </select>
                         </div>
                     </div>
@@ -858,13 +859,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label">
-                                <i class="fas fa-language"></i>Langue du rapport
+                                <i class="fas fa-language"></i>
+                                Langue du rapport 
                             </label>
                             <select class="form-select" id="langue" name="langue" required>
-                                <option value="" disabled selected>Choisir la langue</option>
-                                <option value="fr">Français</option>
-                                <option value="en">English</option>
+                                <option value="" disabled {% if CURRENT_LANGUAGE|slice:":2" != 'fr' and CURRENT_LANGUAGE|slice:":2" != 'en' %}selected{% endif %}>Choisir la langue</option>
+                                <option value="fr" {% if CURRENT_LANGUAGE|slice:":2" == 'fr' %}selected{% endif %}>Français</option>
+                                <option value="en" {% if CURRENT_LANGUAGE|slice:":2" == 'en' %}selected{% endif %}>English</option>
                             </select>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                La langue active du site (drapeau FR/EN) est pré-sélectionnée automatiquement. Vous pouvez la modifier ici avant la génération.
+                            </small>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -1030,11 +1036,28 @@ $(document).ready(function() {
     // ============================================
     function init() {
         console.log('🚀 Initialisation du module rapport de solvabilité...');
+        applyActiveLanguageDefault();
         loadAcheteurData();
         loadAnnees();
         loadDevises();
         setupEventListeners();
         initSelect2();
+    }
+
+    function applyActiveLanguageDefault() {
+        const serverLang = '{{ CURRENT_LANGUAGE|default:"fr"|slice:":2" }}'.toLowerCase();
+        const htmlLang = (document.documentElement.getAttribute('lang') || '').toLowerCase().slice(0, 2);
+        const uiLang = (localStorage.getItem('ui_lang') || '').toLowerCase().slice(0, 2);
+
+        const candidate = (uiLang === 'fr' || uiLang === 'en')
+            ? uiLang
+            : (htmlLang === 'fr' || htmlLang === 'en')
+                ? htmlLang
+                : (serverLang === 'fr' || serverLang === 'en')
+                    ? serverLang
+                    : 'fr';
+
+        $('#langue').val(candidate);
     }
     
     function initSelect2() {

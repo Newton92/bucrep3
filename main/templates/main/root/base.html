@@ -668,7 +668,7 @@
                             </div>
                             <div>&nbsp;&nbsp;</div>
                             <select id="country-select" class="form-select form-select-sm country-loading">
-                                <option value="">Chargement des pays...</option>
+                                <option value="">{% trans "Chargement des pays..." %}</option>
                             </select>
                         </li>
 
@@ -1081,6 +1081,92 @@
             updateActiveFlag(currentLang);
         }
 
+        // Client-side fallback translation for root templates (no external library)
+        function setupClientSideFallbackTranslation() {
+            const htmlLang = (document.documentElement.getAttribute('lang') || 'fr').toLowerCase().slice(0, 2);
+            const uiLang = (localStorage.getItem('ui_lang') || htmlLang).toLowerCase().slice(0, 2);
+
+            const FR_TO_EN = {
+                "Chargement...": "Loading...",
+                "Chargement des pays...": "Loading countries...",
+                "Sélectionnez un pays": "Select a country",
+                "Rechercher un pays...": "Search a country...",
+                "Aucun pays trouvé": "No country found",
+                "Aucun pays disponible": "No country available",
+                "Tableau de bord": "Dashboard",
+                "Dashboard": "Dashboard",
+                "Mon compte": "My account",
+                "Utilisateurs": "Users",
+                "Acheteurs": "Buyers",
+                "Français": "French",
+                "Déconnexion": "Logout",
+                "Oui, déconnecter": "Yes, logout",
+                "Annuler": "Cancel",
+                "Déconnecté !": "Logged out!",
+                "Vous avez été déconnecté avec succès.": "You have been logged out successfully.",
+                "Erreur": "Error",
+                "Une erreur est survenue lors de la déconnexion.": "An error occurred during logout.",
+                "Tous droits réservés.": "All rights reserved.",
+                "Développé par": "Developed by",
+                "Module de Gestion des Acheteurs": "Buyer Management Module",
+                "Liste des Acheteurs": "Buyers List",
+                "Rechercher un acheteur...": "Search a buyer...",
+                "Filtrer": "Filter",
+                "Ajouter": "Add",
+                "Total Acheteurs": "Total Buyers",
+                "Ce mois": "This month",
+                "Cette semaine": "This week",
+                "Pays actif": "Active country",
+                "Aucun acheteur trouvé": "No buyer found",
+                "Ajouter un acheteur": "Add a buyer",
+                "Afficher": "Show"
+            };
+
+            function translateExactText(sourceMap) {
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+                        const parent = node.parentElement;
+                        if (!parent) return NodeFilter.FILTER_REJECT;
+                        if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+
+                nodes.forEach((node) => {
+                    const raw = node.nodeValue;
+                    const trimmed = raw.trim();
+                    const translated = sourceMap[trimmed];
+                    if (!translated) return;
+                    const prefix = raw.slice(0, raw.indexOf(trimmed));
+                    const suffix = raw.slice(raw.indexOf(trimmed) + trimmed.length);
+                    node.nodeValue = `${prefix}${translated}${suffix}`;
+                });
+            }
+
+            function translateAttributes(sourceMap) {
+                const attrs = ["placeholder", "title", "aria-label"];
+                document.querySelectorAll("*").forEach((el) => {
+                    attrs.forEach((attr) => {
+                        const val = el.getAttribute(attr);
+                        if (!val) return;
+                        const translated = sourceMap[val.trim()];
+                        if (translated) {
+                            el.setAttribute(attr, translated);
+                        }
+                    });
+                });
+            }
+
+            if (uiLang === "en") {
+                translateExactText(FR_TO_EN);
+                translateAttributes(FR_TO_EN);
+            }
+        }
+
         function setupCountrySelector() {
             const select = document.getElementById('country-select');
             if (!select) {
@@ -1252,6 +1338,7 @@
                 
         // Initialize everything
         document.addEventListener('DOMContentLoaded', function() {
+            setupClientSideFallbackTranslation();
             setupLanguageSwitcher();
             setupCountrySelector();
         });

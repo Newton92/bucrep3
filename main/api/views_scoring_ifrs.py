@@ -31,58 +31,17 @@ class ScoreACREMACBilanIFRSService:
     }
 
     @classmethod
-    def appliquer_bornes_ifrs(cls, ratios):
-        """Applique les bornes spécifiques aux ratios IFRS - CORRIGÉ"""
-        ratios_bornees = {}
-        
+    def _safe_ratio(cls, numerator, denominator, multiplier=Decimal('1')):
+        """Retourne Decimal('0') si le dénominateur est invalide."""
         try:
-            # CORRECTION : Utiliser Decimal directement au lieu de float
-            r1 = ratios.get('r1', Decimal('0'))
-            r2 = ratios.get('r2', Decimal('0'))
-            r3 = ratios.get('r3', Decimal('0'))
-            r4 = ratios.get('r4', Decimal('0'))
-            r5 = ratios.get('r5', Decimal('0'))
-            r6 = ratios.get('r6', Decimal('0'))
-            
-            # Bornes adaptées pour IFRS COBAC
-            ratios_bornees['r1'] = max(Decimal('0'), min(Decimal('100'), r1))
-            ratios_bornees['r2'] = max(Decimal('50'), min(Decimal('200'), r2))
-            ratios_bornees['r3'] = max(Decimal('20'), min(Decimal('80'), r3))
-            ratios_bornees['r4'] = max(Decimal('5'), min(Decimal('50'), r4))
-            ratios_bornees['r5'] = max(Decimal('0'), min(Decimal('90'), r5))
-            ratios_bornees['r6'] = max(Decimal('-60'), min(Decimal('60'), r6))
-            
-            logger.info(f"Ratios après bornes: {ratios_bornees}")
-            
-        except Exception as e:
-            logger.error(f"Erreur application bornes IFRS: {str(e)}")
-            ratios_bornees = ratios.copy()
-        
-        return ratios_bornees
-
-    @classmethod
-    def determiner_classe_risque_ifrs(cls, score):
-        """Détermine la classe de risque pour IFRS COBAC - CORRIGÉ"""
-        try:
-            # CORRECTION : Plages de score révisées
-            if score >= 1.50:
-                return "Risque faible à excellent", 0.5, "Excellente santé financière selon IFRS"
-            elif score >= 1.00:
-                return "Risque acceptable", 2.0, "Bonne santé financière selon IFRS"
-            elif score >= 0.50:
-                return "Risque normal", 5.0, "Situation satisfaisante selon IFRS"
-            elif score >= 0.00:
-                return "Risque modéré", 15.0, "Vigilance recommandée selon IFRS"
-            elif score >= -0.50:
-                return "Risque important", 30.0, "Situation fragile selon IFRS"
-            elif score >= -1.00:
-                return "Risque élevé", 50.0, "Situation difficile selon IFRS"
-            else:
-                return "Risque très élevé", 75.0, "Situation très difficile selon IFRS"
-                
-        except Exception as e:
-            logger.error(f"Erreur détermination classe risque IFRS: {str(e)}")
-            return "Erreur", 0.0, "Erreur de calcul"
+            numerator = Decimal(str(numerator or 0))
+            denominator = Decimal(str(denominator or 0))
+            multiplier = Decimal(str(multiplier))
+            if denominator == 0:
+                return Decimal('0')
+            return (numerator / denominator) * multiplier
+        except Exception:
+            return Decimal('0')
 
     @classmethod
     def extraire_donnees_bilan_ifrs(cls, acheteur, annee):
@@ -191,48 +150,30 @@ class ScoreACREMACBilanIFRSService:
             # R1: Frais financiers / EBE
             ebe = donnees.get('ebe', Decimal('0'))
             charges_financieres = donnees.get('charges_financieres', Decimal('0'))
-            if ebe and ebe != Decimal('0'):
-                ratios['r1'] = (charges_financieres / ebe) * Decimal('100')
-            else:
-                ratios['r1'] = Decimal('0')
+            ratios['r1'] = cls._safe_ratio(charges_financieres, ebe, Decimal('100'))
             
             # R2: (Créances + disponibilités) / Dettes CT
             creances_disponibilites = donnees.get('creances_clients', Decimal('0')) + donnees.get('disponibilites', Decimal('0'))
             dettes_court_terme = donnees.get('dettes_court_terme', Decimal('0'))
-            if dettes_court_terme and dettes_court_terme != Decimal('0'):
-                ratios['r2'] = (creances_disponibilites / dettes_court_terme) * Decimal('100')
-            else:
-                ratios['r2'] = Decimal('0')
+            ratios['r2'] = cls._safe_ratio(creances_disponibilites, dettes_court_terme, Decimal('100'))
             
             # R3: Capitaux permanents / Passif
             capitaux_permanents = donnees.get('capitaux_propres', Decimal('0')) + donnees.get('dettes_financieres', Decimal('0'))
             total_passif = donnees.get('total_passif', Decimal('0'))
-            if total_passif and total_passif != Decimal('0'):
-                ratios['r3'] = (capitaux_permanents / total_passif) * Decimal('100')
-            else:
-                ratios['r3'] = Decimal('0')
+            ratios['r3'] = cls._safe_ratio(capitaux_permanents, total_passif, Decimal('100'))
             
             # R4: Valeur ajoutée / Chiffre d'affaires
             valeur_ajoutee = donnees.get('valeur_ajoutee', Decimal('0'))
             chiffre_affaires = donnees.get('chiffre_affaires', Decimal('0'))
-            if chiffre_affaires and chiffre_affaires != Decimal('0'):
-                ratios['r4'] = (valeur_ajoutee / chiffre_affaires) * Decimal('100')
-            else:
-                ratios['r4'] = Decimal('0')
+            ratios['r4'] = cls._safe_ratio(valeur_ajoutee, chiffre_affaires, Decimal('100'))
             
             # R5: Trésorerie / Ventes (jours)
             tresorerie = donnees.get('total_tresorerie_actif', Decimal('0'))
-            if chiffre_affaires and chiffre_affaires != Decimal('0'):
-                ratios['r5'] = (tresorerie / chiffre_affaires) * Decimal('360')
-            else:
-                ratios['r5'] = Decimal('0')
+            ratios['r5'] = cls._safe_ratio(tresorerie, chiffre_affaires, Decimal('360'))
             
             # R6: Fonds de roulement / CA (jours)
             fonds_roulement = (donnees.get('capitaux_propres', Decimal('0')) + donnees.get('dettes_financieres', Decimal('0'))) - donnees.get('total_actif_immobilise', Decimal('0'))
-            if chiffre_affaires and chiffre_affaires != Decimal('0'):
-                ratios['r6'] = (fonds_roulement / chiffre_affaires) * Decimal('360')
-            else:
-                ratios['r6'] = Decimal('0')
+            ratios['r6'] = cls._safe_ratio(fonds_roulement, chiffre_affaires, Decimal('360'))
                 
             logger.info(f"Ratios IFRS calculés: {ratios}")
                 
@@ -251,21 +192,20 @@ class ScoreACREMACBilanIFRSService:
         ratios_bornees = {}
         
         try:
-            # Conversion en float pour l'application des bornes, puis retour en Decimal
-            r1 = float(ratios.get('r1', Decimal('0')))
-            r2 = float(ratios.get('r2', Decimal('0')))
-            r3 = float(ratios.get('r3', Decimal('0')))
-            r4 = float(ratios.get('r4', Decimal('0')))
-            r5 = float(ratios.get('r5', Decimal('0')))
-            r6 = float(ratios.get('r6', Decimal('0')))
+            r1 = Decimal(str(ratios.get('r1', Decimal('0'))))
+            r2 = Decimal(str(ratios.get('r2', Decimal('0'))))
+            r3 = Decimal(str(ratios.get('r3', Decimal('0'))))
+            r4 = Decimal(str(ratios.get('r4', Decimal('0'))))
+            r5 = Decimal(str(ratios.get('r5', Decimal('0'))))
+            r6 = Decimal(str(ratios.get('r6', Decimal('0'))))
             
             # Bornes adaptées pour IFRS COBAC
-            ratios_bornees['r1'] = Decimal(str(max(0, min(100, r1))))  # R1: 0% à 100%
-            ratios_bornees['r2'] = Decimal(str(max(50, min(200, r2))))  # R2: 50% à 200%
-            ratios_bornees['r3'] = Decimal(str(max(20, min(80, r3))))   # R3: 20% à 80%
-            ratios_bornees['r4'] = Decimal(str(max(5, min(50, r4))))    # R4: 5% à 50%
-            ratios_bornees['r5'] = Decimal(str(max(0, min(90, r5))))    # R5: 0 à 90 jours
-            ratios_bornees['r6'] = Decimal(str(max(-60, min(60, r6))))  # R6: -60 à 60 jours
+            ratios_bornees['r1'] = max(Decimal('0'), min(Decimal('100'), r1))
+            ratios_bornees['r2'] = max(Decimal('0'), min(Decimal('200'), r2))
+            ratios_bornees['r3'] = max(Decimal('-100'), min(Decimal('100'), r3))
+            ratios_bornees['r4'] = max(Decimal('0'), min(Decimal('100'), r4))
+            ratios_bornees['r5'] = max(Decimal('0'), min(Decimal('360'), r5))
+            ratios_bornees['r6'] = max(Decimal('-360'), min(Decimal('360'), r6))
             
             logger.info(f"Ratios après bornes: {ratios_bornees}")
             
