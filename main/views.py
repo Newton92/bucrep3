@@ -8856,6 +8856,42 @@ def dash_root_manage_backup(request):
         "main/root/backup/dash_root_manage_backup.html",
         context,
     )
+    
+    
+    
+@login_required
+def dash_root_warning(request):
+    """
+    Vue pour la gestion des warnings
+    """
+    
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    user = request.user
+
+    # Génération des tokens d'accès
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+
+    context = {
+        "warnings_active": "active",
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
+    }
+    return render(
+        request,
+        "main/root/alertes/dash_root_warning.html",
+        context
+    )
 
 
 

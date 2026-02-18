@@ -6710,6 +6710,120 @@ class EditDocumentAlerteSerializer(serializers.ModelSerializer):
         fields = ["alerte", "titre", "fichier"]
 
 
+
+class AcheteurSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Acheteur
+        fields = ["id", "nom", "code"]
+
+
+class WarningAttachmentSerializer(serializers.ModelSerializer):
+    filename = serializers.SerializerMethodField()
+    upload_url = serializers.SerializerMethodField()
+    file_size = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WarningAttachment
+        fields = ["id", "filename", "upload_url", "file_size", "uploaded_at"]
+
+    def get_filename(self, obj):
+        return obj.filename()
+
+    def get_upload_url(self, obj):
+        request = self.context.get("request")
+        if not obj.upload:
+            return None
+
+        file_url = obj.upload.url
+        return request.build_absolute_uri(file_url) if request else file_url
+
+    def get_file_size(self, obj):
+        try:
+            return obj.upload.size if obj.upload else 0
+        except Exception:
+            return 0
+
+
+class WarningListSerializer(serializers.ModelSerializer):
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True)
+    acheteurs_count = serializers.SerializerMethodField()
+    attachments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Warning
+        fields = [
+            "id",
+            "titre",
+            "description",
+            "created_by",
+            "created_by_username",
+            "acheteurs_count",
+            "attachments_count",
+            "created_at",
+        ]
+
+    def get_acheteurs_count(self, obj):
+        return obj.acheteurs.count()
+
+    def get_attachments_count(self, obj):
+        return obj.warning_attachments.count()
+
+
+class WarningDetailSerializer(serializers.ModelSerializer):
+    created_by_username = serializers.CharField(source="created_by.username", read_only=True)
+    acheteurs = AcheteurSimpleSerializer(many=True, read_only=True)
+    warning_attachments = WarningAttachmentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Warning
+        fields = [
+            "id",
+            "titre",
+            "description",
+            "acheteurs",
+            "created_by",
+            "created_by_username",
+            "created_at",
+            "warning_attachments",
+        ]
+
+
+class WarningUpsertSerializer(serializers.ModelSerializer):
+    acheteurs = serializers.PrimaryKeyRelatedField(
+        queryset=Acheteur.objects.all(), many=True
+    )
+
+    class Meta:
+        model = Warning
+        fields = ["titre", "description", "acheteurs"]
+
+    def validate_titre(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Le titre est obligatoire.")
+        return value.strip()
+
+    def validate_description(self, value):
+        return (value or "").strip()
+
+    def create(self, validated_data):
+        acheteurs = validated_data.pop("acheteurs", [])
+        warning = Warning.objects.create(**validated_data)
+        warning.acheteurs.set(acheteurs)
+        return warning
+
+    def update(self, instance, validated_data):
+        acheteurs = validated_data.pop("acheteurs", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        if acheteurs is not None:
+            instance.acheteurs.set(acheteurs)
+
+        return instance
+
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client

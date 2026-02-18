@@ -19,6 +19,7 @@ from main.api.views_monitoring import *
 from main.api.views_standard import *
 from main.api.views_users import *
 from main.api.views_warning import *
+from main.api.views_alertes import *
 from main.api.views_account import *
 from main.api.views_report import *
 from main.api.views_reporting import *
@@ -735,6 +736,11 @@ urlpatterns = [
         "root-dashboard/sauvegardes/",
         dash_root_manage_backup,
         name="dash_root_manage_backup",
+    ),
+    path(
+        "root-dashboard/gestion-des-warnings/",
+        dash_root_warning,
+        name="dash_root_warning",
     ),
     ########################################################################################################################
     #                                                                                                                      #
@@ -3666,6 +3672,14 @@ urlpatterns = [
         "api/supprimer-des-alertes/", DeleteAlerteView.as_view(), name="delete-alerte"
     ),
     path("api/envoyer-warning/", EnvoyerWarningView.as_view(), name="envoyer-warning"),
+
+    path("api/warnings/", ListWarningView.as_view(), name="api-warning-list"),
+    path("api/warnings/acheteurs/", ListWarningAcheteurView.as_view(), name="api-warning-acheteur-list"),
+    path("api/warnings/create/", AddWarningView.as_view(), name="api-warning-create"),
+    path("api/warnings/<int:id>/", GetWarningView.as_view(), name="api-warning-detail"),
+    path("api/warnings/<int:id>/update/", EditWarningView.as_view(), name="api-warning-update"),
+    path("api/warnings/delete/", DeleteWarningView.as_view(), name="api-warning-delete"),
+    path("api/warnings/attachments/<int:id>/delete/", DeleteWarningAttachmentView.as_view(), name="api-warning-attachment-delete"),
     
     
     
@@ -5977,3 +5991,4 @@ urlpatterns = [
     #                                                                                                                      #
     ########################################################################################################################
 ]
+
