@@ -38,7 +38,7 @@ import random
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport
+from main.models import Client, Commande, Acheteur, Pays, Ville, Devise, ModeleRapport, SuiviCommande
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -535,6 +535,60 @@ def dash_root_user(request):
     )
 
 
+
+
+
+@login_required
+def dash_root_order(request):
+    # Vérifier si l'utilisateur a les permissions nécessaires
+    # Vérifier si l'utilisateur est authentifié
+    if not request.user.is_authenticated:
+        return redirect('login')
+    
+    user = request.user
+
+    # Génération des tokens d'accès
+    try:
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+    except Exception:
+        messages.error(request, "Erreur lors de la génération des tokens.")
+        return redirect('index')
+
+    selected_pays_id = request.session.get("selected_pays_id") or getattr(user, "pays_id", None)
+    ville_queryset = Ville.objects.all()
+    acheteur_queryset = Acheteur.objects.all()
+    if selected_pays_id:
+        ville_queryset = ville_queryset.filter(pays_id=selected_pays_id)
+        acheteur_queryset = acheteur_queryset.filter(pays_id=selected_pays_id)
+
+    context = {
+        "requests_active": "active",
+        "orders_active": "active",
+        "user": request.user,
+        "refresh": refresh_token,
+        "access": access_token,
+        "devise_list": Devise.objects.all(),
+        "acheteur_list": acheteur_queryset,
+        "client_list": User.objects.filter(is_client=True, is_active=True).order_by("id"),
+        "validateur_list": User.objects.filter(is_active=True, is_client=False).order_by("username"),
+        "pays_list": Pays.objects.all(),
+        "ville_list": ville_queryset,
+        "selected_pays_id": selected_pays_id,
+        "modele_rapport_list": ModeleRapport.objects.all(),
+        "status_choices": Commande.STATUS_CHOICES,
+        "type_rapport_choices": [
+            choice for choice in Commande._meta.get_field("type_rapport").choices if choice[0] != "--------"
+        ],
+    }
+    return render(
+        request,
+        "main/root/orders/dash_root_order.html",
+        context
+    )
+    
+    
 
 @login_required
 def dash_root_pays(request):
@@ -5645,17 +5699,23 @@ def dash_root_manage_commande(request, commande_id):
     # Génération des tokens d'accès
     refresh = RefreshToken.for_user(user)
 
-    # Recuperer l'id de la commande
-    id_commande = commande_id
-
-    # Récupérer tous les categories d'entrepris
+    commande = Commande.objects.filter(id=commande_id).first()
+    if not commande:
+        messages.error(request, "Commande introuvable.")
+        return redirect("dash_root_order")
 
     context = {
         "requests_active": "active",
         "user": user,
         "refresh": str(refresh),
         "access": str(refresh.access_token),
-        "id_commande": id_commande,
+        "id_commande": commande_id,
+        "commande": commande,
+        "status_choices": Commande.STATUS_CHOICES,
+        "action_types": SuiviCommande.TYPE_ACTIONS,
+        "validateur_list": User.objects.filter(
+            Q(role__icontains="Validateur") | Q(role__icontains="Root")
+        ).order_by("username"),
     }
     return render(request, "main/root/orders/dash_root_manage_commande.html", context)
 

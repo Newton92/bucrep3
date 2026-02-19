@@ -104,3 +104,4 @@ Documentation technique – **PELBA**
 [ 107.172.88.238 - 1651221@$Ng - yannick ]
 [ git remote set-url origin git@github.com:yannickaboh/bucrep-api.git ]
 
+[ python manage.py import_clients_list --default-password "VotreMotDePasseFort!2026" --update-existing]

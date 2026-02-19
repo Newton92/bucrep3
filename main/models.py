@@ -38,6 +38,11 @@ from django.utils.text import slugify
 from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
 from safedelete.managers import SafeDeleteManager
 
+from django.db import models
+from django.contrib.auth.models import Group
+from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from simple_history.models import HistoricalRecords
+
 
 from main.constantes import *
 
@@ -82,10 +87,49 @@ ROLES_USERS = [
 ]
 
 
-from django.db import models
-from django.contrib.auth.models import Group
-from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
-from simple_history.models import HistoricalRecords
+
+
+class UserReportQuota(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="report_quota"
+    )
+    max_reports = models.PositiveIntegerField(default=10)
+    used_reports = models.PositiveIntegerField(default=0)
+
+    def has_quota(self):
+        return self.used_reports < self.max_reports
+
+    def increment(self):
+        self.used_reports += 1
+        self.save(update_fields=["used_reports"])
+
+    def __str__(self):
+        return f"{self.user.username} ({self.used_reports}/{self.max_reports})"
+
+class GeneratedReport(models.Model):
+    REPORT_TYPES = (
+        ("pdf", "PDF"),
+        ("html", "HTML"),
+        ("xml", "XML"),
+        ("json", "JSON"),
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="generated_reports"
+    )
+    acheteur = models.ForeignKey(
+        "Acheteur",
+        on_delete=models.CASCADE
+    )
+    report_type = models.CharField(max_length=10, choices=REPORT_TYPES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class Referer(Model):
@@ -12452,14 +12496,6 @@ class Commande(Model):
         verbose_name=_("Type de rapport"),
         help_text=_("Type de rapport demandé par le client."),
     )
-    # ref_type_rapport = models.ForeignKey(
-    #     "ModeleRapport",
-    #     null=True,
-    #     blank=True,
-    #     on_delete=models.DO_NOTHING,
-    #     verbose_name=_("Référence du modèle de rapport"),
-    #     help_text=_("Modèle de rapport utilisé pour cette commande."),
-    # )
 
     credit_demande = models.DecimalField(
         max_digits=100,
@@ -12532,6 +12568,10 @@ class Commande(Model):
         null=True,
         blank=True,
     )
+    
+    type_commande = models.CharField(max_length=100, blank=False, null=False, default='NORMALE')
+    type_traitement = models.CharField(max_length=100, blank=False, null=False, default='MANUEL')
+    client_nom = models.CharField(max_length=255, blank=True, verbose_name=_('Client'))
 
     pays = models.ForeignKey(
         "Pays",

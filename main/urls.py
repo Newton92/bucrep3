@@ -12,6 +12,7 @@ from main.api.views_bilans_sysohada import *
 from main.api.views_bilans_anglais import *
 
 from main.api.views_commande import *
+from main.api.views_order import *
 from main.api.views_localisation import *
 from main.api.views_modele import *
 from main.api.views_modules_acheteur import *
@@ -116,6 +117,11 @@ urlpatterns = [
         "root-dashboard/utilisateurs/liste-des-utilisateurs",
         dash_root_user,
         name="dash_root_user",
+    ),
+    path(
+        "root-dashboard/commandes/gestion-des-commandes",
+        dash_root_order,
+        name="dash_root_order",
     ),
     path(
         "root-dashboard/standard/liste-des-devises",
@@ -3638,6 +3644,28 @@ urlpatterns = [
     ),
     # === MODULES COMMANDE === #
     path("api/liste-des-commandes/", ListCommandeView.as_view(), name="list-commande"),
+    path("api/orders/module/", OrderModuleListCreateView.as_view(), name="order-module-list-create"),
+    path("api/orders/module/stats/", OrderModuleStatsView.as_view(), name="order-module-stats"),
+    path(
+        "api/orders/module/<int:commande_id>/",
+        OrderModuleRetrieveUpdateDeleteView.as_view(),
+        name="order-module-detail",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/timeline/",
+        OrderModuleTimelineView.as_view(),
+        name="order-module-timeline",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/status/",
+        OrderModuleStatusUpdateView.as_view(),
+        name="order-module-status-update",
+    ),
+    path(
+        "api/orders/module/<int:commande_id>/timeline/export/",
+        OrderModuleTimelineExportView.as_view(),
+        name="order-module-timeline-export",
+    ),
     path(
         "api/recherche-commande/", SearchCommandeView.as_view(), name="search-commande"
     ),

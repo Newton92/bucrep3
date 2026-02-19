@@ -6562,7 +6562,6 @@ class CommandesSerializer(serializers.ModelSerializer):
     acheteur = AcheteurSerializer()
     pays = PaysSerializer()
     ville = VilleSerializer()
-    ref_type_rapport = ModeleRapportSerializer()
     devise_credit_demande = DeviseSerializer()
     devise_credit_recommande = DeviseSerializer()
 
@@ -6582,34 +6581,52 @@ class CommandesSerializer(serializers.ModelSerializer):
         return self.validate_decimal_field(value)
 
 
+COMMANDE_EDITABLE_FIELDS = [
+        "id",
+        "notre_ref",
+        "reference_client",
+        "date_recept_commande",
+        "date_rapport",
+        "delais",
+        "priorite",
+        "raison_sociale",
+        "type_rapport",
+        "credit_demande",
+        "devise_credit_demande",
+        "credit_recommande",
+        "devise_credit_recommande",
+        "numero_adresse",
+        "rue_adresse",
+        "code_postale_adresse",
+        "telephone",
+        "email",
+        "type_commande",
+        "type_traitement",
+        "client_nom",
+        "pays",
+        "ville",
+        "client",
+        "acheteur",
+        "status",
+        "validateur",
+        "date_envoi_client",
+        "email_envoye",
+        "imprimer_avec_etats_fin",
+        "company_identification_number",
+        "address_additional",
+        "state",
+        "postcode",
+        "post_office",
+        "provider",
+        "comments",
+]
+
+
 class AddCommandeSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Commande
-        fields = [
-            "id",
-            "notre_ref",
-            "reference_client",
-            "date_recept_commande",
-            "date_rapport",
-            "delais",
-            "priorite",
-            "raison_sociale",
-            "type_rapport",
-            "ref_type_rapport",
-            "credit_demande",
-            "devise_credit_demande",
-            "credit_recommande",
-            "devise_credit_recommande",
-            "numero_adresse",
-            "rue_adresse",
-            "code_postale_adresse",
-            "telephone",
-            "email",
-            "ville",
-            "client",
-            "acheteur",
-            "status",
-        ]
+        fields = COMMANDE_EDITABLE_FIELDS
 
 
 class GetCommandeSerializer(serializers.ModelSerializer):
@@ -6621,8 +6638,9 @@ class GetCommandeSerializer(serializers.ModelSerializer):
 class CheckCommandeSerializer(serializers.ModelSerializer):
     client = UserSerializer()
     acheteur = AcheteurSerializer()
+    pays = PaysSerializer()
     ville = VilleSerializer()
-    ref_type_rapport = ModeleRapportSerializer()
+    validateur = UserSerializer()
     devise_credit_demande = DeviseSerializer()
     devise_credit_recommande = DeviseSerializer()
 
@@ -6645,31 +6663,7 @@ class CheckCommandeSerializer(serializers.ModelSerializer):
 class EditCommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
-        fields = [
-            "id",
-            "notre_ref",
-            "reference_client",
-            "date_recept_commande",
-            "date_rapport",
-            "delais",
-            "priorite",
-            "raison_sociale",
-            "type_rapport",
-            "ref_type_rapport",
-            "credit_demande",
-            "devise_credit_demande",
-            "credit_recommande",
-            "devise_credit_recommande",
-            "numero_adresse",
-            "rue_adresse",
-            "code_postale_adresse",
-            "telephone",
-            "email",
-            "ville",
-            "client",
-            "acheteur",
-            "status",
-        ]
+        fields = COMMANDE_EDITABLE_FIELDS
 
 
 class AlerteSerializer(serializers.ModelSerializer):
