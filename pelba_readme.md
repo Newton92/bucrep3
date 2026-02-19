@@ -98,9 +98,9 @@ Si aucune erreur n’est retournée par les commandes précédentes, l’applica
 Documentation technique – **PELBA**
 
 [ #fcfefe, #0a95ca, #0d80be, #25add6, #106cb2 ]
-[ cd /var/www/html/bucrepapi ]
 [ ./deploy.sh ]
 [ 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 ]
+[ cd /var/www/html/bucrepapi ]
 [ 107.172.88.238 - 1651221@$Ng - yannick ]
 [ git remote set-url origin git@github.com:yannickaboh/bucrep-api.git ]
 

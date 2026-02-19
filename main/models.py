@@ -4,6 +4,7 @@ import re
 import base64
 from django.conf import settings
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.contrib.staticfiles import finders
 import os
 
 from django.contrib.auth.models import AbstractUser, Group
@@ -3527,28 +3528,35 @@ class RiskManagment(Model):
     
     def get_management_image_base64(self):
         """Retourne l'image en Base64 pour l'intégration directe dans le HTML"""
-        image_path = self.get_management_image_path()
-        
-        # Si le chemin est relatif, construire le chemin absolu
-        if not os.path.isabs(image_path):
-            image_path = os.path.join(settings.BASE_DIR, image_path)
-        
-        if os.path.exists(image_path):
-            with open(image_path, "rb") as image_file:
-                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-                
-                # Déterminer le type MIME
-                if image_path.endswith('.png'):
-                    mime_type = 'image/png'
-                elif image_path.endswith('.jpg') or image_path.endswith('.jpeg'):
-                    mime_type = 'image/jpeg'
-                elif image_path.endswith('.svg'):
-                    mime_type = 'image/svg+xml'
+        relative_path = self.get_management_image_path_report()
+        absolute_path = finders.find(relative_path)
+
+        if not absolute_path:
+            candidate_paths = [
+                os.path.join(getattr(settings, "STATIC_ROOT", ""), relative_path),
+                os.path.join(settings.BASE_DIR, "main", "static", relative_path),
+                os.path.join(settings.BASE_DIR, "static", relative_path),
+            ]
+            for path in candidate_paths:
+                if path and os.path.exists(path):
+                    absolute_path = path
+                    break
+
+        if absolute_path and os.path.exists(absolute_path):
+            with open(absolute_path, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+
+                if relative_path.endswith(".png"):
+                    mime_type = "image/png"
+                elif relative_path.endswith(".jpg") or relative_path.endswith(".jpeg"):
+                    mime_type = "image/jpeg"
+                elif relative_path.endswith(".svg"):
+                    mime_type = "image/svg+xml"
                 else:
-                    mime_type = 'image/png'  # par défaut
-                
+                    mime_type = "image/png"
+
                 return f"data:{mime_type};base64,{encoded_string}"
-        
+
         return None
     
     def get_management_image_path(self):

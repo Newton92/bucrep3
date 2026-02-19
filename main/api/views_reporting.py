@@ -1166,6 +1166,17 @@ def generer_rapport_solvabilite(request):
         
         
         static_base_url = _get_static_base_url(request)
+
+        def _score_image_path(score_value):
+            try:
+                score_int = round(float(score_value)) if score_value is not None else 0
+            except (TypeError, ValueError):
+                score_int = 0
+            score_int = max(0, min(10, score_int))
+            return f"scoring/{score_int}.png"
+
+        def _score_image_base64(score_value):
+            return get_static_image_base64(_score_image_path(score_value))
         riskrating_base_url = _get_static_base_url(request, 'riskrating/')
 
         # Préparation des données pour le template
@@ -1463,6 +1474,7 @@ def generer_rapport_solvabilite(request):
                 "title_16": "SCORING ACREMAC - SANS BILAN",
                 "score_image": f"scoring/{score_indexe}.png",
                 "score_png": f"scoring/{score_indexe}.png",
+                "score_image_base64": get_static_image_base64(f"scoring/{score_indexe}.png"),
                 "score_value": f"{raw_score_sans_bilan:.2f}",  # <- toujours 2 décimales
                 "interpretation": scoring_sans_bilan.interpretation if scoring_sans_bilan else "Non spécifié",
                 "commentaire": scoring_sans_bilan.commentaire if scoring_sans_bilan else "Aucun commentaire disponible",
@@ -1475,17 +1487,20 @@ def generer_rapport_solvabilite(request):
                 "annee_N1": data['annee_n1'],
                 "annee_N2": data['annee_n2'],
                 
-                "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
+                "score_image_annee_N": _score_image_path(score_value_annee_N),
+                "score_image_annee_N_base64": _score_image_base64(score_value_annee_N),
                 "score_value_annee_N": score_value_annee_N,
                 "score_value_annee_N_arrondi": round(float(score_value_annee_N)) if score_value_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_annee_N,
                 
-                "score_image_annee_N1": f"scoring/{round(float(score_value_annee_N1)) if score_value_annee_N1 else 0}.png",
+                "score_image_annee_N1": _score_image_path(score_value_annee_N1),
+                "score_image_annee_N1_base64": _score_image_base64(score_value_annee_N1),
                 "score_value_annee_N1": score_value_annee_N1,
                 "score_value_annee_N1_arrondi": round(float(score_value_annee_N1)) if score_value_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_annee_N1,
                 
-                "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
+                "score_image_annee_N2": _score_image_path(score_value_annee_N2),
+                "score_image_annee_N2_base64": _score_image_base64(score_value_annee_N2),
                 "score_value_annee_N2": score_value_annee_N2,
                 "score_value_annee_N2_arrondi": round(float(score_value_annee_N2)) if score_value_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_annee_N2,
@@ -1498,17 +1513,20 @@ def generer_rapport_solvabilite(request):
                 "annee_N1": data['annee_n1'],
                 "annee_N2": data['annee_n2'],
                 
-                "score_image_annee_N": f"scoring/{round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N else 0}.png",
+                "score_image_annee_N": _score_image_path(score_value_anglais_annee_N),
+                "score_image_annee_N_base64": _score_image_base64(score_value_anglais_annee_N),
                 "score_value_annee_N": score_value_anglais_annee_N,
                 "score_value_annee_N_arrondi": round(float(score_value_anglais_annee_N)) if score_value_anglais_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_anglais_annee_N,
                 
-                "score_image_annee_N1": f"scoring/{round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 else 0}.png",
+                "score_image_annee_N1": _score_image_path(score_value_anglais_annee_N1),
+                "score_image_annee_N1_base64": _score_image_base64(score_value_anglais_annee_N1),
                 "score_value_annee_N1": score_value_anglais_annee_N1,
                 "score_value_annee_N1_arrondi": round(float(score_value_anglais_annee_N1)) if score_value_anglais_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_anglais_annee_N1,
                 
-                "score_image_annee_N2": f"scoring/{round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 else 0}.png",
+                "score_image_annee_N2": _score_image_path(score_value_anglais_annee_N2),
+                "score_image_annee_N2_base64": _score_image_base64(score_value_anglais_annee_N2),
                 "score_value_annee_N2": score_value_anglais_annee_N2,
                 "score_value_annee_N2_arrondi": round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_anglais_annee_N2,
@@ -1521,17 +1539,20 @@ def generer_rapport_solvabilite(request):
                 "annee_N1": data['annee_n1'],
                 "annee_N2": data['annee_n2'],
                 
-                "score_image_annee_N": f"scoring/{round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N else 0}.png",
+                "score_image_annee_N": _score_image_path(score_value_bancaire_annee_N),
+                "score_image_annee_N_base64": _score_image_base64(score_value_bancaire_annee_N),
                 "score_value_annee_N": score_value_bancaire_annee_N,
                 "score_value_annee_N_arrondi": round(float(score_value_bancaire_annee_N)) if score_value_bancaire_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_bancaire_annee_N,
                 
-                "score_image_annee_N1": f"scoring/{round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 else 0}.png",
+                "score_image_annee_N1": _score_image_path(score_value_bancaire_annee_N1),
+                "score_image_annee_N1_base64": _score_image_base64(score_value_bancaire_annee_N1),
                 "score_value_annee_N1": score_value_bancaire_annee_N1,
                 "score_value_annee_N1_arrondi": round(float(score_value_bancaire_annee_N1)) if score_value_bancaire_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_bancaire_annee_N1,
                 
-                "score_image_annee_N2": f"scoring/{round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 else 0}.png",
+                "score_image_annee_N2": _score_image_path(score_value_bancaire_annee_N2),
+                "score_image_annee_N2_base64": _score_image_base64(score_value_bancaire_annee_N2),
                 "score_value_annee_N2": score_value_bancaire_annee_N2,
                 "score_value_annee_N2_arrondi": round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_bancaire_annee_N2,
@@ -1544,17 +1565,20 @@ def generer_rapport_solvabilite(request):
                 "annee_N1": data['annee_n1'],
                 "annee_N2": data['annee_n2'],
                 
-                "score_image_annee_N": f"scoring/{round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N else 0}.png",
+                "score_image_annee_N": _score_image_path(score_value_syscohada_annee_N),
+                "score_image_annee_N_base64": _score_image_base64(score_value_syscohada_annee_N),
                 "score_value_annee_N": score_value_syscohada_annee_N,
                 "score_value_annee_N_arrondi": round(float(score_value_syscohada_annee_N)) if score_value_syscohada_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_syscohada_annee_N,
                 
-                "score_image_annee_N1": f"scoring/{round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 else 0}.png",
+                "score_image_annee_N1": _score_image_path(score_value_syscohada_annee_N1),
+                "score_image_annee_N1_base64": _score_image_base64(score_value_syscohada_annee_N1),
                 "score_value_annee_N1": score_value_syscohada_annee_N1,
                 "score_value_annee_N1_arrondi": round(float(score_value_syscohada_annee_N1)) if score_value_syscohada_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_syscohada_annee_N1,
                 
-                "score_image_annee_N2": f"scoring/{round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 else 0}.png",
+                "score_image_annee_N2": _score_image_path(score_value_syscohada_annee_N2),
+                "score_image_annee_N2_base64": _score_image_base64(score_value_syscohada_annee_N2),
                 "score_value_annee_N2": score_value_syscohada_annee_N2,
                 "score_value_annee_N2_arrondi": round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_syscohada_annee_N2,
@@ -1567,17 +1591,20 @@ def generer_rapport_solvabilite(request):
                 "annee_N1": data['annee_n1'],
                 "annee_N2": data['annee_n2'],
                 
-                "score_image_annee_N": f"scoring/{round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N else 0}.png",
+                "score_image_annee_N": _score_image_path(score_value_ifrs_annee_N),
+                "score_image_annee_N_base64": _score_image_base64(score_value_ifrs_annee_N),
                 "score_value_annee_N": score_value_ifrs_annee_N,
                 "score_value_annee_N_arrondi": round(float(score_value_ifrs_annee_N)) if score_value_ifrs_annee_N is not None else 0,
                 "interpretation_annee_N": interpretation_ifrs_annee_N,
                 
-                "score_image_annee_N1": f"scoring/{round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 else 0}.png",
+                "score_image_annee_N1": _score_image_path(score_value_ifrs_annee_N1),
+                "score_image_annee_N1_base64": _score_image_base64(score_value_ifrs_annee_N1),
                 "score_value_annee_N1": score_value_ifrs_annee_N1,
                 "score_value_annee_N1_arrondi": round(float(score_value_ifrs_annee_N1)) if score_value_ifrs_annee_N1 is not None else 0,
                 "interpretation_annee_N1": interpretation_ifrs_annee_N1,
                 
-                "score_image_annee_N2": f"scoring/{round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 else 0}.png",
+                "score_image_annee_N2": _score_image_path(score_value_ifrs_annee_N2),
+                "score_image_annee_N2_base64": _score_image_base64(score_value_ifrs_annee_N2),
                 "score_value_annee_N2": score_value_ifrs_annee_N2,
                 "score_value_annee_N2_arrondi": round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
