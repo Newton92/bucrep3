@@ -105,3 +105,22 @@ Documentation technique – **PELBA**
 [ git remote set-url origin git@github.com:yannickaboh/bucrep-api.git ]
 
 [ python manage.py import_clients_list --default-password "VotreMotDePasseFort!2026" --update-existing]
+
+python manage.py seed_solvabilite_gabon --code GAB-SOLV-TEST
+python manage.py seed_solvabilite_gabon --code GAB-SOLV-TEST --with-commande --force-reset
+python manage.py seed_solvabilite_cote_divoire --code CIV-SOLV-TEST --with-commande --force-reset
+python manage.py seed_solvabilite_south_africa --code ZA-SOLV-TEST --with-commande --force-reset
+
+
+
+
+Genere moi un management command seed_solvabilite_cote_divoire --code CIV-SOLV-TEST --with-commande --force-reset
+Nom acheteur (African Distribution Company) | 
+Pays : Cote d'ivoire | 
+Recuperer informations dans pdf que j'ai fourni precedemment, le reste des infos tu les genere
+
+
+Genere moi un management command seed_solvabilite_south_africa --code ZA-SOLV-TEST --with-commande --force-reset
+Nom acheteur (Aquatan Proprietary Limited) | 
+Pays : Afrique du sud ou South Africa | Bilan Anglais (a mon avis)
+Recuperer informations dans pdf que j'ai fourni precedemment, le reste des infos tu les genere
