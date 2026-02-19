@@ -85,6 +85,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from decimal import Decimal
 from datetime import datetime, date
+from urllib.parse import urljoin
 from django.db.models.query import QuerySet
 from django.db.models.manager import BaseManager
 from django.utils.functional import Promise
@@ -445,6 +446,78 @@ def get_risk_rating_base64(score):
     
     score = max(0, min(9, score))
     return get_static_image_base64(f'riskrating/{score}.svg')
+
+
+def _normalize_base_url(url):
+    value = str(url or '').strip()
+    if not value:
+        return ''
+    return value if value.endswith('/') else f'{value}/'
+
+
+def _get_public_base_url(request=None):
+    explicit_base_url = (
+        getattr(settings, 'REPORT_BASE_URL', None)
+        or getattr(settings, 'SITE_URL', None)
+    )
+    if explicit_base_url:
+        return _normalize_base_url(explicit_base_url)
+
+    if request is not None:
+        try:
+            return _normalize_base_url(request.build_absolute_uri('/'))
+        except Exception:
+            pass
+
+    return _normalize_base_url('http://localhost:8000/')
+
+
+def _get_static_base_url(request=None, subpath=''):
+    static_url = getattr(settings, 'STATIC_URL', '/static/')
+    if static_url.startswith(('http://', 'https://')):
+        base_static_url = _normalize_base_url(static_url)
+    else:
+        base_static_url = _normalize_base_url(
+            urljoin(_get_public_base_url(request), static_url.lstrip('/'))
+        )
+
+    if not subpath:
+        return base_static_url
+    return urljoin(base_static_url, subpath.lstrip('/'))
+
+
+def _get_weasy_base_url(request=None):
+    if request is not None:
+        return _get_public_base_url(request)
+    return settings.BASE_DIR
+
+
+def _inject_static_urls(report_data, request=None):
+    if not isinstance(report_data, dict):
+        return report_data
+
+    static_base_url = _get_static_base_url(request)
+    riskrating_base_url = _get_static_base_url(request, 'riskrating/')
+
+    report_data['url_site'] = riskrating_base_url
+
+    summary_section = report_data.get('summary_and_opinion')
+    if isinstance(summary_section, dict):
+        summary_section['url_site'] = riskrating_base_url
+
+    for section_name in (
+        'scoring_sans_bilan',
+        'scoring_classique',
+        'scoring_anglais',
+        'scoring_bancaire',
+        'scoring_syscohada',
+        'scoring_ifrs',
+    ):
+        section_value = report_data.get(section_name)
+        if isinstance(section_value, dict):
+            section_value['url_site'] = static_base_url
+
+    return report_data
 
 
 
@@ -1092,10 +1165,14 @@ def generer_rapport_solvabilite(request):
         
         
         
+        static_base_url = _get_static_base_url(request)
+        riskrating_base_url = _get_static_base_url(request, 'riskrating/')
+
         # Préparation des données pour le template
         report_data = {
             "logo_data": get_logo_data(),
             "logo_path": get_logo_path(),
+            "url_site": riskrating_base_url,
             "header_report": {
                 "acremac_services": "Services ACREMAC Gabon",
                 "acremac_mail": "credit.report@acremac.com",
@@ -1174,7 +1251,7 @@ def generer_rapport_solvabilite(request):
                 "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_image_base64": risk_rating.get_risk_rating_image_base64() if risk_rating else None,
                 "risk_rating_image_url": risk_rating.get_risk_rating_image_url() if risk_rating else None,
-                "url_site": request.build_absolute_uri('/static/riskrating/'),  # ou une autre URL de base
+                "url_site": riskrating_base_url,
                 "risk_gauge_base64": risk_gauge_base64,
                 "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
                 "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
@@ -1390,7 +1467,7 @@ def generer_rapport_solvabilite(request):
                 "interpretation": scoring_sans_bilan.interpretation if scoring_sans_bilan else "Non spécifié",
                 "commentaire": scoring_sans_bilan.commentaire if scoring_sans_bilan else "Aucun commentaire disponible",
                 "score_type": "Scoring sans bilan",
-                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
+                "url_site": static_base_url,
             },
             "scoring_classique": {
                 "title_16": "SCORING CLASSIQUE - AVEC BILAN",
@@ -1413,7 +1490,7 @@ def generer_rapport_solvabilite(request):
                 "score_value_annee_N2_arrondi": round(float(score_value_annee_N2)) if score_value_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_annee_N2,
                 
-                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
+                "url_site": static_base_url,
             },
             "scoring_anglais": {
                 "title_16": "SCORING ANGLAIS - AVEC BILAN",
@@ -1436,7 +1513,7 @@ def generer_rapport_solvabilite(request):
                 "score_value_annee_N2_arrondi": round(float(score_value_anglais_annee_N2)) if score_value_anglais_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_anglais_annee_N2,
                 
-                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
+                "url_site": static_base_url,
             },
             "scoring_bancaire": {
                 "title_16": "SCORING BANCAIRE - AVEC BILAN",
@@ -1459,7 +1536,7 @@ def generer_rapport_solvabilite(request):
                 "score_value_annee_N2_arrondi": round(float(score_value_bancaire_annee_N2)) if score_value_bancaire_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_bancaire_annee_N2,
                 
-                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
+                "url_site": static_base_url,
             },
             "scoring_syscohada": {
                 "title_16": "SCORING SYSCOHADA - AVEC BILAN",
@@ -1482,7 +1559,7 @@ def generer_rapport_solvabilite(request):
                 "score_value_annee_N2_arrondi": round(float(score_value_syscohada_annee_N2)) if score_value_syscohada_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_syscohada_annee_N2,
                 
-                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
+                "url_site": static_base_url,
             },
             "scoring_ifrs": {
                 "title_16": "SCORING IFRS COBAC - AVEC BILAN",
@@ -1505,7 +1582,7 @@ def generer_rapport_solvabilite(request):
                 "score_value_annee_N2_arrondi": round(float(score_value_ifrs_annee_N2)) if score_value_ifrs_annee_N2 is not None else 0,
                 "interpretation_annee_N2": interpretation_ifrs_annee_N2,
                 
-                "url_site": request.build_absolute_uri('/static/'),  # ou une autre URL de base
+                "url_site": static_base_url,
             },
             
             "operation_history": {
@@ -1606,6 +1683,7 @@ def exporter_rapport(request):
         form_data = data.get('form_data', {})
         export_format = data.get('export_format', 'pdf').lower()
         acheteur_id = data.get('acheteur_id')
+        report_data = _inject_static_urls(report_data, request)
         
         print(f"📤 Export demandé: {export_format}")
         print(f"📊 Données reçues - Clés: {list(report_data.keys())}")
@@ -1620,7 +1698,7 @@ def exporter_rapport(request):
             html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
             
             # Générer le PDF en mémoire
-            pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()
+            pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
             
             # Préparer la réponse HTTP
             response = HttpResponse(pdf_file, content_type='application/pdf')
@@ -1629,8 +1707,7 @@ def exporter_rapport(request):
             
             return response
         elif export_format.upper() == 'JSON':
-            # Renvoyer le dictionnaire directement comme une réponse JSON pour inspection
-            return Response(report_data, status=status.HTTP_200_OK)
+            return exporter_json(report_data, form_data, request)
         elif export_format.upper() == 'XML':
             logger.info("Génération du XML + XSD...")
 
@@ -1663,7 +1740,7 @@ def exporter_rapport(request):
         else:
             print("Génération du JSON...")  # Debug
             print(report_data)  # Debug
-            return Response(report_data, status=status.HTTP_200_OK)
+            return exporter_json(report_data, form_data, request)
     except Exception as e:
         print(f"Erreur : {str(e)}")  # Debug
         return Response(
@@ -1731,7 +1808,7 @@ def exporter_rapport_version1(request):
         nom_fichier = f"rapport_solvabilite_{nom_acheteur}_{timestamp}"
         
         if export_format == 'pdf':
-            return generer_pdf_weasyprint(report_data, form_data, nom_fichier)
+            return generer_pdf_weasyprint(report_data, form_data, nom_fichier, request=request)
         elif export_format == 'html':
             return generer_html_standalone(report_data, form_data, nom_fichier)
         elif export_format == 'xml':
@@ -1756,15 +1833,16 @@ from django.http import HttpResponse
 from weasyprint import HTML
 import tempfile
 
-def generer_pdf_weasyprint(report_data, form_data, nom_fichier):
+def generer_pdf_weasyprint(report_data, form_data, nom_fichier, request=None):
     try:
+        report_data = _inject_static_urls(report_data, request)
         
         print("Génération du PDF...")  # Debug
         # Rendre le template HTML
         html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
         
         # Générer le PDF en mémoire
-        pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/static/')).write_pdf()
+        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
         
         # Préparer la réponse HTTP
         response = HttpResponse(pdf_file, content_type='application/pdf')
@@ -1782,9 +1860,10 @@ def generer_pdf_weasyprint(report_data, form_data, nom_fichier):
 
 
 
-def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier):
+def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier, request=None):
     """Générer un PDF avec WeasyPrint optimisé"""
     try:
+        report_data = _inject_static_urls(report_data, request)
         print("📄 Début génération PDF...")
         
         # VÉRIFICATION CRITIQUE: Assurez-vous que report_data n'est pas None
@@ -1859,7 +1938,7 @@ def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier):
         
         try:
             # Configuration WeasyPrint
-            base_url = settings.BASE_DIR
+            base_url = _get_weasy_base_url(request)
             
             # Convertir HTML en PDF
             HTML(
@@ -2096,6 +2175,7 @@ def exporter_rapport_unifie(request, report_data, form_data, export_format):
         
         # 1. Préparer les données pour être compatible avec le module 1
         data_complete = preparer_donnees_pour_export(report_data, form_data, export_format)
+        data_complete = _inject_static_urls(data_complete, request)
         
         # 2. Sélectionner le bon format
         format_lower = export_format.lower()
@@ -2219,6 +2299,7 @@ def exporter_pdf(report_data, form_data, request=None):
     """
     try:
         print("📄 Début génération PDF...")
+        report_data = _inject_static_urls(report_data, request)
         
         # Si request n'est pas fourni, créez un objet request minimal
         if request is None:
@@ -2236,7 +2317,7 @@ def exporter_pdf(report_data, form_data, request=None):
         html_string = render_to_string('main/report_deep_seek_test.html', report_data)
         
         # Générer le PDF en mémoire
-        pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
         
         # Préparer la réponse HTTP
         response = HttpResponse(pdf_file, content_type='application/pdf')
@@ -2270,6 +2351,7 @@ def exporter_html(report_data, form_data, request=None):
     """
     try:
         print("🌐 Début génération HTML...")
+        report_data = _inject_static_urls(report_data, request)
         
         from django.template.loader import render_to_string
         from django.http import HttpResponse
@@ -2375,7 +2457,8 @@ def exporter_json(report_data, form_data, request=None):
         from django.http import HttpResponse
         response = HttpResponse(json_content, content_type='application/json; charset=utf-8')
         nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
-        filename = f"rapport_solvabilite_{nom_acheteur}.json"
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        filename = f"rapport_solvabilite_{safe_nom}.json"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         print(f"✅ JSON généré: {len(json_content)} caractères")
@@ -2417,7 +2500,8 @@ def exporter_json(report_data, form_data, request=None):
         
         response = HttpResponse(json_content, content_type='application/json; charset=utf-8')
         nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
-        filename = f"rapport_solvabilite_{nom_acheteur}.json"
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        filename = f"rapport_solvabilite_{safe_nom}.json"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         return response

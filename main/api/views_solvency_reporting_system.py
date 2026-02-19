@@ -148,7 +148,7 @@ class ReportGenerator:
         }
         
         html_string = render_to_string('reports/solvability_report_fr.html', context)
-        html = HTML(string=html_string, base_url='.')
+        html = HTML(string=html_string, base_url=settings.BASE_DIR)
         pdf = html.write_pdf()
         
         return pdf

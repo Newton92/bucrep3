@@ -104,8 +104,7 @@ Documentation technique – **PELBA**
 [ 107.172.88.238 - 1651221@$Ng - yannick ]
 [ git remote set-url origin git@github.com:yannickaboh/bucrep-api.git ]
 
-[ python manage.py import_clients_list --default-password "VotreMotDePasseFort!2026" --update-existing]
-
+python manage.py import_clients_list --default-password "VotreMotDePasseFort!2026" --update-existing
 python manage.py seed_solvabilite_gabon --code GAB-SOLV-TEST
 python manage.py seed_solvabilite_gabon --code GAB-SOLV-TEST --with-commande --force-reset
 python manage.py seed_solvabilite_cote_divoire --code CIV-SOLV-TEST --with-commande --force-reset
