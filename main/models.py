@@ -2484,7 +2484,29 @@ class RiskRating(Model):
         encoded_fallback = base64.b64encode(fallback_svg.encode('utf-8')).decode('utf-8')
         return f"data:image/svg+xml;base64,{encoded_fallback}"
 
+    def _get_fallback_png(self, score):
+        """Génère un PNG de secours pour éviter les problèmes d'affichage SVG dans le HTML local."""
+        try:
+            import io
+            from PIL import Image, ImageDraw
+
+            size = 220
+            img = Image.new("RGBA", (size, size), (245, 247, 250, 255))
+            draw = ImageDraw.Draw(img)
+
+            draw.ellipse((15, 15, size - 15, size - 15), outline=(45, 85, 140, 255), width=6)
+            draw.text((85, 78), str(score), fill=(25, 25, 25, 255))
+            draw.text((98, 124), "/9", fill=(90, 90, 90, 255))
+
+            buffer = io.BytesIO()
+            img.save(buffer, format="PNG")
+            encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
+            return f"data:image/png;base64,{encoded}"
+        except Exception:
+            return None
+
     def get_risk_gauge_image(self):
+        from main.utils import generate_risk_gauge
         score = self.calculate_risk_score()
         filename = f"risk_gauge_{self.pk}.png"
         return generate_risk_gauge(score, filename=filename)
@@ -2556,7 +2578,6 @@ class RiskRating(Model):
     
     def get_risk_rating_image_base64(self):
         score = self.calculate_risk_score()
-        print(f"Score calculé : {score}")  # Debug
 
         if score is None:
             score = 0
@@ -2566,9 +2587,31 @@ class RiskRating(Model):
         except (ValueError, TypeError):
             score = 0
 
-        score = max(0, min(9, score))
+        score = max(0, min(8, score))
+        png_filenames = [f"{score}.png", f"{score}{score}.png"]
         svg_filename = f"{score}.svg"
-        print(f"Fichier SVG recherché : {svg_filename}")  # Debug
+
+        possible_png_paths = [
+            os.path.join(settings.STATIC_ROOT, 'riskrating', png_name)
+            for png_name in png_filenames
+        ] + [
+            os.path.join(settings.BASE_DIR, 'static', 'riskrating', png_name)
+            for png_name in png_filenames
+        ] + [
+            os.path.join(settings.BASE_DIR, 'main', 'static', 'riskrating', png_name)
+            for png_name in png_filenames
+        ]
+
+        for png_path in possible_png_paths:
+            if os.path.exists(png_path):
+                try:
+                    with open(png_path, "rb") as png_file:
+                        png_content = png_file.read()
+                        encoded_png = base64.b64encode(png_content).decode("utf-8")
+                        return f"data:image/png;base64,{encoded_png}"
+                except Exception as e:
+                    print(f"Erreur lecture PNG ({png_path}) : {e}")
+                    continue
 
         possible_paths = [
             os.path.join(settings.STATIC_ROOT, 'riskrating', svg_filename),
@@ -2576,20 +2619,25 @@ class RiskRating(Model):
             os.path.join(settings.BASE_DIR, 'main', 'static', 'riskrating', svg_filename),
         ]
 
-        print(f"Chemins testés : {possible_paths}")  # Debug
-
         for svg_path in possible_paths:
-            print(f"Test du chemin : {svg_path} - Existe : {os.path.exists(svg_path)}")  # Debug
             if os.path.exists(svg_path):
                 try:
-                    with open(svg_path, 'rb') as svg_file:
-                        svg_content = svg_file.read()
-                        encoded_string = base64.b64encode(svg_content).decode('utf-8')
-                        return f"data:image/svg+xml;base64,{encoded_string}"
-                except Exception as e:
-                    print(f"Erreur lors de la lecture : {e}")  # Debug
+                    from svglib.svglib import svg2rlg
+                    from reportlab.graphics import renderPM
 
-        print(f"Aucun fichier SVG trouvé pour le score {score}.")  # Debug
+                    drawing = svg2rlg(svg_path)
+                    if drawing is not None:
+                        png_bytes = renderPM.drawToString(drawing, fmt="PNG")
+                        if png_bytes:
+                            encoded_string = base64.b64encode(png_bytes).decode("utf-8")
+                            return f"data:image/png;base64,{encoded_string}"
+                except Exception as e:
+                    print(f"Erreur conversion SVG->PNG ({svg_path}) : {e}")
+                    continue
+
+        fallback_png = self._get_fallback_png(score)
+        if fallback_png:
+            return fallback_png
         return self._get_fallback_svg(score)
     
     def get_risk_rating_image_url(self):
@@ -9026,8 +9074,7 @@ class RatiosClassique:
         if achats and achats != 0:
             return (self.passif.dettes_fournisseurs_divers / achats) * 360
         return None
-    
-    
+       
     @property
     def solvabilite(self):
         """
@@ -9041,8 +9088,6 @@ class RatiosClassique:
             # Convertir en float pour éviter les erreurs de division de Decimal si nécessaire
             return float(capitaux_propres) / float(total_actif)
         return None
-    
-    
     
     @property
     def rendement_capitaux_propres(self):

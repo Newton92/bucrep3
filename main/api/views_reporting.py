@@ -355,7 +355,8 @@ def get_risk_gauge_chart(score):
     buffer.seek(0)
     plt.close(fig)
 
-    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+    encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    return f"data:image/png;base64,{encoded}"
 
 
 def get_logo_data():
@@ -399,19 +400,50 @@ def format_currency(value):
     return f"{value:,.2f}".replace(",", " ").replace(".", ",") # Exemple de formatage français
 
 
+def _find_static_file_path(image_path):
+    """Résout le chemin absolu d'un asset statique."""
+    absolute_path = finders.find(image_path)
+    if absolute_path and os.path.exists(absolute_path):
+        return absolute_path
+
+    static_root = getattr(settings, "STATIC_ROOT", None)
+    if static_root:
+        fallback_path = os.path.join(static_root, image_path)
+        if os.path.exists(fallback_path):
+            return fallback_path
+
+    return None
+
+
+def _convert_svg_file_to_png_base64(svg_path):
+    """Convertit un fichier SVG en data URI PNG base64."""
+    try:
+        from svglib.svglib import svg2rlg
+        from reportlab.graphics import renderPM
+
+        drawing = svg2rlg(svg_path)
+        if drawing is None:
+            return None
+
+        png_bytes = renderPM.drawToString(drawing, fmt="PNG")
+        if not png_bytes:
+            return None
+
+        encoded_png = base64.b64encode(png_bytes).decode("utf-8")
+        return f"data:image/png;base64,{encoded_png}"
+    except Exception as e:
+        print(f"Erreur conversion SVG->PNG ({svg_path}): {e}")
+        return None
+
+
 def get_static_image_base64(image_path):
     """
     Convertit une image statique en Base64
     :param image_path: Chemin relatif de l'image (ex: 'riskrating/5.svg')
     :return: Chaîne Base64 ou None
     """
-    # Chercher le fichier avec finders
-    absolute_path = finders.find(image_path)
-    
-    if not absolute_path:
-        # Essayer avec STATIC_ROOT
-        absolute_path = os.path.join(settings.STATIC_ROOT, image_path)
-    
+    absolute_path = _find_static_file_path(image_path)
+
     if absolute_path and os.path.exists(absolute_path):
         try:
             with open(absolute_path, 'rb') as img_file:
@@ -444,8 +476,19 @@ def get_risk_rating_base64(score):
     except (ValueError, TypeError):
         score = 0
     
-    score = max(0, min(9, score))
-    return get_static_image_base64(f'riskrating/{score}.svg')
+    # Les assets disponibles sont 0.svg a 8.svg
+    score = max(0, min(8, score))
+    image_path = f'riskrating/{score}.svg'
+    svg_path = _find_static_file_path(image_path)
+
+    if svg_path:
+        # Force la compatibilité navigateur: on renvoie du PNG même si la source est un SVG.
+        png_data_uri = _convert_svg_file_to_png_base64(svg_path)
+        if png_data_uri:
+            return png_data_uri
+
+    # Fallback: renvoyer le SVG en base64 si la conversion PNG échoue.
+    return get_static_image_base64(image_path)
 
 
 def _normalize_base_url(url):
@@ -671,6 +714,18 @@ def generer_rapport_solvabilite(request):
         }  
         
         note_values = []
+        notes_details = []
+        risk_field_labels = {
+            'risque_de_defaut': 'Risque de défaut',
+            'risque_de_concentration_credit': 'Risque de concentration crédit',
+            'risque_de_reputation': 'Risque de réputation',
+            'risque_pays': 'Risque pays',
+            'risque_de_taux_dinteret': "Risque de taux d'intérêt",
+            'risque_de_liquidite': 'Risque de liquidité',
+            'risque_eleve': 'Risque élevé',
+            'risque_moyen': 'Risque moyen',
+            'risque_faible': 'Risque faible',
+        }
         if acremac_opinion:
             # Créez une liste de tous les champs de note
             # Utilisez une boucle pour rendre le code plus propre
@@ -691,9 +746,15 @@ def generer_rapport_solvabilite(request):
                 value = getattr(acremac_opinion, field)
                 if value is not None and value != 0:
                     note_values.append(str(value)) # Convertir en chaîne de caractères
+                    notes_details.append({
+                        "field": field,
+                        "label": risk_field_labels.get(field, field),
+                        "value": value,
+                    })
 
         # Formatez la liste en une chaîne séparée par des virgules
-        notes_str = ", ".join(note_values)
+        notes_str = ", ".join(note_values) if note_values else "Non spécifié"
+        notes_detailed_str = "\n".join([f"{item['label']}: {item['value']}" for item in notes_details]) if notes_details else "Non spécifié"
         
         # Récupération Donnees Enregistrement
         donnees_enregistrement = None
@@ -880,6 +941,18 @@ def generer_rapport_solvabilite(request):
         }  
         
         note_values = []
+        notes_details = []
+        risk_field_labels = {
+            'risque_de_defaut': 'Risque de défaut',
+            'risque_de_concentration_credit': 'Risque de concentration crédit',
+            'risque_de_reputation': 'Risque de réputation',
+            'risque_pays': 'Risque pays',
+            'risque_de_taux_dinteret': "Risque de taux d'intérêt",
+            'risque_de_liquidite': 'Risque de liquidité',
+            'risque_eleve': 'Risque élevé',
+            'risque_moyen': 'Risque moyen',
+            'risque_faible': 'Risque faible',
+        }
         if acremac_opinion:
             # Créez une liste de tous les champs de note
             # Utilisez une boucle pour rendre le code plus propre
@@ -900,9 +973,15 @@ def generer_rapport_solvabilite(request):
                 value = getattr(acremac_opinion, field)
                 if value is not None and value != 0:
                     note_values.append(str(value)) # Convertir en chaîne de caractères
+                    notes_details.append({
+                        "field": field,
+                        "label": risk_field_labels.get(field, field),
+                        "value": value,
+                    })
 
         # Formatez la liste en une chaîne séparée par des virgules
-        notes_str = ", ".join(note_values)
+        notes_str = ", ".join(note_values) if note_values else "Non spécifié"
+        notes_detailed_str = "\n".join([f"{item['label']}: {item['value']}" for item in notes_details]) if notes_details else "Non spécifié"
         
         # Calculer le score
         risk_score = risk_rating.calculate_risk_score() if risk_rating else 1
@@ -1260,11 +1339,11 @@ def generer_rapport_solvabilite(request):
                 "title_5": "EVALUATION DU RISQUE",
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
-                "risk_rating_image_base64": risk_rating.get_risk_rating_image_base64() if risk_rating else None,
+                "risk_rating_image_base64": get_risk_rating_base64(risk_rating_value),
                 "risk_rating_image_url": risk_rating.get_risk_rating_image_url() if risk_rating else None,
                 "url_site": riskrating_base_url,
                 "risk_gauge_base64": risk_gauge_base64,
-                "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
+                "risk_rating_value": max(0, min(8, int(risk_rating_value or 0))),
                 "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
                 "situation_liquidite": "Oui" if risk_rating and risk_rating.situation_liquidite else "Non",
                 "performance_rentabilite": "Oui" if risk_rating and risk_rating.performance_rentabilite else "Non",
@@ -1282,6 +1361,8 @@ def generer_rapport_solvabilite(request):
                 "title_6": "AVIS CREDIT ACREMAC",
                 # Passez le dictionnaire directement au template
                 "notes": notes_str, # Passez la chaîne formatée au template
+                "notes_details": notes_details,
+                "notes_detailed": notes_detailed_str,
                 "highlighted_risks": highlighted_risks,
                 "montant_credit_maximum": acremac_opinion.montant_credit_maximum if acremac_opinion else "Non spécifié",
                 "commentaire": acremac_opinion.commentaire if acremac_opinion else "Aucun commentaire disponible",
@@ -1674,6 +1755,7 @@ import base64
 from datetime import datetime
 import random
 import re
+import string
 import unicodedata
 
 def generate_code_reference():
@@ -1698,6 +1780,32 @@ def _safe_download_filename(name, default='rapport_solvabilite'):
     return cleaned or default
 
 
+def _extract_country_for_filename(report_data):
+    identification = report_data.get('identification', {}) if isinstance(report_data, dict) else {}
+    acremac_address = identification.get('acremac_address', {}) if isinstance(identification, dict) else {}
+    acremac_info = identification.get('acremac_info', {}) if isinstance(identification, dict) else {}
+
+    country_raw = (
+        acremac_address.get('pays')
+        or acremac_info.get('pays')
+        or identification.get('pays')
+        or 'gabon'
+    )
+    return _safe_download_filename(str(country_raw).lower(), default='gabon')
+
+
+def _build_export_filename(report_data, acheteur_id, extension):
+    date_part = timezone.localtime().strftime('%d_%m_%Y')
+    country_part = _extract_country_for_filename(report_data)
+    try:
+        acheteur_part = str(int(acheteur_id))
+    except (TypeError, ValueError):
+        acheteur_part = 'inconnu'
+    unique_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    ext = str(extension or '').lower().strip('.')
+    return f'rapport_{date_part}_{country_part}_acheteur_{acheteur_part}_code_{unique_code}.{ext}'
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def exporter_rapport(request):
@@ -1716,9 +1824,6 @@ def exporter_rapport(request):
         print(f"📊 Données reçues - Clés: {list(report_data.keys())}")
         print(f"📝 Form data - Clés: {list(form_data.keys())}")
         
-        chiffre_aleatoire = random.randint(10000, 99999)
-        print(chiffre_aleatoire)
-        
         if export_format.upper() == 'PDF':
             print("Génération du PDF...")  # Debug
             # Rendre le template HTML
@@ -1729,22 +1834,28 @@ def exporter_rapport(request):
             
             # Préparer la réponse HTTP
             response = HttpResponse(pdf_file, content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="rapport_solvabilite.pdf"'
+            pdf_filename = _build_export_filename(report_data, acheteur_id, 'pdf')
+            response['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
             response['Content-Length'] = len(pdf_file)
             
             return response
         elif export_format.upper() == 'JSON':
-            return exporter_json(report_data, form_data, request)
+            response = exporter_json(report_data, form_data, request)
+            json_filename = _build_export_filename(report_data, acheteur_id, 'json')
+            response['Content-Disposition'] = f'attachment; filename="{json_filename}"'
+            return response
         elif export_format.upper() == 'XML':
-            logger.info("Génération du XML + XSD...")
+            logger.info("Génération du XML...")
 
             try:
-                response = generate_xml_with_xsd(report_data)
-                logger.info("XML + XSD généré avec succès")
+                response = generate_xml_v2(report_data)
+                xml_filename = _build_export_filename(report_data, acheteur_id, 'xml')
+                response['Content-Disposition'] = f'attachment; filename="{xml_filename}"'
+                logger.info("XML généré avec succès")
                 return response
 
             except Exception as e:
-                logger.error(f"Erreur lors de la génération XML/XSD : {str(e)}")
+                logger.error(f"Erreur lors de la génération XML : {str(e)}")
 
                 error_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
                 <erreur>
@@ -1757,17 +1868,22 @@ def exporter_rapport(request):
                     content_type='application/xml; charset=utf-8',
                     status=500
                 )
-                response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+                xml_filename = _build_export_filename(report_data, acheteur_id, 'xml')
+                response['Content-Disposition'] = f'attachment; filename="{xml_filename}"'
                 return response
         elif export_format.upper() == 'HTML':
             print("Génération du HTML...")  # Debug
             response = generate_report_html_standalone(report_data)
-            response['Content-Disposition'] = f'attachment; filename="rapport_{chiffre_aleatoire}.html"'
+            html_filename = _build_export_filename(report_data, acheteur_id, 'html')
+            response['Content-Disposition'] = f'attachment; filename="{html_filename}"'
             return response
         else:
             print("Génération du JSON...")  # Debug
             print(report_data)  # Debug
-            return exporter_json(report_data, form_data, request)
+            response = exporter_json(report_data, form_data, request)
+            json_filename = _build_export_filename(report_data, acheteur_id, 'json')
+            response['Content-Disposition'] = f'attachment; filename="{json_filename}"'
+            return response
     except Exception as e:
         print(f"Erreur : {str(e)}")  # Debug
         return Response(
@@ -2383,8 +2499,8 @@ def exporter_html(report_data, form_data, request=None):
         from django.template.loader import render_to_string
         from django.http import HttpResponse
 
-        # Utiliser le meme template que le PDF pour conserver la structure
-        html_content = render_to_string('main/report_html_standalone_pdf.html', report_data)
+        # Template HTML dédié (même structure globale, gestion d'image risque spécifique web)
+        html_content = render_to_string('main/report_html_standalone_html.html', report_data)
         
         response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
         nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
@@ -2546,8 +2662,8 @@ def exporter_json(report_data, form_data, request=None):
 def generate_report_html_standalone(report_data):
     """Génère un rapport HTML complet et le force en téléchargement"""
     try:
-        # Utiliser render_to_string pour générer le HTML à partir du template
-        html_content = render_to_string('main/report_html_standalone_pdf.html', report_data)
+        # Utiliser le template HTML dédié
+        html_content = render_to_string('main/report_html_standalone_html.html', report_data)
         
         # Créer une réponse HTTP avec le contenu HTML
         response = HttpResponse(html_content, content_type='text/html; charset=utf-8')

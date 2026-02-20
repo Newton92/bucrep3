@@ -1,10 +1,10 @@
-{% load static custom_filters %}
+{% load i18n static custom_filters %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ LANGUAGE_CODE|default:'fr' }}">
    <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Rapport de Solvabilité</title>
+      <title>{% trans "Rapport de Solvabilité" %}</title>
       <style>
          /* Styles pour WeasyPrint */
          @media screen {
@@ -18,18 +18,18 @@
             size: A4;
             margin: 15mm 10mm 20mm 10mm; /* Ces marges s'appliquent à la page PDF */
             @bottom-left {
-                content: "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.";
+                content: "{% trans "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts." %}";
                 font-size: 8pt;
                 color: #666;
             }
             @bottom-right {
-                content: "Page " counter(page) " sur " counter(pages);
+                content: "{% trans "Page" %} " counter(page) " {% trans "sur" %} " counter(pages);
                 font-size: 8pt;
                 color: #666;
             }
         }
          @bottom-right {
-         content: "Page " counter(page) " sur " counter(pages);
+         content: "{% trans "Page" %} " counter(page) " {% trans "sur" %} " counter(pages);
          font-size: 8pt;
          color: #666;
          }
@@ -433,8 +433,16 @@
                   <td>{{ identification.acremac_info.pays }}</td>
                </tr>
                <tr>
+                  <th>Email</th>
+                  <td>{{ identification.acremac_info.email }}</td>
+               </tr>
+               <tr>
+                  <th>Téléphone</th>
+                  <td>{{ identification.acremac_info.telephone }}</td>
+               </tr>
+               <tr>
                   <th>Fax / Email</th>
-                  <td>{{ identification.acremac_info.fax }} / {{ identification.acremac_info.email }}</td>
+                  <td>{{ identification.acremac_info.fax }}</td>
                </tr>
             </table>
          </div>
@@ -469,7 +477,8 @@
                      {{ additional_information.description|striptags|safe }}<br>
                   </td>
                </tr>
-               <th>Code(s) NACE</th>
+               <tr>
+                  <th>Code(s) NACE</th>
                   <td>
                      {% if additional_information.nace_codes and additional_information.nace_codes.0 != "Aucun code NACE disponible" %}
                            <ul style="margin: 0; padding-left: 20px;">
@@ -541,13 +550,12 @@
             <div class="subsection-title">EVALUATION DU RISQUE</div>
             <div class="row" style="text-align: center;">
                <div class="section" style="display: inline-block;">
-                  <img src="{{ summary_and_opinion.url_site }}{{ summary_and_opinion.risk_rating_value }}.svg" 
-                        alt="Score de risque : ${riskScore}/9"
-                        style="max-height: 250px; display: block; margin: 0 auto;"
-                        onerror="this.src='{{ summary_and_opinion.url_site }}0.svg'">
-                  <p style="margin-top: 10px; font-weight: bold;">
-                        Score: {{ summary_and_opinion.risk_rating_value }}/9 - {{ summary_and_opinion.cotation_du_risque }}
-                  </p>
+                  <img
+                     src="{{ summary_and_opinion.url_site }}{{ summary_and_opinion.risk_rating_value }}{{ summary_and_opinion.risk_rating_value }}.png"
+                     alt="Score de risque : {{ summary_and_opinion.risk_rating_value }}/9"
+                     style="max-height: 200px; display: block; margin: 0 auto;"
+                     onerror="this.onerror=null;this.src='{{ summary_and_opinion.url_site }}{{ summary_and_opinion.risk_rating_value }}.png';"
+                     >
                </div>
             </div>
             <table>
@@ -609,7 +617,7 @@
             <table>
                <tr>
                   <th>Note:</th>
-                  <td>{{ acremac_opinion.notes }}</td>
+                  <td>{{ acremac_opinion.notes_detailed|default:acremac_opinion.notes|linebreaksbr }}</td>
                </tr>
                <tr>
                   <th>Montant crédit maximum conseillée:</th>
@@ -629,7 +637,7 @@
             <table>
                <tr>
                   <th>Date de création</th>
-                  <td>{{ registered_data.date_creation }}</td>
+                  <td>{{ registered_data.date_registre|default:"Non spécifié" }}</td>
                </tr>
                <tr>
                   <th>Date d'enregistrement</th>
@@ -663,7 +671,7 @@
          </div>
          <!-- Dossiers juridiques -->
          <div class="section-title">ANTECEDENTS JURIDIQUES</div>
-         {% if legal_background.antecedents_juridiques %}
+         {% if legal_background.antecedents_juridiques and legal_background.antecedents_juridiques.0.dossier_faillite %}
          {% for antecedant in legal_background.antecedents_juridiques %}
          <div class="antecedent-entry">
             <table>
@@ -697,7 +705,7 @@
          <div class="section">
             <div class="section-title">MANAGEMENT ET STAFF</div>
             <div class="subsection-title">CONSEIL D'ADMINISTRATION</div>
-            {% if management.conseil_administration %}
+            {% if management.conseil_administration and management.conseil_administration.0.nom %}
             {% for membre in management.conseil_administration %}
             <div class="ca-membre-entry">
                <table>
@@ -727,7 +735,7 @@
             <div class="subsection-title">Aucun membre du conseil d'administration n'est spécifié.</div>
             {% endif %}
             <div class="subsection-title">DIRIGEANTS</div>
-            {% if management.responsables %}
+            {% if management.responsables and management.responsables.0.nom %}
             {% for responsable in management.responsables %}
             <div class="responsable-entry">
                <table>
@@ -762,16 +770,14 @@
             <div style="text-align: center; margin-bottom: 20px;">
                <!-- Affichage de l'image de gestion des risques -->
                {% if management.risk_management %}
-               {% if management.risk_management.image_base64 %}
-                <img src="{{ management.risk_management.image_base64 }}"  alt="Image Gestion du Risque" 
-                style="max-height: 200px; display: block; margin: 0 auto;">
-                {% elif management.risk_management.image_path %}
-                <img src="{% static management.risk_management.image_path %}" alt="Image Gestion du Risque" 
-                    style="max-height: 200px; display: block; margin: 0 auto;">
-                {% endif %}
-                <div style="margin-top: 10px; font-weight: bold;">
-                    Score : {{ management.risk_management.score }}
-                </div>
+               <img 
+                  src="{% if management.risk_management.image_base64 %}{{ management.risk_management.image_base64 }}{% else %}{% static management.risk_management.image %}{% endif %}" 
+                  alt="Image Gestion du Risque" 
+                  style="max-height: 200px; display: block; margin: 0 auto;"
+                  >
+               <div style="margin-top: 10px; font-weight: bold;">
+                  Score : {{ management.risk_management.score }}
+               </div>
                {% endif %}
             </div>
             <table>
@@ -828,7 +834,7 @@
          <!-- Actionnariat/Propriétaires -->
          <div class="section">
             <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
-            {% if shareholders.actionnaires %}
+            {% if shareholders.actionnaires and shareholders.actionnaires.0.nom %}
             {% for shareholder in shareholders.actionnaires %}
             <div class="shareholder-entry">
                <table>
@@ -866,7 +872,7 @@
          <!-- Affiliations d'entreprise -->
          <div class="section">
             <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
-            {% if affiliations.affiliations %}
+            {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
             {% for affiliation in affiliations.affiliations %}
             <div class="affiliation-entry">
                <table>
@@ -973,7 +979,7 @@
                </table>
             </div>
             <div class="subsection-title">DONNÉES BANCAIRES</div>
-            {% if banking_data.data_banks %}
+            {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
             {% for bank in banking_data.data_banks %}
             <div class="bank-entry">
                <table>
@@ -1070,7 +1076,6 @@
             {% endif %}
          </div>
       </div>
-
 
 
       {% if financial_statements.bilan_type == 'classique' %}
@@ -1291,7 +1296,7 @@
             <p>This score is automatically generated by ACREMAC. It takes into consideration the following information: financial health, company age, payment behavior, commercial opinion, NACE code. The score grid elements have been weighted according to their degree of importance in credit risk calculation.</p>
             {% if scoring_sans_bilan %}
             <div class="score-image">
-               <img src="{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}" alt="Score ACREMAC">
+               <img src="{% if scoring_sans_bilan.score_image_base64 %}{{ scoring_sans_bilan.score_image_base64 }}{% else %}{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}{% endif %}" alt="Score ACREMAC">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1324,17 +1329,7 @@
             {% if scoring_classique.score_value_annee_N %}
             <div class="subsection-title">SCORE ANNEE N ({{ scoring_classique.annee_N }})</div>
             <div class="score-image">
-               {% with score=scoring_classique.score_value_annee_N_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_classique.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_classique.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_classique.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_classique.score_image_annee_N_base64 %}{{ scoring_classique.score_image_annee_N_base64 }}{% else %}{{ scoring_classique.url_site }}{{ scoring_classique.score_image_annee_N }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1360,17 +1355,7 @@
             {% if scoring_classique.score_value_annee_N1 %}
             <div class="subsection-title">SCORE ANNEE N-1 ({{ scoring_classique.annee_N1 }})</div>
             <div class="score-image">
-               {% with score=scoring_classique.score_value_annee_N1_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_classique.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_classique.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_classique.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_classique.score_image_annee_N1_base64 %}{{ scoring_classique.score_image_annee_N1_base64 }}{% else %}{{ scoring_classique.url_site }}{{ scoring_classique.score_image_annee_N1 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1396,17 +1381,7 @@
             {% if scoring_classique.score_value_annee_N2 %}
             <div class="subsection-title">SCORE ANNEE N-2 ({{ scoring_classique.annee_N2 }})</div>
             <div class="score-image">
-               {% with score=scoring_classique.score_value_annee_N2_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_classique.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_classique.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_classique.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_classique.score_image_annee_N2_base64 %}{{ scoring_classique.score_image_annee_N2_base64 }}{% else %}{{ scoring_classique.url_site }}{{ scoring_classique.score_image_annee_N2 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1646,7 +1621,7 @@
             <p>This score is automatically generated by ACREMAC. It takes into consideration the following information: financial health, company age, payment behavior, commercial opinion, NACE code. The score grid elements have been weighted according to their degree of importance in credit risk calculation.</p>
             {% if scoring_sans_bilan %}
             <div class="score-image">
-               <img src="{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}" alt="Score ACREMAC">
+               <img src="{% if scoring_sans_bilan.score_image_base64 %}{{ scoring_sans_bilan.score_image_base64 }}{% else %}{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}{% endif %}" alt="Score ACREMAC">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1679,17 +1654,7 @@
             {% if scoring_anglais.score_value_annee_N %}
             <div class="subsection-title">SCORE ANNEE N ({{ scoring_anglais.annee_N }})</div>
             <div class="score-image">
-               {% with score=scoring_anglais.score_value_annee_N_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_anglais.score_image_annee_N_base64 %}{{ scoring_anglais.score_image_annee_N_base64 }}{% else %}{{ scoring_anglais.url_site }}{{ scoring_anglais.score_image_annee_N }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1715,17 +1680,7 @@
             {% if scoring_anglais.score_value_annee_N1 %}
             <div class="subsection-title">SCORE ANNEE N-1 ({{ scoring_anglais.annee_N1 }})</div>
             <div class="score-image">
-               {% with score=scoring_anglais.score_value_annee_N1_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_anglais.score_image_annee_N1_base64 %}{{ scoring_anglais.score_image_annee_N1_base64 }}{% else %}{{ scoring_anglais.url_site }}{{ scoring_anglais.score_image_annee_N1 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -1751,17 +1706,7 @@
             {% if scoring_anglais.score_value_annee_N2 %}
             <div class="subsection-title">SCORE ANNEE N-2 ({{ scoring_anglais.annee_N2 }})</div>
             <div class="score-image">
-               {% with score=scoring_anglais.score_value_annee_N2_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_anglais.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_anglais.score_image_annee_N2_base64 %}{{ scoring_anglais.score_image_annee_N2_base64 }}{% else %}{{ scoring_anglais.url_site }}{{ scoring_anglais.score_image_annee_N2 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2075,7 +2020,7 @@
             <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code NACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
             {% if scoring_sans_bilan %}
             <div class="score-image">
-               <img src="{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}" alt="Score ACREMAC">
+               <img src="{% if scoring_sans_bilan.score_image_base64 %}{{ scoring_sans_bilan.score_image_base64 }}{% else %}{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}{% endif %}" alt="Score ACREMAC">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2109,17 +2054,7 @@
             {% if scoring_bancaire.score_value_annee_N %}
             <div class="subsection-title">SCORE ANNEE N ({{ scoring_bancaire.annee_N }})</div>
             <div class="score-image">
-               {% with score=scoring_bancaire.score_value_annee_N_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_bancaire.score_image_annee_N_base64 %}{{ scoring_bancaire.score_image_annee_N_base64 }}{% else %}{{ scoring_bancaire.url_site }}{{ scoring_bancaire.score_image_annee_N }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2145,17 +2080,7 @@
             {% if scoring_bancaire.score_value_annee_N1 %}
             <div class="subsection-title">SCORE ANNEE N-1 ({{ scoring_bancaire.annee_N1 }})</div>
             <div class="score-image">
-               {% with score=scoring_bancaire.score_value_annee_N1_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_bancaire.score_image_annee_N1_base64 %}{{ scoring_bancaire.score_image_annee_N1_base64 }}{% else %}{{ scoring_bancaire.url_site }}{{ scoring_bancaire.score_image_annee_N1 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2181,17 +2106,7 @@
             {% if scoring_bancaire.score_value_annee_N2 %}
             <div class="subsection-title">SCORE ANNEE N-2 ({{ scoring_bancaire.annee_N2 }})</div>
             <div class="score-image">
-               {% with score=scoring_bancaire.score_value_annee_N2_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_bancaire.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_bancaire.score_image_annee_N2_base64 %}{{ scoring_bancaire.score_image_annee_N2_base64 }}{% else %}{{ scoring_bancaire.url_site }}{{ scoring_bancaire.score_image_annee_N2 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2199,17 +2114,17 @@
                   <tbody>
                      <tr>
                         <th>Score</th>
-                        <td style="color: #00cc00;">{{ scoring_anglais.score_value_annee_N2 }}</td>
+                        <td style="color: #00cc00;">{{ scoring_bancaire.score_value_annee_N2 }}</td>
                      </tr>
                      <tr>
                         <th>Interprétation</th>
-                        <td>{{ scoring_anglais.interpretation_annee_N2 }}</td>
+                        <td>{{ scoring_bancaire.interpretation_annee_N2 }}</td>
                      </tr>
                   </tbody>
                </table>
             </div>
             {% else %}
-            <div class="subsection-title">Aucun scoring avec bilan anglais disponible pour cet acheteur.</div>
+            <div class="subsection-title">Aucun scoring avec bilan bancaire disponible pour cet acheteur.</div>
             {% endif %}
          </div>
 
@@ -2426,7 +2341,7 @@
             <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code NACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
             {% if scoring_sans_bilan %}
             <div class="score-image">
-               <img src="{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}" alt="Score ACREMAC">
+               <img src="{% if scoring_sans_bilan.score_image_base64 %}{{ scoring_sans_bilan.score_image_base64 }}{% else %}{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}{% endif %}" alt="Score ACREMAC">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2460,17 +2375,7 @@
             {% if scoring_syscohada.score_value_annee_N %}
             <div class="subsection-title">SCORE ANNEE N ({{ scoring_syscohada.annee_N }})</div>
             <div class="score-image">
-               {% with score=scoring_syscohada.score_value_annee_N_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_syscohada.score_image_annee_N_base64 %}{{ scoring_syscohada.score_image_annee_N_base64 }}{% else %}{{ scoring_syscohada.url_site }}{{ scoring_syscohada.score_image_annee_N }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2496,17 +2401,7 @@
             {% if scoring_syscohada.score_value_annee_N1 %}
             <div class="subsection-title">SCORE ANNEE N-1 ({{ scoring_syscohada.annee_N1 }})</div>
             <div class="score-image">
-               {% with score=scoring_syscohada.score_value_annee_N1_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_syscohada.score_image_annee_N1_base64 %}{{ scoring_syscohada.score_image_annee_N1_base64 }}{% else %}{{ scoring_syscohada.url_site }}{{ scoring_syscohada.score_image_annee_N1 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2532,17 +2427,7 @@
             {% if scoring_syscohada.score_value_annee_N2 %}
             <div class="subsection-title">SCORE ANNEE N-2 ({{ scoring_syscohada.annee_N2 }})</div>
             <div class="score-image">
-               {% with score=scoring_syscohada.score_value_annee_N2_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_syscohada.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_syscohada.score_image_annee_N2_base64 %}{{ scoring_syscohada.score_image_annee_N2_base64 }}{% else %}{{ scoring_syscohada.url_site }}{{ scoring_syscohada.score_image_annee_N2 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2560,7 +2445,7 @@
                </table>
             </div>
             {% else %}
-            <div class="subsection-title">Aucun scoring avec bilan anglais disponible pour cet acheteur.</div>
+            <div class="subsection-title">Aucun scoring avec bilan syscohada disponible pour cet acheteur.</div>
             {% endif %}
          </div>
 
@@ -2777,7 +2662,7 @@
             <p>Ce score est généré automatiquement par l'ACREMAC. Il prend en considération les informations suivantes : la santé financière, l'âge de l'entreprise, le comportement de paiement, l'opinion commerciale, le code NACE. Les éléments de la grille de score ont été pondérés en fonction de leur degré d'importance dans le calcul du risque de crédit.</p>
             {% if scoring_sans_bilan %}
             <div class="score-image">
-               <img src="{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}" alt="Score ACREMAC">
+               <img src="{% if scoring_sans_bilan.score_image_base64 %}{{ scoring_sans_bilan.score_image_base64 }}{% else %}{{ scoring_sans_bilan.url_site }}{{ scoring_sans_bilan.score_png }}{% endif %}" alt="Score ACREMAC">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2811,17 +2696,7 @@
             {% if scoring_ifrs.score_value_annee_N %}
             <div class="subsection-title">SCORE ANNEE N ({{ scoring_ifrs.annee_N }})</div>
             <div class="score-image">
-                {% with score=scoring_ifrs.score_value_annee_N_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_ifrs.score_image_annee_N_base64 %}{{ scoring_ifrs.score_image_annee_N_base64 }}{% else %}{{ scoring_ifrs.url_site }}{{ scoring_ifrs.score_image_annee_N }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2847,17 +2722,7 @@
             {% if scoring_ifrs.score_value_annee_N1 %}
             <div class="subsection-title">SCORE ANNEE N-1 ({{ scoring_ifrs.annee_N1 }})</div>
             <div class="score-image">
-                {% with score=scoring_ifrs.score_value_annee_N1_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_ifrs.score_image_annee_N1_base64 %}{{ scoring_ifrs.score_image_annee_N1_base64 }}{% else %}{{ scoring_ifrs.url_site }}{{ scoring_ifrs.score_image_annee_N1 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2883,17 +2748,7 @@
             {% if scoring_ifrs.score_value_annee_N2 %}
             <div class="subsection-title">SCORE ANNEE N-2 ({{ scoring_ifrs.annee_N2 }})</div>
             <div class="score-image">
-               {% with score=scoring_ifrs.score_value_annee_N2_arrondi %}
-                    {% with score_int=score %}
-                        {% if score_int < 0 %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/0.png">
-                        {% elif score_int > 10 %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/10.png">
-                        {% else %}
-                            <img src="{{ scoring_ifrs.url_site }}scoring/{{ score_int }}.png">
-                        {% endif %}
-                    {% endwith %}
-                {% endwith %}
+               <img src="{% if scoring_ifrs.score_image_annee_N2_base64 %}{{ scoring_ifrs.score_image_annee_N2_base64 }}{% else %}{{ scoring_ifrs.url_site }}{{ scoring_ifrs.score_image_annee_N2 }}{% endif %}">
             </div>
             <br>
             <div class="shareholder-entry">
@@ -2951,7 +2806,7 @@
             </tbody>
          </table>
          <div class="subsection-title">PROPRIÉTÉ & ACTIFS</div>
-         {% if properties_and_assets.assets_list %}
+         {% if properties_and_assets.assets_list and properties_and_assets.assets_list.0.locaux %}
          {% for asset in properties_and_assets.assets_list %}
          <div class="asset-entry">
             <table>
@@ -3052,7 +2907,7 @@
       </div>
       <!-- Pied de page -->
       <div class="footer">
-         <p>Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts.</p>
+         <p>{% trans "Nos informations sont confidentielles et ne peuvent être divulguées sous peine de dommages et intérêts." %}</p>
          <p>ACREMAC s'engage à mettre en œuvre diligemment les moyens à sa disposition sans être lié par aucune obligation de résultat.</p>
          <p>Rapport généré le {{ header_report.date_today }} (GMT) - {{ header_report.acremac_services }}.</p>
       </div>

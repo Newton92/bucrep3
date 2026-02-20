@@ -321,6 +321,40 @@ def get_logo_path():
     return None
 
 
+def get_risk_rating_png_base64(score):
+    """Retourne l'image de risque en PNG base64 (priorité aux fichiers 00.png..88.png)."""
+    try:
+        score_int = int(score)
+    except (TypeError, ValueError):
+        score_int = 0
+    score_int = max(0, min(8, score_int))
+
+    candidate_files = [
+        f"riskrating/{score_int}{score_int}.png",
+        f"riskrating/{score_int}.png",
+    ]
+
+    for image_path in candidate_files:
+        absolute_path = finders.find(image_path)
+        if not absolute_path:
+            static_root = getattr(settings, "STATIC_ROOT", None)
+            if static_root:
+                probe = os.path.join(static_root, image_path)
+                if os.path.exists(probe):
+                    absolute_path = probe
+
+        if absolute_path and os.path.exists(absolute_path):
+            try:
+                with open(absolute_path, "rb") as png_file:
+                    encoded = base64.b64encode(png_file.read()).decode("utf-8")
+                    return f"data:image/png;base64,{encoded}"
+            except Exception as e:
+                print(f"Erreur lecture image risque PNG ({absolute_path}): {e}")
+                continue
+
+    return None
+
+
 def render_html_template(report_data):
     # Chemin absolu vers le dossier des templates
     template_dir = os.path.join(settings.BASE_DIR, 'main', 'templates', 'main')
@@ -1811,7 +1845,7 @@ class GenerateReport(APIView):
         
         # Recuperation de l'evaluation de risque de l'acheteur 
         # Recuperation de l'evaluation de risque chiffree de l'acheteur  
-        risk_rating_value = 1  # Commencer à 0
+        risk_rating_value = 0
         try:
             # Utiliser filter().first() pour éviter l'exception MultipleObjectsReturned
             risk_rating = RiskRating.objects.filter(acheteur=acheteur).first()
@@ -1835,13 +1869,13 @@ class GenerateReport(APIView):
                     risk_rating_value += 1
                 
                 # S'assurer que la valeur est entre 0 et 8
-                risk_rating_value = min(risk_rating_value, 9)
+                risk_rating_value = min(risk_rating_value, 8)
             else:
                 risk_rating = None
                 
         except Exception as e:
             risk_rating = None
-            risk_rating_value = 1
+            risk_rating_value = 0
             
         
         # Recuperation de l'opinion ACREMAC en fonction de l'acheteur   
@@ -2517,9 +2551,13 @@ class GenerateReport(APIView):
                 "title_5": "EVALUATION DU RISQUE",
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
+                "risk_rating_image_base64": (
+                    get_risk_rating_png_base64(risk_rating_value)
+                    or (risk_rating.get_risk_rating_image_base64() if risk_rating else None)
+                ),
                 #"get_risk_gauge_image": get_risk_gauge_image,
                 "risk_gauge_base64": risk_gauge_base64,
-                "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
+                "risk_rating_value": max(0, min(8, int(risk_rating_value or 0))),
                 "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
                 "situation_liquidite": "Oui" if risk_rating and risk_rating.situation_liquidite else "Non",
                 "performance_rentabilite": "Oui" if risk_rating and risk_rating.performance_rentabilite else "Non",
@@ -2995,7 +3033,7 @@ class GenerateReportCommandeAcheteur(APIView):
         
         # Recuperation de l'evaluation de risque de l'acheteur 
         # Recuperation de l'evaluation de risque chiffree de l'acheteur  
-        risk_rating_value = 1  # Commencer à 0
+        risk_rating_value = 0
         try:
             # Utiliser filter().first() pour éviter l'exception MultipleObjectsReturned
             risk_rating = RiskRating.objects.filter(acheteur=acheteur).first()
@@ -3019,13 +3057,13 @@ class GenerateReportCommandeAcheteur(APIView):
                     risk_rating_value += 1
                 
                 # S'assurer que la valeur est entre 0 et 8
-                risk_rating_value = min(risk_rating_value, 9)
+                risk_rating_value = min(risk_rating_value, 8)
             else:
                 risk_rating = None
                 
         except Exception as e:
             risk_rating = None
-            risk_rating_value = 1
+            risk_rating_value = 0
             
         
         # Recuperation de l'opinion ACREMAC en fonction de l'acheteur   
@@ -3701,9 +3739,13 @@ class GenerateReportCommandeAcheteur(APIView):
                 "title_5": "EVALUATION DU RISQUE",
                 # Utiliser la chaîne Base64 pour l'affichage de la jauge
                 "risk_gauge_base64": risk_gauge_base64,
+                "risk_rating_image_base64": (
+                    get_risk_rating_png_base64(risk_rating_value)
+                    or (risk_rating.get_risk_rating_image_base64() if risk_rating else None)
+                ),
                 #"get_risk_gauge_image": get_risk_gauge_image,
                 "risk_gauge_base64": risk_gauge_base64,
-                "risk_rating_value": risk_rating.calculate_risk_score() if risk_rating else "Non spécifié",
+                "risk_rating_value": max(0, min(8, int(risk_rating_value or 0))),
                 "remboursabilite": "Oui" if risk_rating and risk_rating.remboursabilite else "Non",
                 "situation_liquidite": "Oui" if risk_rating and risk_rating.situation_liquidite else "Non",
                 "performance_rentabilite": "Oui" if risk_rating and risk_rating.performance_rentabilite else "Non",

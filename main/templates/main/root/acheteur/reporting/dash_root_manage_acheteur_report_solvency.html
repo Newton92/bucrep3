@@ -2350,7 +2350,7 @@ $(document).ready(function() {
                 <table class="report-table">
                     <tr>
                         <th style="width: 200px;">Notes</th>
-                        <td>${avis.notes || 'Non spécifié'}</td>
+                        <td>${formatAcremacNotes(avis)}</td>
                     </tr>
                     <tr>
                         <th>Montant crédit maximum</th>
@@ -3462,6 +3462,16 @@ $(document).ready(function() {
             5: '#2F85AB', 6: '#F57C00', 7: '#2F4A6D', 8: '#D32F2F', 9: '#E0201E'
         };
         return colors[score] || '#6c757d';
+    }
+
+    function formatAcremacNotes(avis) {
+        const details = Array.isArray(avis?.notes_details) ? avis.notes_details : [];
+        if (details.length > 0) {
+            return details
+                .map(item => `<div><strong>${item.label || item.field || 'Risque'}:</strong> ${item.value ?? 'N/A'}</div>`)
+                .join('');
+        }
+        return avis?.notes || 'Non spécifié';
     }
 
     function formatDate(dateObj) {
