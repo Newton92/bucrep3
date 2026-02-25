@@ -20,6 +20,12 @@ import re
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 from rest_framework.response import Response  # ⭐⭐ AJOUTEZ CET IMPORT ⭐⭐
+from rest_framework import serializers
+from main.models import MailInfo, MailAttachment, Commande, Document, Client
+import json
+from rest_framework import serializers
+from main.models import User, Commande, Acheteur, Document, MailInfo, MailAttachment
+# ... autres imports
 
 from django.contrib.auth import get_user_model
 
@@ -13825,3 +13831,316 @@ class EditResultatIFRSOneSerializer(serializers.ModelSerializer):
             })
         
         return data
+
+
+
+
+
+
+
+class UserMailingSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour les clients dans le module d'emailing
+    """
+    full_name = serializers.SerializerMethodField()
+    email_principal = serializers.EmailField(source='email')
+    telephone_display = serializers.CharField(source='telephone', read_only=True)
+    pays_nom = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'full_name',
+            'email_principal',
+            'telephone_display',
+            'pays_nom',
+            'profession',
+            'is_active',
+        ]
+    
+    def get_full_name(self, obj):
+        """Retourne le nom complet de l'utilisateur"""
+        if obj.first_name and obj.last_name:
+            return f"{obj.first_name} {obj.last_name}"
+        return obj.username
+    
+    def get_pays_nom(self, obj):
+        """Retourne le nom du pays de l'utilisateur"""
+        if hasattr(obj, 'pays') and obj.pays:
+            return obj.pays.nom
+        return None
+
+class AcheteurCommandeSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour les acheteurs liés aux commandes
+    """
+    class Meta:
+        model = Acheteur
+        fields = [
+            'id',
+            'nom',
+            'code',
+            'sigle',
+        ]
+
+class CommandeMailingSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour les commandes dans le module d'emailing
+    """
+    acheteur_details = AcheteurCommandeSerializer(source='acheteur', read_only=True)
+    date_commande_formatted = serializers.SerializerMethodField()
+    montant_formatted = serializers.SerializerMethodField()
+    statut_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Commande
+        fields = [
+            'id',
+            'reference_client',
+            'date_recept_commande',
+            'date_commande_formatted',
+            'credit_demande',
+            'montant_formatted',
+            'status',
+            'statut_display',
+            'acheteur',
+            'acheteur_details',
+            'comments',
+        ]
+    
+    def get_date_commande_formatted(self, obj):
+        """Formatage de la date de réception commande"""
+        if obj.date_recept_commande:
+            return obj.date_recept_commande.strftime('%d/%m/%Y')
+        return None
+    
+    def get_montant_formatted(self, obj):
+        """Formatage du montant (credit_demande)"""
+        if obj.credit_demande:
+            # Format sans décimales
+            montant = int(float(obj.credit_demande))
+            return f"{montant:,} FCFA".replace(',', ' ')
+        return "0 FCFA"
+
+class DocumentSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour les documents
+    """
+    taille_formatted = serializers.SerializerMethodField()
+    date_upload_formatted = serializers.SerializerMethodField()
+    icone_class = serializers.SerializerMethodField()
+    uploader = serializers.CharField(source='created_by.username', read_only=True, default="Inconnu")
+    acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
+    
+    class Meta:
+        model = Document
+        fields = [
+            'id',
+            'titre',
+            'fichier',
+            'created_at',
+            'date_upload_formatted',
+            'description',
+            'acheteur',
+            'acheteur_nom',
+            'uploader',
+            'icone_class',
+            'taille_formatted'
+        ]
+    
+    def get_taille_formatted(self, obj):
+        """Formate la taille du fichier"""
+        if not obj.fichier or not hasattr(obj.fichier, 'size') or not obj.fichier.size:
+            return "0 Ko"
+        
+        taille = obj.fichier.size
+        if taille < 1024:
+            return f"{taille} o"
+        elif taille < 1024 * 1024:
+            return f"{taille / 1024:.1f} Ko"
+        else:
+            return f"{taille / (1024 * 1024):.1f} Mo"
+    
+    def get_date_upload_formatted(self, obj):
+        """Formate la date de création"""
+        if obj.created_at:
+            return obj.created_at.strftime('%d/%m/%Y %H:%M')
+        return None
+    
+    def get_icone_class(self, obj):
+        """Retourne la classe CSS de l'icône selon le type de fichier"""
+        if not obj.fichier or not obj.fichier.name:
+            return 'fa-file'
+        
+        extension = obj.fichier.name.split('.')[-1].lower() if '.' in obj.fichier.name else ''
+        
+        icones = {
+            'pdf': 'fa-file-pdf',
+            'doc': 'fa-file-word',
+            'docx': 'fa-file-word',
+            'xls': 'fa-file-excel',
+            'xlsx': 'fa-file-excel',
+            'jpg': 'fa-file-image',
+            'jpeg': 'fa-file-image',
+            'png': 'fa-file-image',
+            'gif': 'fa-file-image',
+            'txt': 'fa-file-alt',
+            'csv': 'fa-file-csv',
+        }
+        
+        return icones.get(extension, 'fa-file')
+
+
+class EnvoyerEmailSerializer(serializers.Serializer):
+    """
+    Serializer pour valider les données d'envoi d'email
+    """
+    client_id = serializers.IntegerField(required=True)
+    periode = serializers.CharField(required=True, allow_blank=True)
+    sujet = serializers.CharField(required=True, max_length=500)
+    message = serializers.CharField(required=True)
+    cc = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    commandes = serializers.CharField(required=True)  # JSON string
+    documents = serializers.CharField(required=True)  # JSON string
+    rapports = serializers.CharField(required=False, allow_blank=True, allow_null=True)  # JSON string
+    total_attachments = serializers.IntegerField(required=False, default=0)
+    total_commands = serializers.IntegerField(required=False, default=0)
+    
+    def validate_client_id(self, value):
+        """Vérifie que le client existe"""
+        try:
+            User.objects.get(id=value, role__iexact='Client', is_active=True)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Client non trouvé ou inactif")
+        return value
+    
+    def validate_commandes(self, value):
+        """Valide et parse la liste des commandes"""
+        try:
+            commandes_list = json.loads(value)
+            if not isinstance(commandes_list, list):
+                raise serializers.ValidationError("Le format des commandes est invalide")
+            
+            # Vérifier que toutes les commandes existent
+            for cmd_id in commandes_list:
+                try:
+                    Commande.objects.get(id=cmd_id)
+                except Commande.DoesNotExist:
+                    raise serializers.ValidationError(f"Commande {cmd_id} non trouvée")
+            
+            return commandes_list
+        except json.JSONDecodeError:
+            raise serializers.ValidationError("Format JSON invalide pour les commandes")
+    
+    def validate_documents(self, value):
+        """Valide et parse la liste des documents"""
+        try:
+            documents_list = json.loads(value)
+            if not isinstance(documents_list, list):
+                raise serializers.ValidationError("Le format des documents est invalide")
+            
+            # Vérifier que tous les documents existent
+            for doc_id in documents_list:
+                try:
+                    Document.objects.get(id=doc_id)
+                except Document.DoesNotExist:
+                    raise serializers.ValidationError(f"Document {doc_id} non trouvé")
+            
+            return documents_list
+        except json.JSONDecodeError:
+            raise serializers.ValidationError("Format JSON invalide pour les documents")
+    
+    def validate_rapports(self, value):
+        """Valide et parse la liste des rapports (optionnel)"""
+        if not value:
+            return []
+        
+        try:
+            rapports_list = json.loads(value)
+            if not isinstance(rapports_list, list):
+                raise serializers.ValidationError("Le format des rapports est invalide")
+            return rapports_list
+        except json.JSONDecodeError:
+            raise serializers.ValidationError("Format JSON invalide pour les rapports")
+    
+    def validate_cc(self, value):
+        """Valide les emails en CC"""
+        if not value:
+            return ""
+        
+        emails = [email.strip() for email in value.split(';') if email.strip()]
+        for email in emails:
+            import re
+            if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+                raise serializers.ValidationError(f"Email invalide: {email}")
+        
+        return value
+
+class MailInfoDetailSerializer(serializers.ModelSerializer):
+    """Serializer détaillé pour l'historique"""
+    commandes_details = serializers.SerializerMethodField()
+    attachments = serializers.SerializerMethodField()
+    destinataire = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MailInfo
+        fields = '__all__'
+    
+    def get_commandes_details(self, obj):
+        return [{
+            'id': cmd.id,
+            'notre_ref': cmd.notre_ref,
+            'raison_sociale': cmd.raison_sociale,
+            'status': cmd.status
+        } for cmd in obj.commands.all()]
+    
+    def get_attachments(self, obj):
+        return [{
+            'id': att.id,
+            'nom': att.upload.name.split('/')[-1],
+            'url': att.upload.url if att.upload else '',
+            'taille': att.upload.size if att.upload else 0,
+            'est_document': getattr(att, 'is_document', False)
+        } for att in MailAttachment.objects.filter(mailinfo=obj)]
+    
+    def get_destinataire(self, obj):
+        # Récupérer le premier client à partir des commandes
+        commande = obj.commands.first()
+        if commande and commande.client:
+            return {
+                'nom': commande.client.nom,
+                'email': commande.client.email
+            }
+        return None
+
+class EmailComposeSerializer(serializers.Serializer):
+    """Serializer pour la composition d'email"""
+    client_id = serializers.IntegerField()
+    commandes_ids = serializers.ListField(child=serializers.IntegerField())
+    sujet = serializers.CharField(max_length=500)
+    message = serializers.CharField()
+    html_message = serializers.CharField(required=False, allow_blank=True)
+    cc = serializers.CharField(required=False, allow_blank=True)
+    formats = serializers.ListField(child=serializers.CharField(), default=['pdf'])
+    documents_ids = serializers.ListField(child=serializers.IntegerField(), required=False, default=[])
+    inclure_email_acheteur = serializers.BooleanField(default=True)
+    periode_jours = serializers.IntegerField(required=False, allow_null=True)
+    
+    def validate_client_id(self, value):
+        if not Client.objects.filter(id=value, actif=True).exists():
+            raise serializers.ValidationError("Client invalide")
+        return value
+    
+    def validate_commandes_ids(self, value):
+        commandes = Commande.objects.filter(id__in=value)
+        if commandes.count() != len(value):
+            raise serializers.ValidationError("Certaines commandes sont invalides")
+        
+        # Vérifier que les commandes sont éligibles
+        commandes_non_envoyees = commandes.filter(email_envoye=False)
+        if commandes_non_envoyees.count() != len(value):
+            raise serializers.ValidationError("Certaines commandes ont déjà été envoyées")
+        
+        return value

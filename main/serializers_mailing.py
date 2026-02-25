@@ -1,7 +1,7 @@
 # main/serializers_mailing.py
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from .models import Client, Commande, User, MailInfo, MailAttachment
+from main.models import Client, Commande, User, MailInfo, MailAttachment
 from rest_framework import serializers
 from main.models import Client, Commande, Document, MailInfo, MailAttachment
 from django.core.validators import validate_email
@@ -11,6 +11,14 @@ from main.models import Client, Commande, Document, MailInfo, MailAttachment, Ra
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+
+
+class ClientReportSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'username', 'role', 'email'] 
+        
 
 class ClientSerializer(serializers.ModelSerializer):
     nom_complet = serializers.SerializerMethodField()

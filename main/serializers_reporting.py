@@ -118,3 +118,4 @@ class RapportSolvabiliteSerializer(serializers.Serializer):
             data['format_rapport'] = None
 
         return data
+

@@ -47,6 +47,8 @@ from main.api.views_scoring_ifrs import *
 from main.api.views_solvency_reporting_system import *
 from main.api.views_reporting import *
 from main.api.views_api_emailling import *
+from main.api.views_mailing_v2 import *
+from main.api.views_api_mailling_v3 import *
 from main.api.views_bucrep3 import *
 
 
@@ -5954,7 +5956,18 @@ urlpatterns = [
     path('api/reporting/generer-rapport-solvabilite/', generer_rapport_solvabilite, name='generer_rapport_solvabilite'),
     
     
-    path('api/mailing/clients/', ClientListView.as_view(), name='client-list'),
+    path('api/mailing/clients/', ClientReportListView.as_view(), name='client-list'),
+    path('api/gestion-des-mails/test/', TestMailingAPIView.as_view(), name='api_test'),
+    path('api/gestion-des-mails/diagnostique-commandes/', DiagnostiqueCommandesAPIView.as_view(), name='api_diagnostique_commandes'),
+    path('api/gestion-des-mails/clients/', ClientListAPIView.as_view(), name='api_clients_list'),
+    path('api/gestion-des-mails/clients/<int:client_id>/commandes/', ClientCommandesAPIView.as_view(), name='api_client_commandes'),
+    path('api/gestion-des-mails/acheteurs/<int:acheteur_id>/documents/', AcheteurDocumentsAPIView.as_view(), name='api_acheteur_documents'),
+    path('api/emailing/generer-rapport/', GenererRapportEmailingAPIView.as_view(), name='api_generer_rapport_emailing'),
+    path('api/emailing/envoyer/', EnvoyerRapportEmailAPIView.as_view(), name='envoyer_rapport_emailing'),
+    path('api/emailing/historique/',  HistoriqueEnvoisAPIView.as_view(),  name='historique_envois'),
+    path('api/emailing/historique/<int:envoi_id>/', DetailEnvoiAPIView.as_view(),  name='detail_envoi'),
+    
+    
     path('api/mailing/clients/<int:client_id>/commandes/', get_client_commandes, name='client-commandes'),
     path('api/mailing/documents-by-acheteurs/', get_documents_by_acheteurs, name='documents-by-acheteurs'),
     path('api/mailing/commandes-acheteurs/', get_acheteurs_by_commandes, name='commandes-acheteurs'),
@@ -5973,6 +5986,18 @@ urlpatterns = [
     # path('api/mailing/commandes-acheteurs/', get_acheteurs_from_commandes, name='api_mailing_commandes_acheteurs'),
     # path('api/mailing/generate-report/', generate_report, name='api_mailing_generate_report'),
     # path('api/mailing/send-email/', send_email, name='api_mailing_send_email'),
+    
+    # Envoi d'email
+    path('api/send-email/', envoyer_email_complet, name='api_mailing_send'),
+    
+    # Historique
+    path('api/history/', historique_mails, name='api_mailing_history'),
+    path('api/history/<int:mail_id>/', detail_mail, name='api_mailing_detail'),
+    path('api/history/<int:mail_id>/delete/', supprimer_mail, name='api_mailing_delete'),
+    path('api/history/<int:mail_id>/resend/', renvoyer_mail, name='api_mailing_resend'),
+    
+    # Documents
+    path('api/documents/by-commandes/', documents_par_commandes, name='api_mailing_documents_by_commandes'),
     
     
     

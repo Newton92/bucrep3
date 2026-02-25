@@ -56,7 +56,42 @@ import xml.etree.ElementTree as ET
 from main.models import Client, Commande, User, MailInfo, MailAttachment, SuiviCommande, Notification, Rapport, Document
 
 # Import des serializers
-from main.serializers_mailing import EmailSendSerializer, DocumentSerializer, CommandeDetailSerializer, MailInfoSerializer
+from main.serializers_mailing import EmailSendSerializer, ClientReportSerializer, DocumentSerializer, CommandeDetailSerializer, MailInfoSerializer
+
+
+class ClientReportListView(APIView):
+    """
+    Vue pour lister les clients avec possibilité de recherche
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            # Récupérer le paramètre de recherche si présent
+            search_query = request.GET.get('search', '')
+            
+            # Filtrer les clients actifs
+            clients = User.objects.filter(role="Client")
+            
+            # Appliquer le filtre de recherche si spécifié
+            if search_query and len(search_query) >= 3:
+                clients = clients.filter(
+                    Q(name__icontains=search_query) |  # Utilisez Q directement
+                    Q(username__icontains=search_query) |  # Utilisez Q directement
+                    Q(email__icontains=search_query)
+                )
+            
+            # Limiter le nombre de résultats pour l'autocomplétion
+            clients = clients.order_by('name')[:50]
+            
+            serializer = ClientReportSerializer(clients, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class ClientListView(APIView):
     """
