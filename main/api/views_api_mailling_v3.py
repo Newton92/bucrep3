@@ -30,6 +30,7 @@ from datetime import timedelta
 from main.models import User, Commande, Acheteur, Document  # IMPORTANT: Ajouter Commande
 from main.serializers import UserMailingSerializer, CommandeMailingSerializer, DocumentSerializer  # IMPORTANT: Ajouter CommandeMailingSerializer
 from main.api.views_reporting import *  # Importer la fonction de génération de rapport
+import re
 
 import logging
 
@@ -519,13 +520,40 @@ class EnvoyerRapportEmailAPIView(APIView):
         # Initialiser le logger avec l'utilisateur
         logger.info(f"📧 Tentative d'envoi d'email par l'utilisateur: {request.user.username}")
         
+        # LOGS DÉTAILLÉS - AJOUTER CECI
+        logger.info(f"🔍 Taille totale de la requête: {len(request.body)} bytes")
+        logger.info(f"🔍 Content-Type: {request.content_type}")
+        logger.info(f"🔍 FILES keys: {list(request.FILES.keys())}")
+        
+        # LOGS DÉTAILLÉS DES FICHIERS REÇUS
+        logger.info(f"FILES reçus: {request.FILES.keys()}")
+        for key, files in request.FILES.lists():
+            for file in files:
+                logger.info(f"Fichier reçu - Nom: {file.name}, Taille: {file.size}, Type: {file.content_type}")
+        
+        # LOGS DES DONNÉES
+        logger.info(f"Data reçues: {request.data.keys()}")
+        logger.info(f"commandes: {request.data.get('commandes')}")
+        logger.info(f"documents: {request.data.get('documents')}")
+        
         try:
             # =================================================================
-            # 1. VALIDATION DES DONNÉES
+            # 1. LOGS DÉTAILLÉS DES FICHIERS REÇUS
             # =================================================================
-            logger.debug("Validation des données reçues...")
+            logger.info(f"🔍 FILES reçus: {list(request.FILES.keys())}")
             
-            # Créer un dictionnaire avec les données du formulaire
+            fichiers_recus = []
+            if 'fichiers' in request.FILES:
+                fichiers_recus = request.FILES.getlist('fichiers')
+                logger.info(f"✅ {len(fichiers_recus)} fichier(s) reçu(s) avec le champ 'fichiers'")
+                for i, f in enumerate(fichiers_recus):
+                    logger.info(f"   Fichier {i+1}: {f.name} - {f.size} bytes - {f.content_type}")
+            else:
+                logger.warning("⚠️ Aucun fichier reçu dans request.FILES['fichiers']")
+            
+            # =================================================================
+            # 2. VALIDATION DES DONNÉES
+            # =================================================================
             data = {
                 'client_id': request.data.get('client_id'),
                 'periode': request.data.get('periode'),
@@ -539,10 +567,11 @@ class EnvoyerRapportEmailAPIView(APIView):
                 'total_commands': request.data.get('total_commands', 0),
             }
             
-            # Valider avec le serializer
+            logger.info(f"📦 Données reçues: client_id={data['client_id']}, commandes={data['commandes']}")
+            
             serializer = EnvoyerEmailSerializer(data=data)
             if not serializer.is_valid():
-                logger.warning(f"Données invalides: {serializer.errors}")
+                logger.warning(f"❌ Données invalides: {serializer.errors}")
                 return Response({
                     'status': 'error',
                     'message': 'Données invalides',
@@ -550,225 +579,163 @@ class EnvoyerRapportEmailAPIView(APIView):
                 }, status=status.HTTP_400_BAD_REQUEST)
             
             validated_data = serializer.validated_data
-            logger.info(f"✅ Données validées - Client: {validated_data['client_id']}, Commandes: {len(validated_data['commandes'])}")
             
             # =================================================================
-            # 2. RÉCUPÉRATION DES OBJETS
+            # 3. CRÉATION DU MAILINFO
             # =================================================================
-            
-            # Client destinataire
-            try:
-                client = User.objects.get(id=validated_data['client_id'])
-            except User.DoesNotExist:
-                logger.error(f"Client {validated_data['client_id']} non trouvé")
-                return Response({
-                    'status': 'error',
-                    'message': 'Client destinataire non trouvé'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Commandes concernées
-            commandes = Commande.objects.filter(id__in=validated_data['commandes'])
-            logger.info(f"Commandes récupérées: {commandes.count()}")
-            
-            # Documents joints
-            documents_ids = validated_data.get('documents', [])
-            documents = Document.objects.filter(id__in=documents_ids) if documents_ids else []
-            logger.info(f"Documents récupérés: {len(documents)}")
-            
-            # =================================================================
-            # 3. PRÉPARATION DE L'EMAIL
-            # =================================================================
-            
-            # Sujet de l'email
-            subject = validated_data['sujet']
-            
-            # Message HTML
-            html_message = validated_data['message']
-            
-            # Message texte brut (version simplifiée)
-            import re
-            text_message = re.sub(r'<[^>]+>', ' ', html_message)
-            text_message = re.sub(r'\s+', ' ', text_message).strip()
-            
-            # Destinataire principal
-            to_email = client.email
-            if not to_email:
-                logger.warning(f"Le client {client.username} n'a pas d'email")
-                return Response({
-                    'status': 'error',
-                    'message': 'Le client destinataire n\'a pas d\'adresse email'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Destinataires en copie
-            cc_emails = []
-            cc_raw = validated_data.get('cc', '')
-            if cc_raw:
-                cc_emails = [email.strip() for email in cc_raw.split(';') if email.strip()]
-            
-            logger.info(f"Destinataire: {to_email}, CC: {cc_emails}")
-            
-            # =================================================================
-            # 4. CRÉATION DE L'OBJET MAILINFO (avant envoi pour traçabilité)
-            # =================================================================
-            
             mail_info = MailInfo.objects.create(
                 user=request.user,
-                subject=subject,
-                cc_emails=cc_raw,
-                success=False,  # Sera mis à True après envoi réussi
-                custom_days=validated_data.get('custom_days'),
-                formats_generes=validated_data.get('rapports', [])
+                subject=validated_data['sujet'],
+                cc_emails=validated_data.get('cc', ''),
+                success=False
             )
             
             # Associer les commandes
-            mail_info.commands.set(commandes)
-            logger.info(f"📝 MailInfo créé avec ID: {mail_info.id}")
+            commandes = []
+            if validated_data['commandes']:
+                commandes = Commande.objects.filter(id__in=validated_data['commandes'])
+                mail_info.commands.set(commandes)
+                logger.info(f"📝 Commandes associées: {commandes.count()}")
             
             # =================================================================
-            # 5. GESTION DES FICHIERS JOINTS
+            # 4. TRAITEMENT DES FICHIERS UPLOADÉS
             # =================================================================
-            
             attachments = []
-            attachment_errors = []
             
-            # Traiter les fichiers uploadés
+            # Récupérer les fichiers depuis request.FILES
             fichiers = request.FILES.getlist('fichiers')
-            logger.info(f"Fichiers uploadés reçus: {len(fichiers)}")
             
-            for fichier in fichiers:
-                try:
-                    # Vérifier la taille (max 10MB)
-                    if fichier.size > 10 * 1024 * 1024:
-                        attachment_errors.append(f"{fichier.name} dépasse la limite de 10MB")
-                        continue
-                    
-                    # Créer l'attachment
-                    attachment = MailAttachment.objects.create(
-                        upload=fichier,
-                        mailinfo=mail_info
-                    )
-                    attachments.append(attachment)
-                    logger.debug(f"Fichier attaché: {fichier.name} ({fichier.size} bytes)")
-                    
-                except Exception as e:
-                    logger.error(f"Erreur lors de l'upload de {fichier.name}: {str(e)}")
-                    attachment_errors.append(f"{fichier.name}: {str(e)}")
-            
-            # Si des documents sont sélectionnés, on les attache aussi
-            for doc in documents:
-                if doc.fichier and os.path.exists(doc.fichier.path):
+            if fichiers:
+                logger.info(f"📎 Traitement de {len(fichiers)} fichier(s) uploadé(s)...")
+                
+                for fichier in fichiers:
                     try:
-                        # Ouvrir le fichier et le joindre
-                        with open(doc.fichier.path, 'rb') as f:
-                            # Ici, vous devrez peut-être adapter selon votre logique d'envoi
-                            # Pour l'instant, on crée juste une entrée MailAttachment
+                        # Vérifier la taille (max 10MB)
+                        if fichier.size > 10 * 1024 * 1024:
+                            logger.warning(f"⚠️ Fichier trop volumineux: {fichier.name} ({fichier.size} bytes)")
+                            continue
+                        
+                        # Créer l'attachment
+                        attachment = MailAttachment.objects.create(
+                            upload=fichier,
+                            mailinfo=mail_info
+                        )
+                        attachments.append(attachment)
+                        logger.info(f"✅ Fichier uploadé attaché: {fichier.name} ({fichier.size} bytes)")
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Erreur lors de l'upload de {fichier.name}: {str(e)}")
+            else:
+                logger.info("ℹ️ Aucun fichier uploadé à traiter")
+            
+            # =================================================================
+            # 5. TRAITEMENT DES DOCUMENTS ACHETEURS (par ID)
+            # =================================================================
+            if validated_data['documents']:
+                logger.info(f"📄 Traitement de {len(validated_data['documents'])} document(s) par ID...")
+                for doc_id in validated_data['documents']:
+                    try:
+                        doc = Document.objects.get(id=doc_id)
+                        if doc.fichier and os.path.exists(doc.fichier.path):
+                            # Créer un attachment à partir du document existant
                             attachment = MailAttachment.objects.create(
                                 upload=doc.fichier,
                                 mailinfo=mail_info
                             )
                             attachments.append(attachment)
-                            logger.debug(f"Document attaché: {doc.titre}")
-                    except Exception as e:
-                        logger.error(f"Erreur lors de l'attachement du document {doc.id}: {str(e)}")
-                        attachment_errors.append(f"Document {doc.id}: {str(e)}")
+                            logger.info(f"✅ Document attaché: {doc.titre} - {doc.fichier.name}")
+                        else:
+                            logger.warning(f"⚠️ Fichier du document {doc_id} non trouvé")
+                    except Document.DoesNotExist:
+                        logger.warning(f"⚠️ Document {doc_id} non trouvé")
+            else:
+                logger.info("ℹ️ Aucun document acheteur à traiter")
             
             # =================================================================
-            # 6. ENVOI EFFECTIF DE L'EMAIL
+            # 6. ENVOI DE L'EMAIL AVEC PIÈCES JOINTES
             # =================================================================
-            
             try:
+                # Récupérer le client
+                client = User.objects.get(id=validated_data['client_id'])
+                
                 # Créer l'email
                 email = EmailMultiAlternatives(
-                    subject=subject,
-                    body=text_message,
+                    subject=validated_data['sujet'],
+                    body=re.sub(r'<[^>]+>', ' ', validated_data['message']),  # Version texte
                     from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[to_email],
-                    cc=cc_emails,
-                    reply_to=[settings.DEFAULT_FROM_EMAIL]
+                    to=[client.email],
+                    cc=validated_data.get('cc', '').split(';') if validated_data.get('cc') else [],
                 )
                 
                 # Ajouter la version HTML
-                email.attach_alternative(html_message, "text/html")
+                email.attach_alternative(validated_data['message'], "text/html")
                 
                 # Ajouter les pièces jointes
                 for attachment in attachments:
-                    if os.path.exists(attachment.upload.path):
-                        with open(attachment.upload.path, 'rb') as f:
-                            email.attach(
-                                filename=os.path.basename(attachment.upload.name),
-                                content=f.read(),
-                                mimetype='application/octet-stream'
-                            )
-                    else:
-                        logger.warning(f"Fichier joint non trouvé: {attachment.upload.path}")
+                    try:
+                        # Récupérer le chemin du fichier
+                        file_path = attachment.upload.path
+                        
+                        if os.path.exists(file_path):
+                            with open(file_path, 'rb') as f:
+                                file_content = f.read()
+                                email.attach(
+                                    filename=os.path.basename(attachment.upload.name),
+                                    content=file_content,
+                                    mimetype='application/octet-stream'
+                                )
+                            logger.info(f"✅ Pièce jointe ajoutée à l'email: {attachment.upload.name}")
+                        else:
+                            logger.warning(f"⚠️ Fichier non trouvé: {file_path}")
+                            
+                    except Exception as e:
+                        logger.error(f"❌ Erreur lors de l'ajout de la pièce jointe: {str(e)}")
                 
                 # Envoyer l'email
                 email.send(fail_silently=False)
+                logger.info(f"✅ Email envoyé avec succès à {client.email}")
                 
-                logger.info(f"✅ Email envoyé avec succès à {to_email}")
+                # Mettre à jour le statut
+                mail_info.success = True
+                mail_info.save()
                 
-                # =================================================================
-                # 7. MISE À JOUR DES COMMANDES (STATUT ET HISTORIQUE)
-                # =================================================================
-                
-                with transaction.atomic():
-                    for commande in commandes:
-                        # Mettre à jour le statut
-                        commande.status = 'envoye_client'
-                        commande.date_envoi_client = timezone.now()
-                        commande.email_envoye = True
-                        commande.save()
-                        
-                        # Créer une entrée de suivi
-                        SuiviCommande.objects.create(
-                            commande=commande,
-                            user=request.user,
-                            action=f"Rapport envoyé au client {client.username}",
-                            type="ENVOI_CLIENT",
-                            commentaire=f"Email envoyé avec {len(attachments)} pièce(s) jointe(s)"
-                        )
-                        
-                        logger.debug(f"Commande {commande.id} mise à jour avec statut 'envoye_client'")
+                # Mettre à jour les commandes
+                for commande in commandes:
+                    commande.status = 'envoye_client'
+                    commande.date_envoi_client = timezone.now()
+                    commande.email_envoye = True
+                    commande.save()
                     
-                    # Mettre à jour le MailInfo
-                    mail_info.success = True
-                    mail_info.save()
+                    SuiviCommande.objects.create(
+                        commande=commande,
+                        user=request.user,
+                        action=f"Rapport envoyé au client {client.username}",
+                        type="ENVOI_CLIENT",
+                        commentaire=f"Email envoyé avec {len(attachments)} pièce(s) jointe(s)"
+                    )
                 
-                # =================================================================
-                # 8. PRÉPARATION DE LA RÉPONSE
-                # =================================================================
-                
-                response_data = {
+                return Response({
                     'status': 'success',
                     'message': 'Email envoyé avec succès',
                     'mail_id': mail_info.id,
-                    'commandes_mises_a_jour': commandes.count(),
                     'pieces_jointes': len(attachments),
                     'details': {
-                        'destinataire': to_email,
-                        'cc': cc_emails,
-                        'sujet': subject
+                        'fichiers_uploades': len(fichiers) if fichiers else 0,
+                        'documents_acheteurs': len(validated_data['documents']) if validated_data['documents'] else 0,
+                        'total': len(attachments)
                     }
-                }
-                
-                if attachment_errors:
-                    response_data['warnings'] = attachment_errors
-                
-                return Response(response_data, status=status.HTTP_200_OK)
+                }, status=status.HTTP_200_OK)
                 
             except Exception as e:
                 logger.error(f"❌ Erreur lors de l'envoi de l'email: {str(e)}", exc_info=True)
-                
-                # Marquer l'envoi comme échoué
                 mail_info.success = False
                 mail_info.save()
                 
                 return Response({
                     'status': 'error',
-                    'message': f'Erreur lors de l\'envoi de l\'email: {str(e)}',
-                    'mail_id': mail_info.id
+                    'message': f'Erreur lors de l\'envoi: {str(e)}'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+                
         except Exception as e:
             logger.error(f"❌ Erreur inattendue: {str(e)}", exc_info=True)
             return Response({

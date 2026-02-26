@@ -35,7 +35,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 import os
 from django.conf import settings
-from jinja2 import Environment, FileSystemLoader
+
 from xhtml2pdf import pisa
 from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
@@ -89,6 +89,11 @@ from main.api.views_scoring_anglais import *
 from main.api.views_scoring_bancaire import *
 from main.api.views_scoring_syscohada import *
 from main.api.views_scoring_ifrs import *
+
+from main.utils import *
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Une fonction pour s'assurer que les données sont numériques.
 def to_float(value):
@@ -356,33 +361,16 @@ def get_risk_rating_png_base64(score):
 
 
 def render_html_template(report_data):
-    # Chemin absolu vers le dossier des templates
-    template_dir = os.path.join(settings.BASE_DIR, 'main', 'templates', 'main')
-    print("Chemin des templates :", os.path.abspath(template_dir))  # Debug
-    if not os.path.exists(template_dir):
-        raise FileNotFoundError(f"Le dossier {template_dir} n'existe pas.")
-
-    env = Environment(loader=FileSystemLoader(template_dir))
-    template = env.get_template('report_deep_seek_test.html')
-
-    # Rendu du template avec des valeurs par défaut
-    html = template.render(
-        # Pied de page
-        footer_text_1=report_data.get('footer_report', {}).get('footer_text_1', 'Texte par défaut 1'),
-        footer_text_2=report_data.get('footer_report', {}).get('footer_text_2', 'Texte par défaut 2'),
-        footer_text_3=report_data.get('footer_report', {}).get('footer_text_3', 'Texte par défaut 3'),
-
-        # En-tête
-        acremac_services=report_data.get('header_report', {}).get('acremac_services', 'Services ACREMAC'),
-        acremac_mail=report_data.get('header_report', {}).get('acremac_mail', 'credit.report@acremac.com'),
-
-        # Client
-        client=report_data.get('commande', {}).get('client', 'Client inconnu'),
-
-        # Nom de l'acheteur
-        client_nom_acheteur=report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'Nom inconnu'),
-    )
-    return html
+    """Retourne le HTML rendu par le moteur de templates Django.
+    L'ancienne version utilisait Jinja2 avec un contexte restreint, ce qui empêchait
+    certaines données (comme le scoring) d'apparaître dans l'aperçu HTML. En
+    privilégiant le moteur Django on bénéficie également de l'auto-escaping
+    et de la compatibilité avec les tags/filtres utilisés dans
+    `report_deep_seek_test.html`.
+    """
+    # utilisation de render_to_string garantit que tout `report_data` est
+    # rendu et que les filtres `{% load %}` fonctionnent.
+    return render_to_string('main/report_deep_seek_test.html', report_data)
 
 
 def generate_pdf_weasyprint(report_data):
@@ -2235,14 +2223,31 @@ class GenerateReport(APIView):
         # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
-        
-        # Limiter le score entre 0 et 10 pour correspondre aux images
-        score_indexe = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
-        score_indexe = max(0, min(score_indexe, 10))
-        print(int(round(scoring_sans_bilan.scoring_value)))
-        print(score_indexe)
-        
-        
+        print(scoring_sans_bilan)
+
+        # par défaut
+        score_indexe = 0
+        scoring_context = None
+        if scoring_sans_bilan:
+            # Limiter le score entre 0 et 10 pour correspondre aux images
+            try:
+                score_indexe = int(round(scoring_sans_bilan.scoring_value or 0))
+            except Exception:
+                score_indexe = 0
+            score_indexe = max(0, min(score_indexe, 10))
+            print(int(round(scoring_sans_bilan.scoring_value or 0)))
+            print(score_indexe)
+            scoring_context = {
+                "title_16": "SCORING ACREMAC - SANS BILAN",
+                "score_image": f"scoring/{score_indexe}.png",
+                "score_png": f"scoring/{score_indexe}.png",
+                "score_value": f"{scoring_sans_bilan.scoring_value:.2f}" if scoring_sans_bilan.scoring_value is not None else "",
+                "interpretation": scoring_sans_bilan.interpretation or "",
+                "commentaire": scoring_sans_bilan.commentaire or "",
+                "score_type": "Scoring sans bilan",
+            }
+        else:
+            score_indexe = 0
         # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
         # Scoring avec bilan classique
         # Récupérer le scoring avec bilan en fonction du type de bilan
@@ -2750,13 +2755,14 @@ class GenerateReport(APIView):
             },
             
             "translations": {},
-            "scoring": {
+            "scoring_sansbilan": {
                 "title_16": "SCORING ACREMAC - SANS BILAN",
                 "score_image": f"scoring/{score_indexe}.png",
                 "score_png": f"scoring/{int(round(scoring_sans_bilan.scoring_value))}.png",
                 "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
                 "interpretation": scoring_sans_bilan.interpretation,
                 "commentaire": scoring_sans_bilan.commentaire,
+                "score_indexe": score_indexe,
                 "score_type": "Scoring sans bilan",
             },
             "scoring_classique": {
@@ -2764,9 +2770,11 @@ class GenerateReport(APIView):
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
                 "score_value_annee_N": score_value_annee_N,
                 "interpretation_annee_N": interpretation_annee_N,
+                
                 "score_image_annee_N1": f"scoring/{round(float(score_value_annee_N1)) if score_value_annee_N1 else 0}.png",
                 "score_value_annee_N1": score_value_annee_N1,
                 "interpretation_annee_N1": interpretation_annee_N1,
+                
                 "score_image_annee_N2": f"scoring/{round(float(score_value_annee_N2)) if score_value_annee_N2 else 0}.png",
                 "score_value_annee_N2": score_value_annee_N2,
                 "interpretation_annee_N2": interpretation_annee_N2,
@@ -2863,6 +2871,7 @@ class GenerateReport(APIView):
         }
         
         print(report_data)
+        logger.info(f"Récupération de report data {report_data}")
 
             
         # 3. Retourner le format demandé
@@ -3423,14 +3432,31 @@ class GenerateReportCommandeAcheteur(APIView):
         # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
-        
-        # Limiter le score entre 0 et 10 pour correspondre aux images
-        score_indexe = int(round(scoring_sans_bilan.scoring_value))  # arrondi à l'entier le plus proche
-        score_indexe = max(0, min(score_indexe, 10))
-        print(int(round(scoring_sans_bilan.scoring_value)))
-        print(score_indexe)
-        
-        
+        print(scoring_sans_bilan)
+
+        # par défaut
+        score_indexe = 0
+        scoring_context = None
+        if scoring_sans_bilan:
+            # Limiter le score entre 0 et 10 pour correspondre aux images
+            try:
+                score_indexe = int(round(scoring_sans_bilan.scoring_value or 0))
+            except Exception:
+                score_indexe = 0
+            score_indexe = max(0, min(score_indexe, 10))
+            print(int(round(scoring_sans_bilan.scoring_value or 0)))
+            print(score_indexe)
+            scoring_context = {
+                "title_16": "SCORING ACREMAC - SANS BILAN",
+                "score_image": f"scoring/{score_indexe}.png",
+                "score_png": f"scoring/{score_indexe}.png",
+                "score_value": f"{scoring_sans_bilan.scoring_value:.2f}" if scoring_sans_bilan.scoring_value is not None else "",
+                "interpretation": scoring_sans_bilan.interpretation or "",
+                "commentaire": scoring_sans_bilan.commentaire or "",
+                "score_type": "Scoring sans bilan",
+            }
+        else:
+            score_indexe = 0
         # NOUVEAU: SCORING AVEC BILAN CLASSIQUE
         # Scoring avec bilan classique
         # Récupérer le scoring avec bilan en fonction du type de bilan
@@ -3938,15 +3964,7 @@ class GenerateReportCommandeAcheteur(APIView):
             },
             
             "translations": {},
-            "scoring": {
-                "title_16": "SCORING ACREMAC - SANS BILAN",
-                "score_image": f"scoring/{score_indexe}.png",
-                "score_png": f"scoring/{int(round(scoring_sans_bilan.scoring_value))}.png",
-                "score_value": f"{scoring_sans_bilan.scoring_value:.2f}",  # <- toujours 2 décimales
-                "interpretation": scoring_sans_bilan.interpretation,
-                "commentaire": scoring_sans_bilan.commentaire,
-                "score_type": "Scoring sans bilan",
-            },
+            "scoring": scoring_context,
             "scoring_classique": {
                 "title_16": "SCORING CLASSIQUE - AVEC BILAN",
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",
@@ -4050,6 +4068,24 @@ class GenerateReportCommandeAcheteur(APIView):
             }
         }
         
+        # fallback: ensure scoring_context exists or has a value
+        if "scoring_context" not in locals() or scoring_context is None:
+            if scoring_sans_bilan:
+                score_indexe = score_indexe if score_indexe is not None else 0
+                scoring_context = {
+                    "title_16": "SCORING ACREMAC - SANS BILAN",
+                    "score_image": f"scoring/{score_indexe}.png",
+                    "score_png": f"scoring/{score_indexe}.png",
+                    "score_value": f"{scoring_sans_bilan.scoring_value:.2f}" if scoring_sans_bilan.scoring_value is not None else "",
+                    "interpretation": scoring_sans_bilan.interpretation or "",
+                    "commentaire": scoring_sans_bilan.commentaire or "",
+                    "score_type": "Scoring sans bilan",
+                }
+            else:
+                scoring_context = None
+            # keep compatibility with template expecting 'scoring'
+            report_data["scoring"] = scoring_context
+
         print(report_data)
 
             

@@ -1247,6 +1247,10 @@ body {
                                 <button type="button" id="resetForm" class="btn btn-email-outline px-4 py-3" data-bs-toggle="tooltip" title="Réinitialiser le formulaire">
                                     <i class="fas fa-undo"></i>
                                 </button>
+                                <!-- À ajouter temporairement près du bouton Envoyer -->
+                                <button type="button" id="testUploadBtn" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-vial me-2"></i>Tester Upload
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -1378,7 +1382,7 @@ $(document).ready(function() {
             '<p>Votre nom complet</p>',
             '<p>Votre poste</p>',
             '<p><br></p>',
-            '<p><img src="/static/images/acremac_option.png"></p>',
+            '<p><img src="{{ request.build_absolute_uri|cut:request.get_full_path }}{% static "images/acremac_option.png" %}"></p>',
             '<p>│URL: www.acremac.com Email: votre.email@acremac.com</p>',
             '<p>│Cell: +241 077 08 34 34 : +223 76 45 00 00 : +336 76 55 35 97 │Ph: +223 20 29 26 45 │</p>',
             '<p>|Address: Mali: Hamdallaye ACI 2000 Imm. Sabaly BP :1081 Bamako</p>',
@@ -1960,6 +1964,7 @@ $(document).ready(function() {
         $(`#documents-${acheteurId}`).html(html);
 
         // Gestionnaires d'événements pour cette section
+        // Dans afficherDocumentsAcheteur, le gestionnaire de changement
         $(`#documents-${acheteurId} .document-checkbox`).on('change', function() {
             const docId = parseInt($(this).val());
             const acheteurId = $(this).data('acheteur-id');
@@ -1976,7 +1981,9 @@ $(document).ready(function() {
             
             // Mettre à jour la sélection globale
             mettreAJourSelectionDocuments();
+            console.log('📄 Documents sélectionnés mis à jour:', documentsSelectionnes); // DEBUG
         });
+
 
         // Gestionnaire pour "tout sélectionner" de cet acheteur
         $(`#documents-${acheteurId} .select-all-documents-acheteur`).on('change', function() {
@@ -2371,41 +2378,20 @@ $(document).ready(function() {
     }
 
     // Fonction pour gérer les fichiers uploadés
+    // Fonction pour gérer les fichiers uploadés (vérification)
     function handleFiles(files) {
-        const maxSize = 10 * 1024 * 1024; // 10 MB
-        const allowedTypes = ['application/pdf', 'application/msword', 
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'image/jpeg', 'image/png'];
-
+        const maxSize = 10 * 1024 * 1024;
+        
         files.forEach(file => {
-            // Vérifier la taille
             if (file.size > maxSize) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Fichier trop volumineux',
+                Swal.fire({ icon: 'error', title: 'Fichier trop volumineux',
                     text: `${file.name} dépasse la limite de 10 MB`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                    timer: 2000, showConfirmButton: false });
                 return;
             }
 
-            // Vérifier le type
-            if (!allowedTypes.includes(file.type) && !file.type.startsWith('image/')) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Type de fichier non supporté',
-                    text: `${file.name} n'est pas un type de fichier autorisé`,
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                return;
-            }
-
-            // Créer un objet fichier avec un ID unique
             const fileObj = {
-                id: Date.now() + Math.random(),
+                id: String(Date.now() + Math.random()),   // ← doit être String
                 file: file,
                 name: file.name,
                 size: file.size,
@@ -2414,6 +2400,9 @@ $(document).ready(function() {
             };
 
             uploadedFiles.push(fileObj);
+            // ✅ Auto-sélectionner le fichier après l'avoir ajouté
+            selectedAttachments.uploaded.push(String(fileObj.id));
+            console.log('📎 Fichier ajouté et sélectionné:', fileObj.name, '- ID:', fileObj.id);
         });
 
         afficherFichiersUploades();
@@ -2435,7 +2424,8 @@ $(document).ready(function() {
 
         let html = '';
         uploadedFiles.forEach(file => {
-            const isSelected = selectedAttachments.uploaded.includes(file.id);
+            // Comparer en string pour être cohérent
+            const isSelected = selectedAttachments.uploaded.includes(String(file.id));
             const sizeFormatted = formatFileSize(file.size);
             const iconClass = getFileIconClass(file.name);
 
@@ -2473,7 +2463,7 @@ $(document).ready(function() {
 
         // Gestionnaires pour les cases à cocher des fichiers uploadés
         $('#uploadedFilesList .attachment-checkbox').on('change', function() {
-            const fileId = $(this).val();
+            const fileId = String($(this).val()); // ✅ Forcer en string
             const isChecked = $(this).is(':checked');
             
             if (isChecked) {
@@ -2668,42 +2658,96 @@ $(document).ready(function() {
 
     }
 
-    // Fonction pour préparer les données du formulaire
+    // Fonction pour préparer les données du formulaire (version corrigée)
+    // Fonction pour préparer les données du formulaire (version corrigée avec rapports)
     function prepareFormData() {
         const formData = new FormData();
         
         // Informations de base
-        formData.append('client_id', clientSelectionne);
-        formData.append('periode', $('#periodeSelect').val());
-        formData.append('sujet', $('#sujetInput').val().trim());
-        formData.append('message', window.quillEditor.root.innerHTML);
-        formData.append('cc', $('#ccInput').val().trim());
+        formData.append('client_id', clientSelectionne || '');
+        formData.append('periode', $('#periodeSelect').val() || '30days');
+        formData.append('sujet', $('#sujetInput').val().trim() || 'Rapport de solvabilité');
+        formData.append('message', window.quillEditor.root.innerHTML || '<p></p>');
+        formData.append('cc', $('#ccInput').val().trim() || '');
         
-        // Commandes sélectionnées
-        formData.append('commandes', JSON.stringify(commandesSelectionnees));
+        // ============================================
+        // 1. COMMANDES SÉLECTIONNÉES
+        // ============================================
+        formData.append('commandes', JSON.stringify(commandesSelectionnees || []));
         
-        // Documents acheteurs sélectionnés
-        formData.append('documents', JSON.stringify(selectedAttachments.documents));
+        // ============================================
+        // 2. DOCUMENTS ACHETEURS SÉLECTIONNÉS (IDs)
+        // ============================================
+        console.log('📄 Documents sélectionnés:', documentsSelectionnes);
+        formData.append('documents', JSON.stringify(documentsSelectionnes || []));
         
-        // Rapports générés (si vous voulez les envoyer aussi)
-        const rapportsSelectionnes = selectedReports.filter(reportId => {
-            const rapport = generatedReports.find(r => r.id === reportId);
-            return rapport && rapport.blob;
+        // ============================================
+        // 3. RAPPORTS GÉNÉRÉS SÉLECTIONNÉS (IDs) - pour traçabilité
+        // ============================================
+        const rapportsSelectionnesIds = selectedReports.filter(reportId => {
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
+            return rapport && (rapport.blob || rapport.file);
         });
+        console.log('📊 Rapports sélectionnés (IDs):', rapportsSelectionnesIds);
+        formData.append('rapports', JSON.stringify(rapportsSelectionnesIds || []));
         
-        formData.append('rapports', JSON.stringify(rapportsSelectionnes));
+        // ============================================
+        // 4. FICHIERS UPLOADÉS SÉLECTIONNÉS
+        // ============================================
+        console.log('📎 Fichiers uploadés disponibles:', uploadedFiles.length);
+        console.log('📎 Fichiers uploadés sélectionnés (IDs):', selectedAttachments.uploaded);
         
-        // Fichiers uploadés sélectionnés
         selectedAttachments.uploaded.forEach(fileId => {
-            const file = uploadedFiles.find(f => f.id === fileId);
-            if (file && file.file) {
+            const file = uploadedFiles.find(f => String(f.id) === String(fileId));
+            if (file && file.file instanceof File) {
+                console.log('✅ Ajout fichier uploadé:', file.name, file.file.size, 'bytes');
                 formData.append('fichiers', file.file, file.name);
             }
         });
         
-        // Métadonnées supplémentaires
-        formData.append('total_attachments', selectedAttachments.uploaded.length + selectedAttachments.documents.length);
+        // ============================================
+        // 5. RAPPORTS GÉNÉRÉS (fichiers physiques) - CORRECTION ICI
+        // ============================================
+        console.log('📊 Rapports générés disponibles:', generatedReports.length);
+        console.log('📊 Rapports sélectionnés:', selectedReports);
+        
+        selectedReports.forEach(reportId => {
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
+            if (rapport && rapport.blob) {
+                // Créer un nom de fichier approprié
+                const filename = rapport.nom || `rapport_${rapport.commande_id}.${rapport.format}`;
+                
+                // Convertir le blob en fichier
+                let fileToAttach;
+                if (rapport.blob instanceof File) {
+                    fileToAttach = rapport.blob;
+                } else {
+                    // Créer un File à partir du Blob
+                    fileToAttach = new File(
+                        [rapport.blob], 
+                        filename, 
+                        { type: rapport.contentType || 'application/octet-stream' }
+                    );
+                }
+                
+                console.log('✅ Ajout du rapport généré:', filename);
+                formData.append('fichiers', fileToAttach, filename);
+            }
+        });
+        
+        // Métadonnées
+        const totalPhysicalFiles = selectedAttachments.uploaded.length + selectedReports.length;
+        formData.append('total_attachments', totalPhysicalFiles + documentsSelectionnes.length);
         formData.append('total_commands', commandesSelectionnees.length);
+        
+        // DEBUG
+        console.log('📦 RÉCAPITULATIF DU FORMULAIRE:');
+        console.log('   - Commandes:', commandesSelectionnees.length);
+        console.log('   - Documents (IDs):', documentsSelectionnes.length);
+        console.log('   - Rapports (IDs):', rapportsSelectionnesIds.length);
+        console.log('   - Fichiers uploadés physiques:', selectedAttachments.uploaded.length);
+        console.log('   - Rapports physiques:', selectedReports.length);
+        console.log('   - TOTAL pièces jointes physiques:', totalPhysicalFiles);
         
         return formData;
     }
@@ -2747,88 +2791,94 @@ $(document).ready(function() {
                 updateSendProgress(progress, `Traitement... ${progress}%`);
             }
         }, 300);
-        
-        // Envoyer la requête
-        $.ajax({
-            url: '/api/emailing/envoyer/',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            xhr: function() {
-                const xhr = new window.XMLHttpRequest();
-                // Suivi de progression pour l'upload
-                xhr.upload.addEventListener('progress', function(e) {
-                    if (e.lengthComputable) {
-                        const percentComplete = Math.round((e.loaded / e.total) * 100);
-                        updateSendProgress(percentComplete, `Upload des fichiers... ${percentComplete}%`);
-                    }
-                }, false);
-                return xhr;
-            },
-            success: function(response) {
-                clearInterval(progressInterval);
-                updateSendProgress(100, 'Envoi terminé !');
-                
-                setTimeout(() => {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Email envoyé !',
-                        html: `
-                            <div style="text-align: center;">
-                                <i class="fas fa-check-circle fa-4x" style="color: #28a745; margin-bottom: 15px;"></i>
-                                <p>Votre message a été envoyé avec succès.</p>
-                                <p style="font-size: 0.9rem; color: var(--gray);">
-                                    ${commandesSelectionnees.length} commande(s) mise(s) à jour
-                                </p>
-                            </div>
-                        `,
-                        confirmButtonText: '<i class="fas fa-check me-2"></i>OK',
-                        confirmButtonColor: '#0d80be',
-                        timer: 3000,
-                        timerProgressBar: true
-                    }).then(() => {
-                        // Réinitialiser le formulaire ou rediriger
-                        resetAllState();
-                        $('#sujetInput').val('');
-                        window.quillEditor.root.innerHTML = '<p><br></p>';
-                        $('#ccInput').val('');
-                    });
-                }, 500);
-            },
-            error: function(xhr) {
-                clearInterval(progressInterval);
-                updateSendProgress(100, 'Erreur lors de l\'envoi');
-                
-                setTimeout(() => {
-                    let errorMsg = 'Une erreur est survenue lors de l\'envoi';
-                    if (xhr.responseJSON?.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    } else if (xhr.responseText) {
-                        try {
-                            const jsonResponse = JSON.parse(xhr.responseText);
-                            errorMsg = jsonResponse.message || errorMsg;
-                        } catch (e) {
-                            errorMsg = xhr.responseText;
+
+        // Dans sendEmail(), avant l'envoi AJAX
+        setTimeout(() => {
+            // Envoyer la requête
+            $.ajax({
+                url: '/api/emailing/envoyer/',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    // Suivi de progression pour l'upload
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percentComplete = Math.round((e.loaded / e.total) * 100);
+                            updateSendProgress(percentComplete, `Upload des fichiers... ${percentComplete}%`);
                         }
-                    }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    clearInterval(progressInterval);
+                    updateSendProgress(100, 'Envoi terminé !');
                     
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Erreur d\'envoi',
-                        html: `
-                            <div style="text-align: center;">
-                                <i class="fas fa-exclamation-circle fa-4x" style="color: #dc3545; margin-bottom: 15px;"></i>
-                                <p>${errorMsg}</p>
-                                <p style="font-size: 0.9rem; color: var(--gray);">Veuillez réessayer ou contacter le support.</p>
-                            </div>
-                        `,
-                        confirmButtonText: '<i class="fas fa-times me-2"></i>Fermer',
-                        confirmButtonColor: '#0d80be'
-                    });
-                }, 500);
-            }
-        });
+                    setTimeout(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Email envoyé !',
+                            html: `
+                                <div style="text-align: center;">
+                                    <i class="fas fa-check-circle fa-4x" style="color: #28a745; margin-bottom: 15px;"></i>
+                                    <p>Votre message a été envoyé avec succès.</p>
+                                    <p style="font-size: 0.9rem; color: var(--gray);">
+                                        ${commandesSelectionnees.length} commande(s) mise(s) à jour
+                                    </p>
+                                </div>
+                            `,
+                            confirmButtonText: '<i class="fas fa-check me-2"></i>OK',
+                            confirmButtonColor: '#0d80be',
+                            timer: 3000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            // Réinitialiser le formulaire ou rediriger
+                            resetAllState();
+                            $('#sujetInput').val('');
+                            window.quillEditor.root.innerHTML = '<p><br></p>';
+                            $('#ccInput').val('');
+                        });
+                    }, 500);
+                },
+                error: function(xhr) {
+                    clearInterval(progressInterval);
+                    updateSendProgress(100, 'Erreur lors de l\'envoi');
+                    
+                    setTimeout(() => {
+                        let errorMsg = 'Une erreur est survenue lors de l\'envoi';
+                        if (xhr.responseJSON?.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        } else if (xhr.responseText) {
+                            try {
+                                const jsonResponse = JSON.parse(xhr.responseText);
+                                errorMsg = jsonResponse.message || errorMsg;
+                            } catch (e) {
+                                errorMsg = xhr.responseText;
+                            }
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Erreur d\'envoi',
+                            html: `
+                                <div style="text-align: center;">
+                                    <i class="fas fa-exclamation-circle fa-4x" style="color: #dc3545; margin-bottom: 15px;"></i>
+                                    <p>${errorMsg}</p>
+                                    <p style="font-size: 0.9rem; color: var(--gray);">Veuillez réessayer ou contacter le support.</p>
+                                </div>
+                            `,
+                            confirmButtonText: '<i class="fas fa-times me-2"></i>Fermer',
+                            confirmButtonColor: '#0d80be'
+                        });
+                    }, 500);
+                }
+            });
+    
+        }, 500); // Petit délai pour laisser le temps au FormData de se préparer
+        
+        
     }
 
     // Fonction pour mettre à jour la progression dans la modal
@@ -2841,12 +2891,31 @@ $(document).ready(function() {
 
     // Fonction pour afficher le récapitulatif avant envoi
     function showSendConfirmation() {
+
+        // Juste avant d'appeler sendEmail()
+        console.log('📊 RAPPORTS SÉLECTIONNÉS AVANT ENVOI:', selectedReports);
+        console.log('📊 DÉTAILS DES RAPPORTS:', selectedReports.map(id => 
+            generatedReports.find(r => r.id === id)
+        ));
+
         // Vérifications préliminaires
         if (!clientSelectionne) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Client non sélectionné',
                 text: 'Veuillez sélectionner un client destinataire',
+                confirmButtonColor: '#0d80be'
+            });
+            return false;
+        }
+
+        // Dans showSendConfirmation(), avant les autres vérifications
+        const periode = $('#periodeSelect').val();
+        if (!periode) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Période non sélectionnée',
+                text: 'Veuillez sélectionner une période pour les commandes',
                 confirmButtonColor: '#0d80be'
             });
             return false;
@@ -3007,6 +3076,77 @@ $(document).ready(function() {
         showSendConfirmation();
     });
 
+    // Bouton de test pour diagnostiquer l'upload
+    // Bouton de test corrigé
+    $('#testUploadBtn').on('click', function() {
+        const formData = new FormData();
+        
+        // Ajouter les fichiers
+        if (uploadedFiles.length > 0) {
+            uploadedFiles.forEach(file => {
+                if (file.file) {
+                    console.log('Test - Ajout du fichier:', file.name);
+                    formData.append('fichiers', file.file, file.name);
+                }
+            });
+        }
+        
+        // Ajouter TOUS les champs requis
+        formData.append('client_id', clientSelectionne || '133');
+        formData.append('periode', $('#periodeSelect').val() || '30days');  // ← AJOUTÉ
+        formData.append('commandes', JSON.stringify(commandesSelectionnees || [143]));
+        formData.append('documents', JSON.stringify(selectedAttachments.documents || []));
+        formData.append('rapports', JSON.stringify(selectedReports || []));
+        formData.append('sujet', $('#sujetInput').val() || 'Test upload');
+        formData.append('message', window.quillEditor.root.innerHTML || '<p>Test</p>');
+        formData.append('cc', $('#ccInput').val() || '');
+        formData.append('total_attachments', selectedAttachments.uploaded.length);
+        formData.append('total_commands', commandesSelectionnees.length);
+        
+        console.log('📦 Envoi du test avec:', {
+            client_id: clientSelectionne,
+            periode: $('#periodeSelect').val(),
+            fichiers: uploadedFiles.length,
+            commandes: commandesSelectionnees
+        });
+        
+        $.ajax({
+            url: '/api/emailing/envoyer/',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'Authorization': 'Bearer ' + ACCESS_TOKEN,
+                'X-CSRFToken': CSRF_TOKEN
+            },
+            success: function(response) {
+                console.log('✅ Test réussi:', response);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Succès',
+                    text: `Email envoyé avec ${response.pieces_jointes} pièce(s) jointe(s)`,
+                    confirmButtonColor: '#0d80be'
+                });
+            },
+            error: function(xhr) {
+                console.error('❌ Test échoué:', xhr.responseText);
+                let errorMsg = 'Erreur inconnue';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    errorMsg = response.message || response.errors?.periode?.[0] || JSON.stringify(response);
+                } catch (e) {
+                    errorMsg = xhr.responseText;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: errorMsg,
+                    confirmButtonColor: '#0d80be'
+                });
+            }
+        });
+    });
 
     // Variables globales pour les rapports générés
     let generatedReports = [];
@@ -3051,23 +3191,26 @@ $(document).ready(function() {
         });
         
         // Gestionnaire pour les cases à cocher des rapports
-        $(document).on('change', '.generated-report-checkbox', function() {
-            const reportId = $(this).val();
-            if ($(this).is(':checked')) {
-                if (!selectedReports.includes(reportId)) {
-                    selectedReports.push(reportId);
-                }
-                $(this).closest('.generated-report-item').addClass('selected');
-            } else {
-                selectedReports = selectedReports.filter(id => id !== reportId);
-                $(this).closest('.generated-report-item').removeClass('selected');
-            }
+        // Dans le gestionnaire des cases à cocher des rapports
+        // $(document).on('change', '.generated-report-checkbox', function() {
+        //     const reportId = $(this).val();
+        //     if ($(this).is(':checked')) {
+        //         if (!selectedReports.includes(reportId)) {
+        //             selectedReports.push(reportId);
+        //         }
+        //         $(this).closest('.generated-report-item').addClass('selected');
+        //     } else {
+        //         selectedReports = selectedReports.filter(id => id !== reportId);
+        //         $(this).closest('.generated-report-item').removeClass('selected');
+        //     }
             
-            // Mettre à jour le bouton "tout sélectionner"
-            const totalReports = $('.generated-report-checkbox').length;
-            const checkedReports = $('.generated-report-checkbox:checked').length;
-            $('#selectAllGeneratedReports').prop('checked', totalReports === checkedReports && totalReports > 0);
-        });
+        //     // Mettre à jour le bouton "tout sélectionner"
+        //     const totalReports = $('.generated-report-checkbox').length;
+        //     const checkedReports = $('.generated-report-checkbox:checked').length;
+        //     $('#selectAllGeneratedReports').prop('checked', totalReports === checkedReports && totalReports > 0);
+            
+        //     console.log('📊 Rapports sélectionnés:', selectedReports); // DEBUG
+        // });
 
         // Gestionnaire pour ajouter les rapports sélectionnés aux pièces jointes
         $('#addSelectedReportsToAttachments').on('click', function() {
@@ -3076,7 +3219,6 @@ $(document).ready(function() {
     }
 
     // Fonction pour générer un rapport pour une commande
-    // Fonction pour générer un rapport pour une commande (version corrigée)
     // Fonction pour générer un rapport pour une commande (version corrigée)
     function genererRapportPourCommande(commandeId, format) {
         // Trouver les informations de la commande
@@ -3124,8 +3266,12 @@ $(document).ready(function() {
                 const contentType = xhr.getResponseHeader('Content-Type');
                 const contentDisposition = xhr.getResponseHeader('Content-Disposition');
                 
-                // Extraire le nom du fichier
-                let filename = `rapport_solvabilite_${acheteurNom.replace(/\s+/g, '_')}_${commandeId}_${Date.now()}.${format}`;
+                // Extraire le nom du fichier - Option 3: Format avec date complète et heure
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+                const acheteurId = commande?.acheteur || ACHETEUR_ID;
+                let filename = `rapport_solvabilite_${commandeId}_${acheteurId}_${dateStr}_${timeStr}.${format}`;
                 
                 if (contentDisposition) {
                     const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
@@ -3140,7 +3286,7 @@ $(document).ready(function() {
                     const url = window.URL.createObjectURL(blob);
                     
                     const rapport = {
-                        id: Date.now() + Math.random(),
+                        id: 'rpt_' + Date.now() + '_' + Math.floor(Math.random() * 100000),
                         commande_id: commandeId,
                         format: format,
                         nom: filename,
@@ -3183,7 +3329,7 @@ $(document).ready(function() {
                     const url = window.URL.createObjectURL(blob);
                     
                     const rapport = {
-                        id: Date.now() + Math.random(),
+                        id: 'rpt_' + Date.now() + '_' + Math.floor(Math.random() * 100000),
                         commande_id: commandeId,
                         format: format,
                         nom: filename,
@@ -3236,7 +3382,7 @@ $(document).ready(function() {
     }
 
     // Fonction pour afficher les rapports générés
-    function afficherRapportsGeneres() {
+    function afficherRapportsGeneresOne() {
         if (generatedReports.length === 0) {
             $('#generatedReportsContainer').hide();
             $('#noGeneratedReports').show();
@@ -3307,6 +3453,117 @@ $(document).ready(function() {
         
         // Gestionnaires pour les cases à cocher
         $('.generated-report-checkbox').on('change', function() {
+            const reportId = String($(this).val());   // ← String() ajouté
+            if ($(this).is(':checked')) {
+                if (!selectedReports.includes(reportId)) {
+                    selectedReports.push(reportId);
+                }
+                $(this).closest('.generated-report-item').addClass('selected');
+            } else {
+                selectedReports = selectedReports.filter(id => String(id) !== reportId);
+                $(this).closest('.generated-report-item').removeClass('selected');
+            }
+            
+            // Mettre à jour "tout sélectionner"
+            mettreAJourSelectionRapports();
+        });
+        
+        // Gestionnaires pour les boutons de visualisation
+        $('.view-report-btn').on('click', function() {
+            const reportId = $(this).data('report-id');
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
+            if (rapport) {
+                visualiserRapport(rapport);
+            }
+        });
+        
+        // Gestionnaires pour les boutons de téléchargement
+        $('.download-report-btn').on('click', function() {
+            const reportId = $(this).data('report-id');
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
+            if (rapport) {
+                telechargerRapport(rapport);
+            }
+        });
+        
+        // Gestionnaire pour "tout sélectionner"
+        $('#selectAllGeneratedReports').off('change').on('change', function() {
+            const isChecked = $(this).is(':checked');
+            $('.generated-report-checkbox').each(function() {
+                $(this).prop('checked', isChecked).trigger('change');
+            });
+        });
+    }
+
+    // Fonction pour afficher les rapports générés (version corrigée)
+    function afficherRapportsGeneres() {
+        if (generatedReports.length === 0) {
+            $('#generatedReportsContainer').hide();
+            $('#noGeneratedReports').show();
+            $('#generatedReportsCount').text('0');
+            return;
+        }
+        
+        $('#noGeneratedReports').hide();
+        $('#generatedReportsContainer').show();
+        $('#generatedReportsCount').text(generatedReports.length);
+        
+        let html = '';
+        generatedReports.forEach(rapport => {
+            const estSelectionne = selectedReports.includes(rapport.id);
+            const dateFormatted = new Date(rapport.date_generation).toLocaleString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const tailleFormatted = formatTailleFichier(rapport.taille);
+            const iconeClass = getReportIconClass(rapport.format);
+            const bgClass = `report-icon-${rapport.format}`;
+            
+            html += `
+                <div class="generated-report-item ${estSelectionne ? 'selected' : ''}" data-report-id="${rapport.id}">
+                    <div class="form-check">
+                        <input class="form-check-input generated-report-checkbox" 
+                            type="checkbox" 
+                            value="${rapport.id}"
+                            id="report_${rapport.id}"
+                            ${estSelectionne ? 'checked' : ''}>
+                    </div>
+                    <div class="${bgClass}">
+                        <i class="fas ${iconeClass}"></i>
+                    </div>
+                    <div class="report-info">
+                        <div class="report-name">
+                            ${rapport.nom}
+                            <span class="badge bg-primary bg-opacity-10 text-white ms-2">${rapport.format.toUpperCase()}</span>
+                        </div>
+                        <div class="report-meta">
+                            <i class="fas fa-calendar me-1"></i>${dateFormatted}
+                            <span class="mx-2">|</span>
+                            <i class="fas fa-database me-1"></i>${tailleFormatted}
+                            <span class="mx-2">|</span>
+                            <i class="fas fa-shopping-cart me-1"></i>Commande #${rapport.commande_id}
+                        </div>
+                    </div>
+                    <div class="report-actions">
+                        <button type="button" class="btn-view-report view-report-btn" data-report-id="${rapport.id}" title="Visualiser">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" class="btn-download-report download-report-btn" data-report-id="${rapport.id}" title="Télécharger">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#generatedReportsList').html(html);
+        
+        // Gestionnaires pour les cases à cocher
+        $('.generated-report-checkbox').off('change').on('change', function() {
             const reportId = $(this).val();
             if ($(this).is(':checked')) {
                 if (!selectedReports.includes(reportId)) {
@@ -3323,20 +3580,30 @@ $(document).ready(function() {
         });
         
         // Gestionnaires pour les boutons de visualisation
-        $('.view-report-btn').on('click', function() {
+        $('.view-report-btn').off('change').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const reportId = $(this).data('report-id');
-            const rapport = generatedReports.find(r => r.id === reportId);
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
             if (rapport) {
+                console.log('Visualisation du rapport:', rapport);
                 visualiserRapport(rapport);
+            } else {
+                console.error('Rapport non trouvé:', reportId);
             }
         });
         
         // Gestionnaires pour les boutons de téléchargement
-        $('.download-report-btn').on('click', function() {
+        $('.download-report-btn').off('change').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const reportId = $(this).data('report-id');
-            const rapport = generatedReports.find(r => r.id === reportId);
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
             if (rapport) {
+                console.log('Téléchargement du rapport:', rapport);
                 telechargerRapport(rapport);
+            } else {
+                console.error('Rapport non trouvé:', reportId);
             }
         });
         
@@ -3348,6 +3615,7 @@ $(document).ready(function() {
             });
         });
     }
+
 
     // Fonction pour obtenir l'icône du rapport
     function getReportIconClass(format) {
@@ -3361,7 +3629,6 @@ $(document).ready(function() {
     }
 
     // Fonction pour visualiser un rapport
-    // Fonction de visualisation corrigée
     // Fonction de visualisation corrigée
     function visualiserRapport(rapport) {
         if (rapport.format === 'pdf') {
@@ -3380,7 +3647,7 @@ $(document).ready(function() {
                 
                 Swal.fire({
                     title: `Rapport XML - ${rapport.nom}`,
-                    html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:#d4d4d4; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(content)}</pre>`,
+                    html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:white; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(content)}</pre>`,
                     width: '90%',
                     showConfirmButton: false,
                     showCloseButton: true,
@@ -3399,7 +3666,7 @@ $(document).ready(function() {
                 
                 Swal.fire({
                     title: `Rapport JSON - ${rapport.nom}`,
-                    html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:#d4d4d4; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(formattedJson)}</pre>`,
+                    html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:white; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(formattedJson)}</pre>`,
                     width: '90%',
                     showConfirmButton: false,
                     showCloseButton: true,
@@ -3419,7 +3686,7 @@ $(document).ready(function() {
                         
                         Swal.fire({
                             title: `Rapport JSON - ${rapport.nom}`,
-                            html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:#d4d4d4; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(formattedJson)}</pre>`,
+                            html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:white; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(formattedJson)}</pre>`,
                             width: '90%',
                             showConfirmButton: false,
                             showCloseButton: true,
@@ -3430,7 +3697,7 @@ $(document).ready(function() {
                     } catch (e) {
                         Swal.fire({
                             title: `Rapport JSON - ${rapport.nom}`,
-                            html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:#d4d4d4; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(content)}</pre>`,
+                            html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:white; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(content)}</pre>`,
                             width: '90%',
                             showConfirmButton: false,
                             showCloseButton: true,
@@ -3578,7 +3845,7 @@ $(document).ready(function() {
     }
 
     // Fonction pour visualiser un rapport
-    function visualiserRapport(rapport) {
+    function visualiserRapportOne(rapport) {
         if (rapport.format === 'pdf') {
             // Ouvrir le PDF dans un nouvel onglet
             window.open(rapport.url, '_blank');
@@ -3604,7 +3871,7 @@ $(document).ready(function() {
     }
 
     // Fonction pour télécharger un rapport
-    function telechargerRapport(rapport) {
+    function telechargerRapportOne(rapport) {
         const link = document.createElement('a');
         link.href = rapport.url;
         link.download = rapport.nom;
@@ -3612,6 +3879,60 @@ $(document).ready(function() {
         link.click();
         document.body.removeChild(link);
     }
+
+    // Fonction simplifiée pour visualiser un rapport
+    function visualiserRapport(rapport) {
+        if (!rapport || !rapport.url) {
+            console.error('Rapport invalide ou URL manquante');
+            return;
+        }
+        
+        if (rapport.format === 'pdf' || rapport.format === 'html') {
+            // PDF et HTML : ouvrir dans un nouvel onglet
+            window.open(rapport.url, '_blank');
+        } else if (rapport.format === 'xml' || rapport.format === 'json') {
+            // XML et JSON : lire et afficher dans une modale
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                let displayContent = content;
+                
+                // Essayer de formater joliment
+                try {
+                    if (rapport.format === 'json') {
+                        displayContent = JSON.stringify(JSON.parse(content), null, 2);
+                    }
+                } catch (e) {
+                    // Garder le contenu brut
+                }
+                
+                Swal.fire({
+                    title: `Rapport ${rapport.format.toUpperCase()}`,
+                    html: `<pre style="max-height:500px; overflow:auto; background:#1e1e1e; color:#fff; padding:15px; border-radius:8px; text-align:left; font-family:monospace;">${escapeHtml(displayContent)}</pre>`,
+                    width: '90%',
+                    showConfirmButton: false,
+                    showCloseButton: true
+                });
+            };
+            reader.readAsText(rapport.blob);
+        }
+    }
+
+    // Fonction simplifiée pour télécharger un rapport
+    function telechargerRapport(rapport) {
+        if (!rapport || !rapport.url) {
+            console.error('Rapport invalide ou URL manquante');
+            return;
+        }
+        
+        const link = document.createElement('a');
+        link.href = rapport.url;
+        link.download = rapport.nom;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 
     // Fonction pour échapper le HTML
     // Fonction pour échapper le HTML
@@ -3638,7 +3959,7 @@ $(document).ready(function() {
         }
         
         selectedReports.forEach(reportId => {
-            const rapport = generatedReports.find(r => r.id === reportId);
+            const rapport = generatedReports.find(r => String(r.id) === String(reportId));
             if (rapport) {
                 // Créer un objet fichier virtuel
                 const rapportFile = {

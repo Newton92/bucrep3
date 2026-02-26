@@ -297,6 +297,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "main/media/")
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# settings.py
+# Augmenter la limite de taille des fichiers (50MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024   # 50MB
+
+# Augmenter la limite de données de formulaire
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Nombre de champs maximum
+DATA_UPLOAD_MAX_NUMBER_FILES = 100      # Nombre de fichiers maximum
+
+# Timeout plus long pour les gros fichiers
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+
 SITE_ID = 1
 
 # =========== CONFIGURATION SÉCURITÉ POUR HTTP ===========
