@@ -836,7 +836,7 @@
          </div>
          <!-- Actionnariat/Propriétaires -->
          <div class="section">
-            <div class="section-title">ACTIONNARIAT/PROPRIÉTAIRES</div>
+            <div class="section-title">{{ shareholders.title_11|default:"ACTIONNARIAT/PROPRIÉTAIRES" }}</div>
             {% if shareholders.actionnaires and shareholders.actionnaires.0.nom %}
             {% for shareholder in shareholders.actionnaires %}
             <div class="shareholder-entry">
@@ -872,9 +872,748 @@
             <div class="subsection-title">Aucun actionnaire n'est spécifié pour cet acheteur.</div>
             {% endif %}
          </div>
+
+         <!-- Registres de commerce -->
+         <div class="section">
+            <div class="section-title">{{ registres.title_12|default:"REGISTRES DE COMMERCE" }}</div>
+            {% if registres.registres %}
+            {% for item in registres.registres %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucun registre disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Produits & services -->
+         <div class="section">
+            <div class="section-title">{{ produits_services.title_13|default:"PRODUITS & SERVICES" }}</div>
+            {% if produits_services.produits %}
+            {% for item in produits_services.produits %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucun produit ou service disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Marques -->
+         <div class="section">
+            <div class="section-title">{{ marques.title_14|default:"MARQUES" }}</div>
+            {% if marques.marques %}
+            {% for item in marques.marques %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune marque disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Procedures collectives -->
+         <div class="section">
+            <div class="section-title">{{ procedures_collectives.title_15|default:"PROCEDURES & COLLECTIVES" }}</div>
+            {% if procedures_collectives.procedures_collectives %}
+            {% for item in procedures_collectives.procedures_collectives %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune procedure collective disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Cotisations -->
+         <div class="section">
+            <div class="section-title">{{ cotisations.title_16|default:"COTISATIONS SOCIALES" }}</div>
+            {% if cotisations.cotisations %}
+            {% for item in cotisations.cotisations %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune cotisation disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Certifications -->
+         <div class="section">
+            <div class="section-title">{{ certifications.title_17|default:"CERTIFICATIONS" }}</div>
+            {% if certifications.certifications %}
+            {% for item in certifications.certifications %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune certification disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Innovations & developpement -->
+         <div class="section">
+            <div class="section-title">{{ innovations_developpements.title_18|default:"INNOVATIONS & DEVELOPPEMENT" }}</div>
+            {% if innovations_developpements.innovations_developpements %}
+            {% for item in innovations_developpements.innovations_developpements %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune innovation ou developpement disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Strategies & planifications -->
+         <div class="section">
+            <div class="section-title">{{ strategies_planifications.title_19|default:"STRATEGIES & PLANIFICATIONS" }}</div>
+            {% if strategies_planifications.strategies_planifications %}
+            {% for item in strategies_planifications.strategies_planifications %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune strategie ou planification disponible.</div>
+            {% endif %}
+         </div>
+
+         <!-- Conformite reglementation -->
+         <div class="section">
+            <div class="section-title">{{ conformitesy.title_20|default:"CONFORMITE REGLEMENTATION" }}</div>
+            {% if conformitesy.strategies_planifications %}
+            {% for item in conformitesy.strategies_planifications %}
+            <div class="affiliation-entry">
+               <table>
+                  <tbody>
+                     {% if item.items %}
+                     {% for key, value in item.items %}
+                     <tr>
+                        <th>
+                           {% if key == "numero" %}Numéro
+                           {% elif key == "date_inscription" %}Date inscription
+                           {% elif key == "est_actif" %}Actif
+                           {% elif key == "produits" %}Produits
+                           {% elif key == "services" %}Services
+                           {% elif key == "marques" %}Marques
+                           {% elif key == "type_procedure" %}Type procédure
+                           {% elif key == "date_ouverture" %}Date ouverture
+                           {% elif key == "date_cloture" %}Date clôture
+                           {% elif key == "tribunal" %}Tribunal
+                           {% elif key == "numero_dossier" %}Numéro dossier
+                           {% elif key == "secteur_activite" %}Secteur activité
+                           {% elif key == "description" %}Description
+                           {% elif key == "montant_creance" %}Montant créance
+                           {% elif key == "impact_assureur" %}Impact assureur
+                           {% elif key == "type_certification" %}Type certification
+                           {% elif key == "nom_certification" %}Nom certification
+                           {% elif key == "date_obtention" %}Date obtention
+                           {% elif key == "organisme_delivreur" %}Organisme délivreur
+                           {% elif key == "type_innovation" %}Type innovation
+                           {% elif key == "titre" %}Titre
+                           {% elif key == "date_debut" %}Date début
+                           {% elif key == "date_fin" %}Date fin
+                           {% elif key == "type_strategie" %}Type stratégie
+                           {% elif key == "date_mise_en_place" %}Date mise en place
+                           {% elif key == "type_conformite" %}Type conformité
+                           {% elif key == "statut" %}Statut
+                           {% elif key == "details_non_conformite" %}Détails non conformité
+                           {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "organisme_controle" %}Organisme contrôle
+                           {% elif key == "commentaires" %}Commentaires
+                           {% else %}{{ key|capfirst }}
+                           {% endif %}
+                        </th>
+                        <td class="warning">
+                           {% if key == "est_actif" %}
+                              {% if value == True or value == "True" or value == "true" or value == 1 or value == "1" %}
+                                 Actif
+                              {% else %}
+                                 Inactif
+                              {% endif %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                              {% with raw=value|stringformat:"s" %}
+                                 {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
+                                    {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
+                                 {% else %}
+                                    {{ value|date:"d/m/Y"|default:raw }}
+                                 {% endif %}
+                              {% endwith %}
+                           {% else %}
+                              {{ value|default:"Non spécifié"|striptags|safe }}
+                           {% endif %}
+                        </td>
+                     </tr>
+                     {% endfor %}
+                     {% else %}
+                     <tr>
+                        <th>Donnée</th>
+                        <td class="warning">{{ item|default:"Non spécifié"|striptags|safe }}</td>
+                     </tr>
+                     {% endif %}
+                  </tbody>
+               </table>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="subsection-title">Aucune donnee de conformite disponible.</div>
+            {% endif %}
+         </div>
+
          <!-- Affiliations d'entreprise -->
          <div class="section">
-            <div class="section-title">AFFILIATIONS D'ENTREPRISE</div>
+            <div class="section-title">{{ affiliations.title_21|default:affiliations.title_12|default:"AFFILIATIONS D'ENTREPRISE" }}</div>
             {% if affiliations.affiliations and affiliations.affiliations.0.nom %}
             {% for affiliation in affiliations.affiliations %}
             <div class="affiliation-entry">
@@ -914,7 +1653,7 @@
          </div>
          <!-- Analyse sectorielle -->
          <div class="section">
-            <div class="section-title">ANALYSE SECTORIELLE</div>
+            <div class="section-title">{{ sector_analysis.title_22|default:sector_analysis.title_13|default:"ANALYSE SECTORIELLE" }}</div>
             <!-- SECTORIELLE -->
             <div class="subsection-title">ANALYSE ECONOMIQUE</div>
             <div class="section">
@@ -981,7 +1720,31 @@
                   </tr>
                </table>
             </div>
-            <div class="subsection-title">DONNÉES BANCAIRES</div>
+
+            <!-- SWOT -->
+            <div class="subsection-title">ANALYSE SWOT</div>
+            <div class="section">
+               <table>
+                  <tr>
+                     <th>Forces</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.forces|default:"Non spécifié"|striptags|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>Faiblesses</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.faiblesses|default:"Non spécifié"|striptags|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>Opportunités</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.opportunites|default:"Non spécifié"|striptags|safe }}</td>
+                  </tr>
+                  <tr>
+                     <th>Menaces</th>
+                     <td colspan="1" class="warning">{{ sector_analysis.swot.menaces|default:"Non spécifié"|striptags|safe }}</td>
+                  </tr>
+               </table>
+            </div>
+
+            <div class="subsection-title">{{ banking_data.title_23|default:banking_data.title_14|default:"DONNÉES BANCAIRES" }}</div>
             {% if banking_data.data_banks and banking_data.data_banks.0.nom_banque %}
             {% for bank in banking_data.data_banks %}
             <div class="bank-entry">
@@ -1024,7 +1787,7 @@
          </div>
          <!-- Comptes financiers -->
          <div class="section">
-            <div class="section-title">COMPTES FINANCIERS</div>
+            <div class="section-title">{{ financial_accounts.title_24|default:financial_accounts.title_15|default:"COMPTES FINANCIERS" }}</div>
             {% if financial_accounts and not financial_accounts.error %}
             <table>
                <tbody>

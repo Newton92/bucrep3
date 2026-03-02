@@ -1,29 +1,32 @@
-import os
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.utils.translation import gettext_lazy as _
-from safedelete.admin import SafeDeleteAdmin, highlight_deleted
-from simple_history.admin import SimpleHistoryAdmin
-from django.contrib import messages  # Ajout de l'import manquant
-from django.utils.html import format_html  # Ajout pour format_html
-from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.admin import GenericTabularInline
-from django.urls import reverse
-from django.utils.safestring import mark_safe
+from datetime import timedelta
 from decimal import Decimal
 import base64
+import os
+
 from django.conf import settings
+from django.contrib import admin, messages
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Avg, Max, Min
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.contenttypes.admin import GenericTabularInline
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from datetime import timedelta
+from django.db.models import Avg, Max, Min, Sum
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
+
+from safedelete.admin import SafeDeleteAdmin, highlight_deleted
+from simple_history.admin import SimpleHistoryAdmin
+
+from main.forms import *
+from main.models import *
+
 
 User = get_user_model()
 
-from main.models import *
-from main.forms import *
 
 # Register your models here.
 
@@ -31,6 +34,7 @@ from main.forms import *
 
 @admin.register(Referer)
 class RefererAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: RefererAdmin."""
     list_display = ['id', 'source', 'target'] + list(SafeDeleteAdmin.list_display)
     list_filter = ['source', 'target'] + list(SafeDeleteAdmin.list_filter)
     search_fields = ['source__name', 'target__name']
@@ -51,6 +55,7 @@ class RefererAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(AdminMails)
 class AdminMailsAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: AdminMailsAdmin."""
     list_display = ['id', 'email'] + list(SafeDeleteAdmin.list_display)
     list_filter = SafeDeleteAdmin.list_filter
     search_fields = ['email']
@@ -64,6 +69,7 @@ class AdminMailsAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin, SimpleHistoryAdmin):  # Retirer SafeDeleteAdmin
+    """Configuration admin: UserAdmin."""
     form = CustomUserChangeForm        # 🔴 OBLIGATOIRE
     add_form = CustomUserCreationForm  # 🔴 OBLIGATOIRE
     
@@ -182,6 +188,7 @@ class UserAdmin(BaseUserAdmin, SimpleHistoryAdmin):  # Retirer SafeDeleteAdmin
 
 @admin.register(Pays)
 class PaysAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):  # Retirer ImportExportModelAdmin si non installé
+    """Configuration admin: PaysAdmin."""
     list_display = [
         'code', 'nom', 'is_active', 'afficher_au_dashboard', 
         'deleted', 'date_creation', 'date_modification'
@@ -235,6 +242,7 @@ class PaysAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):  # Retirer ImportExportMod
 
 @admin.register(Province)
 class ProvinceAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: ProvinceAdmin."""
     list_display = [
         'code', 'nom', 'pays', 'is_active', 'deleted', 
         'date_creation', 'date_modification'
@@ -273,6 +281,7 @@ class ProvinceAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(Ville)
 class VilleAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: VilleAdmin."""
     list_display = [
         'code', 'nom', 'province', 'get_country', 'is_active', 
         'deleted', 'date_creation'
@@ -315,6 +324,7 @@ class VilleAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(Annee)
 class AnneeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: AnneeAdmin."""
     list_display = [
         'annee', 'is_active', 'deleted', 'date_creation', 'date_modification'
     ]
@@ -351,6 +361,7 @@ class AnneeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(Devise)
 class DeviseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: DeviseAdmin."""
     list_display = [
         'code', 'nom', 'symbole', 'is_active', 'deleted', 
         'date_creation', 'date_modification'
@@ -400,6 +411,7 @@ class DeviseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(CouleurCommentaire)
 class CouleurCommentaireAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: CouleurCommentaireAdmin."""
     list_display = [
         'couleur', 'code', 'color_preview', 'deleted'
     ]
@@ -440,6 +452,7 @@ class CouleurCommentaireAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(CategoryNaceCode)
 class CategoryNaceCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: CategoryNaceCodeAdmin."""
     list_display = [
         'code', 'libelle', 'active', 'poids', 
         'subcategories_count', 'deleted', 'created_at'
@@ -494,6 +507,7 @@ class CategoryNaceCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(SubCategoryNaceCode)
 class SubCategoryNaceCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: SubCategoryNaceCodeAdmin."""
     list_display = [
         'code', 'libelle', 'category', 'active', 'poids', 
         'deleted', 'created_at'
@@ -531,6 +545,7 @@ class SubCategoryNaceCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(CategoryNafCode)
 class CategoryNafCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: CategoryNafCodeAdmin."""
     list_display = [
         'code', 'libelle', 'active', 'poids', 
         'subcategories_count', 'deleted', 'created_at'
@@ -585,6 +600,7 @@ class CategoryNafCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(SubCategoryNafCode)
 class SubCategoryNafCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: SubCategoryNafCodeAdmin."""
     list_display = [
         'code', 'libelle', 'category', 'active', 'poids', 
         'deleted', 'created_at'
@@ -622,6 +638,7 @@ class SubCategoryNafCodeAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(FormeJuridique)
 class FormeJuridiqueAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: FormeJuridiqueAdmin."""
     list_display = [
         'code', 'libelle', 'active', 'poids', 
         'description_preview', 'deleted', 'created_at'
@@ -672,6 +689,7 @@ class FormeJuridiqueAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(DomaineEntreprise)
 class DomaineEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: DomaineEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'active', 
         'description_preview', 'deleted', 'created_at'
@@ -723,6 +741,7 @@ class DomaineEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
     
 @admin.register(PosteEntreprise)
 class PosteEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: PosteEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'domaine', 'active',
         'description_preview', 'created_at'
@@ -792,6 +811,7 @@ class PosteEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(CategorieEntreprise)
 class CategorieEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: CategorieEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'active',
         'description_preview', 'created_at'
@@ -856,6 +876,7 @@ class CategorieEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(StructureEntreprise)
 class StructureEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: StructureEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'active',
         'description_preview', 'created_at'
@@ -920,6 +941,7 @@ class StructureEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(StatutEntreprise)
 class StatutEntrepriseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: StatutEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'active',
         'description_preview', 'created_at'
@@ -1091,6 +1113,7 @@ class ModeleBaseAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(ModeleRapport)
 class ModeleRapportAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleRapportAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1112,6 +1135,7 @@ class ModeleRapportAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleAlarme)
 class ModeleAlarmeAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleAlarmeAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1133,6 +1157,7 @@ class ModeleAlarmeAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleBilan)
 class ModeleBilanAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleBilanAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1154,6 +1179,7 @@ class ModeleBilanAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleBail)
 class ModeleBailAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleBailAdmin."""
     list_display = [
         'code', 'libelle', 'get_poids_display', 
         'is_empty_display', 'created_at'
@@ -1209,6 +1235,7 @@ class ModeleBailAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleNotation)
 class ModeleNotationAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleNotationAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1230,6 +1257,7 @@ class ModeleNotationAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleAvisCommercial)
 class ModeleAvisCommercialAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleAvisCommercialAdmin."""
     list_display = [
         'code', 'libelle', 'get_poids_display', 
         'is_empty_display', 'created_at'
@@ -1440,6 +1468,7 @@ class ModeleAvecPoidsAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleRelationEntreprise)
 class ModeleRelationEntrepriseAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleRelationEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1461,6 +1490,7 @@ class ModeleRelationEntrepriseAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleInformationNotationEntreprise)
 class ModeleInformationNotationEntrepriseAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleInformationNotationEntrepriseAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1482,6 +1512,7 @@ class ModeleInformationNotationEntrepriseAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleComportementPaiement)
 class ModeleComportementPaiementAdmin(ModeleAvecPoidsAdmin):
+    """Configuration admin: ModeleComportementPaiementAdmin."""
     list_display = [
         'code', 'libelle', 'get_poids_display', 
         'is_empty_display', 'created_at'
@@ -1532,6 +1563,7 @@ class ModeleComportementPaiementAdmin(ModeleAvecPoidsAdmin):
 
 @admin.register(ModeleComportementJugement)
 class ModeleComportementJugementAdmin(ModeleBaseAdmin):
+    """Configuration admin: ModeleComportementJugementAdmin."""
     list_display = [
         'code', 'libelle', 'is_empty_display', 'created_at'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1582,6 +1614,7 @@ class ModeleComportementJugementAdmin(ModeleBaseAdmin):
 
 @admin.register(ModeleAgeSociete)
 class ModeleAgeSocieteAdmin(ModeleAvecPoidsAdmin):
+    """Configuration admin: ModeleAgeSocieteAdmin."""
     list_display = [
         'code', 'libelle', 'get_poids_display', 
         'age_range_display', 'is_empty_display', 'created_at'
@@ -1645,6 +1678,7 @@ class ModeleAgeSocieteAdmin(ModeleAvecPoidsAdmin):
 
 @admin.register(ModeleInterpretationScoringSansBilan)
 class ModeleInterpretationScoringSansBilanAdmin(ModeleAvecPoidsAdmin):
+    """Configuration admin: ModeleInterpretationScoringSansBilanAdmin."""
     list_display = [
         'code', 'libelle', 'get_poids_display', 
         'scoring_range_display', 'is_empty_display', 'created_at'
@@ -1715,6 +1749,7 @@ class ModeleInterpretationScoringSansBilanAdmin(ModeleAvecPoidsAdmin):
 
 @admin.register(Client)
 class ClientAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: ClientAdmin."""
     list_display = [
         'nom', 'email', 'telephone', 'actif',
         'portefeuilles_count', 'date_inscription'
@@ -1780,6 +1815,7 @@ class ClientAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(Contact)
 class ContactAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: ContactAdmin."""
     list_display = [
         'nom', 'email', 'telephone', 'client', 'actif'
     ] + list(SafeDeleteAdmin.list_display)
@@ -1829,6 +1865,7 @@ class ContactAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 
 class NotificationLogInline(admin.TabularInline):
+    """Configuration admin: NotificationLogInline."""
     model = NotificationLog
     extra = 0
     readonly_fields = ['portefeuille', 'code_evenement', 'date_notification', 'description', 'actif']
@@ -1839,6 +1876,7 @@ class NotificationLogInline(admin.TabularInline):
     classes = ['collapse']
 
 class AlerteLogInline(admin.TabularInline):
+    """Configuration admin: AlerteLogInline."""
     model = AlerteLog
     extra = 0
     readonly_fields = ['acheteur', 'element_surveille', 'date_creation', 'message', 'lu']
@@ -1852,6 +1890,7 @@ class AlerteLogInline(admin.TabularInline):
 
 @admin.register(NotificationLog)
 class NotificationLogAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: NotificationLogAdmin."""
     list_display = [
         'portefeuille', 'code_evenement', 'date_notification',
         'actif_display', 'description_preview'
@@ -1990,6 +2029,7 @@ class UpdatedObjectsAdmin(admin.ModelAdmin):
         )
 
 class AcheteurUploadInline(admin.TabularInline):
+    """Configuration admin: AcheteurUploadInline."""
     model = AcheteurUpload
     extra = 1
     readonly_fields = ['uploaded_at', 'file_preview', 'file_size']
@@ -2034,6 +2074,7 @@ class AcheteurUploadInline(admin.TabularInline):
     file_size.short_description = _('Taille')
 
 class RapportTelechargerInline(admin.TabularInline):
+    """Configuration admin: RapportTelechargerInline."""
     model = RapportTelecharger
     extra = 0
     max_num = 5
@@ -2051,6 +2092,7 @@ class RapportTelechargerInline(admin.TabularInline):
 
 @admin.register(Acheteur)
 class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: AcheteurAdmin."""
     list_display = [
         'code', 'nom', 'sigle', 'forme_juridique', 'categorie_entreprise',
         'statut_entreprise', 'pays', 'ville', 'created_at',
@@ -2263,6 +2305,7 @@ class AcheteurAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(AcheteurUpload)
 class AcheteurUploadAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: AcheteurUploadAdmin."""
     list_display = [
         'acheteur', 'file_preview', 'file_size', 'uploaded_at', 'get_time_ago'
     ]
@@ -2360,6 +2403,7 @@ class AcheteurUploadAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
 
 @admin.register(RapportTelecharger)
 class RapportTelechargerAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
+    """Configuration admin: RapportTelechargerAdmin."""
     list_display = [
         'acheteur', 'type_rapport', 'downloaded_by',
         'download_at', 'ref_commande_client', 'ref_commande_acremac'
@@ -2443,6 +2487,7 @@ class RapportTelechargerAdmin(SafeDeleteAdmin, SimpleHistoryAdmin):
         
 @admin.register(Locaux)
 class LocauxAdmin(admin.ModelAdmin):
+    """Configuration admin: LocauxAdmin."""
     list_display = ("id", "nom")
     search_fields = ("nom",)
     ordering = ("nom",)
@@ -2450,6 +2495,7 @@ class LocauxAdmin(admin.ModelAdmin):
 
 @admin.register(ListeConditionAchat)
 class ListeConditionAchatAdmin(admin.ModelAdmin):
+    """Configuration admin: ListeConditionAchatAdmin."""
     list_display = ("id", "nom")
     search_fields = ("nom",)
     ordering = ("nom",)
@@ -2457,6 +2503,7 @@ class ListeConditionAchatAdmin(admin.ModelAdmin):
 
 @admin.register(ListeConditionVente)
 class ListeConditionVenteAdmin(admin.ModelAdmin):
+    """Configuration admin: ListeConditionVenteAdmin."""
     list_display = ("id", "nom")
     search_fields = ("nom",)
     ordering = ("nom",)
@@ -2464,6 +2511,7 @@ class ListeConditionVenteAdmin(admin.ModelAdmin):
 
 @admin.register(ListeImportation)
 class ListeImportationAdmin(admin.ModelAdmin):
+    """Configuration admin: ListeImportationAdmin."""
     list_display = ("id", "libelle")
     search_fields = ("libelle",)
 
@@ -2471,6 +2519,7 @@ class ListeImportationAdmin(admin.ModelAdmin):
 
 @admin.register(ListeComportementsPaiement)
 class ListeComportementsPaiementAdmin(admin.ModelAdmin):
+    """Configuration admin: ListeComportementsPaiementAdmin."""
     list_display = ("id", "libelle", "couleur")
     search_fields = ("libelle",)
     list_filter = ("couleur",)
@@ -2479,6 +2528,7 @@ class ListeComportementsPaiementAdmin(admin.ModelAdmin):
 
 @admin.register(ListeInformationsRating)
 class ListeInformationsRatingAdmin(admin.ModelAdmin):
+    """Configuration admin: ListeInformationsRatingAdmin."""
     list_display = ("id", "libelle", "couleur")
     search_fields = ("libelle",)
     list_filter = ("couleur",)
@@ -2487,6 +2537,7 @@ class ListeInformationsRatingAdmin(admin.ModelAdmin):
 
 @admin.register(ListeInformationsAvisCommercial)
 class ListeInformationsAvisCommercialAdmin(admin.ModelAdmin):
+    """Configuration admin: ListeInformationsAvisCommercialAdmin."""
     list_display = ("id", "libelle", "couleur")
     search_fields = ("libelle",)
     list_filter = ("couleur",)
@@ -2497,6 +2548,7 @@ class ListeInformationsAvisCommercialAdmin(admin.ModelAdmin):
 
 @admin.register(ScoringSansBilanAcheteur)
 class ScoringSansBilanAcheteurAdmin(admin.ModelAdmin):
+    """Configuration admin: ScoringSansBilanAcheteurAdmin."""
     # -------------------------
     # LISTE
     # -------------------------
@@ -2604,7 +2656,99 @@ class ScoringSansBilanAcheteurAdmin(admin.ModelAdmin):
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
 
+# Enregistrement automatique des modeles non declares avec un ModelAdmin par defaut.
+AUTO_REGISTERED_MODELS = [
+    ActifA,
+    ActifC,
+    ActifIFRS,
+    ActifS,
+    ActivityLog,
+    AdresseAcheteur,
+    Advice,
+    AffectationAnalyste,
+    Alerte,
+    AlerteLog,
+    AnalyseSectorielle,
+    AntecedantsJuridique,
+    Assets,
+    Banquier,
+    Certification,
+    CodeNaceAcheteur,
+    CodeNafAcheteur,
+    Commande,
+    CompositionAction,
+    CompositionCapitalSocial,
+    CompteFinancier,
+    CompteFinancierIrfs,
+    ConditionAchat,
+    ConditionDeVente,
+    ConformiteReglementation,
+    ConseilAdministration,
+    Cotisation,
+    CredendoCommande,
+    DocDownload,
+    Document,
+    DocumentAlerte,
+    DonneesEnregistrement,
+    ElementSurveillance,
+    EmailAcheteur,
+    Expenses,
+    GeneratedReport,
+    Geopolitics,
+    InnovationDeveloppement,
+    Liabilities,
+    Logo,
+    MailAttachment,
+    MailInfo,
+    Marque,
+    NotifClient,
+    Notification,
+    OffBalanceSheet,
+    OperationEtHistorique,
+    OpinionCreditAcremac,
+    PassifA,
+    PassifC,
+    PassifIFRS,
+    PassifS,
+    PortableAcheteur,
+    Portefeuille,
+    PortefeuilleClient,
+    ProcedureCollective,
+    Products,
+    ProduitService,
+    ProprieteEtActif,
+    Rapport,
+    RatioFinancierIrfs,
+    RatiosIFRS,
+    RegistreCommerce,
+    ReportRequest,
+    ResponsableAcheteur,
+    ResultatA,
+    ResultatC,
+    ResultatIFRS,
+    ResultatS,
+    Resume,
+    RiskManagment,
+    RiskRating,
+    Scoring,
+    SommaireEtAvis,
+    StrategiePlanification,
+    Structure,
+    SuiviCommande,
+    Swot,
+    TelephoneAcheteur,
+    Tendance,
+    UserReportQuota,
+    ValeurCompteIrfs,
+    ValeurRatioIrfs,
+    ValidationRapport,
+    Warning,
+    WarningAttachment
+]
 
-    
-    
-    
+for model in AUTO_REGISTERED_MODELS:
+    try:
+        admin.site.register(model)
+    except admin.sites.AlreadyRegistered:
+        pass
+

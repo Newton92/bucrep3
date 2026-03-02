@@ -1,49 +1,28 @@
-import datetime
-import time
-import re
 import base64
-from django.conf import settings
-from django.contrib.staticfiles.storage import staticfiles_storage
-from django.contrib.staticfiles import finders
+import datetime
 import os
+import re
+import time
+from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group
 from django.contrib.contenttypes.fields import GenericForeignKey
-from django.db.models import ForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.staticfiles import finders
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator, validate_email
 from django.db import models
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-# from django_model_changes import ChangesMixin
-# from changes import ChangesMixin
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.exceptions import ValidationError
-
-
-
-from safedelete.models import SafeDeleteModel as Model, SOFT_DELETE_CASCADE
-from simple_history.models import HistoricalRecords
-
-from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
-from decimal import Decimal
+from django.db.models import ForeignKey
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 
-
-# Vérifier s'il existe un scoring soft-deleted pour cette combinaison
-# models.py - CORRIGEZ LES IMPORTS EN HAUT
-from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
 from safedelete.managers import SafeDeleteManager
-
-from django.db import models
-from django.contrib.auth.models import Group
-from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
+from safedelete.models import SOFT_DELETE_CASCADE, SafeDeleteModel
+from safedelete.models import SafeDeleteModel as Model
 from simple_history.models import HistoricalRecords
-
 
 from main.constantes import *
 
@@ -91,6 +70,7 @@ ROLES_USERS = [
 
 
 class UserReportQuota(models.Model):
+    """Modele metier: UserReportQuota."""
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -110,6 +90,7 @@ class UserReportQuota(models.Model):
         return f"{self.user.username} ({self.used_reports}/{self.max_reports})"
 
 class GeneratedReport(models.Model):
+    """Modele metier: GeneratedReport."""
     REPORT_TYPES = (
         ("pdf", "PDF"),
         ("html", "HTML"),
@@ -134,6 +115,7 @@ class GeneratedReport(models.Model):
 
 
 class Referer(Model):
+    """Modele metier: Referer."""
     safedelete_policy = SOFT_DELETE_CASCADE
 
     source = models.ForeignKey(
@@ -164,6 +146,7 @@ class Referer(Model):
 
 
 class AdminMails(Model):
+    """Modele metier: AdminMails."""
     safedelete_policy = SOFT_DELETE_CASCADE
     
     email = models.EmailField(max_length=255, unique=True)
@@ -180,6 +163,7 @@ class AdminMails(Model):
 
 
 class User(AbstractUser):
+    """Modele metier: User."""
     # Attributs par défaut de AbstractUser (masqués)
     # username = models.CharField(
     #     _('username'),
@@ -351,6 +335,7 @@ class User(AbstractUser):
 
 
 class Pays(Model):
+    """Modele metier: Pays."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -401,6 +386,7 @@ class Pays(Model):
 
 
 class Province(Model):
+    """Modele metier: Province."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -456,6 +442,7 @@ class Province(Model):
 
 
 class Ville(Model):
+    """Modele metier: Ville."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -517,6 +504,7 @@ class Ville(Model):
 
 
 class Annee(Model):
+    """Modele metier: Annee."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -555,6 +543,7 @@ class Annee(Model):
 
 
 class Devise(Model):
+    """Modele metier: Devise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -609,6 +598,7 @@ class Devise(Model):
 
 
 class CouleurCommentaire(Model):
+    """Modele metier: CouleurCommentaire."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -640,6 +630,7 @@ class CouleurCommentaire(Model):
 
 
 class CategoryNaceCode(Model):
+    """Modele metier: CategoryNaceCode."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -667,6 +658,7 @@ class CategoryNaceCode(Model):
 
 
 class SubCategoryNaceCode(Model):
+    """Modele metier: SubCategoryNaceCode."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -704,6 +696,7 @@ class SubCategoryNaceCode(Model):
 
 
 class CategoryNafCode(Model):
+    """Modele metier: CategoryNafCode."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -735,6 +728,7 @@ class CategoryNafCode(Model):
 
 
 class SubCategoryNafCode(Model):
+    """Modele metier: SubCategoryNafCode."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -772,6 +766,7 @@ class SubCategoryNafCode(Model):
 
 
 class FormeJuridique(Model):
+    """Modele metier: FormeJuridique."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -804,6 +799,7 @@ class FormeJuridique(Model):
 
 
 class DomaineEntreprise(Model):
+    """Modele metier: DomaineEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -837,6 +833,7 @@ class DomaineEntreprise(Model):
 
 
 class PosteEntreprise(Model):
+    """Modele metier: PosteEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -874,6 +871,7 @@ class PosteEntreprise(Model):
 
 
 class CategorieEntreprise(Model):
+    """Modele metier: CategorieEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -897,6 +895,7 @@ class CategorieEntreprise(Model):
 
 
 class StructureEntreprise(Model):
+    """Modele metier: StructureEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -920,6 +919,7 @@ class StructureEntreprise(Model):
 
 
 class StatutEntreprise(Model):
+    """Modele metier: StatutEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -946,6 +946,7 @@ class StatutEntreprise(Model):
 
 
 class ModeleRapport(Model):
+    """Modele metier: ModeleRapport."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -976,6 +977,7 @@ class ModeleRapport(Model):
 
 
 class ModeleAlarme(Model):
+    """Modele metier: ModeleAlarme."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1006,6 +1008,7 @@ class ModeleAlarme(Model):
 
 
 class ModeleBilan(Model):
+    """Modele metier: ModeleBilan."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1036,6 +1039,7 @@ class ModeleBilan(Model):
 
 
 class ModeleBail(Model):
+    """Modele metier: ModeleBail."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1068,6 +1072,7 @@ class ModeleBail(Model):
 
 
 class ModeleNotation(Model):
+    """Modele metier: ModeleNotation."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1098,6 +1103,7 @@ class ModeleNotation(Model):
 
 
 class ModeleAvisCommercial(Model):
+    """Modele metier: ModeleAvisCommercial."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1130,6 +1136,7 @@ class ModeleAvisCommercial(Model):
 
 
 class ModeleRelationEntreprise(Model):
+    """Modele metier: ModeleRelationEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1160,6 +1167,7 @@ class ModeleRelationEntreprise(Model):
 
 
 class ModeleInformationNotationEntreprise(Model):
+    """Modele metier: ModeleInformationNotationEntreprise."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1190,6 +1198,7 @@ class ModeleInformationNotationEntreprise(Model):
 
 
 class ModeleComportementPaiement(Model):
+    """Modele metier: ModeleComportementPaiement."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1222,6 +1231,7 @@ class ModeleComportementPaiement(Model):
 
 
 class ModeleComportementJugement(Model):
+    """Modele metier: ModeleComportementJugement."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1252,6 +1262,7 @@ class ModeleComportementJugement(Model):
 
 
 class ModeleAgeSociete(Model):
+    """Modele metier: ModeleAgeSociete."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1284,6 +1295,7 @@ class ModeleAgeSociete(Model):
                  
         
 class ModeleInterpretationScoringSansBilan(Model):
+    """Modele metier: ModeleInterpretationScoringSansBilan."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1324,6 +1336,7 @@ class ModeleInterpretationScoringSansBilan(Model):
 
 
 class ElementSurveillance(Model):
+    """Modele metier: ElementSurveillance."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1374,6 +1387,7 @@ class ElementSurveillance(Model):
 
 
 class Client(Model):
+    """Modele metier: Client."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1420,6 +1434,7 @@ class Client(Model):
 
 
 class Contact(Model):
+    """Modele metier: Contact."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1464,6 +1479,7 @@ class Contact(Model):
 
 
 class Portefeuille(Model):
+    """Modele metier: Portefeuille."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1536,6 +1552,7 @@ class Portefeuille(Model):
 
 
 class PortefeuilleClient(Model):
+    """Modele metier: PortefeuilleClient."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1568,6 +1585,7 @@ class PortefeuilleClient(Model):
 
 
 class NotificationLog(Model):
+    """Modele metier: NotificationLog."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1599,6 +1617,7 @@ class NotificationLog(Model):
 
 
 class AlerteLog(Model):
+    """Modele metier: AlerteLog."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -1658,6 +1677,7 @@ class AlerteLog(Model):
 
 
 class UpdatedObjects(models.Model):
+    """Modele metier: UpdatedObjects."""
     acheteur = models.OneToOneField(
         "Acheteur",
         on_delete=models.DO_NOTHING,
@@ -1691,6 +1711,7 @@ class UpdatedObjects(models.Model):
 
 
 class Acheteur(Model):
+    """Modele metier: Acheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -2057,6 +2078,7 @@ def acheteur_upload_path(instance, filename):
     
     
 class AcheteurUpload(Model):
+    """Modele metier: AcheteurUpload."""
     _safedelete_policy = SOFT_DELETE_CASCADE
 
     acheteur = models.ForeignKey(
@@ -2106,6 +2128,7 @@ class AcheteurUpload(Model):
 
 
 class RapportTelecharger(Model):
+    """Modele metier: RapportTelecharger."""
 
     downloaded_by = models.ForeignKey(
         "User",
@@ -2201,6 +2224,7 @@ class RapportTelecharger(Model):
 ##########################################################
 ##########################################################
 class Resume(Model):
+    """Modele metier: Resume."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -2334,6 +2358,7 @@ RISK_INDEX_CHOICES = [
 
 
 class RiskRating(Model):
+    """Modele metier: RiskRating."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -2661,6 +2686,7 @@ class RiskRating(Model):
 
 
 class DonneesEnregistrement(Model):
+    """Modele metier: DonneesEnregistrement."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -2815,6 +2841,7 @@ class DonneesEnregistrement(Model):
 
 
 class Tendance(Model):
+    """Modele metier: Tendance."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3009,6 +3036,7 @@ class Tendance(Model):
 
 
 class ResponsableAcheteur(Model):
+    """Modele metier: ResponsableAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3297,6 +3325,7 @@ class ResponsableAcheteur(Model):
 
 
 class AntecedantsJuridique(Model):
+    """Modele metier: AntecedantsJuridique."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3486,6 +3515,7 @@ class AntecedantsJuridique(Model):
 
 
 class RiskManagment(Model):
+    """Modele metier: RiskManagment."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3726,6 +3756,7 @@ class RiskManagment(Model):
 
 
 class ConseilAdministration(Model):
+    """Modele metier: ConseilAdministration."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3795,6 +3826,7 @@ class ConseilAdministration(Model):
 
 
 class CompositionCapitalSocial(Model):
+    """Modele metier: CompositionCapitalSocial."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -3889,6 +3921,7 @@ class CompositionCapitalSocial(Model):
 
 
 class CompositionAction(Model):
+    """Modele metier: CompositionAction."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4013,6 +4046,7 @@ class CompositionAction(Model):
 
 
 class OpinionCreditAcremac(Model):
+    """Modele metier: OpinionCreditAcremac."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4105,6 +4139,7 @@ class OpinionCreditAcremac(Model):
 ##########################################################
 ##########################################################
 class Logo(Model):
+    """Modele metier: Logo."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4147,6 +4182,7 @@ class Logo(Model):
 
 
 class TelephoneAcheteur(Model):
+    """Modele metier: TelephoneAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4252,6 +4288,7 @@ class TelephoneAcheteur(Model):
 
 
 class AdresseAcheteur(Model):
+    """Modele metier: AdresseAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4297,6 +4334,7 @@ class AdresseAcheteur(Model):
 
 
 class PortableAcheteur(Model):
+    """Modele metier: PortableAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4450,6 +4488,7 @@ class PortableAcheteur(Model):
 
 
 class EmailAcheteur(Model):
+    """Modele metier: EmailAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4541,6 +4580,7 @@ class EmailAcheteur(Model):
 
 
 class Document(Model):
+    """Modele metier: Document."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4595,6 +4635,7 @@ class Document(Model):
 
 
 class Swot(Model):
+    """Modele metier: Swot."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4658,6 +4699,7 @@ class Swot(Model):
 
 
 class ProduitService(Model):
+    """Modele metier: ProduitService."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4716,6 +4758,7 @@ class ProduitService(Model):
 
 
 class Marque(Model):
+    """Modele metier: Marque."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4770,6 +4813,7 @@ class Marque(Model):
 
 
 class ProcedureCollective(Model):
+    """Modele metier: ProcedureCollective."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4873,6 +4917,7 @@ class ProcedureCollective(Model):
 
 
 class RegistreCommerce(Model):
+    """Modele metier: RegistreCommerce."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4895,6 +4940,11 @@ class RegistreCommerce(Model):
         null=True,
         blank=True,
         help_text=_("Date d'inscription au registre de commerce"),
+    )
+    est_actif = models.BooleanField(
+        _("Registre actif"),
+        default=False,
+        help_text=_("Indique si ce registre de commerce est celui actuellement en vigueur"),
     )
 
     created_at = models.DateTimeField(
@@ -4935,6 +4985,7 @@ class RegistreCommerce(Model):
 
 
 class Cotisation(Model):
+    """Modele metier: Cotisation."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -4997,6 +5048,7 @@ class Cotisation(Model):
 
 
 class CodeNaceAcheteur(Model):
+    """Modele metier: CodeNaceAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5052,6 +5104,7 @@ class CodeNaceAcheteur(Model):
 
 
 class CodeNafAcheteur(Model):
+    """Modele metier: CodeNafAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5115,6 +5168,7 @@ class CodeNafAcheteur(Model):
     
 
 class Certification(Model):
+    """Modele metier: Certification."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5276,6 +5330,7 @@ class Certification(Model):
 
 
 class InnovationDeveloppement(Model):
+    """Modele metier: InnovationDeveloppement."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5422,6 +5477,7 @@ class InnovationDeveloppement(Model):
 
 
 class StrategiePlanification(Model):
+    """Modele metier: StrategiePlanification."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5582,6 +5638,7 @@ class StrategiePlanification(Model):
 
 
 class ConformiteReglementation(Model):
+    """Modele metier: ConformiteReglementation."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5760,6 +5817,7 @@ class ConformiteReglementation(Model):
 ##########################################################
 ##########################################################
 class Structure(Model):
+    """Modele metier: Structure."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5850,6 +5908,7 @@ class Structure(Model):
 
 
 class AnalyseSectorielle(Model):
+    """Modele metier: AnalyseSectorielle."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -5906,6 +5965,7 @@ class AnalyseSectorielle(Model):
 
 
 class CompteFinancier(Model):
+    """Modele metier: CompteFinancier."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6162,6 +6222,7 @@ class CompteFinancier(Model):
 
 
 class OperationEtHistorique(Model):
+    """Modele metier: OperationEtHistorique."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6259,6 +6320,7 @@ class OperationEtHistorique(Model):
 
 
 class ProprieteEtActif(Model):
+    """Modele metier: ProprieteEtActif."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6342,6 +6404,7 @@ class ProprieteEtActif(Model):
 
 
 class ConditionAchat(Model):
+    """Modele metier: ConditionAchat."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6441,6 +6504,7 @@ class ConditionAchat(Model):
 
 
 class ConditionDeVente(Model):
+    """Modele metier: ConditionDeVente."""
     
     LIEN_TYPE_RAPPORT_CHOICE_DEFAUT = '--------'
     
@@ -6598,6 +6662,7 @@ class ConditionDeVente(Model):
 
 
 class SommaireEtAvis(Model):
+    """Modele metier: SommaireEtAvis."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6691,6 +6756,7 @@ class SommaireEtAvis(Model):
 
 
 class Advice(Model):
+    """Modele metier: Advice."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6792,6 +6858,7 @@ class Advice(Model):
 
 
 class Geopolitics(Model):
+    """Modele metier: Geopolitics."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -6903,6 +6970,7 @@ class Geopolitics(Model):
 
 
 class Scoring(SafeDeleteModel):  # Changez Model en SafeDeleteModel
+    """Modele metier: Scoring."""
     _safedelete_policy = SOFT_DELETE_CASCADE
 
     annee = models.ForeignKey(
@@ -7084,6 +7152,7 @@ class Scoring(SafeDeleteModel):  # Changez Model en SafeDeleteModel
 
 
 class Banquier(Model):
+    """Modele metier: Banquier."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -7211,6 +7280,7 @@ class Banquier(Model):
 # Debut Modules Bilan Anglais
 
 class ActifA(Model):
+    """Modele metier: ActifA."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -7358,6 +7428,7 @@ class ActifA(Model):
 
 
 class PassifA(Model):
+    """Modele metier: PassifA."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -7499,6 +7570,7 @@ class PassifA(Model):
 
 
 class ResultatA(Model):
+    """Modele metier: ResultatA."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -7628,7 +7700,6 @@ class ResultatA(Model):
         return (self.resultat_net or 0) + (self.autres_elements_resultat_global or 0)
 
 # Calcul des ratios
-from decimal import Decimal
 
 class RatiosAnglais:
     def __init__(self, actif: ActifA, passif: PassifA, resultat: ResultatA):
@@ -7803,6 +7874,7 @@ class RatiosAnglais:
 
 # Actif
 class ActifC(Model):
+    """Modele metier: ActifC."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -8180,6 +8252,7 @@ class ActifC(Model):
 
 # Passif
 class PassifC(Model):
+    """Modele metier: PassifC."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -8432,6 +8505,7 @@ class PassifC(Model):
 
 # Compte de Résultat
 class ResultatC(Model):
+    """Modele metier: ResultatC."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -8861,7 +8935,6 @@ class ResultatC(Model):
 # dédiée pour la clarté et la réutilisation.
 
 
-from decimal import Decimal
 
 # Dans un fichier utils.py ou similaire
 class RatiosClassique:
@@ -9189,6 +9262,7 @@ SEMESTRE_CHOICES = (
 
 # Actifs
 class Assets(Model):
+    """Modele metier: Assets."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -9490,6 +9564,7 @@ class Assets(Model):
 
 # Passifs
 class Liabilities(Model):
+    """Modele metier: Liabilities."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -9768,6 +9843,7 @@ class Liabilities(Model):
 
 # Depenses
 class Expenses(Model):
+    """Modele metier: Expenses."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -10092,6 +10168,7 @@ class Expenses(Model):
 
 # Produits
 class Products(Model):
+    """Modele metier: Products."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -10408,6 +10485,7 @@ class Products(Model):
 
 # Hors bilan
 class OffBalanceSheet(Model):
+    """Modele metier: OffBalanceSheet."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -10623,6 +10701,7 @@ class OffBalanceSheet(Model):
 # Debut Modules Bilan SysCohada
 
 class ActifS(Model):
+    """Modele metier: ActifS."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -10894,6 +10973,7 @@ class ActifS(Model):
 
 
 class PassifS(Model):
+    """Modele metier: PassifS."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -11141,6 +11221,7 @@ class PassifS(Model):
 
 
 class ResultatS(Model):
+    """Modele metier: ResultatS."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -11482,7 +11563,6 @@ class ResultatS(Model):
 # Ratios Bilan SYSCOHADA
 
 # Création d'une classe dédiée pour les ratios
-from decimal import Decimal
 
 class RatiosSyscohada:
     def __init__(self, actif: ActifS, passif: PassifS, resultat: ResultatS):
@@ -11747,8 +11827,6 @@ class RatiosSyscohada:
 ##########################################################
 # Fichier: DANS VOTRE FICHIER models.py
 
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 # Ces énumérations sont déjà définies dans votre code, nous les réutilisons.
 TYPE_BILAN_CHOICES = (
@@ -12283,6 +12361,7 @@ class ResultatIFRS(BilanIFRSBase):
 
 
 class RatiosIFRS(Model):
+    """Modele metier: RatiosIFRS."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12432,6 +12511,7 @@ class RatiosIFRS(Model):
 ##########################################################
 ##########################################################
 class Notification(Model):
+    """Modele metier: Notification."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12479,6 +12559,7 @@ class Notification(Model):
 
 
 class Commande(Model):
+    """Modele metier: Commande."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12734,6 +12815,7 @@ class Commande(Model):
 
 
 class SuiviCommande(Model):
+    """Modele metier: SuiviCommande."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12784,6 +12866,7 @@ class SuiviCommande(Model):
 
 
 class AffectationAnalyste(Model):
+    """Modele metier: AffectationAnalyste."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12812,6 +12895,7 @@ class AffectationAnalyste(Model):
 
 
 class Rapport(Model):
+    """Modele metier: Rapport."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12841,6 +12925,7 @@ class Rapport(Model):
 
 
 class ValidationRapport(Model):
+    """Modele metier: ValidationRapport."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12883,6 +12968,7 @@ class ValidationRapport(Model):
 
 
 class ReportRequest(Model):
+    """Modele metier: ReportRequest."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     history = HistoricalRecords()
 
@@ -12943,6 +13029,7 @@ class ReportRequest(Model):
 ##########################################################
 ##########################################################
 class Alerte(Model):
+    """Modele metier: Alerte."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -12982,6 +13069,7 @@ class Alerte(Model):
 
 
 class DocumentAlerte(Model):
+    """Modele metier: DocumentAlerte."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13021,6 +13109,7 @@ class DocumentAlerte(Model):
 
 
 class Warning(Model):
+    """Modele metier: Warning."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     titre = models.CharField(max_length=500,verbose_name=_("Titre"), null=False, blank=False)
     description = models.TextField()
@@ -13037,6 +13126,7 @@ def warning_upload_path(instance, filename):
 
 
 class WarningAttachment(Model):
+    """Modele metier: WarningAttachment."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     upload = models.FileField(upload_to=warning_upload_path, verbose_name='Veuillez choisir le fichier',
                               max_length=500, blank=False, null=False)
@@ -13060,6 +13150,7 @@ class WarningAttachment(Model):
 
 
 class NotifClient(Model):
+    """Modele metier: NotifClient."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     acheteurs = models.ManyToManyField(Acheteur)
     client = models.ForeignKey("User", on_delete=models.CASCADE)
@@ -13080,11 +13171,10 @@ class NotifClient(Model):
 # Debut Module IRFS COBAC
 ##########################################################
 ##########################################################
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 
 class CompteFinancierIrfs(Model):
+    """Modele metier: CompteFinancierIrfs."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13129,6 +13219,7 @@ class CompteFinancierIrfs(Model):
 
 
 class ValeurCompteIrfs(Model):
+    """Modele metier: ValeurCompteIrfs."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13162,6 +13253,7 @@ class ValeurCompteIrfs(Model):
 
 
 class RatioFinancierIrfs(Model):
+    """Modele metier: RatioFinancierIrfs."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13188,6 +13280,7 @@ class RatioFinancierIrfs(Model):
 
 
 class ValeurRatioIrfs(Model):
+    """Modele metier: ValeurRatioIrfs."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13229,6 +13322,7 @@ class ValeurRatioIrfs(Model):
 
 
 class CredendoCommande(Model):
+    """Modele metier: CredendoCommande."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13276,6 +13370,7 @@ class CredendoCommande(Model):
 
 
 class ScoringSansBilanAcheteur(Model):
+    """Modele metier: ScoringSansBilanAcheteur."""
     
     safedelete_policy  = SOFT_DELETE_CASCADE
     
@@ -13502,15 +13597,13 @@ class ScoringSansBilanAcheteur(Model):
 # Debut Emailling
 ##########################################################
 ##########################################################
-from django.db import models
-from django.conf import settings
 from safedelete.models import SafeDeleteModel, SOFT_DELETE_CASCADE
-from simple_history.models import HistoricalRecords
 
 AUTH_USER_MODEL = settings.AUTH_USER_MODEL
 
 
 class MailInfo(SafeDeleteModel):
+    """Modele metier: MailInfo."""
     safedelete_policy = SOFT_DELETE_CASCADE
 
     date_sent = models.DateTimeField(auto_now_add=True)
@@ -13541,6 +13634,7 @@ class MailInfo(SafeDeleteModel):
 
 
 class MailAttachment(SafeDeleteModel):
+    """Modele metier: MailAttachment."""
     safedelete_policy = SOFT_DELETE_CASCADE
 
     # Fichier joint
@@ -13583,6 +13677,7 @@ class MailAttachment(SafeDeleteModel):
 
 
 class DocDownload(models.Model):
+    """Modele metier: DocDownload."""
     acheteur = models.ForeignKey(Acheteur, on_delete=models.CASCADE)
     client = models.ForeignKey("User", on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
@@ -13608,6 +13703,7 @@ class DocDownload(models.Model):
 ##########################################################
 
 class Locaux(models.Model):
+    """Modele metier: Locaux."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     nom = models.CharField(_("nom"), max_length=100)
 
@@ -13616,6 +13712,7 @@ class Locaux(models.Model):
 
 
 class ListeConditionAchat(models.Model):
+    """Modele metier: ListeConditionAchat."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     nom = models.CharField(_("nom"), max_length=100)
 
@@ -13624,6 +13721,7 @@ class ListeConditionAchat(models.Model):
     
     
 class ListeConditionVente(models.Model):
+    """Modele metier: ListeConditionVente."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     nom = models.CharField(_("nom"), max_length=100)
 
@@ -13632,6 +13730,7 @@ class ListeConditionVente(models.Model):
     
     
 class ListeImportation(models.Model):
+    """Modele metier: ListeImportation."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     libelle = models.TextField(_("nom"), max_length=2000)
 
@@ -13640,6 +13739,7 @@ class ListeImportation(models.Model):
 
 
 class ListeComportementsPaiement(models.Model):
+    """Modele metier: ListeComportementsPaiement."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     libelle = models.TextField(_("libelle"), max_length=255)
     couleur = models.CharField(_("couleur"), max_length=10)
@@ -13650,6 +13750,7 @@ class ListeComportementsPaiement(models.Model):
 
 
 class ListeInformationsRating(models.Model):
+    """Modele metier: ListeInformationsRating."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     libelle = models.TextField(_("libelle"), max_length=255)
     couleur = models.CharField(_("couleur"), max_length=10)
@@ -13659,6 +13760,7 @@ class ListeInformationsRating(models.Model):
 
 
 class ListeInformationsAvisCommercial(models.Model):
+    """Modele metier: ListeInformationsAvisCommercial."""
     _safedelete_policy = SOFT_DELETE_CASCADE
     libelle = models.TextField(_("libelle"), max_length=255)
     couleur = models.CharField(_("couleur"), max_length=20)

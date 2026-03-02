@@ -908,6 +908,24 @@ def generer_rapport_solvabilite(request):
             geopolitics = Geopolitics.objects.get(acheteur=acheteur)
         except Geopolitics.DoesNotExist:
             pass
+
+        # Recuperation de l'analyse SWOT sur l'acheteur
+        swot_analysis = None
+        try:
+            swot_analysis = Swot.objects.get(acheteur=acheteur)
+        except Swot.DoesNotExist:
+            pass
+            
+            
+        # Recuperation des registres de commerce de l'acheteur
+        registres = RegistreCommerce.objects.filter(acheteur=acheteur)
+        list_registres_data = []
+        for registre in registres:
+            list_registres_data.append({
+                "numero": registre.numero if registre.numero else "Non spécifié",
+                "date_inscription": registre.date_inscription if registre.date_inscription else "Non spécifié",
+                "est_actif": registre.est_actif if registre.est_actif else False,
+            })
             
             
         # Recuperation des banques associees de l'acheteur
@@ -924,6 +942,119 @@ def generer_rapport_solvabilite(request):
                 "code_postal": banker.code_postal if banker.code_postal else "Non spécifié",
                 "commentaire": banker.commentaire if banker.commentaire else "Non spécifié",
             })
+            
+            
+        # Recuperation des procedures collectives de l'acheteur
+        procedures = ProcedureCollective.objects.filter(acheteur=acheteur)
+        list_procedures_data = []
+        for procedure in procedures:
+            list_procedures_data.append({
+                "type_procedure": (
+                    getattr(procedure, "get_type_procedure_display", lambda: procedure.type_procedure)()
+                    if procedure.type_procedure else "Non spécifié"
+                ),
+                "date_ouverture": procedure.date_ouverture if procedure.date_ouverture else "Non spécifié",
+                "date_cloture": procedure.date_cloture if procedure.date_cloture else "Non spécifié",
+                "tribunal": procedure.tribunal if procedure.tribunal else "Non spécifié",
+                "numero_dossier": procedure.numero_dossier if procedure.numero_dossier else "Non spécifié",
+                "secteur_activite": procedure.secteur_activite if procedure.secteur_activite else "Non spécifié",
+                "description": procedure.description if procedure.description else "Non spécifié",
+                "montant_creance": procedure.montant_creance if procedure.montant_creance else "Non spécifié",
+                "impact_assureur": procedure.impact_assureur if procedure.impact_assureur else "Non spécifié",
+            })
+            
+            
+        # Recuperation des cotisations sociales de l'acheteur
+        cotisations = Cotisation.objects.filter(acheteur=acheteur)
+        list_cotisations_data = []
+        for cotisation in cotisations:
+            list_cotisations_data.append({
+                "numero": cotisation.numero if cotisation.numero else "Non spécifié",
+                "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "Non spécifié",
+            })
+            
+            
+        # Recuperation des produits et services de l'acheteur
+        produits_services = ProduitService.objects.filter(acheteur=acheteur)
+        list_produits_services_data = []
+        for produit_service in produits_services:
+            list_produits_services_data.append({
+                "produits": produit_service.produits if produit_service.produits else "Non spécifié",
+                "services": produit_service.services if produit_service.services else "Non spécifié",
+            })
+            
+            
+        # Recuperation des marques de l'acheteur
+        marques = Marque.objects.filter(acheteur=acheteur)
+        list_marques_data = []
+        for marque in marques:
+            list_marques_data.append({
+                "marques": marque.marques if marque.marques else "Non spécifié",
+            })
+            
+            
+        # Recuperation des certifications de l'acheteur
+        certifications = Certification.objects.filter(acheteur=acheteur)
+        list_certifications_data = []
+        for certification in certifications:
+            list_certifications_data.append({
+                "type_certification": (
+                    getattr(certification, "get_type_certification_display", lambda: certification.type_certification)()
+                    if certification.type_certification else "Non spécifié"
+                ),
+                "nom_certification": certification.nom_certification if certification.nom_certification else "Non spécifié",
+                "date_obtention": certification.date_obtention if certification.date_obtention else "Non spécifié",
+                "organisme_delivreur": certification.organisme_delivreur if certification.organisme_delivreur else "Non spécifié",
+                "description": certification.description if certification.description else "Non spécifié",
+            })
+            
+            
+        # Recuperation des innovations et developpements de l'acheteur
+        innovations_developpements = InnovationDeveloppement.objects.filter(acheteur=acheteur)
+        list_innovations_developpements_data = []
+        for innovation_developpement in innovations_developpements:
+            list_innovations_developpements_data.append({
+                "type_innovation": (
+                    getattr(innovation_developpement, "get_type_innovation_display", lambda: innovation_developpement.type_innovation)()
+                    if innovation_developpement.type_innovation else "Non spécifié"
+                ),
+                "titre": innovation_developpement.titre if innovation_developpement.titre else "Non spécifié",
+                "description": innovation_developpement.description if innovation_developpement.description else "Non spécifié",
+                "date_debut": innovation_developpement.date_debut if innovation_developpement.date_debut else "Non spécifié",
+                "date_fin": innovation_developpement.date_fin if innovation_developpement.date_fin else "Non spécifié",
+            })
+            
+            
+        # Recuperation des strategies et planifications de l'acheteur
+        strategies_planifications = StrategiePlanification.objects.filter(acheteur=acheteur)
+        list_strategies_planifications_data = []
+        for strategie_planification in strategies_planifications:
+            list_strategies_planifications_data.append({
+                "type_strategie": (
+                    getattr(strategie_planification, "get_type_strategie_display", lambda: strategie_planification.type_strategie)()
+                    if strategie_planification.type_strategie else "Non spécifié"
+                ),
+                "description": strategie_planification.description if strategie_planification.description else "Non spécifié",
+                "date_mise_en_place": strategie_planification.date_mise_en_place if strategie_planification.date_mise_en_place else "Non spécifié",
+            })
+            
+            
+        # Recuperation des conformites et reglementations de l'acheteur
+        conformites_reglementations = ConformiteReglementation.objects.filter(acheteur=acheteur)
+        list_conformites_reglementations_data = []
+        for conformite_reglementation in conformites_reglementations:
+            list_conformites_reglementations_data.append({
+                "type_conformite": (
+                    getattr(conformite_reglementation, "get_type_conformite_display", lambda: conformite_reglementation.type_conformite)()
+                    if conformite_reglementation.type_conformite else "Non spécifié"
+                ),
+                "statut": conformite_reglementation.statut if conformite_reglementation.statut else "Non spécifié",
+                "details_non_conformite": conformite_reglementation.details_non_conformite if conformite_reglementation.details_non_conformite else "Non spécifié",
+                "date_verification": conformite_reglementation.date_verification if conformite_reglementation.date_verification else "Non spécifié",
+                "organisme_controle": conformite_reglementation.organisme_controle if conformite_reglementation.organisme_controle else "Non spécifié",
+                "commentaires": conformite_reglementation.commentaires if conformite_reglementation.commentaires else "Non spécifié",
+            })
+            
             
         # Recuperation le compte financier de l'acheteur
         compte_financier = None
@@ -1446,6 +1577,44 @@ def generer_rapport_solvabilite(request):
                 "title_11": "ACTIONNARIAT/PROPRIETAIRES",
                 "actionnaires": list_shareholders_data if list_shareholders_data else [],
             },
+            # Nouveaux elements
+            "registres": {
+                "title_12": "REGISTRES DE COMMERCE",
+                "registres": list_registres_data if list_registres_data else ["Aucun registre disponible"],
+            },
+            "produits_services": {
+                "title_13": "PRODUITS & SERVICES",
+                "produits": list_produits_services_data if list_produits_services_data else ["Aucun produit ou service disponible"],
+            },
+            "marques": {
+                "title_14": "MARQUES",
+                "marques": list_marques_data if list_marques_data else ["Aucune marque disponible"],
+            },
+            "procedures_collectives": {
+                "title_15": "PROCEDURES & COLLECTIVES",
+                "procedures_collectives": list_procedures_data if list_procedures_data else ["Aucune procédure ou collective disponible"],
+            },
+            "cotisations": {
+                "title_16": "COTISATIONS SOCIALES",
+                "cotisations": list_cotisations_data if list_cotisations_data else ["Aucune cotisation disponible"],
+            },
+            "certifications": {
+                "title_17": "CERTIFICATIONS",
+                "certifications": list_certifications_data if list_certifications_data else ["Aucune certification disponible"],
+            },
+            "innovations_developpements": {
+                "title_18": "INNOVATIONS & DEVELOPPEMENT",
+                "innovations_developpements": list_innovations_developpements_data if list_innovations_developpements_data else ["Aucune innovation ou développement disponible"],
+            },
+            "strategies_planifications": {
+                "title_19": "STRATEGIES & PLANIFICATIONS",
+                "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
+            },
+            "conformitesy": {
+                "title_20": "STRATEGIES & PLANIFICATIONS",
+                "strategies_planifications": list_conformites_reglementations_data if list_conformites_reglementations_data else ["Aucune donnée de conformité disponible"],
+            },
+            
             "affiliations": {
                 "title_12": "AFFILIATIONS D'ENTREPRISE",
                 "affiliations": list_affiliations_data if list_affiliations_data else [],
@@ -1478,6 +1647,13 @@ def generer_rapport_solvabilite(request):
                 "geopolitics": {
                     "donnees_politiques": geopolitics.donnees_politiques if geopolitics and geopolitics.donnees_politiques else "Non spécifié",
                     "donnees_economiques": geopolitics.donnees_economiques if geopolitics and geopolitics.donnees_economiques else "Non spécifié",
+                },
+                # Nouveaux elements
+                "swot": {
+                    "forces": swot_analysis.forces if swot_analysis and swot_analysis.forces else "Non spécifié",
+                    "faiblesses": swot_analysis.faiblesses if swot_analysis and swot_analysis.faiblesses else "Non spécifié",
+                    "opportunites": swot_analysis.opportunites if swot_analysis and swot_analysis.opportunites else "Non spécifié",
+                    "menaces": swot_analysis.menaces if swot_analysis and swot_analysis.menaces else "Non spécifié",
                 },
             },
             "banking_data": {
