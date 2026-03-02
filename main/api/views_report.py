@@ -4007,7 +4007,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
             },
             "conformitesy": {
-                "title_20": "STRATEGIES & PLANIFICATIONS",
+                "title_20": "CONFORMITE REGLEMENTATION",
                 "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
             },
             

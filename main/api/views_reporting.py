@@ -1611,7 +1611,7 @@ def generer_rapport_solvabilite(request):
                 "strategies_planifications": list_strategies_planifications_data if list_strategies_planifications_data else ["Aucune stratégie ou planification disponible"],
             },
             "conformitesy": {
-                "title_20": "STRATEGIES & PLANIFICATIONS",
+                "title_20": "CONFORMITE REGLEMENTATION",
                 "strategies_planifications": list_conformites_reglementations_data if list_conformites_reglementations_data else ["Aucune donnée de conformité disponible"],
             },
             
