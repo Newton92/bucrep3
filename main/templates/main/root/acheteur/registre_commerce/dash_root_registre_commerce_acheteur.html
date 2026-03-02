@@ -1159,6 +1159,21 @@
                         </div>
                     </div>
 
+                    <h5 class="modal-section-title mt-4">
+                        <i class="fas fa-toggle-on me-2 text-success"></i>Statut du registre
+                    </h5>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="estActif" name="est_actif">
+                                <label class="form-check-label" for="estActif">Registre actif</label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Activez si ce registre est actuellement en vigueur.
+                            </small>
+                        </div>
+                    </div>
+
                     <!-- Aperçu -->
                     <div class="number-highlight-premium mt-4" id="registrePreview">
                         <div class="number-display-premium">
@@ -1239,6 +1254,21 @@
                                        placeholder="Sélectionner une date"
                                        data-date-format="d/m/Y">
                             </div>
+                        </div>
+                    </div>
+
+                    <h5 class="modal-section-title mt-4">
+                        <i class="fas fa-toggle-on me-2 text-success"></i>Statut du registre
+                    </h5>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="editEstActif" name="est_actif">
+                                <label class="form-check-label" for="editEstActif">Registre actif</label>
+                            </div>
+                            <small class="form-text text-muted">
+                                Activez si ce registre est actuellement en vigueur.
+                            </small>
                         </div>
                     </div>
 
@@ -1452,6 +1482,9 @@ $(document).ready(function() {
                     response.results.forEach(function(registre) {
                         const numero = registre.numero || 'N/A';
                         const dateInscription = registre.date_inscription ? formatDate(registre.date_inscription) : null;
+                        const estActif = !!registre.est_actif;
+                        const statutTexte = estActif ? 'Actif' : 'Inactif';
+                        const statutClasse = estActif ? 'success' : 'secondary';
                         const createdAt = formatDateTime(registre.created_at);
                         const updatedAt = formatDateTime(registre.updated_at);
                         
@@ -1469,6 +1502,10 @@ $(document).ready(function() {
                                     </div>
                                     <div class="registre-title-premium">
                                         Registre de commerce
+                                    </div>
+                                    <div class="date-badge-premium text-bg-${statutClasse}">
+                                        <i class="fas fa-circle-check"></i>
+                                        Statut: ${statutTexte}
                                     </div>
                                     ${dateInscription ? `
                                     <div class="date-badge-premium">
@@ -1583,6 +1620,7 @@ $(document).ready(function() {
         const formData = {
             numero: $('#numeroRegistre').val(),
             date_inscription: addDateValue,
+            est_actif: $('#estActif').is(':checked'),
             acheteur: ACHETEUR_ID
         };
         
@@ -1685,6 +1723,7 @@ $(document).ready(function() {
 
                 $('#editRegistreId').val(response.id);
                 $('#editNumeroRegistre').val(response.numero);
+                $('#editEstActif').prop('checked', !!response.est_actif);
                 
                 // Pré-remplir les dates
                 $('#editCreatedAtInfo').text(formatDate(response.created_at));
@@ -1755,7 +1794,8 @@ $(document).ready(function() {
 
         const formData = {
             numero: $('#editNumeroRegistre').val(),
-            date_inscription_input: editDateValue
+            date_inscription_input: editDateValue,
+            est_actif: $('#editEstActif').is(':checked')
         };
         
         if (!formData.numero) {
@@ -1964,12 +2004,14 @@ $(document).ready(function() {
     // Réinitialiser le modal quand il est fermé
     $('#addRegistreModal').on('hidden.bs.modal', function () {
         $('#addRegistreForm')[0].reset();
+        $('#estActif').prop('checked', false);
         $('#registrePreview').hide();
         setTimeout(initDatepickers, 300);
     });
     
     $('#editRegistreModal').on('hidden.bs.modal', function () {
         $('#editRegistreForm')[0].reset();
+        $('#editEstActif').prop('checked', false);
         $('#editRegistrePreview').hide();
         currentRegistreId = null;
     });

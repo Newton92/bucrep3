@@ -10160,6 +10160,7 @@ class AddRegistreCommerceSerializer(serializers.ModelSerializer):
             "acheteur",
             "numero",
             "date_inscription",
+            "est_actif",
         ]
 
 class EditRegistreCommerceSerializer(serializers.ModelSerializer):
@@ -10168,6 +10169,7 @@ class EditRegistreCommerceSerializer(serializers.ModelSerializer):
         fields = [
             "numero",
             "date_inscription",
+            "est_actif",
         ]
 
 ###########################################################################    
@@ -10189,6 +10191,7 @@ class RegistreCommerceOneSerializer(serializers.ModelSerializer):
             'acheteur_info',
             'numero', 
             'date_inscription',
+            'est_actif',
             'created_at', 
             'updated_at',
             'created_by', 
@@ -10209,7 +10212,7 @@ class RegistreCommerceOneSerializer(serializers.ModelSerializer):
 class RegistreCommerceDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ['id', 'acheteur', 'numero', 'date_inscription']
+        fields = ['id', 'acheteur', 'numero', 'date_inscription', 'est_actif']
 
 class AddRegistreCommerceOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
@@ -10218,10 +10221,13 @@ class AddRegistreCommerceOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = RegistreCommerce
-        fields = ['numero', 'date_inscription', 'acheteur']
+        fields = ['numero', 'date_inscription', 'est_actif', 'acheteur']
     
     def create(self, validated_data):
         """Override create method to handle created_by and updated_by"""
+        acheteur = validated_data.get("acheteur")
+        est_actif = validated_data.get("est_actif", False)
+
         # Créer l'instance
         instance = RegistreCommerce(**validated_data)
         
@@ -10232,6 +10238,11 @@ class AddRegistreCommerceOneSerializer(serializers.ModelSerializer):
             instance.updated_by = request.user
         
         instance.save()
+
+        # Un seul registre actif par acheteur
+        if est_actif and acheteur:
+            RegistreCommerce.objects.filter(acheteur=acheteur).exclude(id=instance.id).update(est_actif=False)
+
         return instance
     
     def validate(self, data):
@@ -10272,7 +10283,7 @@ class EditRegistreCommerceOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = RegistreCommerce
-        fields = ['numero', 'date_inscription', 'date_inscription_input']
+        fields = ['numero', 'date_inscription', 'date_inscription_input', 'est_actif']
         extra_kwargs = {
             'date_inscription': {'read_only': True}  # On gère la date via date_inscription_input
         }
@@ -10322,6 +10333,16 @@ class EditRegistreCommerceOneSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Le numéro de registre doit contenir au moins 3 caractères.")
         
         return value.strip()
+
+    def update(self, instance, validated_data):
+        est_actif = validated_data.get("est_actif", instance.est_actif)
+        instance = super().update(instance, validated_data)
+
+        # Un seul registre actif par acheteur
+        if est_actif and instance.acheteur_id:
+            RegistreCommerce.objects.filter(acheteur_id=instance.acheteur_id).exclude(id=instance.id).update(est_actif=False)
+
+        return instance
 
 class RegistreCommerceSearchSerializer(serializers.ModelSerializer):
     acheteur_nom = serializers.CharField(source='acheteur.nom', read_only=True)
@@ -10951,22 +10972,22 @@ from .models import RegistreCommerce
 class ListRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["id", "acheteur", "numero", "date_inscription", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "created_at", "updated_at"]
 
 class AddRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["acheteur", "numero", "date_inscription"]
+        fields = ["acheteur", "numero", "date_inscription", "est_actif"]
 
 class DetailRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["id", "acheteur", "numero", "date_inscription", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "created_at", "updated_at"]
 
 class EditRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["id", "acheteur", "numero", "date_inscription", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 
