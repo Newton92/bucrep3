@@ -105,6 +105,32 @@ from main.api.views_report import (
 
 # Importez aussi la fonction de génération de logo si besoin
 from main.api.views_report import get_logo_data, get_logo_path
+# Dans views_reporting.py
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from django.conf import settings
+import json
+import xml.etree.ElementTree as ET
+from weasyprint import HTML
+import tempfile
+import os
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+import base64
+from datetime import datetime
+import random
+import re
+import string
+import unicodedata
+# Dans views_reporting.py, modifiez la fonction generer_pdf_weasyprint
+import base64
+import os
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from weasyprint import HTML
+import tempfile
 
 
 # ... vos autres vues ...
@@ -1737,27 +1763,6 @@ def generer_rapport_solvabilite(request):
 
 
 
-
-
-# Dans views_reporting.py
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from django.conf import settings
-import json
-import xml.etree.ElementTree as ET
-from weasyprint import HTML
-import tempfile
-import os
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-import base64
-from datetime import datetime
-import random
-import re
-import string
-import unicodedata
-
 def generate_code_reference():
     date_du_jour = datetime.now().strftime("%Y%m%d")  # ex : 20241204
     chiffre_aleatoire = random.randint(10000, 99999)  # 5 chiffres aléatoires
@@ -1967,14 +1972,7 @@ def exporter_rapport_version1(request):
         traceback.print_exc()
         return Response({'error': f'Erreur lors de l\'export: {str(e)}'}, status=500)
 
-# Dans views_reporting.py, modifiez la fonction generer_pdf_weasyprint
-import base64
-import os
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.http import HttpResponse
-from weasyprint import HTML
-import tempfile
+
 
 def generer_pdf_weasyprint(report_data, form_data, nom_fichier, request=None):
     try:
@@ -2436,7 +2434,7 @@ def preparer_donnees_pour_export(report_data, form_data, export_format):
         
     
         
-def exporter_pdf(report_data, form_data, request=None):
+def exporter_pdf_old(report_data, form_data, request=None):
     """
     Export PDF en réutilisant la fonction du module 1
     """
@@ -2488,7 +2486,7 @@ def exporter_pdf(report_data, form_data, request=None):
 
 
 
-def exporter_html(report_data, form_data, request=None):
+def exporter_html_old(report_data, form_data, request=None):
     """
     Export HTML en réutilisant la fonction du module 1
     """
@@ -2533,7 +2531,7 @@ def exporter_html(report_data, form_data, request=None):
 
 
 
-def exporter_xml(report_data, form_data, request=None):
+def exporter_xml_old(report_data, form_data, request=None):
     """
     Export XML en utilisant la fonction qui fonctionne déjà dans le module 1
     """
@@ -2571,7 +2569,7 @@ def exporter_xml(report_data, form_data, request=None):
 
 
 
-def exporter_json(report_data, form_data, request=None):
+def exporter_json_old(report_data, form_data, request=None):
     """
     Export JSON
     """
@@ -2656,8 +2654,7 @@ def exporter_json(report_data, form_data, request=None):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         
-        
-        
+               
         
 def generate_report_html_standalone(report_data):
     """Génère un rapport HTML complet et le force en téléchargement"""
@@ -2698,3 +2695,195 @@ def generate_report_html_standalone(report_data):
         response = HttpResponse(html_content, content_type='text/html; charset=utf-8', status=500)
         response['Content-Disposition'] = 'attachment; filename="rapport_erreur.html"'
         return response
+
+
+
+def exporter_pdf(report_data, form_data, request=None):
+    try:
+        print("📄 Début génération PDF...")
+        report_data = _inject_static_urls(report_data, request)
+        
+        if request is None:
+            from django.http import HttpRequest
+            request = HttpRequest()
+            request.META['SERVER_NAME'] = 'localhost'
+            request.META['SERVER_PORT'] = '8000'
+        
+        from django.template.loader import render_to_string
+        from weasyprint import HTML
+        from django.http import HttpResponse
+        
+        html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
+        pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        
+        # ✅ AMÉLIORATION : Inclure l'ID de la commande dans le nom
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        
+        # Récupérer l'ID de la commande depuis form_data
+        commande_id = form_data.get('commande_id', '')
+        
+        # Ajouter timestamp pour garantir l'unicité
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        filename = f"rapport_solvabilite_{safe_nom}_cmd{commande_id}_{timestamp}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(pdf_file)
+        
+        print(f"✅ PDF généré: {filename} ({len(pdf_file)} bytes)")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        from rest_framework.response import Response
+        from rest_framework import status
+        return Response(
+            {"error": f"Erreur lors de la génération du PDF: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+def exporter_html(report_data, form_data, request=None):
+    try:
+        print("🌐 Début génération HTML...")
+        report_data = _inject_static_urls(report_data, request)
+        
+        from django.template.loader import render_to_string
+        from django.http import HttpResponse
+
+        html_content = render_to_string('main/report_html_standalone_html.html', report_data)
+        
+        response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
+        
+        # ✅ AMÉLIORATION : Inclure l'ID de la commande dans le nom
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        
+        # Récupérer l'ID de la commande depuis form_data
+        commande_id = form_data.get('commande_id', '')
+        
+        # Ajouter timestamp pour garantir l'unicité
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        filename = f"rapport_solvabilite_{safe_nom}_cmd{commande_id}_{timestamp}.html"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        print(f"✅ HTML généré: {filename} ({len(html_content)} caractères)")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur HTML: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        html_content = f"""
+        <html>
+            <head><title>Erreur Rapport</title></head>
+            <body>
+                <h1>Erreur lors de la génération du rapport HTML</h1>
+                <p>{str(e)}</p>
+            </body>
+        </html>
+        """
+        
+        response = HttpResponse(html_content, content_type='text/html')
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.html"'
+        return response
+    
+    
+    
+
+def exporter_xml(report_data, form_data, request=None):
+    try:
+        print("📤 Début génération XML + XSD...")
+        
+        from main.api.views_report import generate_xml_with_xsd
+        response = generate_xml_with_xsd(report_data)
+        
+        # ✅ AMÉLIORATION : Renommer le fichier avec un meilleur format
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        commande_id = form_data.get('commande_id', '')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        filename = f"rapport_solvabilite_{safe_nom}_cmd{commande_id}_{timestamp}.zip"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        print(f"✅ XML généré: {filename}")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur XML: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+        <erreur>
+            <message>Erreur lors de la génération du rapport XML</message>
+            <details>{str(e)}</details>
+            <timestamp>{datetime.now().isoformat()}</timestamp>
+        </erreur>'''
+        
+        from django.http import HttpResponse
+        response = HttpResponse(
+            error_xml, 
+            content_type='application/xml; charset=utf-8',
+            status=500
+        )
+        response['Content-Disposition'] = 'attachment; filename="rapport_erreur.xml"'
+        return response
+
+
+def exporter_json(report_data, form_data, request=None):
+    try:
+        print("📊 Début génération JSON...")
+        
+        def clean_for_json(obj):
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            elif isinstance(obj, Decimal):
+                return float(obj)
+            elif hasattr(obj, '__dict__'):
+                return {k: clean_for_json(v) for k, v in obj.__dict__.items() 
+                        if not k.startswith('_')}
+            elif isinstance(obj, dict):
+                return {k: clean_for_json(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [clean_for_json(item) for item in obj]
+            else:
+                return obj
+        
+        cleaned_data = clean_for_json(report_data)
+        json_content = json.dumps(cleaned_data, ensure_ascii=False, indent=2)
+        
+        from django.http import HttpResponse
+        response = HttpResponse(json_content, content_type='application/json; charset=utf-8')
+        
+        # ✅ AMÉLIORATION : Inclure l'ID de la commande dans le nom
+        nom_acheteur = report_data.get('identification', {}).get('acremac_info', {}).get('nom', 'acheteur')
+        safe_nom = _safe_download_filename(nom_acheteur, default='acheteur')
+        commande_id = form_data.get('commande_id', '')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        filename = f"rapport_solvabilite_{safe_nom}_cmd{commande_id}_{timestamp}.json"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        print(f"✅ JSON généré: {filename} ({len(json_content)} caractères)")
+        return response
+        
+    except Exception as e:
+        print(f"❌ Erreur JSON: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        from rest_framework.response import Response
+        from rest_framework import status
+        return Response(
+            {"error": f"Erreur lors de la génération du JSON: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

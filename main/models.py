@@ -12442,6 +12442,12 @@ class Notification(Model):
         ("CORRECTION", "Correction demandée"),
         ("ENVOI_CLIENT", "Rapport envoyé au client"),
         ("RAPPEL", "Rappel de notification"),
+        ('ENVOI_REUSSI', 'Envoi réussi'),
+        ('ENVOI_ECHEC', "Échec d'envoi"),
+        ('RAPPORT_GENERE', 'Rapport généré'),
+        ('TACHE_TERMINEE', 'Tâche terminée'),
+        ('INFO', 'Information'),
+        ('ALERTE', 'Alerte'),
     ]
 
     user = models.ForeignKey(

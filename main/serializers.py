@@ -13992,7 +13992,6 @@ class DocumentSerializer(serializers.ModelSerializer):
         
         return icones.get(extension, 'fa-file')
 
-
 class EnvoyerEmailSerializer(serializers.Serializer):
     """
     Serializer pour valider les données d'envoi d'email

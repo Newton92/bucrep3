@@ -50,6 +50,19 @@ from main.api.views_api_emailling import *
 from main.api.views_mailing_v2 import *
 from main.api.views_api_mailling_v3 import *
 from main.api.views_bucrep3 import *
+from main.api.views_api_mailling_v3 import (
+    TestMailingAPIView,
+    DiagnostiqueCommandesAPIView,
+    ClientListAPIView,
+    ClientCommandesAPIView,
+    AcheteurDocumentsAPIView,
+    GenererRapportEmailingAPIView,
+    EnvoyerRapportEmailAPIView,
+    HistoriqueEnvoisAPIView,
+    DetailEnvoiAPIView,
+    ExporterHistoriqueAPIView,   # ← CETTE LIGNE
+    StatistiquesAPIView,
+)
 
 
 # OPTION 3: Import global
@@ -5955,7 +5968,8 @@ urlpatterns = [
     path('api/reporting/commandes/acheteur/<int:acheteur_id>/', liste_commandes_acheteur, name='liste_commandes_acheteur'),
     path('api/reporting/generer-rapport-solvabilite/', generer_rapport_solvabilite, name='generer_rapport_solvabilite'),
     
-    
+    # main/urls.py
+    # Gestion du module d'envoi de rapports et documents par mail
     path('api/mailing/clients/', ClientReportListView.as_view(), name='client-list'),
     path('api/gestion-des-mails/test/', TestMailingAPIView.as_view(), name='api_test'),
     path('api/gestion-des-mails/diagnostique-commandes/', DiagnostiqueCommandesAPIView.as_view(), name='api_diagnostique_commandes'),
@@ -5966,6 +5980,8 @@ urlpatterns = [
     path('api/emailing/envoyer/', EnvoyerRapportEmailAPIView.as_view(), name='envoyer_rapport_emailing'),
     path('api/emailing/historique/',  HistoriqueEnvoisAPIView.as_view(),  name='historique_envois'),
     path('api/emailing/historique/<int:envoi_id>/', DetailEnvoiAPIView.as_view(),  name='detail_envoi'),
+    path('api/emailing/exporter-historique/', ExporterHistoriqueAPIView.as_view(), name='exporter_historique'),
+    path('api/emailing/statistiques/', StatistiquesAPIView.as_view(), name='statistiques_historique'),
     
     
     path('api/mailing/clients/<int:client_id>/commandes/', get_client_commandes, name='client-commandes'),

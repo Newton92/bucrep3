@@ -61,10 +61,14 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 
 # IP autorisés
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "107.172.88.238", "3.236.213.114", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["10.0.57.47", "10.0.194.193", "107.172.88.238", "3.236.213.114", "localhost", "127.0.0.1", "preprod.bucrep3.bucrep.net"])
 
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
+    "http://10.0.194.193",
+    "http://10.0.194.193:8004",
+    "https://10.0.194.193",
+    "https://10.0.194.193:8004",
     "http://10.0.57.47",
     "http://3.236.213.114",
     "http://107.172.88.238",

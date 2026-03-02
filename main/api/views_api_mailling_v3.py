@@ -32,6 +32,32 @@ from main.serializers import UserMailingSerializer, CommandeMailingSerializer, D
 from main.api.views_reporting import *  # Importer la fonction de génération de rapport
 import re
 
+from django.db.models import Count, Q
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+from collections import Counter
+
+import csv
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from datetime import datetime
+import csv
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from datetime import datetime
+import os
+import csv
+import io
+from django.http import HttpResponse
+
+
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -746,8 +772,8 @@ class EnvoyerRapportEmailAPIView(APIView):
 
 class HistoriqueEnvoisAPIView(APIView):
     """
-    API endpoint pour récupérer l'historique des envois
-    URL: /api/emailing/historique/
+    API endpoint pour récupérer l'historique des envois avec pagination
+    URL: /api/emailing/historique/?page=1&page_size=10
     Méthode: GET
     """
     permission_classes = [permissions.IsAuthenticated]
@@ -756,10 +782,29 @@ class HistoriqueEnvoisAPIView(APIView):
         try:
             logger.info(f"Récupération de l'historique des envois pour {request.user.username}")
             
-            # Récupérer les envois (limité aux 50 derniers)
-            envois = MailInfo.objects.filter(
+            # Paramètres de pagination
+            page = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 10))
+            
+            # Valider les paramètres
+            if page < 1:
+                page = 1
+            if page_size < 1 or page_size > 50:
+                page_size = 10
+            
+            # Récupérer les envois
+            queryset = MailInfo.objects.filter(
                 user=request.user
-            ).order_by('-date_sent')[:50]
+            ).order_by('-date_sent')
+            
+            total_count = queryset.count()
+            
+            # Calculer les offsets
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            # Paginer
+            envois = queryset[start:end]
             
             # Préparer les données
             data = []
@@ -777,11 +822,18 @@ class HistoriqueEnvoisAPIView(APIView):
                     'cc_emails': envoi.get_cc_list()
                 })
             
-            logger.info(f"✅ {len(data)} envois trouvés")
+            # Calculer s'il y a une page suivante
+            has_next = end < total_count
+            
+            logger.info(f"✅ {len(data)} envois trouvés (page {page}/{ (total_count + page_size - 1) // page_size })")
             
             return Response({
                 'status': 'success',
                 'count': len(data),
+                'total': total_count,
+                'page': page,
+                'page_size': page_size,
+                'has_next': has_next,
                 'data': data
             }, status=status.HTTP_200_OK)
             
@@ -791,7 +843,6 @@ class HistoriqueEnvoisAPIView(APIView):
                 'status': 'error',
                 'message': f'Erreur serveur: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class DetailEnvoiAPIView(APIView):
     """
@@ -856,7 +907,222 @@ class DetailEnvoiAPIView(APIView):
                 'message': f'Erreur serveur: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
+
+class ExporterHistoriqueAPIView(APIView):
+    """
+    API endpoint pour exporter l'historique des envois
+    URL: /api/emailing/exporter-historique/?format=csv&type=all
+    Format: csv ou excel
+    Type: all, current_page, selected
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Remplacez les print par :
+        logger.info(f"ExporterHistoriqueAPIView - User: {request.user}, Auth: {request.user.is_authenticated}")
+        print(f"🔍 ExporterHistoriqueAPIView - User: {request.user}, Auth: {request.user.is_authenticated}")
+        
+        try:
+            export_format = request.query_params.get('format', 'csv').lower()
+            export_type   = request.query_params.get('type', 'all')
+            selected_ids  = request.query_params.get('ids', '')
+            page          = int(request.query_params.get('page', 1))
+            page_size     = int(request.query_params.get('page_size', 10))
+
+            queryset = MailInfo.objects.filter(
+                user=request.user
+            ).order_by('-date_sent')
             
+            print(f"📊 Total envois trouvés: {queryset.count()}")
+
+            # Filtrer selon le type
+            if export_type == 'selected' and selected_ids:
+                ids_list = [int(i) for i in selected_ids.split(',') if i.strip()]
+                if ids_list:
+                    queryset = queryset.filter(id__in=ids_list)
+            elif export_type == 'current_page':
+                start = (page - 1) * page_size
+                end   = start + page_size
+                queryset = queryset[start:end]
+
+            # ✅ Même si queryset est vide, générer un fichier vide (pas d'erreur 404)
+            rows = []
+            for envoi in queryset:
+                commandes_refs = ', '.join([
+                    str(getattr(c, 'reference_client', None) or c.id)
+                    for c in envoi.commandes.all()
+                ])
+                rows.append({
+                    'ID'            : envoi.id,
+                    'Date'          : envoi.date_sent.strftime('%d/%m/%Y %H:%M') if envoi.date_sent else '',
+                    'Sujet'         : envoi.subject or '',
+                    'Statut'        : 'Succès' if envoi.success else 'Échec',
+                    'Commandes'     : commandes_refs,
+                    'Pièces jointes': getattr(envoi, 'pieces_jointes', 0) or 0,
+                })
+
+            # ── CSV ──────────────────────────────────────────────────────────
+            if export_format == 'csv':
+                import csv
+                from django.http import HttpResponse
+                
+                response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+                response['Content-Disposition'] = f'attachment; filename="historique_{export_type}.csv"'
+                
+                fieldnames = ['ID', 'Date', 'Sujet', 'Statut', 'Commandes', 'Pièces jointes']
+                writer = csv.DictWriter(response, fieldnames=fieldnames, delimiter=';')
+                writer.writeheader()
+                writer.writerows(rows)
+                
+                print(f"✅ Export CSV généré: {len(rows)} lignes")
+                return response
+
+            # ── EXCEL ─────────────────────────────────────────────────────────
+            elif export_format == 'excel':
+                import io
+                from django.http import HttpResponse
+                
+                try:
+                    from openpyxl import Workbook
+                    from openpyxl.styles import Font, PatternFill, Alignment
+                except ImportError:
+                    return Response(
+                        {'status': 'error', 'message': 'Installez openpyxl: pip install openpyxl'},
+                        status=400
+                    )
+
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "Historique"
+
+                fieldnames = ['ID', 'Date', 'Sujet', 'Statut', 'Commandes', 'Pièces jointes']
+                
+                # En-têtes stylisés
+                for col_idx, header in enumerate(fieldnames, 1):
+                    cell = ws.cell(row=1, column=col_idx, value=header)
+                    cell.font      = Font(bold=True, color='FFFFFF')
+                    cell.fill      = PatternFill('solid', fgColor='0D80BE')
+                    cell.alignment = Alignment(horizontal='center')
+
+                # Données
+                for row_idx, row in enumerate(rows, 2):
+                    for col_idx, key in enumerate(fieldnames, 1):
+                        ws.cell(row=row_idx, column=col_idx, value=row.get(key, ''))
+
+                # Largeur auto
+                for col in ws.columns:
+                    max_len = max((len(str(cell.value or '')) for cell in col), default=10)
+                    ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 50)
+
+                buffer = io.BytesIO()
+                wb.save(buffer)
+                buffer.seek(0)
+
+                response = HttpResponse(
+                    buffer.getvalue(),
+                    content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+                response['Content-Disposition'] = f'attachment; filename="historique_{export_type}.xlsx"'
+                print(f"✅ Export Excel généré: {len(rows)} lignes")
+                return response
+
+            else:
+                return Response(
+                    {'status': 'error', 'message': f'Format non supporté: {export_format}'},
+                    status=400
+                )
+
+        except Exception as e:
+            import traceback
+            print(f"❌ Erreur export: {e}")
+            print(traceback.format_exc())
+            return Response({'status': 'error', 'message': str(e)}, status=500)
+        
+    
+class StatistiquesAPIView(APIView):
+    """
+    API endpoint pour les statistiques
+    URL: /api/emailing/statistiques/?period=30
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        try:
+            period = int(request.query_params.get('period', 30))
+            group_by = request.query_params.get('group_by', 'daily')
+            
+            # Date limite
+            date_limit = timezone.now() - timedelta(days=period)
+            
+            # Récupérer les envois de la période
+            envois = MailInfo.objects.filter(
+                user=request.user,
+                date_sent__gte=date_limit
+            ).order_by('date_sent')
+            
+            # KPIs
+            total = envois.count()
+            success = envois.filter(success=True).count()
+            failed = total - success
+            success_rate = round((success / total * 100) if total > 0 else 0, 1)
+            
+            # Évolution temporelle
+            if group_by == 'weekly':
+                evolution = envois.annotate(periode=TruncWeek('date_sent'))
+            elif group_by == 'monthly':
+                evolution = envois.annotate(periode=TruncMonth('date_sent'))
+            else:  # daily
+                evolution = envois.annotate(periode=TruncDate('date_sent'))
+            
+            evolution_data = evolution.values('periode').annotate(
+                total=Count('id'),
+                reussis=Count('id', filter=Q(success=True)),
+                echoues=Count('id', filter=Q(success=False))
+            ).order_by('periode')
+            
+            # Distribution des commandes par envoi
+            commandes_par_envoi = []
+            pieces_par_envoi = []
+            for envoi in envois:
+                commandes_par_envoi.append(envoi.commands.count())
+                pieces_par_envoi.append(envoi.mailattachment_set.count())
+            
+            # Top clients
+            top_clients = Counter()
+            for envoi in envois:
+                for cmd in envoi.commands.all():
+                    if cmd.client:
+                        top_clients[cmd.client.username] += 1
+            
+            top_clients_data = dict(top_clients.most_common(5))
+            
+            return Response({
+                'status': 'success',
+                'kpis': {
+                    'total': total,
+                    'success': success,
+                    'failed': failed,
+                    'success_rate': success_rate
+                },
+                'evolution': {
+                    'labels': [item['periode'].strftime('%d/%m/%Y') if group_by == 'daily' else 
+                               item['periode'].strftime('Semaine %W %Y') if group_by == 'weekly' else
+                               item['periode'].strftime('%B %Y') for item in evolution_data],
+                    'reussis': [item['reussis'] for item in evolution_data],
+                    'echoues': [item['echoues'] for item in evolution_data]
+                },
+                'distribution': {
+                    'commandes': commandes_par_envoi,
+                    'pieces': pieces_par_envoi
+                },
+                'top_clients': top_clients_data
+            })
+            
+        except Exception as e:
+            logger.error(f"Erreur stats: {str(e)}", exc_info=True)
+            return Response({'error': str(e)}, status=500)
+        
+                    
 
 # Voir comment les commandes sont liées aux clients
 class DiagnostiqueCommandesAPIView(APIView):
