@@ -419,14 +419,35 @@ def generate_chart_image(charts_data):  # charts_data au lieu de chart_data
     plt.figure(figsize=(10, 6))
     
     labels = charts_data['labels']  # charts_data au lieu de chart_data
+    datasets = charts_data.get('datasets', [])
+
+    # ensure ascending order by year label
+    try:
+        order = sorted(range(len(labels)), key=lambda i: int(labels[i]))
+        labels = [labels[i] for i in order]
+        datasets = [
+            {**ds, 'data': [ds['data'][i] for i in order]}
+            for ds in datasets
+        ]
+    except Exception:
+        pass
+
     x = np.arange(len(labels))
+    chart_type = charts_data.get('chart_type', 'line')
     
-    # Créer le graphique
-    for i, dataset in enumerate(charts_data['datasets']):  # charts_data au lieu de chart_data
-        plt.plot(labels, dataset['data'], label=dataset['label'], 
-                marker='o', linewidth=2, markersize=6)
-    
-    plt.title(charts_data['title'], fontsize=14, fontweight='bold')  # charts_data au lieu de chart_data
+    # Créer le graphique selon le type
+    if chart_type in ('line',):
+        for i, dataset in enumerate(datasets):  # charts_data au lieu de chart_data
+            plt.plot(labels, dataset['data'], label=dataset['label'], 
+                    marker='o', linewidth=2, markersize=6)
+    else:
+        # default to bar/histogramme
+        width = 0.8 / max(1, len(datasets))
+        for i, dataset in enumerate(datasets):
+            plt.bar(x + i * width, dataset['data'], width=width, label=dataset['label'])
+        plt.xticks(x + width * (len(datasets)-1) / 2, labels)
+
+    plt.title(charts_data.get('title', ''), fontsize=14, fontweight='bold')  # charts_data au lieu de chart_data
     plt.xlabel('Années')
     plt.ylabel('Valeurs')
     plt.legend()
@@ -1867,7 +1888,7 @@ def get_charts_rentabilite_financiere_data_v1(acheteur, years):
     return image_base64
 
 
-def get_charts_delais_data_v1(acheteur, years):
+def get_charts_delais_data_v1(acheteur, years, chart_type='bar'):
     """
     Génère les données pour le chart des délais
     """
@@ -1984,9 +2005,10 @@ def get_charts_delais_data_v1(acheteur, years):
     return image_base64
 
 
-def get_charts_structure_financiere_data(acheteur, years):
+def get_charts_structure_financiere_data(acheteur, years, chart_type='bar'):
     """
-    Génère les données pour le chart de structure financière AVEC GESTION D'ERREURS
+    Génère les données pour le chart de structure financière AVEC GESTION D'ERREURS.
+    ``chart_type`` peut être 'bar' ou 'line'.
     """
     try:
         actif_model = ActifC
@@ -2047,16 +2069,37 @@ def get_charts_structure_financiere_data(acheteur, years):
             f"series={{fdr:{fdr_data}, fdrn:{fdrn_data}, aufin:{aufin_data}, lr:{lr_data}, li:{li_data}}}"
         )
         
-        # Créer le graphique
+        # sort labels and corresponding data chronologically
+        try:
+            order = sorted(range(len(labels)), key=lambda i: int(labels[i]))
+            labels = [labels[i] for i in order]
+            fdr_data = [fdr_data[i] for i in order]
+            fdrn_data = [fdrn_data[i] for i in order]
+            aufin_data = [aufin_data[i] for i in order]
+            lr_data = [lr_data[i] for i in order]
+            li_data = [li_data[i] for i in order]
+        except Exception:
+            pass
+
+        # Créer le graphique (barres ou lignes selon chart_type)
         plt.figure(figsize=(12, 8))
-        
-        # Tracer les courbes
-        plt.plot(labels, fdr_data, label='FDR - Fonds de Roulement Net Global', marker='o', linewidth=2, color='#1f77b4')
-        plt.plot(labels, fdrn_data, label='FDRN - Fonds de Roulement Normatif', marker='s', linewidth=2, color='#ff7f0e')
-        plt.plot(labels, aufin_data, label='AUFIN - Autonomie Financière', marker='^', linewidth=2, color='#2ca02c')
-        plt.plot(labels, lr_data, label='LR - Liquidité Réduite', marker='d', linewidth=2, color='#d62728')
-        plt.plot(labels, li_data, label='LI - Liquidité Immédiate', marker='v', linewidth=2, color='#9467bd')
-        
+        if chart_type == 'bar':
+            width = 0.15
+            x = np.arange(len(labels))
+            plt.bar(x - 2*width, fdr_data, width=width, label='FDR - Fonds de Roulement Net Global', color='#1f77b4')
+            plt.bar(x - width, fdrn_data, width=width, label='FDRN - Fonds de Roulement Normatif', color='#ff7f0e')
+            plt.bar(x, aufin_data, width=width, label='AUFIN - Autonomie Financière', color='#2ca02c')
+            plt.bar(x + width, lr_data, width=width, label='LR - Liquidité Réduite', color='#d62728')
+            plt.bar(x + 2*width, li_data, width=width, label='LI - Liquidité Immédiate', color='#9467bd')
+            plt.xticks(x, labels)
+        else:
+            # Tracer les courbes
+            plt.plot(labels, fdr_data, label='FDR - Fonds de Roulement Net Global', marker='o', linewidth=2, color='#1f77b4')
+            plt.plot(labels, fdrn_data, label='FDRN - Fonds de Roulement Normatif', marker='s', linewidth=2, color='#ff7f0e')
+            plt.plot(labels, aufin_data, label='AUFIN - Autonomie Financière', marker='^', linewidth=2, color='#2ca02c')
+            plt.plot(labels, lr_data, label='LR - Liquidité Réduite', marker='d', linewidth=2, color='#d62728')
+            plt.plot(labels, li_data, label='LI - Liquidité Immédiate', marker='v', linewidth=2, color='#9467bd')
+
         # Personnaliser le graphique
         plt.title('Structure Financière', fontsize=16, fontweight='bold', pad=20)
         plt.xlabel('Années', fontsize=12)
@@ -2082,9 +2125,10 @@ def get_charts_structure_financiere_data(acheteur, years):
         return None
 
 
-def get_charts_rentabilite_financiere_data(acheteur, years):
+def get_charts_rentabilite_financiere_data(acheteur, years, chart_type='bar'):
     """
     Génère les données pour le chart de rentabilité financière AVEC GESTION D'ERREURS
+    ``chart_type`` peut être 'bar' ou 'line'.
     """
     try:
         actif_model = ActifC
@@ -2147,16 +2191,39 @@ def get_charts_rentabilite_financiere_data(acheteur, years):
             f"series={{caf:{caf_data}, caht:{caht_data}, re:{re_data}, ref:{ref_data}, rop:{rop_data}, cff:{cff_data}}}"
         )
         
+        # sort labels and data
+        try:
+            order = sorted(range(len(labels)), key=lambda i: int(labels[i]))
+            labels = [labels[i] for i in order]
+            caf_data = [caf_data[i] for i in order]
+            caht_data = [caht_data[i] for i in order]
+            re_data = [re_data[i] for i in order]
+            ref_data = [ref_data[i] for i in order]
+            rop_data = [rop_data[i] for i in order]
+            cff_data = [cff_data[i] for i in order]
+        except Exception:
+            pass
+        
         # Créer le graphique
         plt.figure(figsize=(12, 8))
-        
-        # Tracer les courbes
-        plt.plot(labels, caf_data, label='CAF - Chiffre d\'Affaires', marker='o', linewidth=2, color='#1f77b4')
-        plt.plot(labels, caht_data, label='CAHT - Chiffre d\'Affaires Hors Taxes', marker='s', linewidth=2, color='#ff7f0e')
-        plt.plot(labels, re_data, label='RE - Rentabilité Économique', marker='^', linewidth=2, color='#2ca02c')
-        plt.plot(labels, ref_data, label='REF - Rentabilité Financière', marker='d', linewidth=2, color='#d62728')
-        plt.plot(labels, rop_data, label='ROP - Rentabilité Outil de Production', marker='v', linewidth=2, color='#9467bd')
-        plt.plot(labels, cff_data, label='CFF - Couverture Frais Financiers', marker='*', linewidth=2, color='#8c564b')
+        if chart_type == 'bar':
+            width = 0.13
+            x = np.arange(len(labels))
+            plt.bar(x - 2*width, caf_data, width=width, label='CAF - Chiffre d\'Affaires', color='#1f77b4')
+            plt.bar(x - width, caht_data, width=width, label='CAHT - Chiffre d\'Affaires Hors Taxes', color='#ff7f0e')
+            plt.bar(x, re_data, width=width, label='RE - Rentabilité Économique', color='#2ca02c')
+            plt.bar(x + width, ref_data, width=width, label='REF - Rentabilité Financière', color='#d62728')
+            plt.bar(x + 2*width, rop_data, width=width, label='ROP - Rentabilité Outil de Production', color='#9467bd')
+            plt.bar(x + 3*width, cff_data, width=width, label='CFF - Couverture Frais Financiers', color='#8c564b')
+            plt.xticks(x, labels)
+        else:
+            # Tracer les courbes
+            plt.plot(labels, caf_data, label='CAF - Chiffre d\'Affaires', marker='o', linewidth=2, color='#1f77b4')
+            plt.plot(labels, caht_data, label='CAHT - Chiffre d\'Affaires Hors Taxes', marker='s', linewidth=2, color='#ff7f0e')
+            plt.plot(labels, re_data, label='RE - Rentabilité Économique', marker='^', linewidth=2, color='#2ca02c')
+            plt.plot(labels, ref_data, label='REF - Rentabilité Financière', marker='d', linewidth=2, color='#d62728')
+            plt.plot(labels, rop_data, label='ROP - Rentabilité Outil de Production', marker='v', linewidth=2, color='#9467bd')
+            plt.plot(labels, cff_data, label='CFF - Couverture Frais Financiers', marker='*', linewidth=2, color='#8c564b')
         
         # Personnaliser le graphique
         plt.title('Rentabilité Financière', fontsize=16, fontweight='bold', pad=20)
@@ -2183,9 +2250,10 @@ def get_charts_rentabilite_financiere_data(acheteur, years):
         return None
 
 
-def get_charts_delais_data(acheteur, years):
+def get_charts_delais_data(acheteur, years, chart_type='bar'):
     """
-    Génère les données pour le chart des délais AVEC GESTION D'ERREURS
+    Génère les données pour le chart des délais AVEC GESTION D'ERREURS.
+    ``chart_type`` may be 'bar' or 'line'; bars are used by default.
     """
     try:
         actif_model = ActifC
@@ -2248,16 +2316,39 @@ def get_charts_delais_data(acheteur, years):
             f"series={{rsmp:{rsmp_data}, rspf:{rspf_data}, rstmt:{rstmt_data}, rsts:{rsts_data}, cc:{cc_data}, cf:{cf_data}}}"
         )
         
+        # sort labels/data
+        try:
+            order = sorted(range(len(labels)), key=lambda i: int(labels[i]))
+            labels = [labels[i] for i in order]
+            rsmp_data = [rsmp_data[i] for i in order]
+            rspf_data = [rspf_data[i] for i in order]
+            rstmt_data = [rstmt_data[i] for i in order]
+            rsts_data = [rsts_data[i] for i in order]
+            cc_data = [cc_data[i] for i in order]
+            cf_data = [cf_data[i] for i in order]
+        except Exception:
+            pass
+        
         # Créer le graphique
         plt.figure(figsize=(12, 8))
-        
-        # Tracer les courbes
-        plt.plot(labels, rsmp_data, label='RSMP - Rotation Stocks MP (jours)', marker='o', linewidth=2, color='#1f77b4')
-        plt.plot(labels, rspf_data, label='RSPF - Rotation Stocks PF (jours)', marker='s', linewidth=2, color='#ff7f0e')
-        plt.plot(labels, rstmt_data, label='RSTM - Rotation Stocks Marchandises (jours)', marker='^', linewidth=2, color='#2ca02c')
-        plt.plot(labels, rsts_data, label='RSTS - Rotation Stocks Services (jours)', marker='d', linewidth=2, color='#d62728')
-        plt.plot(labels, cc_data, label='CC - Crédit Clients (jours)', marker='v', linewidth=2, color='#9467bd')
-        plt.plot(labels, cf_data, label='CF - Crédit Fournisseurs (jours)', marker='*', linewidth=2, color='#8c564b')
+        if chart_type == 'bar':
+            width = 0.13
+            x = np.arange(len(labels))
+            plt.bar(x - 2*width, rsmp_data, width=width, label='RSMP - Rotation Stocks MP (jours)', color='#1f77b4')
+            plt.bar(x - width, rspf_data, width=width, label='RSPF - Rotation Stocks PF (jours)', color='#ff7f0e')
+            plt.bar(x, rstmt_data, width=width, label='RSTM - Rotation Stocks Marchandises (jours)', color='#2ca02c')
+            plt.bar(x + width, rsts_data, width=width, label='RSTS - Rotation Stocks Services (jours)', color='#d62728')
+            plt.bar(x + 2*width, cc_data, width=width, label='CC - Crédit Clients (jours)', color='#9467bd')
+            plt.bar(x + 3*width, cf_data, width=width, label='CF - Crédit Fournisseurs (jours)', color='#8c564b')
+            plt.xticks(x, labels)
+        else:
+            # Tracer les courbes
+            plt.plot(labels, rsmp_data, label='RSMP - Rotation Stocks MP (jours)', marker='o', linewidth=2, color='#1f77b4')
+            plt.plot(labels, rspf_data, label='RSPF - Rotation Stocks PF (jours)', marker='s', linewidth=2, color='#ff7f0e')
+            plt.plot(labels, rstmt_data, label='RSTM - Rotation Stocks Marchandises (jours)', marker='^', linewidth=2, color='#2ca02c')
+            plt.plot(labels, rsts_data, label='RSTS - Rotation Stocks Services (jours)', marker='d', linewidth=2, color='#d62728')
+            plt.plot(labels, cc_data, label='CC - Crédit Clients (jours)', marker='v', linewidth=2, color='#9467bd')
+            plt.plot(labels, cf_data, label='CF - Crédit Fournisseurs (jours)', marker='*', linewidth=2, color='#8c564b')
         
         # Personnaliser le graphique
         plt.title('Délais', fontsize=16, fontweight='bold', pad=20)

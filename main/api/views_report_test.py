@@ -415,7 +415,8 @@ class GenerateReport(APIView):
         # 2. Définir les années et récupérer la devise
         current_year = datetime.datetime.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
-        print(years_to_retrieve)
+        years_to_retrieve = sorted(years_to_retrieve)
+        print("years_to_retrieve (sorted):", years_to_retrieve)
         
         
         

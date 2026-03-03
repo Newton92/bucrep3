@@ -11,6 +11,7 @@ from django.db.models import Count
 # from datetime import datetime
 from datetime import datetime as dt
 import html  # Pour l'échappement XML
+import re  # regex utilities
 
 from main.serializers import *
 import xml.etree.ElementTree as ET
@@ -108,6 +109,58 @@ def to_float(value):
         return 0.0
 
 
+def _format_value_as_percent(value):
+    if value is None:
+        return value
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw or raw in {"-", "--", "N/A", "Non spécifié", "None"}:
+            return value
+        if "%" in raw:
+            return value
+        raw_norm = raw.replace(" ", "").replace(",", ".")
+        try:
+            number = float(raw_norm)
+            return f"{number:.2f}%"
+        except (TypeError, ValueError):
+            return value
+    if isinstance(value, (int, float, Decimal)):
+        return f"{float(value):.2f}%"
+    return value
+
+
+def _format_ratios_node_as_percent(node):
+    if isinstance(node, dict):
+        return {k: _format_ratios_node_as_percent(v) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_format_ratios_node_as_percent(item) for item in node]
+    return _format_value_as_percent(node)
+
+
+def _force_ratios_percent_display(report_data):
+    if not isinstance(report_data, dict):
+        return report_data
+
+    financial_statements = report_data.get("financial_statements")
+    if not isinstance(financial_statements, dict):
+        return report_data
+
+    for section_key in (
+        "etats_financiers_classiques",
+        "etats_financiers_anglais",
+        "etats_financiers_bancaires",
+        "etats_financiers_syscohada",
+        "etats_financiers_irfs_cobac",
+    ):
+        section = financial_statements.get(section_key)
+        if not isinstance(section, dict):
+            continue
+        if "ratios_data" in section:
+            section["ratios_data"] = _format_ratios_node_as_percent(section.get("ratios_data"))
+
+    return report_data
+
+
 def build_scoring_manuel_context(acheteur, years_to_retrieve):
     """Construit l'historique de scoring manuel pour N, N-1, N-2."""
     labels = ["N", "N-1", "N-2"]
@@ -182,19 +235,55 @@ def get_base64_chart2(data, title, y_label, chart_type='bar', is_percentage=Fals
 
     labels = data['labels']
     datasets = data['datasets']
-    
+
+    # For consistent X-axis ordering we sort by numeric value of the labels
+    # and re‑order the corresponding dataset values. This prevents charts
+    # from showing years like [2025,2024,2023].
+    def _numeric_key(label):
+        # attempt to coerce into int, otherwise raise
+        return int(label)
+
+    def _nlabel_key(label):
+        # support patterns N, N-1, N-2, N+1 etc.
+        m = re.match(r'^N([+-]?\d+)?$', label)
+        if m:
+            offset = int(m.group(1)) if m.group(1) else 0
+            # we want N-2 < N-1 < N < N+1 so use offset
+            return offset
+        # finally fall back to label index (preserve original order)
+        try:
+            return labels.index(label)
+        except ValueError:
+            return 0
+
+    try:
+        order = sorted(range(len(labels)), key=lambda i: _numeric_key(labels[i]))
+    except Exception:
+        try:
+            order = sorted(range(len(labels)), key=lambda i: _nlabel_key(labels[i]))
+        except Exception:
+            order = list(range(len(labels)))
+
+    if order != list(range(len(labels))):
+        labels = [labels[i] for i in order]
+        datasets = [
+            {**ds, 'data': [ds['data'][i] for i in order]}
+            for ds in datasets
+        ]
+
     # Nouvelle méthode pour créer le DataFrame
-    if chart_type == 'bar':
+    if chart_type == 'bar' or chart_type == 'hist':
         # On extrait les données et les labels pour les années
         years = [d['label'] for d in datasets]
         datas = [d['data'] for d in datasets]
-        
+
         # Création du DataFrame avec les labels comme index des colonnes et les années comme index des lignes
         df = pd.DataFrame(datas, columns=labels, index=years)
-        
+
         # Affichage du graphique directement depuis le DataFrame
+        # 'hist' est traité de la même façon que 'bar' : diagramme en bâtons
         df.plot(kind='bar', ax=ax, width=0.8, rot=0)
-        
+    
     elif chart_type == 'line':
         for dataset in datasets:
             ax.plot(labels, dataset['data'], label=dataset['label'], marker='o')
@@ -1774,7 +1863,9 @@ class GenerateReport(APIView):
         # 2. Définir les années et récupérer la devise
         current_year = dt.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
-        print(years_to_retrieve)
+        # trier immédiatement afin que les graphiques et badges s'affichent en ordre chronologique
+        years_to_retrieve = sorted(years_to_retrieve)
+        print("years_to_retrieve (sorted):", years_to_retrieve)
         
         # 3. Définir les textes en fonction de la langue
         if language_report.lower() == "en":
@@ -2798,9 +2889,9 @@ class GenerateReport(APIView):
                     "ratios_data": ratios_structured_data,
                     "charts_data_v1": charts_data,
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve),
-                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve, chart_type='bar'),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve, chart_type='bar'),
+                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve, chart_type='bar'),
                     },
                 },
                 "etats_financiers_anglais": {
@@ -2969,6 +3060,7 @@ class GenerateReport(APIView):
             }
         }
         
+        _force_ratios_percent_display(report_data)
         print(report_data)
         logger.info(f"Récupération de report data {report_data}")
 
@@ -3048,6 +3140,7 @@ class GenerateReportCommandeAcheteur(APIView):
         # 2. Définir les années et récupérer la devise
         current_year = dt.now().year
         years_to_retrieve = [current_year - 1, current_year - 2, current_year - 3]
+        years_to_retrieve = sorted(years_to_retrieve)
         print(years_to_retrieve)
         
         # Variables
@@ -4218,9 +4311,9 @@ class GenerateReportCommandeAcheteur(APIView):
                     "ratios_data": ratios_structured_data,
                     "charts_data_v1": charts_data,
                     "charts_data": {
-                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve),
-                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve),
-                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve),
+                        "charts_structure_financiere": get_charts_structure_financiere_data(acheteur, years_to_retrieve, chart_type='bar'),
+                        "charts_rentabilite_financiere": get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve, chart_type='bar'),
+                        "charts_delais": get_charts_delais_data(acheteur, years_to_retrieve, chart_type='bar'),
                     },
                 },
                 "etats_financiers_anglais": {
@@ -4396,6 +4489,7 @@ class GenerateReportCommandeAcheteur(APIView):
             # keep compatibility with template expecting 'scoring'
             report_data["scoring"] = scoring_context
 
+        _force_ratios_percent_display(report_data)
         print(report_data)
 
             

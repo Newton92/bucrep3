@@ -588,7 +588,65 @@ def _inject_static_urls(report_data, request=None):
         if isinstance(section_value, dict):
             section_value['url_site'] = static_base_url
 
+    _force_ratios_percent_display(report_data)
     _cap_scores_for_export(report_data)
+
+    return report_data
+
+
+def _format_value_as_percent(value):
+    """Convertit une valeur numérique en chaîne pourcentage (affichage)."""
+    if value is None:
+        return value
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw or raw in {"-", "--", "N/A", "Non spécifié", "None"}:
+            return value
+        if "%" in raw:
+            return value
+        raw_norm = raw.replace(" ", "").replace(",", ".")
+        try:
+            number = float(raw_norm)
+            return f"{number:.2f}%"
+        except (TypeError, ValueError):
+            return value
+    if isinstance(value, (int, float, Decimal)):
+        return f"{float(value):.2f}%"
+    return value
+
+
+def _format_ratios_node_as_percent(node):
+    """Parcourt récursivement une structure ratios et convertit les numériques en %."""
+    if isinstance(node, dict):
+        return {k: _format_ratios_node_as_percent(v) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_format_ratios_node_as_percent(item) for item in node]
+    return _format_value_as_percent(node)
+
+
+def _force_ratios_percent_display(report_data):
+    """
+    Force l'affichage de tous les ratios en pourcentage pour tous les types de bilan.
+    """
+    if not isinstance(report_data, dict):
+        return report_data
+
+    financial_statements = report_data.get("financial_statements")
+    if not isinstance(financial_statements, dict):
+        return report_data
+
+    for section_key in (
+        "etats_financiers_classiques",
+        "etats_financiers_anglais",
+        "etats_financiers_bancaires",
+        "etats_financiers_syscohada",
+        "etats_financiers_irfs_cobac",
+    ):
+        section = financial_statements.get(section_key)
+        if not isinstance(section, dict):
+            continue
+        if "ratios_data" in section:
+            section["ratios_data"] = _format_ratios_node_as_percent(section.get("ratios_data"))
 
     return report_data
 
@@ -721,8 +779,12 @@ def generer_rapport_solvabilite(request):
         
         
         # 2. Définir les années et récupérer la devise
+        # build the list of years and immediately sort it so that
+        # downstream code always sees them in chronological order
+        # (oldest first). The original payload sends [N, N-1, N-2].
         years_to_retrieve = [data['annee_n'], data['annee_n1'], data['annee_n2']]
-        print(years_to_retrieve)
+        years_to_retrieve = sorted(y for y in years_to_retrieve if y is not None)
+        print("years_to_retrieve (sorted):", years_to_retrieve)
         
         # Récupération de la commande si spécifiée
         commande = None
@@ -1499,9 +1561,9 @@ def generer_rapport_solvabilite(request):
         classic_passif_data = get_structured_passif_data(acheteur, years_to_retrieve)
         classic_resultat_data = get_structured_resultat_data(acheteur, years_to_retrieve)
         classic_ratios_data = get_structured_ratios_data(acheteur, years_to_retrieve)
-        classic_chart_structure = get_charts_structure_financiere_data(acheteur, years_to_retrieve)
-        classic_chart_rentabilite = get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve)
-        classic_chart_delais = get_charts_delais_data(acheteur, years_to_retrieve)
+        classic_chart_structure = get_charts_structure_financiere_data(acheteur, years_to_retrieve, chart_type='bar')
+        classic_chart_rentabilite = get_charts_rentabilite_financiere_data(acheteur, years_to_retrieve, chart_type='bar')
+        classic_chart_delais = get_charts_delais_data(acheteur, years_to_retrieve, chart_type='bar')
 
         print(
             "[DEBUG][REPORTING][CLASSIQUE] "
@@ -2073,6 +2135,7 @@ def generer_rapport_solvabilite(request):
         }
         
         # Retourner les données pour affichage dans le template
+        _force_ratios_percent_display(report_data)
         return Response({
             'status': 'success',
             'message': 'Rapport généré avec succès',
