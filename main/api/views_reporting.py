@@ -97,6 +97,7 @@ from main.api.views_report import (
     generate_xml_v2,
     render_html_template,
     generate_xml_with_xsd,
+    build_scoring_manuel_context,
     render_to_string,
     HttpResponse,
     Response,
@@ -576,6 +577,7 @@ def _inject_static_urls(report_data, request=None):
 
     for section_name in (
         'scoring_sans_bilan',
+        'scoring_manuel',
         'scoring_classique',
         'scoring_anglais',
         'scoring_bancaire',
@@ -585,6 +587,99 @@ def _inject_static_urls(report_data, request=None):
         section_value = report_data.get(section_name)
         if isinstance(section_value, dict):
             section_value['url_site'] = static_base_url
+
+    _cap_scores_for_export(report_data)
+
+    return report_data
+
+
+def _cap_numeric_score_value(value):
+    """Retourne (valeur_affichee, valeur_numerique_cappee_0_10_ou_None)."""
+    if value in (None, "", "None"):
+        return value, None
+
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return value, None
+
+    numeric_capped = max(0.0, min(10.0, numeric))
+    return f"{numeric_capped:.2f}", numeric_capped
+
+
+def _score_image_path_from_numeric(value_numeric):
+    if value_numeric is None:
+        return "scoring/0.png"
+    score_int = max(0, min(10, round(float(value_numeric))))
+    return f"scoring/{score_int}.png"
+
+
+def _cap_scores_for_export(report_data):
+    """
+    Limite les valeurs de scoring au domaine [0, 10] pour les exports.
+    N'affecte que le payload utilisé par les générations de rapports.
+    """
+    if not isinstance(report_data, dict):
+        return report_data
+
+    # 1) Scoring sans bilan (nomenclatures possibles)
+    for section_name in ("scoring_sans_bilan", "scoring", "scoring_sansbilan"):
+        section = report_data.get(section_name)
+        if not isinstance(section, dict):
+            continue
+
+        score_display, score_numeric = _cap_numeric_score_value(section.get("score_value"))
+        section["score_value"] = score_display
+        image_path = _score_image_path_from_numeric(score_numeric)
+        section["score_image"] = image_path
+        section["score_png"] = image_path
+        if "score_image_base64" in section:
+            section["score_image_base64"] = get_static_image_base64(image_path)
+
+    # 2) Scorings avec bilan par année
+    for section_name in (
+        "scoring_classique",
+        "scoring_anglais",
+        "scoring_bancaire",
+        "scoring_syscohada",
+        "scoring_ifrs",
+    ):
+        section = report_data.get(section_name)
+        if not isinstance(section, dict):
+            continue
+
+        for suffix in ("N", "N1", "N2"):
+            value_key = f"score_value_annee_{suffix}"
+            image_key = f"score_image_annee_{suffix}"
+            image_b64_key = f"score_image_annee_{suffix}_base64"
+            arrondi_key = f"score_value_annee_{suffix}_arrondi"
+
+            score_display, score_numeric = _cap_numeric_score_value(section.get(value_key))
+            section[value_key] = score_display
+
+            image_path = _score_image_path_from_numeric(score_numeric)
+            section[image_key] = image_path
+            section[arrondi_key] = max(0, min(10, round(float(score_numeric)))) if score_numeric is not None else 0
+            if image_b64_key in section:
+                section[image_b64_key] = get_static_image_base64(image_path)
+
+    # 3) Scoring manuel (N / N-1 / N-2)
+    scoring_manuel = report_data.get("scoring_manuel")
+    if isinstance(scoring_manuel, dict):
+        annees = scoring_manuel.get("annees")
+        if isinstance(annees, list):
+            for entry in annees:
+                if not isinstance(entry, dict):
+                    continue
+
+                score_display, score_numeric = _cap_numeric_score_value(entry.get("score"))
+                entry["score"] = score_display
+                entry["score_numeric"] = score_numeric
+                entry["score_arrondi"] = max(0, min(10, round(float(score_numeric)))) if score_numeric is not None else 0
+
+                image_path = _score_image_path_from_numeric(score_numeric)
+                entry["score_image"] = image_path
+                entry["score_image_base64"] = get_static_image_base64(image_path)
 
     return report_data
 
@@ -1171,6 +1266,7 @@ def generer_rapport_solvabilite(request):
         # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
+        scoring_manuel_context = build_scoring_manuel_context(acheteur, years_to_retrieve)
         
         # Limiter le score entre 0 et 10 pour correspondre aux images
         raw_score_sans_bilan = float(scoring_sans_bilan.scoring_value) if scoring_sans_bilan and scoring_sans_bilan.scoring_value is not None else 0.0
@@ -1436,6 +1532,7 @@ def generer_rapport_solvabilite(request):
         def _score_image_base64(score_value):
             return get_static_image_base64(_score_image_path(score_value))
         riskrating_base_url = _get_static_base_url(request, 'riskrating/')
+        scoring_manuel_context["url_site"] = static_base_url
 
         # Préparation des données pour le template
         report_data = {
@@ -1811,6 +1908,7 @@ def generer_rapport_solvabilite(request):
                 "score_type": "Scoring sans bilan",
                 "url_site": static_base_url,
             },
+            "scoring_manuel": scoring_manuel_context,
             "scoring_classique": {
                 "title_16": "SCORING CLASSIQUE - AVEC BILAN",
                 "annee_N": data['annee_n'],

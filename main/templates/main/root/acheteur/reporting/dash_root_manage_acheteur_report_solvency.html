@@ -2490,12 +2490,17 @@ $(document).ready(function() {
             ${genererScoringAvecBilanPremium(reportData, formData)}
             
             <!-- ================================================================= -->
-            <!-- SECTION 18: ÉTATS FINANCIERS -->
+            <!-- SECTION 18: SCORING MANUEL HISTORIQUE -->
+            <!-- ================================================================= -->
+            ${genererScoringManuelHistoriquePremium(reportData)}
+            
+            <!-- ================================================================= -->
+            <!-- SECTION 19: ÉTATS FINANCIERS -->
             <!-- ================================================================= -->
             ${genererSectionEtatsFinanciersPremium(reportData, formData)}
             
             <!-- ================================================================= -->
-            <!-- SECTION 19: OPÉRATIONS ET HISTORIQUE -->
+            <!-- SECTION 20: OPÉRATIONS ET HISTORIQUE -->
             <!-- ================================================================= -->
             <div class="report-section">
                 <div class="report-section-title">
@@ -2967,6 +2972,56 @@ $(document).ready(function() {
                             </div>
                         `;
                     }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function genererScoringManuelHistoriquePremium(reportData) {
+        const scoringManuel = reportData?.scoring_manuel || {};
+        const annees = Array.isArray(scoringManuel.annees) ? scoringManuel.annees : [];
+        const anneesDisponibles = annees.filter(item => item && item.is_available);
+
+        if (!anneesDisponibles.length) {
+            return '';
+        }
+
+        return `
+            <div class="report-section">
+                <div class="report-section-title" style="background: linear-gradient(135deg, #20c997, #198754);">
+                    <i class="fas fa-user-edit"></i>
+                    ${scoringManuel.title || 'SCORING MANUEL - HISTORIQUE'}
+                </div>
+                <p style="margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #198754;">
+                    <i class="fas fa-info-circle me-2" style="color: #198754;"></i>
+                    Historique des scores saisis manuellement sur les exercices N, N-1 et N-2.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
+                    ${anneesDisponibles.map(annee => `
+                        <div style="background: white; border-radius: 16px; border: 1px solid #e9ecef; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                            <div style="background: linear-gradient(135deg, #20c997, #198754); padding: 12px; text-align: center; color: white; font-weight: 700;">
+                                <i class="fas fa-calendar me-2"></i>EXERCICE ${annee.label || '-'} (${annee.annee || '-'})
+                            </div>
+                            <div style="padding: 20px; text-align: center;">
+                                <img src="${STATIC_URL}${annee.score_image || 'scoring/0.png'}"
+                                    alt="Score manuel ${annee.label || '-'}"
+                                    style="max-width: 120px; height: auto; margin-bottom: 15px;"
+                                    onerror="this.src='${STATIC_URL}scoring/0.png'">
+                                <div style="font-size: 1.8rem; font-weight: 800; color: #198754; margin-bottom: 5px;">
+                                    ${annee.score || 'N/A'}
+                                </div>
+                                <div style="font-size: 0.9rem; color: #6c757d; margin-bottom: 10px;">
+                                    ${annee.interpretation || 'Interprétation N/A'}
+                                </div>
+                                ${annee.commentaire ? `
+                                    <div style="margin-top: 8px; padding: 10px; border-radius: 8px; background: #fff3cd; color: #856404; font-size: 0.9rem;">
+                                        ${annee.commentaire}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;

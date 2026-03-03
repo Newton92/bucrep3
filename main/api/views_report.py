@@ -81,7 +81,8 @@ from main.models import (
     ActifA, PassifA, ResultatA,  # Anglais
     Assets, Liabilities,          # Bancaire
     ActifS, PassifS, ResultatS,  # SYSCOHADA
-    ActifIFRS, PassifIFRS, ResultatIFRS  # IFRS COBAC
+    ActifIFRS, PassifIFRS, ResultatIFRS,  # IFRS COBAC
+    Scoring
 )
 from main.models import TelephoneAcheteur, PortableAcheteur, EmailAcheteur, AdresseAcheteur
 # from datetime import datetime as dt 
@@ -105,6 +106,67 @@ def to_float(value):
         return float(value)
     except (ValueError, TypeError):
         return 0.0
+
+
+def build_scoring_manuel_context(acheteur, years_to_retrieve):
+    """Construit l'historique de scoring manuel pour N, N-1, N-2."""
+    labels = ["N", "N-1", "N-2"]
+    normalized_years = []
+    for year in (years_to_retrieve or [])[:3]:
+        try:
+            normalized_years.append(int(year))
+        except (TypeError, ValueError):
+            normalized_years.append(year)
+
+    scorings = (
+        Scoring.objects
+        .filter(acheteur=acheteur, annee__annee__in=normalized_years)
+        .select_related("annee")
+        .order_by("-updated_at", "-created_at")
+    )
+
+    scoring_by_year = {}
+    for scoring in scorings:
+        year_value = getattr(scoring.annee, "annee", None)
+        if year_value is not None and year_value not in scoring_by_year:
+            scoring_by_year[year_value] = scoring
+
+    annees = []
+    for idx, year in enumerate(normalized_years):
+        scoring = scoring_by_year.get(year)
+        raw_score = str(scoring.score).strip() if scoring and scoring.score else None
+        score_numeric = None
+        if raw_score:
+            try:
+                score_numeric = float(raw_score)
+            except (TypeError, ValueError):
+                score_numeric = None
+
+        if score_numeric is not None:
+            score_arrondi = max(0, min(10, round(score_numeric)))
+            score_affiche = f"{score_numeric:.2f}"
+        else:
+            score_arrondi = 0
+            score_affiche = raw_score or "N/A"
+
+        annees.append({
+            "label": labels[idx] if idx < len(labels) else f"N-{idx}",
+            "annee": year,
+            "score": score_affiche,
+            "score_raw": raw_score,
+            "score_numeric": score_numeric,
+            "score_arrondi": score_arrondi,
+            "score_image": f"scoring/{score_arrondi}.png",
+            "interpretation": scoring.get_score_category() if scoring else "Non évalué",
+            "commentaire": scoring.commentaire if scoring and scoring.commentaire else "",
+            "is_available": bool(scoring),
+        })
+
+    return {
+        "title": "SCORING MANUEL",
+        "annees": annees,
+        "has_data": any(item["is_available"] for item in annees),
+    }
 
 
 # Fichier : views_report.py
@@ -2224,6 +2286,7 @@ class GenerateReport(APIView):
         # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
+        scoring_manuel_context = build_scoring_manuel_context(acheteur, years_to_retrieve)
         print(scoring_sans_bilan)
 
         # par défaut
@@ -2790,6 +2853,7 @@ class GenerateReport(APIView):
             },
             
             "translations": {},
+            "scoring_manuel": scoring_manuel_context,
             "scoring_sansbilan": {
                 "title_17": "SCORING ACREMAC - SANS BILAN",
                 "score_image": f"scoring/{score_indexe}.png",
@@ -3596,6 +3660,7 @@ class GenerateReportCommandeAcheteur(APIView):
         # NOUVEAU: SCORING SANS BILAN
         # Recuperer le scoring sans bilan ici 
         scoring_sans_bilan = ScoringSansBilanAcheteur.objects.filter(acheteur=acheteur).first()
+        scoring_manuel_context = build_scoring_manuel_context(acheteur, years_to_retrieve)
         print(scoring_sans_bilan)
 
         # par défaut
@@ -4209,6 +4274,7 @@ class GenerateReportCommandeAcheteur(APIView):
             
             "translations": {},
             "scoring": scoring_context,
+            "scoring_manuel": scoring_manuel_context,
             "scoring_classique": {
                 "title_26": "SCORING CLASSIQUE - AVEC BILAN",
                 "score_image_annee_N": f"scoring/{round(float(score_value_annee_N)) if score_value_annee_N else 0}.png",

@@ -29,6 +29,7 @@ from decimal import Decimal
 from typing import Dict, Tuple, Optional
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.http import Http404
 # views_scoring_manuel.py - AJOUTEZ CET IMPORT EN HAUT DU FICHIER
 
 from django.db import IntegrityError

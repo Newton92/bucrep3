@@ -3560,6 +3560,41 @@
       </div>
       {% endif %}
 
+      {% if scoring_manuel and scoring_manuel.has_data %}
+      <div class="section">
+         <div class="section-title">{{ scoring_manuel.title|default:"SCORING MANUEL" }}</div>
+         <p>Ce score correspond au scoring manuel saisi pour chaque exercice disponible.</p>
+         {% for entry in scoring_manuel.annees %}
+         {% if entry.is_available %}
+         <div class="subsection-title">SCORE ANNEE {{ entry.label }} ({{ entry.annee }})</div>
+         <div class="score-image">
+            <img src="{% if entry.score_image_base64 %}{{ entry.score_image_base64 }}{% elif scoring_manuel.url_site %}{{ scoring_manuel.url_site }}{{ entry.score_image }}{% else %}{% static entry.score_image %}{% endif %}" alt="Score manuel {{ entry.label }}">
+         </div>
+         <br>
+         <div class="shareholder-entry">
+            <table>
+               <tbody>
+                  <tr>
+                     <th>Score</th>
+                     <td style="color: #00cc00;">{{ entry.score }}</td>
+                  </tr>
+                  <tr>
+                     <th>Interprétation</th>
+                     <td>{{ entry.interpretation|default:"Non évalué" }}</td>
+                  </tr>
+                  <tr>
+                     <th>Commentaire</th>
+                     <td class="warning">{{ entry.commentaire|default:"-"|striptags|safe }}</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+         <br>
+         {% endif %}
+         {% endfor %}
+      </div>
+      {% endif %}
+
 
       <!-- Opérations & Historique -->
       <div class="section">
