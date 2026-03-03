@@ -83,6 +83,7 @@ from main.models import (
     ActifS, PassifS, ResultatS,  # SYSCOHADA
     ActifIFRS, PassifIFRS, ResultatIFRS  # IFRS COBAC
 )
+from main.models import TelephoneAcheteur, PortableAcheteur, EmailAcheteur, AdresseAcheteur
 # from datetime import datetime as dt 
 from main.api.views_scoring_classique import *
 from main.api.views_scoring_anglais import *
@@ -2465,6 +2466,35 @@ class GenerateReport(APIView):
         
 
 
+        telephones_acheteur = list(
+            TelephoneAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(telephone__isnull=True)
+            .exclude(telephone__exact="")
+            .values_list("telephone", flat=True)
+            .distinct()
+        )
+        portables_acheteur = list(
+            PortableAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(portable__isnull=True)
+            .exclude(portable__exact="")
+            .values_list("portable", flat=True)
+            .distinct()
+        )
+        emails_acheteur = list(
+            EmailAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(email__isnull=True)
+            .exclude(email__exact="")
+            .values_list("email", flat=True)
+            .distinct()
+        )
+        adresses_acheteur = list(
+            AdresseAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(adresse__isnull=True)
+            .exclude(adresse__exact="")
+            .values_list("adresse", flat=True)
+            .distinct()
+        )
+
         # 3. Initialize the report data structure
         report_data = {
             "logo_data": get_logo_data(),
@@ -2516,6 +2546,11 @@ class GenerateReport(APIView):
                     "province": acheteur.province.nom if hasattr(acheteur, 'province') else "Non spécifié",
                     "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
+                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
+                    "telephones": telephones_acheteur,
+                    "portables": portables_acheteur,
+                    "emails_secondaires": emails_acheteur,
+                    "adresses_secondaires": adresses_acheteur,
                     "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
                     "code_postal": acheteur.code_postal if hasattr(acheteur, 'code_postal') else "Non spécifié",
                 }
@@ -3803,6 +3838,35 @@ class GenerateReportCommandeAcheteur(APIView):
         
 
 
+        telephones_acheteur = list(
+            TelephoneAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(telephone__isnull=True)
+            .exclude(telephone__exact="")
+            .values_list("telephone", flat=True)
+            .distinct()
+        )
+        portables_acheteur = list(
+            PortableAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(portable__isnull=True)
+            .exclude(portable__exact="")
+            .values_list("portable", flat=True)
+            .distinct()
+        )
+        emails_acheteur = list(
+            EmailAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(email__isnull=True)
+            .exclude(email__exact="")
+            .values_list("email", flat=True)
+            .distinct()
+        )
+        adresses_acheteur = list(
+            AdresseAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(adresse__isnull=True)
+            .exclude(adresse__exact="")
+            .values_list("adresse", flat=True)
+            .distinct()
+        )
+
         # 3. Initialize the report data structure
         report_data = {
             "logo_data": get_logo_data(),
@@ -3854,6 +3918,11 @@ class GenerateReportCommandeAcheteur(APIView):
                     "province": acheteur.province.nom if hasattr(acheteur, 'province') else "Non spécifié",
                     "ville": acheteur.ville.nom if hasattr(acheteur, 'ville') else "Non spécifié",
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
+                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
+                    "telephones": telephones_acheteur,
+                    "portables": portables_acheteur,
+                    "emails_secondaires": emails_acheteur,
+                    "adresses_secondaires": adresses_acheteur,
                     "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
                     "code_postal": acheteur.code_postal if hasattr(acheteur, 'code_postal') else "Non spécifié",
                 }
@@ -4017,7 +4086,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "affiliations": list_affiliations_data if list_affiliations_data else ["Aucune affiliation disponible"],
             },
             "sector_analysis": {
-                "title_22": "ANALYSE SECTORIELLE",
+                "title_22": "ANALYSE ECONOMIQUE",
                 "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
                 "sectorielle": {

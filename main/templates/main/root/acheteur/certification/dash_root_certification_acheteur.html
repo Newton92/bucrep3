@@ -1479,6 +1479,26 @@
                             <span id="descriptionCount">0</span>/1000 caractères
                         </div>
                     </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="couleurCommentaireCertification" class="form-label">
+                                <i class="fas fa-palette"></i>Couleur commentaire
+                            </label>
+                            <select class="form-select" id="couleurCommentaireCertification" name="couleur_commentaire">
+                                <option value="">Aucune</option>
+                                {% for c in coloration_list %}
+                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="commentaireCertification" class="form-label">
+                                <i class="fas fa-comment-dots"></i>Commentaire interne
+                            </label>
+                            <textarea class="form-control" id="commentaireCertification" name="commentaire" rows="2"></textarea>
+                        </div>
+                    </div>
                     
                     <!-- Conseils -->
                     <div class="alert-premium mt-4">
@@ -1596,6 +1616,26 @@
                             maxlength="1000"></textarea>
                         <div class="char-counter-premium" id="editDescriptionCounter">
                             <span id="editDescriptionCount">0</span>/1000 caractères
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="editCouleurCommentaireCertification" class="form-label">
+                                <i class="fas fa-palette"></i>Couleur commentaire
+                            </label>
+                            <select class="form-select" id="editCouleurCommentaireCertification" name="couleur_commentaire">
+                                <option value="">Aucune</option>
+                                {% for c in coloration_list %}
+                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCommentaireCertification" class="form-label">
+                                <i class="fas fa-comment-dots"></i>Commentaire interne
+                            </label>
+                            <textarea class="form-control" id="editCommentaireCertification" name="commentaire" rows="2"></textarea>
                         </div>
                     </div>
                     
@@ -1815,6 +1855,7 @@ $(document).ready(function() {
                         const dateObtention = cert.date_obtention ? formatDate(cert.date_obtention) : null;
                         const organismeDelivreur = cert.organisme_delivreur || '';
                         const description = cert.description || '';
+                        const commentaire = cert.commentaire || '';
                         const createdAt = formatDateTime(cert.created_at);
                         const updatedAt = formatDateTime(cert.updated_at);
                         
@@ -1883,6 +1924,18 @@ $(document).ready(function() {
                                 </div>
                                 <div class="info-value-premium text-content">
                                     ${description.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            ${commentaire ? `
+                            <div class="info-section-premium">
+                                <div class="info-label-premium">
+                                    <i class="fas fa-comment-dots"></i>
+                                    Commentaire interne
+                                </div>
+                                <div class="info-value-premium text-content">
+                                    ${commentaire.replace(/\n/g, '<br>')}
                                 </div>
                             </div>
                             ` : ''}
@@ -2002,6 +2055,8 @@ $(document).ready(function() {
             date_obtention: $('#dateObtention').val() || null,
             organisme_delivreur: $('#organismeDelivreur').val().trim() || null,
             description: $('#descriptionCertification').val().trim() || null,
+            couleur_commentaire: $('#couleurCommentaireCertification').val() || null,
+            commentaire: $('#commentaireCertification').val().trim() || null,
             acheteur: ACHETEUR_ID
         };
         
@@ -2123,6 +2178,8 @@ $(document).ready(function() {
                 
                 $('#editOrganismeDelivreur').val(response.organisme_delivreur || '');
                 $('#editDescriptionCertification').val(response.description || '');
+                $('#editCouleurCommentaireCertification').val(response.couleur_commentaire || '');
+                $('#editCommentaireCertification').val(response.commentaire || '');
                 
                 // Mettre à jour les compteurs
                 $('#editDescriptionCount').text(response.description ? response.description.length : 0);
@@ -2166,7 +2223,9 @@ $(document).ready(function() {
             nom_certification: $('#editNomCertification').val().trim(),
             date_obtention: $('#editDateObtention').val() || null,
             organisme_delivreur: $('#editOrganismeDelivreur').val().trim() || null,
-            description: $('#editDescriptionCertification').val().trim() || null
+            description: $('#editDescriptionCertification').val().trim() || null,
+            couleur_commentaire: $('#editCouleurCommentaireCertification').val() || null,
+            commentaire: $('#editCommentaireCertification').val().trim() || null
         };
         
         // Validation

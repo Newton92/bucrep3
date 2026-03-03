@@ -72,7 +72,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status  # Ajoutez cette importation
-from main.models import Annee, Devise, Commande, Acheteur, CodeNaceAcheteur, TelephoneAcheteur, ProprieteEtActif  # Ajoutez Acheteur ici
+from main.models import Annee, Devise, Commande, Acheteur, CodeNaceAcheteur, TelephoneAcheteur, PortableAcheteur, EmailAcheteur, AdresseAcheteur, ProprieteEtActif  # Ajoutez Acheteur ici
 from main.serializers_reporting import AnneeSerializer, DeviseSerializer, CommandeSerializer, RapportSolvabiliteSerializer
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -637,13 +637,35 @@ def generer_rapport_solvabilite(request):
             except Commande.DoesNotExist:
                 pass
         
-        # Récupération du premier téléphone
-        # Recuperation des téléphones en fonction de l'acheteur
-        telephone = None
-        try:
-            telephone = TelephoneAcheteur.objects.filter(acheteur=acheteur).first()
-        except TelephoneAcheteur.DoesNotExist:
-            pass
+        # Récupération des contacts liés à l'acheteur
+        telephones_acheteur = list(
+            TelephoneAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(telephone__isnull=True)
+            .exclude(telephone__exact="")
+            .values_list("telephone", flat=True)
+            .distinct()
+        )
+        portables_acheteur = list(
+            PortableAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(portable__isnull=True)
+            .exclude(portable__exact="")
+            .values_list("portable", flat=True)
+            .distinct()
+        )
+        emails_acheteur = list(
+            EmailAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(email__isnull=True)
+            .exclude(email__exact="")
+            .values_list("email", flat=True)
+            .distinct()
+        )
+        adresses_acheteur = list(
+            AdresseAcheteur.objects.filter(acheteur=acheteur)
+            .exclude(adresse__isnull=True)
+            .exclude(adresse__exact="")
+            .values_list("adresse", flat=True)
+            .distinct()
+        )
         
         # Récupération du Résumé executif
         # Recuperation du resume en fonction de l'acheteur
@@ -1458,7 +1480,11 @@ def generer_rapport_solvabilite(request):
                     "province": _safe_nested_attr(acheteur, ["province", "nom"]),
                     "ville": _safe_nested_attr(acheteur, ["ville", "nom"]),
                     "fax": acheteur.fax if hasattr(acheteur, 'fax') else "Non spécifié",
-                    "telephone": telephone.telephone if hasattr(telephone, 'telephone') else "Non spécifié",
+                    "telephone": telephones_acheteur[0] if telephones_acheteur else (acheteur.telephone if hasattr(acheteur, 'telephone') and acheteur.telephone else "Non spécifié"),
+                    "telephones": telephones_acheteur,
+                    "portables": portables_acheteur,
+                    "emails_secondaires": emails_acheteur,
+                    "adresses_secondaires": adresses_acheteur,
                     "numero_adresse": acheteur.numero_adresse if hasattr(acheteur, 'numero_adresse') else "Non spécifié",
                     "rue_adresse": acheteur.rue_adresse if hasattr(acheteur, 'rue_adresse') else "Non spécifié",
                     "code_nace": acheteur.code_nace if hasattr(acheteur, 'code_nace') else "Non spécifié",
@@ -1521,6 +1547,27 @@ def generer_rapport_solvabilite(request):
                 "notes_details": notes_details,
                 "notes_detailed": notes_detailed_str,
                 "highlighted_risks": highlighted_risks,
+                "legende": {
+                    "echelle": "L'échelle ACREMAC va de 1 (risque le plus eleve) a 9 (risque le plus faible).",
+                    "codes": [
+                        {
+                            "code": "RDEF",
+                            "libelle": "Risque de defaut",
+                            "description": "Capacite de remboursement tres fragile, vigilance maximale.",
+                        },
+                        {
+                            "code": "RMOY",
+                            "libelle": "Risque moyen",
+                            "description": "Risque intermediaire, decision a encadrer selon garanties et delais.",
+                        },
+                        {
+                            "code": "RFAI",
+                            "libelle": "Risque faible",
+                            "description": "Profil favorable, capacite de remboursement jugée solide.",
+                        },
+                    ],
+                    "lecture_notes": "La section Notes liste les facteurs de risque actifs avec leur note respective.",
+                },
                 "montant_credit_maximum": acremac_opinion.montant_credit_maximum if acremac_opinion else "Non spécifié",
                 "commentaire": acremac_opinion.commentaire if acremac_opinion else "Aucun commentaire disponible",
             },
@@ -1620,7 +1667,7 @@ def generer_rapport_solvabilite(request):
                 "affiliations": list_affiliations_data if list_affiliations_data else [],
             },
             "sector_analysis": {
-                "title_13": "ANALYSE SECTORIELLE",
+                "title_13": "ANALYSE ECONOMIQUE",
                 "nace_codes": nace_codes_formatted if nace_codes_formatted else ["Aucun code NACE disponible"],
                 "naf_codes": naf_codes_formatted if naf_codes_formatted else ["Aucun code NAF disponible"],
                 "sectorielle": {
@@ -2597,11 +2644,26 @@ def preparer_donnees_pour_export(report_data, form_data, export_format):
             acremac_info['nom'] = "Nom inconnu"
         if 'email' not in acremac_info:
             acremac_info['email'] = "email@inconnu.com"
+        if 'telephone' not in acremac_info:
+            acremac_info['telephone'] = "Non spécifié"
+        if 'telephones' not in acremac_info:
+            acremac_info['telephones'] = []
+        if 'portables' not in acremac_info:
+            acremac_info['portables'] = []
+        if 'emails_secondaires' not in acremac_info:
+            acremac_info['emails_secondaires'] = []
+        if 'adresses_secondaires' not in acremac_info:
+            acremac_info['adresses_secondaires'] = []
     else:
         data_complete['identification'] = {
             "acremac_info": {
                 "nom": "Nom inconnu",
-                "email": "email@inconnu.com"
+                "email": "email@inconnu.com",
+                "telephone": "Non spécifié",
+                "telephones": [],
+                "portables": [],
+                "emails_secondaires": [],
+                "adresses_secondaires": [],
             }
         }
     

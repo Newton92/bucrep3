@@ -4667,6 +4667,15 @@ class Swot(Model):
         _("Menaces"), null=True, blank=True, help_text=_("Menaces de l'entreprise")
     )
 
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
@@ -4718,6 +4727,15 @@ class ProduitService(Model):
     services = models.TextField(
         _("Services"), null=True, blank=True, help_text=_("Services de l'entreprise")
     )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -4774,6 +4792,15 @@ class Marque(Model):
     marques = models.TextField(
         _("Marques"), null=True, blank=True, help_text=_("Marques de l'entreprise")
     )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -4885,6 +4912,15 @@ class ProcedureCollective(Model):
         help_text=_("Résumé de l’impact et des mesures prises par l’assureur crédit"),
     )
 
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
@@ -4946,6 +4982,15 @@ class RegistreCommerce(Model):
         default=False,
         help_text=_("Indique si ce registre de commerce est celui actuellement en vigueur"),
     )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -5009,6 +5054,15 @@ class Cotisation(Model):
         blank=True,
         help_text=_("Date d'affiliation à la sécurité sociale"),
     )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -5210,6 +5264,15 @@ class Certification(Model):
         blank=True, null=True, verbose_name="Description / Commentaires"
     )
 
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
+
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
     )
@@ -5362,6 +5425,15 @@ class InnovationDeveloppement(Model):
     date_fin = models.DateField(
         blank=True, null=True, verbose_name="Date de Fin (si applicable)"
     )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")
@@ -5516,6 +5588,15 @@ class StrategiePlanification(Model):
     date_mise_en_place = models.DateField(
         blank=True, null=True, verbose_name="Date de Mise en Place"
     )
+
+    couleur_commentaire = models.ForeignKey(
+        "CouleurCommentaire",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Couleur Commentaire"),
+    )
+    commentaire = models.TextField(_("Commentaire"), blank=True, max_length=10000000)
 
     created_at = models.DateTimeField(
         auto_now_add=True, verbose_name=_("Date de création")

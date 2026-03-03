@@ -1306,6 +1306,26 @@ Ou décrivez les marques commerciales de l'entreprise..."
                             Liste des marques commerciales, déposées ou des noms de marques (utilisez des puces • pour la clarté)
                         </small>
                     </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="addCouleurCommentaireMarque" class="form-label">
+                                <i class="fas fa-palette"></i>Couleur commentaire
+                            </label>
+                            <select id="addCouleurCommentaireMarque" name="couleur_commentaire" class="form-select">
+                                <option value="">Aucune</option>
+                                {% for c in coloration_list %}
+                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="addCommentaireMarque" class="form-label">
+                                <i class="fas fa-comment-dots"></i>Commentaire interne
+                            </label>
+                            <textarea id="addCommentaireMarque" name="commentaire" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
                     
                     <!-- Conseils -->
                     <div class="alert-premium mt-4">
@@ -1367,6 +1387,26 @@ Ou décrivez les marques commerciales de l'entreprise..."
                             required></textarea>
                         <div class="char-counter-premium" id="editMarquesCounter">
                             <span id="editMarquesCount">0</span>/2000 caractères
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editCouleurCommentaireMarque" class="form-label">
+                                <i class="fas fa-palette"></i>Couleur commentaire
+                            </label>
+                            <select id="editCouleurCommentaireMarque" name="couleur_commentaire" class="form-select">
+                                <option value="">Aucune</option>
+                                {% for c in coloration_list %}
+                                <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editCommentaireMarque" class="form-label">
+                                <i class="fas fa-comment-dots"></i>Commentaire interne
+                            </label>
+                            <textarea id="editCommentaireMarque" name="commentaire" class="form-control" rows="2"></textarea>
                         </div>
                     </div>
                     
@@ -1535,6 +1575,7 @@ $(document).ready(function() {
                     response.results.forEach(function(marque, index) {
                         const marques = marque.marques || '';
                         const hasMarques = marques.trim().length > 0;
+                        const commentaire = marque.commentaire || '';
                         const createdAt = formatDateTime(marque.created_at);
                         const updatedAt = formatDateTime(marque.updated_at);
                         
@@ -1593,6 +1634,11 @@ $(document).ready(function() {
                                 </div>
                                 `}
                             </div>
+
+                            ${commentaire ? `
+                            <div class="small text-muted mt-2">
+                                <i class="fas fa-comment-dots me-1"></i>${commentaire.replace(/\n/g, '<br>')}
+                            </div>` : ''}
 
                             <div class="marque-meta-premium">
                                 <div class="meta-item-premium">
@@ -1665,6 +1711,8 @@ $(document).ready(function() {
         
         const formData = {
             marques: $('#marquesInput').val().trim(),
+            couleur_commentaire: $('#addCouleurCommentaireMarque').val() || null,
+            commentaire: $('#addCommentaireMarque').val().trim() || null,
             acheteur: ACHETEUR_ID
         };
         
@@ -1690,7 +1738,9 @@ $(document).ready(function() {
         if (!currentMarqueId) return;
         
         const formData = {
-            marques: $('#editMarquesInput').val().trim()
+            marques: $('#editMarquesInput').val().trim(),
+            couleur_commentaire: $('#editCouleurCommentaireMarque').val() || null,
+            commentaire: $('#editCommentaireMarque').val().trim() || null
         };
         
         // Vérifier que le champ est rempli
@@ -1798,6 +1848,8 @@ $(document).ready(function() {
             success: function(response) {
                 $('#editMarqueId').val(response.id);
                 $('#editMarquesInput').val(response.marques || '');
+                $('#editCouleurCommentaireMarque').val(response.couleur_commentaire || '');
+                $('#editCommentaireMarque').val(response.commentaire || '');
                 
                 // Mettre à jour les compteurs
                 $('#editMarquesCount').text(response.marques ? response.marques.length : 0);

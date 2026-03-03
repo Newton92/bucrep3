@@ -1253,6 +1253,24 @@ body {
                             Date d'affiliation à la sécurité sociale (optionnel)
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="couleurCommentaireCotisation" class="form-label">
+                            <i class="fas fa-palette"></i>Couleur commentaire
+                        </label>
+                        <select class="form-select" id="couleurCommentaireCotisation" name="couleur_commentaire">
+                            <option value="">Aucune</option>
+                            {% for c in coloration_list %}
+                            <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="commentaireCotisation" class="form-label">
+                            <i class="fas fa-comment-dots"></i>Commentaire interne
+                        </label>
+                        <textarea class="form-control" id="commentaireCotisation" name="commentaire" rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-primary btn-action" data-bs-dismiss="modal">
@@ -1306,6 +1324,24 @@ body {
                                name="date_affiliation"
                                placeholder="Sélectionner une date"
                                data-date-format="Y-m-d">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editCouleurCommentaireCotisation" class="form-label">
+                            <i class="fas fa-palette"></i>Couleur commentaire
+                        </label>
+                        <select class="form-select" id="editCouleurCommentaireCotisation" name="couleur_commentaire">
+                            <option value="">Aucune</option>
+                            {% for c in coloration_list %}
+                            <option value="{{ c.id }}">{{ c.couleur }} ({{ c.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCommentaireCotisation" class="form-label">
+                            <i class="fas fa-comment-dots"></i>Commentaire interne
+                        </label>
+                        <textarea class="form-control" id="editCommentaireCotisation" name="commentaire" rows="2"></textarea>
                     </div>
                     
                     <div class="cotisation-meta">
@@ -1451,6 +1487,7 @@ $(document).ready(function() {
                         response.results.forEach(function(cotisation) {
                             const numero = cotisation.numero || 'N/A';
                             const dateAffiliation = cotisation.date_affiliation ? formatDate(cotisation.date_affiliation) : null;
+                            const commentaire = cotisation.commentaire || '';
                             const createdAt = formatDateTime(cotisation.created_at);
                             const updatedAt = formatDateTime(cotisation.updated_at);
                             
@@ -1502,6 +1539,11 @@ $(document).ready(function() {
                                         <span>Màj: ${updatedAt}</span>
                                     </div>
                                 </div>
+
+                                ${commentaire ? `
+                                <div class="mt-2 small text-muted">
+                                    <i class="fas fa-comment-dots me-1"></i>${commentaire}
+                                </div>` : ''}
                             </div>`;
                         });
                         
@@ -1562,6 +1604,8 @@ $(document).ready(function() {
         const formData = {
             numero: $('#numeroCotisation').val().trim(),
             date_affiliation: $('#dateAffiliation').val() || null,
+            couleur_commentaire: $('#couleurCommentaireCotisation').val() || null,
+            commentaire: $('#commentaireCotisation').val().trim() || null,
             acheteur: ACHETEUR_ID
         };
         
@@ -1594,6 +1638,8 @@ $(document).ready(function() {
                 } else {
                     $('#editDateAffiliation').flatpickr().clear();
                 }
+                $('#editCouleurCommentaireCotisation').val(response.couleur_commentaire || '');
+                $('#editCommentaireCotisation').val(response.commentaire || '');
                 
                 // Pré-remplir les dates
                 $('#editCreatedAtInfo').text(formatDateTime(response.created_at));
@@ -1621,7 +1667,9 @@ $(document).ready(function() {
         
         const formData = {
             numero: $('#editNumeroCotisation').val().trim(),
-            date_affiliation: $('#editDateAffiliation').val() || null
+            date_affiliation: $('#editDateAffiliation').val() || null,
+            couleur_commentaire: $('#editCouleurCommentaireCotisation').val() || null,
+            commentaire: $('#editCommentaireCotisation').val().trim() || null
         };
         
         if (!formData.numero) {

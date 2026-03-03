@@ -7596,6 +7596,8 @@ class ListCertificationSerializer(serializers.ModelSerializer):
             "date_obtention",
             "organisme_delivreur",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class AddCertificationSerializer(serializers.ModelSerializer):
@@ -7608,6 +7610,8 @@ class AddCertificationSerializer(serializers.ModelSerializer):
             "date_obtention",
             "organisme_delivreur",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class DetailCertificationSerializer(serializers.ModelSerializer):
@@ -7621,6 +7625,8 @@ class DetailCertificationSerializer(serializers.ModelSerializer):
             "date_obtention",
             "organisme_delivreur",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditCertificationSerializer(serializers.ModelSerializer):
@@ -7634,6 +7640,8 @@ class EditCertificationSerializer(serializers.ModelSerializer):
             "date_obtention",
             "organisme_delivreur",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -7650,6 +7658,8 @@ class SearchCertificationSerializer(serializers.ModelSerializer):
             "date_obtention",
             "organisme_delivreur",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
 ###########################################################################    
@@ -7676,6 +7686,8 @@ class CertificationOneSerializer(serializers.ModelSerializer):
             'date_obtention',
             'organisme_delivreur',
             'description',
+            'couleur_commentaire',
+            'commentaire',
             'created_at', 
             'updated_at',
             'created_by', 
@@ -7699,7 +7711,7 @@ class CertificationDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
         fields = ['id', 'acheteur', 'type_certification', 'type_certification_display', 'nom_certification', 
-                  'date_obtention', 'organisme_delivreur', 'description']
+                  'date_obtention', 'organisme_delivreur', 'description', 'couleur_commentaire', 'commentaire']
         read_only_fields = ['type_certification_display']
 
 class AddCertificationOneSerializer(serializers.ModelSerializer):
@@ -7710,7 +7722,7 @@ class AddCertificationOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
         fields = ['type_certification', 'nom_certification', 'date_obtention', 
-                  'organisme_delivreur', 'description', 'acheteur']
+                  'organisme_delivreur', 'description', 'couleur_commentaire', 'commentaire', 'acheteur']
     
     def create(self, validated_data):
         """Override create method to handle created_by and updated_by"""
@@ -7765,7 +7777,7 @@ class EditCertificationOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
         fields = ['type_certification', 'nom_certification', 'date_obtention', 
-                  'organisme_delivreur', 'description']
+                  'organisme_delivreur', 'description', 'couleur_commentaire', 'commentaire']
     
     def update(self, instance, validated_data):
         """Override update method to handle updated_by"""
@@ -7829,7 +7841,7 @@ class CertificationSearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certification
         fields = ['id', 'type_certification', 'type_certification_display', 'nom_certification', 
-                  'date_obtention', 'organisme_delivreur', 'acheteur_nom', 'acheteur_code', 
+                  'date_obtention', 'organisme_delivreur', 'commentaire', 'couleur_commentaire', 'acheteur_nom', 'acheteur_code', 
                   'created_at', 'updated_at']
 
 
@@ -7847,6 +7859,8 @@ class ListInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "description",
             "date_debut",
             "date_fin",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class AddInnovationDeveloppementSerializer(serializers.ModelSerializer):
@@ -7859,6 +7873,8 @@ class AddInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "description",
             "date_debut",
             "date_fin",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class DetailInnovationDeveloppementSerializer(serializers.ModelSerializer):
@@ -7872,6 +7888,8 @@ class DetailInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "description",
             "date_debut",
             "date_fin",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditInnovationDeveloppementSerializer(serializers.ModelSerializer):
@@ -7885,6 +7903,8 @@ class EditInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "description",
             "date_debut",
             "date_fin",
+            "couleur_commentaire",
+            "commentaire",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -7901,6 +7921,8 @@ class SearchInnovationDeveloppementSerializer(serializers.ModelSerializer):
             "description",
             "date_debut",
             "date_fin",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
 ###########################################################################    
@@ -7927,6 +7949,8 @@ class InnovationDeveloppementOneSerializer(serializers.ModelSerializer):
             'description',
             'date_debut',
             'date_fin',
+            'couleur_commentaire',
+            'commentaire',
             'created_at',
             'updated_at',
             'created_by',
@@ -7979,7 +8003,9 @@ class AddInnovationDeveloppementOneSerializer(serializers.ModelSerializer):
             'titre',
             'description',
             'date_debut',
-            'date_fin'
+            'date_fin',
+            'couleur_commentaire',
+            'commentaire',
         ]
     
     def validate(self, data):
@@ -8003,7 +8029,9 @@ class EditInnovationDeveloppementOneSerializer(serializers.ModelSerializer):
             'titre',
             'description',
             'date_debut',
-            'date_fin'
+            'date_fin',
+            'couleur_commentaire',
+            'commentaire',
         ]
     
     def validate(self, data):
@@ -8035,6 +8063,8 @@ class InnovationDeveloppementSearchSerializer(serializers.ModelSerializer):
             'description',
             'date_debut',
             'date_fin',
+            'couleur_commentaire',
+            'commentaire',
             'created_at',
             'updated_at'
         ]
@@ -8055,12 +8085,14 @@ class ListStrategiePlanificationSerializer(serializers.ModelSerializer):
             "type_strategie",
             "description",
             "date_mise_en_place",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class AddStrategiePlanificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = StrategiePlanification
-        fields = ["acheteur", "type_strategie", "description", "date_mise_en_place"]
+        fields = ["acheteur", "type_strategie", "description", "date_mise_en_place", "couleur_commentaire", "commentaire"]
 
 class DetailStrategiePlanificationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8071,6 +8103,8 @@ class DetailStrategiePlanificationSerializer(serializers.ModelSerializer):
             "type_strategie",
             "description",
             "date_mise_en_place",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditStrategiePlanificationSerializer(serializers.ModelSerializer):
@@ -8082,6 +8116,8 @@ class EditStrategiePlanificationSerializer(serializers.ModelSerializer):
             "type_strategie",
             "description",
             "date_mise_en_place",
+            "couleur_commentaire",
+            "commentaire",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -8096,6 +8132,8 @@ class SearchStrategiePlanificationSerializer(serializers.ModelSerializer):
             "type_strategie",
             "description",
             "date_mise_en_place",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
 ###########################################################################    
@@ -8120,6 +8158,8 @@ class StrategiePlanificationOneSerializer(serializers.ModelSerializer):
             'type_strategie_display',
             'description',
             'date_mise_en_place',
+            'couleur_commentaire',
+            'commentaire',
             'created_at',
             'updated_at',
             'created_by',
@@ -8170,7 +8210,9 @@ class AddStrategiePlanificationOneSerializer(serializers.ModelSerializer):
             'acheteur',
             'type_strategie',
             'description',
-            'date_mise_en_place'
+            'date_mise_en_place',
+            'couleur_commentaire',
+            'commentaire',
         ]
     
     def validate_date_mise_en_place(self, value):
@@ -8185,7 +8227,9 @@ class EditStrategiePlanificationOneSerializer(serializers.ModelSerializer):
         fields = [
             'type_strategie',
             'description',
-            'date_mise_en_place'
+            'date_mise_en_place',
+            'couleur_commentaire',
+            'commentaire',
         ]
     
     def validate_date_mise_en_place(self, value):
@@ -8209,6 +8253,8 @@ class StrategiePlanificationSearchSerializer(serializers.ModelSerializer):
             'type_strategie_display',
             'description',
             'date_mise_en_place',
+            'couleur_commentaire',
+            'commentaire',
             'created_at',
             'updated_at'
         ]
@@ -9742,6 +9788,8 @@ class AddSwotSerializer(serializers.ModelSerializer):
             "faiblesses",
             "opportunites",
             "menaces",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditSwotSerializer(serializers.ModelSerializer):
@@ -9752,6 +9800,8 @@ class EditSwotSerializer(serializers.ModelSerializer):
             "faiblesses",
             "opportunites",
             "menaces",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
         
@@ -9777,10 +9827,12 @@ class SwotOneSerializer(serializers.ModelSerializer):
             'id', 
             'acheteur', 
             'acheteur_info',
-            'forces', 
+            'forces',
             'faiblesses',
             'opportunites',
             'menaces',
+            'couleur_commentaire',
+            'commentaire',
             'forces_count',
             'faiblesses_count',
             'opportunites_count',
@@ -9832,7 +9884,7 @@ class SwotOneSerializer(serializers.ModelSerializer):
 class SwotDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Swot
-        fields = ['id', 'acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces']
+        fields = ['id', 'acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces', 'couleur_commentaire', 'commentaire']
 
 class AddSwotOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
@@ -9841,7 +9893,7 @@ class AddSwotOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Swot
-        fields = ['acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces']
+        fields = ['acheteur', 'forces', 'faiblesses', 'opportunites', 'menaces', 'couleur_commentaire', 'commentaire']
     
     def validate(self, data):
         """Validation globale de l'analyse SWOT"""
@@ -9872,7 +9924,7 @@ class EditSwotOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Swot
-        fields = ['forces', 'faiblesses', 'opportunites', 'menaces']
+        fields = ['forces', 'faiblesses', 'opportunites', 'menaces', 'couleur_commentaire', 'commentaire']
     
     def validate(self, data):
         """Validation pour l'édition"""
@@ -9916,6 +9968,8 @@ class AddProduitServiceSerializer(serializers.ModelSerializer):
             "acheteur",
             "produits",
             "services",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditProduitServiceSerializer(serializers.ModelSerializer):
@@ -9924,6 +9978,8 @@ class EditProduitServiceSerializer(serializers.ModelSerializer):
         fields = [
             "produits",
             "services",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
         
@@ -9948,6 +10004,8 @@ class AddMarqueSerializer(serializers.ModelSerializer):
         fields = [
             "acheteur",
             "marques",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditMarqueSerializer(serializers.ModelSerializer):
@@ -9955,6 +10013,8 @@ class EditMarqueSerializer(serializers.ModelSerializer):
         model = Marque
         fields = [
             "marques",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
         
@@ -9982,6 +10042,8 @@ class AddProcedureCollectiveSerializer(serializers.ModelSerializer):
             "date_ouverture",
             "date_cloture",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
@@ -9992,6 +10054,8 @@ class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
             "date_ouverture",
             "date_cloture",
             "description",
+            "couleur_commentaire",
+            "commentaire",
         ]
         
 ###########################################################################    
@@ -10020,6 +10084,8 @@ class ProcedureCollectiveOneSerializer(serializers.ModelSerializer):
             'numero_dossier',
             'secteur_activite',
             'description',
+            'couleur_commentaire',
+            'commentaire',
             'montant_creance',
             'impact_assureur',
             'statut',
@@ -10057,7 +10123,7 @@ class ProcedureCollectiveDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCollective
         fields = ['id', 'acheteur', 'type_procedure', 'date_ouverture', 'date_cloture', 
-                  'tribunal', 'numero_dossier', 'secteur_activite', 'description', 
+                  'tribunal', 'numero_dossier', 'secteur_activite', 'description', 'couleur_commentaire', 'commentaire',
                   'montant_creance', 'impact_assureur']
 
 class AddProcedureCollectiveOneSerializer(serializers.ModelSerializer):
@@ -10069,7 +10135,7 @@ class AddProcedureCollectiveOneSerializer(serializers.ModelSerializer):
         model = ProcedureCollective
         fields = ['acheteur', 'type_procedure', 'date_ouverture', 'date_cloture',
                   'tribunal', 'numero_dossier', 'secteur_activite', 'description',
-                  'montant_creance', 'impact_assureur']
+                  'montant_creance', 'impact_assureur', 'couleur_commentaire', 'commentaire']
     
     def validate(self, data):
         """Validation globale de la procédure collective"""
@@ -10103,7 +10169,7 @@ class EditProcedureCollectiveOneSerializer(serializers.ModelSerializer):
         model = ProcedureCollective
         fields = ['type_procedure', 'date_ouverture', 'date_cloture',
                   'tribunal', 'numero_dossier', 'secteur_activite', 'description',
-                  'montant_creance', 'impact_assureur']
+                  'montant_creance', 'impact_assureur', 'couleur_commentaire', 'commentaire']
     
     def validate(self, data):
         """Validation pour l'édition"""
@@ -10161,6 +10227,8 @@ class AddRegistreCommerceSerializer(serializers.ModelSerializer):
             "numero",
             "date_inscription",
             "est_actif",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditRegistreCommerceSerializer(serializers.ModelSerializer):
@@ -10170,6 +10238,8 @@ class EditRegistreCommerceSerializer(serializers.ModelSerializer):
             "numero",
             "date_inscription",
             "est_actif",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 ###########################################################################    
@@ -10192,6 +10262,8 @@ class RegistreCommerceOneSerializer(serializers.ModelSerializer):
             'numero', 
             'date_inscription',
             'est_actif',
+            'couleur_commentaire',
+            'commentaire',
             'created_at', 
             'updated_at',
             'created_by', 
@@ -10212,7 +10284,7 @@ class RegistreCommerceOneSerializer(serializers.ModelSerializer):
 class RegistreCommerceDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ['id', 'acheteur', 'numero', 'date_inscription', 'est_actif']
+        fields = ['id', 'acheteur', 'numero', 'date_inscription', 'est_actif', 'couleur_commentaire', 'commentaire']
 
 class AddRegistreCommerceOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
@@ -10221,7 +10293,7 @@ class AddRegistreCommerceOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = RegistreCommerce
-        fields = ['numero', 'date_inscription', 'est_actif', 'acheteur']
+        fields = ['numero', 'date_inscription', 'est_actif', 'couleur_commentaire', 'commentaire', 'acheteur']
     
     def create(self, validated_data):
         """Override create method to handle created_by and updated_by"""
@@ -10283,7 +10355,7 @@ class EditRegistreCommerceOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = RegistreCommerce
-        fields = ['numero', 'date_inscription', 'date_inscription_input', 'est_actif']
+        fields = ['numero', 'date_inscription', 'date_inscription_input', 'est_actif', 'couleur_commentaire', 'commentaire']
         extra_kwargs = {
             'date_inscription': {'read_only': True}  # On gère la date via date_inscription_input
         }
@@ -10350,7 +10422,7 @@ class RegistreCommerceSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = RegistreCommerce
-        fields = ['id', 'numero', 'date_inscription', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']   
+        fields = ['id', 'numero', 'date_inscription', 'couleur_commentaire', 'commentaire', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']   
         
         
         
@@ -10382,6 +10454,8 @@ class AddCotisationSerializer(serializers.ModelSerializer):
             "acheteur",
             "numero",
             "date_affiliation",
+            "couleur_commentaire",
+            "commentaire",
         ]
 
 class EditCotisationSerializer(serializers.ModelSerializer):
@@ -10390,6 +10464,8 @@ class EditCotisationSerializer(serializers.ModelSerializer):
         fields = [
             "numero",
             "date_affiliation",
+            "couleur_commentaire",
+            "commentaire",
         ]   
         
 ###########################################################################    
@@ -10411,6 +10487,8 @@ class CotisationOneSerializer(serializers.ModelSerializer):
             'acheteur_info',
             'numero', 
             'date_affiliation',
+            'couleur_commentaire',
+            'commentaire',
             'created_at', 
             'updated_at',
             'created_by', 
@@ -10431,7 +10509,7 @@ class CotisationOneSerializer(serializers.ModelSerializer):
 class CotisationDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ['id', 'acheteur', 'numero', 'date_affiliation']
+        fields = ['id', 'acheteur', 'numero', 'date_affiliation', 'couleur_commentaire', 'commentaire']
 
 class AddCotisationOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
@@ -10440,7 +10518,7 @@ class AddCotisationOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Cotisation
-        fields = ['numero', 'date_affiliation', 'acheteur']
+        fields = ['numero', 'date_affiliation', 'couleur_commentaire', 'commentaire', 'acheteur']
     
     def create(self, validated_data):
         """Override create method to handle created_by and updated_by"""
@@ -10488,13 +10566,15 @@ class AddCotisationOneSerializer(serializers.ModelSerializer):
 class EditCotisationOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ['numero', 'date_affiliation']
+        fields = ['numero', 'date_affiliation', 'couleur_commentaire', 'commentaire']
     
     def update(self, instance, validated_data):
         """Override update method to handle updated_by"""
         # Mettre à jour les champs de base d'abord
         instance.numero = validated_data.get('numero', instance.numero)
         instance.date_affiliation = validated_data.get('date_affiliation', instance.date_affiliation)
+        instance.couleur_commentaire = validated_data.get('couleur_commentaire', instance.couleur_commentaire)
+        instance.commentaire = validated_data.get('commentaire', instance.commentaire)
         
         # Mettre à jour updated_by si request est dans le contexte
         request = self.context.get('request')
@@ -10539,7 +10619,7 @@ class CotisationSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Cotisation
-        fields = ['id', 'numero', 'date_affiliation', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at'] 
+        fields = ['id', 'numero', 'date_affiliation', 'couleur_commentaire', 'commentaire', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at'] 
         
 
         
@@ -10555,28 +10635,28 @@ from .models import Marque
 class ListMarqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "marques", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class AddMarqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ["acheteur", "marques"]
+        fields = ["acheteur", "marques", "couleur_commentaire", "commentaire"]
 
 class DetailMarqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "marques", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class EditMarqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "marques", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 class SearchMarqueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ["id", "acheteur", "marques", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "marques", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         
 ###########################################################################    
 #    
@@ -10596,6 +10676,8 @@ class MarqueOneSerializer(serializers.ModelSerializer):
             'acheteur', 
             'acheteur_info',
             'marques', 
+            'couleur_commentaire',
+            'commentaire',
             'created_at', 
             'updated_at',
             'created_by', 
@@ -10616,7 +10698,7 @@ class MarqueOneSerializer(serializers.ModelSerializer):
 class MarqueDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ['id', 'acheteur', 'marques']
+        fields = ['id', 'acheteur', 'marques', 'couleur_commentaire', 'commentaire']
 
 class AddMarqueOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
@@ -10625,7 +10707,7 @@ class AddMarqueOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Marque
-        fields = ['marques', 'acheteur']
+        fields = ['marques', 'couleur_commentaire', 'commentaire', 'acheteur']
     
     def create(self, validated_data):
         """Override create method to handle created_by and updated_by"""
@@ -10671,12 +10753,14 @@ class AddMarqueOneSerializer(serializers.ModelSerializer):
 class EditMarqueOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marque
-        fields = ['marques']
+        fields = ['marques', 'couleur_commentaire', 'commentaire']
     
     def update(self, instance, validated_data):
         """Override update method to handle updated_by"""
         # Mettre à jour les champs de base
         instance.marques = validated_data.get('marques', instance.marques)
+        instance.couleur_commentaire = validated_data.get('couleur_commentaire', instance.couleur_commentaire)
+        instance.commentaire = validated_data.get('commentaire', instance.commentaire)
         
         # Mettre à jour updated_by si request est dans le contexte
         request = self.context.get('request')
@@ -10716,7 +10800,7 @@ class MarqueSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Marque
-        fields = ['id', 'marques', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']
+        fields = ['id', 'marques', 'couleur_commentaire', 'commentaire', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']
 
 
 
@@ -10734,28 +10818,28 @@ from .models import ProduitService
 class ListProduitServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "produits", "services", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class AddProduitServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ["acheteur", "produits", "services"]
+        fields = ["acheteur", "produits", "services", "couleur_commentaire", "commentaire"]
 
 class DetailProduitServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "produits", "services", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class EditProduitServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "produits", "services", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 class SearchProduitServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ["id", "acheteur", "produits", "services", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "produits", "services", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         
 ###########################################################################    
 #    
@@ -10776,6 +10860,8 @@ class ProduitServiceOneSerializer(serializers.ModelSerializer):
             'acheteur_info',
             'produits', 
             'services',
+            'couleur_commentaire',
+            'commentaire',
             'created_at', 
             'updated_at',
             'created_by', 
@@ -10796,7 +10882,7 @@ class ProduitServiceOneSerializer(serializers.ModelSerializer):
 class ProduitServiceDetailOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ['id', 'acheteur', 'produits', 'services']
+        fields = ['id', 'acheteur', 'produits', 'services', 'couleur_commentaire', 'commentaire']
 
 class AddProduitServiceOneSerializer(serializers.ModelSerializer):
     acheteur = serializers.PrimaryKeyRelatedField(
@@ -10805,7 +10891,7 @@ class AddProduitServiceOneSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ProduitService
-        fields = ['produits', 'services', 'acheteur']
+        fields = ['produits', 'services', 'couleur_commentaire', 'commentaire', 'acheteur']
     
     def create(self, validated_data):
         """Override create method to handle created_by and updated_by"""
@@ -10845,13 +10931,15 @@ class AddProduitServiceOneSerializer(serializers.ModelSerializer):
 class EditProduitServiceOneSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProduitService
-        fields = ['produits', 'services']
+        fields = ['produits', 'services', 'couleur_commentaire', 'commentaire']
     
     def update(self, instance, validated_data):
         """Override update method to handle updated_by"""
         # Mettre à jour les champs de base
         instance.produits = validated_data.get('produits', instance.produits)
         instance.services = validated_data.get('services', instance.services)
+        instance.couleur_commentaire = validated_data.get('couleur_commentaire', instance.couleur_commentaire)
+        instance.commentaire = validated_data.get('commentaire', instance.commentaire)
         
         # Mettre à jour updated_by si request est dans le contexte
         request = self.context.get('request')
@@ -10892,7 +10980,7 @@ class ProduitServiceSearchSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ProduitService
-        fields = ['id', 'produits', 'services', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']
+        fields = ['id', 'produits', 'services', 'couleur_commentaire', 'commentaire', 'acheteur_nom', 'acheteur_code', 'created_at', 'updated_at']
 
 
 
@@ -10907,28 +10995,28 @@ from .models import Cotisation
 class ListCotisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_affiliation", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class AddCotisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ["acheteur", "numero", "date_affiliation"]
+        fields = ["acheteur", "numero", "date_affiliation", "couleur_commentaire", "commentaire"]
 
 class DetailCotisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_affiliation", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class EditCotisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_affiliation", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 class SearchCotisationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cotisation
-        fields = ["id", "acheteur", "numero", "date_affiliation", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_affiliation", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 
 
@@ -10943,22 +11031,22 @@ from .models import Swot
 class ListSwotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Swot
-        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class AddSwotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Swot
-        fields = ["acheteur", "forces", "faiblesses", "opportunites", "menaces"]
+        fields = ["acheteur", "forces", "faiblesses", "opportunites", "menaces", "couleur_commentaire", "commentaire"]
 
 class DetailSwotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Swot
-        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class EditSwotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Swot
-        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "forces", "faiblesses", "opportunites", "menaces", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 
@@ -10972,22 +11060,22 @@ from .models import RegistreCommerce
 class ListRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class AddRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["acheteur", "numero", "date_inscription", "est_actif"]
+        fields = ["acheteur", "numero", "date_inscription", "est_actif", "couleur_commentaire", "commentaire"]
 
 class DetailRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class EditRegistreCommerceSerializer(serializers.ModelSerializer):
     class Meta:
         model = RegistreCommerce
-        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "numero", "date_inscription", "est_actif", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 
@@ -11005,22 +11093,22 @@ from .models import ProcedureCollective
 class ListProcedureCollectiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCollective
-        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class AddProcedureCollectiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCollective
-        fields = ["acheteur", "type_procedure", "date_ouverture", "date_cloture", "description"]
+        fields = ["acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "couleur_commentaire", "commentaire"]
 
 class DetailProcedureCollectiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCollective
-        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
 
 class EditProcedureCollectiveSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProcedureCollective
-        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "created_at", "updated_at"]
+        fields = ["id", "acheteur", "type_procedure", "date_ouverture", "date_cloture", "description", "couleur_commentaire", "commentaire", "created_at", "updated_at"]
         extra_kwargs = {"id": {"read_only": True}, "created_at": {"read_only": True}}
 
 

@@ -6291,6 +6291,8 @@ def dash_root_certification_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -6342,6 +6344,7 @@ def dash_root_certification_acheteur(request, acheteur_id):
         "certifications": certifications_list,
         "certifications_count": certifications_list.count(),
         "certifications_json": certifications_json or '[]',
+        "coloration_list": coloration_list,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
     }
@@ -6407,6 +6410,8 @@ def dash_root_innovation_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -6467,6 +6472,7 @@ def dash_root_innovation_acheteur(request, acheteur_id):
         "types_innovation": InnovationDeveloppement.TYPES_INNOVATION,
         "types_innovation_display": TYPES_INNOVATION_DISPLAY,
         "get_type_badge_class": get_type_badge_class,
+        "coloration_list": coloration_list,
     }
     
     return render(
@@ -6518,6 +6524,8 @@ def dash_root_strategie_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -6575,6 +6583,7 @@ def dash_root_strategie_acheteur(request, acheteur_id):
         "id_acheteur": acheteur_id,
         "types_strategie": StrategiePlanification.TYPES_STRATEGIE,
         "types_strategie_display": TYPES_STRATEGIE_DISPLAY,
+        "coloration_list": coloration_list,
     }
     
     return render(
@@ -7482,6 +7491,8 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -7526,6 +7537,7 @@ def dash_root_manage_marque_acheteur(request, acheteur_id):
         "marques": marques_list,
         "marques_count": marques_list.count(),
         "marques_json": marques_json or '[]',
+        "coloration_list": coloration_list,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
     }
@@ -7573,6 +7585,8 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -7621,6 +7635,7 @@ def dash_root_manage_produit_service_acheteur(request, acheteur_id):
         "produits_services": produits_services_list,
         "produits_services_count": produits_services_list.count(),
         "produits_services_json": produits_services_json or '[]',
+        "coloration_list": coloration_list,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
     }
@@ -7668,6 +7683,8 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -7709,6 +7726,7 @@ def dash_root_manage_cotisation_acheteur(request, acheteur_id):
         "cotisations": cotisations_list,
         "cotisations_count": cotisations_list.count(),
         "cotisations_json": cotisations_json or '[]',
+        "coloration_list": coloration_list,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
     }
@@ -7776,6 +7794,8 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -7835,6 +7855,7 @@ def dash_root_manage_swot_acheteur(request, acheteur_id):
         "opportunites_count": opportunites_count,
         "menaces_count": menaces_count,
         "total_elements": total_elements,
+        "coloration_list": coloration_list,
     }
     return render(
         request,
@@ -7882,6 +7903,8 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -7923,6 +7946,7 @@ def dash_root_manage_registre_commerce_acheteur(request, acheteur_id):
         "registres": registres_list,
         "registres_count": registres_list.count(),
         "registres_json": registres_json or '[]',
+        "coloration_list": coloration_list,
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
     }
@@ -7986,6 +8010,8 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
         messages.error(request, "Erreur d'authentification. Veuillez vous reconnecter.")
         return redirect('login')
     
+    coloration_list = CouleurCommentaire.objects.all()
+
     # Préparer les données de l'acheteur pour le template
     acheteur_data = {
         'id': acheteur.id,
@@ -8080,6 +8106,7 @@ def dash_root_manage_procedure_collective_acheteur(request, acheteur_id):
         "acheteur": acheteur,
         "id_acheteur": acheteur_id,
         "types_procedures": TYPES_PROCEDURES,
+        "coloration_list": coloration_list,
     }
     return render(
         request,

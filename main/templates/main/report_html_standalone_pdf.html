@@ -441,6 +441,22 @@
                   <td>{{ identification.acremac_info.telephone }}</td>
                </tr>
                <tr>
+                  <th>Téléphones supplémentaires</th>
+                  <td>{% if identification.acremac_info.telephones %}{{ identification.acremac_info.telephones|join:", " }}{% else %}Non spécifié{% endif %}</td>
+               </tr>
+               <tr>
+                  <th>Portables</th>
+                  <td>{% if identification.acremac_info.portables %}{{ identification.acremac_info.portables|join:", " }}{% else %}Non spécifié{% endif %}</td>
+               </tr>
+               <tr>
+                  <th>Emails secondaires</th>
+                  <td>{% if identification.acremac_info.emails_secondaires %}{{ identification.acremac_info.emails_secondaires|join:", " }}{% else %}Non spécifié{% endif %}</td>
+               </tr>
+               <tr>
+                  <th>Adresses supplémentaires</th>
+                  <td>{% if identification.acremac_info.adresses_secondaires %}{{ identification.acremac_info.adresses_secondaires|join:" | " }}{% else %}Non spécifié{% endif %}</td>
+               </tr>
+               <tr>
                   <th>Fax / Email</th>
                   <td>{{ identification.acremac_info.fax }}</td>
                </tr>
@@ -563,31 +579,15 @@
             </div>
             <table>
                <tr>
-                  <th>Cotation du risque</th>
-                  <td colspan="3" class="warning">
-                     {{ summary_and_opinion.cotation_du_risque|striptags|safe }}
-                  </td>
-               </tr>
-               <tr>
-                  <th>Indice du risque</th>
-                  <td colspan="3" class="warning">
-                     {{ summary_and_opinion.indice_du_risque|striptags|safe }}
-                  </td>
-               </tr>
-               <tr>
-                  <th>Commentaire</th>
-                  <td colspan="3" class="warning">
-                     {{ summary_and_opinion.analyse_detailee|striptags|safe }}
-                  </td>
-               </tr>
-            </table>
-            <!-- INTERPRÉTATION -->
-            <div class="subsection-title">INTERPRÉTATION</div>
-            <table>
-               <tr>
-                  <th>Commentaire </th>
+                  <th>Interprétation</th>
                   <td colspan="3" class="warning">
                      {{ summary_and_opinion.interpretation|striptags|safe }}
+                  </td>
+               </tr>
+               <tr>
+                  <th>Analyse détaillée</th>
+                  <td colspan="3" class="warning">
+                     {{ summary_and_opinion.analyse_detailee|striptags|safe }}
                   </td>
                </tr>
             </table>
@@ -617,6 +617,35 @@
                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_moyen %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque moyen</div>
                <div class="rating-point{% if acremac_opinion.highlighted_risks.risque_faible %} highlighted{% endif %}" style="font-size: 6.5pt;">Risque faible</div>
             </div>
+            <div class="subsection-title">LÉGENDE EXPLICATIVE</div>
+            <table>
+               <tr>
+                  <th>Échelle</th>
+                  <td>{{ acremac_opinion.legende.echelle|default:"L'échelle ACREMAC va de 1 (risque le plus élevé) à 9 (risque le plus faible)." }}</td>
+               </tr>
+               <tr>
+                  <th>Codes</th>
+                  <td>
+                     {% if acremac_opinion.legende.codes %}
+                     <ul style="margin: 0; padding-left: 18px;">
+                        {% for code in acremac_opinion.legende.codes %}
+                        <li><strong>{{ code.code }}</strong> - {{ code.libelle }} : {{ code.description }}</li>
+                        {% endfor %}
+                     </ul>
+                     {% else %}
+                     <ul style="margin: 0; padding-left: 18px;">
+                        <li><strong>RDEF</strong> - Risque de défaut : Capacité de remboursement très fragile, vigilance maximale.</li>
+                        <li><strong>RMOY</strong> - Risque moyen : Risque intermédiaire, décision à encadrer selon garanties et délais.</li>
+                        <li><strong>RFAI</strong> - Risque faible : Profil favorable, capacité de remboursement jugée solide.</li>
+                     </ul>
+                     {% endif %}
+                  </td>
+               </tr>
+               <tr>
+                  <th>Lecture des notes</th>
+                  <td>{{ acremac_opinion.legende.lecture_notes|default:"La section Notes liste les facteurs de risque actifs avec leur note respective." }}</td>
+               </tr>
+            </table>
             <table>
                <tr>
                   <th>Note:</th>
@@ -786,24 +815,6 @@
             <table>
                <tbody>
                   <tr>
-                     <th>Professionnalisme</th>
-                     <td>{{ management.risk_management.professionalisme }}</td>
-                     <th>Organisation</th>
-                     <td>{{ management.risk_management.organisation }}</td>
-                  </tr>
-                  <tr>
-                     <th>Non départ des employés</th>
-                     <td>{{ management.risk_management.turn_over }}</td>
-                     <th>Non grève</th>
-                     <td>{{ management.risk_management.greve }}</td>
-                  </tr>
-                  <tr>
-                     <th>Non dégradation de la qualité du travail</th>
-                     <td>{{ management.risk_management.degradation_qualite }}</td>
-                     <th>Respect des Employés</th>
-                     <td>{{ management.risk_management.non_respect_condition }}</td>
-                  </tr>
-                  <tr>
                      <th>Commentaire</th>
                      <td colspan="3" class="warning">{{ management.risk_management.commentaire|striptags|safe }}</td>
                   </tr>
@@ -914,6 +925,7 @@
                            {% elif key == "statut" %}Statut
                            {% elif key == "details_non_conformite" %}Détails non conformité
                            {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "date_affiliation" %}Date affiliation
                            {% elif key == "organisme_controle" %}Organisme contrôle
                            {% elif key == "commentaires" %}Commentaires
                            {% else %}{{ key|capfirst }}
@@ -926,7 +938,7 @@
                               {% else %}
                                  Inactif
                               {% endif %}
-                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" or key == "date_affiliation" %}
                               {% with raw=value|stringformat:"s" %}
                                  {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
                                     {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
@@ -996,6 +1008,7 @@
                            {% elif key == "statut" %}Statut
                            {% elif key == "details_non_conformite" %}Détails non conformité
                            {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "date_affiliation" %}Date affiliation
                            {% elif key == "organisme_controle" %}Organisme contrôle
                            {% elif key == "commentaires" %}Commentaires
                            {% else %}{{ key|capfirst }}
@@ -1008,7 +1021,7 @@
                               {% else %}
                                  Inactif
                               {% endif %}
-                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" or key == "date_affiliation" %}
                               {% with raw=value|stringformat:"s" %}
                                  {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
                                     {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
@@ -1242,6 +1255,7 @@
                            {% elif key == "statut" %}Statut
                            {% elif key == "details_non_conformite" %}Détails non conformité
                            {% elif key == "date_verification" %}Date vérification
+                           {% elif key == "date_affiliation" %}Date affiliation
                            {% elif key == "organisme_controle" %}Organisme contrôle
                            {% elif key == "commentaires" %}Commentaires
                            {% else %}{{ key|capfirst }}
@@ -1254,7 +1268,7 @@
                               {% else %}
                                  Inactif
                               {% endif %}
-                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" %}
+                           {% elif key == "date_inscription" or key == "date_ouverture" or key == "date_cloture" or key == "date_obtention" or key == "date_debut" or key == "date_fin" or key == "date_mise_en_place" or key == "date_verification" or key == "date_affiliation" %}
                               {% with raw=value|stringformat:"s" %}
                                  {% if raw != "Non spécifié" and raw|length >= 10 and "-" in raw %}
                                     {{ raw|slice:"8:10" }}/{{ raw|slice:"5:7" }}/{{ raw|slice:"0:4" }}
@@ -1653,9 +1667,9 @@
          </div>
          <!-- Analyse sectorielle -->
          <div class="section">
-            <div class="section-title">{{ sector_analysis.title_22|default:sector_analysis.title_13|default:"ANALYSE SECTORIELLE" }}</div>
+            <div class="section-title">{{ sector_analysis.title_22|default:sector_analysis.title_13|default:"ANALYSE ECONOMIQUE" }}</div>
             <!-- SECTORIELLE -->
-            <div class="subsection-title">ANALYSE ECONOMIQUE</div>
+            <div class="subsection-title">ANALYSE SECTORIELLE </div>
             <div class="section">
                <table>
                   <tr>
