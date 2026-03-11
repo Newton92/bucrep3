@@ -327,7 +327,7 @@ def support(request):
 def orders_report(request):
 
     context = {
-        "orders_report_active": "active",
+        "solutions_active": "active",
     }
     return render(request, "main/vitrine/orders_report.html", context)
 
@@ -335,9 +335,136 @@ def orders_report(request):
 def ask_demo(request):
 
     context = {
-        "ask_demo_active": "active",
+        "solutions_active": "active",
     }
     return render(request, "main/vitrine/ask_demo.html", context)
+
+
+def contact_commercial_team(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/contact_commercial_team_two.html", context)
+
+
+def free_trial(request):
+    aujourd_hui = datetime.today()
+    date_plus_30 = aujourd_hui + timedelta(days=30)
+
+    context = {
+        "solutions_active": "active",
+        "date_plus_30": date_plus_30
+    }
+    return render(request, "main/vitrine/free_trial.html", context)
+
+
+def report_payment(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/report_payment.html", context)
+
+
+def abonnement_payment(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/abonnement_payment.html", context)
+
+
+def confirm_order(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/confirm_order.html", context)
+
+
+def documentation_api(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/documentation_api.html", context)
+
+
+def key_api(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/key_api.html", context)
+
+
+def key_api_free(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/key_api_free.html", context)
+
+
+def key_api_devis(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/key_api_devis.html", context)
+
+
+def key_api(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/key_api.html", context)
+
+
+def policy_confidentiality(request):
+    aujourd_hui = datetime.today()
+    date_plus_30 = aujourd_hui + timedelta(days=30)
+
+    context = {
+        "solutions_active": "active",
+        "date_plus_30": date_plus_30,
+        "aujourd_hui": aujourd_hui
+    }
+    return render(request, "main/vitrine/policy_confidentiality.html", context)
+
+
+def legal_mention(request):
+    aujourd_hui = datetime.today()
+    date_plus_30 = aujourd_hui + timedelta(days=30)
+
+    context = {
+        "solutions_active": "active",
+        "date_plus_30": date_plus_30,
+        "aujourd_hui": aujourd_hui
+    }
+    return render(request, "main/vitrine/legal_mention.html", context)
+
+
+def terms_of_use(request):
+    aujourd_hui = datetime.today()
+    date_plus_30 = aujourd_hui + timedelta(days=30)
+
+    context = {
+        "solutions_active": "active",
+        "date_plus_30": date_plus_30,
+        "aujourd_hui": aujourd_hui
+    }
+    return render(request, "main/vitrine/terms_of_use.html", context)
+
+
+def gestion_cookie(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/gestion_cookie.html", context)
 
 
 def login(request):

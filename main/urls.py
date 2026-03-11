@@ -100,9 +100,25 @@ urlpatterns = [
     path("nos-solutions/", solutions, name="solutions"),
     path("comment-ça-marche/", comment_ca_marche, name="comment_ca_marche"),
     path("nos-tarifs/", tarifs, name="tarifs"),
-    path("support/", support, name="support"),
-    path("commander-un-rapport/", orders_report, name="orders_report"),
-    path("demander-une-demo/", ask_demo, name="ask_demo"),
+    path("support-technique/", support, name="support"),
+    
+    path("nos-solutions/commander-un-rapport/", orders_report, name="orders_report"),
+    path("nos-solutions/demander-une-demo/", ask_demo, name="ask_demo"),
+    path("nos-solutions/contacter-equipe-commerciale/", contact_commercial_team, name="contact_commercial_team"),
+    path("nos-solutions/demande-essai-gratuit/", free_trial, name="free_trial"),
+    path("nos-solutions/documentation-api/", documentation_api, name="documentation_api"),
+    path("nos-solutions/cles-api/", key_api, name="key_api"),
+    path("nos-solutions/cles-api/plan-gratuit/", key_api_free, name="key_api_free"),
+    path("nos-solutions/cles-api/demande-de-devis", key_api_devis, name="key_api_devis"),
+    
+    path("paiement-demande-rapport/", report_payment, name="report_payment"),
+    path("paiement-demande-abonnement/", abonnement_payment, name="abonnement_payment"),
+    path("confirmation-paiement/", confirm_order, name="confirm_order"),
+    
+    path("politique-de-confidentialite/", policy_confidentiality, name="policy_confidentiality"),
+    path("mentions-legales/", legal_mention, name="legal_mention"),
+    path("conditions-generales/", terms_of_use, name="terms_of_use"),
+    path("gestion-des-cookies/", gestion_cookie, name="gestion_cookie"),
     ########################################################################################################################
     #                                                                                                                      #
     #  API ROUTES END FOR VITRINE                                                                                          #
