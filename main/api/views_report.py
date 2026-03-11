@@ -3403,6 +3403,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "numero": registre.numero if registre.numero else "Non spécifié",
                 "date_inscription": registre.date_inscription if registre.date_inscription else "Non spécifié",
                 "est_actif": registre.est_actif if registre.est_actif else False,
+                "commentaires": registre.commentaire if getattr(registre, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3439,6 +3440,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "description": procedure.description if procedure.description else "Non spécifié",
                 "montant_creance": procedure.montant_creance if procedure.montant_creance else "Non spécifié",
                 "impact_assureur": procedure.impact_assureur if procedure.impact_assureur else "Non spécifié",
+                "commentaires": procedure.commentaire if getattr(procedure, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3449,6 +3451,7 @@ class GenerateReportCommandeAcheteur(APIView):
             list_cotisations_data.append({
                 "numero": cotisation.numero if cotisation.numero else "Non spécifié",
                 "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "Non spécifié",
+                "commentaires": cotisation.commentaire if getattr(cotisation, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3459,6 +3462,7 @@ class GenerateReportCommandeAcheteur(APIView):
             list_produits_services_data.append({
                 "produits": produit_service.produits if produit_service.produits else "Non spécifié",
                 "services": produit_service.services if produit_service.services else "Non spécifié",
+                "commentaires": produit_service.commentaire if getattr(produit_service, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3468,6 +3472,7 @@ class GenerateReportCommandeAcheteur(APIView):
         for marque in marques:
             list_marques_data.append({
                 "marques": marque.marques if marque.marques else "Non spécifié",
+                "commentaires": marque.commentaire if getattr(marque, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3484,6 +3489,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "date_obtention": certification.date_obtention if certification.date_obtention else "Non spécifié",
                 "organisme_delivreur": certification.organisme_delivreur if certification.organisme_delivreur else "Non spécifié",
                 "description": certification.description if certification.description else "Non spécifié",
+                "commentaires": certification.commentaire if getattr(certification, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3500,6 +3506,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 "description": innovation_developpement.description if innovation_developpement.description else "Non spécifié",
                 "date_debut": innovation_developpement.date_debut if innovation_developpement.date_debut else "Non spécifié",
                 "date_fin": innovation_developpement.date_fin if innovation_developpement.date_fin else "Non spécifié",
+                "commentaires": innovation_developpement.commentaire if getattr(innovation_developpement, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -3514,6 +3521,7 @@ class GenerateReportCommandeAcheteur(APIView):
                 ),
                 "description": strategie_planification.description if strategie_planification.description else "Non spécifié",
                 "date_mise_en_place": strategie_planification.date_mise_en_place if strategie_planification.date_mise_en_place else "Non spécifié",
+                "commentaires": strategie_planification.commentaire if getattr(strategie_planification, "commentaire", None) else "Non spécifié",
             })
             
             

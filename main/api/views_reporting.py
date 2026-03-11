@@ -1104,6 +1104,7 @@ def generer_rapport_solvabilite(request):
                 "numero": registre.numero if registre.numero else "Non spécifié",
                 "date_inscription": registre.date_inscription if registre.date_inscription else "Non spécifié",
                 "est_actif": registre.est_actif if registre.est_actif else False,
+                "commentaires": registre.commentaire if getattr(registre, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1140,6 +1141,7 @@ def generer_rapport_solvabilite(request):
                 "description": procedure.description if procedure.description else "Non spécifié",
                 "montant_creance": procedure.montant_creance if procedure.montant_creance else "Non spécifié",
                 "impact_assureur": procedure.impact_assureur if procedure.impact_assureur else "Non spécifié",
+                "commentaires": procedure.commentaire if getattr(procedure, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1150,6 +1152,7 @@ def generer_rapport_solvabilite(request):
             list_cotisations_data.append({
                 "numero": cotisation.numero if cotisation.numero else "Non spécifié",
                 "date_affiliation": cotisation.date_affiliation if cotisation.date_affiliation else "Non spécifié",
+                "commentaires": cotisation.commentaire if getattr(cotisation, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1160,6 +1163,7 @@ def generer_rapport_solvabilite(request):
             list_produits_services_data.append({
                 "produits": produit_service.produits if produit_service.produits else "Non spécifié",
                 "services": produit_service.services if produit_service.services else "Non spécifié",
+                "commentaires": produit_service.commentaire if getattr(produit_service, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1169,6 +1173,7 @@ def generer_rapport_solvabilite(request):
         for marque in marques:
             list_marques_data.append({
                 "marques": marque.marques if marque.marques else "Non spécifié",
+                "commentaires": marque.commentaire if getattr(marque, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1185,6 +1190,7 @@ def generer_rapport_solvabilite(request):
                 "date_obtention": certification.date_obtention if certification.date_obtention else "Non spécifié",
                 "organisme_delivreur": certification.organisme_delivreur if certification.organisme_delivreur else "Non spécifié",
                 "description": certification.description if certification.description else "Non spécifié",
+                "commentaires": certification.commentaire if getattr(certification, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1201,6 +1207,7 @@ def generer_rapport_solvabilite(request):
                 "description": innovation_developpement.description if innovation_developpement.description else "Non spécifié",
                 "date_debut": innovation_developpement.date_debut if innovation_developpement.date_debut else "Non spécifié",
                 "date_fin": innovation_developpement.date_fin if innovation_developpement.date_fin else "Non spécifié",
+                "commentaires": innovation_developpement.commentaire if getattr(innovation_developpement, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -1215,6 +1222,7 @@ def generer_rapport_solvabilite(request):
                 ),
                 "description": strategie_planification.description if strategie_planification.description else "Non spécifié",
                 "date_mise_en_place": strategie_planification.date_mise_en_place if strategie_planification.date_mise_en_place else "Non spécifié",
+                "commentaires": strategie_planification.commentaire if getattr(strategie_planification, "commentaire", None) else "Non spécifié",
             })
             
             
@@ -2195,6 +2203,33 @@ def _build_export_filename(report_data, acheteur_id, extension):
     return f'rapport_{date_part}_{country_part}_acheteur_{acheteur_part}_code_{unique_code}.{ext}'
 
 
+# helper functions to support multi‑language templates
+from django.utils import translation
+
+def _activate_language(lang_code):
+    """Activate given language code for template rendering."""
+    if lang_code:
+        try:
+            translation.activate(lang_code)
+        except Exception:
+            # ignore invalid codes
+            pass
+
+
+def _choose_template(base_name, lang_code):
+    """Return a template name adjusted for language.
+
+    If an English version is available (base_name_en.html) and
+    ``lang_code`` is ``'en'`` we return that variant, otherwise the
+    original.
+    """
+    if lang_code and lang_code.lower().startswith('en'):
+        parts = base_name.rsplit('.', 1)
+        if len(parts) == 2:
+            return f"{parts[0]}_en.{parts[1]}"
+    return base_name
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def exporter_rapport(request):
@@ -2215,8 +2250,11 @@ def exporter_rapport(request):
         
         if export_format.upper() == 'PDF':
             print("Génération du PDF...")  # Debug
-            # Rendre le template HTML
-            html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
+            # activer la langue provenant des données si disponible
+            _activate_language(report_data.get('lang'))
+            # choisir le template adapté
+            template = _choose_template('main/report_html_standalone_pdf.html', report_data.get('lang'))
+            html_string = render_to_string(template, report_data)
             
             # Générer le PDF en mémoire
             pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
@@ -2262,6 +2300,7 @@ def exporter_rapport(request):
                 return response
         elif export_format.upper() == 'HTML':
             print("Génération du HTML...")  # Debug
+            # pass language flag through
             response = generate_report_html_standalone(report_data)
             html_filename = _build_export_filename(report_data, acheteur_id, 'html')
             response['Content-Disposition'] = f'attachment; filename="{html_filename}"'
@@ -2363,8 +2402,11 @@ def generer_pdf_weasyprint(report_data, form_data, nom_fichier, request=None):
         report_data = _inject_static_urls(report_data, request)
         
         print("Génération du PDF...")  # Debug
+        # activer et choisir la langue
+        _activate_language(report_data.get('lang'))
+        template = _choose_template('main/report_html_standalone_pdf.html', report_data.get('lang'))
         # Rendre le template HTML
-        html_string = render_to_string('main/report_html_standalone_pdf.html', report_data)
+        html_string = render_to_string(template, report_data)
         
         # Générer le PDF en mémoire
         pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()
@@ -2528,15 +2570,20 @@ def generer_pdf_weasyprint_two(report_data, form_data, nom_fichier, request=None
 def generer_html_standalone(report_data, form_data, nom_fichier):
     """Générer un fichier HTML autonome avec tous les styles intégrés"""
     try:
+        # activer la langue si fournie
+        _activate_language(report_data.get('lang'))
         # Préparer le contexte
         context = {
             'report_data': report_data,
             'form_data': form_data,
             'is_standalone': True,  # Flag pour le template
+            'LANGUAGE_CODE': report_data.get('lang', 'fr'),
         }
         
+        # choisir le template (version anglaise possible)
+        template = _choose_template('main/report_html_standalone.html', report_data.get('lang'))
         # Utiliser un template spécifique pour HTML autonome
-        html_content = render_to_string('main/report_html_standalone.html', context)
+        html_content = render_to_string(template, context)
         
         response = HttpResponse(html_content, content_type='text/html; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="{nom_fichier}.html"'
@@ -2853,8 +2900,11 @@ def exporter_pdf_old(report_data, form_data, request=None):
         from weasyprint import HTML
         from django.http import HttpResponse
         
+        # activer la langue et choisir template si nécessaire
+        _activate_language(report_data.get('lang'))
+        template = _choose_template('main/report_deep_seek_test.html', report_data.get('lang'))
         # Rendre le template HTML
-        html_string = render_to_string('main/report_deep_seek_test.html', report_data)
+        html_string = render_to_string(template, report_data)
         
         # Générer le PDF en mémoire
         pdf_file = HTML(string=html_string, base_url=_get_weasy_base_url(request)).write_pdf()

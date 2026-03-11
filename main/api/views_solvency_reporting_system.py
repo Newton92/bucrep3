@@ -21,6 +21,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 class ReportGenerator:
     def __init__(self, acheteur_id, language='fr', devise='XAF', bilan_type='Classique', commande_id=None):
@@ -201,12 +204,10 @@ class ReportGenerator:
     
     
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+
 
 @api_view(['GET'])
-@permission_classes([])  # Ajoutez cette ligne
+@permission_classes([IsAuthenticated])  # Ajoutez cette ligne
 def generer_rapport_solvabilite(request, acheteur_id):
     """
     Endpoint principal pour générer les rapports de solvabilité

@@ -85,6 +85,34 @@ urlpatterns = [
     ),  # Vue intégrée pour changer de langue
     ########################################################################################################################
     #                                                                                                                      #
+    #  API ROUTES END FOR TRANSLATION                                                                                      #
+    #                                                                                                                      #
+    ########################################################################################################################
+    
+    
+    
+    ########################################################################################################################
+    #                                                                                                                      #
+    #  API ROUTES START FOR VITRINE                                                                                        #
+    #                                                                                                                      #
+    ########################################################################################################################
+    path("", index, name="index"),
+    path("nos-solutions/", solutions, name="solutions"),
+    path("comment-ça-marche/", comment_ca_marche, name="comment_ca_marche"),
+    path("nos-tarifs/", tarifs, name="tarifs"),
+    path("support/", support, name="support"),
+    path("commander-un-rapport/", orders_report, name="orders_report"),
+    path("demander-une-demo/", ask_demo, name="ask_demo"),
+    ########################################################################################################################
+    #                                                                                                                      #
+    #  API ROUTES END FOR VITRINE                                                                                          #
+    #                                                                                                                      #
+    ########################################################################################################################
+    
+    
+    
+    ########################################################################################################################
+    #                                                                                                                      #
     #  API ROUTES END FOR AUTH                                                                                             #
     #                                                                                                                      #
     ########################################################################################################################
@@ -93,8 +121,8 @@ urlpatterns = [
     #  API ROUTES END FOR TRANSLATION                                                                                      #
     #                                                                                                                      #
     ########################################################################################################################
-    path("", index, name="index"),
-    path("login/", index, name="index"),
+    # path("", index, name="index"),
+    path("login/", index, name="login"),
     path("verification/compte/", check_auth, name="check_auth"),
     path("mot-de-passe-oublie/", forgot_auth, name="forgot_auth"),
     path("reinitialisation-mot-de-passe-oublie/", reset_auth, name="reset_auth"),
@@ -5982,6 +6010,8 @@ urlpatterns = [
     path('api/emailing/historique/<int:envoi_id>/', DetailEnvoiAPIView.as_view(),  name='detail_envoi'),
     path('api/emailing/exporter-historique/', ExporterHistoriqueAPIView.as_view(), name='exporter_historique'),
     path('api/emailing/statistiques/', StatistiquesAPIView.as_view(), name='statistiques_historique'),
+    path('api/emailing/notifications/mark-read/', mark_notification_read, name='emailing_notifications_mark_read'),
+    path('api/emailing/notifications/mark-all-read/', mark_all_notifications_read, name='emailing_notifications_mark_all_read'),
     
     
     path('api/mailing/clients/<int:client_id>/commandes/', get_client_commandes, name='client-commandes'),

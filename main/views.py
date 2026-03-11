@@ -285,7 +285,63 @@ def dash_root_profile_page(request):
 
 
 def index(request):
-    return render(request, "main/index.html")
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/index.html", context)
+
+
+def solutions(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/solutions.html", context)
+
+
+def comment_ca_marche(request):
+
+    context = {
+        "comment_ca_marche_active": "active",
+    }
+    return render(request, "main/vitrine/comment_ca_marche.html", context)
+
+
+def tarifs(request):
+
+    context = {
+        "tarifs_active": "active",
+    }
+    return render(request, "main/vitrine/tarifs.html", context)
+
+
+def support(request):
+
+    context = {
+        "supports_active": "active",
+    }
+    return render(request, "main/vitrine/support.html", context)
+
+
+def orders_report(request):
+
+    context = {
+        "orders_report_active": "active",
+    }
+    return render(request, "main/vitrine/orders_report.html", context)
+
+
+def ask_demo(request):
+
+    context = {
+        "ask_demo_active": "active",
+    }
+    return render(request, "main/vitrine/ask_demo.html", context)
+
+
+def login(request):
+    return render(request, "main/login.html")
 
 
 def report(request):

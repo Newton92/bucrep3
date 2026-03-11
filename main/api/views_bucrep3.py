@@ -10,6 +10,9 @@ import os
 from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.auth.decorators import user_passes_test
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 
 # --- Fonction Utilitaires pour le Streaming ---
@@ -174,7 +177,7 @@ def telecharger_donnees_postgres_sql_texte(request):
 class DatabaseDumpAPIView(APIView):
     # 1. Utiliser les permissions DRF (seuls les administrateurs peuvent y accéder)
     # permission_classes = [IsAdminUser] 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated] # Vous pouvez ajuster cela selon vos besoins (ex: AllowAny pour tout le monde)
 
     
     def get(self, request, *args, **kwargs):

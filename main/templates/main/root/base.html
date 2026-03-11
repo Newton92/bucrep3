@@ -95,6 +95,9 @@
             background: rgba(252, 254, 254, 0.95);
             box-shadow: 0 2px 20px rgba(10, 149, 202, 0.1);
             border-bottom: 1px solid rgba(13, 128, 190, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 2000;
         }
         
         .navbar-brand img {
@@ -136,6 +139,7 @@
             border-radius: var(--border-radius);
             animation: slideDown 0.3s ease;
             border: 1px solid rgba(13, 128, 190, 0.1);
+            z-index: 2100;
         }
         
         @keyframes slideDown {
@@ -594,6 +598,42 @@
             gap: 10px;
         }
 
+        .notifications-dropdown-menu {
+            width: 380px;
+            max-height: 500px;
+            overflow: hidden;
+            z-index: 2200;
+        }
+
+        #globalNotificationDropdown {
+            overflow: visible;
+        }
+
+        #globalNotificationBadge {
+            top: 2px !important;
+            right: 2px !important;
+            left: auto !important;
+            transform: none !important;
+            min-width: 18px;
+            height: 18px;
+            line-height: 18px;
+            padding: 0 5px;
+            border: 2px solid #fff;
+            font-size: 0.65rem;
+        }
+
+        .notifications-list {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .navbar,
+        .navbar .container,
+        .navbar-collapse,
+        .navbar-nav {
+            overflow: visible;
+        }
+
         .google-translate-hidden {
             position: absolute;
             left: -9999px;
@@ -672,6 +712,32 @@
                             </select>
                         </li>
 
+                        <!-- Notifications -->
+                        <li class="nav-item ms-3 dropdown">
+                            <button type="button"
+                                    class="btn btn-light position-relative p-2"
+                                    id="globalNotificationDropdown"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                <i class="bi bi-bell fs-5"></i>
+                                <span id="globalNotificationBadge"
+                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                      style="display:none;">0</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-0 notifications-dropdown-menu"
+                                 aria-labelledby="globalNotificationDropdown">
+                                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                                    <h6 class="mb-0">{% trans "Notifications" %}</h6>
+                                    <button type="button" id="globalMarkAllReadBtn" class="btn btn-sm btn-link text-primary">
+                                        {% trans "Tout marquer comme lu" %}
+                                    </button>
+                                </div>
+                                <div id="globalNotificationsList" class="notifications-list p-2">
+                                    <div class="text-center py-4 text-muted">{% trans "Aucune notification" %}</div>
+                                </div>
+                            </div>
+                        </li>
+
 
                         <!-- User Profile -->
                         <li class="nav-item ms-3 dropdown">
@@ -682,8 +748,6 @@
                                 <img class="avatar-img rounded-circle" 
                                      src="{% if user.avatar %}{{ user.avatar.url }}{% else %}{% static 'media/avatars/avatar.PNG' %}{% endif %}" 
                                      alt="Avatar">
-                                <!-- Notification Badge -->
-                                <span class="notification-badge d-none">3</span>
                             </a>
 
                             <ul class="dropdown-menu dropdown-menu-end shadow pt-3" 
@@ -1024,6 +1088,211 @@
         if (document.getElementById('logoutButtonMenu')) {
             setupLogout('logoutButtonMenu');
         }
+
+        // Global notifications
+        let globalNotificationSocket = null;
+        let globalNotificationCount = 0;
+        let globalNotificationReconnectTimer = null;
+
+        function notifIcon(type) {
+            const icons = {
+                ENVOI_REUSSI: 'bi-check-circle-fill',
+                ENVOI_ECHEC: 'bi-x-circle-fill',
+                RAPPORT_GENERE: 'bi-file-earmark-text-fill',
+                TACHE_TERMINEE: 'bi-check2-square',
+                INFO: 'bi-info-circle-fill',
+                ALERTE: 'bi-exclamation-triangle-fill',
+                VALIDATION: 'bi-patch-check-fill',
+                CORRECTION: 'bi-pencil-square',
+                ENVOI_CLIENT: 'bi-send-fill',
+                RAPPEL: 'bi-alarm-fill'
+            };
+            return icons[type] || 'bi-bell-fill';
+        }
+
+        function notifBg(type) {
+            const bg = {
+                ENVOI_REUSSI: 'bg-success',
+                ENVOI_ECHEC: 'bg-danger',
+                RAPPORT_GENERE: 'bg-primary',
+                TACHE_TERMINEE: 'bg-info',
+                INFO: 'bg-secondary',
+                ALERTE: 'bg-warning',
+                VALIDATION: 'bg-success',
+                CORRECTION: 'bg-warning',
+                ENVOI_CLIENT: 'bg-primary',
+                RAPPEL: 'bg-dark'
+            };
+            return bg[type] || 'bg-secondary';
+        }
+
+        function notifTitle(type) {
+            const titles = {
+                ENVOI_REUSSI: 'Envoi réussi',
+                ENVOI_ECHEC: "Échec d'envoi",
+                RAPPORT_GENERE: 'Rapport généré',
+                TACHE_TERMINEE: 'Tâche terminée',
+                INFO: 'Information',
+                ALERTE: 'Alerte',
+                VALIDATION: 'Validation',
+                CORRECTION: 'Correction',
+                ENVOI_CLIENT: 'Envoi client',
+                RAPPEL: 'Rappel'
+            };
+            return titles[type] || 'Notification';
+        }
+
+        function notifTimeAgo(value) {
+            if (!value) return "à l'instant";
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return "à l'instant";
+            const s = Math.floor((new Date() - d) / 1000);
+            if (s < 60) return "à l'instant";
+            if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+            if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`;
+            return `il y a ${Math.floor(s / 86400)} j`;
+        }
+
+        function updateGlobalNotifBadge() {
+            const badge = document.getElementById('globalNotificationBadge');
+            if (!badge) return;
+            if (globalNotificationCount > 0) {
+                badge.textContent = globalNotificationCount;
+                badge.style.display = 'inline-flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function renderNotifHtml(notif) {
+            const unreadClass = notif.is_read ? '' : 'bg-light';
+            return `
+                <div class="p-2 border-bottom ${unreadClass} global-notification-item" data-id="${notif.id}">
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="${notifBg(notif.type)} rounded-circle p-2 text-white">
+                            <i class="bi ${notifIcon(notif.type)}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="small fw-bold">${notifTitle(notif.type)}</div>
+                            <div class="small">${notif.message || ''}</div>
+                            <div class="small text-muted">${notifTimeAgo(notif.created_at)}</div>
+                        </div>
+                        <button class="btn btn-sm btn-link global-mark-read" data-id="${notif.id}" title="Marquer comme lu">
+                            <i class="bi bi-check2"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function setGlobalNotifications(notifications) {
+            const list = document.getElementById('globalNotificationsList');
+            if (!list) return;
+            const items = Array.isArray(notifications) ? notifications : [];
+            globalNotificationCount = items.length;
+            updateGlobalNotifBadge();
+            if (!items.length) {
+                list.innerHTML = '<div class="text-center py-4 text-muted">Aucune notification</div>';
+                return;
+            }
+            list.innerHTML = items.map(renderNotifHtml).join('');
+        }
+
+        function prependGlobalNotification(notification) {
+            const list = document.getElementById('globalNotificationsList');
+            if (!list) return;
+            if (list.querySelector('.text-muted')) {
+                list.innerHTML = '';
+            }
+            list.insertAdjacentHTML('afterbegin', renderNotifHtml(notification));
+            globalNotificationCount += 1;
+            updateGlobalNotifBadge();
+        }
+
+        function connectGlobalNotifications() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws/notifications/`;
+            globalNotificationSocket = new WebSocket(wsUrl);
+
+            globalNotificationSocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'unread_list') {
+                    setGlobalNotifications(data.notifications || []);
+                } else if (data.type === 'new_notification' && data.notification) {
+                    prependGlobalNotification(data.notification);
+                }
+            };
+
+            globalNotificationSocket.onclose = function() {
+                if (globalNotificationReconnectTimer) {
+                    clearTimeout(globalNotificationReconnectTimer);
+                }
+                globalNotificationReconnectTimer = setTimeout(connectGlobalNotifications, 5000);
+            };
+        }
+
+        function markNotifRead(notificationId) {
+            if (!notificationId) return;
+            if (globalNotificationSocket && globalNotificationSocket.readyState === WebSocket.OPEN) {
+                globalNotificationSocket.send(JSON.stringify({
+                    action: 'mark_read',
+                    notification_id: notificationId
+                }));
+                return;
+            }
+            fetch('/api/emailing/notifications/mark-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ notification_id: notificationId })
+            }).then(() => {
+                const item = document.querySelector(`.global-notification-item[data-id="${notificationId}"]`);
+                if (item) item.classList.remove('bg-light');
+            });
+        }
+
+        function markAllNotifRead() {
+            if (globalNotificationSocket && globalNotificationSocket.readyState === WebSocket.OPEN) {
+                globalNotificationSocket.send(JSON.stringify({ action: 'mark_all_read' }));
+                return;
+            }
+            fetch('/api/emailing/notifications/mark-all-read/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            }).then(() => {
+                document.querySelectorAll('.global-notification-item').forEach((el) => el.classList.remove('bg-light'));
+                globalNotificationCount = 0;
+                updateGlobalNotifBadge();
+            });
+        }
+
+        function setupGlobalNotifications() {
+            if (!document.getElementById('globalNotificationDropdown')) {
+                return;
+            }
+            connectGlobalNotifications();
+
+            document.addEventListener('click', function(e) {
+                const readBtn = e.target.closest('.global-mark-read');
+                if (readBtn) {
+                    e.preventDefault();
+                    markNotifRead(readBtn.getAttribute('data-id'));
+                }
+            });
+
+            const markAllBtn = document.getElementById('globalMarkAllReadBtn');
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    markAllNotifRead();
+                });
+            }
+        }
         
         // Language Switcher
         function setupLanguageSwitcher() {
@@ -1346,6 +1615,7 @@
             setupClientSideFallbackTranslation();
             setupLanguageSwitcher();
             setupCountrySelector();
+            setupGlobalNotifications();
         });
         
         // Global error handler

@@ -1356,3 +1356,36 @@ def get_mail_details(request, mail_id):
         
     except MailInfo.DoesNotExist:
         return Response({'error': 'Mail non trouvé'}, status=404)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_notification_read(request):
+    """Marque une notification comme lue pour l'utilisateur courant."""
+    notification_id = request.data.get("notification_id")
+    if not notification_id:
+        return Response(
+            {"error": "notification_id est requis"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    updated = Notification.objects.filter(
+        id=notification_id, user=request.user
+    ).update(is_read=True)
+
+    if updated == 0:
+        return Response(
+            {"error": "Notification introuvable"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return Response({"success": True, "unread_count": unread_count})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def mark_all_notifications_read(request):
+    """Marque toutes les notifications non lues de l'utilisateur comme lues."""
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return Response({"success": True, "unread_count": 0})

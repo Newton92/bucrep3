@@ -30,13 +30,19 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
     
     async def receive(self, text_data):
-        data = json.loads(text_data)
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+
         action = data.get('action')
         
         if action == 'mark_read':
             await self.mark_notification_read(data.get('notification_id'))
+            await self.send_unread_notifications()
         elif action == 'mark_all_read':
             await self.mark_all_read()
+            await self.send_unread_notifications()
     
     async def send_unread_notifications(self):
         notifications = await self.get_unread_notifications()
@@ -54,10 +60,14 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def get_unread_notifications(self):
-        return list(Notification.objects.filter(
+        notifications = list(Notification.objects.filter(
             user=self.user,
             is_read=False
         ).values('id', 'type', 'message', 'created_at'))
+        for notif in notifications:
+            created_at = notif.get('created_at')
+            notif['created_at'] = created_at.isoformat() if created_at else None
+        return notifications
     
     @database_sync_to_async
     def mark_notification_read(self, notification_id):

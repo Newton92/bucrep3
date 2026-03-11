@@ -86,3 +86,85 @@ class AuthenticationTests(APITestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access", response.data)
+
+
+class ReportCommentsTests(APITestCase):
+    """Ensure comment fields are included in generated report data."""
+
+    def setUp(self):
+        # create minimal user/acheteur for authentication
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="reportuser",
+            email="report@example.com",
+            password=hash_string("reportpass"),
+            role="Client",
+        )
+        self.client.force_authenticate(user=self.user)
+        # create acheteur and related objects
+        from main.models import Acheteur, RegistreCommerce, Cotisation, ProduitService, Marque, Certification, InnovationDeveloppement, ProcedureCollective
+        self.acheteur = Acheteur.objects.create(nom="TestAcheteur")
+        # add one record of each type with commentaire
+        RegistreCommerce.objects.create(
+            acheteur=self.acheteur,
+            numero="R123",
+            date_inscription="2023-01-01",
+            est_actif=True,
+            commentaire="reg comment"
+        )
+        Cotisation.objects.create(
+            acheteur=self.acheteur,
+            numero="C123",
+            date_affiliation="2023-01-01",
+            commentaire="cot comment"
+        )
+        ProduitService.objects.create(
+            acheteur=self.acheteur,
+            produits="P",
+            services="S",
+            commentaire="prod comment"
+        )
+        Marque.objects.create(
+            acheteur=self.acheteur,
+            marques="M",
+            commentaire="marque comment"
+        )
+        Certification.objects.create(
+            acheteur=self.acheteur,
+            type_certification="autre",
+            nom_certification="Cert",
+            commentaire="cert comment"
+        )
+        InnovationDeveloppement.objects.create(
+            acheteur=self.acheteur,
+            type_innovation="innovation_produit",
+            titre="Innov",
+            commentaire="innov comment",
+        )
+        ProcedureCollective.objects.create(
+            acheteur=self.acheteur,
+            type_procedure="proc",
+            commentaire="proc comment",
+        )
+
+    def test_report_includes_comments(self):
+        url = reverse("generer_rapport_solvabilite")
+        payload = {
+            "annee_n": 2025,
+            "annee_n1": 2024,
+            "annee_n2": 2023,
+            "inclure_commande": "non",
+            "langue": "fr",
+            "acheteur_id": self.acheteur.id,
+            "format_rapport": "json",
+        }
+        response = self.client.post(url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data
+        # check reg comment appears
+        self.assertIn("registres", data)
+        self.assertTrue(data["registres"])
+        self.assertEqual(data["registres"][0].get("commentaires"), "reg comment")
+        # check one other comment for good measure
+        self.assertIn("cotisations", data)
+        self.assertEqual(data["cotisations"][0].get("commentaires"), "cot comment")

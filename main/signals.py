@@ -1,9 +1,15 @@
 # main_monitoring/signals.py
-from django.db.models.signals import post_delete
+import logging
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .models import (AlerteLog, Certification, ElementSurveillance,
-                     Portefeuille, ResponsableAcheteur)
+                     Notification, Portefeuille, ResponsableAcheteur)
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_delete, sender=ResponsableAcheteur)
@@ -73,3 +79,34 @@ def log_certification_loss_alert(sender, instance, **kwargs):
             content_object=instance,
         )
     print(f"Alerte de perte de certification loggée pour {instance.nom_certification}")
+
+
+@receiver(post_save, sender=Notification)
+def push_notification_realtime(sender, instance, created, **kwargs):
+    """Diffuse la notification au groupe websocket de l'utilisateur."""
+    if not created:
+        return
+
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+
+    payload = {
+        "id": instance.id,
+        "type": instance.type,
+        "message": instance.message,
+        "is_read": instance.is_read,
+        "created_at": instance.created_at.isoformat() if instance.created_at else None,
+    }
+
+    try:
+        async_to_sync(channel_layer.group_send)(
+            f"user_{instance.user_id}",
+            {
+                "type": "notification_message",
+                "notification": payload,
+            },
+        )
+    except Exception as exc:
+        # Ne pas casser la transaction DB si le broker WS est indisponible.
+        logger.warning("Realtime notification skipped (channel layer unavailable): %s", exc)

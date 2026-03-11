@@ -324,7 +324,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 
 # Cookies configuration for HTTP
-CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False  # En HTTP, cela doit être False, mais pour la sécurité, on peut le laisser à True si on est sûr que les clients utilisent HTTPS
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = False
@@ -404,15 +404,37 @@ CACHES = {
 
 ASGI_APPLICATION = "bucrep.asgi.application"
 
-# Utilisation de Redis comme broker pour les WebSockets
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-        "CONFIG": {
-            "expiry": 30,
+# Channels:
+# - local/dev: InMemory par défaut
+# - prod: Redis par défaut
+# Override possible via USE_REDIS_CHANNEL_LAYER=true/false.
+USE_REDIS_CHANNEL_LAYER = env.bool("USE_REDIS_CHANNEL_LAYER", default=not DEBUG)
+
+if USE_REDIS_CHANNEL_LAYER:
+    CHANNEL_REDIS_URL = env(
+        "CHANNEL_REDIS_URL",
+        default="redis://127.0.0.1:6379/1",
+    )
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [CHANNEL_REDIS_URL],
+            },
         },
-    },
-}
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+            "CONFIG": {
+                "expiry": 30,
+            },
+        },
+    }
+
+
+
 
 # LOGGING
 LOGGING = {
