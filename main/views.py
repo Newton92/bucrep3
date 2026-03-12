@@ -291,6 +291,35 @@ def index(request):
     }
     return render(request, "main/vitrine/index.html", context)
 
+def connexion(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/connexion.html", context)
+
+def registration(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/registration.html", context)
+
+def forgot_password(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/forgot_password.html", context)
+
+
+def reset_password(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/reset_password.html", context)
+
 
 def solutions(request):
 
@@ -298,6 +327,46 @@ def solutions(request):
         "solutions_active": "active",
     }
     return render(request, "main/vitrine/solutions.html", context)
+
+
+def solvency_report(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/solvency_report.html", context)
+
+
+def solvency_report_model(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/solvency_report_model.html", context)
+
+
+def abonnement_saas(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/abonnement_saas.html", context)
+
+
+def licence_autonome(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/licence_autonome.html", context)
+
+
+def access_api_bucrep(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/access_api_bucrep.html", context)
 
 
 def comment_ca_marche(request):
@@ -324,6 +393,38 @@ def support(request):
     return render(request, "main/vitrine/support.html", context)
 
 
+def support_doc_bucrep(request):
+
+    context = {
+        "supports_active": "active",
+    }
+    return render(request, "main/vitrine/support_doc_bucrep.html", context)
+
+
+def support_doc_demand_report(request):
+
+    context = {
+        "supports_active": "active",
+    }
+    return render(request, "main/vitrine/support_doc_demand_report.html", context)
+
+
+def support_doc_licence_autonome(request):
+
+    context = {
+        "supports_active": "active",
+    }
+    return render(request, "main/vitrine/support_doc_licence_autonome.html", context)
+
+
+def support_doc_licence_autonome_details(request):
+
+    context = {
+        "supports_active": "active",
+    }
+    return render(request, "main/vitrine/support_doc_licence_autonome_details.html", context)
+
+
 def orders_report(request):
 
     context = {
@@ -346,6 +447,14 @@ def contact_commercial_team(request):
         "solutions_active": "active",
     }
     return render(request, "main/vitrine/contact_commercial_team_two.html", context)
+
+
+def discuss_with_expert(request):
+
+    context = {
+        "solutions_active": "active",
+    }
+    return render(request, "main/vitrine/discuss_with_expert.html", context)
 
 
 def free_trial(request):
@@ -465,6 +574,40 @@ def gestion_cookie(request):
         "solutions_active": "active",
     }
     return render(request, "main/vitrine/gestion_cookie.html", context)
+
+
+def blog(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/blog.html", context)
+
+
+def blog_article(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/blog_article.html", context)
+
+
+def webinaires(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/webinaires.html", context)
+
+
+def webinaires_masterclass(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/webinaires_masterclass.html", context)
+
+
 
 
 def login(request):
