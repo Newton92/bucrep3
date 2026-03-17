@@ -633,7 +633,8 @@ class CustomForgotPasswordView(APIView):
             {"code_secret": code_secret},
         )
 
-        reset_url = reverse("reset_auth") + f"?token={reset_token}"
+        # Redirect to the vitrine reset page (same treatment as reset_auth, but consistent UI).
+        reset_url = reverse("reset_password") + f"?token={reset_token}"
 
         return Response(
             {
