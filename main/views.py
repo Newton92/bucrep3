@@ -611,19 +611,39 @@ def webinaires_masterclass(request):
 
 
 def login(request):
-    return render(request, "main/login.html")
 
-
-def report(request):
-    return render(request, "main/report_template.html")
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/login.html", context)
 
 
 def check_auth(request):
-    return render(request, "main/check_auth.html")
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/check_auth.html", context)
 
 
 def forgot_auth(request):
-    return render(request, "main/forgot_auth.html")
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/forgot_auth.html", context)
+
+
+def reset_auth(request):
+
+    context = {
+        "index_active": "active",
+    }
+    return render(request, "main/vitrine/reset_auth.html", context)
+
+
+def report(request):
+    return render(request, "main/vitrine/report_template.html")
 
 
 
@@ -654,6 +674,7 @@ def new_admin():
 
     except Exception as e:
         return HttpResponse(f"❌ Erreur lors de la création ou mise à jour : {str(e)}", status=500)
+
 
 
 JSON_LIST_ADMIN = {
@@ -726,11 +747,7 @@ def new_admins_from_list(request):
 
 
 
-def reset_auth(request):
-    token = request.GET.get("token")
-    if not token:
-        return render(request, "main/reset_auth.html", {"error": _("Token manquant.")})
-    return render(request, "main/reset_auth.html", {"token": token})
+
 
 
 
